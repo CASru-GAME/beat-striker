@@ -1,0 +1,44 @@
+name: Enforce UTF-8 (no BOM) for C#
+
+on: [push, pull_request]
+
+jobs:
+  utf8:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check .cs encoding is UTF-8 without BOM
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # .cs の一覧（NULL区切りで安全に）
+          mapfile -d '' files < <(git ls-files -z '*.cs')
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No .cs files — skipping."
+            exit 0
+          fi
+
+          bad=""
+          bom=""
+          for f in "${files[@]}"; do
+            enc=$(file -b --mime-encoding "$f")
+            # ASCII は UTF-8 の部分集合なので許容
+            if [[ "$enc" != "utf-8" && "$enc" != "us-ascii" ]]; then
+              bad+="$f ($enc)\n"
+            fi
+            # BOM 検知（file は BOM 付きを 'with BOM' と表示）
+            if file "$f" | grep -q 'with BOM'; then
+              bom+="$f\n"
+            fi
+          done
+
+          if [ -n "$bad" ] || [ -n "$bom" ]; then
+            echo "::error::エンコーディング違反を検出しました"
+            [ -n "$bad" ] && echo -e "UTF-8/ASCII 以外:\n$bad"
+            [ -n "$bom" ] && echo -e "BOM 付き:\n$bom"
+            exit 1
+          fi
+
+          echo "✅ All .cs files are UTF-8 without BOM."
