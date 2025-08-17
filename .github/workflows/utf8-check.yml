@@ -3,7 +3,7 @@ name: Convert SJIS .cs to UTF-8
 on: [push, pull_request]
 
 permissions:
-  contents: write
+  contents: write   # 自動コミットに必要（同一リポ内のみ）
 
 jobs:
   convert:
@@ -20,6 +20,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y nkf
 
       - name: Convert SJIS to UTF-8
+        shell: bash
         run: |
           #!/usr/bin/env bash
           set -euo pipefail
@@ -27,6 +28,7 @@ jobs:
           ROOT="."
           changed=0
 
+          # .cs ファイルを再帰的に探索
           find "$ROOT" -type f -name "*.cs" -print0 | while IFS= read -r -d '' f; do
             enc="$(nkf -g "$f" 2>/dev/null || echo unknown)"
             enc_lc="$(printf '%s' "$enc" | tr '[:upper:]' '[:lower:]')"
@@ -45,19 +47,21 @@ jobs:
             fi
           done
 
-          # 状態を後段に渡すためにファイルに保存
+          # フラグ保存（後段で参照）
           echo "$changed" > /tmp/changed.flag
 
       - name: Commit and push changes
         if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
+        shell: bash
         run: |
           changed=$(cat /tmp/changed.flag || echo 0)
           if [ "$changed" -eq 1 ]; then
+            echo "Committing converted files..."
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -A
             git commit -m "ci: convert .cs files to UTF-8"
             git push
           else
-            echo "No changes to commit."
+            echo "No SJIS files converted. Nothing to commit."
           fi
