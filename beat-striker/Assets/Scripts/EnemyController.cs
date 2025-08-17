@@ -6,7 +6,7 @@ public class EnemyController : MonoBehaviour
 
     void Start()
     {
-        // ƒvƒŒƒCƒ„[ƒIƒuƒWƒFƒNƒg‚ğ’T‚·
+        // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’æ¢ã™
         player = GameObject.Find("Player");
     }
 
