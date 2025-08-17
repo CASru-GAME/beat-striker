@@ -3,7 +3,7 @@ name: Convert SJIS .cs to UTF-8
 on: [push, pull_request]
 
 permissions:
-  contents: write   # 自動コミットに必要（同一リポ内のみ）
+  contents: write   # 自動コミットに必要（fork PR では使われません）
 
 jobs:
   convert:
@@ -13,13 +13,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
+          # PR の場合はヘッドブランチをそのままチェックアウト
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
           repository: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
 
       - name: Install nkf
         run: sudo apt-get update && sudo apt-get install -y nkf
 
-      - name: Convert SJIS to UTF-8
+      - name: Convert SJIS to UTF-8 (no BOM)
         shell: bash
         run: |
           #!/usr/bin/env bash
@@ -28,29 +29,43 @@ jobs:
           ROOT="."
           changed=0
 
-          # .cs ファイルを再帰的に探索
-          find "$ROOT" -type f -name "*.cs" -print0 | while IFS= read -r -d '' f; do
+          # パイプを使わず、リダイレクトで while を回す（subshell 回避）
+          while IFS= read -r -d '' f; do
             enc="$(nkf -g "$f" 2>/dev/null || echo unknown)"
             enc_lc="$(printf '%s' "$enc" | tr '[:upper:]' '[:lower:]')"
 
-            if [[ "$enc_lc" == utf-8* || "$enc_lc" == ascii* ]]; then
+            # すでに UTF-8 でも「BOM 付き」なら除去して変更扱い
+            if [[ "$enc_lc" == utf-8* ]]; then
+              # 念のため常に no-bom で上書き（差分がなければ変更は出ません）
+              nkf --overwrite -w --no-bom -- "$f"
+              continue
+            fi
+
+            # ASCII はそのまま（UTF-8 部分集合）
+            if [[ "$enc_lc" == ascii* ]]; then
               echo "skip (already $enc): $f"
               continue
             fi
 
+            # Shift_JIS 系（sjis/shift_jis/cp932/windows-31j）を検出したら変換
             if [[ "$enc_lc" == *shift_jis* || "$enc_lc" == sjis* || "$enc_lc" == cp932* || "$enc_lc" == *windows-31j* ]]; then
-              nkf -w --overwrite -- "$f"
+              nkf --overwrite -w --no-bom -- "$f"
               echo "converted (SJIS -> UTF-8): $f  [detected: $enc]"
               changed=1
             else
               echo "unknown encoding ($enc): $f"
             fi
-          done
+          done < <(find "$ROOT" -type f -name "*.cs" -print0)
 
-          # フラグ保存（後段で参照）
-          echo "$changed" > /tmp/changed.flag
+          # 変数スコープの事故を避けるため、実際の変更有無を Git からも判定
+          if ! git diff --quiet; then
+            changed=1
+          fi
+
+          printf '%s\n' "$changed" > /tmp/changed.flag
 
       - name: Commit and push changes
+        # push イベント、または fork でない PR のときだけコミット可能
         if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
         shell: bash
         run: |
@@ -60,8 +75,13 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -A
-            git commit -m "ci: convert .cs files to UTF-8"
-            git push
+            # 何もステージされていない可能性に備えて条件分岐
+            if ! git diff --cached --quiet; then
+              git commit -m "ci: convert .cs files to UTF-8 (no BOM)"
+              git push
+            else
+              echo "No staged changes; skipping commit."
+            fi
           else
-            echo "No SJIS files converted. Nothing to commit."
+            echo "No SJIS conversions detected. Nothing to commit."
           fi
