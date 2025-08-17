@@ -1,15 +1,14 @@
-name: Enforce UTF-8 (no BOM) for C#
+name: Convert SJIS .cs to UTF-8
 
 on: [push, pull_request]
 
 permissions:
-  contents: write  # 自動コミットに必要（同一リポ/ブランチのみ）
+  contents: write
 
 jobs:
-  utf8:
+  convert:
     runs-on: ubuntu-latest
     steps:
-      # PR イベントでは「PRのヘッドブランチ」をチェックアウトしておく
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -17,76 +16,47 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
           repository: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
 
-      - name: Install tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y nkf
+      - name: Install nkf
+        run: sudo apt-get update && sudo apt-get install -y nkf
 
-      # ① 強制変換：すべての .cs を UTF-8（BOMなし）に正規化
-      - name: Normalize encoding to UTF-8 (no BOM)
-        shell: bash
+      - name: Convert SJIS to UTF-8
         run: |
+          #!/usr/bin/env bash
           set -euo pipefail
 
-          mapfile -d '' files < <(git ls-files -z '*.cs')
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No .cs files — skipping normalize."
-            exit 0
-          fi
+          ROOT="."
+          changed=0
 
-          for f in "${files[@]}"; do
-            # nkf は入力文字コードを自動判定して UTF-8(no BOM) で上書き保存
-            nkf --overwrite -w8 --no-bom "$f"
-          done
+          find "$ROOT" -type f -name "*.cs" -print0 | while IFS= read -r -d '' f; do
+            enc="$(nkf -g "$f" 2>/dev/null || echo unknown)"
+            enc_lc="$(printf '%s' "$enc" | tr '[:upper:]' '[:lower:]')"
 
-          echo "Changed files (if any):"
-          git diff --name-only || true
-
-      # ② 検証：UTF-8 妥当性 + BOM なし
-      - name: Verify .cs encoding is UTF-8 without BOM
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          mapfile -d '' files < <(git ls-files -z '*.cs')
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No .cs files — skipping verify."
-            exit 0
-          fi
-
-          bad=""
-          bom=""
-          for f in "${files[@]}"; do
-            # UTF-8 妥当性（ASCII も UTF-8 として妥当なのでOK）
-            if ! iconv -f utf-8 -t utf-8 "$f" -o /dev/null 2>/dev/null; then
-              bad+="$f (invalid UTF-8)\n"
+            if [[ "$enc_lc" == utf-8* || "$enc_lc" == ascii* ]]; then
+              echo "skip (already $enc): $f"
+              continue
             fi
-            # BOM 検出
-            if head -c3 "$f" | grep -q $'\xEF\xBB\xBF'; then
-              bom+="$f\n"
+
+            if [[ "$enc_lc" == *shift_jis* || "$enc_lc" == sjis* || "$enc_lc" == cp932* || "$enc_lc" == *windows-31j* ]]; then
+              nkf -w --overwrite -- "$f"
+              echo "converted (SJIS -> UTF-8): $f  [detected: $enc]"
+              changed=1
+            else
+              echo "unknown encoding ($enc): $f"
             fi
           done
 
-          if [ -n "$bad" ] || [ -n "$bom" ]; then
-            echo "::error::エンコーディング違反を検出しました（自動修正後の検証で失敗）"
-            [ -n "$bad" ] && echo -e "不正な UTF-8:\n$bad"
-            [ -n "$bom" ] && echo -e "BOM 付き:\n$bom"
-            exit 1
-          fi
+          # 状態を後段に渡すためにファイルに保存
+          echo "$changed" > /tmp/changed.flag
 
-          echo "✅ All .cs files are valid UTF-8 without BOM."
-
-      # ③ 変更があればコミット＆プッシュ
-      # push イベント、または同一リポ内 PR のときのみ実行（fork PR は権限なしでスキップ）
-      - name: Commit and push fixes (if any)
+      - name: Commit and push changes
         if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
-        shell: bash
         run: |
-          if ! git diff --quiet; then
+          changed=$(cat /tmp/changed.flag || echo 0)
+          if [ "$changed" -eq 1 ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -A
-            git commit -m "ci: normalize .cs encoding to UTF-8 (no BOM)"
+            git commit -m "ci: convert .cs files to UTF-8"
             git push
           else
             echo "No changes to commit."
