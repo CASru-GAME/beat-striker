@@ -1,12 +1,12 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-    [SerializeField] private CharacterController playerPrefab;
-    [SerializeField] private Transform spawnPosition1;
-    public CharacterController player1;
+    [SerializeField] Transform spawnPosition1, spawnPosition2;
+    [NonSerialized] public Striker player1, player2;
 
     private void Awake()
     {
@@ -22,7 +22,8 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        player1 = Instantiate(playerPrefab, spawnPosition1.position, Quaternion.Euler(0, 90, 0));
+        player1 = Instantiate(Common.Instance.player0.strikerPrefab, spawnPosition1.position, Quaternion.Euler(0, 90, 0));
+        player2 = Instantiate(Common.Instance.player1.strikerPrefab, spawnPosition2.position, Quaternion.Euler(0, -90, 0));
     }
 
     // Update is called once per frame

@@ -15,6 +15,12 @@ public class SelectScene : MonoBehaviour
 
     }
 
+    public void SelectCharacter(Striker prefab)
+    {
+        Common.Instance.player0.strikerPrefab = prefab;
+        Common.Instance.player1.strikerPrefab = prefab;
+    }
+
     public void GotoBattleScene()
     {
         SceneManager.LoadScene("BattleScene");

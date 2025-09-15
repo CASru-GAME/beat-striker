@@ -3,7 +3,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Rigidbody))]
-public class HeroController : CharacterController
+public class HeroController : Striker
 {
     Animator anim;
     Rigidbody rb;
@@ -25,7 +25,7 @@ public class HeroController : CharacterController
 
     void Update()
     {
-        var inputX = Input.GetAxis("Horizontal");
+        var inputX = InputVector.x;
         anim.SetBool("IsGround", isGround);
 
         if (Mathf.Abs(inputX) > 0.1f)
@@ -39,12 +39,12 @@ public class HeroController : CharacterController
             anim.SetBool("IsRun", false);
         }
 
-        if (isGround && Input.GetKeyDown(KeyCode.W))
+        if (isGround && InputA)
         {
             rb.AddForce(jupmForce * Vector3.up);
         }
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (InputB)
         {
             anim.SetTrigger("DoAttack");
         }
