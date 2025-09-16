@@ -1,42 +1,33 @@
+using System;
 using UnityEngine;
 
-public class Striker : MonoBehaviour
-{
-    public float hp = 10;
-    [SerializeField]
-    private Vector2 inputVector;
-    public Vector2 InputVector { get => inputVector; }
+public class Striker : MonoBehaviour {
+    public float hp = 100;
+    public bool isGround { get; private set; }
+    [NonSerialized] public Player player;
 
-    private bool inputA;
-    public bool InputA { get => inputA; }
-
-    private bool inputB;
-    public bool InputB { get => inputB; }
-
-    private bool inputY;
-    public bool InputY { get => inputY; }
-
-    private bool inputX;
-    public bool InputX { get => inputX; }
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
+    void Start() {
 
     }
 
-    // Update is called once per frame
-    void Update()
+    void Update() {
+    }
+    
+    private void OnCollisionStay(Collision collision)
     {
-        // Update movement vector from Unity input axes (works with keyboard, joystick, etc.)
-        float h = Input.GetAxis("Horizontal");
-        float v = Input.GetAxis("Vertical");
-        inputVector = new Vector2(h, v);
+        isGround = false;
+        foreach (var contact in collision.contacts)
+        {
+            if (contact.normal.y > 0.5f)
+            {
+                isGround = true;
+                return;
+            }
+        }
+    }
 
-        // Update action buttons from keyboard keys A/B/C/D (held state)
-        inputA = Input.GetKey(KeyCode.L);
-        inputB = Input.GetKey(KeyCode.K);
-        inputY = Input.GetKey(KeyCode.J);
-        inputX = Input.GetKey(KeyCode.I);
+    private void OnCollisionExit(Collision collision)
+    {
+        isGround = false;
     }
 }

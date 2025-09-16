@@ -1,23 +1,24 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Common : MonoBehaviour
 {
-    [NonSerialized] public Player player0, player1;
+    [NonSerialized] public List<HumanPlayer> players = new();
     public static Common Instance { get; private set; }
     [SerializeField] Canvas targetCanvas;
+    [NonSerialized] public bool cursorMode;
 
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
+    private void Awake() {
+        if (Instance != null && Instance != this) {
             Destroy(gameObject);
             return;
         }
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        cursorMode = true;
     }
 
     void OnEnable()

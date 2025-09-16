@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 
 [RequireComponent(typeof(TextMeshPro))]
+[RequireComponent(typeof(TextMeshProUGUI))]
 public class HpBar : MonoBehaviour
 {
     TextMeshProUGUI text;
@@ -14,6 +15,6 @@ public class HpBar : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        text.text = "HP: " + (int) GameManager.Instance.player1.hp;
+        text.text = "HP: " + (int) GameManager.Instance.strikers[0].hp;
     }
 }

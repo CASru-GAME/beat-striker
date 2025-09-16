@@ -599,12 +599,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5189117836200484639}
-  - component: {fileID: 712021694818041983}
+  - component: {fileID: 8817504715203060625}
   - component: {fileID: 6037586890744269640}
+  - component: {fileID: 712021694818041983}
   - component: {fileID: 7378333137058971118}
   - component: {fileID: 8735412774696205190}
   - component: {fileID: 2617055465004819645}
-  - component: {fileID: 2280210212496772610}
   m_Layer: 0
   m_Name: Hero
   m_TagString: Untagged
@@ -632,6 +632,32 @@ Transform:
   - {fileID: 1238320377402717587}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!114 &8817504715203060625
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273013822404465156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60a5d8d43a07e483396dc0da280d7858, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Striker
+  hp: 100
+--- !u!114 &6037586890744269640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273013822404465156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f152563c2eea7f44c8892f046c2d57f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::playerController
+  jupmForce: 1000
 --- !u!95 &712021694818041983
 Animator:
   serializedVersion: 7
@@ -654,22 +680,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &6037586890744269640
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2273013822404465156}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f152563c2eea7f44c8892f046c2d57f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::playerController
-  hp: 10
-  inputVector: {x: 0, y: 0}
-  speed: 5
-  jupmForce: 500
 --- !u!54 &7378333137058971118
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -741,36 +751,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.72003317
   m_Center: {x: 0, y: 0.7365117, z: 0.01961863}
---- !u!114 &2280210212496772610
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2273013822404465156}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
-  m_Actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_NotificationBehavior: 0
-  m_UIInputModule: {fileID: 0}
-  m_DeviceLostEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_DeviceRegainedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ControlsChangedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ActionEvents: []
-  m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme: 
-  m_DefaultActionMap: 
-  m_SplitScreenIndex: -1
-  m_Camera: {fileID: 0}
 --- !u!1 &2322457901791417078
 GameObject:
   m_ObjectHideFlags: 0
