@@ -657,7 +657,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f152563c2eea7f44c8892f046c2d57f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::playerController
-  jupmForce: 1000
+  jupmForce: 500
 --- !u!95 &712021694818041983
 Animator:
   serializedVersion: 7
@@ -705,7 +705,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 120
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!136 &8735412774696205190
 CapsuleCollider:
