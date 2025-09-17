@@ -735,7 +735,7 @@ MonoBehaviour:
   cpuPrefab: {fileID: 787077013856687099, guid: fe536268e0cbf438dbb52ad7e7a984bf, type: 3}
   despawnY: -10
   beatSpawnTimeDelta: 3
-  beatMapTestSpan: 0.7
+  beatMapTestSpan: 0.54
 --- !u!4 &937167222
 Transform:
   m_ObjectHideFlags: 0
