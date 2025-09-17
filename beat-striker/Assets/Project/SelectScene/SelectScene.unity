@@ -132,7 +132,7 @@ GameObject:
   - component: {fileID: 378971380}
   - component: {fileID: 378971379}
   m_Layer: 5
-  m_Name: Button
+  m_Name: ButtonWarrer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -207,8 +207,8 @@ MonoBehaviour:
         m_MethodName: SelectCharacter
         m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 6037586890744269640, guid: 1bc78afdd55844d15a2b3e78489bbd03, type: 3}
-          m_ObjectArgumentAssemblyTypeName: Player, Assembly-CSharp
+          m_ObjectArgument: {fileID: 8817504715203060625, guid: 1bc78afdd55844d15a2b3e78489bbd03, type: 3}
+          m_ObjectArgumentAssemblyTypeName: Striker, Assembly-CSharp
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -265,7 +265,7 @@ GameObject:
   - component: {fileID: 422729966}
   - component: {fileID: 422729965}
   m_Layer: 5
-  m_Name: Button
+  m_Name: ButtonHero
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -340,8 +340,8 @@ MonoBehaviour:
         m_MethodName: SelectCharacter
         m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 6037586890744269640, guid: 1bc78afdd55844d15a2b3e78489bbd03, type: 3}
-          m_ObjectArgumentAssemblyTypeName: Player, Assembly-CSharp
+          m_ObjectArgument: {fileID: 8817504715203060625, guid: 1bc78afdd55844d15a2b3e78489bbd03, type: 3}
+          m_ObjectArgumentAssemblyTypeName: Striker, Assembly-CSharp
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -398,7 +398,7 @@ GameObject:
   - component: {fileID: 698344402}
   - component: {fileID: 698344401}
   m_Layer: 5
-  m_Name: Button
+  m_Name: ButtonSatan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -473,8 +473,8 @@ MonoBehaviour:
         m_MethodName: SelectCharacter
         m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 6037586890744269640, guid: 1bc78afdd55844d15a2b3e78489bbd03, type: 3}
-          m_ObjectArgumentAssemblyTypeName: Player, Assembly-CSharp
+          m_ObjectArgument: {fileID: 8817504715203060625, guid: 1bc78afdd55844d15a2b3e78489bbd03, type: 3}
+          m_ObjectArgumentAssemblyTypeName: Striker, Assembly-CSharp
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -1825,7 +1825,7 @@ GameObject:
   - component: {fileID: 1793422661}
   - component: {fileID: 1793422660}
   m_Layer: 5
-  m_Name: Button
+  m_Name: ButtonWizerd
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1900,8 +1900,8 @@ MonoBehaviour:
         m_MethodName: SelectCharacter
         m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 6037586890744269640, guid: 1bc78afdd55844d15a2b3e78489bbd03, type: 3}
-          m_ObjectArgumentAssemblyTypeName: Player, Assembly-CSharp
+          m_ObjectArgument: {fileID: 8817504715203060625, guid: 1bc78afdd55844d15a2b3e78489bbd03, type: 3}
+          m_ObjectArgumentAssemblyTypeName: Striker, Assembly-CSharp
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 

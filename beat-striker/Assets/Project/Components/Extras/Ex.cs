@@ -1,5 +1,7 @@
 
 
+using System;
+using System.Linq;
 using UnityEngine;
 
 public static class Ex {
@@ -16,3 +18,19 @@ public static class Ex {
         return self;
     }
 }
+
+public class EventWrapper<T> {
+    public event Action<T> Handler;
+
+    public void Add(Action<T> handler) => Handler += handler;
+    public void Add(Action handler) => Handler += _ => handler();
+
+    public void Invoke(T arg) => Handler?.Invoke(arg);
+}
+
+public class EventWrapper {
+    private event Action handlers;
+    public void Add(Action h) => handlers += h;
+    public void Invoke() => handlers?.Invoke();
+}
+

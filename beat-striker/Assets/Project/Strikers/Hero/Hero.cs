@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Rigidbody))]
@@ -9,7 +10,9 @@ public class Hero : MonoBehaviour {
     Rigidbody rb;
     Striker striker;
     [SerializeField] float jumpSpeed = 5f;
+    [SerializeField] int airJumpMax = 3;
     int airJumpCount = 0;
+
     public Colliden swardColliden;
 
     void Start() {
@@ -17,6 +20,9 @@ public class Hero : MonoBehaviour {
         rb = GetComponent<Rigidbody>();
         striker = GetComponent<Striker>();
         striker.OnLanded += () => { airJumpCount = 0; };
+        striker.OnBeated += res => {
+            // 何かしらのペナルティ
+        };
     }
 
     void Update() {
@@ -24,15 +30,18 @@ public class Hero : MonoBehaviour {
 
         var btnDownDir = striker.player.GetBtnDown(Btn.Direction);
 
-        if (btnDownDir && (striker.isGround || airJumpCount < 1)) {
-            rb.linearVelocity = jumpSpeed * (Vector3)btnDownDir.direction.normalized;
+        if (btnDownDir && (striker.isGround || airJumpCount < airJumpMax) && striker.Beat()) {
+            var dir = btnDownDir.direction.normalized;
+            transform.forward = Mathf.Sign(dir.x) * Vector3.right;
+            rb.linearVelocity = jumpSpeed * new Vector2(0.7f, 1f) * dir;
             if (!striker.isGround) airJumpCount++;
         }
 
 
         if (striker.player.GetBtnDown(Btn.East)) {
-            Debug.Log("east");
-            anim.SetTrigger("DoAttack");
+            var res = striker.Beat();
+            if (res)
+                anim.SetTrigger("DoAttack");
         }
     }
 }

@@ -1,0 +1,52 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+public class Striker : MonoBehaviour {
+    public float hp = 100;
+    public bool isGround { get; private set; }
+    [NonSerialized] public Player player;
+    public event Action OnLanded, OnTakeoff;
+    public event Action<BeatResult> OnBeated;
+    [NonSerialized] public readonly List<Beat> beats = new();
+    [SerializeField] float goodTimeWidth = 0.1f, perfectTimeWidth = 0.05f;
+
+    void Start() {
+        isGround = false;
+    }
+
+    void Update() {
+        int removed = beats.RemoveAll(b => b.time < Battle.Instance.musicTime - goodTimeWidth);
+        if (removed >= 1) {
+            OnBeated?.Invoke(new BeatResult(BeatResult.Status.MISS));
+        }
+    }
+
+    public BeatResult Beat() {
+        var status = BeatResult.Status.MISS;
+        if (beats.Count != 0) {
+            var dt = Mathf.Abs(beats[0].time - Battle.Instance.musicTime);
+            status = dt <= perfectTimeWidth ? BeatResult.Status.PERFECT : dt <= goodTimeWidth ? BeatResult.Status.GOOD : BeatResult.Status.MISS;
+            if (status != BeatResult.Status.MISS) beats.RemoveAt(0);
+        }
+        var res = new BeatResult(status);
+        OnBeated?.Invoke(res);
+        return res;
+    }
+
+    private void OnCollisionStay(Collision collision) {
+        foreach (var contact in collision.contacts) {
+            if (contact.normal.y > 0.5f) {
+                if (!isGround) OnLanded?.Invoke();
+                isGround = true;
+                return;
+            }
+        }
+    }
+
+    private void OnCollisionExit(Collision collision) {
+        if (isGround) OnTakeoff?.Invoke();
+        isGround = false;
+    }
+}
