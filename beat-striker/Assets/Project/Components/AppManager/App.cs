@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Common : MonoBehaviour
+public class App : MonoBehaviour
 {
     [NonSerialized] public List<HumanPlayer> players = new();
-    public static Common Instance { get; private set; }
+    public static App Instance { get; private set; }
     [SerializeField] Canvas targetCanvas;
     [NonSerialized] public bool cursorMode;
 

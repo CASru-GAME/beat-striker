@@ -14,7 +14,9 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
     [SerializeField] private GameObject cursor;
     [SerializeField] protected Color[] playerColor;
     private RectTransform rectTransform;
-    [SerializeField] private float cursorSpeed = 5f;
+    [SerializeField] private float cursorSpeed = 5000f;
+    [SerializeField] private float cursorSpeedDegree = 0.3f;
+    private float cursorTime = 0f;
     private PlayerInput playerInput;
     private GameInput input;
 
@@ -34,17 +36,17 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
     protected override void Start() {
         base.Start();
 
-        playerNumber = Common.Instance.players.Count;
-        Common.Instance.players.Add(this);
+        playerNumber = App.Instance.players.Count;
+        App.Instance.players.Add(this);
 
         text.text = playerNumber + 1 + "P";
         text.color = playerColor[playerNumber];
     }
 
     void Update() {
-        if (cursor.activeSelf != Common.Instance.cursorMode)
-            cursor.SetActive(Common.Instance.cursorMode);
-        if (!Common.Instance.cursorMode) return;
+        if (cursor.activeSelf != App.Instance.cursorMode)
+            cursor.SetActive(App.Instance.cursorMode);
+        if (!App.Instance.cursorMode) return;
 
         if (GetBtnDown(Btn.East)) {
             Vector2 pos = transform.position;
@@ -65,8 +67,10 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
 
         var res = GetBtn(Btn.Direction);
         if (res) {
-            rectTransform.anchoredPosition += cursorSpeed * Time.deltaTime * res.direction;
+            cursorTime += Time.deltaTime;
+            rectTransform.anchoredPosition += cursorSpeed * (1 - Mathf.Exp(-cursorSpeedDegree * cursorTime)) * Time.deltaTime * res.direction;
         }
+        else cursorTime = 0f;
     }
 
     void OnEnable() {

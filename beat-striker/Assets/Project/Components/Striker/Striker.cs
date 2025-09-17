@@ -5,6 +5,7 @@ public class Striker : MonoBehaviour {
     public float hp = 100;
     public bool isGround { get; private set; }
     [NonSerialized] public Player player;
+    public event Action OnLanded,OnTakeoff;
 
     void Start() {
 
@@ -15,11 +16,11 @@ public class Striker : MonoBehaviour {
     
     private void OnCollisionStay(Collision collision)
     {
-        isGround = false;
         foreach (var contact in collision.contacts)
         {
             if (contact.normal.y > 0.5f)
             {
+                if (!isGround) OnLanded?.Invoke();
                 isGround = true;
                 return;
             }
@@ -28,6 +29,7 @@ public class Striker : MonoBehaviour {
 
     private void OnCollisionExit(Collision collision)
     {
+        if (isGround) OnTakeoff?.Invoke();
         isGround = false;
     }
 }

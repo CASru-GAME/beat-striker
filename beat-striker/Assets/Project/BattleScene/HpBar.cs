@@ -6,6 +6,7 @@ using UnityEngine;
 public class HpBar : MonoBehaviour
 {
     TextMeshProUGUI text;
+    [SerializeField] int playerNumber;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -15,6 +16,6 @@ public class HpBar : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        text.text = "HP: " + (int) GameManager.Instance.strikers[0].hp;
+        text.text = "HP: " + (int) GameManager.Instance.strikers[playerNumber].hp;
     }
 }

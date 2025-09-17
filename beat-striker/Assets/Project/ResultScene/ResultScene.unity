@@ -265,7 +265,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1603827059278062349, guid: f75d33e8ba98d4e53ad9f139d82f2df4, type: 3}
       propertyPath: m_Name
-      value: Common
+      value: App
       objectReference: {fileID: 0}
     - target: {fileID: 6556459244726163729, guid: f75d33e8ba98d4e53ad9f139d82f2df4, type: 3}
       propertyPath: m_LocalPosition.x

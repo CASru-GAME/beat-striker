@@ -17,7 +17,7 @@ public class SelectScene : MonoBehaviour
 
     public void SelectCharacter(Striker prefab)
     {
-        Common.Instance.players.ForEach(p => p.strikerPrefab = prefab);
+        App.Instance.players.ForEach(p => p.strikerPrefab = prefab);
     }
 
     public void GotoBattleScene()
