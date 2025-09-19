@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+[AddComponentMenu(" Striker", 0)]
 public class Striker : MonoBehaviour {
     public float hp = 100;
     public bool isGround { get; private set; }

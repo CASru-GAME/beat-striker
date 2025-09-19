@@ -23,6 +23,7 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
     private bool directionDown = false;
     private const float DIR_ON_THRESHOLD = 0.2f;
     private const float DIR_OFF_THRESHOLD = 0.15f;
+    private GameObject lastHoveredObject;
 
     protected override void Awake() {
         base.Awake();
@@ -48,21 +49,25 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
             cursor.SetActive(App.Instance.cursorMode);
         if (!App.Instance.cursorMode) return;
 
-        if (GetBtnDown(Btn.East)) {
-            Vector2 pos = transform.position;
-            PointerEventData pointerData = new(EventSystem.current) {
-                position = pos
-            };
+        PointerEventData data = new(EventSystem.current) {
+            position = transform.position,
+            pointerId = playerNumber
+        };
 
-            List<RaycastResult> results = new();
-            EventSystem.current.RaycastAll(pointerData, results);
+        List<RaycastResult> hoverResults = new();
+        EventSystem.current.RaycastAll(data, hoverResults);
+        GameObject currentHovered = FindBotan(hoverResults);
 
-            foreach (var result in results) {
-                if (result.gameObject.TryGetComponent<Button>(out var btn)) {
-                    btn.onClick.Invoke();
-                    break;
-                }
-            }
+        if (currentHovered != lastHoveredObject) {
+            if (lastHoveredObject)
+                ExecuteEvents.Execute(lastHoveredObject, data, ExecuteEvents.pointerExitHandler);
+            if (currentHovered)
+                ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerEnterHandler);
+            lastHoveredObject = currentHovered;
+        }
+
+        if (currentHovered && GetBtnDown(Btn.East)) {
+            ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerClickHandler);
         }
 
         var res = GetBtn(Btn.Direction);
@@ -125,5 +130,14 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
     public void OnEast(InputAction.CallbackContext context) {
         if (context.started) HandleButton(Btn.East, true);
         else if (context.canceled) HandleButton(Btn.East, false);
+    }
+
+    private GameObject FindBotan(List<RaycastResult> results) {
+        foreach (var result in results) {
+            if (result.gameObject.GetComponent<Botan>() || result.gameObject.GetComponent<Button>()) {
+                return result.gameObject;
+            }
+        }
+        return null;
     }
 }

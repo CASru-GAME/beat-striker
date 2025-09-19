@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class App : MonoBehaviour
-{
+public class App : MonoBehaviour {
     [NonSerialized] public List<HumanPlayer> players = new();
     public static App Instance { get; private set; }
     [SerializeField] Canvas targetCanvas;
@@ -21,22 +20,20 @@ public class App : MonoBehaviour
         cursorMode = true;
     }
 
-    void OnEnable()
-    {
+    void OnEnable() {
+        if (PlayerInputManager.instance == null) return;
         PlayerInputManager.instance.onPlayerJoined += OnPlayerJoined;
     }
 
-    void OnDisable()
-    {
+    void OnDisable() {
+        if (PlayerInputManager.instance == null) return;
         PlayerInputManager.instance.onPlayerJoined -= OnPlayerJoined;
     }
 
-    void OnPlayerJoined(PlayerInput playerInput)
-    {
+    void OnPlayerJoined(PlayerInput playerInput) {
         playerInput.transform.SetParent(targetCanvas.transform, false);
 
-        if (playerInput.TryGetComponent<RectTransform>(out var rt))
-        {
+        if (playerInput.TryGetComponent<RectTransform>(out var rt)) {
             rt.anchoredPosition = Vector2.zero;
         }
     }

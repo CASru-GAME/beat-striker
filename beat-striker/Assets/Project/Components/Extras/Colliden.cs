@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 
+[AddComponentMenu(" Colliden", 0)]
 [RequireComponent(typeof(Collider))]
 public class Colliden : MonoBehaviour
 {
