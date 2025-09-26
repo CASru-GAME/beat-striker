@@ -1,0 +1,13 @@
+Font: AnnyantRoman  Style: Regular
+Point Size: 71   Padding: 3   SP/PD Ratio: 4.2%
+
+Characters included: 269/270
+Missing characters: 1
+Excluded characters: 0
+
+Characters missing from font file:
+----------------------------------------
+ID: 9	Hex: 9	Char [	]
+
+Characters excluded from packing:
+----------------------------------------

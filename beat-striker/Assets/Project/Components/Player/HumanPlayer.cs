@@ -19,6 +19,7 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
     private float cursorTime = 0f;
     private PlayerInput playerInput;
     private GameInput input;
+    private RectTransform canvasRectTransform;
 
     private bool directionDown = false;
     private const float DIR_ON_THRESHOLD = 0.2f;
@@ -30,6 +31,7 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
 
         playerInput = GetComponent<PlayerInput>();
         rectTransform = GetComponent<RectTransform>();
+        canvasRectTransform = transform.parent.GetComponent<RectTransform>();
         DontDestroyOnLoad(gameObject);
         input = new GameInput();
     }
@@ -42,6 +44,8 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
 
         text.text = playerNumber + 1 + "P";
         text.color = playerColor[playerNumber];
+
+        rectTransform.anchoredPosition = Vector2.zero;
     }
 
     void Update() {
@@ -76,6 +80,11 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
             rectTransform.anchoredPosition += cursorSpeed * (1 - Mathf.Exp(-cursorSpeedDegree * cursorTime)) * Time.deltaTime * res.direction;
         }
         else cursorTime = 0f;
+
+        rectTransform.anchoredPosition = new Vector2(
+            Mathf.Clamp(rectTransform.anchoredPosition.x, -canvasRectTransform.rect.width / 2, canvasRectTransform.rect.width / 2),
+            Mathf.Clamp(rectTransform.anchoredPosition.y, -canvasRectTransform.rect.height / 2, canvasRectTransform.rect.height / 2)
+        );
     }
 
     void OnEnable() {
