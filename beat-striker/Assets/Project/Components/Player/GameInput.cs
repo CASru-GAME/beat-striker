@@ -136,6 +136,42 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""RightShoulder"",
+                    ""type"": ""Button"",
+                    ""id"": ""ffb5514d-bc9d-416b-9436-c114961645bd"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""LeftShoulder"",
+                    ""type"": ""Button"",
+                    ""id"": ""6f6576ca-99ba-4d46-a823-f6c7b6d2c38f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""RightTrigger"",
+                    ""type"": ""Button"",
+                    ""id"": ""d8b92a1e-96cc-4dd1-80c1-9cb71fca29a7"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""LeftTrigger"",
+                    ""type"": ""Button"",
+                    ""id"": ""8fa77bfd-491b-47b4-8622-7b3ce0681a81"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -292,6 +328,94 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""action"": ""East"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""53d60d26-0db1-4678-933a-fd3b0847814a"",
+                    ""path"": ""<Keyboard>/rightShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keybord"",
+                    ""action"": ""RightShoulder"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d0f0b258-a51f-4508-8f30-e6509e177daa"",
+                    ""path"": ""<Gamepad>/rightShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RightShoulder"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""18557d50-4864-4f30-bfa3-1109c899c417"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LeftShoulder"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fb96d6c9-7b0f-4983-a46d-2c66242e7309"",
+                    ""path"": ""<Gamepad>/leftShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LeftShoulder"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2f4edc50-7035-4eec-97cc-2965e69f29e8"",
+                    ""path"": ""<Keyboard>/rightMeta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keybord"",
+                    ""action"": ""RightTrigger"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""86185a42-c73b-442f-9fa0-04375b310ba9"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RightTrigger"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""cc6170d0-571a-4ece-8353-b93d04a14387"",
+                    ""path"": ""<Keyboard>/leftMeta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keybord"",
+                    ""action"": ""LeftTrigger"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d422fd74-6056-4d1a-87f0-35af22126613"",
+                    ""path"": ""<Gamepad>/leftTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LeftTrigger"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -328,6 +452,10 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         m_Player_West = m_Player.FindAction("West", throwIfNotFound: true);
         m_Player_South = m_Player.FindAction("South", throwIfNotFound: true);
         m_Player_East = m_Player.FindAction("East", throwIfNotFound: true);
+        m_Player_RightShoulder = m_Player.FindAction("RightShoulder", throwIfNotFound: true);
+        m_Player_LeftShoulder = m_Player.FindAction("LeftShoulder", throwIfNotFound: true);
+        m_Player_RightTrigger = m_Player.FindAction("RightTrigger", throwIfNotFound: true);
+        m_Player_LeftTrigger = m_Player.FindAction("LeftTrigger", throwIfNotFound: true);
     }
 
     ~@GameInput()
@@ -413,6 +541,10 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_West;
     private readonly InputAction m_Player_South;
     private readonly InputAction m_Player_East;
+    private readonly InputAction m_Player_RightShoulder;
+    private readonly InputAction m_Player_LeftShoulder;
+    private readonly InputAction m_Player_RightTrigger;
+    private readonly InputAction m_Player_LeftTrigger;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -444,6 +576,22 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/East".
         /// </summary>
         public InputAction @East => m_Wrapper.m_Player_East;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/RightShoulder".
+        /// </summary>
+        public InputAction @RightShoulder => m_Wrapper.m_Player_RightShoulder;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/LeftShoulder".
+        /// </summary>
+        public InputAction @LeftShoulder => m_Wrapper.m_Player_LeftShoulder;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/RightTrigger".
+        /// </summary>
+        public InputAction @RightTrigger => m_Wrapper.m_Player_RightTrigger;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/LeftTrigger".
+        /// </summary>
+        public InputAction @LeftTrigger => m_Wrapper.m_Player_LeftTrigger;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -485,6 +633,18 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @East.started += instance.OnEast;
             @East.performed += instance.OnEast;
             @East.canceled += instance.OnEast;
+            @RightShoulder.started += instance.OnRightShoulder;
+            @RightShoulder.performed += instance.OnRightShoulder;
+            @RightShoulder.canceled += instance.OnRightShoulder;
+            @LeftShoulder.started += instance.OnLeftShoulder;
+            @LeftShoulder.performed += instance.OnLeftShoulder;
+            @LeftShoulder.canceled += instance.OnLeftShoulder;
+            @RightTrigger.started += instance.OnRightTrigger;
+            @RightTrigger.performed += instance.OnRightTrigger;
+            @RightTrigger.canceled += instance.OnRightTrigger;
+            @LeftTrigger.started += instance.OnLeftTrigger;
+            @LeftTrigger.performed += instance.OnLeftTrigger;
+            @LeftTrigger.canceled += instance.OnLeftTrigger;
         }
 
         /// <summary>
@@ -511,6 +671,18 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @East.started -= instance.OnEast;
             @East.performed -= instance.OnEast;
             @East.canceled -= instance.OnEast;
+            @RightShoulder.started -= instance.OnRightShoulder;
+            @RightShoulder.performed -= instance.OnRightShoulder;
+            @RightShoulder.canceled -= instance.OnRightShoulder;
+            @LeftShoulder.started -= instance.OnLeftShoulder;
+            @LeftShoulder.performed -= instance.OnLeftShoulder;
+            @LeftShoulder.canceled -= instance.OnLeftShoulder;
+            @RightTrigger.started -= instance.OnRightTrigger;
+            @RightTrigger.performed -= instance.OnRightTrigger;
+            @RightTrigger.canceled -= instance.OnRightTrigger;
+            @LeftTrigger.started -= instance.OnLeftTrigger;
+            @LeftTrigger.performed -= instance.OnLeftTrigger;
+            @LeftTrigger.canceled -= instance.OnLeftTrigger;
         }
 
         /// <summary>
@@ -612,5 +784,33 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnEast(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "RightShoulder" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnRightShoulder(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "LeftShoulder" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnLeftShoulder(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "RightTrigger" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnRightTrigger(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "LeftTrigger" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnLeftTrigger(InputAction.CallbackContext context);
     }
 }

@@ -132,6 +132,26 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
         else if (context.canceled) HandleButton(Btn.East, false);
     }
 
+    public void OnRightShoulder(InputAction.CallbackContext context) {
+        if (context.started) HandleButton(Btn.RightShoulder, true);
+        else if (context.canceled) HandleButton(Btn.RightShoulder, false);
+    }
+
+    public void OnLeftShoulder(InputAction.CallbackContext context) {
+        if (context.started) HandleButton(Btn.LeftShoulder, true);
+        else if (context.canceled) HandleButton(Btn.LeftShoulder, false);
+    }
+
+    public void OnRightTrigger(InputAction.CallbackContext context) {
+        if (context.started) HandleButton(Btn.RightTrigger, true);
+        else if (context.canceled) HandleButton(Btn.RightTrigger, false);
+    }
+
+    public void OnLeftTrigger(InputAction.CallbackContext context) {
+        if (context.started) HandleButton(Btn.LeftTrigger, true);
+        else if (context.canceled) HandleButton(Btn.LeftTrigger, false);
+    }
+
     private GameObject FindBotan(List<RaycastResult> results) {
         foreach (var result in results) {
             if (result.gameObject.GetComponent<Botan>() || result.gameObject.GetComponent<Button>()) {

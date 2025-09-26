@@ -7,7 +7,11 @@ public enum Btn {
     West,
     South,
     East,
-    Direction
+    Direction,
+    RightShoulder,
+    LeftShoulder,
+    RightTrigger,
+    LeftTrigger
 }
 
 public abstract class Player : MonoBehaviour {
@@ -78,7 +82,6 @@ public abstract class Player : MonoBehaviour {
         return new ActionResult(false, Vector2.zero);
     }
 
-    // 入力バッファ管理メソッド
     protected static bool ShouldGrace(Btn b) => b != Btn.Direction;
 
     protected void HandleButton(Btn btn, bool down) {
