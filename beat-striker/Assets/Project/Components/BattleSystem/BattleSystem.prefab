@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 841196717140380764}
   - component: {fileID: 4674766564793334169}
   m_Layer: 0
-  m_Name: BattlManager
+  m_Name: BattleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
