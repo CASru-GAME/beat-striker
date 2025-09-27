@@ -1,22 +1,18 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
-public class TitleScene : MonoBehaviour
-{
+public class StageselectScene : MonoBehaviour
+ {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
+    void Start() {
 
     }
 
     // Update is called once per frame
-    void Update()
-    {
+    void Update() {
 
     }
-
-    public void GotoSelectScene()
+     public void GotoSelectScene()
     {
-        SceneManager.LoadScene("StageselectScene");
+        SceneManager.LoadScene("SelectScene");
     }
 }

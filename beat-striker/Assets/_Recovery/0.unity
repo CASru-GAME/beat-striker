@@ -135,7 +135,7 @@ GameObject:
   - component: {fileID: 71778566}
   - component: {fileID: 71778567}
   m_Layer: 5
-  m_Name: Backbutton
+  m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -188,7 +188,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a98ebbea0705064d98ea95401a3e7a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Backbutton
-  previousSceneName: StageselectScene
+  previousSceneName: TitleScene
   clickSound: {fileID: 8300000, guid: fffdef6c6ce19b5409acca832a61af2e, type: 3}
 --- !u!114 &71778564
 MonoBehaviour:
