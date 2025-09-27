@@ -17,6 +17,8 @@ public class TitleScene : MonoBehaviour
 
     public void GotoSelectScene()
     {
+
         SceneManager.LoadScene("StageselectScene");
+
     }
 }
