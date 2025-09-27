@@ -16,15 +16,18 @@ public class Botan : MonoBehaviour,
     public UnityEvent onClickEvent;
 
     public void OnPointerEnter(PointerEventData eventData) {
+        if (eventData.pointerId < 0 || eventData.pointerId >= App.Instance.players.Count) return;
         onHover?.Invoke(App.Instance.players[eventData.pointerId]);
     }
 
     public void OnPointerExit(PointerEventData eventData) {
+        if (eventData.pointerId < 0 || eventData.pointerId >= App.Instance.players.Count) return;
         onHoverExit?.Invoke(App.Instance.players[eventData.pointerId]);
     }
 
     public void OnPointerClick(PointerEventData eventData) {
-        onClick?.Invoke(App.Instance.players[eventData.pointerId]);
         onClickEvent?.Invoke();
+        if (eventData.pointerId < 0 || eventData.pointerId >= App.Instance.players.Count) return;
+        onClick?.Invoke(App.Instance.players[eventData.pointerId]);
     }
 }
