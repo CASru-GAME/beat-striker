@@ -36,5 +36,7 @@ public class App : MonoBehaviour {
         if (playerInput.TryGetComponent<RectTransform>(out var rt)) {
             rt.anchoredPosition = Vector2.zero;
         }
+
+        Battle.Instance?.RebindPlayers();
     }
 }

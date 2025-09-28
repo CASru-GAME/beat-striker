@@ -8,7 +8,7 @@ public class Striker : MonoBehaviour {
     public float hp = 100;
     public bool isGround { get; private set; }
     [NonSerialized] public Player player;
-    public event Action OnLanded, OnTakeoff;
+    public event Action OnLanded, OnTakeoff, OnIntroPose, OnVictoryPose;
     public event Action<BeatResult> OnBeated;
     [NonSerialized] public readonly List<Beat> beats = new();
     [SerializeField] float goodTimeWidth = 0.1f, perfectTimeWidth = 0.05f;

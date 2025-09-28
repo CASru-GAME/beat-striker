@@ -59,7 +59,7 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
         };
 
         List<RaycastResult> hoverResults = new();
-        EventSystem.current.RaycastAll(data, hoverResults);
+        EventSystem.current?.RaycastAll(data, hoverResults);
         GameObject currentHovered = FindBotan(hoverResults);
 
         if (currentHovered != lastHoveredObject) {

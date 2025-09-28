@@ -13,7 +13,7 @@ public class BeatBar : MonoBehaviour {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
         text = GetComponent<TextMeshProUGUI>();
-        Battle.Instance.OnBattleStart += () => {
+        Battle.Instance.playingState.OnEnter += () => {
             Battle.Instance.strikers[playerNumber].OnBeated += res => {
                 result = res.status == BeatResult.Status.PERFECT ? "P" : res.status == BeatResult.Status.GOOD ?  "G" : "M";
             };
