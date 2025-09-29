@@ -5,26 +5,20 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[RequireComponent(typeof(BattleMusicController))]
 public partial class Battle : MonoBehaviour {
     public const int STRIKER_COUNT = 2;
     public static Battle Instance { get; private set; }
     public bool IsBattleStarted => currentState == playingState;
 
-    [SerializeField] AudioClip beatClip;
-    [SerializeField] float beatOffset;
     [SerializeField] CPUPlayer cpuPrefab;
     [SerializeField] float despawnY = -10f;
-    [SerializeField] float beatMapTestSpan = 1f;
+    public BattleMusicController Music { get; private set; }
 
     public float beatSpawnTimeDelta = 3f;
 
     Transform[] spawnPositions;
     [NonSerialized] public Striker[] strikers;
-
-    public float musicTime { get; private set; }
-    Beat[] beatMap;
-    int nextBeatSpawnIndex;
-    int nextBeatIndex;
 
     private IBattleState currentState;
     public readonly BattleReadyState readyState = new();
@@ -37,6 +31,8 @@ public partial class Battle : MonoBehaviour {
             Destroy(gameObject);
             return;
         }
+
+        App.Instance.OnPlayerJoin += OnPlayerJoin;
 
         Instance = this;
     }
@@ -52,13 +48,7 @@ public partial class Battle : MonoBehaviour {
                 Debug.LogError($"SpawnPosition{i} not found in scene");
         }
 
-        beatMap = new Beat[1000];
-        for (int i = 0; i < beatMap.Length; i++) {
-            beatMap[i] = new Beat(1f + beatMapTestSpan * i);
-        }
-        musicTime = 0;
-        nextBeatSpawnIndex = 0;
-        nextBeatIndex = 0;
+        Music = GetComponent<BattleMusicController>();
 
         strikers = new Striker[STRIKER_COUNT];
         for (int i = 0; i < STRIKER_COUNT; i++) {
@@ -82,23 +72,14 @@ public partial class Battle : MonoBehaviour {
         }
     }
 
+    private void OnPlayerJoin(Player p) {
+        RebindPlayers();
+    }
+
     public void ChangeState(IBattleState newState) {
         currentState?.OnExitEvent(this, newState);
         newState?.OnEnterEvent(this, currentState);
         currentState = newState;
-    }
-
-    public void UpdateMusicTime(float deltaTime) {
-        musicTime += deltaTime;
-        if (nextBeatSpawnIndex < beatMap.Length && beatMap[nextBeatSpawnIndex].time < musicTime + beatSpawnTimeDelta) {
-            Array.ForEach(strikers, s => s.beats.Add(beatMap[nextBeatSpawnIndex]));
-            nextBeatSpawnIndex++;
-        }
-
-        if (nextBeatIndex < beatMap.Length && beatMap[nextBeatIndex].time < musicTime - beatOffset) {
-            AudioSource.PlayClipAtPoint(beatClip, transform.position);
-            nextBeatIndex++;
-        }
     }
 
     public bool CheckGameSet() {
@@ -114,7 +95,9 @@ public partial class Battle : MonoBehaviour {
 
     private void OnDestroy() {
         ChangeState(null);
+
         Instance = null;
         App.Instance.cursorMode = true;
+        App.Instance.OnPlayerJoin -= OnPlayerJoin;
     }
 }

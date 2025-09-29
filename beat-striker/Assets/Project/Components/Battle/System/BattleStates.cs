@@ -45,11 +45,14 @@ public partial class Battle {
             if (preState is BattlePausedState) {
                 OnResume?.Invoke();
             }
-            else OnEnter?.Invoke();
+            else {
+                OnEnter?.Invoke();
+                battle.Music.StartMusic();
+            }
         }
 
         public void OnUpdateEvent(Battle battle, float deltaTime) {
-            battle.UpdateMusicTime(deltaTime);
+            battle.Music.UpdateMusic(deltaTime, battle.beatSpawnTimeDelta);
 
             if (battle.CheckGameSet()) {
                 battle.ChangeState(battle.finishState);

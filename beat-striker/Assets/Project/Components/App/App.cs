@@ -8,6 +8,7 @@ public class App : MonoBehaviour {
     public static App Instance { get; private set; }
     [SerializeField] Canvas targetCanvas;
     [NonSerialized] public bool cursorMode;
+    public event Action<HumanPlayer> OnPlayerJoin;
 
     private void Awake() {
         if (Instance != null && Instance != this) {
@@ -37,6 +38,10 @@ public class App : MonoBehaviour {
             rt.anchoredPosition = Vector2.zero;
         }
 
-        Battle.Instance?.RebindPlayers();
+        if (playerInput.TryGetComponent<HumanPlayer>(out var p)) {
+            p.playerNumber = App.Instance.players.Count;
+            players.Add(p);
+            OnPlayerJoin(p);
+        }
     }
 }

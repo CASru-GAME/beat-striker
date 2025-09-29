@@ -39,9 +39,6 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
     protected override void Start() {
         base.Start();
 
-        playerNumber = App.Instance.players.Count;
-        App.Instance.players.Add(this);
-
         text.text = playerNumber + 1 + "P";
         text.color = playerColor[playerNumber];
 
