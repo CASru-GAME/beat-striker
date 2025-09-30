@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 841196717140380764}
   - component: {fileID: 4674766564793334169}
+  - component: {fileID: 4546490731738603451}
   m_Layer: 0
   m_Name: BattleSystem
   m_TagString: Untagged
@@ -45,15 +46,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c24d90621d79348fbbfc8750b2d95b2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  beatClip: {fileID: 8300000, guid: 4e3f3a2ec4eef4b308cda766a054361e, type: 3}
-  beatOffset: -0.1
-  spawnPositions:
-  - {fileID: 0}
-  - {fileID: 0}
   cpuPrefab: {fileID: 787077013856687099, guid: fe536268e0cbf438dbb52ad7e7a984bf, type: 3}
   despawnY: -10
   beatSpawnTimeDelta: 3
-  beatMapTestSpan: 0.54
+--- !u!114 &4546490731738603451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5351317176154225972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bfdc7578c1ac463c8af870659bc1214, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleMusicController
+  beatClip: {fileID: 8300000, guid: 4e3f3a2ec4eef4b308cda766a054361e, type: 3}
+  beatOffset: 0
+  beatMapTestSpan: 1
 --- !u!1 &6421433297293604508
 GameObject:
   m_ObjectHideFlags: 0

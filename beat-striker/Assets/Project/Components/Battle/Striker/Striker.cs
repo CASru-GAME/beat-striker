@@ -8,28 +8,36 @@ public class Striker : MonoBehaviour {
     public float hp = 100;
     public bool isGround { get; private set; }
     [NonSerialized] public Player player;
-    public event Action OnLanded, OnTakeoff;
+    public event Action OnLanded, OnTakeoff, OnIntroPose, OnVictoryPose;
     public event Action<BeatResult> OnBeated;
     [NonSerialized] public readonly List<Beat> beats = new();
     [SerializeField] float goodTimeWidth = 0.1f, perfectTimeWidth = 0.05f;
 
+
     void Start() {
         isGround = false;
+        Battle.Instance.Music.OnBeatSpawn += OnBeatSpawn;
     }
 
     void Update() {
-        int removed = beats.RemoveAll(b => b.time < Battle.Instance.musicTime - goodTimeWidth);
-        if (removed >= 1) {
+        var removes = beats.RemoveAll(b => b.time < Battle.Instance.Music.Time - goodTimeWidth);
+        if (removes >= 1) {
             OnBeated?.Invoke(new BeatResult(BeatResult.Status.MISS));
         }
+    }
+
+    void OnBeatSpawn(Beat beat) {
+        beats.Add(beat);
     }
 
     public BeatResult Beat() {
         var status = BeatResult.Status.MISS;
         if (beats.Count != 0) {
-            var dt = Mathf.Abs(beats[0].time - Battle.Instance.musicTime);
+            var dt = Mathf.Abs(beats[0].time - Battle.Instance.Music.Time);
             status = dt <= perfectTimeWidth ? BeatResult.Status.PERFECT : dt <= goodTimeWidth ? BeatResult.Status.GOOD : BeatResult.Status.MISS;
-            if (status != BeatResult.Status.MISS) beats.RemoveAt(0);
+            if (status != BeatResult.Status.MISS) {
+                beats.RemoveAt(0);
+            }
         }
         var res = new BeatResult(status);
         OnBeated?.Invoke(res);
@@ -49,5 +57,10 @@ public class Striker : MonoBehaviour {
     private void OnCollisionExit(Collision collision) {
         if (isGround) OnTakeoff?.Invoke();
         isGround = false;
+    }
+
+    private void OnDestroy() {
+        if (!Battle.Instance || !Battle.Instance.Music) return;
+        Battle.Instance.Music.OnBeatSpawn -= OnBeatSpawn;
     }
 }

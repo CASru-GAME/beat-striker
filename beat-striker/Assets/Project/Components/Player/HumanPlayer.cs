@@ -39,9 +39,6 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
     protected override void Start() {
         base.Start();
 
-        playerNumber = App.Instance.players.Count;
-        App.Instance.players.Add(this);
-
         text.text = playerNumber + 1 + "P";
         text.color = playerColor[playerNumber];
 
@@ -59,7 +56,7 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
         };
 
         List<RaycastResult> hoverResults = new();
-        EventSystem.current.RaycastAll(data, hoverResults);
+        EventSystem.current?.RaycastAll(data, hoverResults);
         GameObject currentHovered = FindBotan(hoverResults);
 
         if (currentHovered != lastHoveredObject) {
