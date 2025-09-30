@@ -17,6 +17,6 @@ public class HpBar : MonoBehaviour
     // Update is called once per frame
         void Update() {
         var striker = Battle.Instance.strikers[playerNumber];
-        text.text = "HP: " + (int)striker.hp;
+        text.text = "HP: " + (int)striker.Hp;
     }
 }

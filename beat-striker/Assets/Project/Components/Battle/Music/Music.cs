@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BattleMusicController : MonoBehaviour {
+[RequireComponent(typeof(Battle))]
+public class Music : MonoBehaviour {
     [SerializeField] private AudioClip beatClip;
     [SerializeField] private float beatOffset;
     [SerializeField] private float beatMapTestSpan = 1f;
+    [SerializeField] float beatSpawnTimeDelta = 3f;
 
     public float Time { get; private set; }
     Beat[] beatMap;
@@ -14,7 +16,15 @@ public class BattleMusicController : MonoBehaviour {
 
     public event Action<Beat> OnBeatSpawn;
 
+    public static Music Instance { get; private set; }
+
     private void Awake() {
+        //BattleのAwakeが先
+        Instance = this;
+    }
+
+    private void OnDestroy() {
+        Instance = null;
     }
 
     public void StartMusic() {
@@ -27,18 +37,18 @@ public class BattleMusicController : MonoBehaviour {
         nextBeatIndex = 0;
     }
 
-    public void UpdateMusic(float deltaTime, float beatSpawnTimeDelta) {
+    public void UpdateMusic(float deltaTime) {
         Time += deltaTime;
-        
-        if (nextBeatSpawnIndex < beatMap.Length && 
+
+        if (nextBeatSpawnIndex < beatMap.Length &&
             beatMap[nextBeatSpawnIndex].time < Time + beatSpawnTimeDelta) {
-            
+
             var beat = beatMap[nextBeatSpawnIndex];
             OnBeatSpawn?.Invoke(beat);
             nextBeatSpawnIndex++;
         }
 
-        if (nextBeatIndex < beatMap.Length && 
+        if (nextBeatIndex < beatMap.Length &&
             beatMap[nextBeatIndex].time < Time - beatOffset) {
             AudioSource.PlayClipAtPoint(beatClip, transform.position);
             nextBeatIndex++;

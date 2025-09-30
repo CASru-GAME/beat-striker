@@ -26,7 +26,7 @@ public class BeatBar : MonoBehaviour {
     void Update() {
         text.text = result;
         if (Striker.beats.Count == 0) return;
-        int dt = (int)Mathf.Floor(Mathf.Max(0, Striker.beats[0].time - Battle.Instance.Music.Time + timeOffset) * 20);
+        int dt = (int)Mathf.Floor(Mathf.Max(0, Striker.beats[0].time - Music.Instance.Time + timeOffset) * 20);
         text.text += new string(' ', dt);
         text.text += "o";
     }

@@ -25,7 +25,7 @@ public abstract class Player : MonoBehaviour {
         public static implicit operator bool(ActionResult result) => result.success;
     }
 
-    public Striker strikerPrefab;
+    public StrikerType striker = StrikerType.Hero;
 
     protected struct InputEvent {
         public Btn btn;

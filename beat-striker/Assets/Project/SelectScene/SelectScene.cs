@@ -20,7 +20,6 @@ public class SelectScene : MonoBehaviour {
 
     public void SelectCharacter(HumanPlayer player) {
         if (player == null) return;
-        player.strikerPrefab = prefab;
         Debug.Log("Player " + (player.playerNumber + 1) + " selected " + prefab.name);
     }
 

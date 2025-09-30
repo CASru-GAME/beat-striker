@@ -1,6 +1,7 @@
 
 
 using System;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -16,6 +17,17 @@ public static class Ex {
     public static Vector3 Z(this Vector3 self, float v) {
         self.z = v;
         return self;
+    }
+
+    public static Coroutine Delay(this MonoBehaviour monoBehaviour, System.Action action, float delay)
+    {
+        return monoBehaviour.StartCoroutine(CoroutineAction(action, delay));
+    }
+
+    private static IEnumerator CoroutineAction(Action action, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        action?.Invoke();
     }
 }
 

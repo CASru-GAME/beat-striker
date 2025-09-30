@@ -47,6 +47,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Common
   targetCanvas: {fileID: 5926671693188137234}
+  cpuPrefab: {fileID: 787077013856687099, guid: fe536268e0cbf438dbb52ad7e7a984bf, type: 3}
 --- !u!114 &5221688124930511777
 MonoBehaviour:
   m_ObjectHideFlags: 0

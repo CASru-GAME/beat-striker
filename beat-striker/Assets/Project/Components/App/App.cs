@@ -9,6 +9,7 @@ public class App : MonoBehaviour {
     [SerializeField] Canvas targetCanvas;
     [NonSerialized] public bool cursorMode;
     public event Action<HumanPlayer> OnPlayerJoin;
+    public CPUPlayer cpuPrefab;
 
     private void Awake() {
         if (Instance != null && Instance != this) {
@@ -44,4 +45,8 @@ public class App : MonoBehaviour {
             OnPlayerJoin(p);
         }
     }
+}
+
+public enum StrikerType {
+    Hero, Wizard, Warrior, Satan
 }
