@@ -9,6 +9,7 @@ public partial class Battle : MonoBehaviour {
     public const int STRIKER_COUNT = 2;
     public static Battle Instance { get; private set; }
     private int nextRank;
+    public int Winner { get; private set; }
 
     [SerializeField] float despawnY = -10f;
 
@@ -41,7 +42,9 @@ public partial class Battle : MonoBehaviour {
             strikers[i].player = player;
             trans.SetParent(strikers[i].transform);
         }
+    }
 
+    private void Start() {
         ChangeState(introState);
     }
     
@@ -64,11 +67,11 @@ public partial class Battle : MonoBehaviour {
         }
     }
 
-    private void OnPlayerJoin(Player p) {
+    void OnPlayerJoin(Player p) {
         RebindPlayers();
     }
 
-    public void ChangeState(State newState) {
+    void ChangeState(State newState) {
         currentState?.OnExitEvent(newState);
         newState?.OnEnterEvent(currentState);
         currentState = newState;
