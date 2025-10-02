@@ -21,7 +21,7 @@ public partial class Battle : MonoBehaviour {
     public readonly ResultState resultState = new();
     private State currentState;
 
-    public StrikerPrefab[] strikerPrefabs;
+    [SerializeField] StrikerPrefab[] strikerPrefabs;
 
     private void Awake() {
         if (Instance != null && Instance != this) {
@@ -39,6 +39,7 @@ public partial class Battle : MonoBehaviour {
             Transform trans = GameObject.Find($"SpawnPosition{i}").transform;
             strikers[i] = Instantiate(Array.Find(strikerPrefabs, s => s.type == player.striker).prefab, trans.position, trans.rotation, null);
             strikers[i].player = player;
+            trans.SetParent(strikers[i].transform);
         }
 
         ChangeState(introState);
