@@ -10,24 +10,33 @@ public class HumanPlayerEvent : UnityEvent<int> { }
 public class Botan : MonoBehaviour,
     IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler {
     [Header("Events")]
-    public Action<HumanPlayer> onHover;
-    public Action<HumanPlayer> onHoverExit;
-    public Action<HumanPlayer> onClick;
+    public Action<PlayerPointerEventData> onHover;
+    public Action<PlayerPointerEventData> onHoverExit;
+    public Action<PlayerPointerEventData> onClick;
     public UnityEvent onClickEvent;
 
     public void OnPointerEnter(PointerEventData eventData) {
-        if (eventData.pointerId < 0 || eventData.pointerId >= App.Instance.players.Count) return;
-        onHover?.Invoke(App.Instance.players[eventData.pointerId]);
+        onHover?.Invoke(new PlayerPointerEventData(eventData));
     }
 
     public void OnPointerExit(PointerEventData eventData) {
-        if (eventData.pointerId < 0 || eventData.pointerId >= App.Instance.players.Count) return;
-        onHoverExit?.Invoke(App.Instance.players[eventData.pointerId]);
+        onHoverExit?.Invoke(new PlayerPointerEventData(eventData));
     }
 
     public void OnPointerClick(PointerEventData eventData) {
         onClickEvent?.Invoke();
-        if (eventData.pointerId < 0 || eventData.pointerId >= App.Instance.players.Count) return;
-        onClick?.Invoke(App.Instance.players[eventData.pointerId]);
+        onClick?.Invoke(new PlayerPointerEventData(eventData));
     }
 }
+
+public class PlayerPointerEventData {
+        public PointerEventData EventData { get; private set; }
+        public HumanPlayer Player { get; private set; }
+
+        public PlayerPointerEventData(PointerEventData eventData) {
+            EventData = eventData;
+            if (eventData.pointerId >= 0 && eventData.pointerId < App.Instance.players.Count) {
+                Player = App.Instance.players[eventData.pointerId];
+            }
+        }
+    }

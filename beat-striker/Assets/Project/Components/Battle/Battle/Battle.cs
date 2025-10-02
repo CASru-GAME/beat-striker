@@ -13,7 +13,8 @@ public partial class Battle : MonoBehaviour {
 
     [SerializeField] float despawnY = -10f;
 
-    [NonSerialized] public Striker[] strikers = new Striker[STRIKER_COUNT];
+    [NonSerialized] public readonly Striker[] strikers = new Striker[STRIKER_COUNT];
+    [SerializeField] StrikerPrefab[] strikerPrefabs;
 
     public readonly IntroState introState = new();
     public readonly PlayingState playingState = new();
@@ -21,8 +22,6 @@ public partial class Battle : MonoBehaviour {
     public readonly OutroState outroState = new();
     public readonly ResultState resultState = new();
     private State currentState;
-
-    [SerializeField] StrikerPrefab[] strikerPrefabs;
 
     private void Awake() {
         if (Instance != null && Instance != this) {
@@ -44,11 +43,11 @@ public partial class Battle : MonoBehaviour {
         }
     }
 
-    private void Start() {
+    void Start() {
         ChangeState(introState);
     }
-    
-    private void OnDestroy() {
+
+    void OnDestroy() {
         ChangeState(null);
 
         Instance = null;
@@ -76,11 +75,11 @@ public partial class Battle : MonoBehaviour {
         newState?.OnEnterEvent(currentState);
         currentState = newState;
     }
-}
 
 
-[Serializable]
-public class StrikerPrefab {
-    public StrikerType type;
-    public Striker prefab;
+    [Serializable]
+    class StrikerPrefab {
+        public StrikerType type;
+        public Striker prefab;
+    }
 }

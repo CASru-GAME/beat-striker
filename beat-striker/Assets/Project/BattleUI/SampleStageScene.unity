@@ -130,8 +130,6 @@ GameObject:
   - component: {fileID: 265128225}
   - component: {fileID: 265128224}
   - component: {fileID: 265128226}
-  - component: {fileID: 265128227}
-  - component: {fileID: 265128228}
   m_Layer: 0
   m_Name: Stage
   m_TagString: Untagged
@@ -188,57 +186,9 @@ PlayableDirector:
   - key: {fileID: -6065215825997149495, guid: b48117c21ef8945c5ae6cc2d34d09749, type: 2}
     value: {fileID: 1279167138}
   - key: {fileID: -7143993293733411757, guid: b48117c21ef8945c5ae6cc2d34d09749, type: 2}
-    value: {fileID: 265128227}
+    value: {fileID: 0}
   m_ExposedReferences:
     m_References: []
---- !u!114 &265128227
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 265128223}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e52de21a22b6dd44c9cc19f810c65059, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
-  m_Events:
-    m_Signals:
-    - {fileID: 11400000, guid: b42b69450598741b99dc9b5c795800be, type: 2}
-    m_Events:
-    - m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 265128224}
-          m_TargetAssemblyTypeName: SampleStatge, Assembly-CSharp
-          m_MethodName: BattleEnd
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
---- !u!114 &265128228
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 265128223}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e52de21a22b6dd44c9cc19f810c65059, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
-  m_Events:
-    m_Signals:
-    - {fileID: 11400000, guid: a5a2327b0b84b4d628b38bf324eb5f77, type: 2}
-    m_Events:
-    - m_PersistentCalls:
-        m_Calls: []
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -400,8 +350,8 @@ MonoBehaviour:
     Enabled: 0
     DefaultMode: 2
   DefaultBlend:
-    Style: 0
-    Time: 2
+    Style: 1
+    Time: 0.5
     CustomCurve:
       serializedVersion: 2
       m_Curve: []

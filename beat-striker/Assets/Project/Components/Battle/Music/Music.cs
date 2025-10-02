@@ -4,9 +4,9 @@ using UnityEngine;
 
 [RequireComponent(typeof(Battle))]
 public class Music : MonoBehaviour {
-    [SerializeField] private AudioClip beatClip;
-    [SerializeField] private float beatOffset;
-    [SerializeField] private float beatMapTestSpan = 1f;
+    [SerializeField] AudioClip beatClip;
+    [SerializeField] float beatOffset;
+    [SerializeField] float beatMapTestSpan = 1f;
     [SerializeField] float beatSpawnTimeDelta = 3f;
 
     public float Time { get; private set; }
