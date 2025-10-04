@@ -32,6 +32,9 @@ public class Striker : MonoBehaviour {
         if (removes >= 1) {
             OnBeated?.Invoke(new BeatResult(BeatResult.Status.MISS));
         }
+
+        if (transform.position.y < -1e-2f) transform.position = transform.position.Y(-1e-2f);
+        if (transform.position.y < Battle.Instance.despawnY) hp = 0;
     }
 
     void OnBeatSpawn(Beat beat) {

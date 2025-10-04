@@ -16,18 +16,23 @@ public partial class Battle {
         public event Action OnExit;
         IEnumerator stageAnime, readyAnime;
         IEnumerator[] strikerAnimes = new IEnumerator[STRIKER_COUNT];
+        private Coroutine currentCoroutine;
 
         internal IntroState() {
         }
 
         internal override void OnEnterEvent(State preState) {
-            Instance.StartCoroutine(Anime());
+            currentCoroutine = Instance.StartCoroutine(Anime());
         }
 
         internal override void OnUpdateEvent(float deltaTime) {
         }
 
         internal override void OnExitEvent(State nextState) {
+            if (currentCoroutine != null) {
+                Instance.StopCoroutine(currentCoroutine);
+                currentCoroutine = null;
+            }
             OnExit?.Invoke();
         }
 
@@ -41,6 +46,10 @@ public partial class Battle {
 
          public void SetStrikerAnime(int strikerNumber,IEnumerator animation) {
             this.strikerAnimes[strikerNumber] = animation;
+        }
+
+        public void Skip() {
+            Instance.ChangeState(Instance.playingState);
         }
 
         IEnumerator Anime() {
@@ -103,19 +112,24 @@ public partial class Battle {
     public class OutroState : State {
         public event Action OnEnter, OnExit;
         IEnumerator victoryAnime;
+        private Coroutine currentCoroutine;
 
         internal OutroState() {
         }
 
         internal override void OnEnterEvent(State preState) {
             OnEnter?.Invoke();
-            Instance.StartCoroutine(Anime());
+            currentCoroutine = Instance.StartCoroutine(Anime());
         }
 
         internal override void OnUpdateEvent(float deltaTime) {
         }
 
         internal override void OnExitEvent(State nextState) {
+            if (currentCoroutine != null) {
+                Instance.StopCoroutine(currentCoroutine);
+                currentCoroutine = null;
+            }
             OnExit?.Invoke();
         }
 
@@ -126,7 +140,7 @@ public partial class Battle {
         IEnumerator Anime() {
             Instance.strikers[1 - Instance.Winner].gameObject.SetActive(false);
             if (victoryAnime != null) yield return victoryAnime;
-            Instance.ChangeState(Instance.playingState);
+            Instance.ChangeState(Instance.resultState);
         }
     }
 

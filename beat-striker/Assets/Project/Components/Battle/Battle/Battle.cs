@@ -11,7 +11,7 @@ public partial class Battle : MonoBehaviour {
     private int nextRank;
     public int Winner { get; private set; }
 
-    [SerializeField] float despawnY = -10f;
+    [SerializeField] internal float despawnY = -10f;
 
     [NonSerialized] public readonly Striker[] strikers = new Striker[STRIKER_COUNT];
     [SerializeField] StrikerPrefab[] strikerPrefabs;
@@ -31,6 +31,7 @@ public partial class Battle : MonoBehaviour {
         Instance = this;
 
         App.Instance.OnPlayerJoin += OnPlayerJoin;
+        App.Instance.OnEscape += OnEscape;
         App.Instance.cursorMode = false;
 
         for (int i = 0; i < STRIKER_COUNT; i++) {
@@ -53,6 +54,7 @@ public partial class Battle : MonoBehaviour {
         Instance = null;
         App.Instance.cursorMode = true;
         App.Instance.OnPlayerJoin -= OnPlayerJoin;
+        App.Instance.OnPlayerJoin -= OnEscape;
     }
 
     void Update() {
@@ -68,6 +70,10 @@ public partial class Battle : MonoBehaviour {
 
     void OnPlayerJoin(Player p) {
         RebindPlayers();
+    }
+
+    void OnEscape(Player p) {
+        if(currentState == introState) introState.Skip();
     }
 
     void ChangeState(State newState) {

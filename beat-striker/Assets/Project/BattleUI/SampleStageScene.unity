@@ -1046,6 +1046,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4546490731738603451, guid: 0a994691d77bf495085217fd79eea9aa, type: 3}
+      propertyPath: beatMapTestSpan
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 5351317176154225972, guid: 0a994691d77bf495085217fd79eea9aa, type: 3}
       propertyPath: m_Name
       value: BattlManager

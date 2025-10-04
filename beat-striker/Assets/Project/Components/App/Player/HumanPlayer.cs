@@ -109,11 +109,13 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
     }
 
     public void OnDirection(InputAction.CallbackContext context) {
-        direction = context.ReadValue<Vector2>();
-        float mag = direction.magnitude;
+        var val = context.ReadValue<Vector2>();
+        float mag = val.magnitude;
 
         bool nextDown = directionDown ? (mag >= DIR_OFF_THRESHOLD)
                                       : (mag >= DIR_ON_THRESHOLD);
+
+        direction = nextDown ? val.normalized : Vector2.zero;
 
         if (nextDown != directionDown) {
             directionDown = nextDown;
@@ -156,6 +158,12 @@ public class HumanPlayer : Player, GameInput.IPlayerActions {
     public void OnLeftTrigger(InputAction.CallbackContext context) {
         if (context.started) HandleButton(Btn.LeftTrigger, true);
         else if (context.canceled) HandleButton(Btn.LeftTrigger, false);
+    }
+
+    public void OnEscape(InputAction.CallbackContext context) {
+        if (context.started) {
+            App.Instance.Escape(this);
+        }
     }
 
     private GameObject FindBotan(List<RaycastResult> results) {
