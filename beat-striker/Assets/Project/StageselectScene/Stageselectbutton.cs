@@ -9,6 +9,8 @@ public class Stageselectbutton : MonoBehaviour
     public Panel panel; // Panel参照
     public enum MoveType { None, Right, Left }
     public MoveType moveType = MoveType.None;
+    public GameObject PopupPanel;
+    private static bool isPopupShown = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
@@ -17,6 +19,7 @@ public class Stageselectbutton : MonoBehaviour
 
         image.color = Color.gray;
         botan.onHover += (e) => {
+            if (isPopupShown) return;
             image.color = Color.white;
             Debug.Log("hovered");
             if (hoverSound != null && audioSource != null) {
@@ -29,8 +32,13 @@ public class Stageselectbutton : MonoBehaviour
         };
         botan.onClick += (e) => {
             Debug.Log("clicked");
+            if (PopupPanel != null) {
+                PopupPanel.SetActive(true);
+                isPopupShown = true;
+            }
         };
         botan.onHoverExit += (e) => {
+            if (isPopupShown) return;
             image.color = Color.gray;
             Debug.Log("hover exited");
         };
