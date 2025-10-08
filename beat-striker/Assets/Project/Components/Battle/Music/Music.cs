@@ -4,9 +4,9 @@ using UnityEngine;
 
 [RequireComponent(typeof(Battle))]
 public class Music : MonoBehaviour {
-    [SerializeField] private AudioClip beatClip;
-    [SerializeField] private float beatOffset;
-    [SerializeField] private float beatMapTestSpan = 1f;
+    [SerializeField] AudioClip beatClip;
+    [SerializeField] float beatOffset;
+    [SerializeField] float beatMapTestSpan = 1f;
     [SerializeField] float beatSpawnTimeDelta = 3f;
 
     public float Time { get; private set; }
@@ -27,7 +27,7 @@ public class Music : MonoBehaviour {
         Instance = null;
     }
 
-    public void StartMusic() {
+    internal void StartMusic() {
         beatMap = new Beat[1000];
         for (int i = 0; i < beatMap.Length; i++) {
             beatMap[i] = new Beat(1f + beatMapTestSpan * i);
@@ -37,7 +37,7 @@ public class Music : MonoBehaviour {
         nextBeatIndex = 0;
     }
 
-    public void UpdateMusic(float deltaTime) {
+    internal void UpdateMusic(float deltaTime) {
         Time += deltaTime;
 
         if (nextBeatSpawnIndex < beatMap.Length &&

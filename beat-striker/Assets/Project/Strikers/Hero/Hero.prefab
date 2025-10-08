@@ -643,7 +643,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60a5d8d43a07e483396dc0da280d7858, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Striker
-  hp: 100
+  maxHp: 100
   goodTimeWidth: 0.2
   perfectTimeWidth: 0.05
 --- !u!114 &6037586890744269640
@@ -658,8 +658,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f152563c2eea7f44c8892f046c2d57f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::playerController
-  jumpSpeed: 10
-  airJumpMax: 3
+  jumpSpeed: 70
+  runSpeed: 3
+  airJumpMax: 8
   swardColliden: {fileID: 2876211542508739535}
 --- !u!95 &712021694818041983
 Animator:
@@ -692,7 +693,7 @@ Rigidbody:
   m_GameObject: {fileID: 2273013822404465156}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 0
+  m_LinearDamping: 10
   m_AngularDamping: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}

@@ -9,10 +9,12 @@ public partial class Battle : MonoBehaviour {
     public const int STRIKER_COUNT = 2;
     public static Battle Instance { get; private set; }
     private int nextRank;
+    public int Winner { get; private set; }
 
-    [SerializeField] float despawnY = -10f;
+    [SerializeField] internal float despawnY = -10f;
 
-    [NonSerialized] public Striker[] strikers = new Striker[STRIKER_COUNT];
+    [NonSerialized] public readonly Striker[] strikers = new Striker[STRIKER_COUNT];
+    [SerializeField] StrikerPrefab[] strikerPrefabs;
 
     public readonly IntroState introState = new();
     public readonly PlayingState playingState = new();
@@ -20,8 +22,6 @@ public partial class Battle : MonoBehaviour {
     public readonly OutroState outroState = new();
     public readonly ResultState resultState = new();
     private State currentState;
-
-    public StrikerPrefab[] strikerPrefabs;
 
     private void Awake() {
         if (Instance != null && Instance != this) {
@@ -31,6 +31,7 @@ public partial class Battle : MonoBehaviour {
         Instance = this;
 
         App.Instance.OnPlayerJoin += OnPlayerJoin;
+        App.Instance.OnEscape += OnEscape;
         App.Instance.cursorMode = false;
 
         for (int i = 0; i < STRIKER_COUNT; i++) {
@@ -39,17 +40,21 @@ public partial class Battle : MonoBehaviour {
             Transform trans = GameObject.Find($"SpawnPosition{i}").transform;
             strikers[i] = Instantiate(Array.Find(strikerPrefabs, s => s.type == player.striker).prefab, trans.position, trans.rotation, null);
             strikers[i].player = player;
+            trans.SetParent(strikers[i].transform);
         }
+    }
 
+    void Start() {
         ChangeState(introState);
     }
-    
-    private void OnDestroy() {
+
+    void OnDestroy() {
         ChangeState(null);
 
         Instance = null;
         App.Instance.cursorMode = true;
         App.Instance.OnPlayerJoin -= OnPlayerJoin;
+        App.Instance.OnPlayerJoin -= OnEscape;
     }
 
     void Update() {
@@ -63,20 +68,24 @@ public partial class Battle : MonoBehaviour {
         }
     }
 
-    private void OnPlayerJoin(Player p) {
+    void OnPlayerJoin(Player p) {
         RebindPlayers();
     }
 
-    public void ChangeState(State newState) {
+    void OnEscape(Player p) {
+        if(currentState == introState) introState.Skip();
+    }
+
+    void ChangeState(State newState) {
         currentState?.OnExitEvent(newState);
         newState?.OnEnterEvent(currentState);
         currentState = newState;
     }
-}
 
 
-[Serializable]
-public class StrikerPrefab {
-    public StrikerType type;
-    public Striker prefab;
+    [Serializable]
+    class StrikerPrefab {
+        public StrikerType type;
+        public Striker prefab;
+    }
 }

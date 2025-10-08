@@ -18,9 +18,9 @@ public class SelectScene : MonoBehaviour {
 
     }
 
-    public void SelectCharacter(HumanPlayer player) {
-        if (player == null) return;
-        Debug.Log("Player " + (player.playerNumber + 1) + " selected " + prefab.name);
+    public void SelectCharacter(PlayerPointerEventData e) {
+        if (e.Player) return;
+        Debug.Log("Player " + (e.Player.playerNumber + 1) + " selected " + prefab.name);
     }
 
     public void GotoBattleScene() {

@@ -336,7 +336,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleMusicController
   beatClip: {fileID: 8300000, guid: 4e3f3a2ec4eef4b308cda766a054361e, type: 3}
-  beatOffset: 0
+  beatOffset: -0.1
   beatMapTestSpan: 1
   beatSpawnTimeDelta: 3
 --- !u!114 &6725454366230945217

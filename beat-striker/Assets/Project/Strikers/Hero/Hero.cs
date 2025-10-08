@@ -11,6 +11,7 @@ public class Hero : MonoBehaviour {
     Rigidbody rb;
     Striker striker;
     [SerializeField] float jumpSpeed = 5f;
+    [SerializeField] float runSpeed = 0.5f;
     [SerializeField] int airJumpMax = 3;
     int airJumpCount = 0;
 
@@ -29,17 +30,24 @@ public class Hero : MonoBehaviour {
     void Update() {
         anim.SetBool("IsGround", striker.isGround);
 
-        var btnDownDir = striker.player.GetBtnDown(Btn.Direction);
+        var east = striker.player.GetBtnDown(Btn.East);
 
-        if (btnDownDir && (striker.isGround || airJumpCount < airJumpMax) && striker.Beat()) {
-            var dir = btnDownDir.direction.normalized;
-            transform.forward = Mathf.Sign(dir.x) * Vector3.right;
-            rb.linearVelocity = jumpSpeed * new Vector2(0.7f, 1f) * dir;
-            if (!striker.isGround) airJumpCount++;
+        if (east && (striker.isGround || airJumpCount < airJumpMax)) {
+            var res = striker.Beat();
+            if (res) {
+                var d = east.direction;
+                transform.forward = Mathf.Sign(d.x) * Vector3.right;
+                rb.linearVelocity = jumpSpeed * d;
+                if (!striker.isGround) airJumpCount++;
+            }
+        }
+        else if (Mathf.Abs(rb.linearVelocity.x) < runSpeed && east.direction.sqrMagnitude > 0e-3) {
+            transform.forward = Mathf.Sign(east.direction.x) * Vector3.right;
+            rb.linearVelocity = rb.linearVelocity.X(runSpeed * Mathf.Sign(east.direction.x));
         }
 
 
-        if (striker.player.GetBtnDown(Btn.East)) {
+        if (striker.player.GetBtnDown(Btn.South)) {
             var res = striker.Beat();
             if (res)
                 anim.SetTrigger("DoAttack");

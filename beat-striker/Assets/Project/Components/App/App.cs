@@ -8,7 +8,7 @@ public class App : MonoBehaviour {
     public static App Instance { get; private set; }
     [SerializeField] Canvas targetCanvas;
     [NonSerialized] public bool cursorMode;
-    public event Action<HumanPlayer> OnPlayerJoin;
+    public event Action<HumanPlayer> OnPlayerJoin, OnEscape;
     public CPUPlayer cpuPrefab;
 
     private void Awake() {
@@ -33,6 +33,7 @@ public class App : MonoBehaviour {
     }
 
     void OnPlayerJoined(PlayerInput playerInput) {
+        Debug.Log($"Player Joined: {(playerInput.devices.Count == 0 ? "" : playerInput.devices[0].name)}");
         playerInput.transform.SetParent(targetCanvas.transform, false);
 
         if (playerInput.TryGetComponent<RectTransform>(out var rt)) {
@@ -42,8 +43,12 @@ public class App : MonoBehaviour {
         if (playerInput.TryGetComponent<HumanPlayer>(out var p)) {
             p.playerNumber = App.Instance.players.Count;
             players.Add(p);
-            OnPlayerJoin(p);
+            OnPlayerJoin?.Invoke(p);
         }
+    }
+
+    internal void Escape(HumanPlayer p) {
+        OnEscape?.Invoke(p);
     }
 }
 
