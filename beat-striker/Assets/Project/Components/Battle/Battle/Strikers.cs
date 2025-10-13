@@ -38,7 +38,7 @@ public class Strikers {
 
     public bool Rank() {
         foreach (var striker in rankers) {
-            if (striker.Rank <= nextRank && striker.Striker.hp <= 0) {
+            if (striker.Rank <= nextRank && striker.Striker.Hp <= 0) {
                 striker.Rank = nextRank;
                 nextRank--;
             }
