@@ -16,6 +16,9 @@ public class Stageselectbutton : MonoBehaviour
     public float fadeSpeed = 6.0f;
     private static bool isPopupShown = false;
     public float targetAlpha = 0f;
+    public RectTransform musicSelection;
+    public float musicSlideDistance = 500f;
+    private bool isPopupFadeInComplete = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
@@ -40,7 +43,7 @@ public class Stageselectbutton : MonoBehaviour
         botan.onClick += (e) => {
             Debug.Log("clicked");
             if (PopupPanel != null && popupCanvasGroup != null) {
-                StartCoroutine(ShowPopupWithFade());
+                StartCoroutine(ShowPopupWithFadeAndMusicSlide());
                 isPopupShown = true;
             }
         };
@@ -51,11 +54,18 @@ public class Stageselectbutton : MonoBehaviour
         };
         
     }
-    IEnumerator ShowPopupWithFade()
+    IEnumerator ShowPopupWithFadeAndMusicSlide()
     {
         PopupPanel.SetActive(true);
         popupCanvasGroup.alpha = 0f;
         targetAlpha = 1f;
+
+        if (musicSelection != null)
+        {
+            Vector3 centerPos = musicSelection.localPosition;
+            Vector3 rightOff = centerPos + new Vector3(musicSlideDistance, 0f, 0f);
+            musicSelection.localPosition = rightOff;
+        }
         yield return new WaitForSeconds(popupDelay);
         while (popupCanvasGroup.alpha < 0.99f) 
         {
@@ -64,6 +74,12 @@ public class Stageselectbutton : MonoBehaviour
             yield return null;
         }
         popupCanvasGroup.alpha = 1f;
+        isPopupFadeInComplete = true;
+        if (musicSelection != null)
+        {
+            Vector3 centerPos = musicSelection.localPosition - new Vector3(musicSlideDistance, 0f, 0f);
+            LeanTween.moveLocal(musicSelection.gameObject, centerPos, 0.4f).setEase(LeanTweenType.easeOutQuad);
+        }
     }
     // Update is called once per frame
     void Update()
