@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Codice.Client.BaseCommands;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -15,7 +16,7 @@ public partial class Battle {
     public class IntroState : State {
         public event Action OnExit;
         IEnumerator stageAnime, readyAnime;
-        IEnumerator[] strikerAnimes = new IEnumerator[STRIKER_COUNT];
+        SortedDictionary<int, IEnumerator> strikerAnimes = new();
         private Coroutine currentCoroutine;
 
         internal IntroState() {
@@ -53,10 +54,10 @@ public partial class Battle {
         }
 
         IEnumerator Anime() {
-            if(stageAnime != null) yield return stageAnime;
-            for (int i = 0; i < STRIKER_COUNT; i++) {
-                var anime = strikerAnimes[i];
-                if(anime != null) yield return anime;
+            if (stageAnime != null) yield return stageAnime;
+            
+            foreach (var anime in strikerAnimes.Values) {
+                yield return anime;
             }
             if(readyAnime != null) yield return readyAnime;
             Instance.ChangeState(Instance.playingState);
@@ -70,7 +71,7 @@ public partial class Battle {
         }
 
         internal override void OnEnterEvent(State preState) {
-            Instance.RebindPlayers();
+            Instance.strikers.RebindPlayers();
             if (preState is PausedState) {
                 OnResume?.Invoke();
             }
@@ -78,27 +79,13 @@ public partial class Battle {
                 Debug.Log("GameStart");
                 OnEnter?.Invoke();
                 Music.Instance.StartMusic();
-                Instance.nextRank = STRIKER_COUNT;
-                Instance.Winner = -1;
             }
         }
 
         internal override void OnUpdateEvent(float deltaTime) {
             Music.Instance.UpdateMusic(deltaTime);
 
-            for (int i = 0; i < Instance.strikers.Length; i++) {
-                var striker = Instance.strikers[i];
-                if (Instance.nextRank == 1) {
-                    striker.Rank = Instance.nextRank;
-                    Instance.Winner = i;
-                    Instance.ChangeState(Instance.outroState);
-                    break;
-                }
-                else if (striker.Rank < Instance.nextRank && striker.Hp <= 0) {
-                    striker.Rank = Instance.nextRank;
-                    Instance.nextRank--;
-                }
-            }
+            if(Instance.strikers.Rank()) Instance.ChangeState(Instance.outroState);
         }
 
         internal override void OnExitEvent(State nextState) {
@@ -138,7 +125,7 @@ public partial class Battle {
         }
 
         IEnumerator Anime() {
-            Instance.strikers[1 - Instance.Winner].gameObject.SetActive(false);
+            Instance.strikers.SliceByRank(1).ForEach(s => s.Striker.gameObject.SetActive(false));
             if (victoryAnime != null) yield return victoryAnime;
             Instance.ChangeState(Instance.resultState);
         }

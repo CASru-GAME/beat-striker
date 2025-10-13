@@ -6,14 +6,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public partial class Battle : MonoBehaviour {
-    public const int STRIKER_COUNT = 2;
     public static Battle Instance { get; private set; }
-    private int nextRank;
-    public int Winner { get; private set; }
 
     [SerializeField] internal float despawnY = -10f;
 
-    [NonSerialized] public readonly Striker[] strikers = new Striker[STRIKER_COUNT];
+    [NonSerialized] public readonly Strikers strikers = new(2);
     [SerializeField] StrikerPrefab[] strikerPrefabs;
 
     public readonly IntroState introState = new();
@@ -24,24 +21,16 @@ public partial class Battle : MonoBehaviour {
     private State currentState;
 
     private void Awake() {
-        if (Instance != null && Instance != this) {
-            Destroy(gameObject);
-            return;
-        }
         Instance = this;
 
         App.Instance.OnPlayerJoin += OnPlayerJoin;
         App.Instance.OnEscape += OnEscape;
         App.Instance.cursorMode = false;
 
-        for (int i = 0; i < STRIKER_COUNT; i++) {
-            Player player = i >= App.Instance.players.Count ? null : App.Instance.players[i];
-            if (!player) player = Instantiate(App.Instance.cpuPrefab);
-            Transform trans = GameObject.Find($"SpawnPosition{i}").transform;
-            strikers[i] = Instantiate(Array.Find(strikerPrefabs, s => s.type == player.striker).prefab, trans.position, trans.rotation, null);
-            strikers[i].player = player;
-            trans.SetParent(strikers[i].transform);
-        }
+        var spawnTransforms = Enumerable.Range(0, strikers.Count)
+            .Select(i => GameObject.Find($"SpawnPosition{i}").transform);
+
+        strikers.Spawn(strikerPrefabs, spawnTransforms);
     }
 
     void Start() {
@@ -61,19 +50,12 @@ public partial class Battle : MonoBehaviour {
         currentState?.OnUpdateEvent(Time.deltaTime);
     }
 
-    void RebindPlayers() {
-        for (int i = 0; i < STRIKER_COUNT; i++) {
-            Player player = i >= App.Instance.players.Count ? null : App.Instance.players[i];
-            if (player) strikers[i].player = player;
-        }
-    }
-
     void OnPlayerJoin(Player p) {
-        RebindPlayers();
+        strikers.RebindPlayers();
     }
 
     void OnEscape(Player p) {
-        if(currentState == introState) introState.Skip();
+        if (currentState == introState) introState.Skip();
     }
 
     void ChangeState(State newState) {
@@ -81,11 +63,10 @@ public partial class Battle : MonoBehaviour {
         newState?.OnEnterEvent(currentState);
         currentState = newState;
     }
+}
 
-
-    [Serializable]
-    class StrikerPrefab {
-        public StrikerType type;
-        public Striker prefab;
-    }
+[System.Serializable]
+public class StrikerPrefab {
+    public StrikerType type;
+    public Striker prefab;
 }

@@ -24,14 +24,14 @@ public class SampleStatge : MonoBehaviour {
 
     IEnumerator StrikerAnime0() {
         SwitchTo(camera0);
-        Battle.Instance.strikers[0].IntroPose();
+        Battle.Instance.strikers.Get(0).Striker.IntroPose();
         yield return new WaitForSeconds(3f);
 
     }
 
     IEnumerator StrikerAnime1() {
         SwitchTo(camera1);
-        Battle.Instance.strikers[1].IntroPose();
+        Battle.Instance.strikers.Get(1).Striker.IntroPose();
         yield return new WaitForSeconds(3f);
 
     }
@@ -43,8 +43,8 @@ public class SampleStatge : MonoBehaviour {
 
     IEnumerator VictoryAnime() {
         yield return new WaitForSeconds(3f);
-        SwitchTo(Battle.Instance.Winner == 0 ? camera0 : camera1);
-        Battle.Instance.strikers[Battle.Instance.Winner].OutroPose();
+        SwitchTo(Battle.Instance.strikers.GetByRank(0).Id == 0 ? camera0 : camera1);
+       Battle.Instance.strikers.GetByRank(0).Striker.OutroPose();
         yield return new WaitForSeconds(3f);
     }
 

@@ -19,7 +19,6 @@ public class Music : MonoBehaviour {
     public static Music Instance { get; private set; }
 
     private void Awake() {
-        //BattleのAwakeが先
         Instance = this;
     }
 

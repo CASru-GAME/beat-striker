@@ -7,8 +7,8 @@ using UnityEngine;
 
 [RequireComponent(typeof(TextMeshProUGUI))]
 public class BeatBar : MonoBehaviour {
-    [SerializeField] int playerNumber;
-    Striker Striker => Battle.Instance.strikers[playerNumber];
+    [SerializeField] int strikerId;
+    Striker Striker => Battle.Instance.strikers.Get(strikerId);
     TextMeshProUGUI text;
     string result = "O";
     public float timeOffset;

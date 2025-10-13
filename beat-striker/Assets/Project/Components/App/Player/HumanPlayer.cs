@@ -9,7 +9,6 @@ using UnityEngine.UI;
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(RectTransform))]
 public class HumanPlayer : Player, GameInput.IPlayerActions {
-    public int playerNumber = -1;
     [SerializeField] private TextMeshProUGUI text;
     [SerializeField] private GameObject cursor;
     [SerializeField] protected Color[] playerColor;

@@ -21,24 +21,23 @@ public class Hero : MonoBehaviour {
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         striker = GetComponent<Striker>();
-        striker.OnLanded += () => { airJumpCount = 0; };
         striker.OnBeated += res => {
             // 何かしらのペナルティ
         };
     }
 
     void Update() {
-        anim.SetBool("IsGround", striker.isGround);
+        anim.SetBool("IsGround", false);
 
         var east = striker.player.GetBtnDown(Btn.East);
 
-        if (east && (striker.isGround || airJumpCount < airJumpMax)) {
+        if (east && (airJumpCount < airJumpMax)) {
             var res = striker.Beat();
             if (res) {
                 var d = east.direction;
                 transform.forward = Mathf.Sign(d.x) * Vector3.right;
                 rb.linearVelocity = jumpSpeed * d;
-                if (!striker.isGround) airJumpCount++;
+                airJumpCount++;
             }
         }
         else if (Mathf.Abs(rb.linearVelocity.x) < runSpeed && east.direction.sqrMagnitude > 0e-3) {

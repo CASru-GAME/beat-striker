@@ -24,6 +24,6 @@ public class HeroAttackState : StateMachineBehaviour {
     void OnSwardEnter(Collider collider) {
         var enemy = collider.gameObject.GetComponent<Striker>();
         if (!enemy) return;
-        enemy.Hp -= 10;
+        enemy.Damage(10);
     }
 }

@@ -15,6 +15,8 @@ public enum Btn {
 }
 
 public abstract class Player : MonoBehaviour {
+    public PlayerId playerNumber = new(-1);
+
     public struct ActionResult {
         public bool success;
         public Vector2 direction;
@@ -50,7 +52,7 @@ public abstract class Player : MonoBehaviour {
     }
 
     public virtual ActionResult GetBtnDown(Btn btn) {
-        if (isDown.TryGetValue(btn, out bool pressed) && pressed && 
+        if (isDown.TryGetValue(btn, out bool pressed) && pressed &&
             wasDown.TryGetValue(btn, out bool wasPreviouslyPressed) && !wasPreviouslyPressed) {
             return new ActionResult(true, direction);
         }
@@ -58,7 +60,7 @@ public abstract class Player : MonoBehaviour {
     }
 
     public virtual ActionResult GetBtnUp(Btn btn) {
-        if (isDown.TryGetValue(btn, out bool pressed) && !pressed && 
+        if (isDown.TryGetValue(btn, out bool pressed) && !pressed &&
             wasDown.TryGetValue(btn, out bool wasPreviouslyPressed) && wasPreviouslyPressed) {
             return new ActionResult(true, direction);
         }
@@ -89,9 +91,20 @@ public abstract class Player : MonoBehaviour {
 
     protected void HandleButton(Btn btn, bool down) {
         isDown[btn] = down;
-        
+
         if (down) {
             lastRepeatTime[btn] = float.NegativeInfinity;
         }
     }
+}
+
+[System.Serializable]
+public struct PlayerId {
+    public int value;
+
+    public PlayerId(int value) {
+        this.value = value;
+    }
+
+    public static implicit operator int(PlayerId id) => id.value;
 }

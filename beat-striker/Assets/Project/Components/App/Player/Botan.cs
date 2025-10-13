@@ -31,7 +31,7 @@ public class Botan : MonoBehaviour,
 
 public class PlayerPointerEventData {
         public PointerEventData EventData { get; private set; }
-        public HumanPlayer Player { get; private set; }
+        public Player Player { get; private set; }
 
         public PlayerPointerEventData(PointerEventData eventData) {
             EventData = eventData;
