@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+
+[RequireComponent(typeof(Botan))]
+[RequireComponent(typeof(AudioSource))]
 public class Stageselectbutton : MonoBehaviour
 {
      Botan botan;
@@ -10,7 +13,7 @@ public class Stageselectbutton : MonoBehaviour
     public Panel panel; // Panel参照
     public enum MoveType { None, Right, Left }
     public MoveType moveType = MoveType.None;
-    public GameObject PopupPanel;
+    public GameObject popupPanel;
     public CanvasGroup popupCanvasGroup;
     public float popupDelay = 0.3f;
     public float fadeSpeed = 6.0f;
@@ -22,6 +25,7 @@ public class Stageselectbutton : MonoBehaviour
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
+        popupPanel.SetActive(false);
         botan = GetComponent<Botan>();
         audioSource = GetComponent<AudioSource>();
 
@@ -42,7 +46,7 @@ public class Stageselectbutton : MonoBehaviour
         };
         botan.onClick += (e) => {
             Debug.Log("clicked");
-            if (PopupPanel != null && popupCanvasGroup != null) {
+            if (popupPanel != null && popupCanvasGroup != null) {
                 StartCoroutine(ShowPopupWithFadeAndMusicSlide());
                 isPopupShown = true;
             }
@@ -56,7 +60,7 @@ public class Stageselectbutton : MonoBehaviour
     }
     IEnumerator ShowPopupWithFadeAndMusicSlide()
     {
-        PopupPanel.SetActive(true);
+        popupPanel.SetActive(true);
         popupCanvasGroup.alpha = 0f;
         targetAlpha = 1f;
 
