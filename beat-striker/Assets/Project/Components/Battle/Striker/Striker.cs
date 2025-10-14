@@ -6,7 +6,8 @@ using UnityEngine;
 [AddComponentMenu(" Striker", 0)]
 public class Striker : MonoBehaviour {
     public float maxHp;
-    public float hp{ get; private set; }
+    public float Hp{ get; private set; }
+
     [NonSerialized] public Player player;
     public event Action OnIntroPose, OnOutroPose;
     public event Action<BeatResult> OnBeated;
@@ -16,7 +17,7 @@ public class Striker : MonoBehaviour {
 
     void Start() {
         Music.Instance.OnBeatSpawn += OnBeatSpawn;
-        hp = maxHp;
+        Hp = maxHp;
     }
 
     void Update() {
@@ -26,7 +27,7 @@ public class Striker : MonoBehaviour {
         }
 
         if (transform.position.y < -1e-2f) transform.position = transform.position.Y(-1e-2f);
-        if (transform.position.y < Battle.Instance.despawnY) Damage(hp);
+        if (transform.position.y < Battle.Instance.despawnY) Damage(Hp);
     }
 
     void OnBeatSpawn(Beat beat) {
@@ -61,6 +62,6 @@ public class Striker : MonoBehaviour {
     }
 
     public void Damage(float value) {
-        hp = Mathf.Clamp(hp - value, 0, maxHp);
+        Hp = Mathf.Clamp(Hp - value, 0, maxHp);
     }
 }
