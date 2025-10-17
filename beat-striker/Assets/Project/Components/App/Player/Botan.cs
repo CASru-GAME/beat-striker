@@ -9,10 +9,9 @@ public class HumanPlayerEvent : UnityEvent<int> { }
 [AddComponentMenu(" Button", 0)]
 public class Botan : MonoBehaviour,
     IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler {
-    [Header("Events")]
-    public Action<PlayerPointerEventData> onHover;
-    public Action<PlayerPointerEventData> onHoverExit;
-    public Action<PlayerPointerEventData> onClick;
+    public event Action<PlayerPointerEventData> onHover;
+    public event Action<PlayerPointerEventData> onHoverExit;
+    public event Action<PlayerPointerEventData> onClick;
     public UnityEvent onClickEvent;
 
     public void OnPointerEnter(PointerEventData eventData) {
