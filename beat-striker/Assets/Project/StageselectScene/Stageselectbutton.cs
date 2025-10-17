@@ -22,6 +22,13 @@ public class Stageselectbutton : MonoBehaviour
     public RectTransform musicSelection;
     public float musicSlideDistance = 500f;
     private bool isPopupFadeInComplete = false;
+    
+    // black表示用
+    public GameObject blackObject; // blackのImageオブジェクト
+    private CanvasGroup blackCanvasGroup;
+    public float blackFadeDuration = 0.5f;
+    private bool isHovering = false;
+    private bool hasCompletedMove = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
@@ -31,17 +38,46 @@ public class Stageselectbutton : MonoBehaviour
 
         image.color = Color.gray;
         if (popupCanvasGroup != null) popupCanvasGroup.alpha = 0f;
+        
+        // blackオブジェクトにCanvasGroupを追加/取得して初期状態で非表示に
+        if (blackObject != null)
+        {
+            blackCanvasGroup = blackObject.GetComponent<CanvasGroup>();
+            if (blackCanvasGroup == null)
+            {
+                blackCanvasGroup = blackObject.AddComponent<CanvasGroup>();
+            }
+            blackCanvasGroup.alpha = 0f;
+        }
+        
+        // Panelの移動完了イベントを購読
+        if (panel != null)
+        {
+            panel.OnRightMoveComplete += OnPanelMoveComplete;
+        }
 
         botan.onHover += (e) => {
             if (isPopupShown) return;
             image.color = Color.white;
-            Debug.Log("hovered");
+            Debug.Log($"{gameObject.name} hovered - moveType: {moveType}");
             if (hoverSound != null && audioSource != null) {
                 audioSource.PlayOneShot(hoverSound);
             }
              if(panel != null) {
-                if (moveType == MoveType.Right) panel.MoveRight();
-                else if (moveType == MoveType.Left) panel.MoveLeft();
+                if (moveType == MoveType.Right) {
+                    Debug.Log($"{gameObject.name} moving right");
+                    panel.MoveRight();
+                }
+                else if (moveType == MoveType.Left) {
+                    Debug.Log($"{gameObject.name} moving left");
+                    panel.MoveLeft();
+                }
+                
+                isHovering = true;
+                hasCompletedMove = false;
+            }
+            else {
+                Debug.LogWarning($"{gameObject.name}: Panel is null!");
             }
         };
         botan.onClick += (e) => {
@@ -55,6 +91,21 @@ public class Stageselectbutton : MonoBehaviour
             if (isPopupShown) return;
             image.color = Color.gray;
             Debug.Log("hover exited");
+            
+            isHovering = false;
+            hasCompletedMove = false;
+            
+            // ホバーが離れたときにPanelをデフォルト位置に戻す（blackもフェードアウト）
+            if(panel != null) {
+                panel.MoveToDefault();
+            }
+            
+            // blackをフェードアウト
+            if (blackCanvasGroup != null)
+            {
+                LeanTween.cancel(blackObject);
+                LeanTween.alphaCanvas(blackCanvasGroup, 0f, blackFadeDuration).setEase(LeanTweenType.easeInQuad);
+            }
         };
         
     }
@@ -83,6 +134,38 @@ public class Stageselectbutton : MonoBehaviour
         {
             Vector3 centerPos = musicSelection.localPosition - new Vector3(musicSlideDistance, 0f, 0f);
             LeanTween.moveLocal(musicSelection.gameObject, centerPos, 0.4f).setEase(LeanTweenType.easeOutQuad);
+        }
+    }
+    
+    void OnPanelMoveComplete()
+    {
+        Debug.Log($"{gameObject.name} OnPanelMoveComplete - isHovering: {isHovering}, hasCompletedMove: {hasCompletedMove}");
+        
+        // ホバー中で、まだフェードインしていない場合のみ実行
+        if (isHovering && !hasCompletedMove)
+        {
+            hasCompletedMove = true;
+
+            // blackオブジェクトをフェードイン
+            if (blackCanvasGroup != null)
+            {
+                Debug.Log($"{gameObject.name} fading in black object");
+                LeanTween.cancel(blackObject);
+                LeanTween.alphaCanvas(blackCanvasGroup, 1f, blackFadeDuration).setEase(LeanTweenType.easeOutQuad);
+            }
+            else
+            {
+                Debug.LogWarning($"{gameObject.name}: blackCanvasGroup is null!");
+            }
+        }
+    }
+    
+    void OnDestroy()
+    {
+        // イベント購読解除
+        if (panel != null)
+        {
+            panel.OnRightMoveComplete -= OnPanelMoveComplete;
         }
     }
     // Update is called once per frame
