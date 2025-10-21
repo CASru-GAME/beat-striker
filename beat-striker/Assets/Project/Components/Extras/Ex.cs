@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -24,10 +25,15 @@ public static class Ex {
         return monoBehaviour.StartCoroutine(CoroutineAction(action, delay));
     }
 
-    private static IEnumerator CoroutineAction(Action action, float delay)
-    {
+    private static IEnumerator CoroutineAction(Action action, float delay) {
         yield return new WaitForSeconds(delay);
         action?.Invoke();
+    }
+    
+    public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
+    {
+        foreach (var item in source)
+            action(item);
     }
 }
 

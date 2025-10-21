@@ -51,7 +51,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54f75b19b24894048beda2a02458b2d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HumanPlayer
-  strikerPrefab: {fileID: 8817504715203060625, guid: 1bc78afdd55844d15a2b3e78489bbd03, type: 3}
+  striker: 0
   playerNumber: -1
   text: {fileID: 1504338247666303300}
   cursor: {fileID: 2678076839241500623}
@@ -59,7 +59,7 @@ MonoBehaviour:
   - {r: 1, g: 0.28773582, b: 0.28773582, a: 1}
   - {r: 0.28627455, g: 0.60302335, b: 1, a: 1}
   cursorSpeed: 1500
-  cursorSpeedDegree: 7
+  cursorSpeedDegree: 3
 --- !u!114 &6308726767528904221
 MonoBehaviour:
   m_ObjectHideFlags: 0

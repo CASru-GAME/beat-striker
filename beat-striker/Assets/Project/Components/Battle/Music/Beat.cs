@@ -1,6 +1,6 @@
 public class Beat {
     public readonly float time;
-    public Beat(float time) {
+    internal Beat(float time) {
         this.time = time;
     }
 }
@@ -8,7 +8,7 @@ public class Beat {
 public class BeatResult {
     public readonly Status status;
 
-    public BeatResult(Status status) {
+    internal BeatResult(Status status) {
         this.status = status;
     }
 

@@ -11,38 +11,52 @@ public class Hero : MonoBehaviour {
     Rigidbody rb;
     Striker striker;
     [SerializeField] float jumpSpeed = 5f;
+    [SerializeField] float runSpeed = 0.5f;
     [SerializeField] int airJumpMax = 3;
-    int airJumpCount = 0;
 
     public Colliden swardColliden;
+    bool isGround = false;
 
     void Start() {
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         striker = GetComponent<Striker>();
-        striker.OnLanded += () => { airJumpCount = 0; };
         striker.OnBeated += res => {
             // 何かしらのペナルティ
         };
     }
 
     void Update() {
-        anim.SetBool("IsGround", striker.isGround);
+        anim.SetBool("IsGround", isGround);
 
-        var btnDownDir = striker.player.GetBtnDown(Btn.Direction);
+        var east = striker.player.GetBtnDown(Btn.East);
 
-        if (btnDownDir && (striker.isGround || airJumpCount < airJumpMax) && striker.Beat()) {
-            var dir = btnDownDir.direction.normalized;
-            transform.forward = Mathf.Sign(dir.x) * Vector3.right;
-            rb.linearVelocity = jumpSpeed * new Vector2(0.7f, 1f) * dir;
-            if (!striker.isGround) airJumpCount++;
+        if (east) {
+            var d = east.direction;
+            transform.forward = Mathf.Sign(d.x) * Vector3.right;
+            rb.linearVelocity = jumpSpeed * d;
         }
 
-
-        if (striker.player.GetBtnDown(Btn.East)) {
-            var res = striker.Beat();
-            if (res)
-                anim.SetTrigger("DoAttack");
+        else if (Mathf.Abs(rb.linearVelocity.x) < runSpeed && east.direction.sqrMagnitude > 0e-3) {
+            transform.forward = Mathf.Sign(east.direction.x) * Vector3.right;
+            rb.linearVelocity = rb.linearVelocity.X(runSpeed * Mathf.Sign(east.direction.x));
         }
+
+        if (striker.player.GetBtnDown(Btn.South)) {
+            anim.SetTrigger("DoAttack");
+        }
+    }
+
+    private void OnCollisionStay(Collision collision) {
+        foreach (var contact in collision.contacts) {
+            if (contact.normal.y > 0.5f) {
+                isGround = true;
+                return;
+            }
+        }
+    }
+
+    private void OnCollisionExit(Collision collision) {
+        isGround = false;
     }
 }

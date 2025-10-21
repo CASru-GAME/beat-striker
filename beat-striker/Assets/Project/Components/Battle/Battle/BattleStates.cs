@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Codice.Client.BaseCommands;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -14,27 +15,52 @@ public partial class Battle {
 
     public class IntroState : State {
         public event Action OnExit;
-        private float timer = 0f;
-        private const float INTRO_TIMEOUT = 30f;
+        IEnumerator stageAnime, readyAnime;
+        SortedDictionary<int, IEnumerator> strikerAnimes = new();
+        private Coroutine currentCoroutine;
 
         internal IntroState() {
         }
 
         internal override void OnEnterEvent(State preState) {
-            //基本呼ばれません
-            timer = 0f;
+            currentCoroutine = Instance.StartCoroutine(Anime());
         }
 
         internal override void OnUpdateEvent(float deltaTime) {
-            timer += deltaTime;
-            if (timer >= INTRO_TIMEOUT) {
-                Debug.Log("IntroState timeout - transitioning to PlayingState");
-                Instance.ChangeState(Instance.playingState);
-            }
         }
 
         internal override void OnExitEvent(State nextState) {
+            if (currentCoroutine != null) {
+                Instance.StopCoroutine(currentCoroutine);
+                currentCoroutine = null;
+            }
             OnExit?.Invoke();
+        }
+
+         public void SetStageAnime(IEnumerator animation) {
+            this.stageAnime = animation;
+        }
+
+         public void SetReadyAnime(IEnumerator animation) {
+            this.readyAnime = animation;
+        }
+
+         public void SetStrikerAnime(int strikerNumber,IEnumerator animation) {
+            this.strikerAnimes[strikerNumber] = animation;
+        }
+
+        public void Skip() {
+            Instance.ChangeState(Instance.playingState);
+        }
+
+        IEnumerator Anime() {
+            if (stageAnime != null) yield return stageAnime;
+            
+            foreach (var anime in strikerAnimes.Values) {
+                yield return anime;
+            }
+            if(readyAnime != null) yield return readyAnime;
+            Instance.ChangeState(Instance.playingState);
         }
     }
 
@@ -45,7 +71,7 @@ public partial class Battle {
         }
 
         internal override void OnEnterEvent(State preState) {
-            Instance.RebindPlayers();
+            Instance.strikers.RebindPlayers();
             if (preState is PausedState) {
                 OnResume?.Invoke();
             }
@@ -53,24 +79,13 @@ public partial class Battle {
                 Debug.Log("GameStart");
                 OnEnter?.Invoke();
                 Music.Instance.StartMusic();
-                Instance.nextRank = STRIKER_COUNT;
             }
         }
 
         internal override void OnUpdateEvent(float deltaTime) {
             Music.Instance.UpdateMusic(deltaTime);
 
-            foreach (var striker in Instance.strikers) {
-                if (Instance.nextRank == 1) {
-                    striker.Rank = Instance.nextRank;
-                    Instance.ChangeState(Instance.outroState);
-                    break;
-                }
-                else if (striker.Rank < Instance.nextRank && striker.Hp <= 0) {
-                    striker.Rank = Instance.nextRank;
-                    Instance.nextRank--;
-                }
-            }
+            if(Instance.strikers.Rank()) Instance.ChangeState(Instance.outroState);
         }
 
         internal override void OnExitEvent(State nextState) {
@@ -83,27 +98,36 @@ public partial class Battle {
 
     public class OutroState : State {
         public event Action OnEnter, OnExit;
-        private float timer = 0f;
-        private const float OUTRO_TIMEOUT = 30f;
+        IEnumerator victoryAnime;
+        private Coroutine currentCoroutine;
 
         internal OutroState() {
         }
 
         internal override void OnEnterEvent(State preState) {
             OnEnter?.Invoke();
-            timer = 0f;
+            currentCoroutine = Instance.StartCoroutine(Anime());
         }
 
         internal override void OnUpdateEvent(float deltaTime) {
-            timer += deltaTime;
-            if (timer >= OUTRO_TIMEOUT) {
-                Debug.Log("OutroState timeout - transitioning to ResultState");
-                Instance.ChangeState(Instance.resultState);
-            }
         }
 
         internal override void OnExitEvent(State nextState) {
+            if (currentCoroutine != null) {
+                Instance.StopCoroutine(currentCoroutine);
+                currentCoroutine = null;
+            }
             OnExit?.Invoke();
+        }
+
+         public void SetVictoryAnime(IEnumerator animation) {
+            this.victoryAnime = animation;
+        }
+
+        IEnumerator Anime() {
+            Instance.strikers.SliceByRank(1).ForEach(s => s.Striker.gameObject.SetActive(false));
+            if (victoryAnime != null) yield return victoryAnime;
+            Instance.ChangeState(Instance.resultState);
         }
     }
 

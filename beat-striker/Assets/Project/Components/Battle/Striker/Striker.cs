@@ -5,26 +5,19 @@ using UnityEngine;
 
 [AddComponentMenu(" Striker", 0)]
 public class Striker : MonoBehaviour {
-    public float Rank { get; internal set; }
-    public float maxHp = 100;
-    private float hp;
-    public float Hp { 
-        get => hp; 
-        set => hp = Mathf.Clamp(value, 0, maxHp); 
-    }
-    public bool isGround { get; private set; }
+    public float maxHp;
+    public float Hp{ get; private set; }
+
     [NonSerialized] public Player player;
-    public event Action OnLanded, OnTakeoff, OnIntroPose, OnOutroPose;
+    public event Action OnIntroPose, OnOutroPose;
     public event Action<BeatResult> OnBeated;
     [NonSerialized] public readonly List<Beat> beats = new();
     [SerializeField] float goodTimeWidth = 0.1f, perfectTimeWidth = 0.05f;
 
 
     void Start() {
-        isGround = false;
         Music.Instance.OnBeatSpawn += OnBeatSpawn;
         Hp = maxHp;
-        Rank = 0;
     }
 
     void Update() {
@@ -32,6 +25,9 @@ public class Striker : MonoBehaviour {
         if (removes >= 1) {
             OnBeated?.Invoke(new BeatResult(BeatResult.Status.MISS));
         }
+
+        if (transform.position.y < -1e-2f) transform.position = transform.position.Y(-1e-2f);
+        if (transform.position.y < Battle.Instance.despawnY) Damage(Hp);
     }
 
     void OnBeatSpawn(Beat beat) {
@@ -60,23 +56,12 @@ public class Striker : MonoBehaviour {
         OnOutroPose?.Invoke();
     }
 
-    private void OnCollisionStay(Collision collision) {
-        foreach (var contact in collision.contacts) {
-            if (contact.normal.y > 0.5f) {
-                if (!isGround) OnLanded?.Invoke();
-                isGround = true;
-                return;
-            }
-        }
-    }
-
-    private void OnCollisionExit(Collision collision) {
-        if (isGround) OnTakeoff?.Invoke();
-        isGround = false;
-    }
-
     private void OnDestroy() {
         if (!Music.Instance) return;
         Music.Instance.OnBeatSpawn -= OnBeatSpawn;
+    }
+
+    public void Damage(float value) {
+        Hp = Mathf.Clamp(Hp - value, 0, maxHp);
     }
 }

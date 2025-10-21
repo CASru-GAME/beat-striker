@@ -36,6 +36,6 @@ public class CPUPlayer : Player {
     }
 
     public void SetDirection(Vector2 dir) {
-        direction = dir;
+        direction = dir.normalized;
     }
 }
