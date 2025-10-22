@@ -323,6 +323,7 @@ MonoBehaviour:
   strikerPrefabs:
   - type: 0
     prefab: {fileID: 8817504715203060625, guid: 1bc78afdd55844d15a2b3e78489bbd03, type: 3}
+  isStrikerTest: 1
 --- !u!114 &4546490731738603451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -337,7 +338,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleMusicController
   beatClip: {fileID: 8300000, guid: 4e3f3a2ec4eef4b308cda766a054361e, type: 3}
   beatOffset: -0.1
-  beatMapTestSpan: 1
+  beatMapTestSpan: 0.6
   beatSpawnTimeDelta: 3
 --- !u!114 &6725454366230945217
 MonoBehaviour:
@@ -494,7 +495,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2824719395312150377, guid: 32d96cf1443c443d4a6688a6faaee419, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 500
+      value: 416.8381
       objectReference: {fileID: 0}
     - target: {fileID: 2824719395312150377, guid: 32d96cf1443c443d4a6688a6faaee419, type: 3}
       propertyPath: m_SizeDelta.y
@@ -530,7 +531,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2824719395312150377, guid: 32d96cf1443c443d4a6688a6faaee419, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -238
+      value: -196.41905
       objectReference: {fileID: 0}
     - target: {fileID: 2824719395312150377, guid: 32d96cf1443c443d4a6688a6faaee419, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -710,7 +711,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2824719395312150377, guid: 32d96cf1443c443d4a6688a6faaee419, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 500
+      value: 416.5881
       objectReference: {fileID: 0}
     - target: {fileID: 2824719395312150377, guid: 32d96cf1443c443d4a6688a6faaee419, type: 3}
       propertyPath: m_SizeDelta.y
@@ -750,7 +751,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2824719395312150377, guid: 32d96cf1443c443d4a6688a6faaee419, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 235
+      value: 193.29404
       objectReference: {fileID: 0}
     - target: {fileID: 2824719395312150377, guid: 32d96cf1443c443d4a6688a6faaee419, type: 3}
       propertyPath: m_AnchoredPosition.y

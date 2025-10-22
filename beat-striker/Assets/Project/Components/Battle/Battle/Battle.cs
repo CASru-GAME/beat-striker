@@ -13,6 +13,8 @@ public partial class Battle : MonoBehaviour {
     [NonSerialized] public readonly Strikers strikers = new(2);
     [SerializeField] StrikerPrefab[] strikerPrefabs;
 
+    [SerializeField] internal bool isStrikerTest = false;
+
     public readonly IntroState introState = new();
     public readonly PlayingState playingState = new();
     public readonly PausedState pausedState = new();
@@ -34,7 +36,8 @@ public partial class Battle : MonoBehaviour {
     }
 
     void Start() {
-        ChangeState(introState);
+        if (isStrikerTest) ChangeState(playingState);
+        else ChangeState(introState);
     }
 
     void OnDestroy() {

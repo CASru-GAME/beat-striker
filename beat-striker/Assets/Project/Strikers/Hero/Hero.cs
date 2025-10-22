@@ -13,9 +13,9 @@ public class Hero : MonoBehaviour {
     [SerializeField] float jumpSpeed = 5f;
     [SerializeField] float runSpeed = 0.5f;
     [SerializeField] int airJumpMax = 3;
-    int airJumpCount = 0;
 
     public Colliden swardColliden;
+    bool isGround = false;
 
     void Start() {
         anim = GetComponent<Animator>();
@@ -27,29 +27,36 @@ public class Hero : MonoBehaviour {
     }
 
     void Update() {
-        anim.SetBool("IsGround", false);
+        anim.SetBool("IsGround", isGround);
 
         var east = striker.player.GetBtnDown(Btn.East);
 
-        if (east && (airJumpCount < airJumpMax)) {
-            var res = striker.Beat();
-            if (res) {
-                var d = east.direction;
-                transform.forward = Mathf.Sign(d.x) * Vector3.right;
-                rb.linearVelocity = jumpSpeed * d;
-                airJumpCount++;
-            }
+        if (east) {
+            var d = east.direction;
+            transform.forward = Mathf.Sign(d.x) * Vector3.right;
+            rb.linearVelocity = jumpSpeed * d;
         }
+
         else if (Mathf.Abs(rb.linearVelocity.x) < runSpeed && east.direction.sqrMagnitude > 0e-3) {
             transform.forward = Mathf.Sign(east.direction.x) * Vector3.right;
             rb.linearVelocity = rb.linearVelocity.X(runSpeed * Mathf.Sign(east.direction.x));
         }
 
-
         if (striker.player.GetBtnDown(Btn.South)) {
-            var res = striker.Beat();
-            if (res)
-                anim.SetTrigger("DoAttack");
+            anim.SetTrigger("DoAttack");
         }
+    }
+
+    private void OnCollisionStay(Collision collision) {
+        foreach (var contact in collision.contacts) {
+            if (contact.normal.y > 0.5f) {
+                isGround = true;
+                return;
+            }
+        }
+    }
+
+    private void OnCollisionExit(Collision collision) {
+        isGround = false;
     }
 }
