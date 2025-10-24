@@ -1,19 +1,19 @@
 
 using UnityEngine;
 
-namespace Core.GamePad {
+namespace Core.GamePad.Types {
     /// <summary>
     /// ゲームパッドのコマンド入力を示すメッセージ
     /// </summary>
     public class GamePadMessage {
-        public readonly GamePadId humanId;
+        public readonly GamePadId gamePadId;
         public readonly GamePadButton button;
-        public readonly GamePadAction humanAction;
+        public readonly GamePadAction action;
 
-        public GamePadMessage(GamePadId id, GamePadButton button, GamePadAction humanAction) {
-            this.humanId = id;
+        public GamePadMessage(GamePadId id, GamePadButton button, GamePadAction action) {
+            this.gamePadId = id;
             this.button = button;
-            this.humanAction = humanAction;
+            this.action = action;
         }
     }
 
@@ -21,11 +21,11 @@ namespace Core.GamePad {
     /// ゲームパッドの方向入力を示すメッセージ
     /// </summary>
     public class GamePadDirectionMessage {
-        public readonly GamePadId humanId;
+        public readonly GamePadId gamePadId;
         public readonly Vector2 direction;
 
         public GamePadDirectionMessage(GamePadId id, Vector2 direction) {
-            this.humanId = id;
+            this.gamePadId = id;
             this.direction = direction;
         }
     }
