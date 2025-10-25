@@ -8,23 +8,16 @@ using UnityEngine.InputSystem;
 using VContainer;
 
 namespace Core.GamePad.Views {
-
-    [RequireComponent(typeof(PlayerInput))]
+    
     public sealed class GamePad : MonoBehaviour, GameInput.IPlayerActions {
         private PlayerInput playerInput;
         private GameInput input;
         private IGamePadPresenter presenter;
-        [SerializeField]
-        private GamePadConfig config = new() {
-            onThreshold = 0.5f,
-            offThreshold = 0.4f,
-        };
-
-        public GamePadConfig Config => config;
 
         [Inject]
-        public void Construct(IGamePadPresenter presenter) {
+        public void Construct(IGamePadPresenter presenter, PlayerInput playerInput) {
             this.presenter = presenter;
+            this.playerInput = playerInput;
         }
 
         void Awake() {
