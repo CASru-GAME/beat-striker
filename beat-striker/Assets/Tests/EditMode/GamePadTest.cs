@@ -15,7 +15,11 @@ namespace Tests.EditMode {
 
         [SetUp]
         public void SetUp() {
-            model = new GamePadModel(new GamePadId(1), 0.5f, 0.4f);
+            model = new GamePadModel(new GamePadConfig {
+                id = new GamePadId(0),
+                onThreshold = 0.5f,
+                offThreshold = 0.4f,
+            });
         }
 
         [Test]
@@ -82,7 +86,11 @@ namespace Tests.EditMode {
         public void SetUp() {
             bus = new FakeBus();
             id = new GamePadId(10);
-            model = new GamePadModel(id, onThreshold: 0.5f, offThreshold: 0.4f);
+            model = new GamePadModel(new GamePadConfig {
+                id = id,
+                onThreshold = 0.5f,
+                offThreshold = 0.4f,
+            });
             presenter = new GamePadPresenter(bus, model);
         }
 

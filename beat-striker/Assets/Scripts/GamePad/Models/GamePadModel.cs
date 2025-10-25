@@ -1,5 +1,6 @@
 
 
+using System;
 using Core.GamePad.Types;
 using UnityEngine;
 
@@ -13,10 +14,10 @@ namespace Core.GamePad.Models {
         private bool directionDown;
         private Vector2 direction = Vector2.zero;
 
-        public GamePadModel(GamePadId id, float onThreshold, float offThreshold) {
-            this.id = id;
-            this.onThreshold = onThreshold;
-            this.offThreshold = offThreshold;
+        public GamePadModel(GamePadConfig config) {
+            this.id = config.id;
+            this.onThreshold = config.onThreshold;
+            this.offThreshold = config.offThreshold;
             directionDown = false;
         }
 
@@ -37,5 +38,10 @@ namespace Core.GamePad.Models {
         }
     }
 
-
+    [Serializable]
+    public struct GamePadConfig {
+        public GamePadId id;
+        public float onThreshold;
+        public float offThreshold;
+    }
 }
