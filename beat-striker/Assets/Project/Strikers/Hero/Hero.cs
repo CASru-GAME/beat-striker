@@ -29,6 +29,10 @@ public class Hero : MonoBehaviour {
     void Update() {
         anim.SetBool("IsGround", isGround);
 
+        // horizontal speed -> run flag
+        var speed = Mathf.Abs(rb.linearVelocity.x);
+        anim.SetBool("IsRun", speed > 0.1f);
+
         var east = striker.player.GetBtnDown(Btn.East);
 
         if (east) {
