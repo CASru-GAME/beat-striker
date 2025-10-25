@@ -5,22 +5,29 @@ using Core.GamePad.Presenters;
 using Core.GamePad.Types;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using VContainer;
 
-namespace Core.GamePad {
+namespace Core.GamePad.Views {
 
     [RequireComponent(typeof(PlayerInput))]
     public sealed class GamePad : MonoBehaviour, GameInput.IPlayerActions {
-        private static int nextId = 0;
         private PlayerInput playerInput;
         private GameInput input;
         private IGamePadPresenter presenter;
-        [SerializeField] private float onThreshold = 0.5f;
-        [SerializeField] private float offThreshold = 0.4f;
+        [SerializeField]
+        private GamePadConfig config = new() {
+            onThreshold = 0.5f,
+            offThreshold = 0.4f,
+        };
+
+        public GamePadConfig Config => config;
+
+        [Inject]
+        public void Construct(IGamePadPresenter presenter) {
+            this.presenter = presenter;
+        }
 
         void Awake() {
-            presenter = new GamePadPresenter(
-                this.GetBus(),
-                new GamePadModel(new GamePadId(nextId++), onThreshold, offThreshold));
             playerInput = GetComponent<PlayerInput>();
             input = new GameInput();
         }
