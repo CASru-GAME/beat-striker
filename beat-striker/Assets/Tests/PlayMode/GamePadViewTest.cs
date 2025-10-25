@@ -20,8 +20,9 @@ namespace Tests.PlayMode {
         public void SetUp() {
             gameObject = new GameObject("TestGamePad");
             playerInput = gameObject.AddComponent<PlayerInput>();
-            gamePad = gameObject.AddComponent<GamePad>();
             mockPresenter = new MockGamePadPresenter();
+            gamePad = gameObject.AddComponent<GamePad>();
+            gamePad.enabled = false;
             gamePad.Construct(mockPresenter, playerInput);
         }
 
@@ -31,45 +32,45 @@ namespace Tests.PlayMode {
         }
 
         [UnityTest]
-        public IEnumerator OnEnable_PresenterOnEnableが呼ばれる() {
-            // Act
+        public IEnumerator OnEnableの時PresenterOnEnableが呼ばれる() {
             gamePad.enabled = true;
             yield return null;
 
-            // Assert
-            Assert.IsTrue(mockPresenter.OnEnableCalled);
+            Assert.IsTrue(mockPresenter.onEnableCalled);
         }
 
         [UnityTest]
-        public IEnumerator OnDisable_PresenterOnDisableが呼ばれる() {
-            // Arrange
+        public IEnumerator OnDisableの時PresenterOnDisableが呼ばれる() {
             gamePad.enabled = true;
             yield return null;
 
-            // Act
             gamePad.enabled = false;
             yield return null;
 
-            // Assert
-            Assert.IsTrue(mockPresenter.OnDisableCalled);
+            Assert.IsTrue(mockPresenter.onDisableCalled);
         }
 
 
         private class MockGamePadPresenter : IGamePadPresenter {
-            public bool OnEnableCalled { get; private set; }
-            public bool OnDisableCalled { get; private set; }
+            public bool onEnableCalled;
+            public bool onDisableCalled;
+            public GamePadButton? lastButtonPressed;
+            public GamePadAction? lastActionType;
 
             public void OnEnable() {
-                OnEnableCalled = true;
+                onEnableCalled = true;
             }
 
             public void OnDisable() {
-                OnDisableCalled = true;
+                onDisableCalled = true;
             }
 
             public void OnDirection(Vector2 v) { }
 
-            public void OnButton(GamePadButton button, GamePadAction action) { }
+            public void OnButton(GamePadButton button, GamePadAction action) {
+                lastButtonPressed = button;
+                lastActionType = action;
+            }
         }
     }
 }

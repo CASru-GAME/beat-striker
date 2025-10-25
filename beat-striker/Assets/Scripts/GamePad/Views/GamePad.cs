@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 using VContainer;
 
 namespace Core.GamePad.Views {
-    
+
     public sealed class GamePad : MonoBehaviour, GameInput.IPlayerActions {
         private PlayerInput playerInput;
         private GameInput input;
@@ -21,7 +21,6 @@ namespace Core.GamePad.Views {
         }
 
         void Awake() {
-            playerInput = GetComponent<PlayerInput>();
             input = new GameInput();
         }
 
