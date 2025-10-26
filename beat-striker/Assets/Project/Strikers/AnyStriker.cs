@@ -29,7 +29,18 @@ public sealed class AnyStriker : MonoBehaviour {
         anim.SetBool("IsGround", isGround);
         anim.SetFloat("Velocity", rb.linearVelocity.magnitude);
 
+
         var east = striker.player.GetBtnDown(Btn.East);
+
+        anim.SetFloat("InputX", east.direction.x);
+        anim.SetFloat("InputY", east.direction.y);
+
+        var velocity = rb.linearVelocity;
+        var velocityMagnitude = velocity.magnitude;
+        if (velocityMagnitude > 0) {
+            anim.SetFloat("MoveX", velocity.x / velocityMagnitude);
+            anim.SetFloat("MoveY", velocity.y / velocityMagnitude);
+        }
 
         if (east) {
             var d = east.direction;
