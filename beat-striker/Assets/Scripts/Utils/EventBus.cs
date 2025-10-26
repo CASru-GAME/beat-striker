@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core.EventBus {
+namespace Core.Utils {
 
     public interface IBus {
         void Subscribe<T>(Action<T> handler);

@@ -1,6 +1,6 @@
 
 using UnityEngine;
-using Core.EventBus;
+using Core.Utils;
 using Core.GamePad.Models;
 using Core.GamePad.Types;
 
