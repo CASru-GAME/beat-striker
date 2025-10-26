@@ -1,5 +1,5 @@
 
-using Core.EventBus;
+
 using Core.GamePad.Models;
 using Core.GamePad.Presenters;
 using Core.GamePad.Types;
