@@ -265,7 +265,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5189117836200484639}
   - component: {fileID: 8817504715203060625}
-  - component: {fileID: 5208035124260131191}
+  - component: {fileID: 5009609225602117194}
   - component: {fileID: 712021694818041983}
   - component: {fileID: 7378333137058971118}
   - component: {fileID: 8735412774696205190}
@@ -318,7 +318,7 @@ MonoBehaviour:
   maxHp: 100
   goodTimeWidth: 0.2
   perfectTimeWidth: 0.05
---- !u!114 &5208035124260131191
+--- !u!114 &5009609225602117194
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -327,13 +327,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2273013822404465156}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9db8e0227c88e46b9af4ac08136cee21, type: 3}
+  m_Script: {fileID: 11500000, guid: e9c07dca8ba284c1899093c3d52c6f6a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Wizard
+  m_EditorClassIdentifier: Assembly-CSharp::AnyStriker
   jumpSpeed: 50
-  runSpeed: 10
+  runSpeed: 5
   airJumpMax: 3
-  swardColliden: {fileID: 0}
+  collinden: []
 --- !u!95 &712021694818041983
 Animator:
   serializedVersion: 7
