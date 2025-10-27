@@ -18,7 +18,17 @@ namespace Core.App.Types {
         public PlayerId(int value) {
             this.value = value;
         }
-        
+
+        public override bool Equals(object obj) {
+            if (obj is PlayerId other) {
+                return value == other.value;
+            }
+            return false;
+        }
+
+        public override int GetHashCode() {
+            return value.GetHashCode();
+        }
     }
 
     public class StrikerId {
@@ -45,12 +55,34 @@ namespace Core.App.Types {
         public StageId(string value) {
             this.value = value;
         }
+
+        public override bool Equals(object obj) {
+            if (obj is StageId other) {
+                return value == other.value;
+            }
+            return false;
+        }
+
+        public override int GetHashCode() {
+            return value?.GetHashCode() ?? 0;
+        }
     }
 
     public class TrackId {
         public readonly string value;
         public TrackId(string value) {
             this.value = value;
+        }
+
+        public override bool Equals(object obj) {
+            if (obj is TrackId other) {
+                return value == other.value;
+            }
+            return false;
+        }
+
+        public override int GetHashCode() {
+            return value?.GetHashCode() ?? 0;
         }
     }
 }

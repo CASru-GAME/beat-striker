@@ -4,7 +4,8 @@
     "references": [
         "GamePad",
         "Utils",
-        "VContainer"
+        "VContainer",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
