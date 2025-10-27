@@ -9,7 +9,7 @@ using VContainer;
 
 namespace Core.GamePad.Views {
 
-    public sealed class GamePad : MonoBehaviour, GameInput.IPlayerActions {
+    public sealed class GamePadView : MonoBehaviour, GameInput.IPlayerActions {
         private PlayerInput playerInput;
         private GameInput input;
         private IGamePadPresenter presenter;

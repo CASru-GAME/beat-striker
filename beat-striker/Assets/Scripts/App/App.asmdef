@@ -2,8 +2,9 @@
     "name": "App",
     "rootNamespace": "",
     "references": [
-        "EventBus",
-        "GamePad"
+        "GamePad",
+        "Utils",
+        "VContainer"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

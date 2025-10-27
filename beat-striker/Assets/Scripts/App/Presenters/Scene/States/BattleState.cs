@@ -1,7 +1,6 @@
 
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
-using UnityEditor.SceneManagement;
 
 namespace Core.App.Presenters.Scene.States {
 
@@ -10,23 +9,24 @@ namespace Core.App.Presenters.Scene.States {
 
         public BattleState(SceneStateContext context) {
             this.context = context;
-            context.bus.Subscribe<TransitionMessage>(OnAppFlowMessage);
         }
 
-        private void OnAppFlowMessage(TransitionMessage message) {
-            if (message.command == TransitionCommand.Next) {
+        private void OnAppFlowMessage(RequireTransitionMessage message) {
+            if (message.command == TransitionRequire.LoadScene) {
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    AppScene.Battle
+                    AppScene.Title
                 ));
             }
         }
 
-        public async void Enter() {
-            context.bus.Unsubscribe<TransitionMessage>(OnAppFlowMessage);
+        public void Enter() {
+            context.bus.Subscribe<RequireTransitionMessage>(OnAppFlowMessage);
         }
 
         public void Exit() {
+            context.bus.Unsubscribe<RequireTransitionMessage>(OnAppFlowMessage);
         }
     }
 }
+

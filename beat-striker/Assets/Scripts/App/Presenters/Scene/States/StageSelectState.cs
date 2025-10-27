@@ -1,7 +1,7 @@
 
+
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
-using UnityEditor.SceneManagement;
 
 namespace Core.App.Presenters.Scene.States {
 
@@ -10,17 +10,16 @@ namespace Core.App.Presenters.Scene.States {
 
         public StageSelectState(SceneStateContext context) {
             this.context = context;
-            context.bus.Subscribe<TransitionMessage>(OnAppFlowMessage);
         }
 
-        private void OnAppFlowMessage(TransitionMessage message) {
-            if (message.command == TransitionCommand.Back) {
+        private void OnAppFlowMessage(RequireTransitionMessage message) {
+            if (message.command == TransitionRequire.StartExitAnimation) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     AppScene.Title
                 ));
             }
-            else if (message.command == TransitionCommand.Next) {
+            else if (message.command == TransitionRequire.Next) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     AppScene.CharacterSelect
@@ -28,11 +27,24 @@ namespace Core.App.Presenters.Scene.States {
             }
         }
 
-        public async void Enter() {
-            context.bus.Unsubscribe<TransitionMessage>(OnAppFlowMessage);
+        private void OnStageSelected(SelectStageMessage message) {
+            context.setting.Stage = message.stage;
+        }
+
+        private void OnTrackSelected(SelectTrackMessage message) {
+            context.setting.Track = message.track;
+        }
+
+        public void Enter() {
+            context.bus.Subscribe<RequireTransitionMessage>(OnAppFlowMessage);
+            context.bus.Subscribe<SelectStageMessage>(OnStageSelected);
+            context.bus.Subscribe<SelectTrackMessage>(OnTrackSelected);
         }
 
         public void Exit() {
+            context.bus.Unsubscribe<RequireTransitionMessage>(OnAppFlowMessage);
+            context.bus.Unsubscribe<SelectStageMessage>(OnStageSelected);
+            context.bus.Unsubscribe<SelectTrackMessage>(OnTrackSelected);
         }
     }
 }
