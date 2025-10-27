@@ -48,14 +48,14 @@ public class CursorRegistry : ICursorRegistry {
         if (isActive) {
             var currentPlayerIds = new HashSet<PlayerId>(playerRegistry.GetAllPlayerIds());
             var existingPlayerIds = new HashSet<PlayerId>(cursors.Keys);
-            
+
             foreach (var playerId in existingPlayerIds) {
                 if (!currentPlayerIds.Contains(playerId)) {
                     cursors.Remove(playerId);
                     bus.Publish(new AppMessages.RequireCursorDestroyed(playerId));
                 }
             }
-            
+
             foreach (var playerId in currentPlayerIds) {
                 if (!cursors.TryGetValue(playerId, out var isCreated) || !isCreated) {
                     cursorFactory.CreateCursor(playerId);
