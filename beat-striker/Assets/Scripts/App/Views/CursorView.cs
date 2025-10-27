@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Core;
 using Core.App.Types;
 using Core.GamePad.Types;
 using Core.Utils;
@@ -58,7 +59,7 @@ public class CursorView : MonoBehaviour, ICursorView {
 
     private GameObject FindBotan(List<RaycastResult> results) {
         foreach (var result in results) {
-            if (result.gameObject.GetComponent<Button>()) {
+            if (result.gameObject.GetComponent<Button>() || result.gameObject.GetComponent<Botan>()) {
                 return result.gameObject;
             }
         }

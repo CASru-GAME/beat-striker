@@ -5,7 +5,8 @@
         "GamePad",
         "Utils",
         "VContainer",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Core.Extras"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

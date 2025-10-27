@@ -8,7 +8,6 @@ namespace Core.Utils {
         void Subscribe<T>(Action<T> handler);
         void Unsubscribe<T>(Action<T> handler);
         void Publish<T>(T evt);
-        void Clear();
     }
 
     public sealed class Bus : IBus {
@@ -31,10 +30,6 @@ namespace Core.Utils {
         public void Publish<T>(T evt) {
             if (map.TryGetValue(typeof(T), out var d))
                 (d as Action<T>)?.Invoke(evt);
-        }
-
-        public void Clear() {
-            map.Clear();
         }
     }
 

@@ -6,7 +6,9 @@ using Core.App.Types;
 using Core.GamePad.Types;
 using Core.Utils;
 
-public interface IPlayerRegistry {
-    PlayerId? ToPlayerId(GamePadId gamePadId);
-    IEnumerable<PlayerId> GetAllPlayerIds();
+namespace Core.App.Interfaces {
+    public interface IPlayerRegistry {
+        PlayerId? ToPlayerId(GamePadId gamePadId);
+        IEnumerable<PlayerId> GetAllPlayerIds();
+    }
 }
