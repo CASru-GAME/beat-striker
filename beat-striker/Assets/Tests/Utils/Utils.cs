@@ -6,6 +6,19 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Tests.Utils {
+    public sealed class FakeLifeMutater : ILifeMutater {
+        public bool isEnabled = false;
+
+        public void SetEnable(bool isEnabled) {
+            if (isEnabled) {
+                this.isEnabled = true;
+            } else {
+                this.isEnabled = false;
+            }
+        }
+    }
+
+
     public sealed class FakeLife : ILife {
         private Action onEnable = delegate { };
         private Action onDisable = delegate { };

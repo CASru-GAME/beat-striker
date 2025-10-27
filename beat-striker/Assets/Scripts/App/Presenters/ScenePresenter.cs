@@ -12,12 +12,20 @@ namespace Core.App.Presenters.Scene {
     public class SceneStatePresenter : ISceneStateController, ISceneStateFactory {
         private ISceneState currentState;
 
-        public SceneStatePresenter() {
-
+        public SceneStatePresenter(
+            AppScene firstScene,
+            ISceneView view,
+            IBus bus,
+            IBattleSettingModel setting,
+            ICursorFactory cursorFactory,
+            ICursorRegistry cursorRegistry) {
+            var context = new SceneStateContext(view, bus, setting, this, this, cursorFactory, cursorRegistry);
+            currentState = CreateSceneState(firstScene, context);
+            currentState.Enter();
         }
 
         public void ChangeState(ISceneState newState) {
-            currentState?.Exit();
+            currentState.Exit();
             currentState = newState;
             currentState.Enter();
         }

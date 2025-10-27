@@ -25,23 +25,20 @@ public class CursorView : MonoBehaviour, ICursorView {
     private RectTransform movableAreaRectTransform;
     private GameObject lastHoveredObject;
     private PlayerId playerId;
-    private ICursorPresenter presenter;
 
-    [Inject]
-    public void Construct(PlayerId playerId, ICursorPresenter presenter) {
-        this.playerId = playerId;
-        this.presenter = presenter;
-    }
 
     void Awake() {
         rectTransform = GetComponent<RectTransform>();
         movableAreaRectTransform = transform.parent.GetComponent<RectTransform>();
+    }
+    
+    public void Construct(PlayerId playerId, ICursorPresenter presenter) {
+        this.playerId = playerId;
         text.text = $"P{playerId.value + 1}";
         if (playerId.value >= 0 && playerId.value < playerColors.Length) {
             text.color = playerColors[playerId.value];
         }
     }
-
 
     private PointerEventData CreatePointerEventData() {
         PointerEventData data = new(EventSystem.current) {

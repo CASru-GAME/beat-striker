@@ -1,8 +1,8 @@
 {
-    "name": "Utils",
+    "name": "BS.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc"
+        "GUID:148597ecdec2f442b8070cf998358dc0"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

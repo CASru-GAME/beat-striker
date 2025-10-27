@@ -91,27 +91,29 @@ namespace Tests.EditMode {
                 onThreshold = 0.5f,
                 offThreshold = 0.4f,
             });
-            presenter = new GamePadPresenter(bus, model);
+            var life = new FakeLife();
+            presenter = new GamePadPresenter(bus, model, life);
+            life.Enable();
         }
 
 
         [Test]
         public void EnableDisable() {
             // 有効化時に参加メッセージを送る
-            presenter.OnEnable();
             var m0 = bus.GetMessage<GamePadMessages.Joined>();
             Assert.That(m0.gamePadId.value, Is.EqualTo(id.value));
 
             // 無効化時に離脱メッセージを送る
-            presenter.OnDisable();
+            bus.ClearMessages();
+            var life2 = new FakeLife();
+            _ = new GamePadPresenter(bus, model, life2);
+            life2.Disable();
             var m1 = bus.GetMessage<GamePadMessages.Left>();
             Assert.That(m1.gamePadId.value, Is.EqualTo(id.value));
         }
 
         [Test]
         public void OnDirection() {
-            presenter.OnEnable();
-
             // ゼロのメッセージを送る
             bus.ClearMessages();
             presenter.OnDirection(Vector2.zero);
@@ -150,8 +152,6 @@ namespace Tests.EditMode {
 
         [Test]
         public void OnButton() {
-            presenter.OnEnable();
-
             // 押下
             bus.ClearMessages();
             presenter.OnButton(GamePadButton.North, GamePadAction.Down);

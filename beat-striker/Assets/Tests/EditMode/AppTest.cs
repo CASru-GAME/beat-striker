@@ -371,7 +371,15 @@ namespace Tests.EditMode {
 
         [Test]
         public void ChangeState_前のExit後に次のEnterが呼ばれる() {
-            var presenter = new SceneStatePresenter();
+            var bus = new FakeBus();
+            var presenter = new SceneStatePresenter(
+                AppScene.Title,
+                new FakeSceneView(),
+                bus,
+                new FakeBattleSettingModel(),
+                new FakeCursorFactory(),
+                new FakeCursorRegistry()
+            );
             var log = new List<string>();
             var s1 = new LogFakeState("S1", log);
             var s2 = new LogFakeState("S2", log);
@@ -391,16 +399,23 @@ namespace Tests.EditMode {
 
         [Test]
         public void CreateSceneState_シーンに応じて正しいState型が返る() {
-            var presenter = new SceneStatePresenter();
-
+            var bus = new FakeBus();
             var ctx = new SceneStateContext(
                 new FakeSceneView(),
-                new FakeBus(),
+                bus,
                 new FakeBattleSettingModel(),
-                presenter, // controller
-                presenter, // factory
+                new FakeSceneStateController(),
+                new FakeSceneStateFactory(),
                 new FakeCursorFactory(),
                 new FakeCursorRegistry()
+            );
+            var presenter = new SceneStatePresenter(
+                AppScene.Title,
+                ctx.view,
+                bus,
+                ctx.setting,
+                ctx.cursorFactory,
+                ctx.cursorRegistry
             );
 
             Assert.That(presenter.CreateSceneState(AppScene.Title, ctx), Is.TypeOf<TitleState>());
