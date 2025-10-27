@@ -13,7 +13,7 @@ namespace Core.App.Types {
         None
     }
 
-    public class PlayerId {
+    public readonly struct PlayerId {
         public readonly int value;
         public PlayerId(int value) {
             this.value = value;
@@ -29,9 +29,17 @@ namespace Core.App.Types {
         public override int GetHashCode() {
             return value.GetHashCode();
         }
+
+        public static bool operator ==(PlayerId left, PlayerId right) {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(PlayerId left, PlayerId right) {
+            return !left.Equals(right);
+        }
     }
 
-    public class StrikerId {
+    public readonly struct StrikerId {
         public readonly string value;
 
         public StrikerId(string value) {
@@ -48,9 +56,17 @@ namespace Core.App.Types {
         public override int GetHashCode() {
             return value?.GetHashCode() ?? 0;
         }
+
+        public static bool operator ==(StrikerId left, StrikerId right) {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(StrikerId left, StrikerId right) {
+            return !left.Equals(right);
+        }
     }
 
-    public class StageId {
+    public readonly struct StageId {
         public readonly string value;
         public StageId(string value) {
             this.value = value;
@@ -66,9 +82,17 @@ namespace Core.App.Types {
         public override int GetHashCode() {
             return value?.GetHashCode() ?? 0;
         }
+
+        public static bool operator ==(StageId left, StageId right) {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(StageId left, StageId right) {
+            return !left.Equals(right);
+        }
     }
 
-    public class TrackId {
+    public readonly struct TrackId {
         public readonly string value;
         public TrackId(string value) {
             this.value = value;
@@ -83,6 +107,14 @@ namespace Core.App.Types {
 
         public override int GetHashCode() {
             return value?.GetHashCode() ?? 0;
+        }
+
+        public static bool operator ==(TrackId left, TrackId right) {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(TrackId left, TrackId right) {
+            return !left.Equals(right);
         }
     }
 }

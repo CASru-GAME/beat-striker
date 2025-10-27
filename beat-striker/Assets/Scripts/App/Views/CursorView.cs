@@ -19,6 +19,7 @@ public class CursorView : MonoBehaviour, ICursorView {
     [SerializeField] private float moveSpeed = 5000f;
     [SerializeField] private float accelerationFactor = 0.3f;
     private float movingTime = 0f;
+    private Vector2 currentDirection = Vector2.zero;
     private RectTransform rectTransform;
     private RectTransform movableAreaRectTransform;
     private GameObject lastHoveredObject;
@@ -65,9 +66,21 @@ public class CursorView : MonoBehaviour, ICursorView {
     }
 
     public void OnMove(Vector2 direction) {
+        currentDirection = direction;
+    }
+
+    public void OnMoveEnd() {
+        movingTime = 0f;
+        currentDirection = Vector2.zero;
+    }
+
+    private void Update() {
+        if (currentDirection == Vector2.zero) {
+            return;
+        }
 
         movingTime += Time.deltaTime;
-        rectTransform.anchoredPosition += moveSpeed * (1 - Mathf.Exp(-accelerationFactor * movingTime)) * Time.deltaTime * direction;
+        rectTransform.anchoredPosition += moveSpeed * (1 - Mathf.Exp(-accelerationFactor * movingTime)) * Time.deltaTime * currentDirection;
 
         rectTransform.anchoredPosition = new Vector2(
             Mathf.Clamp(rectTransform.anchoredPosition.x, -movableAreaRectTransform.rect.width / 2, movableAreaRectTransform.rect.width / 2),
@@ -86,10 +99,6 @@ public class CursorView : MonoBehaviour, ICursorView {
         }
     }
 
-    public void OnMoveEnd() {
-        movingTime = 0f;
-    }
-
     public void OnClick() {
         PointerEventData data = CreatePointerEventData();
         GameObject currentHovered = GetHoveredBotan(data);
@@ -98,5 +107,9 @@ public class CursorView : MonoBehaviour, ICursorView {
         if (currentHovered) {
             ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerClickHandler);
         }
+    }
+
+    public void Destroy() {
+        Destroy(gameObject);
     }
 }

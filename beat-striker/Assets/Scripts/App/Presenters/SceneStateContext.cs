@@ -8,6 +8,7 @@ namespace Core.App.Presenters.Scene {
         public readonly IBus bus;
         public readonly IBattleSettingModel setting;
         public readonly ICursorFactory cursorFactory;
+        public readonly ICursorRegistry cursorRegistry;
         public ISceneStateController controller { get; set; }
         public ISceneStateFactory factory { get; set; }
 
@@ -18,7 +19,8 @@ namespace Core.App.Presenters.Scene {
             IBattleSettingModel setting,
             ISceneStateController controller,
             ISceneStateFactory factory,
-            ICursorFactory cursorFactory
+            ICursorFactory cursorFactory,
+            ICursorRegistry cursorRegistry
         ) {
             this.view = view;
             this.bus = bus;
@@ -26,6 +28,7 @@ namespace Core.App.Presenters.Scene {
             this.controller = controller;
             this.factory = factory;
             this.cursorFactory = cursorFactory;
+            this.cursorRegistry = cursorRegistry;
         }
 
     }

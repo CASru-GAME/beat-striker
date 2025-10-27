@@ -19,6 +19,41 @@ namespace Core.App.Presenters.Scene.Types {
             }
         }
 
+        public class RequireCursorDestroyed {
+            private readonly bool isAll;
+            private readonly PlayerId playerId;
+
+            public RequireCursorDestroyed(PlayerId playerId) {
+                this.playerId = playerId;
+                isAll = false;
+            }
+
+            public RequireCursorDestroyed() {
+                isAll = true;
+            }
+
+            public bool IsTarget(PlayerId playerId) {
+                if (isAll) return true;
+                return this.playerId.Equals(playerId);
+            }
+        }
+
+        public class PlayerJoined {
+            public readonly PlayerId playerId;
+
+            public PlayerJoined(PlayerId playerId) {
+                this.playerId = playerId;
+            }
+        }
+
+        public class PlayerLeft {
+            public readonly PlayerId playerId;
+
+            public PlayerLeft(PlayerId playerId) {
+                this.playerId = playerId;
+            }
+        }
+
         public class TransitionStartedMessage {
             public readonly AppScene scene;
 
