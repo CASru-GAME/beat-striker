@@ -12,13 +12,10 @@ using VContainer;
 namespace Core.App.Views.Scene {
     public class SceneView : MonoBehaviour, ISceneView {
         private Dictionary<AppScene, string> sceneNames = new();
-        private IPlayerRegistry playerRegistry;
-
 
         [Inject]
-        public void Construct(Dictionary<AppScene, string> sceneNames, IPlayerRegistry playerRegistry) {
+        public void Construct(Dictionary<AppScene, string> sceneNames) {
             this.sceneNames = sceneNames;
-            this.playerRegistry = playerRegistry;
         }
 
         public void LoadScene(AppScene scene, Action<AppScene> OnSceneLoadCompleted) {

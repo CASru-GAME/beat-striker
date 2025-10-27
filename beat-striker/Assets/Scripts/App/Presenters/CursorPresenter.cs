@@ -1,5 +1,6 @@
 
 
+using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
 using Core.GamePad.Types;
 using Core.Utils;
@@ -21,29 +22,39 @@ public class CursorPresenter: ICursorPresenter {
     private void OnDisable() {
         bus.Unsubscribe<GamePadMessages.Inputed>(OnGamePadInputed);
         bus.Unsubscribe<GamePadMessages.DirectionChanged>(OnDirectionChanged);
+        bus.Unsubscribe<AppMessages.RequireCursorDestroyed>(OnCursorSceneExited);
+        
     }
 
     private void OnEnable() {
         bus.Subscribe<GamePadMessages.Inputed>(OnGamePadInputed);
         bus.Subscribe<GamePadMessages.DirectionChanged>(OnDirectionChanged);
+        bus.Subscribe<AppMessages.RequireCursorDestroyed>(OnCursorSceneExited);
     }
 
-    public void OnDirectionChanged(GamePadMessages.DirectionChanged mes) {
-        if (!registry.ToPlayerId(mes.gamePadId).Equals(playerId)) return;
+     void OnDirectionChanged(GamePadMessages.DirectionChanged mes) {
+        var pId = registry.ToPlayerId(mes.gamePadId);
+        if (pId == null || !pId.Value.Equals(playerId)) return;
         view.OnMove(mes.direction);
-        if (!registry.ToPlayerId(mes.gamePadId).Equals(playerId)) return;
     }
 
-    public void OnGamePadInputed(   GamePadMessages.Inputed mes) {
-        if (!registry.ToPlayerId(mes.gamePadId).Equals(playerId)) return;
+     void OnGamePadInputed(GamePadMessages.Inputed mes) {
+        var pId = registry.ToPlayerId(mes.gamePadId);
+        if (pId == null || !pId.Value.Equals(playerId)) return;
 
         if (mes.button == GamePadButton.Direction && mes.action == GamePadAction.Up) {
             view.OnMoveEnd();
             return;
         }
 
-        if (mes.button != GamePadButton.East) {
+        if (mes.button == GamePadButton.East) {
             view.OnClick();
         }
     }
+
+    private void OnCursorSceneExited(AppMessages.RequireCursorDestroyed message) {
+        if (!message.IsTarget(playerId)) return;
+        view.Destroy();
+    }
+    
 }

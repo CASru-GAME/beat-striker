@@ -1,7 +1,9 @@
 
 
+using System.Linq;
 using Core.App.Models;
 using Core.App.Presenters.Scene.States;
+using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
 using Core.Utils;
 
@@ -11,12 +13,13 @@ namespace Core.App.Presenters.Scene {
         private ISceneState currentState;
 
         public SceneStatePresenter() {
+
         }
 
         public void ChangeState(ISceneState newState) {
             currentState?.Exit();
             currentState = newState;
-            currentState?.Enter();
+            currentState.Enter();
         }
 
         public ISceneState CreateSceneState(AppScene scene, SceneStateContext context) {

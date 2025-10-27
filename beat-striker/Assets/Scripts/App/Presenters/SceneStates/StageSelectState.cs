@@ -36,6 +36,7 @@ namespace Core.App.Presenters.Scene.States {
         }
 
         public void Enter() {
+            context.cursorRegistry.SetCursorsActive(true);
             context.bus.Subscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
             context.bus.Subscribe<AppMessages.SelectStage>(OnStageSelected);
             context.bus.Subscribe<AppMessages.SelectTrack>(OnTrackSelected);
