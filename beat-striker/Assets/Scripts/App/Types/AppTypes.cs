@@ -1,7 +1,7 @@
 namespace Core.App.Types {
-    public enum TransitionCommand {
-        End,
-        Back,
+    public enum TransitionRequire {
+        LoadScene,
+        StartExitAnimation,
         Next,
     }
 
@@ -13,27 +13,43 @@ namespace Core.App.Types {
         None
     }
 
-    public enum Strikers {
-        None,
-        Hero,
-        Warrior,
-        Wizard,
-        Satan,
-    }
-
-    public enum Stages {
-        Street,
-        Stage
-    }
-
-    public struct Track {
-        public string title;
-        public string description;
-    }
-
     public class PlayerId {
         public readonly int value;
         public PlayerId(int value) {
+            this.value = value;
+        }
+        
+    }
+
+    public class StrikerId {
+        public readonly string value;
+
+        public StrikerId(string value) {
+            this.value = value;
+        }
+
+        public override bool Equals(object obj) {
+            if (obj is StrikerId other) {
+                return value == other.value;
+            }
+            return false;
+        }
+
+        public override int GetHashCode() {
+            return value?.GetHashCode() ?? 0;
+        }
+    }
+
+    public class StageId {
+        public readonly string value;
+        public StageId(string value) {
+            this.value = value;
+        }
+    }
+
+    public class TrackId {
+        public readonly string value;
+        public TrackId(string value) {
             this.value = value;
         }
     }

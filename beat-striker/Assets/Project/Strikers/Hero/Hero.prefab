@@ -347,8 +347,8 @@ GameObject:
   m_Component:
   - component: {fileID: 5189117836200484639}
   - component: {fileID: 8817504715203060625}
-  - component: {fileID: 6037586890744269640}
   - component: {fileID: 712021694818041983}
+  - component: {fileID: 4017204965949414326}
   - component: {fileID: 7378333137058971118}
   - component: {fileID: 8735412774696205190}
   m_Layer: 0
@@ -393,22 +393,6 @@ MonoBehaviour:
   maxHp: 100
   goodTimeWidth: 0.2
   perfectTimeWidth: 0.05
---- !u!114 &6037586890744269640
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2273013822404465156}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f152563c2eea7f44c8892f046c2d57f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::playerController
-  jumpSpeed: 70
-  runSpeed: 3
-  airJumpMax: 8
-  swardColliden: {fileID: 0}
 --- !u!95 &712021694818041983
 Animator:
   serializedVersion: 7
@@ -431,6 +415,22 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &4017204965949414326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273013822404465156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9c07dca8ba284c1899093c3d52c6f6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnyStriker
+  jumpSpeed: 5
+  runSpeed: 0.5
+  airJumpMax: 3
+  collinden: []
 --- !u!54 &7378333137058971118
 Rigidbody:
   m_ObjectHideFlags: 0

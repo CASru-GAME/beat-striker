@@ -1,7 +1,6 @@
 
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
-using UnityEditor.SceneManagement;
 
 namespace Core.App.Presenters.Scene.States {
 
@@ -10,29 +9,35 @@ namespace Core.App.Presenters.Scene.States {
 
         public CharacterSelectState(SceneStateContext context) {
             this.context = context;
-            context.bus.Subscribe<TransitionMessage>(OnAppFlowMessage);
         }
 
-        private void OnAppFlowMessage(TransitionMessage message) {
-            if (message.command == TransitionCommand.Back) {
+        private void OnAppFlowMessage(RequireTransitionMessage message) {
+            if (message.command == TransitionRequire.StartExitAnimation) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     AppScene.StageSelect
                 ));
             }
-            else if (message.command == TransitionCommand.Next) {
+            else if (message.command == TransitionRequire.Next) {
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    AppScene.CharacterSelect
+                    AppScene.Battle
                 ));
             }
         }
 
-        public async void Enter() {
-            context.bus.Unsubscribe<TransitionMessage>(OnAppFlowMessage);
+        private void OnStrikerSelected(SelectStrikerMessage message) {
+            context.setting.SetStriker(message.playerId, message.striker);
+        }
+
+        public void Enter() {
+            context.bus.Subscribe<RequireTransitionMessage>(OnAppFlowMessage);
+            context.bus.Subscribe<SelectStrikerMessage>(OnStrikerSelected);
         }
 
         public void Exit() {
+            context.bus.Unsubscribe<RequireTransitionMessage>(OnAppFlowMessage);
+            context.bus.Unsubscribe<SelectStrikerMessage>(OnStrikerSelected);
         }
     }
 }

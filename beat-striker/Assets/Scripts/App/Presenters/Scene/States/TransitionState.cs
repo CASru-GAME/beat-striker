@@ -13,20 +13,27 @@ namespace Core.App.Presenters.Scene {
             this.nextScene = nextScene;
         }
 
-        public async void Enter() {
-            context.view.StartTransitionAnimation();
-            context.bus.Subscribe<TransitionMessage>(OnAppFlowMessage);
-            await context.view.LoadSceneAsync(nextScene);
+        public void Enter() {
+            context.bus.Publish(new TransitionStartedMessage(nextScene));
+            context.bus.Subscribe<RequireTransitionMessage>(OnAppFlowMessage);
+
+
+        }
+        
+        private void OnAppFlowMessage(RequireTransitionMessage message) {
+            if(message.command == TransitionRequire.LoadScene){
+                context.view.LoadScene(nextScene, OnSceneLoadCompleted);
+            }
         }
 
-        private void OnAppFlowMessage(TransitionMessage message) {
-            if (message.command == TransitionCommand.End) {
+        private void OnSceneLoadCompleted(AppScene scene) {
+            if (scene == nextScene) {
                 context.controller.ChangeState(context.factory.CreateSceneState(nextScene, context));
             }
         }
 
         public void Exit() {
-            context.bus.Unsubscribe<TransitionMessage>(OnAppFlowMessage);
+            context.bus.Unsubscribe<RequireTransitionMessage>(OnAppFlowMessage);
         }
     }
 }

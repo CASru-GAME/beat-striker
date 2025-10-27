@@ -12,7 +12,7 @@ namespace Tests.PlayMode {
     public class GamePadViewTest {
 
         private GameObject gameObject;
-        private GamePad gamePad;
+        private GamePadView gamePad;
         private MockGamePadPresenter mockPresenter;
         private PlayerInput playerInput;
 
@@ -21,7 +21,7 @@ namespace Tests.PlayMode {
             gameObject = new GameObject("TestGamePad");
             playerInput = gameObject.AddComponent<PlayerInput>();
             mockPresenter = new MockGamePadPresenter();
-            gamePad = gameObject.AddComponent<GamePad>();
+            gamePad = gameObject.AddComponent<GamePadView>();
             gamePad.enabled = false;
             gamePad.Construct(mockPresenter, playerInput);
         }
