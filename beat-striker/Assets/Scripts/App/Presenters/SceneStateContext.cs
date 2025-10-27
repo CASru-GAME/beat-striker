@@ -9,8 +9,8 @@ namespace Core.App.Presenters.Scene {
         public readonly IBattleSettingModel setting;
         public readonly ICursorFactory cursorFactory;
         public readonly ICursorRegistry cursorRegistry;
-        public ISceneStateController controller { get; set; }
-        public ISceneStateFactory factory { get; set; }
+        public readonly ISceneStateController controller;
+        public readonly ISceneStateFactory factory;
 
 
         public SceneStateContext(

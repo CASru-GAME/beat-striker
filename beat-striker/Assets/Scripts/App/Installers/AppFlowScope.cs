@@ -21,44 +21,28 @@ namespace Core.App.Installers {
 
     [RequireComponent(typeof(SceneView))]
     [RequireComponent(typeof(Life))]
-    public sealed class AppFlowScope : LifetimeScope, ICursorFactory {
+    public sealed class AppFlowScope : MonoBehaviour, ICursorFactory {
+        [SerializeField] Canvas canvas;
         [SerializeField] CursorScope cursorPrefab;
         [SerializeField] SceneNameEntry[] sceneNameEntries;
+        [SerializeField] AppScene firstScene;
         Life life;
 
-        protected override void Configure(IContainerBuilder builder) {
+        ICursorRegistry cursorRegistry;
+        IPlayerRegistry playerRegistry;
+
+        void Awake() {
+            Debug.Log("AppFlowScope Configure");
 
             life = GetComponent<Life>();
-            builder.RegisterInstance(life).As<ILife>();
-
-            builder.RegisterInstance(this).As<ICursorFactory>();
-
-            builder.Register<PlayerRegistry>(Lifetime.Scoped)
-                   .As<IPlayerRegistry>();
-
-            builder.Register<CursorRegistry>(Lifetime.Scoped)
-                   .As<ICursorRegistry>();
-
-            builder.Register<BattleSettingModel>(Lifetime.Scoped)
-                   .As<IBattleSettingModel>();
-
-
-            var bus = new Bus();
-            builder.RegisterInstance(bus).As<IBus>();
-
+            var bus = this.GetBus();
+            playerRegistry = new PlayerRegistry(bus, life);
+            cursorRegistry = new CursorRegistry(this, playerRegistry, bus, life);
+            var bm = new BattleSettingModel();
             var sceneView = GetComponent<SceneView>();
-            builder.RegisterComponent(sceneView).As<ISceneView>();
-
-            builder.RegisterInstance(CreateSceneNameDictFromEntries())
-                   .As<Dictionary<AppScene, string>>();
-
-            builder.Register<SceneStatePresenter>(Lifetime.Scoped)
-                   .As<ISceneStateController>()
-                   .As<ISceneStateFactory>();
-
-            builder.Register<SceneStateContext>(Lifetime.Scoped);
+            sceneView.Construct(CreateSceneNameDictFromEntries());
+            var presenter = new SceneStatePresenter(firstScene,sceneView,bus,bm,this,cursorRegistry);
         }
-
 
         Dictionary<AppScene, string> CreateSceneNameDictFromEntries() {
             var dict = new Dictionary<AppScene, string>();
@@ -68,14 +52,10 @@ namespace Core.App.Installers {
             return dict;
         }
 
-        public void CreateCursor(PlayerId id) {
 
-            CreateChildFromPrefab(
-                cursorPrefab,
-                builder => {
-                    builder.RegisterInstance(id).As<PlayerId>();
-                }
-            );
+        public void CreateCursor(PlayerId id) {
+            var cursor = Instantiate(cursorPrefab,canvas.transform);
+            cursor.Construct(id, playerRegistry);
         }
     }
 }

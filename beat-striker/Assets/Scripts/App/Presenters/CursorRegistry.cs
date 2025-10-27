@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
 using Core.Utils;
+using UnityEngine;
 
 public class CursorRegistry : ICursorRegistry {
     private readonly Dictionary<PlayerId, bool> cursors;
@@ -31,6 +32,7 @@ public class CursorRegistry : ICursorRegistry {
     }
 
     private void OnPlayerJoined(AppMessages.PlayerJoined message) {
+        Debug.Log("CursorRegistry OnPlayerJoined: " + message.playerId.value);
         UpdateCursors();
     }
 

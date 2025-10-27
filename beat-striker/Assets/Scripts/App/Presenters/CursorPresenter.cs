@@ -23,7 +23,6 @@ public class CursorPresenter: ICursorPresenter {
         bus.Unsubscribe<GamePadMessages.Inputed>(OnGamePadInputed);
         bus.Unsubscribe<GamePadMessages.DirectionChanged>(OnDirectionChanged);
         bus.Unsubscribe<AppMessages.RequireCursorDestroyed>(OnCursorSceneExited);
-        
     }
 
     private void OnEnable() {

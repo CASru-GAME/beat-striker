@@ -6,6 +6,7 @@ using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
 using Core.GamePad.Types;
 using Core.Utils;
+using UnityEngine;
 
 namespace Core.App{
     public class PlayerRegistry : IPlayerRegistry {
@@ -14,6 +15,7 @@ namespace Core.App{
         private readonly IBus bus;
 
         public PlayerRegistry(IBus bus, ILife life) {
+            Debug.Log("PlayerRegistry Constructor");
             this.bus = bus;
             life.Link(OnEnable, OnDisable);
         }
@@ -26,6 +28,7 @@ namespace Core.App{
         }
 
         public void OnEnable() {
+            Debug.Log("PlayerRegistry OnEnable");
             bus.Subscribe<GamePadMessages.Joined>(OnGamePadJoined);
             bus.Subscribe<GamePadMessages.Left>(OnGamePadLeft);
         }
@@ -36,6 +39,7 @@ namespace Core.App{
         }
 
         private void OnGamePadJoined(GamePadMessages.Joined message) {
+            Debug.Log($"GamePad Joined: {message.gamePadId.value}");
             for (int playerIdValue = 0; playerIdValue < MAXPLAYERS; playerIdValue++) {
                 var pid = new PlayerId(playerIdValue);
                 if (!playerMap.ContainsValue(pid)) {

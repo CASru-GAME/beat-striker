@@ -37,6 +37,10 @@ namespace Core.App.Types {
         public static bool operator !=(PlayerId left, PlayerId right) {
             return !left.Equals(right);
         }
+
+        public override readonly string ToString() {
+            return $"PlayerId({value})";
+        }
     }
 
     public readonly struct StrikerId {
@@ -64,6 +68,10 @@ namespace Core.App.Types {
         public static bool operator !=(StrikerId left, StrikerId right) {
             return !left.Equals(right);
         }
+
+        public override readonly string ToString() {
+            return $"StrikerId({value})";
+        }
     }
 
     public readonly struct StageId {
@@ -90,6 +98,10 @@ namespace Core.App.Types {
         public static bool operator !=(StageId left, StageId right) {
             return !left.Equals(right);
         }
+
+        public override readonly string ToString() {
+            return $"StageId({value})";
+        }
     }
 
     public readonly struct TrackId {
@@ -115,6 +127,10 @@ namespace Core.App.Types {
 
         public static bool operator !=(TrackId left, TrackId right) {
             return !left.Equals(right);
+        }
+
+        public override readonly string ToString() {
+            return $"TrackId({value})";
         }
     }
 }

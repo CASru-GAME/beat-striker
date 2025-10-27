@@ -8,33 +8,42 @@ using UnityEngine.InputSystem;
 using VContainer;
 
 namespace Core.GamePad.Views {
-
+    [RequireComponent(typeof(PlayerInput))]
     public sealed class GamePadView : MonoBehaviour, GameInput.IPlayerActions {
         private PlayerInput playerInput;
         private GameInput input;
         private IGamePadPresenter presenter;
+        private ILifeMutater lifeMutater;
 
         [Inject]
-        public void Construct(IGamePadPresenter presenter, PlayerInput playerInput) {
+        public void Construct(IGamePadPresenter presenter, ILifeMutater lifeMutater) {
             this.presenter = presenter;
-            this.playerInput = playerInput;
+            this.lifeMutater = lifeMutater;
         }
 
         void Awake() {
             input = new GameInput();
+            playerInput = GetComponent<PlayerInput>();
         }
 
         void OnEnable() {
             input.asset.devices = playerInput.devices;
             input.Player.AddCallbacks(this);
             input.Player.Enable();
-            presenter.OnEnable();
+            playerInput.onControlsChanged += OnControlsChanged;
+            lifeMutater?.SetEnable(true);
         }
 
         void OnDisable() {
             input.Player.RemoveCallbacks(this);
             input.Player.Disable();
-            presenter.OnDisable();
+            playerInput.onControlsChanged -= OnControlsChanged;
+            lifeMutater.SetEnable(false);
+        }
+
+        private void OnControlsChanged(PlayerInput changed) {
+            if (changed == playerInput)
+                input.asset.devices = playerInput.devices;
         }
 
         void OnDestroy() => input.Dispose();
