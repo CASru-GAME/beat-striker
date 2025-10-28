@@ -12,7 +12,7 @@ namespace Core.Battle {
         private float goodWindow;
         private int[] nextBeatIndex = new int[4];
 
-        public RythmTrackModel(float[] beatTimes, float perfectWindow, float goodWindow, int timeOffset = 0) {
+        public RythmTrackModel(float[] beatTimes, float perfectWindow, float goodWindow, float timeOffset) {
             this.beatTimes = beatTimes;
             this.excellentWindow = perfectWindow;
             this.goodWindow = goodWindow;

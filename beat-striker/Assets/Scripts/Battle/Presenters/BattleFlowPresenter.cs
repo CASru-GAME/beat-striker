@@ -5,10 +5,14 @@ namespace Core.Battle {
     public class BattleFlowPresenter : IBattleStateMutator {
         private IBattleState currentState;
         private readonly IBus bus;
+        private readonly ILife life;
+        private readonly IRythmTrackModel rythmTrackModel;
 
-        public BattleFlowPresenter(IBattleState initialState, IBus bus, ILife life) {
+        public BattleFlowPresenter(IBus bus, ILife life, IBattleModel battleModel,IRythmTrackModel rythmTrackModel) {
             this.bus = bus;
-            currentState = initialState;
+            this.life = life;
+            this.rythmTrackModel = rythmTrackModel;
+            currentState = new IntroState(this, bus, battleModel, rythmTrackModel);
             life.Link(OnEnable, OnDisable);
         }
 

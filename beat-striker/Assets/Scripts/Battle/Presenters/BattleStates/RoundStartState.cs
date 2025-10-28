@@ -4,15 +4,13 @@ namespace Core.Battle {
     public class RoundStartState : IBattleState {
         private readonly IBattleStateMutator mutator;
         private readonly IBus bus;
-        private readonly BattleModel battleModel;
-        private readonly StrikerModel strikerModel;
-        private readonly RythmTrackModel rythmTrackModel;
+        private readonly IBattleModel battleModel;
+        private readonly IRythmTrackModel rythmTrackModel;
 
-        public RoundStartState(IBattleStateMutator mutator, IBus bus, BattleModel battleModel, StrikerModel strikerModel, RythmTrackModel rythmTrackModel) {
+        public RoundStartState(IBattleStateMutator mutator, IBus bus, IBattleModel battleModel, IRythmTrackModel rythmTrackModel) {
             this.mutator = mutator;
             this.bus = bus;
             this.battleModel = battleModel;
-            this.strikerModel = strikerModel;
             this.rythmTrackModel = rythmTrackModel;
         }
 
@@ -27,7 +25,8 @@ namespace Core.Battle {
         }
 
         private void OnRoundStartAnimationFinished(BattleMessages.NotifyRoundStartAnimationFinished msg) {
-            mutator.ChangeState(new RoundState(mutator, bus, battleModel, strikerModel, rythmTrackModel));
+            mutator.ChangeState(new RoundState(mutator, bus, battleModel, rythmTrackModel));
+            
         }
     }
 }

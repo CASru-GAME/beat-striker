@@ -10,11 +10,11 @@ namespace Core.Battle {
         private readonly List<PlayerId> allPlayers;
         private int currentRound = 0;
 
-        public BattleModel(List<PlayerId> allPlayers) {
-            this.allPlayers = allPlayers;
+        public BattleModel(IEnumerable<PlayerId> allPlayers) {
+            this.allPlayers = allPlayers.ToList();
             deadPlayers = new List<PlayerId>[10];
             for (int i = 0; i < deadPlayers.Length; i++) {
-                deadPlayers[i] = new List<PlayerId>(allPlayers.Count);
+                deadPlayers[i] = new List<PlayerId>(this.allPlayers.Count);
             }
         }
 
