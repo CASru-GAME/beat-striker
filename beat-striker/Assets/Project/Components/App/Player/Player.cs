@@ -8,6 +8,7 @@ public enum Btn {
     South,
     East,
     Direction,
+    Space,
     RightShoulder,
     LeftShoulder,
     RightTrigger,
@@ -95,6 +96,10 @@ public abstract class Player : MonoBehaviour {
         if (down) {
             lastRepeatTime[btn] = float.NegativeInfinity;
         }
+    }
+
+    public bool GetKeyDown(object key) {
+        throw new NotImplementedException();
     }
 }
 
