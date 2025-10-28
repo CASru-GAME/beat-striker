@@ -9,8 +9,11 @@ namespace Core.Battle {
         public BattleFlowPresenter(IBattleState initialState, IBus bus, ILife life) {
             this.bus = bus;
             currentState = initialState;
-            currentState.Enter();
             life.Link(OnEnable, OnDisable);
+        }
+
+        public void OnUpdate(float deltaTime) {
+            currentState.OnUpdate(deltaTime);
         }
 
         public void ChangeState(IBattleState newState) {
@@ -20,6 +23,7 @@ namespace Core.Battle {
         }
 
         public void OnEnable() {
+            currentState.Enter();
         }
 
         public void OnDisable() {

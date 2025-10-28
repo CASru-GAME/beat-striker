@@ -11,13 +11,12 @@ namespace Core.Battle {
         private float excellentWindow;
         private float goodWindow;
         private int[] nextBeatIndex = new int[4];
-        private int timeOffset = 0;
 
         public RythmTrackModel(float[] beatTimes, float perfectWindow, float goodWindow, int timeOffset = 0) {
             this.beatTimes = beatTimes;
             this.excellentWindow = perfectWindow;
             this.goodWindow = goodWindow;
-            this.timeOffset = timeOffset;
+            this.currentTime = timeOffset;
         }
 
         public BeatResult Beat(PlayerId playerId) {
@@ -43,8 +42,8 @@ namespace Core.Battle {
             return new BeatResult(BeatStatus.Miss);
         }
 
-        public void SetTime(float time) {
-            currentTime = time + timeOffset;
+        public void AddTime(float dt) {
+            currentTime += dt;
             for (int pid = 0; pid < nextBeatIndex.Length; pid++) {
                 int playerBeatIndex = nextBeatIndex[pid];
                 while (true) {

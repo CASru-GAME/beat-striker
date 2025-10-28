@@ -2,7 +2,6 @@
 using Core.App.Types;
 using Core.GamePad.Types;
 using Core.Utils;
-using NUnit.Framework;
 
 namespace Core.Battle {
     public class StrikerPresenter : IStrikerPresenter, IStrikerHit {
@@ -41,41 +40,35 @@ namespace Core.Battle {
 
             if (msg.action == GamePadAction.Down) {
                 if (msg.button == GamePadButton.South) {
-                    view.Dash();
-                    Beat();
+                    if(Beat()) view.Dash();
                 }
                 else if (msg.button == GamePadButton.East) {
-                    view.Attack();
-                    Beat();
+                    if(Beat()) view.Attack();
                 }
                 else if (msg.button == GamePadButton.West) {
-                    view.Charge();
-                    Beat();
+                    if(Beat()) view.Charge();
                 }
                 else if (msg.button == GamePadButton.North) {
-                    view.Special();
-                    Beat();
+                    if(Beat()) view.Special();
                 }
                 else if (msg.button == GamePadButton.LeftTrigger) {
-                    view.Guard();
-                    Beat();
+                    if(Beat()) view.Guard();
                 }
             }
             else if (msg.action == GamePadAction.Up) {
                 if (msg.button == GamePadButton.Direction) view.CancelDirection();
                 else if (msg.button == GamePadButton.West) {
-                    view.ChargeEnd();
-                    Beat();
+                    if(Beat()) view.ChargeEnd();
                 }
             }
         }
-        
-        private void Beat() {
+
+        private bool Beat() {
             var res = rythmTrackModel.Beat(model.PlayerId);
             model.AddBeatResult(res);
-            if(res.status == BeatStatus.Miss) {
-                view.OnMiss();
-            }
+            if (res.status != BeatStatus.Miss) return true;
+            view.OnMiss();
+            return false;
         }
 
         private void OnGamePadDirectionChanged(GamePadMessages.DirectionChanged msg) {
