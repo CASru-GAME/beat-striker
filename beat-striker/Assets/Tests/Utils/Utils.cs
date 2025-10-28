@@ -49,7 +49,8 @@ namespace Tests.Utils {
         public void Publish<T>(T message) {
             messages.Add(message!);
             if (handlers.TryGetValue(typeof(T), out var list)) {
-                foreach (var handler in list) {
+                var handlersCopy = list.ToList();
+                foreach (var handler in handlersCopy) {
                     ((Action<T>)handler)(message);
                 }
             }

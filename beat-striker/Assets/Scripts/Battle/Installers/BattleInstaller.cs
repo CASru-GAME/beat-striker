@@ -17,7 +17,7 @@ namespace Core.Battle {
 
     [RequireComponent(typeof(Life))]
     [RequireComponent(typeof(BattleView))]
-    public class BattleInstaller: MonoBehaviour {
+    public class BattleInstaller : MonoBehaviour {
         [SerializeField] float perfectWindow = 0.1f;
         [SerializeField] float goodWindow = 0.2f;
         [SerializeField] float timeOffset = 0f;
@@ -35,7 +35,7 @@ namespace Core.Battle {
             var view = GetComponent<BattleView>();
             var rule = new ScoreRule(excellentScore, goodScore);
             var life = GetComponent<Life>();
-            var bus = new Bus();
+            var bus = this.GetBus();
             var battleModel = new BattleModel(playerRegistry.GetAllPlayerIds());
             var rythmTrackModel = new RythmTrackModel(new float[] { },
                 perfectWindow,
@@ -46,7 +46,7 @@ namespace Core.Battle {
             view.Construct(mutator);
 
             var playerIds = playerRegistry.GetAllPlayerIds().ToList();
-            for(int i = 0; i < transforms.Length; i++) {
+            for (int i = 0; i < transforms.Length; i++) {
                 var transform = transforms[i];
                 var playerId = playerIds[i];
                 var strikerId = settingModel.GetStriker(playerId);

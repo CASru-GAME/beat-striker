@@ -155,10 +155,26 @@ namespace Tests.EditMode {
     }
 
     sealed class FakeLife : ILife {
-        public void Link(Action onEnabled, Action onDisabled) { }
-        public void Unlink(Action onEnabled, Action onDisabled) { }
-        public void Enable() { }
-        public void Disable() { }
+        private Action onEnabled;
+        private Action onDisabled;
+
+        public void Link(Action onEnabled, Action onDisabled) {
+            this.onEnabled = onEnabled;
+            this.onDisabled = onDisabled;
+        }
+
+        public void Unlink(Action onEnabled, Action onDisabled) {
+            this.onEnabled = null;
+            this.onDisabled = null;
+        }
+
+        public void Enable() {
+            onEnabled?.Invoke();
+        }
+
+        public void Disable() {
+            onDisabled?.Invoke();
+        }
     }
 
     sealed class LogFakeState : ISceneState {
