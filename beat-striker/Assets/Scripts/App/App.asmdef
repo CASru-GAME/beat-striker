@@ -1,0 +1,20 @@
+{
+    "name": "App",
+    "rootNamespace": "",
+    "references": [
+        "GamePad",
+        "Utils",
+        "VContainer",
+        "Unity.TextMeshPro",
+        "Core.Extras"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
