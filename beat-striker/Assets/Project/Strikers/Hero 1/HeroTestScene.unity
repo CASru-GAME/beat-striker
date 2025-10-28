@@ -1049,7 +1049,7 @@ PrefabInstance:
     - target: {fileID: 4674766564793334169, guid: 0a994691d77bf495085217fd79eea9aa, type: 3}
       propertyPath: strikerPrefabs.Array.data[0].prefab
       value: 
-      objectReference: {fileID: 4712988159811140368, guid: 9960a998c4510472291bc5b809491403, type: 3}
+      objectReference: {fileID: 4712988159811140368, guid: 48d8acd7d67534e09a8c7fdb413eb461, type: 3}
     - target: {fileID: 5351317176154225972, guid: 0a994691d77bf495085217fd79eea9aa, type: 3}
       propertyPath: m_Name
       value: BattlManager

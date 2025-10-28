@@ -25,17 +25,12 @@ public sealed class AnyStriker : MonoBehaviour {
             // 何かしらのペナルティ
         };
 
-        groundColliden.OnStayCollision += collision => {
-            Debug.Log("GroundColliden OnStayCollision");
-            foreach (var contact in collision.contacts) {
-                if (contact.normal.y > 0.5f) {
-                    isGround = true;
-                    return;
-                }
-            }
+        groundColliden.OnStayTrigger += collider => {
+            Debug.Log("GroundColliden OnStayTrigger");
+            isGround = true;
         };
 
-        groundColliden.OnExitCollision += collision => {
+        groundColliden.OnExitTrigger += collider => {
             isGround = false;
         };
     }
