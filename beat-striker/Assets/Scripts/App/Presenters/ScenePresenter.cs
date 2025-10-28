@@ -44,6 +44,8 @@ namespace Core.App.Presenters.Scene {
                 AppScene.StageSelect => new StageSelectState(context),
                 AppScene.CharacterSelect => new CharacterSelectState(context),
                 AppScene.Battle => new BattleState(context),
+                AppScene.Battle_Stage => new BattleState(context),
+                AppScene.Battle_Street => new BattleState(context),
                 _ => new TitleState(context),
             };
         }

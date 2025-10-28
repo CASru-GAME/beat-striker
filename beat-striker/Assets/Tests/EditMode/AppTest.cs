@@ -475,13 +475,13 @@ namespace Tests.EditMode {
             Assert.That(cursorReg.lastActive, Is.True);
 
             // Next要求でTransitionStateにChangeStateされる
-            bus.Publish(new AppMsg.RequireTransition(TransitionRequire.Next));
+            bus.Publish(new AppMsg.RequireTransition(AppScene.StageSelect));
             Assert.That(controller.lastState, Is.TypeOf<TransitionState>());
 
             // Exit後はイベントに反応しない
             controller.lastState = null;
             state.Exit();
-            bus.Publish(new AppMsg.RequireTransition(TransitionRequire.Next));
+            bus.Publish(new AppMsg.RequireTransition(AppScene.StageSelect));
             Assert.IsNull(controller.lastState);
         }
 
@@ -504,13 +504,13 @@ namespace Tests.EditMode {
             Assert.That(setting.Track.value, Is.EqualTo("trackB"));
 
             // Next要求でTransitionStateにChangeState
-            bus.Publish(new AppMsg.RequireTransition(TransitionRequire.Next));
+            bus.Publish(new AppMsg.RequireTransition(AppScene.CharacterSelect));
             Assert.That(controller.lastState, Is.TypeOf<TransitionState>());
 
             // Exit後は無反応
             controller.lastState = null;
             state.Exit();
-            bus.Publish(new AppMsg.RequireTransition(TransitionRequire.Next));
+            bus.Publish(new AppMsg.RequireTransition(AppScene.CharacterSelect));
             Assert.IsNull(controller.lastState);
         }
 
@@ -530,13 +530,13 @@ namespace Tests.EditMode {
             Assert.That(setting.GetStriker(pid).value, Is.EqualTo("strikerX"));
 
             // Next要求でTransitionStateにChangeState
-            bus.Publish(new AppMsg.RequireTransition(TransitionRequire.Next));
+            bus.Publish(new AppMsg.RequireTransition(AppScene.Battle));
             Assert.That(controller.lastState, Is.TypeOf<TransitionState>());
 
             // Exit後は無反応
             controller.lastState = null;
             state.Exit();
-            bus.Publish(new AppMsg.RequireTransition(TransitionRequire.Next));
+            bus.Publish(new AppMsg.RequireTransition(AppScene.Battle));
             Assert.IsNull(controller.lastState);
         }
 
@@ -550,18 +550,18 @@ namespace Tests.EditMode {
             Assert.That(cursorReg.lastActive, Is.False);
 
             // Next要求でTransitionStateへの遷移が依頼される
-            bus.Publish(new AppMsg.RequireTransition(TransitionRequire.Next));
+            bus.Publish(new AppMsg.RequireTransition(AppScene.Title));
             Assert.That(controller.lastState, Is.TypeOf<TransitionState>());
 
             // Exit後は無反応
             controller.lastState = null;
             state.Exit();
-            bus.Publish(new AppMsg.RequireTransition(TransitionRequire.Next));
+            bus.Publish(new AppMsg.RequireTransition(AppScene.Title));
             Assert.IsNull(controller.lastState);
         }
 
         [Test]
-        public void TransitionState_EnterでTransitionStartedをPublish_Next要求でシーンロード完了後に次ステートへ() {
+        public void TransitionState_EnterでTransitionStartedをPublish_LoadScene要求でシーンロード完了後に次ステートへ() {
             var ctx = MakeContext(out var bus, out var controller, out _, out _, out var factory, out var view);
 
             var nextScene = AppScene.CharacterSelect;
@@ -572,11 +572,11 @@ namespace Tests.EditMode {
 
             // Enter()でTransitionStartedメッセージがPublishされる
             state.Enter();
-            var mes = bus.GetMessage<AppMsg.TransitionStartedMessage>();
+            var mes = bus.GetMessage<AppMsg.OnTransitionAnimationStarted>();
             Assert.That(mes.scene, Is.EqualTo(nextScene));
 
             // LoadScene要求でシーンロード開始、完了後に次ステートへChangeState
-            bus.Publish(new AppMsg.RequireTransition(TransitionRequire.LoadScene));
+            bus.Publish(new AppMsg.RequireLoadScene());
             Assert.AreSame(nextDummy, controller.lastState);
             // viewが指定シーンをロードしようとしていることも確認
             Assert.That(view.loadedScenes.Last(), Is.EqualTo(nextScene));
@@ -584,7 +584,7 @@ namespace Tests.EditMode {
             // Exit後は無反応
             controller.lastState = null;
             state.Exit();
-            bus.Publish(new AppMsg.RequireTransition(TransitionRequire.LoadScene));
+            bus.Publish(new AppMsg.RequireLoadScene());
             Assert.IsNull(controller.lastState);
         }
     }

@@ -3,6 +3,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
+using Core;
+using Core.Utils;
+using Core.App.Presenters.Scene.Types;
+using Core.App.Types;
 
 [RequireComponent(typeof(AudioSource))]
 public class MusicCard : MonoBehaviour {
@@ -10,6 +14,7 @@ public class MusicCard : MonoBehaviour {
     [SerializeField] Botan botan;
     [SerializeField] TextMeshProUGUI description;
     private Vector3 originalScale;
+    private SelectableMusic currentMusic;
 
     void Awake() {
         audioSource = GetComponent<AudioSource>();
@@ -26,11 +31,17 @@ public class MusicCard : MonoBehaviour {
             transform.localScale = originalScale;
             Debug.Log("card hover exited");
         };
+        botan.onClick += (e) => {
+            Debug.Log("card clicked");
+            this.GetBus().Publish(new AppMessages.SelectTrack(currentMusic.trackId));
+            this.GetBus().Publish(new AppMessages.RequireTransition(AppScene.CharacterSelect));
+        };
     } 
 
     public void SetMusic(SelectableMusic music) {
         audioSource.clip = music.clip;
         description.text = music.description;
+        currentMusic = music;
     }
 
     public void OnHidden() {
