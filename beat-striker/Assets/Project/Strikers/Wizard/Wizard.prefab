@@ -269,6 +269,7 @@ GameObject:
   - component: {fileID: 712021694818041983}
   - component: {fileID: 7378333137058971118}
   - component: {fileID: 8735412774696205190}
+  - component: {fileID: 8226441172754365417}
   m_Layer: 0
   m_Name: Wizard
   m_TagString: Untagged
@@ -406,6 +407,25 @@ CapsuleCollider:
   m_Height: 1.50476
   m_Direction: 1
   m_Center: {x: 0, y: 0.7271303, z: 0}
+--- !u!114 &8226441172754365417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273013822404465156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fff0991ba06da5c49be13a7ce2de6fd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WizardController
+  walkSpeed: 5
+  dashSpeed: 8
+  jumpForce: 10
+  groundCheck: {fileID: 0}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1 &2303661228985555550
 GameObject:
   m_ObjectHideFlags: 0
@@ -1293,7 +1313,7 @@ Transform:
   m_GameObject: {fileID: 5727902198536668208}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071069, y: -0, z: -0, w: 0.70710677}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.01, z: 0}
   m_LocalScale: {x: 100, y: 99.999985, z: 99.99998}
   m_ConstrainProportionsScale: 0
   m_Children: []
