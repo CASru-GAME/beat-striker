@@ -2,6 +2,7 @@
 
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
+using UnityEngine;
 
 namespace Core.App.Presenters.Scene.States {
 
@@ -13,13 +14,14 @@ namespace Core.App.Presenters.Scene.States {
         }
 
         private void OnAppFlowMessage(AppMessages.RequireTransition message) {
-            if (message.command == TransitionRequire.StartExitAnimation) {
+            Debug.Log("StageSelectState received RequireTransition to " + message.scene);
+            if (message.scene == AppScene.Title) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     AppScene.Title
                 ));
             }
-            else if (message.command == TransitionRequire.Next) {
+            else if (message.scene == AppScene.CharacterSelect) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     AppScene.CharacterSelect

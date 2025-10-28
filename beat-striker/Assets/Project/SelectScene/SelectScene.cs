@@ -1,33 +1,32 @@
+
+using System;
+using System.Collections;
+using Core.App.Presenters.Scene.Types;
+using Core.Utils;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 
-[RequireComponent(typeof(Botan))]
 public class SelectScene : MonoBehaviour {
-    Botan botan;
-    public Striker prefab;
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
-        botan = GetComponent<Botan>();
-        botan.onClick += SelectCharacter;
+        this.GetBus().Subscribe<AppMessages.OnTransitionAnimationStarted>(HandleTrackSelection);
     }
 
-    // Update is called once per frame
     void Update() {
 
     }
 
-    public void SelectCharacter(PlayerPointerEventData e) {
-        if (e.Player) return;
-        Debug.Log("Player " + (e.Player.playerNumber + 1) + " selected " + prefab.name);
+    void HandleTrackSelection(AppMessages.OnTransitionAnimationStarted msg) {
+        //遷移アニメーションを記述する
+        StartCoroutine(Animation());
     }
 
-    public void GotoBattleScene() {
-        SceneManager.LoadScene("BattleScene");
+    private IEnumerator Animation() {
+        //ここにアニメーションを記述する
+        yield return new WaitForSeconds(1.0f); //仮で1秒待つ
+
+        this.GetBus().Publish(new AppMessages.RequireLoadScene());
     }
 
-    public void Test() {
-        Debug.Log("Test");
+    void OnDestroy() {
+        this.GetBus().Unsubscribe<AppMessages.OnTransitionAnimationStarted>(HandleTrackSelection);
     }
 }

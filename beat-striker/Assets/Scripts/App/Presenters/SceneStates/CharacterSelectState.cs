@@ -1,6 +1,7 @@
 
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
+using UnityEngine;
 
 namespace Core.App.Presenters.Scene.States {
 
@@ -12,16 +13,17 @@ namespace Core.App.Presenters.Scene.States {
         }
 
         private void OnAppFlowMessage(AppMessages.RequireTransition message) {
-            if (message.command == TransitionRequire.StartExitAnimation) {
+            Debug.Log("CharacterSelectState received RequireTransition to " + message.scene);
+            if (message.scene == AppScene.StageSelect) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     AppScene.StageSelect
                 ));
             }
-            else if (message.command == TransitionRequire.Next) {
+            else if (message.scene == AppScene.Battle) {
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    AppScene.Battle
+                    context.setting.Stage.value == "Street" ? AppScene.Battle_Street : AppScene.Battle_Stage
                 ));
             }
         }
