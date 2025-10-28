@@ -42,11 +42,12 @@ namespace Tests.Utils {
     }
 
     public sealed class FakeBus : IBus {
-        public readonly List<object> Messages = new();
+        private readonly List<object> messages = new();
+        public IReadOnlyList<object> Messages => messages.AsReadOnly();
         private readonly Dictionary<Type, List<Delegate>> handlers = new();
 
         public void Publish<T>(T message) {
-            Messages.Add(message!);
+            messages.Add(message!);
             if (handlers.TryGetValue(typeof(T), out var list)) {
                 foreach (var handler in list) {
                     ((Action<T>)handler)(message);
@@ -68,7 +69,7 @@ namespace Tests.Utils {
         }
 
         public void ClearMessages() {
-            Messages.Clear();
+            messages.Clear();
         }
         
         public void ClearHandlers(){

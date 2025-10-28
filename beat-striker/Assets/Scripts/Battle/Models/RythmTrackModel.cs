@@ -1,0 +1,59 @@
+
+using System.Collections.Generic;
+using Core.App.Types;
+using UnityEngine;
+
+namespace Core.Battle {
+
+    public class RythmTrackModel : IRythmTrackModel {
+        private float currentTime = 0f;
+        private float[] beatTimes;
+        private float excellentWindow;
+        private float goodWindow;
+        private int[] nextBeatIndex = new int[4];
+        private int timeOffset = 0;
+
+        public RythmTrackModel(float[] beatTimes, float perfectWindow, float goodWindow, int timeOffset = 0) {
+            this.beatTimes = beatTimes;
+            this.excellentWindow = perfectWindow;
+            this.goodWindow = goodWindow;
+            this.timeOffset = timeOffset;
+        }
+
+        public BeatResult Beat(PlayerId playerId) {
+            var pid = playerId.value;
+            if (pid < 0 || pid >= nextBeatIndex.Length)
+                return new BeatResult(BeatStatus.Miss);
+
+            int playerBeatIndex = nextBeatIndex[pid];
+            if (playerBeatIndex >= beatTimes.Length) return new BeatResult(BeatStatus.Miss);
+
+            float beatTime = beatTimes[playerBeatIndex];
+            float delta = currentTime - beatTime;
+
+            if (Mathf.Abs(delta) < excellentWindow) {
+                nextBeatIndex[pid]++;
+                return new BeatResult(BeatStatus.Excellent);
+            }
+            else if (Mathf.Abs(delta) < goodWindow) {
+                nextBeatIndex[pid]++;
+                return new BeatResult(BeatStatus.Good);
+            }
+
+            return new BeatResult(BeatStatus.Miss);
+        }
+
+        public void SetTime(float time) {
+            currentTime = time + timeOffset;
+            for (int pid = 0; pid < nextBeatIndex.Length; pid++) {
+                int playerBeatIndex = nextBeatIndex[pid];
+                while (true) {
+                    if (playerBeatIndex >= beatTimes.Length) break;
+                    if (beatTimes[playerBeatIndex] > currentTime - goodWindow) break;
+                    playerBeatIndex++;
+                }
+                nextBeatIndex[pid] = playerBeatIndex;
+            }
+        }
+    }
+}

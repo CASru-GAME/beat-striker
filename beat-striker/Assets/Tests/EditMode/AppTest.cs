@@ -154,6 +154,13 @@ namespace Tests.EditMode {
         public void Exit() { exited = true; }
     }
 
+    sealed class FakeLife : ILife {
+        public void Link(Action onEnabled, Action onDisabled) { }
+        public void Unlink(Action onEnabled, Action onDisabled) { }
+        public void Enable() { }
+        public void Disable() { }
+    }
+
     sealed class LogFakeState : ISceneState {
         readonly string name;
         readonly List<string> log;
@@ -378,7 +385,8 @@ namespace Tests.EditMode {
                 bus,
                 new FakeBattleSettingModel(),
                 new FakeCursorFactory(),
-                new FakeCursorRegistry()
+                new FakeCursorRegistry(),
+                new FakeLife()
             );
             var log = new List<string>();
             var s1 = new LogFakeState("S1", log);
@@ -415,7 +423,8 @@ namespace Tests.EditMode {
                 bus,
                 ctx.setting,
                 ctx.cursorFactory,
-                ctx.cursorRegistry
+                ctx.cursorRegistry,
+                new FakeLife()
             );
 
             Assert.That(presenter.CreateSceneState(AppScene.Title, ctx), Is.TypeOf<TitleState>());

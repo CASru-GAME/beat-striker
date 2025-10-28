@@ -41,7 +41,7 @@ namespace Core.App.Installers {
             var bm = new BattleSettingModel();
             var sceneView = GetComponent<SceneView>();
             sceneView.Construct(CreateSceneNameDictFromEntries());
-            var presenter = new SceneStatePresenter(firstScene,sceneView,bus,bm,this,cursorRegistry);
+            var presenter = new SceneStatePresenter(firstScene,sceneView,bus,bm,this,cursorRegistry,life);
         }
 
         Dictionary<AppScene, string> CreateSceneNameDictFromEntries() {

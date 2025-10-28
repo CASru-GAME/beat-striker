@@ -3,10 +3,11 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-[RequireComponent(typeof(Animator))]
-[RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(Striker))]
-public class Hero : MonoBehaviour {
+namespace Assets.Project.Strikers.Hero {
+    [RequireComponent(typeof(Animator))]
+    [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(Striker))]
+    public class Hero : MonoBehaviour {
     Animator anim;
     Rigidbody rb;
     Striker striker;
@@ -56,7 +57,8 @@ public class Hero : MonoBehaviour {
         }
     }
 
-    private void OnCollisionExit(Collision collision) {
+    private void OnCollisionExit() {
         isGround = false;
+    }
     }
 }
