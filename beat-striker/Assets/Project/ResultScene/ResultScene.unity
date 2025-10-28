@@ -373,6 +373,12 @@ MonoBehaviour:
   comboUnderPanel: {fileID: 1934629340}
   playerWinnerPanel: {fileID: 2005830749}
   playerLoserPanel: {fileID: 171768643}
+  buttonClickSound: {fileID: 8300000, guid: df7d39791f5822449a47c3e1ee73cc66, type: 3}
+  buttonClickSoundDelay: 0
+  blackImageSound: {fileID: 8300000, guid: df7d39791f5822449a47c3e1ee73cc66, type: 3}
+  blackImageSoundDelay: 0
+  lineSound: {fileID: 8300000, guid: df7d39791f5822449a47c3e1ee73cc66, type: 3}
+  lineSoundDelay: 0
   blackImageScaleDuration: 0.8
   blackImageDelay: 0.5
   lineDelay: 0.8

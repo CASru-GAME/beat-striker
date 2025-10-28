@@ -15,6 +15,14 @@ public class ResultPanelButton : MonoBehaviour
     public GameObject playerWinnerPanel; // PlayerWinnerPanel
     public GameObject playerLoserPanel; // PlayerLoserPanel
     
+    [Header("Sound Effects")]
+    public AudioClip buttonClickSound; // 赤いImageを押した時の効果音
+    public float buttonClickSoundDelay = 0f; // ボタンクリック音の遅延
+    public AudioClip blackImageSound; // 黒いImageが動く時の効果音
+    public float blackImageSoundDelay = 0f; // BlackImage音の遅延（BlackImageアニメーション開始からの時間）
+    public AudioClip lineSound; // 白い線が動く時の効果音
+    public float lineSoundDelay = 0f; // Line音の遅延（Lineアニメーション開始からの時間）
+    
     [Header("Animation Settings")]
     public float blackImageScaleDuration = 0.5f; // BlackImage拡大時間
     public float blackImageDelay = 0f; // BlackImage出現の遅延
@@ -38,6 +46,7 @@ public class ResultPanelButton : MonoBehaviour
     public float iconOvershoot = 1.1f; // Iconオーバーシュート倍率
     
     private Button button;
+    private AudioSource audioSource;
     private CanvasGroup blackImageCanvasGroup;
     private RectTransform blackImageRect;
     private RectTransform lineRect;
@@ -60,6 +69,13 @@ public class ResultPanelButton : MonoBehaviour
     void Start()
     {
         button = GetComponent<Button>();
+        audioSource = GetComponent<AudioSource>();
+        
+        // AudioSourceが無ければ追加
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
         
         Debug.Log($"ResultPanelButton Start - Button: {button != null}");
         
@@ -161,10 +177,32 @@ public class ResultPanelButton : MonoBehaviour
         hasPlayed = true;
         Debug.Log("Button clicked!");
         
+        // ボタンクリック効果音（遅延付き）
+        if (buttonClickSoundDelay > 0)
+        {
+            LeanTween.delayedCall(buttonClickSoundDelay, () => PlaySound(buttonClickSound));
+        }
+        else
+        {
+            PlaySound(buttonClickSound);
+        }
+        
         // BlackImageの拡大アニメーション
         if (blackImage != null && blackImageRect != null)
         {
             Debug.Log("Starting BlackImage animation");
+            
+            // BlackImage効果音（BlackImageアニメーション開始時からの遅延）
+            float blackSoundTime = blackImageDelay + blackImageSoundDelay;
+            if (blackSoundTime > 0)
+            {
+                LeanTween.delayedCall(blackSoundTime, () => PlaySound(blackImageSound));
+            }
+            else
+            {
+                PlaySound(blackImageSound);
+            }
+            
             blackImage.SetActive(true);
             
             // フェードイン＆スケールアニメーション
@@ -190,6 +228,17 @@ public class ResultPanelButton : MonoBehaviour
             LeanTween.delayedCall(blackImageDelay + lineDelay, () =>
             {
                 Debug.Log("Line animation delayed call executed");
+                
+                // Line効果音（Lineアニメーション開始時からの遅延）
+                if (lineSoundDelay > 0)
+                {
+                    LeanTween.delayedCall(lineSoundDelay, () => PlaySound(lineSound));
+                }
+                else
+                {
+                    PlaySound(lineSound);
+                }
+                
                 lineObject.SetActive(true);
                 
                 LeanTween.cancel(lineObject);
@@ -329,6 +378,14 @@ public class ResultPanelButton : MonoBehaviour
                             .setEase(LeanTweenType.easeInQuad);
                     });
             });
+        }
+    }
+    
+    void PlaySound(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+        {
+            audioSource.PlayOneShot(clip);
         }
     }
     
