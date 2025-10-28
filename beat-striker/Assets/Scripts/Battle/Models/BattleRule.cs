@@ -1,10 +1,12 @@
 
+using System;
+
 namespace Core.Battle {
-    public class BattleRule {
+    public class ScoreRule {
         private int ExcellentScore;
         private int GoodScore;
 
-        public BattleRule(int excellentScore, int goodScore) {
+        public ScoreRule(int excellentScore, int goodScore) {
             this.ExcellentScore = excellentScore;
             this.GoodScore = goodScore;
         }

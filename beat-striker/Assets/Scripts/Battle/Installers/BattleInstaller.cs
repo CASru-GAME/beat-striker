@@ -23,13 +23,17 @@ namespace Core.Battle {
         [SerializeField] float timeOffset = 0f;
         [SerializeField] Transform[] transforms;
         [SerializeField] StrikerPrefab[] strikerPrefabs;
+        [SerializeField] int excellentScore = 1000;
+        [SerializeField] int goodScore = 500;
 
         void Awake() {
             var app = GameObject.Find("App").GetComponent<AppFlowScope>();
             var playerRegistry = app.playerRegistry;
             var settingModel = app.battleSettingModel;
-            var view = this.GetComponent<BattleView>();
 
+
+            var view = GetComponent<BattleView>();
+            var rule = new ScoreRule(excellentScore, goodScore);
             var life = GetComponent<Life>();
             var bus = new Bus();
             var battleModel = new BattleModel(playerRegistry.GetAllPlayerIds());
@@ -48,7 +52,7 @@ namespace Core.Battle {
                 var strikerId = settingModel.GetStriker(playerId);
                 var strikerPrefab = strikerPrefabs.FirstOrDefault(x => x.strikerId == strikerId).prefab;
                 var instance = Instantiate(strikerPrefab, transform);
-                instance.Construct(playerId);
+                instance.Construct(playerId, rule, playerRegistry, rythmTrackModel);
             }
         }
     }

@@ -12,9 +12,9 @@ namespace Core.Battle {
         public int ExcellentCount { get; private set; } = 0;
         public int Score { get; private set; } = 0;
         public int ComboCount { get; private set; } = 0;
-        private BattleRule rule;
+        private ScoreRule rule;
 
-        public StrikerModel(PlayerId playerId, HitPoint hitPoint, BattleRule rule) {
+        public StrikerModel(PlayerId playerId, HitPoint hitPoint, ScoreRule rule) {
             this.PlayerId = playerId;
             this.MaxHitPoint = hitPoint;
             this.HitPoint = hitPoint;

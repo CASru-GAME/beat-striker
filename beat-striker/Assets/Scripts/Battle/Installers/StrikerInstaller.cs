@@ -4,15 +4,19 @@ using Core.Utils;
 using UnityEngine;
 
 namespace Core.Battle {
-
+    [RequireComponent(typeof(StrikerView))]
+    [RequireComponent(typeof(Life))]
     public class StrikerInstaller: MonoBehaviour {
+        [SerializeField] private HitPoint maxHitPoint = new(100);
 
-        public void Construct(PlayerId playerId) {
+        public void Construct(PlayerId playerId, ScoreRule rule, IPlayerRegistry playerRegistry, IRythmTrackModel rythmTrackModel) {
             Debug.Log("StrikerInstaller Construct:" + playerId);
-            var view 
-            
-        } 
-    
+            var view = GetComponent<StrikerView>();
+            var life = GetComponent<Life>();
+            var strikerModel = new StrikerModel(playerId, maxHitPoint, rule);
+            var presenter = new StrikerPresenter(strikerModel, view, this.GetBus(), life, playerRegistry, rythmTrackModel);
+        }
+
 
     }
 }
