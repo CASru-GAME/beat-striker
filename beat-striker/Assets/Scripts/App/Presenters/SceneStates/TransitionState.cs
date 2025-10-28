@@ -16,14 +16,12 @@ namespace Core.App.Presenters.Scene {
         }
 
         public void Enter() {
-            context.bus.Publish(new AppMessages.TransitionStartedMessage(nextScene));
-            context.bus.Subscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
+            context.bus.Publish(new AppMessages.OnTransitionAnimationStarted(nextScene));
+            context.bus.Subscribe<AppMessages.RequireLoadScene>(OnAppFlowMessage);
         }
 
-        private void OnAppFlowMessage(AppMessages.RequireTransition message) {
-            if(message.command == TransitionRequire.LoadScene){
-                context.view.LoadScene(nextScene, OnSceneLoadCompleted);
-            }
+        private void OnAppFlowMessage(AppMessages.RequireLoadScene message) {
+            context.view.LoadScene(nextScene, OnSceneLoadCompleted);
         }
 
         private void OnSceneLoadCompleted(AppScene scene) {
@@ -33,7 +31,7 @@ namespace Core.App.Presenters.Scene {
         }
 
         public void Exit() {
-            context.bus.Unsubscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
+            context.bus.Unsubscribe<AppMessages.RequireLoadScene>(OnAppFlowMessage);
         }
     }
 }

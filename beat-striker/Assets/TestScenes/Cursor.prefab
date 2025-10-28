@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7651569056414108291}
   - component: {fileID: 6919472123583752099}
   - component: {fileID: 8484841753646900146}
+  - component: {fileID: -7963647258552398191}
   m_Layer: 0
   m_Name: Cursor
   m_TagString: Untagged
@@ -90,6 +91,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ff959505dd3b44b7bd1f8727eb18f4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Utils::Life
+--- !u!114 &-7963647258552398191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 348724108913023958}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20524752bb88a43e29843cf23c2dfbb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Core.Extras::Core.PersistentObject
 --- !u!1 &2678076839241500623
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,15 +1,12 @@
 namespace Core.App.Types {
-    public enum TransitionRequire {
-        LoadScene,
-        StartExitAnimation,
-        Next,
-    }
 
     public enum AppScene {
         Title,
         StageSelect,
         CharacterSelect,
         Battle,
+        Battle_Stage,
+        Battle_Street,
         None
     }
 

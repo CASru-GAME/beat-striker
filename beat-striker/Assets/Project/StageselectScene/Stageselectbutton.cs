@@ -1,6 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using Core;
+using Core.Utils;
+using Core.App.Presenters.Scene.Types;
+using UnityEditor.SceneManagement;
+using Core.App.Types;
 
 [RequireComponent(typeof(Botan))]
 [RequireComponent(typeof(AudioSource))]
@@ -85,6 +90,7 @@ public class Stageselectbutton : MonoBehaviour
             if (popupPanel != null && popupCanvasGroup != null) {
                 StartCoroutine(ShowPopupWithFadeAndMusicSlide());
                 isPopupShown = true;
+                this.GetBus().Publish(new AppMessages.SelectStage(new StageId("どっちか")));
             }
         };
         botan.onHoverExit += (e) => {
