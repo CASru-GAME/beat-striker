@@ -1,3 +1,5 @@
+using System;
+
 namespace Core.App.Types {
 
     public enum AppScene {
@@ -40,8 +42,9 @@ namespace Core.App.Types {
         }
     }
 
-    public readonly struct StrikerId {
-        public readonly string value;
+    [Serializable]
+    public struct StrikerId {
+        public string value;
 
         public StrikerId(string value) {
             this.value = value;

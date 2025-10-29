@@ -48,6 +48,10 @@ namespace Core.Battle {
             var playerIds = playerRegistry.GetAllPlayerIds().ToList();
             for (int i = 0; i < transforms.Length; i++) {
                 var transform = transforms[i];
+                if( i >= playerIds.Count) {
+                    Debug.LogWarning($"No player for transform index {i}, disabling.");
+                    break;
+                }
                 var playerId = playerIds[i];
                 var strikerId = settingModel.GetStriker(playerId);
                 var strikerPrefab = strikerPrefabs.FirstOrDefault(x => x.strikerId == strikerId).prefab;
