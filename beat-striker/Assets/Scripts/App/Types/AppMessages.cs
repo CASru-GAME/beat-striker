@@ -4,20 +4,15 @@ using Core.App.Types;
 namespace Core.App.Presenters.Scene.Types {
 
     public static class AppMessages {
+
         public class RequireTransition {
-            public readonly TransitionRequire command;
             public readonly AppScene scene;
-
-            public RequireTransition(TransitionRequire command) {
-                this.command = command;
-                this.scene = AppScene.None;
-            }
-
             public RequireTransition(AppScene scene) {
-                this.command = TransitionRequire.Next;
                 this.scene = scene;
             }
         }
+
+        public class RequireLoadScene { }
 
         public class RequireCursorDestroyed {
             private readonly bool isAll;
@@ -54,10 +49,10 @@ namespace Core.App.Presenters.Scene.Types {
             }
         }
 
-        public class TransitionStartedMessage {
+        public class OnTransitionAnimationStarted {
             public readonly AppScene scene;
 
-            public TransitionStartedMessage(AppScene scene) {
+            public OnTransitionAnimationStarted(AppScene scene) {
                 this.scene = scene;
             }
         }

@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 3511246993052855902}
   - component: {fileID: 645802354268570669}
   - component: {fileID: 3618427557833856183}
+  - component: {fileID: 2804282554847202624}
+  - component: {fileID: 658852592159175259}
   m_Layer: 0
   m_Name: GamePad
   m_TagString: Untagged
@@ -88,9 +90,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d8f01794fc4a4efea80ac4f5b3d36ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GamePad::Core.GamePad.Installers.GamePadScope
-  parentReference:
-    TypeName: 
-  autoRun: 1
-  autoInjectGameObjects: []
   onThreshold: 0.5
   offThreshold: 0.4
+--- !u!114 &2804282554847202624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3652572119978379199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ff959505dd3b44b7bd1f8727eb18f4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Utils::Life
+--- !u!114 &658852592159175259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3652572119978379199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20524752bb88a43e29843cf23c2dfbb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Core.Extras::Core.PersistentObject

@@ -4,6 +4,7 @@ using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
 using Core.GamePad.Types;
 using Core.Utils;
+using UnityEngine;
 
 public class CursorPresenter: ICursorPresenter {
     private readonly ICursorView view;
@@ -53,6 +54,7 @@ public class CursorPresenter: ICursorPresenter {
 
     private void OnCursorSceneExited(AppMessages.RequireCursorDestroyed message) {
         if (!message.IsTarget(playerId)) return;
+        Debug.Log("CursorPresenter OnCursorSceneExited: " + playerId.value);
         view.Destroy();
     }
     

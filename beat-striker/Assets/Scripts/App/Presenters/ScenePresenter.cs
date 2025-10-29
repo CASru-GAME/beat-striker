@@ -18,10 +18,18 @@ namespace Core.App.Presenters.Scene {
             IBus bus,
             IBattleSettingModel setting,
             ICursorFactory cursorFactory,
-            ICursorRegistry cursorRegistry) {
+            ICursorRegistry cursorRegistry,
+            ILife life) {
             var context = new SceneStateContext(view, bus, setting, this, this, cursorFactory, cursorRegistry);
             currentState = CreateSceneState(firstScene, context);
             currentState.Enter();
+            life.Link(OnEnable, OnDisable);
+        }
+
+        private void OnEnable() {
+        }
+        private void OnDisable() {
+            currentState.Exit();
         }
 
         public void ChangeState(ISceneState newState) {
@@ -36,6 +44,8 @@ namespace Core.App.Presenters.Scene {
                 AppScene.StageSelect => new StageSelectState(context),
                 AppScene.CharacterSelect => new CharacterSelectState(context),
                 AppScene.Battle => new BattleState(context),
+                AppScene.Battle_Stage => new BattleState(context),
+                AppScene.Battle_Street => new BattleState(context),
                 _ => new TitleState(context),
             };
         }
