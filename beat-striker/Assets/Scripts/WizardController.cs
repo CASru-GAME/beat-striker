@@ -1,152 +1,124 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-[System.Diagnostics.DebuggerDisplay("{" + nameof(DebuggerDisplay ) + "(),nq}")]
 public class WizardController : MonoBehaviour
-
 {
-    // === 1. 公開変数 (Inspectorで設定) ===
-    [Header("Movement Settings")]
-    public float walkSpeed = 5f;
-    public float dashSpeed = 8f;
-    public float jumpForce = 10f;
-    
+    [Header("Movement")]
+    public float moveSpeed = 5f;
+    public float jumpForce = 5f;
+
     [Header("Ground Check")]
     public Transform groundCheck;
+    public float groundCheckRadius = 0.1f;
     public LayerMask groundLayer;
 
-    // === 2. プライベート変数 (コンポーネント) ===
-    private Rigidbody2D rb;
-    private Animator charAnimator; // ★修正点: 変数名を統一
-
-    // === 3. 内部状態変数 ===
-    private float horizontalInput;
+    private Rigidbody rb;
     private bool isGrounded;
-    private bool jumpRequested = false; 
 
-    // =======================================================
-    // 初期設定 (Awake)
-    // =======================================================
+    // Input System
+    private PlayerInput playerInput;
+    private InputAction moveAction;
+    private InputAction jumpAction;
+    private InputAction runAction;
 
-    void Awake()
+    void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
-        charAnimator = GetComponent<Animator>(); // ★修正点: 取得する変数名を統一
-
-        // コンポーネントの存在チェック
-        if (rb == null) Debug.LogError("Rigidbody2Dコンポーネントが見つかりません！");
-        if (charAnimator == null) 
+        rb = GetComponent<Rigidbody>();
+        if (rb == null)
         {
-            Debug.LogError("Animatorコンポーネントが見つかりません！スクリプトを無効化します。");
+            Debug.LogError("WizardController requires a Rigidbody component (3D).", this);
             enabled = false;
             return;
         }
-    }
 
-    // =======================================================
-    // 入力とアニメーション制御 (Update)
-    // =======================================================
+        // Common misconfiguration checks
+        if (rb.isKinematic)
+        {
+            Debug.LogWarning("Rigidbody is set to Kinematic - physics (gravity/jumps) will not work. Set to Dynamic.", this);
+        }
+        if (!rb.useGravity)
+        {
+            Debug.LogWarning("Rigidbody.useGravity is false - the object won't fall. Enable Use Gravity.", this);
+        }
+
+        // PlayerInput / InputAction setup (new Input System)
+        playerInput = GetComponent<PlayerInput>();
+        if (playerInput == null)
+        {
+            Debug.LogWarning("PlayerInput component not found on this GameObject. Add PlayerInput and assign PlayerControls actions.", this);
+        }
+        else if (playerInput.actions != null)
+        {
+            // try to bind commonly expected actions; if action map differs, these will be null
+            moveAction = playerInput.actions.FindAction("Move", true);
+            jumpAction = playerInput.actions.FindAction("Jump", true);
+            runAction = playerInput.actions.FindAction("Run", true);
+        }
+    }
 
     void Update()
     {
-        // === 1. 入力値の取得 ===
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        
-        // === 2. アニメーターの更新 (すべて charAnimator に修正) ===
-        charAnimator.SetBool("IsGrounded", isGrounded);
-        charAnimator.SetFloat("Speed", Mathf.Abs(horizontalInput)); 
-
-        // 進行方向への反転
-        if (horizontalInput != 0)
-        {
-            Vector3 scale = transform.localScale;
-            scale.x = Mathf.Sign(horizontalInput); 
-            transform.localScale = scale;
-        }
-
-        // === 3. ジャンプ処理の入力検知 ===
-        if (isGrounded && Input.GetKeyDown(KeyCode.Space)) 
-        {
-            jumpRequested = true;
-        }
-
-        // === 4. 攻撃処理 ===
-        HandleAttackInput();
+        Move();
+        Jump();
     }
 
-    // =======================================================
-    // 物理演算の処理 (FixedUpdate)
-    // =======================================================
-
-    void FixedUpdate()
+    private void Move()
     {
-        // === 1. 地面判定の更新 ===
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+        float moveInput = 0f;
 
-        // === 2. 左右移動の制御 ===
-        float currentSpeed = walkSpeed;
-        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+        // Read from new Input System if available, otherwise fall back to legacy (should not be used if project is in Input System only mode)
+        if (moveAction != null)
         {
-            currentSpeed = dashSpeed;
+            Vector2 mv = moveAction.ReadValue<Vector2>();
+            moveInput = mv.x;
+        }
+        else
+        {
+            // fallback (only valid if Unity Player Settings allow both systems)
+            moveInput = Input.GetAxis("Horizontal");
         }
 
-        float targetSpeedX = horizontalInput * currentSpeed;
-        rb.linearVelocity = new Vector2(targetSpeedX, rb.linearVelocity.y);
-
-        // === 3. ジャンプの実行 ===
-        if (jumpRequested)
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-            jumpRequested = false;
-        }
+        // Preserve Y and Z velocity; only modify X (left/right)
+        Vector3 vel = rb.linearVelocity;
+        vel.x = moveInput * moveSpeed;
+        rb.linearVelocity = vel;
     }
-    
-    // =======================================================
-    // 攻撃入力の処理
-    // =======================================================
 
-    private void HandleAttackInput()
+    private void Jump()
     {
-        if (isGrounded)
+        if (groundCheck == null)
         {
-            // --- 地上攻撃 (すべて charAnimator に修正) ---
-            if (Input.GetKeyDown(KeyCode.Z))      // 例: 打撃
-            {
-                charAnimator.SetInteger("AttackType", 1); 
-                charAnimator.SetTrigger("AttackTrigger");
-            }
-            else if (Input.GetKeyDown(KeyCode.X)) // 例: 魔法攻撃
-            {
-                charAnimator.SetInteger("AttackType", 2);
-                charAnimator.SetTrigger("AttackTrigger");
-            }
-            else if (Input.GetKeyDown(KeyCode.F)) // 例: 溜め攻撃
-            {
-                charAnimator.SetInteger("AttackType", 3);
-                charAnimator.SetTrigger("AttackTrigger");
-            }
-            else if (Input.GetKeyDown(KeyCode.R)) // 例: 必殺技
-            {
-                charAnimator.SetInteger("AttackType", 4);
-                charAnimator.SetTrigger("AttackTrigger");
-            }
+            Debug.LogWarning("groundCheck Transform is not assigned.", this);
+            return;
         }
-        else // 空中
+
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundLayer, QueryTriggerInteraction.Ignore);
+
+        bool jumpTriggered = false;
+        if (jumpAction != null)
         {
-            // --- 空中攻撃 (すべて charAnimator に修正) ---
-            if (Input.GetMouseButtonDown(0)) {
-                int airAttack = 0;
+            jumpTriggered = jumpAction.triggered;
+        }
+        else
+        {
+            // fallback
+            jumpTriggered = Input.GetButtonDown("Jump");
+        }
 
-                if (horizontalInput != 0) airAttack = 1; // 空中横攻撃
-                else if (Input.GetKey(KeyCode.S)) airAttack = 2; // 空中下攻撃
-
-                if (airAttack > 0) {
-                    charAnimator.SetInteger("AirAttackType", airAttack);
-                    charAnimator.SetTrigger("AttackTrigger");
-                }
-            }
+        if (isGrounded && jumpTriggered)
+        {
+            // Use impulse so gravity immediately affects the body afterwards
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
     }
 
-private string DebuggerDisplay => ToString();
-        }
-    
+    // Gizmo to visualize ground check in editor
+    void OnDrawGizmosSelected()
+    {
+        if (groundCheck == null) return;
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+    }
+}

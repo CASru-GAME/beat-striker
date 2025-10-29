@@ -22,6 +22,12 @@ public static class Ex {
 
     public static Coroutine Delay(this MonoBehaviour monoBehaviour, System.Action action, float delay)
     {
+        // If the target MonoBehaviour is inactive or disabled we cannot start a coroutine on it.
+        // Use a central always-active runner in that case so delayed actions still execute.
+        if (monoBehaviour == null || !monoBehaviour.gameObject.activeInHierarchy || !monoBehaviour.enabled)
+        {
+            return CoroutineRunner.Instance.StartCoroutine(CoroutineAction(action, delay));
+        }
         return monoBehaviour.StartCoroutine(CoroutineAction(action, delay));
     }
 
@@ -34,6 +40,31 @@ public static class Ex {
     {
         foreach (var item in source)
             action(item);
+    }
+}
+
+/// <summary>
+/// A small helper MonoBehaviour that ensures coroutines can be started even if the caller
+/// MonoBehaviour is inactive. The GameObject is created on demand and marked DontDestroyOnLoad.
+/// </summary>
+internal class CoroutineRunner : MonoBehaviour
+{
+    private static CoroutineRunner _instance;
+    public static CoroutineRunner Instance
+    {
+        get
+        {
+            if (_instance != null) return _instance;
+            var go = GameObject.Find("[CoroutineRunner]");
+            if (go == null)
+            {
+                go = new GameObject("[CoroutineRunner]");
+                DontDestroyOnLoad(go);
+            }
+            _instance = go.GetComponent<CoroutineRunner>();
+            if (_instance == null) _instance = go.AddComponent<CoroutineRunner>();
+            return _instance;
+        }
     }
 }
 
