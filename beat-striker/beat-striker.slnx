@@ -1,7 +1,9 @@
 ﻿<Solution>
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Extentions.csproj" />
+  <Project Path="Core.App.csproj" />
   <Project Path="Assembly-CSharp-firstpass.csproj" />
+  <Project Path="Battle.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="GamePad.csproj" />
   <Project Path="PlayMode.csproj" />
