@@ -9,7 +9,7 @@ namespace Core.Battle {
     public class StrikerInstaller: MonoBehaviour {
         [SerializeField] private HitPoint maxHitPoint = new(100);
 
-        public void Construct(PlayerId playerId, ScoreRule rule, IPlayerRegistry playerRegistry, IRythmTrackModel rythmTrackModel) {
+        public void Construct(PlayerId playerId, ScoreRule rule, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry) {
             Debug.Log("StrikerInstaller Construct:" + playerId);
             var view = GetComponent<StrikerView>();
             var life = GetComponent<Life>();

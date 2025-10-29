@@ -10,6 +10,7 @@ namespace Core.Battle {
         readonly IPlayerRegistry playerRegistry;
         readonly IStrikerView view;
         readonly IRythmTrackModel rythmTrackModel;
+        bool isEnabled = false;
 
         public StrikerPresenter(IStrikerModel model, IStrikerView view, IBus bus, ILife life, IPlayerRegistry playerRegistry, IRythmTrackModel rythmTrackModel) {
             this.model = model;
@@ -25,6 +26,8 @@ namespace Core.Battle {
             bus.Subscribe<GamePadMessages.DirectionChanged>(OnGamePadDirectionChanged);
             bus.Subscribe<BattleMessages.RequireIntroPose>(OnIntro);
             bus.Subscribe<BattleMessages.RequireVictoryPose>(OnVictory);
+            bus.Subscribe<BattleMessages.OnRoundStart>(OnRoundStart);
+            bus.Subscribe<BattleMessages.OnRoundFinished>(OnRoundEnd);
         }
 
         public void OnDisable() {
@@ -32,11 +35,13 @@ namespace Core.Battle {
             bus.Unsubscribe<GamePadMessages.DirectionChanged>(OnGamePadDirectionChanged);
             bus.Unsubscribe<BattleMessages.RequireIntroPose>(OnIntro);
             bus.Unsubscribe<BattleMessages.RequireVictoryPose>(OnVictory);
+            bus.Unsubscribe<BattleMessages.OnRoundStart>(OnRoundStart);
+            bus.Unsubscribe<BattleMessages.OnRoundFinished>(OnRoundEnd);
         }
 
         private void OnGamePadInputed(GamePadMessages.Inputed msg) {
             var player = playerRegistry.ToPlayerId(msg.gamePadId);
-            if (player == null || model.PlayerId != player) return;
+            if (isEnabled == false || player == null || model.PlayerId != player) return;
 
             if (msg.action == GamePadAction.Down) {
                 if (msg.button == GamePadButton.South) {
@@ -73,7 +78,7 @@ namespace Core.Battle {
 
         private void OnGamePadDirectionChanged(GamePadMessages.DirectionChanged msg) {
             var player = playerRegistry.ToPlayerId(msg.gamePadId);
-            if (player == null || model.PlayerId != player) return;
+            if (isEnabled == false || player == null || model.PlayerId != player) return;
 
             view.ChangeDirection(msg.direction);
         }
@@ -100,6 +105,14 @@ namespace Core.Battle {
         private void OnVictory(BattleMessages.RequireVictoryPose msgq) {
             if (model.PlayerId != msgq.playerId) return;
             view.OnVictory();
+        }
+
+        private void OnRoundStart(BattleMessages.OnRoundStart msg) {
+            isEnabled = true;
+        }
+
+        private void OnRoundEnd(BattleMessages.OnRoundFinished msg) {
+            isEnabled = false;
         }
     }
 }

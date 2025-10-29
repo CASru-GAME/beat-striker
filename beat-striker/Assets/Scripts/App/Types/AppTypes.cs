@@ -74,8 +74,9 @@ namespace Core.App.Types {
         }
     }
 
-    public readonly struct StageId {
-        public readonly string value;
+    [Serializable]
+    public struct StageId {
+        public string value;
         public StageId(string value) {
             this.value = value;
         }
@@ -104,8 +105,9 @@ namespace Core.App.Types {
         }
     }
 
-    public readonly struct TrackId {
-        public readonly string value;
+    [Serializable]
+    public struct TrackId {
+        public string value;
         public TrackId(string value) {
             this.value = value;
         }

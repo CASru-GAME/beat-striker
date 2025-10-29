@@ -133,6 +133,12 @@ MonoBehaviour:
   - scene: 5
     sceneName: StreetScene
   firstScene: 0
+  defaultStrikerId:
+    value: Hero
+  defaultStageId:
+    value: Stage
+  defaultTrackId:
+    value: BeatStriker
 --- !u!114 &-7378754032342270837
 MonoBehaviour:
   m_ObjectHideFlags: 0

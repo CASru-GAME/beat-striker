@@ -26,6 +26,9 @@ namespace Core.App.Installers {
         [SerializeField] CursorScope cursorPrefab;
         [SerializeField] SceneNameEntry[] sceneNameEntries;
         [SerializeField] AppScene firstScene;
+        [SerializeField] StrikerId defaultStrikerId;
+        [SerializeField] StageId defaultStageId;
+        [SerializeField] TrackId defaultTrackId;
         Life life;
 
         ICursorRegistry cursorRegistry;
@@ -39,7 +42,7 @@ namespace Core.App.Installers {
             var bus = this.GetBus();
             playerRegistry = new PlayerRegistry(bus, life);
             cursorRegistry = new CursorRegistry(this, playerRegistry, bus, life);
-            battleSettingModel = new BattleSettingModel();
+            battleSettingModel = new BattleSettingModel(defaultStageId, defaultTrackId, defaultStrikerId);
             var sceneView = GetComponent<SceneView>();
             sceneView.Construct(CreateSceneNameDictFromEntries());
             var presenter = new SceneStatePresenter(firstScene, sceneView, bus, battleSettingModel, this, cursorRegistry, life);

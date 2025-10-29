@@ -25,18 +25,19 @@ namespace Core.Battle {
         [SerializeField] StrikerPrefab[] strikerPrefabs;
         [SerializeField] int excellentScore = 1000;
         [SerializeField] int goodScore = 500;
+        [SerializeField] int playerCount = 2;
 
         void Awake() {
             var app = GameObject.Find("App").GetComponent<AppFlowScope>();
-            var playerRegistry = app.playerRegistry;
             var settingModel = app.battleSettingModel;
+            var playerRegistry = app.playerRegistry;
 
 
             var view = GetComponent<BattleView>();
             var rule = new ScoreRule(excellentScore, goodScore);
             var life = GetComponent<Life>();
             var bus = this.GetBus();
-            var battleModel = new BattleModel(playerRegistry.GetAllPlayerIds());
+            var battleModel = new BattleModel(playerCount);
             var rythmTrackModel = new RythmTrackModel(new float[] { },
                 perfectWindow,
                 goodWindow,
@@ -45,18 +46,15 @@ namespace Core.Battle {
             var mutator = new BattleFlowPresenter(bus, life, battleModel, rythmTrackModel);
             view.Construct(mutator);
 
-            var playerIds = playerRegistry.GetAllPlayerIds().ToList();
             for (int i = 0; i < transforms.Length; i++) {
                 var transform = transforms[i];
-                if( i >= playerIds.Count) {
-                    Debug.LogWarning($"No player for transform index {i}, disabling.");
-                    break;
-                }
-                var playerId = playerIds[i];
+                var playerId = new PlayerId(i);
                 var strikerId = settingModel.GetStriker(playerId);
                 var strikerPrefab = strikerPrefabs.FirstOrDefault(x => x.strikerId == strikerId).prefab;
-                var instance = Instantiate(strikerPrefab, transform);
-                instance.Construct(playerId, rule, playerRegistry, rythmTrackModel);
+                var instance = Instantiate(strikerPrefab);
+                instance.transform.SetPositionAndRotation(transform.position, transform.rotation);
+                transform.SetParent(instance.transform);
+                instance.Construct(playerId, rule, rythmTrackModel, playerRegistry);
             }
         }
     }

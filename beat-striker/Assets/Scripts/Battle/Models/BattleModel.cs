@@ -10,8 +10,8 @@ namespace Core.Battle {
         private readonly List<PlayerId> allPlayers;
         private int currentRound = 0;
 
-        public BattleModel(IEnumerable<PlayerId> allPlayers) {
-            this.allPlayers = allPlayers.ToList();
+        public BattleModel(int playerCount) {
+            this.allPlayers = Enumerable.Range(0, playerCount).Select(i => new PlayerId(i)).ToList();
             deadPlayers = new List<PlayerId>[10];
             for (int i = 0; i < deadPlayers.Length; i++) {
                 deadPlayers[i] = new List<PlayerId>(this.allPlayers.Count);

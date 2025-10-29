@@ -248,7 +248,7 @@ namespace Tests.EditMode {
             var p0 = new PlayerId(0);
             var p1 = new PlayerId(1);
 
-            var model = new BattleModel(new[] { p0, p1 });
+            var model = new BattleModel(2);
 
             // Round0: p1が死んだ → p0が勝者
             Assert.That(model.GetCurrentRound(), Is.EqualTo(0));
@@ -274,7 +274,7 @@ namespace Tests.EditMode {
         public void BattleModel_AddLoserは同ラウンドで重複登録しない() {
             var p0 = new PlayerId(0);
             var p1 = new PlayerId(1);
-            var model = new BattleModel(new[] { p0, p1 });
+            var model = new BattleModel(2);
 
             model.AddLoser(p1);
             model.AddLoser(p1); // 2回呼んでもOK
