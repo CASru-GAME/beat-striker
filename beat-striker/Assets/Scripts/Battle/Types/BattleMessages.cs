@@ -13,6 +13,7 @@ namespace Core.Battle {
         public class NotifyIntroAnimationFinished { }
 
         public class NotifyRoundStartAnimationFinished { }
+        public class NotifyRoundFinishAnimationFinished { }
 
         public class NotifyPlayerDead {
             public readonly PlayerId playerId;

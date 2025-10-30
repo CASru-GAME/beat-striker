@@ -10,12 +10,14 @@ namespace Core.Battle {
         private float[] beatTimes;
         private float excellentWindow;
         private float goodWindow;
+        private float timeOffset;
         private int[] nextBeatIndex = new int[4];
 
         public RythmTrackModel(float[] beatTimes, float perfectWindow, float goodWindow, float timeOffset) {
             this.beatTimes = beatTimes;
             this.excellentWindow = perfectWindow;
             this.goodWindow = goodWindow;
+            this.timeOffset = timeOffset;
             this.currentTime = timeOffset;
         }
 
@@ -64,6 +66,13 @@ namespace Core.Battle {
 
         public float GetTime() {
             return currentTime;
+        }
+
+        public void Reset() {
+            currentTime = timeOffset;
+            for (int i = 0; i < nextBeatIndex.Length; i++) {
+                nextBeatIndex[i] = 0;
+            }
         }
     }
 }

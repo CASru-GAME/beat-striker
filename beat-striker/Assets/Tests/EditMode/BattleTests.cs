@@ -38,9 +38,11 @@ namespace Tests.EditMode {
         public float GetNextBeatTime(PlayerId playerId, int offset) {
             throw new System.NotImplementedException();
         }
+
+        public void Reset() {
+        }
     }
 
-    // StrikerPresenter検証用 IStrikerViewフェイク
     sealed class FakeStrikerView : IStrikerView {
         public Vector2? lastDirection = null;
         public bool cancelDirectionCalled = false;
@@ -88,6 +90,9 @@ namespace Tests.EditMode {
             return status.damage;
         }
 
+        public void ResetPosition() {
+        }
+
         public void ResetFlags() {
             lastDirection = null;
             cancelDirectionCalled = false;
@@ -103,6 +108,18 @@ namespace Tests.EditMode {
             onIntroCalled = false;
             onVictoryCalled = false;
             lastCalcHitReturned = 0f;
+        }
+
+        public void SavePosition() {
+            throw new System.NotImplementedException();
+        }
+    }
+
+    sealed class FakeBattleResetter : IBattleResetter {
+        public int resetCallCount = 0;
+
+        public void ResetBattle() {
+            resetCallCount++;
         }
     }
 
@@ -472,12 +489,14 @@ namespace Tests.EditMode {
             fakeBattle.roundWinners[0] = new PlayerId(10);
 
             var fakeTrack = new FakeRythmTrackModel();
+            var fakeResetter = new FakeBattleResetter();
 
             var presenter = new BattleFlowPresenter(
                 bus,
                 life,
                 fakeBattle,
-                fakeTrack
+                fakeTrack,
+                fakeResetter
             );
 
             life.Enable();
@@ -510,12 +529,14 @@ namespace Tests.EditMode {
             fakeBattle.roundWinners[1] = new PlayerId(1);
 
             var fakeTrack = new FakeRythmTrackModel();
+            var fakeResetter = new FakeBattleResetter();
 
             var presenter = new BattleFlowPresenter(
                 bus,
                 life,
                 fakeBattle,
-                fakeTrack
+                fakeTrack,
+                fakeResetter
             );
 
             life.Enable();
@@ -563,12 +584,14 @@ namespace Tests.EditMode {
             fakeBattle.finished = true; // すでに決着している想定
 
             var fakeTrack = new FakeRythmTrackModel();
+            var fakeResetter = new FakeBattleResetter();
 
             var presenter = new BattleFlowPresenter(
                 bus,
                 life,
                 fakeBattle,
-                fakeTrack
+                fakeTrack,
+                fakeResetter
             );
 
             life.Enable();

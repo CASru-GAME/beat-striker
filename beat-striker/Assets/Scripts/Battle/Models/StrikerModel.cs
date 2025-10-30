@@ -68,5 +68,15 @@ namespace Core.Battle {
         public bool IsDead() {
             return HitPoint.value <= 0;
         }
+
+        public void Reset() {
+            HitPoint = MaxHitPoint;
+            SpecialPoint = new(0);
+            MissCount = 0;
+            GoodCount = 0;
+            ExcellentCount = 0;
+            Score = 0;
+            ComboCount = 0;
+        }
     }
 }

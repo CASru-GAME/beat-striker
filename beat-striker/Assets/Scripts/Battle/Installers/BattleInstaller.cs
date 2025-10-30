@@ -19,7 +19,7 @@ namespace Core.Battle {
 
     [RequireComponent(typeof(Life))]
     [RequireComponent(typeof(BattleView))]
-    public class BattleInstaller : MonoBehaviour {
+    public class BattleInstaller : MonoBehaviour, IBattleResetter {
         [SerializeField] float perfectWindow = 0.1f;
         [SerializeField] float goodWindow = 0.2f;
         [SerializeField] float timeOffset = 0f;
@@ -30,6 +30,7 @@ namespace Core.Battle {
         [SerializeField] int specialGain = 10;
         [SerializeField] int playerCount = 2;
         public List<IStrikerModelGetter> strikerModels = new();
+        public List<IStrikerView> strikerViews = new();
         public IRythmTrackModelGetter rythmTrackModel;
 
         void Awake() {
@@ -49,7 +50,7 @@ namespace Core.Battle {
                 timeOffset
             );
             this.rythmTrackModel = rythmTrackModel;
-            var mutator = new BattleFlowPresenter(bus, life, battleModel, rythmTrackModel);
+            var mutator = new BattleFlowPresenter(bus, life, battleModel, rythmTrackModel,this);
             view.Construct(mutator);
 
             for (int i = 0; i < playerTransforms.Length; i++) {
@@ -60,10 +61,28 @@ namespace Core.Battle {
                 var instance = Instantiate(strikerPrefab);
                 instance.transform.SetPositionAndRotation(transform.position, transform.rotation);
                 transform.SetParent(instance.transform);
-                var (IStrikerModel, IRythmTrackModel) = instance.Construct(playerId, rule, rythmTrackModel, playerRegistry);
+                var (IStrikerModel, IRythmTrackModel, IStrikerView) = instance.Construct(playerId, rule, rythmTrackModel, playerRegistry);
                 this.strikerModels.Add(IStrikerModel);
+                this.strikerViews.Add(IStrikerView);
+                IStrikerView.SavePosition();
             }
 
+        }
+
+        public void ResetBattle() {
+            if (rythmTrackModel is IRythmTrackModel rythmTrackModelMutable) {
+                rythmTrackModelMutable.Reset();
+            }
+
+            foreach (var strikerModelGetter in strikerModels) {
+                if (strikerModelGetter is IStrikerModel strikerModel) {
+                    strikerModel.Reset();
+                }
+            }
+
+            foreach (var strikerView in strikerViews) {
+                strikerView.ResetPosition();
+            }
         }
     }
 }

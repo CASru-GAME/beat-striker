@@ -10,6 +10,7 @@ namespace Core.Battle {
         public void GainSpecial(SpecialPoint gain);
         public void AddBeatResult(BeatResult result);
         public void GainSpecial();
+        public void Reset();
     }
 
     public interface IStrikerModelGetter {

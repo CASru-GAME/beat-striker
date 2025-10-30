@@ -18,6 +18,9 @@ namespace Core.Battle {
         private bool isGuard = false;
         private float? targetRotationAngle = null;
         private IStrikerHit strikerHit;
+        
+        private Vector3 initialPosition;
+        private Quaternion initialRotation;
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
@@ -155,10 +158,28 @@ namespace Core.Battle {
         }
 
         public HitPoint CalcHit(HitStatus status) {
-            if(isGuard) {
+            if (isGuard) {
                 return new HitPoint(status.damage.value / 2);
             }
             return new HitPoint(status.damage.value);
+        }
+        
+        public void SavePosition() {
+            initialPosition = transform.position;
+            initialRotation = transform.rotation;
+        }
+
+        public void ResetPosition() {
+            transform.position = initialPosition;
+            transform.rotation = initialRotation;
+            
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            
+            direction = Vector2.zero;
+            targetRotationAngle = null;
+            
+            isGuard = false;
         }
     }
 }
