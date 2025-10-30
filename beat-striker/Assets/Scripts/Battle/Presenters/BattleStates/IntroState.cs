@@ -1,4 +1,5 @@
 using Core.Utils;
+using UnityEngine;
 
 namespace Core.Battle {
     public class IntroState : IBattleState {
@@ -15,6 +16,7 @@ namespace Core.Battle {
         }
 
         public void Enter() {
+            Debug.Log("Entering Intro State");
             bus.Subscribe<BattleMessages.NotifyIntroAnimationFinished>(OnIntroAnimationFinished);
         }
 
@@ -26,6 +28,7 @@ namespace Core.Battle {
         }
 
         private void OnIntroAnimationFinished(BattleMessages.NotifyIntroAnimationFinished msg) {
+            Debug.Log("Intro Animation Finished");
             mutator.ChangeState(new RoundStartState(mutator, bus, battleModel, rythmTrackModel));
         }
     }

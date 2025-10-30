@@ -12,12 +12,16 @@ namespace Core.Battle {
         public int ExcellentCount { get; private set; } = 0;
         public int Score { get; private set; } = 0;
         public int ComboCount { get; private set; } = 0;
+
+        public SpecialPoint MaxSpecialPoint { get; private set; }
+
         private ScoreRule rule;
 
-        public StrikerModel(PlayerId playerId, HitPoint hitPoint, ScoreRule rule) {
+        public StrikerModel(PlayerId playerId, HitPoint hitPoint, SpecialPoint maxSpecialPoint, ScoreRule rule) {
             this.PlayerId = playerId;
             this.MaxHitPoint = hitPoint;
             this.HitPoint = hitPoint;
+            this.MaxSpecialPoint = maxSpecialPoint;
             this.rule = rule;
         }
 
@@ -37,6 +41,10 @@ namespace Core.Battle {
             var nextSp = SpecialPoint.value + gain.value;
             SpecialPoint newSp = new(nextSp < 0 ? 0 : nextSp);
             SpecialPoint = newSp;
+        }
+
+        public void GainSpecial() {
+            GainSpecial(new SpecialPoint(rule.GetSpecialGain()));
         }
 
         public void AddBeatResult(BeatResult result) {

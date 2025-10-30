@@ -26,6 +26,14 @@ namespace Tests.EditMode {
         public void AddTime(float time) {
             addedTimeSum += time;
         }
+
+        public float GetBeatTime(PlayerId playerId, int index) {
+            throw new System.NotImplementedException();
+        }
+
+        public float GetTime() {
+            throw new System.NotImplementedException();
+        }
     }
 
     // StrikerPresenter検証用 IStrikerViewフェイク
@@ -135,7 +143,7 @@ namespace Tests.EditMode {
     public sealed class ScoreRuleTests {
         [Test]
         public void ScoreRule_判定ごとのスコアが正しく返る() {
-            var rule = new ScoreRule(1000, 500);
+            var rule = new ScoreRule(1000, 500, 200);
 
             Assert.That(rule.GetScoreForJudge(BeatStatus.Excellent), Is.EqualTo(1000));
             Assert.That(rule.GetScoreForJudge(BeatStatus.Good), Is.EqualTo(500));
@@ -148,8 +156,8 @@ namespace Tests.EditMode {
         [Test]
         public void StrikerModel_HPやSPのクランプ_BeatResult集計_スコア加算_コンボリセット() {
             var pid = new PlayerId(0);
-            var rule = new ScoreRule(excellentScore: 1000, goodScore: 500);
-            var model = new StrikerModel(pid, new HitPoint(100f), rule);
+            var rule = new ScoreRule(excellentScore: 1000, goodScore: 500, specialGain: 200);
+            var model = new StrikerModel(pid, new HitPoint(100f), new SpecialPoint(100f), rule);
 
             // ダメージ適用・下限0
             model.TakeDamage(new HitPoint(30f));
@@ -301,8 +309,8 @@ namespace Tests.EditMode {
             registry.Map(gid, playerId);
 
             var view = new FakeStrikerView();
-            var rule = new ScoreRule(1000, 500);
-            var model = new StrikerModel(playerId, new HitPoint(100f), rule);
+            var rule = new ScoreRule(1000, 500, 200);
+            var model = new StrikerModel(playerId, new HitPoint(100f), new SpecialPoint(100f), rule);
 
             var rtm = new FakeRythmTrackModel();
             // Dash(South), Attack(East), Charge(West Down), ChargeEnd(West Up), Special(North), Guard(LeftTrigger)
@@ -393,7 +401,7 @@ namespace Tests.EditMode {
             registry.Map(gid, playerId);
 
             var view = new FakeStrikerView();
-            var model = new StrikerModel(playerId, new HitPoint(100f), new ScoreRule(1000, 500));
+            var model = new StrikerModel(playerId, new HitPoint(100f), new SpecialPoint(100f), new ScoreRule(1000, 500, 200));
             var rtm = new FakeRythmTrackModel();
 
             var presenter = new StrikerPresenter(
@@ -477,7 +485,7 @@ namespace Tests.EditMode {
             bus.Publish(new BattleMessages.NotifyRoundStartAnimationFinished());
 
             // RoundState.Enter() で OnRoundStart(round=0) がPublishされているはず
-            var roundStartMsg = bus.GetMessage<BattleMessages.OnRoundStart>();
+            var roundStartMsg = bus.GetMessage<BattleMessages.OnBattleStarted>();
             Assert.That(roundStartMsg.round, Is.EqualTo(0));
 
             // RoundState中にOnUpdate()を呼ぶと、RythmTrackModel.AddTime()が叩かれる
@@ -517,7 +525,7 @@ namespace Tests.EditMode {
             bus.Publish(new BattleMessages.NotifyPlayerDead(deadPid));
 
             // RoundState.Exit()の中でOnRoundFinished(winnerOfRound0) がPublishされる
-            var finishedMsg = bus.GetMessage<BattleMessages.OnRoundFinished>();
+            var finishedMsg = bus.GetMessage<BattleMessages.OnOutroStarted>();
             Assert.That(finishedMsg.winner.value, Is.EqualTo(fakeBattle.roundWinners[0].value));
 
             // battleModel.AddLoser()が呼ばれている
@@ -530,7 +538,7 @@ namespace Tests.EditMode {
             // もう一度 NotifyRoundStartAnimationFinished() を発行すると round=1 のRoundStateに遷移して OnRoundStart(1) が Publishされる
             bus.ClearMessages();
             bus.Publish(new BattleMessages.NotifyRoundStartAnimationFinished());
-            var roundStartMsg = bus.GetMessage<BattleMessages.OnRoundStart>();
+            var roundStartMsg = bus.GetMessage<BattleMessages.OnBattleStarted>();
             Assert.That(roundStartMsg.round, Is.EqualTo(1));
 
             // RoundStateに戻ったのでOnUpdateでAddTime()がまた進む
@@ -570,7 +578,7 @@ namespace Tests.EditMode {
             bus.Publish(new BattleMessages.NotifyPlayerDead(new PlayerId(7)));
 
             // RoundState.Exit()でOnRoundFinishedがPublishされているはず
-            var finishedMsg = bus.GetMessage<BattleMessages.OnRoundFinished>();
+            var finishedMsg = bus.GetMessage<BattleMessages.OnOutroStarted>();
             Assert.That(finishedMsg.winner.value, Is.EqualTo(fakeBattle.roundWinners[0].value));
 
             // OutroStateはOnUpdate()でAddTimeしない(=FakeRythmTrackModel.addedTimeSumが増えない)

@@ -1,4 +1,5 @@
 using Core.Utils;
+using UnityEngine;
 
 namespace Core.Battle {
     public class RoundStartState : IBattleState {
@@ -15,7 +16,9 @@ namespace Core.Battle {
         }
 
         public void Enter() {
+            Debug.Log("Entering Round Start State");
             bus.Subscribe<BattleMessages.NotifyRoundStartAnimationFinished>(OnRoundStartAnimationFinished);
+            bus.Publish(new BattleMessages.OnRoundStarted(battleModel.GetCurrentRound()));
         }
         public void OnUpdate(float deltaTime) {
         }

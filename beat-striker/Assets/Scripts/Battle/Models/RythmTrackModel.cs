@@ -4,7 +4,7 @@ using Core.App.Types;
 using UnityEngine;
 
 namespace Core.Battle {
-
+    
     public class RythmTrackModel : IRythmTrackModel {
         private float currentTime = 0f;
         private float[] beatTimes;
@@ -53,6 +53,16 @@ namespace Core.Battle {
                 }
                 nextBeatIndex[pid] = playerBeatIndex;
             }
+        }
+
+        public float GetBeatTime(PlayerId playerId, int index) {
+            if (index >= nextBeatIndex[playerId.value])
+                return beatTimes[index];
+            return float.NaN;
+        }
+
+        public float GetTime() {
+            return currentTime;
         }
     }
 }

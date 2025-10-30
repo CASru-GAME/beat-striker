@@ -26,8 +26,8 @@ namespace Core.Battle {
             bus.Subscribe<GamePadMessages.DirectionChanged>(OnGamePadDirectionChanged);
             bus.Subscribe<BattleMessages.RequireIntroPose>(OnIntro);
             bus.Subscribe<BattleMessages.RequireVictoryPose>(OnVictory);
-            bus.Subscribe<BattleMessages.OnRoundStart>(OnRoundStart);
-            bus.Subscribe<BattleMessages.OnRoundFinished>(OnRoundEnd);
+            bus.Subscribe<BattleMessages.OnBattleStarted>(OnRoundStart);
+            bus.Subscribe<BattleMessages.OnBattleFinished>(OnRoundEnd);
         }
 
         public void OnDisable() {
@@ -35,8 +35,8 @@ namespace Core.Battle {
             bus.Unsubscribe<GamePadMessages.DirectionChanged>(OnGamePadDirectionChanged);
             bus.Unsubscribe<BattleMessages.RequireIntroPose>(OnIntro);
             bus.Unsubscribe<BattleMessages.RequireVictoryPose>(OnVictory);
-            bus.Unsubscribe<BattleMessages.OnRoundStart>(OnRoundStart);
-            bus.Unsubscribe<BattleMessages.OnRoundFinished>(OnRoundEnd);
+            bus.Unsubscribe<BattleMessages.OnBattleStarted>(OnRoundStart);
+            bus.Unsubscribe<BattleMessages.OnBattleFinished>(OnRoundEnd);
         }
 
         private void OnGamePadInputed(GamePadMessages.Inputed msg) {
@@ -54,7 +54,14 @@ namespace Core.Battle {
                     if(Beat()) view.Charge();
                 }
                 else if (msg.button == GamePadButton.North) {
-                    if(Beat()) view.Special();
+                    if (Beat()) {
+                        if (model.SpecialPoint.value < model.MaxSpecialPoint.value) {
+                            view.OnMiss();
+                            return;
+                        }
+                        model.GainSpecial(new SpecialPoint(-model.MaxSpecialPoint.value));
+                        view.Special();
+                    }
                 }
                 else if (msg.button == GamePadButton.LeftTrigger) {
                     if(Beat()) view.Guard();
@@ -71,9 +78,14 @@ namespace Core.Battle {
         private bool Beat() {
             var res = rythmTrackModel.Beat(model.PlayerId);
             model.AddBeatResult(res);
-            if (res.status != BeatStatus.Miss) return true;
-            view.OnMiss();
-            return false;
+            if (res.status != BeatStatus.Miss){
+                model.GainSpecial();
+                return true;
+            }
+            else {
+                view.OnMiss();
+                return false;
+            }
         }
 
         private void OnGamePadDirectionChanged(GamePadMessages.DirectionChanged msg) {
@@ -107,11 +119,11 @@ namespace Core.Battle {
             view.OnVictory();
         }
 
-        private void OnRoundStart(BattleMessages.OnRoundStart msg) {
+        private void OnRoundStart(BattleMessages.OnBattleStarted msg) {
             isEnabled = true;
         }
 
-        private void OnRoundEnd(BattleMessages.OnRoundFinished msg) {
+        private void OnRoundEnd(BattleMessages.OnBattleFinished msg) {
             isEnabled = false;
         }
     }

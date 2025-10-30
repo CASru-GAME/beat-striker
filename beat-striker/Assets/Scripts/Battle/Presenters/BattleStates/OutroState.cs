@@ -1,4 +1,5 @@
 using Core.Utils;
+using UnityEngine;
 
 namespace Core.Battle {
     public class OutroState : IBattleState {
@@ -15,6 +16,8 @@ namespace Core.Battle {
         }
 
         public void Enter() {
+            Debug.Log("Entering Outro State");
+            bus.Publish(new BattleMessages.OnOutroStarted(battleModel.GetWinner(battleModel.GetCurrentRound())));
             // Logic for entering the outro state
         }
         public void OnUpdate(float deltaTime) {

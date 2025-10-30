@@ -1,4 +1,5 @@
 using Core.Utils;
+using UnityEngine;
 
 namespace Core.Battle {
     public class RoundState : IBattleState {
@@ -15,7 +16,8 @@ namespace Core.Battle {
         }
 
         public void Enter() {
-            bus.Publish(new BattleMessages.OnRoundStart(battleModel.GetCurrentRound()));
+            Debug.Log("Entering Round State");
+            bus.Publish(new BattleMessages.OnBattleStarted(battleModel.GetCurrentRound()));
             bus.Subscribe<BattleMessages.NotifyPlayerDead>(ProcessPlayerDeathNotification);
         }
 
@@ -24,7 +26,7 @@ namespace Core.Battle {
         }
 
         public void Exit() {
-            bus.Publish(new BattleMessages.OnRoundFinished(battleModel.GetWinner(battleModel.GetCurrentRound())));
+            bus.Publish(new BattleMessages.OnBattleFinished(battleModel.GetCurrentRound()));
             bus.Unsubscribe<BattleMessages.NotifyPlayerDead>(ProcessPlayerDeathNotification);
         }
 

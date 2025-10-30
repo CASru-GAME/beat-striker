@@ -14,13 +14,6 @@ namespace Core.Battle {
 
         public class NotifyRoundStartAnimationFinished { }
 
-        public class OnRoundStart {
-            public readonly int round;
-            public OnRoundStart(int round) {
-                this.round = round;
-            }
-        }
-
         public class NotifyPlayerDead {
             public readonly PlayerId playerId;
             public NotifyPlayerDead(PlayerId playerId) {
@@ -28,9 +21,30 @@ namespace Core.Battle {
             }
         }
 
-        public class OnRoundFinished {
+        public class OnBattleStarted {
+            public readonly int round;
+            public OnBattleStarted(int round) {
+                this.round = round;
+            }
+        }
+
+        public class OnBattleFinished {
+            public readonly int round;
+            public OnBattleFinished(int round) {
+                this.round = round;
+            }
+        }
+
+        public class OnRoundStarted {
+            public readonly int round;
+            public OnRoundStarted(int round) {
+                this.round = round;
+            }
+        }
+
+        public class OnOutroStarted {
             public readonly PlayerId winner;
-            public OnRoundFinished(PlayerId winner) {
+            public OnOutroStarted(PlayerId winner) {
                 this.winner = winner;
             }
         }
