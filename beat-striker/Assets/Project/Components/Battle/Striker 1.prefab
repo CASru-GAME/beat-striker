@@ -2407,7 +2407,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd850a13dc7f54a2ba56ef052d1400c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Core.Battle::Core.Battle.StrikerView
-  dashSpeed: 50
+  dashSpeed: 65
   walkSpeed: 5
   rotationSpeed: 1080
 --- !u!114 &1815392367388582780
