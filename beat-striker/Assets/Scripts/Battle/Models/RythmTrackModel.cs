@@ -4,18 +4,20 @@ using Core.App.Types;
 using UnityEngine;
 
 namespace Core.Battle {
-
+    
     public class RythmTrackModel : IRythmTrackModel {
         private float currentTime = 0f;
         private float[] beatTimes;
         private float excellentWindow;
         private float goodWindow;
+        private float timeOffset;
         private int[] nextBeatIndex = new int[4];
 
         public RythmTrackModel(float[] beatTimes, float perfectWindow, float goodWindow, float timeOffset) {
             this.beatTimes = beatTimes;
             this.excellentWindow = perfectWindow;
             this.goodWindow = goodWindow;
+            this.timeOffset = timeOffset;
             this.currentTime = timeOffset;
         }
 
@@ -52,6 +54,24 @@ namespace Core.Battle {
                     playerBeatIndex++;
                 }
                 nextBeatIndex[pid] = playerBeatIndex;
+            }
+        }
+
+        public float GetNextBeatTime(PlayerId playerId, int offset) {
+            int index = nextBeatIndex[playerId.value] + offset;
+            if (index >= 0 && index < beatTimes.Length)
+                return beatTimes[index];
+            return float.NaN;
+        }
+
+        public float GetTime() {
+            return currentTime;
+        }
+
+        public void Reset() {
+            currentTime = timeOffset;
+            for (int i = 0; i < nextBeatIndex.Length; i++) {
+                nextBeatIndex[i] = 0;
             }
         }
     }

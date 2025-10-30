@@ -123,13 +123,13 @@ MonoBehaviour:
   - scene: 0
     sceneName: TitleScene
   - scene: 1
-    sceneName: StageSelectScene1
+    sceneName: StageselectScene1
   - scene: 2
     sceneName: SelectScene
   - scene: 3
-    sceneName: BattleScene
+    sceneName: StageScene
   - scene: 4
-    sceneName: AppTestScene
+    sceneName: StageScene
   - scene: 5
     sceneName: StreetScene
   firstScene: 0

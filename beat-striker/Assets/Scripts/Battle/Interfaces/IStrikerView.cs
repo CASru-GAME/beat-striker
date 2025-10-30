@@ -20,5 +20,7 @@ namespace Core.Battle {
         void OnIntro();
         void OnVictory();
         HitPoint CalcHit(HitStatus status);
+        void ResetPosition();
+        void SavePosition();
     }
 }

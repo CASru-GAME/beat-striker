@@ -1,4 +1,5 @@
 using Core.Utils;
+using UnityEngine;
 
 namespace Core.Battle {
     public class RoundState : IBattleState {
@@ -6,16 +7,19 @@ namespace Core.Battle {
         private readonly IBus bus;
         private readonly IBattleModel battleModel;
         private readonly IRythmTrackModel rythmTrackModel;
+        private readonly IBattleResetter resetter;
 
-        public RoundState(IBattleStateMutator mutator, IBus bus, IBattleModel battleModel, IRythmTrackModel rythmTrackModel) {
+        public RoundState(IBattleStateMutator mutator, IBus bus, IBattleModel battleModel, IRythmTrackModel rythmTrackModel, IBattleResetter resetter) {
             this.mutator = mutator;
             this.bus = bus;
             this.battleModel = battleModel;
             this.rythmTrackModel = rythmTrackModel;
+            this.resetter = resetter;
         }
 
         public void Enter() {
-            bus.Publish(new BattleMessages.OnRoundStart(battleModel.GetCurrentRound()));
+            Debug.Log("Entering Round State");
+            bus.Publish(new BattleMessages.OnBattleStarted(battleModel));
             bus.Subscribe<BattleMessages.NotifyPlayerDead>(ProcessPlayerDeathNotification);
         }
 
@@ -24,18 +28,17 @@ namespace Core.Battle {
         }
 
         public void Exit() {
-            bus.Publish(new BattleMessages.OnRoundFinished(battleModel.GetWinner(battleModel.GetCurrentRound())));
+            bus.Publish(new BattleMessages.OnBattleFinished(battleModel));
             bus.Unsubscribe<BattleMessages.NotifyPlayerDead>(ProcessPlayerDeathNotification);
         }
 
         private void ProcessPlayerDeathNotification(BattleMessages.NotifyPlayerDead message) {
             battleModel.AddLoser(message.playerId);
             if (!battleModel.IsFinished()) {
-                mutator.ChangeState(new RoundStartState(mutator, bus, battleModel, rythmTrackModel));
-                battleModel.NextRound();
+                mutator.ChangeState(new RoundFinishState(mutator, bus, battleModel, rythmTrackModel, resetter));
             }
             else {
-                mutator.ChangeState(new OutroState(mutator, bus, battleModel, rythmTrackModel));
+                mutator.ChangeState(new OutroState(mutator, bus, battleModel, rythmTrackModel, resetter));
             }
         }
     }

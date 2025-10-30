@@ -26,9 +26,23 @@ namespace Tests.EditMode {
         public void AddTime(float time) {
             addedTimeSum += time;
         }
+
+        public float GetBeatTime(PlayerId playerId, int index) {
+            throw new System.NotImplementedException();
+        }
+
+        public float GetTime() {
+            throw new System.NotImplementedException();
+        }
+
+        public float GetNextBeatTime(PlayerId playerId, int offset) {
+            throw new System.NotImplementedException();
+        }
+
+        public void Reset() {
+        }
     }
 
-    // StrikerPresenter検証用 IStrikerViewフェイク
     sealed class FakeStrikerView : IStrikerView {
         public Vector2? lastDirection = null;
         public bool cancelDirectionCalled = false;
@@ -76,6 +90,9 @@ namespace Tests.EditMode {
             return status.damage;
         }
 
+        public void ResetPosition() {
+        }
+
         public void ResetFlags() {
             lastDirection = null;
             cancelDirectionCalled = false;
@@ -92,11 +109,24 @@ namespace Tests.EditMode {
             onVictoryCalled = false;
             lastCalcHitReturned = 0f;
         }
+
+        public void SavePosition() {
+            throw new System.NotImplementedException();
+        }
+    }
+
+    sealed class FakeBattleResetter : IBattleResetter {
+        public int resetCallCount = 0;
+
+        public void ResetBattle() {
+            resetCallCount++;
+        }
     }
 
     sealed class FakeBattleModel : IBattleModel {
         public int currentRound = 0;
         public readonly Dictionary<int, PlayerId> roundWinners = new();
+        public readonly Dictionary<PlayerId, int> winCounts = new();
         public bool finished = false;
         public PlayerId finalWinner = new PlayerId(-999);
 
@@ -106,6 +136,11 @@ namespace Tests.EditMode {
         public PlayerId GetWinner(int round) {
             if (roundWinners.TryGetValue(round, out var p)) return p;
             return new PlayerId(-1);
+        }
+
+        public int GetWinCount(PlayerId playerId) {
+            if (winCounts.TryGetValue(playerId, out var count)) return count;
+            return 0;
         }
 
         public int GetCurrentRound() {
@@ -135,7 +170,7 @@ namespace Tests.EditMode {
     public sealed class ScoreRuleTests {
         [Test]
         public void ScoreRule_判定ごとのスコアが正しく返る() {
-            var rule = new ScoreRule(1000, 500);
+            var rule = new ScoreRule(1000, 500, 200);
 
             Assert.That(rule.GetScoreForJudge(BeatStatus.Excellent), Is.EqualTo(1000));
             Assert.That(rule.GetScoreForJudge(BeatStatus.Good), Is.EqualTo(500));
@@ -148,8 +183,8 @@ namespace Tests.EditMode {
         [Test]
         public void StrikerModel_HPやSPのクランプ_BeatResult集計_スコア加算_コンボリセット() {
             var pid = new PlayerId(0);
-            var rule = new ScoreRule(excellentScore: 1000, goodScore: 500);
-            var model = new StrikerModel(pid, new HitPoint(100f), rule);
+            var rule = new ScoreRule(excellentScore: 1000, goodScore: 500, specialGain: 200);
+            var model = new StrikerModel(pid, new HitPoint(100f), new SpecialPoint(100f), rule);
 
             // ダメージ適用・下限0
             model.TakeDamage(new HitPoint(30f));
@@ -301,8 +336,8 @@ namespace Tests.EditMode {
             registry.Map(gid, playerId);
 
             var view = new FakeStrikerView();
-            var rule = new ScoreRule(1000, 500);
-            var model = new StrikerModel(playerId, new HitPoint(100f), rule);
+            var rule = new ScoreRule(1000, 500, 200);
+            var model = new StrikerModel(playerId, new HitPoint(100f), new SpecialPoint(100f), rule);
 
             var rtm = new FakeRythmTrackModel();
             // Dash(South), Attack(East), Charge(West Down), ChargeEnd(West Up), Special(North), Guard(LeftTrigger)
@@ -393,7 +428,7 @@ namespace Tests.EditMode {
             registry.Map(gid, playerId);
 
             var view = new FakeStrikerView();
-            var model = new StrikerModel(playerId, new HitPoint(100f), new ScoreRule(1000, 500));
+            var model = new StrikerModel(playerId, new HitPoint(100f), new SpecialPoint(100f), new ScoreRule(1000, 500, 200));
             var rtm = new FakeRythmTrackModel();
 
             var presenter = new StrikerPresenter(
@@ -460,12 +495,14 @@ namespace Tests.EditMode {
             fakeBattle.roundWinners[0] = new PlayerId(10);
 
             var fakeTrack = new FakeRythmTrackModel();
+            var fakeResetter = new FakeBattleResetter();
 
             var presenter = new BattleFlowPresenter(
                 bus,
                 life,
                 fakeBattle,
-                fakeTrack
+                fakeTrack,
+                fakeResetter
             );
 
             life.Enable();
@@ -477,8 +514,8 @@ namespace Tests.EditMode {
             bus.Publish(new BattleMessages.NotifyRoundStartAnimationFinished());
 
             // RoundState.Enter() で OnRoundStart(round=0) がPublishされているはず
-            var roundStartMsg = bus.GetMessage<BattleMessages.OnRoundStart>();
-            Assert.That(roundStartMsg.round, Is.EqualTo(0));
+            var roundStartMsg = bus.GetMessage<BattleMessages.OnBattleStarted>();
+            Assert.That(roundStartMsg.battlemodel.GetCurrentRound(), Is.EqualTo(0));
 
             // RoundState中にOnUpdate()を呼ぶと、RythmTrackModel.AddTime()が叩かれる
             presenter.OnUpdate(0.5f);
@@ -498,12 +535,14 @@ namespace Tests.EditMode {
             fakeBattle.roundWinners[1] = new PlayerId(1);
 
             var fakeTrack = new FakeRythmTrackModel();
+            var fakeResetter = new FakeBattleResetter();
 
             var presenter = new BattleFlowPresenter(
                 bus,
                 life,
                 fakeBattle,
-                fakeTrack
+                fakeTrack,
+                fakeResetter
             );
 
             life.Enable();
@@ -517,8 +556,8 @@ namespace Tests.EditMode {
             bus.Publish(new BattleMessages.NotifyPlayerDead(deadPid));
 
             // RoundState.Exit()の中でOnRoundFinished(winnerOfRound0) がPublishされる
-            var finishedMsg = bus.GetMessage<BattleMessages.OnRoundFinished>();
-            Assert.That(finishedMsg.winner.value, Is.EqualTo(fakeBattle.roundWinners[0].value));
+            var finishedMsg = bus.GetMessage<BattleMessages.OnOutroStarted>();
+            Assert.That(finishedMsg.battlemodel.GetWinner(0).value, Is.EqualTo(fakeBattle.roundWinners[0].value));
 
             // battleModel.AddLoser()が呼ばれている
             Assert.That(fakeBattle.lastLoser!.Value.value, Is.EqualTo(deadPid.value));
@@ -530,8 +569,8 @@ namespace Tests.EditMode {
             // もう一度 NotifyRoundStartAnimationFinished() を発行すると round=1 のRoundStateに遷移して OnRoundStart(1) が Publishされる
             bus.ClearMessages();
             bus.Publish(new BattleMessages.NotifyRoundStartAnimationFinished());
-            var roundStartMsg = bus.GetMessage<BattleMessages.OnRoundStart>();
-            Assert.That(roundStartMsg.round, Is.EqualTo(1));
+            var roundStartMsg = bus.GetMessage<BattleMessages.OnBattleStarted>();
+            Assert.That(roundStartMsg.battlemodel.GetCurrentRound(), Is.EqualTo(1));
 
             // RoundStateに戻ったのでOnUpdateでAddTime()がまた進む
             presenter.OnUpdate(1.0f);
@@ -551,12 +590,14 @@ namespace Tests.EditMode {
             fakeBattle.finished = true; // すでに決着している想定
 
             var fakeTrack = new FakeRythmTrackModel();
+            var fakeResetter = new FakeBattleResetter();
 
             var presenter = new BattleFlowPresenter(
                 bus,
                 life,
                 fakeBattle,
-                fakeTrack
+                fakeTrack,
+                fakeResetter
             );
 
             life.Enable();
@@ -570,8 +611,8 @@ namespace Tests.EditMode {
             bus.Publish(new BattleMessages.NotifyPlayerDead(new PlayerId(7)));
 
             // RoundState.Exit()でOnRoundFinishedがPublishされているはず
-            var finishedMsg = bus.GetMessage<BattleMessages.OnRoundFinished>();
-            Assert.That(finishedMsg.winner.value, Is.EqualTo(fakeBattle.roundWinners[0].value));
+            var finishedMsg = bus.GetMessage<BattleMessages.OnOutroStarted>();
+            Assert.That(finishedMsg.battlemodel.GetWinner(0).value, Is.EqualTo(fakeBattle.roundWinners[0].value));
 
             // OutroStateはOnUpdate()でAddTimeしない(=FakeRythmTrackModel.addedTimeSumが増えない)
             fakeTrack.addedTimeSum = 0f;

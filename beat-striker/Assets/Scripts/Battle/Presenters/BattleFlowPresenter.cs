@@ -7,12 +7,14 @@ namespace Core.Battle {
         private readonly IBus bus;
         private readonly ILife life;
         private readonly IRythmTrackModel rythmTrackModel;
+        private readonly IBattleResetter resetter;
 
-        public BattleFlowPresenter(IBus bus, ILife life, IBattleModel battleModel,IRythmTrackModel rythmTrackModel) {
+        public BattleFlowPresenter(IBus bus, ILife life, IBattleModel battleModel,IRythmTrackModel rythmTrackModel, IBattleResetter resetter) {
             this.bus = bus;
             this.life = life;
             this.rythmTrackModel = rythmTrackModel;
-            currentState = new IntroState(this, bus, battleModel, rythmTrackModel);
+            this.resetter = resetter;
+            currentState = new IntroState(this, bus, battleModel, rythmTrackModel, resetter);
             life.Link(OnEnable, OnDisable);
         }
 

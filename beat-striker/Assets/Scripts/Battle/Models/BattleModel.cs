@@ -60,7 +60,6 @@ namespace Core.Battle {
             var winCounts = new Dictionary<PlayerId, int>();
             
             for (int r = 0; r <= currentRound; r++) {
-                // そのラウンドで誰かが死んでいる(=決着済み)場合のみカウント
                 if (deadPlayers[r].Count == 0) {
                     continue;
                 }
@@ -79,6 +78,11 @@ namespace Core.Battle {
             if (!deadPlayers[currentRound].Contains(playerId)) {
                 deadPlayers[currentRound].Add(playerId);
             }
+        }
+
+        public int GetWinCount(PlayerId playerId) {
+            var winCounts = GetWinCounts();
+            return winCounts.ContainsKey(playerId) ? winCounts[playerId] : 0;
         }
     }
 }

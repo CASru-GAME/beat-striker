@@ -8,13 +8,16 @@ namespace Core.Battle {
     [RequireComponent(typeof(Life))]
     public class StrikerInstaller: MonoBehaviour {
         [SerializeField] private HitPoint maxHitPoint = new(100);
+        [SerializeField] private SpecialPoint maxSpecialPoint = new(100);
 
-        public void Construct(PlayerId playerId, ScoreRule rule, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry) {
+        public (IStrikerModel, IRythmTrackModel, IStrikerView) Construct(PlayerId playerId, ScoreRule rule, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry) {
             Debug.Log("StrikerInstaller Construct:" + playerId);
             var view = GetComponent<StrikerView>();
             var life = GetComponent<Life>();
-            var strikerModel = new StrikerModel(playerId, maxHitPoint, rule);
+            var strikerModel = new StrikerModel(playerId, maxHitPoint, maxSpecialPoint, rule);
             var presenter = new StrikerPresenter(strikerModel, view, this.GetBus(), life, playerRegistry, rythmTrackModel);
+            view.Construct(presenter);
+            return (strikerModel, rythmTrackModel, view);
         }
 
 
