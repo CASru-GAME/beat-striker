@@ -28,8 +28,8 @@ namespace Core.Battle {
         }
 
         private void OnRoundStartAnimationFinished(BattleMessages.NotifyRoundStartAnimationFinished msg) {
+            Debug.Log("Round Start Animation Finished");
             mutator.ChangeState(new RoundState(mutator, bus, battleModel, rythmTrackModel));
-            
         }
     }
 }

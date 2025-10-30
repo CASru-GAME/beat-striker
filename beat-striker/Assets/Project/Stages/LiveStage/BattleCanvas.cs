@@ -36,6 +36,7 @@ public class BattleCanvas : MonoBehaviour {
         BattleStartText.gameObject.SetActive(true);
         LeanTween.delayedCall(1f, () => {
             BattleStartText.gameObject.SetActive(false);
+            bus.Publish(new BattleMessages.NotifyRoundStartAnimationFinished());
         });
     }
 

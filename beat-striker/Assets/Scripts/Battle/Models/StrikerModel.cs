@@ -39,7 +39,7 @@ namespace Core.Battle {
 
         public void GainSpecial(SpecialPoint gain) {
             var nextSp = SpecialPoint.value + gain.value;
-            SpecialPoint newSp = new(nextSp < 0 ? 0 : nextSp);
+            SpecialPoint newSp = new(nextSp < 0 ? 0 : nextSp > MaxSpecialPoint.value ? MaxSpecialPoint.value : nextSp);
             SpecialPoint = newSp;
         }
 

@@ -2,6 +2,7 @@
 using Core.App.Types;
 using Core.GamePad.Types;
 using Core.Utils;
+using UnityEngine;
 
 namespace Core.Battle {
     public class StrikerPresenter : IStrikerPresenter, IStrikerHit {
@@ -78,6 +79,7 @@ namespace Core.Battle {
         private bool Beat() {
             var res = rythmTrackModel.Beat(model.PlayerId);
             model.AddBeatResult(res);
+            bus.Publish(new BattleMessages.OnBeat(model.PlayerId, res));
             if (res.status != BeatStatus.Miss){
                 model.GainSpecial();
                 return true;

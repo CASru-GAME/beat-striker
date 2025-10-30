@@ -34,6 +34,10 @@ namespace Tests.EditMode {
         public float GetTime() {
             throw new System.NotImplementedException();
         }
+
+        public float GetNextBeatTime(PlayerId playerId, int offset) {
+            throw new System.NotImplementedException();
+        }
     }
 
     // StrikerPresenter検証用 IStrikerViewフェイク

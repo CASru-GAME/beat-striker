@@ -16,10 +16,16 @@ namespace Core.Battle {
         [SerializeField] float walkSpeed = 5f;
         [SerializeField] float rotationSpeed = 360f;
         private bool isGuard = false;
+        private float? targetRotationAngle = null;
+        private IStrikerHit strikerHit;
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
             anim = GetComponent<Animator>();
+        }
+
+        public void Construct(IStrikerHit strikerHit) {
+            this.strikerHit = strikerHit;
         }
 
         public void ChangeDirection(Vector2 direction) {
@@ -31,8 +37,8 @@ namespace Core.Battle {
         }
 
         public void Dash() {
-            var direction = this.direction == Vector2.zero ? (Vector2)transform.forward : this.direction;
-            rb.linearVelocity = dashSpeed * direction;
+            if(this.direction == Vector2.zero) return;
+            rb.linearVelocity = dashSpeed * this.direction;
         }
 
         public void Attack() {
@@ -61,9 +67,7 @@ namespace Core.Battle {
                 preIsGround = isGround;
             }
 
-            if (direction != Vector2.zero) {
-                RotateTowardsDirection(direction);
-            }
+            RotateTowardsDirection(direction);
 
             anim.SetFloat(Anime.Velocity.ToString(), rb.linearVelocity.magnitude);
             anim.SetFloat(Anime.InputX.ToString(), direction.x);
@@ -77,11 +81,21 @@ namespace Core.Battle {
             }
 
 
-            if (direction != Vector2.zero && Mathf.Abs(rb.linearVelocity.x) < walkSpeed && !anim.GetBool(Anime.IsRotation.ToString())) {
+            if (direction != Vector2.zero && Mathf.Abs(rb.linearVelocity.x) < walkSpeed && !targetRotationAngle.HasValue) {
                 var v = rb.linearVelocity;
-                v.x = walkSpeed * Mathf.Sign(direction.x);
+                v.x = walkSpeed * direction.x;
                 rb.linearVelocity = v;
             }
+        }
+
+        public void TakeDamage(HitStatus status) {
+            this.strikerHit.TakeDamage(status);
+        }
+
+        private void OnCollisionEnter(Collision collision) {
+            var view = collision.gameObject.GetComponent<StrikerView>();
+            if (view == null) return;
+            view.TakeDamage(new HitStatus(CalcHit(new HitStatus(new HitPoint(10)))));
         }
 
         private void OnCollisionStay(Collision collision) {
@@ -98,21 +112,26 @@ namespace Core.Battle {
         }
 
         private void RotateTowardsDirection(Vector2 targetDirection) {
-            float targetAngle = Mathf.Atan2(targetDirection.x, targetDirection.y) * Mathf.Rad2Deg;
+            if (targetDirection.x != 0) {
+                targetRotationAngle = targetDirection.x > 0 ? 90f : -90f;
+            }
+            if (!targetRotationAngle.HasValue) return;
+            
             float currentAngle = transform.eulerAngles.y;
-            float angleDifference = Mathf.DeltaAngle(currentAngle, targetAngle);
+            float angleDifference = Mathf.DeltaAngle(currentAngle, targetRotationAngle.Value);
             float rotationThisFrame = rotationSpeed * Time.deltaTime;
 
             if (Mathf.Abs(angleDifference) < rotationThisFrame) {
-                transform.rotation = Quaternion.Euler(transform.eulerAngles.x, targetAngle, transform.eulerAngles.z);
+                transform.rotation = Quaternion.Euler(0, targetRotationAngle.Value, 0);
                 anim.SetBool(Anime.IsRotation.ToString(), false);
+                targetRotationAngle = null;
                 return;
             }
 
             anim.SetBool(Anime.IsRotation.ToString(), true);
             float rotationAmount = Mathf.Clamp(angleDifference, -rotationThisFrame, rotationThisFrame);
             float newRotationAngle = currentAngle + rotationAmount;
-            transform.rotation = Quaternion.Euler(transform.eulerAngles.x, newRotationAngle, transform.eulerAngles.z);
+            transform.rotation = Quaternion.Euler(0, newRotationAngle, 0);
         }
 
         public void OnMiss() {

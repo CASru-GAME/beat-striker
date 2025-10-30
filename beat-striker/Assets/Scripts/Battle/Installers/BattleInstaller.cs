@@ -1,6 +1,7 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Core.App;
@@ -22,13 +23,13 @@ namespace Core.Battle {
         [SerializeField] float perfectWindow = 0.1f;
         [SerializeField] float goodWindow = 0.2f;
         [SerializeField] float timeOffset = 0f;
-        [SerializeField] Transform[] transforms;
+        [SerializeField] Transform[] playerTransforms;
         [SerializeField] StrikerPrefab[] strikerPrefabs;
         [SerializeField] int excellentScore = 1000;
         [SerializeField] int goodScore = 500;
         [SerializeField] int specialGain = 10;
         [SerializeField] int playerCount = 2;
-        public List<IStrikerModelGetter> strikerModels;
+        public List<IStrikerModelGetter> strikerModels = new();
         public IRythmTrackModelGetter rythmTrackModel;
 
         void Awake() {
@@ -42,7 +43,7 @@ namespace Core.Battle {
             var life = GetComponent<Life>();
             var bus = this.GetBus();
             var battleModel = new BattleModel(playerCount);
-            var rythmTrackModel = new RythmTrackModel(new float[] { },
+            var rythmTrackModel = new RythmTrackModel(Enumerable.Range(1, 100).Select(x => (float)x).ToArray(),
                 perfectWindow,
                 goodWindow,
                 timeOffset
@@ -51,8 +52,8 @@ namespace Core.Battle {
             var mutator = new BattleFlowPresenter(bus, life, battleModel, rythmTrackModel);
             view.Construct(mutator);
 
-            for (int i = 0; i < transforms.Length; i++) {
-                var transform = transforms[i];
+            for (int i = 0; i < playerTransforms.Length; i++) {
+                var transform = playerTransforms[i];
                 var playerId = new PlayerId(i);
                 var strikerId = settingModel.GetStriker(playerId);
                 var strikerPrefab = strikerPrefabs.FirstOrDefault(x => x.strikerId == strikerId).prefab;
@@ -62,6 +63,7 @@ namespace Core.Battle {
                 var (IStrikerModel, IRythmTrackModel) = instance.Construct(playerId, rule, rythmTrackModel, playerRegistry);
                 this.strikerModels.Add(IStrikerModel);
             }
+
         }
     }
 }

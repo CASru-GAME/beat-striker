@@ -21,6 +21,15 @@ namespace Core.Battle {
             }
         }
 
+        public class OnBeat {
+            public readonly PlayerId playerId;
+            public readonly BeatResult result;
+            public OnBeat(PlayerId playerId, BeatResult result) {
+                this.playerId = playerId;
+                this.result = result;
+            }
+        }
+
         public class OnBattleStarted {
             public readonly int round;
             public OnBattleStarted(int round) {

@@ -55,8 +55,9 @@ namespace Core.Battle {
             }
         }
 
-        public float GetBeatTime(PlayerId playerId, int index) {
-            if (index >= nextBeatIndex[playerId.value])
+        public float GetNextBeatTime(PlayerId playerId, int offset) {
+            int index = nextBeatIndex[playerId.value] + offset;
+            if (index >= 0 && index < beatTimes.Length)
                 return beatTimes[index];
             return float.NaN;
         }

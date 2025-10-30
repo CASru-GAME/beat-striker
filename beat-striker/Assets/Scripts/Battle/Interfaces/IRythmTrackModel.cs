@@ -3,7 +3,7 @@ using Core.App.Types;
 
 namespace Core.Battle {
     public interface IRythmTrackModelGetter {
-        public float GetBeatTime(PlayerId playerId, int index);
+        public float GetNextBeatTime(PlayerId playerId, int offset);
         public float GetTime();
     }
 

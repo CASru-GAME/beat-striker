@@ -2432,7 +2432,7 @@ Animator:
   m_GameObject: {fileID: 7248259007988934813}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 158990874a4164974a022ea7eb32085d, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -2453,8 +2453,8 @@ Rigidbody:
   m_GameObject: {fileID: 7248259007988934813}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 10
+  m_AngularDamping: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -2478,7 +2478,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7248259007988934813}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 477cfbeb3467947c38d2269c71fffb57, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0

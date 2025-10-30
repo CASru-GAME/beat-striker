@@ -16,6 +16,7 @@ namespace Core.Battle {
             var life = GetComponent<Life>();
             var strikerModel = new StrikerModel(playerId, maxHitPoint, maxSpecialPoint, rule);
             var presenter = new StrikerPresenter(strikerModel, view, this.GetBus(), life, playerRegistry, rythmTrackModel);
+            view.Construct(presenter);
             return (strikerModel, rythmTrackModel);
         }
 
