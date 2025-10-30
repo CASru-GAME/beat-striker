@@ -14,6 +14,7 @@ namespace Core.Battle {
 
         public class NotifyRoundStartAnimationFinished { }
         public class NotifyRoundFinishAnimationFinished { }
+        public class NotifyOutroAnimationFinished { }
 
         public class NotifyPlayerDead {
             public readonly PlayerId playerId;
@@ -32,30 +33,30 @@ namespace Core.Battle {
         }
 
         public class OnBattleStarted {
-            public readonly int round;
-            public OnBattleStarted(int round) {
-                this.round = round;
+            public readonly IBattlemodelGetter battlemodel;
+            public OnBattleStarted(IBattlemodelGetter battlemodel) {
+                this.battlemodel = battlemodel;
             }
         }
 
         public class OnBattleFinished {
-            public readonly int round;
-            public OnBattleFinished(int round) {
-                this.round = round;
+            public readonly IBattlemodelGetter battlemodel;
+            public OnBattleFinished(IBattlemodelGetter battlemodel) {
+                this.battlemodel = battlemodel;
             }
         }
 
         public class OnRoundStarted {
-            public readonly int round;
-            public OnRoundStarted(int round) {
-                this.round = round;
+            public readonly IBattlemodelGetter battlemodel;
+            public OnRoundStarted(IBattlemodelGetter battlemodel) {
+                this.battlemodel = battlemodel;
             }
         }
 
         public class OnOutroStarted {
-            public readonly PlayerId winner;
-            public OnOutroStarted(PlayerId winner) {
-                this.winner = winner;
+            public readonly IBattlemodelGetter battlemodel;
+            public OnOutroStarted(IBattlemodelGetter battlemodel) {
+                this.battlemodel = battlemodel;
             }
         }
 
@@ -66,15 +67,22 @@ namespace Core.Battle {
             }
         }
 
-        
+        public class OnResultStarted {
+            public readonly IBattlemodelGetter battlemodel;
+            public OnResultStarted(IBattlemodelGetter battlemodel) {
+                this.battlemodel = battlemodel;
+            }
+        }
 
-        
 
-        
-        
 
-        
-        
+
+
+
+
+
+
+
 
     }
 }

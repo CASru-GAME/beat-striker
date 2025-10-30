@@ -79,5 +79,10 @@ namespace Core.Battle {
                 deadPlayers[currentRound].Add(playerId);
             }
         }
+
+        public int GetWinCount(PlayerId playerId) {
+            var winCounts = GetWinCounts();
+            return winCounts.ContainsKey(playerId) ? winCounts[playerId] : 0;
+        }
     }
 }

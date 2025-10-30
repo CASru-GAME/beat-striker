@@ -35,6 +35,7 @@ public class BattleCanvas : MonoBehaviour {
         Debug.Log("Round Started Animation");
         BattleStartText.gameObject.SetActive(true);
         LeanTween.delayedCall(1f, () => {
+            BattleStartText.text = $"Round {msg.battlemodel.GetCurrentRound()} Start!";
             BattleStartText.gameObject.SetActive(false);
             bus.Publish(new BattleMessages.NotifyRoundStartAnimationFinished());
         });
@@ -50,7 +51,12 @@ public class BattleCanvas : MonoBehaviour {
     }
 
     void OnOutroStarted(BattleMessages.OnOutroStarted msg) {
-
+        Debug.Log("Battle All Finished");
+        BattleFinishText.text = $"Battle All Finished!";
+        BattleFinishText.gameObject.SetActive(true);
+        LeanTween.delayedCall(1f, () => {
+            BattleFinishText.gameObject.SetActive(false);
+        });
     }
 
 }

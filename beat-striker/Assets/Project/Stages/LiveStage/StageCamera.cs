@@ -19,11 +19,21 @@ public class StageCamera : MonoBehaviour
     [SerializeField] private float forwardDuration = 1f;
     [SerializeField] private float orbitDuration = 3f;
     [SerializeField] private float orbitAngle = -20f;
+    [SerializeField] private float outroDistance = 3f;
+    [SerializeField] private float outroDuration = 1f;
+    [SerializeField] private float outroWaitDuration = 3f;
 
     [SerializeField] BattleCanvas battleCanvas;
 
-    void Start()
-    {
+    void Awake() {
+        this.GetBus().Subscribe<BattleMessages.OnOutroStarted>(OnOutro);
+    }
+
+    void OnDestroy() {
+        this.GetBus().Unsubscribe<BattleMessages.OnOutroStarted>(OnOutro);
+    }
+
+    void Start() {
         StartCoroutine(StartCameraSequence());
     }
 
@@ -83,11 +93,44 @@ public class StageCamera : MonoBehaviour
         }
     }
 
-    private void LookAt(Transform target)
-    {
-        if (target != null)
-        {
+    private void LookAt(Transform target) {
+        if (target != null) {
             transform.LookAt(target);
         }
+    }
+    
+    void OnOutro(BattleMessages.OnOutroStarted msg) {
+        var winner = msg.battlemodel.GetFinalWinner();
+        Transform targetTransform = winner.value == 0 ? playerTransform0 : playerTransform1;
+        StartCoroutine(MoveToWinner(targetTransform, winner));
+    }
+
+    private IEnumerator MoveToWinner(Transform target, PlayerId winner)
+    {
+        yield return new WaitForSeconds(outroWaitDuration);
+        
+        Vector3 startPosition = transform.position;
+        Vector3 direction = (target.position - transform.position).normalized;
+        Vector3 targetPosition = target.position - direction * outroDistance;
+        
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < outroDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / outroDuration;
+            transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+            LookAt(target);
+            yield return null;
+        }
+        
+        transform.position = targetPosition;
+        LookAt(target);
+
+        this.GetBus().Publish(new BattleMessages.RequireVictoryPose(winner));
+
+        yield return new WaitForSeconds(outroWaitDuration);
+
+        this.GetBus().Publish(new BattleMessages.NotifyOutroAnimationFinished());
     }
 }

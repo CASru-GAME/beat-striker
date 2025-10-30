@@ -2409,7 +2409,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Core.Battle::Core.Battle.StrikerView
   dashSpeed: 50
   walkSpeed: 5
-  rotationSpeed: 360
+  rotationSpeed: 1080
 --- !u!114 &1815392367388582780
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -19,7 +19,7 @@ namespace Core.Battle {
 
         public void Enter() {
             Debug.Log("Entering Round State");
-            bus.Publish(new BattleMessages.OnBattleStarted(battleModel.GetCurrentRound()));
+            bus.Publish(new BattleMessages.OnBattleStarted(battleModel));
             bus.Subscribe<BattleMessages.NotifyPlayerDead>(ProcessPlayerDeathNotification);
         }
 
@@ -28,7 +28,7 @@ namespace Core.Battle {
         }
 
         public void Exit() {
-            bus.Publish(new BattleMessages.OnBattleFinished(battleModel.GetCurrentRound()));
+            bus.Publish(new BattleMessages.OnBattleFinished(battleModel));
             bus.Unsubscribe<BattleMessages.NotifyPlayerDead>(ProcessPlayerDeathNotification);
         }
 

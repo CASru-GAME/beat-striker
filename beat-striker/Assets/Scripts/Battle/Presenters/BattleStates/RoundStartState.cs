@@ -20,7 +20,7 @@ namespace Core.Battle {
         public void Enter() {
             Debug.Log("Entering Round Start State");
             bus.Subscribe<BattleMessages.NotifyRoundStartAnimationFinished>(OnRoundStartAnimationFinished);
-            bus.Publish(new BattleMessages.OnRoundStarted(battleModel.GetCurrentRound()));
+            bus.Publish(new BattleMessages.OnRoundStarted(battleModel));
         }
         public void OnUpdate(float deltaTime) {
         }
@@ -31,7 +31,7 @@ namespace Core.Battle {
 
         private void OnRoundStartAnimationFinished(BattleMessages.NotifyRoundStartAnimationFinished msg) {
             Debug.Log("Round Start Animation Finished");
-            mutator.ChangeState(new RoundState(mutator, bus, battleModel, rythmTrackModel, resetter));
+            mutator.ChangeState(new RoundState(mutator, bus, battleModel, rythmTrackModel,resetter));
         }
     }
 }

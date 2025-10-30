@@ -126,6 +126,7 @@ namespace Tests.EditMode {
     sealed class FakeBattleModel : IBattleModel {
         public int currentRound = 0;
         public readonly Dictionary<int, PlayerId> roundWinners = new();
+        public readonly Dictionary<PlayerId, int> winCounts = new();
         public bool finished = false;
         public PlayerId finalWinner = new PlayerId(-999);
 
@@ -135,6 +136,11 @@ namespace Tests.EditMode {
         public PlayerId GetWinner(int round) {
             if (roundWinners.TryGetValue(round, out var p)) return p;
             return new PlayerId(-1);
+        }
+
+        public int GetWinCount(PlayerId playerId) {
+            if (winCounts.TryGetValue(playerId, out var count)) return count;
+            return 0;
         }
 
         public int GetCurrentRound() {
@@ -509,7 +515,7 @@ namespace Tests.EditMode {
 
             // RoundState.Enter() で OnRoundStart(round=0) がPublishされているはず
             var roundStartMsg = bus.GetMessage<BattleMessages.OnBattleStarted>();
-            Assert.That(roundStartMsg.round, Is.EqualTo(0));
+            Assert.That(roundStartMsg.battlemodel.GetCurrentRound(), Is.EqualTo(0));
 
             // RoundState中にOnUpdate()を呼ぶと、RythmTrackModel.AddTime()が叩かれる
             presenter.OnUpdate(0.5f);
@@ -551,7 +557,7 @@ namespace Tests.EditMode {
 
             // RoundState.Exit()の中でOnRoundFinished(winnerOfRound0) がPublishされる
             var finishedMsg = bus.GetMessage<BattleMessages.OnOutroStarted>();
-            Assert.That(finishedMsg.winner.value, Is.EqualTo(fakeBattle.roundWinners[0].value));
+            Assert.That(finishedMsg.battlemodel.GetWinner(0).value, Is.EqualTo(fakeBattle.roundWinners[0].value));
 
             // battleModel.AddLoser()が呼ばれている
             Assert.That(fakeBattle.lastLoser!.Value.value, Is.EqualTo(deadPid.value));
@@ -564,7 +570,7 @@ namespace Tests.EditMode {
             bus.ClearMessages();
             bus.Publish(new BattleMessages.NotifyRoundStartAnimationFinished());
             var roundStartMsg = bus.GetMessage<BattleMessages.OnBattleStarted>();
-            Assert.That(roundStartMsg.round, Is.EqualTo(1));
+            Assert.That(roundStartMsg.battlemodel.GetCurrentRound(), Is.EqualTo(1));
 
             // RoundStateに戻ったのでOnUpdateでAddTime()がまた進む
             presenter.OnUpdate(1.0f);
@@ -606,7 +612,7 @@ namespace Tests.EditMode {
 
             // RoundState.Exit()でOnRoundFinishedがPublishされているはず
             var finishedMsg = bus.GetMessage<BattleMessages.OnOutroStarted>();
-            Assert.That(finishedMsg.winner.value, Is.EqualTo(fakeBattle.roundWinners[0].value));
+            Assert.That(finishedMsg.battlemodel.GetWinner(0).value, Is.EqualTo(fakeBattle.roundWinners[0].value));
 
             // OutroStateはOnUpdate()でAddTimeしない(=FakeRythmTrackModel.addedTimeSumが増えない)
             fakeTrack.addedTimeSum = 0f;

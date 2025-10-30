@@ -19,14 +19,19 @@ namespace Core.Battle {
 
         public void Enter() {
             Debug.Log("Entering Outro State");
-            bus.Publish(new BattleMessages.OnOutroStarted(battleModel.GetWinner(battleModel.GetCurrentRound())));
-            // Logic for entering the outro state
+            bus.Publish(new BattleMessages.OnOutroStarted(battleModel));
+            bus.Subscribe<BattleMessages.NotifyOutroAnimationFinished>(OnOutroAnimationFinished);
         }
+
+        private void OnOutroAnimationFinished(BattleMessages.NotifyOutroAnimationFinished message) {
+            mutator.ChangeState(new ResultState(mutator, bus, battleModel));
+        }
+
         public void OnUpdate(float deltaTime) {
         }
 
         public void Exit() {
-            // Logic for exiting the outro state
+            bus.Unsubscribe<BattleMessages.NotifyOutroAnimationFinished>(OnOutroAnimationFinished);
         }
     }
 }
