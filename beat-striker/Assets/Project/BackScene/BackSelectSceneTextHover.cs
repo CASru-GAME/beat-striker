@@ -14,7 +14,11 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
     
     [Header("Sound Effect")]
     public AudioClip hoverSound; // ホバー時の効果音
+    [Range(0f, 1f)]
+    public float hoverSoundVolume = 1f; // ホバー音の音量
     public AudioClip clickSound; // クリック時の効果音
+    [Range(0f, 1f)]
+    public float clickSoundVolume = 1f; // クリック音の音量
     
     private CanvasGroup[] imageCanvasGroups;
     private AudioSource audioSource;
@@ -62,7 +66,7 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
         // 効果音を再生
         if (audioSource != null && hoverSound != null)
         {
-            audioSource.PlayOneShot(hoverSound);
+            audioSource.PlayOneShot(hoverSound, hoverSoundVolume);
         }
         
         // 左から順番にフェードイン
@@ -106,7 +110,7 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
         // クリック時の効果音を再生
         if (audioSource != null && clickSound != null)
         {
-            audioSource.PlayOneShot(clickSound);
+            audioSource.PlayOneShot(clickSound, clickSoundVolume);
         }
     }
 }

@@ -373,11 +373,14 @@ MonoBehaviour:
   comboUnderPanel: {fileID: 1934629340}
   playerWinnerPanel: {fileID: 2005830749}
   playerLoserPanel: {fileID: 171768643}
-  buttonClickSound: {fileID: 8300000, guid: ea4ca3e2ba8e5b544b266fdfa391ebea, type: 3}
+  buttonClickSound: {fileID: 8300000, guid: b180fa53e62476549938b0109856ae5b, type: 3}
+  buttonClickSoundVolume: 0.366
   buttonClickSoundDelay: 0
   blackImageSound: {fileID: 0}
+  blackImageSoundVolume: 1
   blackImageSoundDelay: 0
-  lineSound: {fileID: 0}
+  lineSound: {fileID: 8300000, guid: 095b0d7cfe5e88244820b51f28719fa8, type: 3}
+  lineSoundVolume: 0.277
   lineSoundDelay: 0
   blackImageScaleDuration: 0.8
   blackImageDelay: 0.5
@@ -4166,6 +4169,7 @@ MonoBehaviour:
   delay: 0
   debounceTime: 0.1
   showDebugLog: 0
+  autoDetectOtherComponents: 1
 --- !u!1 &830046409
 GameObject:
   m_ObjectHideFlags: 0

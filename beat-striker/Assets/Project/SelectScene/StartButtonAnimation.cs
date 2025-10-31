@@ -39,6 +39,8 @@ public class StartButtonAnimation : MonoBehaviour
     
     private bool animationPlayed = false;
     private bool blackImageSoundEnabled = false; // 黒い画像の音が有効かどうか
+    private float lastClickTime = -999f; // 最後にクリックした時間
+    private float clickDebounceTime = 0.2f; // クリック間隔（秒）
     
     void Start()
     {
@@ -64,11 +66,13 @@ public class StartButtonAnimation : MonoBehaviour
         }
         
         // 黒い画像のボタンを無効化（Botanコンポーネントのみ）
+        Debug.Log($"Black image buttons array length: {blackImageButtons.Length}");
         for (int i = 0; i < blackImageButtons.Length; i++)
         {
             var button = blackImageButtons[i];
             if (button != null)
             {
+                Debug.Log($"Registering button {i}: {button.gameObject.name}");
                 button.enabled = false;
                 // 効果音イベントを登録（無効中は発火しない）
                 int index = i; // ローカルコピー
@@ -171,7 +175,16 @@ public class StartButtonAnimation : MonoBehaviour
     
     void OnBlackImageClicked(BotanEventData data, int buttonIndex)
     {
-        Debug.Log($"Black image button {buttonIndex} clicked! Sound enabled: {blackImageSoundEnabled}");
+        Debug.Log($"Black image button {buttonIndex} clicked! Sound enabled: {blackImageSoundEnabled}, Time: {Time.time}");
+        
+        // デバウンス: 短時間での連続クリックを防ぐ
+        if (Time.time - lastClickTime < clickDebounceTime)
+        {
+            Debug.Log($"Click debounced! Time since last click: {Time.time - lastClickTime}");
+            return;
+        }
+        
+        lastClickTime = Time.time;
         
         // アニメーション完了後のみ効果音を再生
         if (blackImageSoundEnabled && blackImageClickSound != null)

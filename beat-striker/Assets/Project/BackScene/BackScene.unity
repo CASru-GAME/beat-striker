@@ -1594,7 +1594,9 @@ MonoBehaviour:
   delayBetweenImages: 0.01
   maxAlpha: 1
   hoverSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
-  clickSound: {fileID: 8300000, guid: 954d868ee9b04be4ea650c9a434c4f82, type: 3}
+  hoverSoundVolume: 0.228
+  clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
+  clickSoundVolume: 0.228
 --- !u!82 &828136020
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1899,7 +1901,9 @@ MonoBehaviour:
   delayBetweenImages: 0.01
   maxAlpha: 1
   hoverSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
-  clickSound: {fileID: 8300000, guid: 954d868ee9b04be4ea650c9a434c4f82, type: 3}
+  hoverSoundVolume: 0.218
+  clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
+  clickSoundVolume: 0.218
 --- !u!114 &842925642
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2583,7 +2587,9 @@ MonoBehaviour:
   delayBetweenImages: 0.01
   maxAlpha: 1
   hoverSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
-  clickSound: {fileID: 8300000, guid: 954d868ee9b04be4ea650c9a434c4f82, type: 3}
+  hoverSoundVolume: 0.228
+  clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
+  clickSoundVolume: 0.218
 --- !u!114 &1132111987
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1661,6 +1661,7 @@ GameObject:
   - component: {fileID: 1197106002}
   - component: {fileID: 1197106001}
   - component: {fileID: 1197106000}
+  - component: {fileID: 1197106004}
   - component: {fileID: 1197106003}
   m_Layer: 5
   m_Name: StreetImage
@@ -1765,8 +1766,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stageselectbutton
   image: {fileID: 549242808}
-  hoverSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
-  clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
+  hoverSound: {fileID: 8300000, guid: 095b0d7cfe5e88244820b51f28719fa8, type: 3}
+  hoverSoundVolume: 0.327
   panel: {fileID: 1483065838}
   moveType: 2
   popupPanel: {fileID: 311054157}
@@ -1791,7 +1792,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 0.37
+  m_Volume: 0.21
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -1889,7 +1890,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: Core.Extras::Core.Botan
   onClickEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1197106004}
+        m_TargetAssemblyTypeName: ButtonClickSound, Assembly-CSharp
+        m_MethodName: PlayClickSound
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &1197106004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1197105995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d499ed4e340f0f64eb7aefebc0256ec7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
+  clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
+  volume: 0.475
+  delay: 0
+  debounceTime: 0.1
+  showDebugLog: 0
+  autoDetectOtherComponents: 1
 --- !u!1 &1275289228
 GameObject:
   m_ObjectHideFlags: 0
@@ -2616,6 +2647,7 @@ GameObject:
   - component: {fileID: 1703879381}
   - component: {fileID: 1703879380}
   - component: {fileID: 1703879384}
+  - component: {fileID: 1703879387}
   - component: {fileID: 1703879386}
   m_Layer: 5
   m_Name: LiveImage
@@ -2657,8 +2689,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
   image: {fileID: 257838011}
-  hoverSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
-  clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
+  hoverSound: {fileID: 8300000, guid: 095b0d7cfe5e88244820b51f28719fa8, type: 3}
+  hoverSoundVolume: 0.327
   panel: {fileID: 1483065838}
   moveType: 1
   popupPanel: {fileID: 311054157}
@@ -2734,7 +2766,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 0.33
+  m_Volume: 0.15
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -2832,7 +2864,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: Core.Extras::Core.Botan
   onClickEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1703879387}
+        m_TargetAssemblyTypeName: ButtonClickSound, Assembly-CSharp
+        m_MethodName: PlayClickSound
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &1703879387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1703879378}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d499ed4e340f0f64eb7aefebc0256ec7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
+  clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
+  volume: 0.475
+  delay: 0
+  debounceTime: 0.1
+  showDebugLog: 0
+  autoDetectOtherComponents: 1
 --- !u!1 &1722483528
 GameObject:
   m_ObjectHideFlags: 0

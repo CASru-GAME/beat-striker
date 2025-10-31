@@ -17,10 +17,16 @@ public class ResultPanelButton : MonoBehaviour
     
     [Header("Sound Effects")]
     public AudioClip buttonClickSound; // 赤いImageを押した時の効果音
+    [Range(0f, 1f)]
+    public float buttonClickSoundVolume = 1f; // ボタンクリック音の音量
     public float buttonClickSoundDelay = 0f; // ボタンクリック音の遅延
     public AudioClip blackImageSound; // 黒いImageが動く時の効果音
+    [Range(0f, 1f)]
+    public float blackImageSoundVolume = 1f; // BlackImage音の音量
     public float blackImageSoundDelay = 0f; // BlackImage音の遅延（BlackImageアニメーション開始からの時間）
     public AudioClip lineSound; // 白い線が動く時の効果音
+    [Range(0f, 1f)]
+    public float lineSoundVolume = 1f; // Line音の音量
     public float lineSoundDelay = 0f; // Line音の遅延（Lineアニメーション開始からの時間）
     
     [Header("Animation Settings")]
@@ -221,11 +227,11 @@ public class ResultPanelButton : MonoBehaviour
         // ボタンクリック効果音（遅延付き）
         if (buttonClickSoundDelay > 0)
         {
-            LeanTween.delayedCall(buttonClickSoundDelay, () => PlaySound(buttonClickSound));
+            LeanTween.delayedCall(buttonClickSoundDelay, () => PlaySound(buttonClickSound, buttonClickSoundVolume));
         }
         else
         {
-            PlaySound(buttonClickSound);
+            PlaySound(buttonClickSound, buttonClickSoundVolume);
         }
         
         // BlackImageの拡大アニメーション
@@ -237,11 +243,11 @@ public class ResultPanelButton : MonoBehaviour
             float blackSoundTime = blackImageDelay + blackImageSoundDelay;
             if (blackSoundTime > 0)
             {
-                LeanTween.delayedCall(blackSoundTime, () => PlaySound(blackImageSound));
+                LeanTween.delayedCall(blackSoundTime, () => PlaySound(blackImageSound, blackImageSoundVolume));
             }
             else
             {
-                PlaySound(blackImageSound);
+                PlaySound(blackImageSound, blackImageSoundVolume);
             }
             
             blackImage.SetActive(true);
@@ -273,11 +279,11 @@ public class ResultPanelButton : MonoBehaviour
                 // Line効果音（Lineアニメーション開始時からの遅延）
                 if (lineSoundDelay > 0)
                 {
-                    LeanTween.delayedCall(lineSoundDelay, () => PlaySound(lineSound));
+                    LeanTween.delayedCall(lineSoundDelay, () => PlaySound(lineSound, lineSoundVolume));
                 }
                 else
                 {
-                    PlaySound(lineSound);
+                    PlaySound(lineSound, lineSoundVolume);
                 }
                 
                 lineObject.SetActive(true);
@@ -474,11 +480,11 @@ public class ResultPanelButton : MonoBehaviour
         }
     }
     
-    void PlaySound(AudioClip clip)
+    void PlaySound(AudioClip clip, float volume = 1f)
     {
         if (audioSource != null && clip != null)
         {
-            audioSource.PlayOneShot(clip);
+            audioSource.PlayOneShot(clip, volume);
         }
     }
     

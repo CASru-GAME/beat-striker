@@ -5,6 +5,7 @@ using Core.App.Types;
 using Core.Utils;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 [RequireComponent(typeof(Botan))]
 [RequireComponent(typeof(AudioSource))]
@@ -12,6 +13,8 @@ public class Characterselectbutton : MonoBehaviour
 {
     Botan botan;
     public RawImage image;
+    public RawImage image2; // 追加の画像
+    public TextMeshProUGUI text; // 追加のテキスト
     public AudioClip hoverSound;
     AudioSource audioSource;
     [SerializeField] string strikerId;
@@ -21,8 +24,13 @@ public class Characterselectbutton : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
 
         image.color = Color.gray;
+        if (image2 != null) image2.color = Color.gray;
+        if (text != null) text.color = Color.gray;
+        
         botan.onHover += (e) => {
             image.color = Color.white;
+            if (image2 != null) image2.color = Color.white;
+            if (text != null) text.color = Color.white;
             Debug.Log("hovered");
             if(hoverSound != null && audioSource != null) {
                 audioSource.PlayOneShot(hoverSound);
@@ -35,6 +43,8 @@ public class Characterselectbutton : MonoBehaviour
         };
         botan.onHoverExit += (e) => {
             image.color = Color.gray;
+            if (image2 != null) image2.color = Color.gray;
+            if (text != null) text.color = Color.gray;
             Debug.Log("hover exited");
         };
     }
