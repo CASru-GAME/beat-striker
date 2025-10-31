@@ -24,34 +24,114 @@ public sealed class AnyStriker : MonoBehaviour {
             // 何かしらのペナルティ
         };
     }
+    
 
     void Update() {
         anim.SetBool("IsGround", isGround);
         anim.SetFloat("Velocity", rb.linearVelocity.magnitude);
 
-        var east = striker.player.GetBtnDown(Btn.East);
+        HandleMovement();
+        HandleAttackInputs();
+    }
 
-        if (east) {
-            var d = east.direction;
-            transform.forward = Mathf.Sign(d.x) * Vector3.right;
-            rb.linearVelocity = jumpSpeed * d;
+    private void HandleAttackInputs()
+    {
+        if (striker.player.GetBtnDown(Btn.East))
+        {
+            // 通常攻撃 (Northボタン)
+            if (striker.player.GetBtnDown(Btn.North))
+            {
+                var result = striker.Beat();
+                anim.SetTrigger("DoAttack");
+                HandleBeatResult(result);
+            }
+
+            // 特殊攻撃 (Southボタン)
+            if (striker.player.GetBtnDown(Btn.South))
+            {
+                var result = striker.Beat();
+                anim.SetTrigger("DoSpecial");
+                HandleBeatResult(result);
+            }
+        }
+    }
+
+    private void HandleBeatResult(BeatResult result)
+    {
+        switch (result.status)
+        {
+            case BeatResult.Status.PERFECT:
+                Debug.Log("PERFECT HIT!");
+                break;
+            case BeatResult.Status.GOOD:
+                Debug.Log("GOOD HIT.");
+                break;
+            default: // MISS
+                Debug.Log("MISS!");
+                break;
+        }
+    }
+
+    private void HandleMovement()
+    {
+        var direction = striker.player.GetBtn(Btn.Direction);
+        Vector2 movementInput = direction ? direction.direction : Vector2.zero;
+
+        if (movementInput.sqrMagnitude > 0.1f)
+        {
+            transform.forward = Mathf.Sign(movementInput.x) * Vector3.right;
+            
+            if (isGround)
+            {
+                rb.linearVelocity = new Vector3(
+                    movementInput.x * jumpSpeed,
+                    rb.linearVelocity.y,
+                    movementInput.y * jumpSpeed
+                );
+            }
+            else if (Mathf.Abs(rb.linearVelocity.x) < runSpeed)
+            {
+                Vector3 newVelocity = rb.linearVelocity;
+                newVelocity.x = runSpeed * Mathf.Sign(movementInput.x);
+                rb.linearVelocity = newVelocity;
+            }
         }
 
-        else if (Mathf.Abs(rb.linearVelocity.x) < runSpeed && east.direction.sqrMagnitude > 0e-3) {
-            transform.forward = Mathf.Sign(east.direction.x) * Vector3.right;
-            rb.linearVelocity = rb.linearVelocity.X(runSpeed * Mathf.Sign(east.direction.x));
-        }
-
-        if (striker.player.GetBtnDown(Btn.South)) {
+        if (striker.player.GetBtnDown(Btn.North)) 
+        {
             anim.SetTrigger("DoAttack");
         }
-        if (striker.player.GetBtnDown(Btn.North)) {
+        if (striker.player.GetBtnDown(Btn.South)) 
+        {
             anim.SetTrigger("DoSpecial");
         }
-        if(striker.player.GetBtnDown(Btn.West)) {
+        if (striker.player.GetBtnDown(Btn.West)) 
+        {
             anim.SetTrigger("DoCharge");
         }
-
+        if (striker.player.GetBtnDown(Btn.RightShoulder)) 
+        {
+            anim.SetTrigger("MagicAttack");
+        }
+        if (striker.player.GetBtnDown(Btn.LeftShoulder)) 
+        {
+            anim.SetTrigger("DoAirAttack");
+        }
+        if (striker.player.GetBtnDown(Btn.Direction)) 
+        {
+            anim.SetTrigger("DoGuard");
+        }
+        if (striker.player.GetBtnDown(Btn.Space)) 
+        {
+            anim.SetTrigger("ActJump");
+        }
+        if (striker.player.GetBtnDown(Btn.RightTrigger)) 
+        {
+            anim.SetTrigger("ActDash");
+        }
+         if(striker.player.GetBtnDown(Btn.LeftTrigger) || striker.player.GetBtnDown(Btn.RightTrigger)) {
+            anim.SetTrigger("ActWalk");
+        }
     }
 
     private void OnCollisionStay(Collision collision) {
