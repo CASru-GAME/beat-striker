@@ -108,7 +108,7 @@ public class StageCamera : MonoBehaviour
     private IEnumerator MoveToWinner(Transform target, PlayerId winner)
     {
         yield return new WaitForSeconds(outroWaitDuration);
-        
+
         Vector3 startPosition = transform.position;
         Vector3 direction = (target.position - transform.position).normalized;
         Vector3 targetPosition = target.position - direction * outroDistance;
