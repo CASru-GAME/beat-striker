@@ -32,6 +32,7 @@ namespace Core.Battle {
         public List<IStrikerModelGetter> strikerModels = new();
         public List<IStrikerView> strikerViews = new();
         public IRythmTrackModelGetter rythmTrackModel;
+        [SerializeField] bool DebugMode = false;
 
         void Awake() {
             var app = GameObject.Find("App").GetComponent<AppFlowScope>();
@@ -65,6 +66,10 @@ namespace Core.Battle {
                 this.strikerModels.Add(IStrikerModel);
                 this.strikerViews.Add(IStrikerView);
                 IStrikerView.SavePosition();
+            }
+
+            if(DebugMode) {
+                mutator.DebugMode();
             }
 
         }

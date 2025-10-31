@@ -1230,6 +1230,9 @@ MonoBehaviour:
   forwardDuration: 1
   orbitDuration: 3
   orbitAngle: -20
+  outroDistance: 3
+  outroDuration: 1
+  outroWaitDuration: 3
   battleCanvas: {fileID: 0}
 --- !u!114 &1520517352
 MonoBehaviour:
