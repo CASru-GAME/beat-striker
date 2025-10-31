@@ -13,6 +13,7 @@ public class MusicCard : MonoBehaviour {
     AudioSource audioSource;
     [SerializeField] Botan botan;
     [SerializeField] TextMeshProUGUI description;
+    [SerializeField] AudioClip clickSound; // クリック時の効果音
     private Vector3 originalScale;
     private SelectableMusic currentMusic;
 
@@ -33,6 +34,13 @@ public class MusicCard : MonoBehaviour {
         };
         botan.onClick += (e) => {
             Debug.Log("card clicked");
+            
+            // クリック効果音を再生（プレビュー音楽を一旦止めて効果音を再生）
+            if (clickSound != null) {
+                audioSource.Stop();
+                audioSource.PlayOneShot(clickSound);
+            }
+            
             this.GetBus().Publish(new AppMessages.SelectTrack(currentMusic.trackId));
             this.GetBus().Publish(new AppMessages.RequireTransition(AppScene.CharacterSelect));
         };

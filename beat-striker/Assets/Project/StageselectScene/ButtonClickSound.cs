@@ -29,8 +29,13 @@ public class ButtonClickSound : MonoBehaviour, IPointerClickHandler
     [Tooltip("デバッグログを表示")]
     public bool showDebugLog = false;
     
+    [Header("Auto Detection")]
+    [Tooltip("ButtonやBotanがある場合、OnPointerClickを無効化（二重再生防止）")]
+    public bool autoDetectOtherComponents = true;
+    
     private AudioSource audioSource;
     private float lastClickTime = -999f;
+    private bool usePointerClick = true;
     
     void Awake()
     {
@@ -44,6 +49,31 @@ public class ButtonClickSound : MonoBehaviour, IPointerClickHandler
         // AudioSourceの設定
         audioSource.playOnAwake = false;
         audioSource.volume = volume;
+        
+        // 他のボタンコンポーネントを検知
+        if (autoDetectOtherComponents)
+        {
+            // Buttonコンポーネントがある場合
+            if (GetComponent<Button>() != null)
+            {
+                usePointerClick = false;
+                if (showDebugLog)
+                {
+                    Debug.Log($"[ButtonClickSound] Button検出 - OnPointerClickを無効化");
+                }
+            }
+            
+            // Botanコンポーネントがある場合（名前空間を考慮）
+            var botanComponent = GetComponent("Botan");
+            if (botanComponent != null)
+            {
+                usePointerClick = false;
+                if (showDebugLog)
+                {
+                    Debug.Log($"[ButtonClickSound] Botan検出 - OnPointerClickを無効化");
+                }
+            }
+        }
     }
     
     /// <summary>
@@ -51,6 +81,12 @@ public class ButtonClickSound : MonoBehaviour, IPointerClickHandler
     /// </summary>
     public void OnPointerClick(PointerEventData eventData)
     {
+        // 他のボタンコンポーネントがある場合は何もしない
+        if (!usePointerClick)
+        {
+            return;
+        }
+        
         if (showDebugLog)
         {
             Debug.Log($"[ButtonClickSound] OnPointerClick called on {gameObject.name}");

@@ -349,7 +349,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: a3b8c002537c4974fb1f7ddc16663df2, type: 3}
+  m_Texture: {fileID: 2800000, guid: a1cb576e185804448864ad6d495d3cb1, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -423,8 +423,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u30E9\u30A4\u30D6"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 09e6fc91cda63423c926ead53c4ef34c, type: 2}
-  m_sharedMaterial: {fileID: -6425270394669822298, guid: 09e6fc91cda63423c926ead53c4ef34c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 45ebcbcba74d44699958be6de3a61b3e, type: 2}
+  m_sharedMaterial: {fileID: -6255709286732580734, guid: 45ebcbcba74d44699958be6de3a61b3e, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -518,7 +518,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &311054158
 RectTransform:
   m_ObjectHideFlags: 0
@@ -798,7 +798,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: e319789018863974683028a08dc79720, type: 3}
+  m_Texture: {fileID: 2800000, guid: ca43c4fcc5ee92140a2ee6c8a20192ad, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -988,10 +988,16 @@ MonoBehaviour:
   musics:
   - description: "\u30B9\u30C8\u30EA\u30FC\u30C8\u7C21\u5358"
     clip: {fileID: 8300000, guid: 1a6d13c29c2e67d48889ce196ed81579, type: 3}
+    trackId:
+      value: 
   - description: "\u30B9\u30C8\u30EA\u30FC\u30C8\u96E3\u3057\u3044"
     clip: {fileID: 8300000, guid: 1a6d13c29c2e67d48889ce196ed81579, type: 3}
+    trackId:
+      value: 
   rightButton: {fileID: 1064152681}
   leftButton: {fileID: 2007859908}
+  buttonClickSound: {fileID: 8300000, guid: f19bb0e40152d164aa3c01317f9d47f9, type: 3}
+  soundVolume: 0.178
   slideDistance: 600
   leftSlideDuration: 0.3
   upMoveDuration: 0.2
@@ -1473,11 +1479,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d499ed4e340f0f64eb7aefebc0256ec7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
-  clickSound: {fileID: 8300000, guid: 2aeda25a411c56441a3eb9f5b2418a70, type: 3}
+  clickSound: {fileID: 8300000, guid: f19bb0e40152d164aa3c01317f9d47f9, type: 3}
   volume: 1
   delay: 0
   debounceTime: 0.1
   showDebugLog: 0
+  autoDetectOtherComponents: 1
 --- !u!1 &1102896165
 GameObject:
   m_ObjectHideFlags: 0
@@ -1617,7 +1624,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1654,7 +1661,6 @@ GameObject:
   - component: {fileID: 1197106002}
   - component: {fileID: 1197106001}
   - component: {fileID: 1197106000}
-  - component: {fileID: 1197106004}
   - component: {fileID: 1197106003}
   m_Layer: 5
   m_Name: StreetImage
@@ -1760,6 +1766,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stageselectbutton
   image: {fileID: 549242808}
   hoverSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
+  clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
   panel: {fileID: 1483065838}
   moveType: 2
   popupPanel: {fileID: 311054157}
@@ -1784,7 +1791,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.37
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -1883,23 +1890,6 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &1197106004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1197105995}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d499ed4e340f0f64eb7aefebc0256ec7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
-  clickSound: {fileID: 8300000, guid: 954d868ee9b04be4ea650c9a434c4f82, type: 3}
-  volume: 1
-  delay: 0
-  debounceTime: 0.1
-  showDebugLog: 0
 --- !u!1 &1275289228
 GameObject:
   m_ObjectHideFlags: 0
@@ -2051,7 +2041,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 218.5, y: 140.75}
+  m_AnchoredPosition: {x: 240.4, y: 140.75}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1325013695
@@ -2076,8 +2066,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u30B9\u30C8\u30EA\u30FC\u30C8"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 09e6fc91cda63423c926ead53c4ef34c, type: 2}
-  m_sharedMaterial: {fileID: -6425270394669822298, guid: 09e6fc91cda63423c926ead53c4ef34c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 45ebcbcba74d44699958be6de3a61b3e, type: 2}
+  m_sharedMaterial: {fileID: -6255709286732580734, guid: 45ebcbcba74d44699958be6de3a61b3e, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2574,7 +2564,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 529.51, y: 327.9}
+  m_AnchoredPosition: {x: 529.51, y: 321}
   m_SizeDelta: {x: 192.89, y: 83.1422}
   m_Pivot: {x: 0.62704813, y: 0.5}
 --- !u!114 &1700114826
@@ -2626,7 +2616,6 @@ GameObject:
   - component: {fileID: 1703879381}
   - component: {fileID: 1703879380}
   - component: {fileID: 1703879384}
-  - component: {fileID: 1703879387}
   - component: {fileID: 1703879386}
   m_Layer: 5
   m_Name: LiveImage
@@ -2669,6 +2658,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
   image: {fileID: 257838011}
   hoverSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
+  clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
   panel: {fileID: 1483065838}
   moveType: 1
   popupPanel: {fileID: 311054157}
@@ -2744,7 +2734,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.33
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -2843,23 +2833,6 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &1703879387
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1703879378}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d499ed4e340f0f64eb7aefebc0256ec7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
-  clickSound: {fileID: 8300000, guid: 954d868ee9b04be4ea650c9a434c4f82, type: 3}
-  volume: 1
-  delay: 0
-  debounceTime: 0.1
-  showDebugLog: 0
 --- !u!1 &1722483528
 GameObject:
   m_ObjectHideFlags: 0
@@ -3272,7 +3245,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.078431375, g: 0.078431375, b: 0.078431375, a: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3834,6 +3807,7 @@ MonoBehaviour:
   delay: 0
   debounceTime: 0.1
   showDebugLog: 0
+  autoDetectOtherComponents: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

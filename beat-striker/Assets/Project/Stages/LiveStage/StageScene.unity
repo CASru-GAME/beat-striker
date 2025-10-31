@@ -3572,7 +3572,7 @@ MonoBehaviour:
   RoundNumberCanvasGroup: {fileID: 2026851027}
   fadePanel: {fileID: 227945478}
   roundSound: {fileID: 0}
-  fightSound: {fileID: 8300000, guid: ba2542cb027aeba49859a3ccdd407082, type: 3}
+  fightSound: {fileID: 8300000, guid: 08295c655501b33458fcb85e8882ecbd, type: 3}
   finishSound: {fileID: 0}
   soundVolume: 1
   roundFadeInDuration: 0.5
