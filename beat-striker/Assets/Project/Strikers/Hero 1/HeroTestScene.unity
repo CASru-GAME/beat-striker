@@ -753,6 +753,10 @@ PrefabInstance:
       value: Battle
       objectReference: {fileID: 0}
     - target: {fileID: 4511881134157039906, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: DebugMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4511881134157039906, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
       propertyPath: playerTransforms.Array.size
       value: 2
       objectReference: {fileID: 0}
