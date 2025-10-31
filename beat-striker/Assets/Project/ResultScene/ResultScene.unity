@@ -4163,6 +4163,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
   clickSound: {fileID: 8300000, guid: 954d868ee9b04be4ea650c9a434c4f82, type: 3}
   volume: 1
+  delay: 0
+  debounceTime: 0.1
+  showDebugLog: 0
 --- !u!1 &830046409
 GameObject:
   m_ObjectHideFlags: 0
@@ -5043,6 +5046,7 @@ RectTransform:
   - {fileID: 1589051915}
   - {fileID: 750911493}
   - {fileID: 976451362}
+  - {fileID: 2092323712}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -10967,11 +10971,11 @@ Transform:
   m_GameObject: {fileID: 2092323710}
   serializedVersion: 2
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -499.99997, y: -275.37592, z: 0}
+  m_LocalScale: {x: 1.8796991, y: 1.8796991, z: 1.879699}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 984328592}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!114 &2092323713
 MonoBehaviour:
@@ -11455,7 +11459,6 @@ SceneRoots:
   - {fileID: 1006170821}
   - {fileID: 1486525827}
   - {fileID: 858904952}
-  - {fileID: 2092323712}
   - {fileID: 984328592}
   - {fileID: 1837010658}
   - {fileID: 172503410}
