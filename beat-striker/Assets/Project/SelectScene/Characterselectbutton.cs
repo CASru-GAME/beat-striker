@@ -1,13 +1,20 @@
 
+using Core;
+using Core.App.Presenters.Scene.Types;
+using Core.App.Types;
+using Core.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(Botan))]
+[RequireComponent(typeof(AudioSource))]
 public class Characterselectbutton : MonoBehaviour
 {
     Botan botan;
     public RawImage image;
     public AudioClip hoverSound;
     AudioSource audioSource;
+    [SerializeField] string strikerId;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
         botan = GetComponent<Botan>();
@@ -22,7 +29,9 @@ public class Characterselectbutton : MonoBehaviour
             }
         };
         botan.onClick += (e) => {
-            Debug.Log("clicked");
+            this.GetBus().Publish(new AppMessages.SelectStriker(new PlayerId(e.EventData.pointerId), new StrikerId(strikerId)));
+            Debug.Log($"Published SelectStriker for Player {e.EventData.pointerId} and Striker {strikerId}");
+            this.GetBus().Publish(new AppMessages.RequireTransition(AppScene.Battle));
         };
         botan.onHoverExit += (e) => {
             image.color = Color.gray;

@@ -6,10 +6,6 @@ namespace Core.GamePad.Presenters {
 
     public interface IGamePadPresenter {
 
-        void OnEnable();
-
-        void OnDisable();
-
         /// <summary>
         /// 方向入力を処理
         /// </summary>

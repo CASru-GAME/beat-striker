@@ -6,7 +6,9 @@
         "UnityEditor.TestRunner",
         "GamePad",
         "TestUtils",
-        "EventBus"
+        "App",
+        "Utils",
+        "Core.Battle"
     ],
     "includePlatforms": [
         "Editor"

@@ -91,58 +91,60 @@ namespace Tests.EditMode {
                 onThreshold = 0.5f,
                 offThreshold = 0.4f,
             });
-            presenter = new GamePadPresenter(bus, model);
+            var life = new FakeLife();
+            presenter = new GamePadPresenter(bus, model, life);
+            life.Enable();
         }
 
 
         [Test]
         public void EnableDisable() {
             // 有効化時に参加メッセージを送る
-            presenter.OnEnable();
-            var m0 = bus.GetMessage<GamePadJoinedMessage>();
+            var m0 = bus.GetMessage<GamePadMessages.Joined>();
             Assert.That(m0.gamePadId.value, Is.EqualTo(id.value));
 
             // 無効化時に離脱メッセージを送る
-            presenter.OnDisable();
-            var m1 = bus.GetMessage<GamePadLeftMessage>();
+            bus.ClearMessages();
+            var life2 = new FakeLife();
+            _ = new GamePadPresenter(bus, model, life2);
+            life2.Disable();
+            var m1 = bus.GetMessage<GamePadMessages.Left>();
             Assert.That(m1.gamePadId.value, Is.EqualTo(id.value));
         }
 
         [Test]
         public void OnDirection() {
-            presenter.OnEnable();
-
             // ゼロのメッセージを送る
-            bus.Clear();
+            bus.ClearMessages();
             presenter.OnDirection(Vector2.zero);
-            var m0 = bus.GetMessage<GamePadDirectionMessage>();
+            var m0 = bus.GetMessage<GamePadMessages.DirectionChanged>();
             Assert.That(m0.direction, Is.EqualTo(Vector2.zero));
             Assert.That(m0.gamePadId.value, Is.EqualTo(id.value));
             
 
             // 正規化された方向のメッセージを送る
-            bus.Clear();
+            bus.ClearMessages();
             presenter.OnDirection(new Vector2(0.8f, 0f));
 
-            var m1 = bus.GetMessage<GamePadDirectionMessage>();
+            var m1 = bus.GetMessage<GamePadMessages.DirectionChanged>();
             Assert.That(m1.direction.magnitude, Is.EqualTo(1f).Within(1e-5));
             Assert.That(m1.gamePadId.value, Is.EqualTo(id.value));
 
-            var m2 = bus.GetMessage<GamePadMessage>();
+            var m2 = bus.GetMessage<GamePadMessages.Inputed>();
             Assert.That(m2.button, Is.EqualTo(GamePadButton.Direction));
             Assert.That(m2.action, Is.EqualTo(GamePadAction.Down));
             Assert.That(m2.gamePadId.value, Is.EqualTo(id.value));
             Assert.That(m2.gamePadId.value, Is.EqualTo(id.value));
 
             // オフしきい値を超える入力
-            bus.Clear();
+            bus.ClearMessages();
             presenter.OnDirection(new Vector2(0.39f, 0f));
 
-            var m4 = bus.GetMessage<GamePadDirectionMessage>();
+            var m4 = bus.GetMessage<GamePadMessages.DirectionChanged>();
             Assert.That(m4.direction, Is.EqualTo(Vector2.zero));
             Assert.That(m4.gamePadId.value, Is.EqualTo(id.value));
 
-            var m5 = bus.GetMessage<GamePadMessage>();
+            var m5 = bus.GetMessage<GamePadMessages.Inputed>();
             Assert.That(m5.button, Is.EqualTo(GamePadButton.Direction));
             Assert.That(m5.action, Is.EqualTo(GamePadAction.Up));
             Assert.That(m5.gamePadId.value, Is.EqualTo(id.value));
@@ -150,20 +152,18 @@ namespace Tests.EditMode {
 
         [Test]
         public void OnButton() {
-            presenter.OnEnable();
-
             // 押下
-            bus.Clear();
+            bus.ClearMessages();
             presenter.OnButton(GamePadButton.North, GamePadAction.Down);
-            var m0 = bus.GetMessage<GamePadMessage>();
+            var m0 = bus.GetMessage<GamePadMessages.Inputed>();
             Assert.That(m0.button, Is.EqualTo(GamePadButton.North));
             Assert.That(m0.action, Is.EqualTo(GamePadAction.Down));
             Assert.That(m0.gamePadId.value, Is.EqualTo(id.value));
 
             // 押下解除
-            bus.Clear();
+            bus.ClearMessages();
             presenter.OnButton(GamePadButton.North, GamePadAction.Up);
-            var m1 = bus.GetMessage<GamePadMessage>();
+            var m1 = bus.GetMessage<GamePadMessages.Inputed>();
             Assert.That(m1.button, Is.EqualTo(GamePadButton.North));
             Assert.That(m1.action, Is.EqualTo(GamePadAction.Up));
             Assert.That(m1.gamePadId.value, Is.EqualTo(id.value));

@@ -1,0 +1,16 @@
+{
+    "name": "BS.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:148597ecdec2f442b8070cf998358dc0"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

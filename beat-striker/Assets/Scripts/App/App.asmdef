@@ -2,8 +2,11 @@
     "name": "App",
     "rootNamespace": "",
     "references": [
-        "EventBus",
-        "GamePad"
+        "GamePad",
+        "Utils",
+        "VContainer",
+        "Unity.TextMeshPro",
+        "Core.Extras"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

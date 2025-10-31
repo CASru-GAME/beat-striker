@@ -9,13 +9,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 578709385026208560}
-  - component: {fileID: 8125587219601986033}
   - component: {fileID: 5768124966667240362}
   - component: {fileID: 5006687454164621809}
-  - component: {fileID: 3829258743741815191}
-  - component: {fileID: 1923912780491108941}
   - component: {fileID: 1415977830939174167}
   - component: {fileID: 4947109043404404853}
+  - component: {fileID: 4123087460469984389}
   m_Layer: 5
   m_Name: Jugdement
   m_TagString: Untagged
@@ -43,21 +41,6 @@ RectTransform:
   m_AnchoredPosition: {x: -39.971252, y: -26.18158}
   m_SizeDelta: {x: 312.8682, y: 151.8165}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &8125587219601986033
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 53294518042951042}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95e7f551d1da9422882c334d0ec4b81c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Botan
-  onClickEvent:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!222 &5768124966667240362
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -96,42 +79,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3829258743741815191
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 53294518042951042}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f08be9c2b7e46ec489b6c28725abbcc8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Popupimage
-  musicClip: {fileID: 8300000, guid: 1a6d13c29c2e67d48889ce196ed81579, type: 3}
-  audioSpectrum: {fileID: 0}
-  spectrumCanvasGroup: {fileID: 0}
-  normalScale: {x: 1, y: 1, z: 1}
-  hoverScale: {x: 1.1, y: 1.1, z: 1}
-  scaleSpeed: 8
-  fadeSpeed: 8
---- !u!114 &1923912780491108941
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 53294518042951042}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7061738cff5564459c34f4971a2e2d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AudioSpectrum
-  FFT_res: 512
-  source: {fileID: 1415977830939174167}
-  dataOffset: 0
-  FFT_wf: 1
-  spectrumData: []
 --- !u!82 &1415977830939174167
 AudioSource:
   m_ObjectHideFlags: 0
@@ -241,6 +188,21 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &4123087460469984389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 53294518042951042}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83521b14984b48cd8503a82e4ec559a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Core.Extras::Core.Botan
+  onClickEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &7691864210460684386
 GameObject:
   m_ObjectHideFlags: 0
