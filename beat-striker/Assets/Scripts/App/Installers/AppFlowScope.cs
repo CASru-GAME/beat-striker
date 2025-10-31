@@ -8,8 +8,6 @@ using Core.App.Types;
 using Core.App.Views.Scene;
 using Core.Utils;
 using UnityEngine;
-using VContainer;
-using VContainer.Unity;
 
 namespace Core.App.Installers {
 

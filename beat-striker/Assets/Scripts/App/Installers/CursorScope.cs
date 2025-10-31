@@ -1,7 +1,5 @@
 using Core.Utils;
 using UnityEngine;
-using VContainer;
-using VContainer.Unity;
 
 [RequireComponent(typeof(CursorView))]
 [RequireComponent(typeof(Life))]

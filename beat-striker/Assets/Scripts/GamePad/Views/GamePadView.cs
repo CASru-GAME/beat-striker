@@ -5,7 +5,6 @@ using Core.GamePad.Presenters;
 using Core.GamePad.Types;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using VContainer;
 
 namespace Core.GamePad.Views {
     [RequireComponent(typeof(PlayerInput))]
@@ -15,7 +14,6 @@ namespace Core.GamePad.Views {
         private IGamePadPresenter presenter;
         private ILifeMutater lifeMutater;
 
-        [Inject]
         public void Construct(IGamePadPresenter presenter, ILifeMutater lifeMutater) {
             this.presenter = presenter;
             this.lifeMutater = lifeMutater;

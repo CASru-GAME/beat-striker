@@ -7,13 +7,11 @@ using Core.App.Presenters.Scene;
 using Core.App.Types;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using VContainer;
 
 namespace Core.App.Views.Scene {
     public class SceneView : MonoBehaviour, ISceneView {
         private Dictionary<AppScene, string> sceneNames = new();
 
-        [Inject]
         public void Construct(Dictionary<AppScene, string> sceneNames) {
             this.sceneNames = sceneNames;
         }

@@ -5,9 +5,6 @@ using Core.GamePad.Views;
 using Core.Utils;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using VContainer;
-using VContainer.Unity;
-
 namespace Core.GamePad.Installers {
     [RequireComponent(typeof(GamePadView))]
     [RequireComponent(typeof(PlayerInput))]
