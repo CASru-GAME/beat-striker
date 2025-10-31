@@ -35,13 +35,11 @@ namespace DentedPixel.LTExamples
         void Awake()
         {
             boxNoCollider = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            Destroy(boxNoCollider.GetComponent(typeof(BoxCollider)) as Component);
+            Destroy(boxNoCollider.GetComponent<BoxCollider>());
         }
 
         void Start()
         {
-            //          Time.timeScale = 0.25f;
-
             LeanTest.timeout = 46f;
             LeanTest.expected = 63;
 

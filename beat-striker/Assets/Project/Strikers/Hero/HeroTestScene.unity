@@ -1046,6 +1046,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4674766564793334169, guid: 0a994691d77bf495085217fd79eea9aa, type: 3}
+      propertyPath: strikerPrefabs.Array.data[0].prefab
+      value: 
+      objectReference: {fileID: 254757629308200668, guid: 3a2635f29ab4a4040a1665746c94e7fa, type: 3}
     - target: {fileID: 5351317176154225972, guid: 0a994691d77bf495085217fd79eea9aa, type: 3}
       propertyPath: m_Name
       value: BattlManager

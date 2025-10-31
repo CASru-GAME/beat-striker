@@ -2,33 +2,37 @@ using Core.GamePad.Models;
 using Core.GamePad.Presenters;
 using Core.GamePad.Types;
 using Core.GamePad.Views;
+using Core.Utils;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using VContainer;
-using VContainer.Unity;
+namespace Core.GamePad.Installers {
+    [RequireComponent(typeof(GamePadView))]
+    [RequireComponent(typeof(PlayerInput))]
+    [RequireComponent(typeof(Life))]
+    public sealed class GamePadScope : MonoBehaviour {
+        public static int nextId = 0;
+        [SerializeField] float onThreshold = 0.5f;
+        [SerializeField] float offThreshold = 0.4f;
 
-[RequireComponent(typeof(GamePad))]
-[RequireComponent(typeof(PlayerInput))]
-public sealed class GamePadScope : LifetimeScope {
-    public static int nextId = 0;
-    [SerializeField] float onThreshold = 0.5f;
-    [SerializeField] float offThreshold = 0.4f;
+        void Awake() {
+            Debug.Log("GamePadScope Configure");
 
-    protected override void Configure(IContainerBuilder b) {
-        var playerInput = GetComponent<PlayerInput>();
-        b.RegisterInstance(playerInput).As<PlayerInput>();
+            var life = GetComponent<Life>();
 
-        var view = GetComponent<GamePad>();
-        b.RegisterComponent(view).As<GamePad>();
+            var bus = this.GetBus();
 
-        b.RegisterInstance(new GamePadConfig {
-            id = new GamePadId(nextId++),
-            onThreshold = onThreshold,
-            offThreshold = offThreshold,
-        }).As<GamePadConfig>();
+            var view = GetComponent<GamePadView>();
+            var config = new GamePadConfig {
+                id = new GamePadId(nextId++),
+                onThreshold = onThreshold,
+                offThreshold = offThreshold,
+            };
 
-        b.Register<GamePadModel>(Lifetime.Scoped).As<IGamePadModel>();
+            var model = new GamePadModel(config);
+            var presenter = new GamePadPresenter(bus, model,life);
 
-        b.Register<GamePadPresenter>(Lifetime.Scoped).As<IGamePadPresenter>();
+            view.Construct(presenter, life);
+        }
     }
+
 }

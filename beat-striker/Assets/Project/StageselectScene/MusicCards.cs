@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System;
+using Core;
+using Core.App.Types;
 
 public class MusicCards : MonoBehaviour
 {
@@ -98,4 +100,5 @@ public class MusicCards : MonoBehaviour
 public struct SelectableMusic {
     public string description;
     public AudioClip clip;
+    public TrackId trackId;
 }

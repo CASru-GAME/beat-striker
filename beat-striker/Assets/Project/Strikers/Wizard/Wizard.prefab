@@ -264,11 +264,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5189117836200484639}
-  - component: {fileID: 8817504715203060625}
-  - component: {fileID: 5009609225602117194}
   - component: {fileID: 712021694818041983}
   - component: {fileID: 7378333137058971118}
   - component: {fileID: 8735412774696205190}
+  - component: {fileID: 8027606925659728178}
+  - component: {fileID: 1986388078883874355}
+  - component: {fileID: 2488487057952320721}
   m_Layer: 0
   m_Name: Wizard
   m_TagString: Untagged
@@ -304,37 +305,6 @@ Transform:
   - {fileID: 5119421731317626058}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8817504715203060625
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2273013822404465156}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 60a5d8d43a07e483396dc0da280d7858, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Striker
-  maxHp: 100
-  goodTimeWidth: 0.2
-  perfectTimeWidth: 0.05
---- !u!114 &5009609225602117194
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2273013822404465156}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e9c07dca8ba284c1899093c3d52c6f6a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnyStriker
-  jumpSpeed: 50
-  runSpeed: 5
-  airJumpMax: 3
-  collinden: []
 --- !u!95 &712021694818041983
 Animator:
   serializedVersion: 7
@@ -407,6 +377,45 @@ CapsuleCollider:
   m_Height: 2.9315414
   m_Direction: 1
   m_Center: {x: -4.2647897e-17, y: 1.3747613, z: 0.059498906}
+--- !u!114 &8027606925659728178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273013822404465156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd850a13dc7f54a2ba56ef052d1400c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Core.Battle::Core.Battle.StrikerView
+  dashSpeed: 65
+  walkSpeed: 3
+  rotationSpeed: 1000
+--- !u!114 &1986388078883874355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273013822404465156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ff959505dd3b44b7bd1f8727eb18f4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Utils::Life
+--- !u!114 &2488487057952320721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273013822404465156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0335bd459de9a41e0b45a2078f2f17f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Core.Battle::Core.Battle.StrikerInstaller
 --- !u!1 &2303661228985555550
 GameObject:
   m_ObjectHideFlags: 0
