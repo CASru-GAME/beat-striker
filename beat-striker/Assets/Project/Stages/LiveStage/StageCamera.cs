@@ -5,8 +5,7 @@ using Core.App.Presenters.Scene.Types;
 using Core.Battle;
 using Core.App.Types;
 
-public class StageCamera : MonoBehaviour
-{
+public class StageCamera : MonoBehaviour {
     [Header("Transforms")]
     [SerializeField] private Transform camTransform0;
     [SerializeField] private Transform playerTransform0;
@@ -37,15 +36,13 @@ public class StageCamera : MonoBehaviour
         StartCoroutine(StartCameraSequence());
     }
 
-    private IEnumerator StartCameraSequence()
-    {
+    private IEnumerator StartCameraSequence() {
         Vector3 startPosition = transform.position;
         Vector3 forwardPosition = startPosition + transform.forward * forwardDistance;
 
         // 少し前に進む
         float elapsedTime = 0f;
-        while (elapsedTime < forwardDuration)
-        {
+        while (elapsedTime < forwardDuration) {
             elapsedTime += Time.deltaTime;
             float t = elapsedTime / forwardDuration;
             transform.position = Vector3.Lerp(startPosition, forwardPosition, t);
@@ -70,25 +67,23 @@ public class StageCamera : MonoBehaviour
         this.GetBus().Publish(new BattleMessages.NotifyIntroAnimationFinished());
     }
 
-    private IEnumerator OrbitAroundTarget(Transform target, float duration, float angle)
-    {
+    private IEnumerator OrbitAroundTarget(Transform target, float duration, float angle) {
         Vector3 startOffset = transform.position - target.position;
         float elapsedTime = 0f;
-        
-        while (elapsedTime < duration)
-        {
+
+        while (elapsedTime < duration) {
             elapsedTime += Time.deltaTime;
             float t = elapsedTime / duration;
             float currentAngle = Mathf.Lerp(0f, angle, t);
-            
+
             // 現在のtarget位置を中心に回転した位置を計算
             Vector3 pivot = target.position;
             Quaternion rotation = Quaternion.Euler(0, currentAngle, 0);
             Vector3 newPos = pivot + rotation * startOffset;
-            
+
             transform.position = newPos;
             LookAt(target);
-            
+
             yield return null;
         }
     }
@@ -98,32 +93,30 @@ public class StageCamera : MonoBehaviour
             transform.LookAt(target);
         }
     }
-    
+
     void OnOutro(BattleMessages.OnOutroStarted msg) {
         var winner = msg.battlemodel.GetFinalWinner();
         Transform targetTransform = winner.value == 0 ? playerTransform0 : playerTransform1;
         StartCoroutine(MoveToWinner(targetTransform, winner));
     }
 
-    private IEnumerator MoveToWinner(Transform target, PlayerId winner)
-    {
+    private IEnumerator MoveToWinner(Transform target, PlayerId winner) {
         yield return new WaitForSeconds(outroWaitDuration);
 
         Vector3 startPosition = transform.position;
         Vector3 direction = (target.position - transform.position).normalized;
         Vector3 targetPosition = target.position - direction * outroDistance;
-        
+
         float elapsedTime = 0f;
-        
-        while (elapsedTime < outroDuration)
-        {
+
+        while (elapsedTime < outroDuration) {
             elapsedTime += Time.deltaTime;
             float t = elapsedTime / outroDuration;
             transform.position = Vector3.Lerp(startPosition, targetPosition, t);
             LookAt(target);
             yield return null;
         }
-        
+
         transform.position = targetPosition;
         LookAt(target);
 

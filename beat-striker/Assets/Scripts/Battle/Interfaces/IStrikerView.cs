@@ -3,9 +3,12 @@
 using Core.App.Types;
 using UnityEngine;
 
-namespace Core.Battle {
 
-    public interface IStrikerView {
+namespace Core.Battle
+{
+
+    public interface IStrikerView
+    {
         void ChangeDirection(Vector2 direction);
         void CancelDirection();
         void Dash();
@@ -22,5 +25,6 @@ namespace Core.Battle {
         HitPoint CalcHit(HitStatus status);
         void ResetPosition();
         void SavePosition();
+        Vector2 GetForwardDirection();
     }
 }

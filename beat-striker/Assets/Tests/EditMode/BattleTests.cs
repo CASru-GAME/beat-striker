@@ -8,6 +8,7 @@ using Core.App.Types;
 using Core.GamePad.Types;
 using Core.Utils;
 
+
 namespace Tests.EditMode {
     sealed class FakeRythmTrackModel : IRythmTrackModel {
         public readonly Queue<BeatResult> results = new();
@@ -62,6 +63,10 @@ namespace Tests.EditMode {
 
         public HitPoint lastCalcHitInput;
         public float lastCalcHitReturned;
+
+        public Vector2 GetForwardDirection() {
+            return new Vector2(1f, 0f);
+        }
 
         public void ChangeDirection(Vector2 direction) {
             lastDirection = direction;
@@ -206,21 +211,21 @@ namespace Tests.EditMode {
             Assert.That(model.SpecialPoint.value, Is.EqualTo(0f).Within(1e-5));
 
             // BeatResultを流してスコア/コンボを検証
-            model.AddBeatResult(new BeatResult(BeatStatus.Excellent)); 
-            model.AddBeatResult(new BeatResult(BeatStatus.Good));      
+            model.AddBeatResult(new BeatResult(BeatStatus.Excellent));
+            model.AddBeatResult(new BeatResult(BeatStatus.Good));
             Assert.That(model.ComboCount, Is.EqualTo(2)); // ミスしなければコンボが増加
-            
+
             model.AddBeatResult(new BeatResult(BeatStatus.Miss));      // +0 & combo reset
 
             Assert.That(model.ExcellentCount, Is.EqualTo(1));
             Assert.That(model.GoodCount, Is.EqualTo(1));
             Assert.That(model.MissCount, Is.EqualTo(1));
-            Assert.That(model.Score, Is.EqualTo(1500)); 
+            Assert.That(model.Score, Is.EqualTo(1500));
             Assert.That(model.ComboCount, Is.EqualTo(0)); // Missで0に戻る
-            
+
             // ミスなしでコンボが継続するケース
             model.AddBeatResult(new BeatResult(BeatStatus.Excellent));
-            model.AddBeatResult(new BeatResult(BeatStatus.Good));     
+            model.AddBeatResult(new BeatResult(BeatStatus.Good));
             model.AddBeatResult(new BeatResult(BeatStatus.Excellent));
             Assert.That(model.ComboCount, Is.EqualTo(3)); // ミスしなければコンボが継続
         }
@@ -401,11 +406,11 @@ namespace Tests.EditMode {
             Assert.That(model.MissCount, Is.EqualTo(1));      // Miss x1
             Assert.That(model.Score, Is.EqualTo(
                 1000 +
-                500 + 
+                500 +
                 1000 +
                 1000 +
-                0 +   
-                1000  
+                0 +
+                1000
             ));
             Assert.That(model.ComboCount, Is.EqualTo(1)); // Missで0→最後のExcellentで1
 
