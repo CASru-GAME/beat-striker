@@ -36,7 +36,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
-      "version": "2.9.3",
+      "version": "2.10.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -71,11 +71,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.23",
+      "version": "2.0.25",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.test-framework": "1.1.9"
+        "com.unity.test-framework": "1.1.31"
       },
       "url": "https://packages.unity.com"
     },
@@ -188,7 +188,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.terrain-tools": {
-      "version": "5.3.0",
+      "version": "5.3.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -239,7 +239,7 @@
       }
     },
     "com.unity.visualscripting": {
-      "version": "1.9.7",
+      "version": "1.9.8",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -247,13 +247,6 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
-    },
-    "jp.hadashikick.vcontainer": {
-      "version": "1.17.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

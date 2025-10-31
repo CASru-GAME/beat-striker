@@ -11,7 +11,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using VContainer;
 
 [RequireComponent(typeof(RectTransform))]
 public class CursorView : MonoBehaviour, ICursorView {

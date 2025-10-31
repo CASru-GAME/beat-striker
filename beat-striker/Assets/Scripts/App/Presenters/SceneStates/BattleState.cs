@@ -12,10 +12,10 @@ namespace Core.App.Presenters.Scene.States {
         }
 
         private void OnAppFlowMessage(AppMessages.RequireTransition message) {
-            if (message.scene == AppScene.Title) {
+            if (message.scene == AppScene.Title || message.scene == AppScene.StageSelect || message.scene == AppScene.CharacterSelect) {
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    AppScene.Title
+                    message.scene
                 ));
             }
         }

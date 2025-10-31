@@ -18,10 +18,18 @@ namespace Core.App.Presenters.Scene {
             IBus bus,
             IBattleSettingModel setting,
             ICursorFactory cursorFactory,
-            ICursorRegistry cursorRegistry) {
+            ICursorRegistry cursorRegistry,
+            ILife life) {
             var context = new SceneStateContext(view, bus, setting, this, this, cursorFactory, cursorRegistry);
             currentState = CreateSceneState(firstScene, context);
             currentState.Enter();
+            life.Link(OnEnable, OnDisable);
+        }
+
+        private void OnEnable() {
+        }
+        private void OnDisable() {
+            currentState.Exit();
         }
 
         public void ChangeState(ISceneState newState) {
