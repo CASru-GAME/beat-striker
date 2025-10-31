@@ -13,6 +13,30 @@ namespace Core.GamePad.Types {
         public GamePadId(int value) {
             this.value = value;
         }
+
+        public override readonly bool Equals(object obj) {
+            if (obj is GamePadId other) {
+                return value == other.value;
+            }
+            return false;
+        }
+
+        public override readonly int GetHashCode() {
+            return value.GetHashCode();
+        }
+
+        public static bool operator ==(GamePadId left, GamePadId right) {
+            return left.value == right.value;
+        }
+
+        public static bool operator !=(GamePadId left, GamePadId right) {
+            return left.value != right.value;
+        }
+
+        public override readonly string ToString() {
+            return $"GamePadId({value})";
+        }
+        
     }
 
     /// <summary>

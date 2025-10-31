@@ -5,9 +5,9 @@
         "UnityEngine.TestRunner",
         "GamePad",
         "TestUtils",
-        "EventBus",
         "UnityEditor.TestRunner",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Utils"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
