@@ -45,6 +45,16 @@ public class ResultPanelButton : MonoBehaviour
     public float iconPopupDuration = 0.6f; // Iconポップアップ時間
     public float iconOvershoot = 1.1f; // Iconオーバーシュート倍率
     
+    [Header("GoBack Button Animation")]
+    public GameObject goBackSceneImage; // 白いImage（GoBackSceneImage）
+    public GameObject nextText; // Textオブジェクト（Next）
+    public float goBackDelay = 0.2f; // GoBackボタン出現の遅延（Icon開始からの時間）
+    public float goBackScaleDuration = 0.5f; // GoBackボタンスケール時間
+    public float nextTextDelay = 0.5f; // Nextテキスト出現の遅延（GoBackアニメーション完了からの時間）
+    public float nextTextFadeDuration = 0.8f; // NextテキストフェードIN/OUT時間（1サイクル）
+    public float nextTextMinAlpha = 0.3f; // Nextテキストの最小透明度
+    public float nextTextMaxAlpha = 1f; // Nextテキストの最大透明度
+    
     private Button button;
     private AudioSource audioSource;
     private CanvasGroup blackImageCanvasGroup;
@@ -65,6 +75,11 @@ public class ResultPanelButton : MonoBehaviour
     private Vector3 scoreUnderOriginalPos;
     private Vector3 comboAboveOriginalPos;
     private Vector3 comboUnderOriginalPos;
+    
+    // GoBackボタン関連
+    private RectTransform goBackRect;
+    private Button goBackButton;
+    private CanvasGroup nextTextCanvasGroup;
 
     void Start()
     {
@@ -131,6 +146,32 @@ public class ResultPanelButton : MonoBehaviour
         // Iconパネルの初期設定
         InitializeIconPanel(playerWinnerPanel, ref playerWinnerRect);
         InitializeIconPanel(playerLoserPanel, ref playerLoserRect);
+        
+        // GoBackボタンの初期設定
+        if (goBackSceneImage != null)
+        {
+            goBackRect = goBackSceneImage.GetComponent<RectTransform>();
+            goBackButton = goBackSceneImage.GetComponent<Button>();
+            goBackRect.localScale = Vector3.zero;
+            goBackSceneImage.SetActive(false);
+            
+            // ボタンを無効化
+            if (goBackButton != null)
+            {
+                goBackButton.interactable = false;
+            }
+        }
+        
+        // Nextテキストの初期設定
+        if (nextText != null)
+        {
+            nextTextCanvasGroup = nextText.GetComponent<CanvasGroup>();
+            if (nextTextCanvasGroup == null)
+            {
+                nextTextCanvasGroup = nextText.AddComponent<CanvasGroup>();
+            }
+            nextTextCanvasGroup.alpha = 0f;
+        }
         
         // ボタンクリックイベント
         if (button != null)
@@ -280,6 +321,10 @@ public class ResultPanelButton : MonoBehaviour
         // Iconアニメーション
         float iconStartTime = comboStartTime + iconDelay;
         AnimateIconPanels(iconStartTime);
+        
+        // GoBackボタンアニメーション
+        float goBackStartTime = iconStartTime + goBackDelay;
+        AnimateGoBackButton(goBackStartTime);
     }
     
     void AnimateScorePanels(float delay)
@@ -377,6 +422,54 @@ public class ResultPanelButton : MonoBehaviour
                         LeanTween.scale(playerLoserPanel, Vector3.one, iconPopupDuration * 0.4f)
                             .setEase(LeanTweenType.easeInQuad);
                     });
+            });
+        }
+    }
+    
+    void AnimateGoBackButton(float delay)
+    {
+        if (goBackSceneImage != null && goBackRect != null)
+        {
+            LeanTween.delayedCall(delay, () =>
+            {
+                Debug.Log("GoBackSceneImage animation start");
+                goBackSceneImage.SetActive(true);
+                goBackRect.localScale = Vector3.zero;
+                
+                // スケールアニメーション（0 → 1）
+                LeanTween.scale(goBackSceneImage, Vector3.one, goBackScaleDuration)
+                    .setEase(LeanTweenType.easeOutBack)
+                    .setOnComplete(() =>
+                    {
+                        // アニメーション完了後、ボタンを有効化
+                        if (goBackButton != null)
+                        {
+                            goBackButton.interactable = true;
+                            Debug.Log("GoBackButton enabled");
+                        }
+                        
+                        // Nextテキストをフェードイン
+                        AnimateNextText();
+                    });
+            });
+        }
+    }
+    
+    void AnimateNextText()
+    {
+        if (nextText != null && nextTextCanvasGroup != null)
+        {
+            LeanTween.delayedCall(nextTextDelay, () =>
+            {
+                Debug.Log("NextText fade loop start");
+                
+                // 最小透明度からスタート
+                nextTextCanvasGroup.alpha = nextTextMinAlpha;
+                
+                // フェードイン→フェードアウトをループ
+                LeanTween.alphaCanvas(nextTextCanvasGroup, nextTextMaxAlpha, nextTextFadeDuration / 2f)
+                    .setEase(LeanTweenType.easeInOutQuad)
+                    .setLoopPingPong(); // ピンポンループ（往復）
             });
         }
     }

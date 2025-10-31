@@ -27,6 +27,9 @@ EditorBuildSettings:
     path: Assets/Project/BattleUI/BattleUI.unity
     guid: 46c774a27c8604f4c9f77cad6e4a5d86
   - enabled: 1
+    path: Assets/Project/BackScene/BackScene.unity
+    guid: c607353831f60e74a9d11d502bc13034
+  - enabled: 1
     path: Assets/Project/StageselectScene/StageselectScene1.unity
     guid: d5fa05366ba68442286138d6a7934b67
   m_configObjects:

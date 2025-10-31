@@ -19,12 +19,18 @@ public class StartButtonAnimation : MonoBehaviour
     
     [Header("Click Feedback")]
     public AudioClip clickSound; // クリック時の効果音
+    [Range(0f, 1f)]
+    public float clickSoundVolume = 1f; // YuusyaImageクリック時の音量
     public RectTransform clickTarget; // へこませる対象（黒い画像のRectTransform）
     public float scaleDownAmount = 0.95f; // へこむサイズ（1.0が元のサイズ）
     public float scaleDuration = 0.1f; // へこむアニメーションの時間
     
     [Header("Button Control")]
+    public Botan yuusyaImageButton; // YuusyaImageのBotanコンポーネント
     public Botan[] blackImageButtons; // 黒い画像のボタン（Botanコンポーネント）2つ
+    public AudioClip blackImageClickSound; // 黒い画像がクリックされた時の効果音
+    [Range(0f, 1f)]
+    public float blackImageClickSoundVolume = 1f; // 黒い画像クリック時の音量
     
     private Vector2 aboveStartPos;
     private Vector2 aboveEndPos;
@@ -32,6 +38,7 @@ public class StartButtonAnimation : MonoBehaviour
     private Vector2 underEndPos;
     
     private bool animationPlayed = false;
+    private bool blackImageSoundEnabled = false; // 黒い画像の音が有効かどうか
     
     void Start()
     {
@@ -57,11 +64,19 @@ public class StartButtonAnimation : MonoBehaviour
         }
         
         // 黒い画像のボタンを無効化（Botanコンポーネントのみ）
-        foreach (var button in blackImageButtons)
+        for (int i = 0; i < blackImageButtons.Length; i++)
         {
+            var button = blackImageButtons[i];
             if (button != null)
             {
                 button.enabled = false;
+                // 効果音イベントを登録（無効中は発火しない）
+                int index = i; // ローカルコピー
+                button.onClick += (data) => OnBlackImageClicked(data, index);
+            }
+            else
+            {
+                Debug.LogWarning($"Black image button {i} is null!");
             }
         }
     }
@@ -75,19 +90,20 @@ public class StartButtonAnimation : MonoBehaviour
         if (!animationPlayed)
         {
             animationPlayed = true;
+            
+            // YuusyaImageのボタンを無効化（重複クリック防止）
+            if (yuusyaImageButton != null)
+            {
+                yuusyaImageButton.enabled = false;
+            }
+            
             AnimateLines();
         }
     }
     
     void PlayClickFeedback()
     {
-        // 効果音を再生
-        if (clickSound != null)
-        {
-            AudioSource.PlayClipAtPoint(clickSound, Camera.main.transform.position);
-        }
-        
-        // へこむアニメーション
+        // へこむアニメーション（音はYuusyaImageのBotanで管理）
         if (clickTarget != null)
         {
             // 元のスケールをキャンセル
@@ -105,8 +121,6 @@ public class StartButtonAnimation : MonoBehaviour
     
     void AnimateLines()
     {
-        Debug.Log("StartButtonAnimation started");
-        
         // 赤いLine（左から右へ）
         if (whiteLineAbove != null)
         {
@@ -125,8 +139,6 @@ public class StartButtonAnimation : MonoBehaviour
     
     void ShowText()
     {
-        Debug.Log("Lines animation complete, showing text");
-        
         if (textCanvasGroup != null)
         {
             if (loopTextFade)
@@ -144,7 +156,7 @@ public class StartButtonAnimation : MonoBehaviour
             }
         }
         
-        // アニメーション完了後、黒い画像のボタンを有効化
+        // アニメーション完了後、黒い画像のボタンと音を有効化
         foreach (var button in blackImageButtons)
         {
             if (button != null)
@@ -153,6 +165,29 @@ public class StartButtonAnimation : MonoBehaviour
             }
         }
         
-        Debug.Log("Animation complete. Black image buttons are now active.");
+        // 黒い画像の音を有効化
+        blackImageSoundEnabled = true;
+    }
+    
+    void OnBlackImageClicked(BotanEventData data, int buttonIndex)
+    {
+        Debug.Log($"Black image button {buttonIndex} clicked! Sound enabled: {blackImageSoundEnabled}");
+        
+        // アニメーション完了後のみ効果音を再生
+        if (blackImageSoundEnabled && blackImageClickSound != null)
+        {
+            PlaySoundAtVolume(blackImageClickSound, blackImageClickSoundVolume);
+        }
+    }
+    
+    void PlaySoundAtVolume(AudioClip clip, float volume)
+    {
+        GameObject tempAudio = new GameObject("TempAudio");
+        tempAudio.transform.position = Camera.main.transform.position;
+        AudioSource audioSource = tempAudio.AddComponent<AudioSource>();
+        audioSource.clip = clip;
+        audioSource.volume = volume;
+        audioSource.Play();
+        Destroy(tempAudio, clip.length);
     }
 }

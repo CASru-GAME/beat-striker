@@ -1281,7 +1281,9 @@ GameObject:
   - component: {fileID: 1064152678}
   - component: {fileID: 1064152680}
   - component: {fileID: 1064152679}
+  - component: {fileID: 1064152683}
   - component: {fileID: 1064152681}
+  - component: {fileID: 1064152682}
   m_Layer: 5
   m_Name: MusicSelectRightButton
   m_TagString: Untagged
@@ -1362,6 +1364,120 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!82 &1064152682
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1064152677}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &1064152683
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1064152677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d499ed4e340f0f64eb7aefebc0256ec7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
+  clickSound: {fileID: 8300000, guid: 2aeda25a411c56441a3eb9f5b2418a70, type: 3}
+  volume: 1
+  delay: 0
+  debounceTime: 0.1
+  showDebugLog: 0
 --- !u!1 &1102896165
 GameObject:
   m_ObjectHideFlags: 0
@@ -1538,6 +1654,7 @@ GameObject:
   - component: {fileID: 1197106002}
   - component: {fileID: 1197106001}
   - component: {fileID: 1197106000}
+  - component: {fileID: 1197106004}
   - component: {fileID: 1197106003}
   m_Layer: 5
   m_Name: StreetImage
@@ -1642,7 +1759,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stageselectbutton
   image: {fileID: 549242808}
-  hoverSound: {fileID: 8300000, guid: 0fef0e834781f1b47a3f4e9fe5a5f498, type: 3}
+  hoverSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
   panel: {fileID: 1483065838}
   moveType: 2
   popupPanel: {fileID: 311054157}
@@ -1766,6 +1883,23 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1197106004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1197105995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d499ed4e340f0f64eb7aefebc0256ec7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
+  clickSound: {fileID: 8300000, guid: 954d868ee9b04be4ea650c9a434c4f82, type: 3}
+  volume: 1
+  delay: 0
+  debounceTime: 0.1
+  showDebugLog: 0
 --- !u!1 &1275289228
 GameObject:
   m_ObjectHideFlags: 0
@@ -2440,7 +2574,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 529.51, y: 306.09}
+  m_AnchoredPosition: {x: 529.51, y: 327.9}
   m_SizeDelta: {x: 192.89, y: 83.1422}
   m_Pivot: {x: 0.62704813, y: 0.5}
 --- !u!114 &1700114826
@@ -2492,6 +2626,7 @@ GameObject:
   - component: {fileID: 1703879381}
   - component: {fileID: 1703879380}
   - component: {fileID: 1703879384}
+  - component: {fileID: 1703879387}
   - component: {fileID: 1703879386}
   m_Layer: 5
   m_Name: LiveImage
@@ -2533,7 +2668,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
   image: {fileID: 257838011}
-  hoverSound: {fileID: 8300000, guid: 0fef0e834781f1b47a3f4e9fe5a5f498, type: 3}
+  hoverSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
   panel: {fileID: 1483065838}
   moveType: 1
   popupPanel: {fileID: 311054157}
@@ -2708,6 +2843,23 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1703879387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1703879378}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d499ed4e340f0f64eb7aefebc0256ec7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
+  clickSound: {fileID: 8300000, guid: 954d868ee9b04be4ea650c9a434c4f82, type: 3}
+  volume: 1
+  delay: 0
+  debounceTime: 0.1
+  showDebugLog: 0
 --- !u!1 &1722483528
 GameObject:
   m_ObjectHideFlags: 0
@@ -2816,14 +2968,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bbb2a515e47e1cd4b8a558d8412af5c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DiagonalStripeTransition
-  stripeCount: 10
+  stripeCount: 8
   transitionDuration: 0.5
   stripeDelay: 0.008
   stripeColor: {r: 0, g: 0, b: 0, a: 1}
   stripeSpacingMultiplier: 2
-  stripeWidthMultiplier: 1.42
-  rightTopOffset: {x: 0.1, y: 1}
-  leftBottomOffset: {x: -0.1, y: -1}
+  stripeWidthMultiplier: 1.9
+  rightTopOffset: {x: 0.08, y: 2}
+  leftBottomOffset: {x: -0.08, y: -2}
   transitionCanvas: {fileID: 0}
   stripePrefab: {fileID: 0}
 --- !u!4 &1807407743
@@ -3106,6 +3258,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Backbutton
   previousSceneName: 
   clickSound: {fileID: 8300000, guid: fffdef6c6ce19b5409acca832a61af2e, type: 3}
+  debounceTime: 0.1
 --- !u!114 &1854520120
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3485,6 +3638,8 @@ GameObject:
   - component: {fileID: 2007859907}
   - component: {fileID: 2007859906}
   - component: {fileID: 2007859908}
+  - component: {fileID: 2007859910}
+  - component: {fileID: 2007859909}
   m_Layer: 5
   m_Name: MusicSelectLeftButton
   m_TagString: Untagged
@@ -3565,6 +3720,120 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!82 &2007859909
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007859904}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &2007859910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007859904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d499ed4e340f0f64eb7aefebc0256ec7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
+  clickSound: {fileID: 8300000, guid: 2aeda25a411c56441a3eb9f5b2418a70, type: 3}
+  volume: 1
+  delay: 0
+  debounceTime: 0.1
+  showDebugLog: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
