@@ -15,6 +15,7 @@ public sealed class AnyStriker : MonoBehaviour {
     [SerializeField] int airJumpMax = 3;
     bool isGround = false;
     public Colliden[] collinden;
+    public Colliden groundColliden;
 
     void Start() {
         anim = GetComponent<Animator>();
@@ -23,11 +24,21 @@ public sealed class AnyStriker : MonoBehaviour {
         striker.OnBeated += res => {
             // 何かしらのペナルティ
         };
+
+        groundColliden.OnStayTrigger += collider => {
+            Debug.Log("GroundColliden OnStayTrigger");
+            isGround = true;
+        };
+
+        groundColliden.OnExitTrigger += collider => {
+            isGround = false;
+        };
     }
 
     void Update() {
         anim.SetBool("IsGround", isGround);
-        anim.SetFloat("Velocity", rb.linearVelocity.magnitude);
+        anim.SetFloat("Velocity", Mathf.Abs(rb.linearVelocity.x));
+        Debug.Log("Velocity:" + Mathf.Abs(rb.linearVelocity.x));
 
         var east = striker.player.GetBtnDown(Btn.East);
 
@@ -52,18 +63,5 @@ public sealed class AnyStriker : MonoBehaviour {
             anim.SetTrigger("DoCharge");
         }
 
-    }
-
-    private void OnCollisionStay(Collision collision) {
-        foreach (var contact in collision.contacts) {
-            if (contact.normal.y > 0.5f) {
-                isGround = true;
-                return;
-            }
-        }
-    }
-
-    private void OnCollisionExit(Collision collision) {
-        isGround = false;
     }
 }
