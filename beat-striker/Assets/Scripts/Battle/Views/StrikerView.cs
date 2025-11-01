@@ -1,6 +1,7 @@
 
 
 using System;
+using System.Collections;
 using Core.Battle;
 using UnityEngine;
 
@@ -23,7 +24,10 @@ namespace Core.Battle {
         private Vector3 initialPosition;
         private Quaternion initialRotation;
 
-        [SerializeField] private CollidenRef[] collidenRefs;
+    [SerializeField] private CollidenRef[] collidenRefs;
+    [Header("Special spawn settings")]
+    [SerializeField] private float specialSpawnHeight = 2.0f;
+    [SerializeField] private float specialSpawnForward = 0.8f;
 
         public Colliden GetColliden(string key) {
             foreach (var collidenRef in collidenRefs) {
@@ -38,6 +42,50 @@ namespace Core.Battle {
             rb = GetComponent<Rigidbody>();
             anim = GetComponent<Animator>();
         }
+
+            // 必殺技の時間差発射用メソッド
+            public void SpawnSpecialProjectiles(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval) {
+                if (slashPrefab == null) {
+                    Debug.LogWarning("StrikerView.SpawnSpecialProjectiles: slashPrefab not assigned.");
+                    return;
+                }
+                StartCoroutine(SpawnProjectilesCoroutine(slashPrefab, count, spreadAngle, speed, damage, hitEffectPrefab, spawnInterval));
+            }
+
+            private IEnumerator SpawnProjectilesCoroutine(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval) {
+                Transform spawnTransform = null;
+                try {
+                    var c = GetColliden("sword");
+                    if (c != null) spawnTransform = c.transform;
+                } catch { }
+
+                // 発射位置を設定（Inspectorで調整できるspecialSpawnHeight/specialSpawnForwardを使用）
+                Vector3 origin = transform.position + Vector3.up * specialSpawnHeight + transform.forward * specialSpawnForward;
+                if (spawnTransform != null) {
+                    origin = spawnTransform.position + Vector3.up * (specialSpawnHeight - 1.0f); // 剣の位置から少し上に
+                }
+
+                for (int i = 0; i < count; i++) {
+                    float t = (count == 1) ? 0f : ((float)i / (count - 1) - 0.5f); // -0.5 .. 0.5
+                    float angle = t * spreadAngle;
+
+                    Quaternion rot = transform.rotation * Quaternion.Euler(0f, angle, 0f);
+                    Debug.Log($"Spawning projectile {i+1}/{count} at origin {origin}");
+                    GameObject go = Instantiate(slashPrefab, origin, rot);
+
+                    Debug.Log($"Instantiated projectile at {go.transform.position}");
+                    var sp = go.GetComponent<SlashProjectile>();
+                    if (sp != null) {
+                        sp.speed = speed;
+                        sp.damage = damage;
+                        sp.hitEffectPrefab = hitEffectPrefab;
+                        sp.owner = this;
+                        Debug.Log($"Spawned slash projectile {i+1}/{count} with hitEffectPrefab: {(hitEffectPrefab ? hitEffectPrefab.name : "null")}");
+                    }
+
+                    yield return new WaitForSeconds(spawnInterval);
+                }
+            }
 
         public void Construct(IStrikerHit strikerHit) {
             this.strikerHit = strikerHit;
