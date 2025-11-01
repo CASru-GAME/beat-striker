@@ -45,7 +45,7 @@ namespace Core.Battle {
 
         private void OnGamePadInputed(GamePadMessages.Inputed msg) {
             var player = playerRegistry.ToPlayerId(msg.gamePadId);
-            if (isEnabled == false || player == null || model.PlayerId != player) return;
+            if (isEnabled == false || player == null || model.PlayerId != player || model.IsDead()) return;
 
             if (msg.action == GamePadAction.Down) {
                 if (msg.button == GamePadButton.South) {
@@ -99,12 +99,14 @@ namespace Core.Battle {
 
         private void OnGamePadDirectionChanged(GamePadMessages.DirectionChanged msg) {
             var player = playerRegistry.ToPlayerId(msg.gamePadId);
-            if (isEnabled == false || player == null || model.PlayerId != player) return;
+            if (isEnabled == false || player == null || model.PlayerId != player || model.IsDead()) return;
 
             view.ChangeDirection(msg.direction);
         }
 
         public void TakeDamage(HitStatus status) {
+            if (model.IsDead()) return;
+            
             view.OnHit();
             var damage = view.CalcHit(status);
             model.TakeDamage(damage);
@@ -137,7 +139,7 @@ namespace Core.Battle {
         }
 
         private void OnBeat(BattleMessages.OnBeat msg) {
-            if (model.PlayerId != msg.playerId) return;
+            if (model.PlayerId != msg.playerId || model.IsDead()) return;
             
             if (msg.result.status == BeatStatus.Miss) {
                 view.OnMiss();

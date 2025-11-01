@@ -14,7 +14,7 @@ namespace Core.Battle {
         IsRotation,
         OnMiss,
         OnHit,
-        OnDead,
+        IsDead,
         OnIntro,
         OnVictory,
 OnReset

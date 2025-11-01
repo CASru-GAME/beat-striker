@@ -12,6 +12,11 @@ public class WarrierChargeAttackSMB : StateMachineBehaviour {
     private Rigidbody rb;
     private Coroutine descendCoroutine;
     private MonoBehaviour coroutineRunner;
+    [SerializeField] private AudioClip hitSound;
+    [SerializeField] private GameObject hitEffectPrefab;
+    bool virgine = true;
+    float linearDampingBefore;
+
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {
         colliden = animator.GetComponent<StrikerView>().GetColliden("Ax");
@@ -22,10 +27,14 @@ public class WarrierChargeAttackSMB : StateMachineBehaviour {
         rb = animator.GetComponent<Rigidbody>();
         coroutineRunner = animator.GetComponent<MonoBehaviour>();
         descendCoroutine = coroutineRunner.StartCoroutine(StartDescendAfterDelay());
+        virgine = true;
+        linearDampingBefore = rb.linearDamping;
+        rb.linearDamping = 0f;
     }
 
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {
         colliden.OnEnterTrigger -= OnEnterTrigger;
+        rb.linearDamping = linearDampingBefore;
 
         if (descendCoroutine != null) {
             coroutineRunner.StopCoroutine(descendCoroutine);
@@ -46,6 +55,12 @@ public class WarrierChargeAttackSMB : StateMachineBehaviour {
         var target = other.GetComponent<StrikerView>();
         if (target != null) {
             target.TakeDamage(new HitStatus(new HitPoint(damage)));
+        }
+        else if (virgine) {
+            virgine = false;
+            AudioSource.PlayClipAtPoint(hitSound, trailer.transform.position);
+            GameObject effect = GameObject.Instantiate(hitEffectPrefab, trailer.transform.position, Quaternion.identity);
+            GameObject.Destroy(effect, 2f);
         }
     }
 }

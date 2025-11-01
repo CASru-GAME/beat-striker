@@ -156,7 +156,7 @@ namespace Core.Battle {
         }
 
         public void OnDead() {
-            anim.SetTrigger(Anime.OnDead.ToString());
+            anim.SetBool(Anime.IsDead.ToString(), true);
         }
 
         public void OnIntro() {
@@ -169,6 +169,7 @@ namespace Core.Battle {
 
         public void OnReset() {
             anim.SetTrigger(Anime.OnReset.ToString());
+            anim.SetBool(Anime.IsDead.ToString(), false);
         }
 
         public HitPoint CalcHit(HitStatus status) {
