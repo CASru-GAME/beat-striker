@@ -2,7 +2,7 @@ namespace Core.Battle {
     public enum Anime {
         DoAttack,
         DoCharge,
-OnCharged,
+        OnCharged,
         DoSpecial,
         DoGuard,
         IsGround,
@@ -16,7 +16,8 @@ OnCharged,
         OnHit,
         OnDead,
         OnIntro,
-        OnVictory
+        OnVictory,
+OnReset
     }
 
     public enum BeatStatus {

@@ -22,6 +22,7 @@ namespace Core.Battle
         void OnDead();
         void OnIntro();
         void OnVictory();
+        void OnReset();
         HitPoint CalcHit(HitStatus status);
         void ResetPosition();
         void SavePosition();

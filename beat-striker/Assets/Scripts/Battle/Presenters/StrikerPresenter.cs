@@ -12,6 +12,7 @@ namespace Core.Battle {
         readonly IStrikerView view;
         readonly IRythmTrackModel rythmTrackModel;
         bool isEnabled = false;
+        bool isCharged = false;
 
         public StrikerPresenter(IStrikerModel model, IStrikerView view, IBus bus, ILife life, IPlayerRegistry playerRegistry, IRythmTrackModel rythmTrackModel) {
             this.model = model;
@@ -29,6 +30,7 @@ namespace Core.Battle {
             bus.Subscribe<BattleMessages.RequireVictoryPose>(OnVictory);
             bus.Subscribe<BattleMessages.OnBattleStarted>(OnRoundStart);
             bus.Subscribe<BattleMessages.OnBattleFinished>(OnRoundEnd);
+            bus.Subscribe<BattleMessages.OnBeat>(OnBeat);
         }
 
         public void OnDisable() {
@@ -38,6 +40,7 @@ namespace Core.Battle {
             bus.Unsubscribe<BattleMessages.RequireVictoryPose>(OnVictory);
             bus.Unsubscribe<BattleMessages.OnBattleStarted>(OnRoundStart);
             bus.Unsubscribe<BattleMessages.OnBattleFinished>(OnRoundEnd);
+            bus.Unsubscribe<BattleMessages.OnBeat>(OnBeat);
         }
 
         private void OnGamePadInputed(GamePadMessages.Inputed msg) {
@@ -52,7 +55,10 @@ namespace Core.Battle {
                     if(Beat()) view.Attack();
                 }
                 else if (msg.button == GamePadButton.West) {
-                    if(Beat()) view.Charge();
+                    if(Beat()){
+                        view.Charge();
+                        isCharged = true;
+                    }
                 }
                 else if (msg.button == GamePadButton.North) {
                     if (Beat()) {
@@ -70,8 +76,9 @@ namespace Core.Battle {
             }
             else if (msg.action == GamePadAction.Up) {
                 if (msg.button == GamePadButton.Direction) view.CancelDirection();
-                else if (msg.button == GamePadButton.West) {
-                    if(Beat()) view.ChargeEnd();
+                else if (msg.button == GamePadButton.West && isCharged) {
+                    if (Beat()) view.ChargeEnd();
+                    isCharged = false;
                 }
             }
         }
@@ -127,6 +134,14 @@ namespace Core.Battle {
 
         private void OnRoundEnd(BattleMessages.OnBattleFinished msg) {
             isEnabled = false;
+        }
+
+        private void OnBeat(BattleMessages.OnBeat msg) {
+            if (model.PlayerId != msg.playerId) return;
+            
+            if (msg.result.status == BeatStatus.Miss) {
+                view.OnMiss();
+            }
         }
     }
 }

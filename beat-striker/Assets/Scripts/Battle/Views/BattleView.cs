@@ -1,7 +1,3 @@
-
-
-
-
 using Core.App.Types;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -33,8 +29,6 @@ namespace Core.Battle {
 
         void Update() {
             if (rythmTrackModel != null && audioSource.isPlaying) {
-                rythmTrackModel.SetTime(audioSource.time);
-                
                 float nextBeatTime = rythmTrackModel.GetNextBeatTime(new PlayerId(0), 0);
                 if (!float.IsNaN(nextBeatTime) && rythmTrackModel.GetTime() >= nextBeatTime && nextBeatTime != lastBeatTime) {
                     if (beatClip != null && beatAudioSource != null) {

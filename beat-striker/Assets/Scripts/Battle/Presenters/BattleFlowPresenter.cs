@@ -1,6 +1,7 @@
 
 using Core.App.Types;
 using Core.Utils;
+using System.Collections.Generic;
 
 namespace Core.Battle {
     public class BattleFlowPresenter : IBattleStateMutator {
@@ -29,6 +30,17 @@ namespace Core.Battle {
 
         public void OnUpdate(float deltaTime) {
             currentState.OnUpdate(deltaTime);
+            
+            // 見逃したビートを検出してイベント発行
+            if (view.IsPlaying()) {
+                var missedPlayers = rythmTrackModel.SetTime(view.GetAudioTime());
+                if (missedPlayers.Count > 0) {
+                    var missResult = new BeatResult(BeatStatus.Miss);
+                    foreach (var playerId in missedPlayers) {
+                        bus.Publish(new BattleMessages.OnBeat(playerId, missResult));
+                    }
+                }
+            }
         }
 
         public void ChangeState(IBattleState newState) {
