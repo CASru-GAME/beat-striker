@@ -94,6 +94,7 @@ namespace Core.Battle {
             var player = playerRegistry.ToPlayerId(msg.gamePadId);
             if (isEnabled == false || player == null || model.PlayerId != player) return;
 
+            Debug.Log($"StrikerPresenter.OnGamePadDirectionChanged: player={player} dir={msg.direction}");
             view.ChangeDirection(msg.direction);
         }
 
