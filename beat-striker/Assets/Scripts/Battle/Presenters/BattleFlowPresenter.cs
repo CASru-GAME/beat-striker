@@ -1,4 +1,5 @@
 
+using Core.App.Types;
 using Core.Utils;
 
 namespace Core.Battle {
@@ -8,18 +9,22 @@ namespace Core.Battle {
         private readonly ILife life;
         private readonly IRythmTrackModel rythmTrackModel;
         private readonly IBattleResetter resetter;
+        private readonly IBattleView view;
+        private readonly TrackId trackId;
 
-        public BattleFlowPresenter(IBus bus, ILife life, IBattleModel battleModel, IRythmTrackModel rythmTrackModel, IBattleResetter resetter) {
+        public BattleFlowPresenter(IBus bus, ILife life, IBattleModel battleModel, IRythmTrackModel rythmTrackModel, IBattleResetter resetter, IBattleView view, TrackId trackId) {
             this.bus = bus;
             this.life = life;
             this.rythmTrackModel = rythmTrackModel;
             this.resetter = resetter;
-            currentState = new IntroState(this, bus, battleModel, rythmTrackModel, resetter);
+            this.view = view;
+            this.trackId = trackId;
+            currentState = new IntroState(this, bus, battleModel, rythmTrackModel, resetter, view, trackId);
             life.Link(OnEnable, OnDisable);
         }
 
         public void DebugMode() {
-            ChangeState(new RoundState(this, bus, null, rythmTrackModel, resetter));
+            ChangeState(new RoundState(this, bus, null, rythmTrackModel, resetter, view, trackId));
         }
 
         public void OnUpdate(float deltaTime) {

@@ -2471,7 +2471,7 @@ PrefabInstance:
     - target: {fileID: 6623968613518214306, guid: 153ff7a8299ef4b03b8ef2d239691bb8, type: 3}
       propertyPath: playerPosition
       value: 
-      objectReference: {fileID: 1382093129}
+      objectReference: {fileID: 0}
     - target: {fileID: 6623968613518214306, guid: 153ff7a8299ef4b03b8ef2d239691bb8, type: 3}
       propertyPath: BattleInstaller
       value: 
@@ -4408,7 +4408,7 @@ PrefabInstance:
     - target: {fileID: 6623968613518214306, guid: 153ff7a8299ef4b03b8ef2d239691bb8, type: 3}
       propertyPath: playerPosition
       value: 
-      objectReference: {fileID: 1568525173}
+      objectReference: {fileID: 0}
     - target: {fileID: 6623968613518214306, guid: 153ff7a8299ef4b03b8ef2d239691bb8, type: 3}
       propertyPath: BattleInstaller
       value: 
@@ -9598,7 +9598,6 @@ GameObject:
   - component: {fileID: 4517761016915096625}
   - component: {fileID: 8818497538118370170}
   - component: {fileID: 1245279239087981169}
-  - component: {fileID: 8818497538118370171}
   m_Layer: 0
   m_Name: Battle
   m_TagString: Untagged
@@ -9645,11 +9644,6 @@ MonoBehaviour:
   - strikerId:
       value: Hero
     prefab: {fileID: 8351331065704730106, guid: 3b7581cee8f7a45ab87fbd3d933fbc9f, type: 3}
-  trackAudios:
-  - trackId:
-      value: Azuno
-    audioClip: {fileID: 8300000, guid: 3b642bf23824f42d88b0ba91abbe5fee, type: 3}
-  beatClip: {fileID: 8300000, guid: df7d39791f5822449a47c3e1ee73cc66, type: 3}
   excellentScore: 1000
   goodScore: 500
   specialGain: 10
@@ -9676,10 +9670,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 3559071986890918602, guid: 9c507950677e942f89f05cea204c4621, type: 3}
-      propertyPath: defaultTrackId.value
-      value: Azuno
-      objectReference: {fileID: 0}
     - target: {fileID: 3992655297025828580, guid: 9c507950677e942f89f05cea204c4621, type: 3}
       propertyPath: m_Name
       value: App
@@ -9741,103 +9731,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9532e3cb913a74639a4114ffff84ed7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Core.Battle::Core.Battle.BattleView
---- !u!82 &8818497538118370171
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 74987736419037409}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
-  m_PlayOnAwake: 1
-  m_Volume: 1
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 500
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
