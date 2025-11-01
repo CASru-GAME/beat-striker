@@ -223,7 +223,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: DoGuard
+    m_ConditionEvent: DoGurad
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 8282426871862088094}
@@ -288,13 +288,13 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: DoGuard
-    m_Type: 4
+  - m_Name: AttackDown
+    m_Type: 9
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: AttackDown
+  - m_Name: DoGurad
     m_Type: 9
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -356,7 +356,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -1437540424208045207, guid: 39d55af06155e2940a5f5c93d65e029a, type: 3}
+  m_Motion: {fileID: -1437540424208045207, guid: 7faccc0bd4b20cf4382f4eda3c1be60a, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -449,8 +449,8 @@ AnimatorStateTransition:
   m_PrefabAsset: {fileID: 0}
   m_Name: 
   m_Conditions:
-  - m_ConditionMode: 2
-    m_ConditionEvent: DoGuard
+  - m_ConditionMode: 1
+    m_ConditionEvent: DoGurad
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 8418142136319541342}
@@ -524,8 +524,8 @@ AnimatorStateTransition:
   m_PrefabAsset: {fileID: 0}
   m_Name: 
   m_Conditions:
-  - m_ConditionMode: 2
-    m_ConditionEvent: DoGuard
+  - m_ConditionMode: 1
+    m_ConditionEvent: DoGurad
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -3279974190341996738}
@@ -550,7 +550,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: DoGuard
+    m_ConditionEvent: DoGurad
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 8282426871862088094}
@@ -716,7 +716,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7066033981674322893, guid: 39d55af06155e2940a5f5c93d65e029a, type: 3}
+  m_Motion: {fileID: 7066033981674322893, guid: 7faccc0bd4b20cf4382f4eda3c1be60a, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
