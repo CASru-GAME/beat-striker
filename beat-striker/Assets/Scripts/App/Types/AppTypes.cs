@@ -12,6 +12,10 @@ namespace Core.App.Types {
         None
     }
 
+    public enum BGMType {
+        MainBGM
+    }
+
     public readonly struct PlayerId {
         public readonly int value;
         public PlayerId(int value) {

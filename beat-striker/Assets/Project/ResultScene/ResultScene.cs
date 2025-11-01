@@ -1,5 +1,7 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using Core.Utils;
+using Core.App.Presenters.Scene.Types;
+using Core.App.Types;
 
 public class ResultScene : MonoBehaviour
 {
@@ -17,6 +19,6 @@ public class ResultScene : MonoBehaviour
 
     public void GotoSelectScene()
     {
-        SceneManager.LoadScene("SelectScene");
+        this.GetBus().Publish(new AppMessages.RequireTransition(AppScene.CharacterSelect));
     }
 }

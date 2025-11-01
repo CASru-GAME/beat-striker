@@ -15,7 +15,12 @@ public class MusicCards : MonoBehaviour
     [Header("Buttons")]
     public Botan rightButton;
     public Botan leftButton;
-
+    
+    [Header("Sound")]
+    public AudioClip buttonClickSound; // ボタンクリック時の効果音
+    [Range(0f, 1f)]
+    public float soundVolume = 1f; // 効果音の音量
+    
     [Header("Motion")]
     public float slideDistance = 600f;
     public float leftSlideDuration = 0.3f;
@@ -47,6 +52,9 @@ public class MusicCards : MonoBehaviour
     {
         if (isAnimating) return;
         isAnimating = true;
+        
+        // クリック効果音を再生
+        PlayClickSound();
 
         MusicCard currentCard = cards[currentIndex];
         int nextIndex = (currentIndex + 1) % cards.Count;
@@ -73,6 +81,9 @@ public class MusicCards : MonoBehaviour
     {
         if (isAnimating) return;
         isAnimating = true;
+        
+        // クリック効果音を再生
+        PlayClickSound();
 
         int prevIndex = (currentIndex - 1 + cards.Count) % cards.Count;
         MusicCard prevCard = cards[prevIndex];
@@ -93,6 +104,19 @@ public class MusicCards : MonoBehaviour
         });
 
         currentIndex = prevIndex;
+    }
+    
+    void PlayClickSound()
+    {
+        if (buttonClickSound != null)
+        {
+            GameObject soundObject = new GameObject("ButtonClickSound");
+            AudioSource audioSource = soundObject.AddComponent<AudioSource>();
+            audioSource.clip = buttonClickSound;
+            audioSource.volume = soundVolume;
+            audioSource.Play();
+            Destroy(soundObject, buttonClickSound.length);
+        }
     }
 }
 
