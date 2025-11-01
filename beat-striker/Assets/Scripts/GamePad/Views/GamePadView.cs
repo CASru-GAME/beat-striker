@@ -29,18 +29,14 @@ namespace Core.GamePad.Views {
             input.Player.AddCallbacks(this);
             input.Player.Enable();
             playerInput.onControlsChanged += OnControlsChanged;
-            var devCount = playerInput.devices.Count;
-            Debug.Log($"GamePadView OnEnable: deviceCount={devCount} presenterSet={(presenter!=null)} lifeMutater={(lifeMutater!=null)}");
             lifeMutater?.SetEnable(true);
         }
 
         void OnDisable() {
-            var devCount2 = playerInput.devices.Count;
-            Debug.Log($"GamePadView OnDisable: deviceCount={devCount2} presenterSet={(presenter!=null)} lifeMutater={(lifeMutater!=null)}");
             input.Player.RemoveCallbacks(this);
             input.Player.Disable();
             playerInput.onControlsChanged -= OnControlsChanged;
-            lifeMutater?.SetEnable(false);
+            lifeMutater.SetEnable(false);
         }
 
         private void OnControlsChanged(PlayerInput changed) {
