@@ -235,6 +235,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MusicCard
   botan: {fileID: 990362631066899421}
   description: {fileID: 1210609324224666477}
+  clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
 --- !u!1 &391938710561977706
 GameObject:
   m_ObjectHideFlags: 0

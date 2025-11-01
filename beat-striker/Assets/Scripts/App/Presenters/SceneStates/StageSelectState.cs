@@ -38,6 +38,7 @@ namespace Core.App.Presenters.Scene.States {
         }
 
         public void Enter() {
+            Debug.Log("Entered StageSelectState");
             context.cursorRegistry.SetCursorsActive(true);
             context.bus.Subscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
             context.bus.Subscribe<AppMessages.SelectStage>(OnStageSelected);

@@ -9,7 +9,7 @@ namespace Core.Battle {
 
     public interface IRythmTrackModel: IRythmTrackModelGetter {
         BeatResult Beat(PlayerId playerId);
-        void AddTime(float time);
+        void SetTime(float time);
         void Reset();
     }
 }

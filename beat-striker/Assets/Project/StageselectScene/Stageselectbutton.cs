@@ -14,6 +14,8 @@ public class Stageselectbutton : MonoBehaviour
      Botan botan;
     public RawImage image;
     public AudioClip hoverSound;
+    [Range(0f, 1f)]
+    public float hoverSoundVolume = 1f; // ホバー音の音量
     AudioSource audioSource;
     public Panel panel; // Panel参照
     public enum MoveType { None, Right, Left }
@@ -66,7 +68,7 @@ public class Stageselectbutton : MonoBehaviour
             image.color = Color.white;
             Debug.Log($"{gameObject.name} hovered - moveType: {moveType}");
             if (hoverSound != null && audioSource != null) {
-                audioSource.PlayOneShot(hoverSound);
+                audioSource.PlayOneShot(hoverSound, hoverSoundVolume);
             }
              if(panel != null) {
                 if (moveType == MoveType.Right) {

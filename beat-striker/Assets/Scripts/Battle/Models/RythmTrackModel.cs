@@ -44,19 +44,6 @@ namespace Core.Battle {
             return new BeatResult(BeatStatus.Miss);
         }
 
-        public void AddTime(float dt) {
-            currentTime += dt;
-            for (int pid = 0; pid < nextBeatIndex.Length; pid++) {
-                int playerBeatIndex = nextBeatIndex[pid];
-                while (true) {
-                    if (playerBeatIndex >= beatTimes.Length) break;
-                    if (beatTimes[playerBeatIndex] > currentTime - goodWindow) break;
-                    playerBeatIndex++;
-                }
-                nextBeatIndex[pid] = playerBeatIndex;
-            }
-        }
-
         public float GetNextBeatTime(PlayerId playerId, int offset) {
             int index = nextBeatIndex[playerId.value] + offset;
             if (index >= 0 && index < beatTimes.Length)
@@ -66,6 +53,19 @@ namespace Core.Battle {
 
         public float GetTime() {
             return currentTime;
+        }
+
+        public void SetTime(float time) {
+            currentTime = time;
+            for (int pid = 0; pid < nextBeatIndex.Length; pid++) {
+                int playerBeatIndex = nextBeatIndex[pid];
+                while (true) {
+                    if (playerBeatIndex >= beatTimes.Length) break;
+                    if (beatTimes[playerBeatIndex] > currentTime - goodWindow) break;
+                    playerBeatIndex++;
+                }
+                nextBeatIndex[pid] = playerBeatIndex;
+            }
         }
 
         public void Reset() {
