@@ -34,12 +34,15 @@ public class MusicCard : MonoBehaviour {
         };
         botan.onClick += (e) => {
             Debug.Log("card clicked");
-            
+
             // クリック効果音を再生（プレビュー音楽を一旦止めて効果音を再生）
             if (clickSound != null) {
                 audioSource.Stop();
                 audioSource.PlayOneShot(clickSound);
             }
+
+            Debug.Log("Selected Track ID: " + currentMusic.trackId);
+            Debug.Log("Transitioning to Character Select Scene");
             
             this.GetBus().Publish(new AppMessages.SelectTrack(currentMusic.trackId));
             this.GetBus().Publish(new AppMessages.RequireTransition(AppScene.CharacterSelect));
