@@ -971,7 +971,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cadb8d6dc5a782f43a81a0a4e0aca1dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionButton
-  targetSceneName: StageselectScene1
+  targetScene: 1
 --- !u!222 &1075654893
 CanvasRenderer:
   m_ObjectHideFlags: 0
