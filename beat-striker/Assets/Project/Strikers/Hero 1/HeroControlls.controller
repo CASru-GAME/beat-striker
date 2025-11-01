@@ -850,7 +850,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackSMB
   collidenKey: sword
-  damage: 10
+  damage: 20
 --- !u!1102 &432698620390740543
 AnimatorState:
   serializedVersion: 6
