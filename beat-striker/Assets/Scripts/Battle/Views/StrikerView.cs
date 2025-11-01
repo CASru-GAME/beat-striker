@@ -39,11 +39,40 @@ namespace Core.Battle {
             anim = GetComponent<Animator>();
         }
 
+        void Start() {
+            // Ensure no stray velocity at the start of the scene/play mode.
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        private bool HasAnimParameter(string name) {
+            if (anim == null) return false;
+            foreach (var p in anim.parameters) {
+                if (p.name == name) return true;
+            }
+            return false;
+        }
+
+        private void SetAnimBool(string name, bool value) {
+            if (anim == null) return;
+            if (!HasAnimParameter(name)) return;
+            anim.SetBool(name, value);
+        }
+
+        private void SetAnimTrigger(string name) {
+            if (anim == null) return;
+            if (!HasAnimParameter(name)) return;
+            anim.SetTrigger(name);
+        }
+
         public void Construct(IStrikerHit strikerHit) {
             this.strikerHit = strikerHit;
         }
 
         public void ChangeDirection(Vector2 direction) {
+            if (this.direction != direction) {
+                Debug.Log($"StrikerView.ChangeDirection: old={this.direction} new={direction}");
+            }
             this.direction = direction;
         }
 
@@ -53,52 +82,70 @@ namespace Core.Battle {
 
         public void Dash() {
             if (this.direction == Vector2.zero) return;
-            rb.linearVelocity = dashSpeed * this.direction;
+            // map 2D input (x: left/right, y: forward/back) to 3D velocity (x, y, z)
+            rb.linearVelocity = new Vector3(this.direction.x * dashSpeed, rb.linearVelocity.y, this.direction.y * dashSpeed);
         }
 
         public void Attack() {
-            anim.SetTrigger(Anime.DoAttack.ToString());
+            SetAnimTrigger(Anime.DoAttack.ToString());
         }
 
         public void Charge() {
-            anim.SetTrigger(Anime.DoCharge.ToString());
+            SetAnimTrigger(Anime.DoCharge.ToString());
         }
 
         public void ChargeEnd() {
-            anim.SetTrigger(Anime.OnCharged.ToString());
+            SetAnimTrigger(Anime.OnCharged.ToString());
         }
 
         public void Special() {
-            anim.SetTrigger(Anime.DoSpecial.ToString());
+            SetAnimTrigger(Anime.DoSpecial.ToString());
         }
 
         public void Guard() {
-            anim.SetTrigger(Anime.DoGuard.ToString());
+            SetAnimTrigger(Anime.DoGuard.ToString());
         }
 
         void Update() {
             if (isGround != preIsGround) {
-                anim.SetBool(Anime.IsGround.ToString(), isGround);
+                SetAnimBool(Anime.IsGround.ToString(), isGround);
                 preIsGround = isGround;
             }
 
             RotateTowardsDirection(direction);
 
-            anim.SetFloat(Anime.Velocity.ToString(), rb.linearVelocity.magnitude);
-            anim.SetFloat(Anime.InputX.ToString(), direction.x);
-            anim.SetFloat(Anime.InputY.ToString(), direction.y);
-
+            // use Rigidbody.linearVelocity and project onto XZ plane for movement-related animator params
             var velocity = rb.linearVelocity;
-            var velocityMagnitude = velocity.magnitude;
-            if (velocityMagnitude > 0) {
-                anim.SetFloat(Anime.MoveX.ToString(), velocity.x / velocityMagnitude);
-                anim.SetFloat(Anime.MoveY.ToString(), velocity.y / velocityMagnitude);
+            var planarVelocity = new Vector3(velocity.x, 0f, velocity.z);
+            var velocityMagnitude = planarVelocity.magnitude;
+
+            // Debug: log direction and planar velocity when direction is non-zero
+            string paramVelocity = Anime.Velocity.ToString();
+            string paramInputX = Anime.InputX.ToString();
+            string paramInputY = Anime.InputY.ToString();
+            string paramMoveX = Anime.MoveX.ToString();
+            string paramMoveY = Anime.MoveY.ToString();
+
+            if (direction != Vector2.zero) {
+                var animVelStr = HasAnimParameter(paramVelocity) ? anim.GetFloat(paramVelocity).ToString() : "(no-param)";
+                Debug.Log($"StrikerView.Update: direction={direction} planarVel={planarVelocity} animVel={animVelStr}");
+            }
+
+            if (HasAnimParameter(paramVelocity)) anim.SetFloat(paramVelocity, velocityMagnitude);
+            if (HasAnimParameter(paramInputX)) anim.SetFloat(paramInputX, direction.x);
+            if (HasAnimParameter(paramInputY)) anim.SetFloat(paramInputY, direction.y);
+
+            if (velocityMagnitude > 0f) {
+                if (HasAnimParameter(paramMoveX)) anim.SetFloat(paramMoveX, planarVelocity.x / velocityMagnitude);
+                if (HasAnimParameter(paramMoveY)) anim.SetFloat(paramMoveY, planarVelocity.z / velocityMagnitude);
             }
 
 
             if (direction != Vector2.zero && Mathf.Abs(rb.linearVelocity.x) < walkSpeed && !targetRotationAngle.HasValue) {
+                Debug.Log($"StrikerView: applying walk speed. dir={direction} rb.v.x={rb.linearVelocity.x} rb.v.z={rb.linearVelocity.z} walkSpeed={walkSpeed}");
                 var v = rb.linearVelocity;
                 v.x = walkSpeed * direction.x;
+                v.z = walkSpeed * direction.y;
                 rb.linearVelocity = v;
             }
         }
@@ -138,35 +185,35 @@ namespace Core.Battle {
 
             if (Mathf.Abs(angleDifference) < rotationThisFrame) {
                 transform.rotation = Quaternion.Euler(0, targetRotationAngle.Value, 0);
-                anim.SetBool(Anime.IsRotation.ToString(), false);
+                SetAnimBool(Anime.IsRotation.ToString(), false);
                 targetRotationAngle = null;
                 return;
             }
 
-            anim.SetBool(Anime.IsRotation.ToString(), true);
+            SetAnimBool(Anime.IsRotation.ToString(), true);
             float rotationAmount = Mathf.Clamp(angleDifference, -rotationThisFrame, rotationThisFrame);
             float newRotationAngle = currentAngle + rotationAmount;
             transform.rotation = Quaternion.Euler(0, newRotationAngle, 0);
         }
 
         public void OnMiss() {
-            anim.SetTrigger(Anime.OnMiss.ToString());
+            SetAnimTrigger(Anime.OnMiss.ToString());
         }
 
         public void OnHit() {
-            anim.SetTrigger(Anime.OnHit.ToString());
+            SetAnimTrigger(Anime.OnHit.ToString());
         }
 
         public void OnDead() {
-            anim.SetTrigger(Anime.OnDead.ToString());
+            SetAnimTrigger(Anime.OnDead.ToString());
         }
 
         public void OnIntro() {
-            anim.SetTrigger(Anime.OnIntro.ToString());
+            SetAnimTrigger(Anime.OnIntro.ToString());
         }
 
         public void OnVictory() {
-            anim.SetTrigger(Anime.OnVictory.ToString());
+            SetAnimTrigger(Anime.OnVictory.ToString());
         }
 
         public HitPoint CalcHit(HitStatus status) {
