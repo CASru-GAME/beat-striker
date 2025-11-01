@@ -30,6 +30,9 @@ public class Stageselectbutton : MonoBehaviour
     public float musicSlideDistance = 500f;
     private bool isPopupFadeInComplete = false;
     
+    // ステージID
+    public string stageId = ""; // インスペクターで設定するステージID
+    
     // black表示用
     public GameObject blackObject; // blackのImageオブジェクト
     private CanvasGroup blackCanvasGroup;
@@ -92,7 +95,7 @@ public class Stageselectbutton : MonoBehaviour
             if (popupPanel != null && popupCanvasGroup != null) {
                 StartCoroutine(ShowPopupWithFadeAndMusicSlide());
                 isPopupShown = true;
-                this.GetBus().Publish(new AppMessages.SelectStage(new StageId("どっちか")));
+                this.GetBus().Publish(new AppMessages.SelectStage(new StageId(stageId)));
             }
         };
         botan.onHoverExit += (e) => {

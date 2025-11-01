@@ -83,6 +83,16 @@ namespace Core.App.Presenters.Scene.Types {
             }
         }
 
+        public class PlayBGM {
+            public readonly BGMType bgmType;
+
+            public PlayBGM(BGMType bgmType) {
+                this.bgmType = bgmType;
+            }
+        }
+
+        public class StopBGM { }
+
     }
 
 

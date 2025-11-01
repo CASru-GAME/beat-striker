@@ -1,11 +1,13 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using System.Collections;
+using Core.Utils;
+using Core.App.Presenters.Scene.Types;
+using Core.App.Types;
 
 public class Backbutton : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
-    public string previousSceneName = "StageselectScene";
+    public AppScene previousScene = AppScene.StageSelect;
     public AudioClip clickSound;
     
     [Header("Debounce Settings")]
@@ -40,13 +42,13 @@ public class Backbutton : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
         }
         else
         {
-            SceneManager.LoadScene(previousSceneName);
+            this.GetBus().Publish(new AppMessages.RequireTransition(previousScene));
         }
     }
     IEnumerator GoToSceneAfterSound()
     {
         yield return new WaitForSeconds(0.2f);
-        SceneManager.LoadScene(previousSceneName);
+        this.GetBus().Publish(new AppMessages.RequireTransition(previousScene));
     }
 
     public void OnPointerEnter(PointerEventData eventData) {
