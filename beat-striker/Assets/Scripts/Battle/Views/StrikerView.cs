@@ -44,33 +44,36 @@ namespace Core.Battle {
         }
 
             // 必殺技の時間差発射用メソッド
-            public void SpawnSpecialProjectiles(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval) {
+            public void SpawnSpecialProjectiles(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval, float heightOffset = 0f, float hueOffset = 0f) {
                 if (slashPrefab == null) {
                     Debug.LogWarning("StrikerView.SpawnSpecialProjectiles: slashPrefab not assigned.");
                     return;
                 }
-                StartCoroutine(SpawnProjectilesCoroutine(slashPrefab, count, spreadAngle, speed, damage, hitEffectPrefab, spawnInterval));
+                StartCoroutine(SpawnProjectilesCoroutine(slashPrefab, count, spreadAngle, speed, damage, hitEffectPrefab, spawnInterval, heightOffset, hueOffset));
             }
 
-            private IEnumerator SpawnProjectilesCoroutine(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval) {
+            private IEnumerator SpawnProjectilesCoroutine(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval, float heightOffset, float hueOffset) {
                 Transform spawnTransform = null;
                 try {
                     var c = GetColliden("sword");
                     if (c != null) spawnTransform = c.transform;
                 } catch { }
 
-                // 発射位置を設定（Inspectorで調整できるspecialSpawnHeight/specialSpawnForwardを使用）
-                Vector3 origin = transform.position + Vector3.up * specialSpawnHeight + transform.forward * specialSpawnForward;
+                // 発射位置を設定（Inspectorで調整できるspecialSpawnHeight/specialSpawnForwardを使用 + 高さオフセット）
+                float finalHeight = specialSpawnHeight + heightOffset;
+                Vector3 origin = transform.position + Vector3.up * finalHeight + transform.forward * specialSpawnForward;
                 if (spawnTransform != null) {
-                    origin = spawnTransform.position + Vector3.up * (specialSpawnHeight - 1.0f); // 剣の位置から少し上に
+                    origin = spawnTransform.position + Vector3.up * (finalHeight - 1.0f); // 剣の位置から少し上に
                 }
 
                 for (int i = 0; i < count; i++) {
+                    // キャラクターの向いている方向を中心に扇形で配置
+                    float characterYRotation = transform.eulerAngles.y;
                     float t = (count == 1) ? 0f : ((float)i / (count - 1) - 0.5f); // -0.5 .. 0.5
-                    float angle = t * spreadAngle;
+                    float angle = characterYRotation + (t * spreadAngle); // spreadAngleを前方中心の扇形として使用
 
-                    Quaternion rot = transform.rotation * Quaternion.Euler(0f, angle, 0f);
-                    Debug.Log($"Spawning projectile {i+1}/{count} at origin {origin}");
+                    Quaternion rot = Quaternion.Euler(0f, angle, 0f);
+                    Debug.Log($"Spawning projectile {i+1}/{count} at origin {origin}, spread angle: {t * spreadAngle}° (final: {angle}°)");
                     GameObject go = Instantiate(slashPrefab, origin, rot);
 
                     Debug.Log($"Instantiated projectile at {go.transform.position}");
@@ -81,6 +84,13 @@ namespace Core.Battle {
                         sp.hitEffectPrefab = hitEffectPrefab;
                         sp.owner = this;
                         Debug.Log($"Spawned slash projectile {i+1}/{count} with hitEffectPrefab: {(hitEffectPrefab ? hitEffectPrefab.name : "null")}");
+                    }
+                    
+                    // 色相オフセットをCrescentMeshGeneratorに設定
+                    var crescentGen = go.GetComponentInChildren<Core.Battle.CrescentMeshGenerator>();
+                    if (crescentGen != null) {
+                        crescentGen.SetHueOffset(hueOffset);
+                        Debug.Log($"Set hue offset {hueOffset} on projectile {i+1}/{count}");
                     }
 
                     yield return new WaitForSeconds(spawnInterval);

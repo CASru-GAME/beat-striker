@@ -10,18 +10,23 @@ namespace Core.Battle {
         public float lifeTime = 2f;
         public int damage = 10;
         public GameObject hitEffectPrefab;
+        [SerializeField] public float hitEffectScale = 2f; // ヒットエフェクトのサイズ倍率
 
         // owner to avoid hitting the spawner
         public StrikerView owner;
 
-        void Start()
+        protected virtual void Start()
         {
             Destroy(gameObject, lifeTime);
         }
 
-        void Update()
+        protected virtual void Update()
         {
-            transform.position += transform.right * (speed * Time.deltaTime);
+            // 地面に平行に移動（Y軸の移動なし、X-Z平面で移動）
+            Vector3 moveDirection = transform.forward;
+            moveDirection.y = 0f; // Y軸の成分を0にして地面に平行にする
+            moveDirection.Normalize();
+            transform.position += moveDirection * (speed * Time.deltaTime);
         }
 
         void OnTriggerEnter(Collider other)
@@ -49,7 +54,14 @@ namespace Core.Battle {
             {
                 Vector3 pos = other.ClosestPoint(transform.position);
                 GameObject e = Instantiate(hitEffectPrefab, pos, Quaternion.identity);
-                Debug.Log($"SlashProjectile: instantiated hit effect: {(e? e.name : "null")} at {pos}");
+                
+                // ヒットエフェクトのサイズを調整
+                if (hitEffectScale != 1f)
+                {
+                    e.transform.localScale = Vector3.one * hitEffectScale;
+                }
+                
+                Debug.Log($"SlashProjectile: instantiated hit effect: {(e? e.name : "null")} at {pos} with scale {hitEffectScale}");
 
                 // try root ParticleSystem first, then children
                 var ps = e.GetComponent<ParticleSystem>();
