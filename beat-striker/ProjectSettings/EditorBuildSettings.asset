@@ -18,8 +18,14 @@ EditorBuildSettings:
     path: Assets/Project/Stages/LiveStage/StageScene.unity
     guid: 02a0b05884d9b4d69bc96ece409e3d35
   - enabled: 1
+    path: Assets/Project/BackScene/BackScene.unity
+    guid: c607353831f60e74a9d11d502bc13034
+  - enabled: 1
     path: Assets/Project/ResultScene/ResultScene.unity
     guid: 3e31f0b1957084d3d9d266414cd6e5e1
+  - enabled: 1
+    path: Assets/Project/Stages/Streat/StreetScene.unity
+    guid: 51f80bcfa0dab4f42848935f57305bcd
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 3deb260f513e44decbbac50e4095346a, type: 3}
   m_UseUCBPForAssetBundles: 0

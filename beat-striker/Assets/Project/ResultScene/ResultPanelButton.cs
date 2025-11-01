@@ -17,10 +17,16 @@ public class ResultPanelButton : MonoBehaviour
     
     [Header("Sound Effects")]
     public AudioClip buttonClickSound; // 赤いImageを押した時の効果音
+    [Range(0f, 1f)]
+    public float buttonClickSoundVolume = 1f; // ボタンクリック音の音量
     public float buttonClickSoundDelay = 0f; // ボタンクリック音の遅延
     public AudioClip blackImageSound; // 黒いImageが動く時の効果音
+    [Range(0f, 1f)]
+    public float blackImageSoundVolume = 1f; // BlackImage音の音量
     public float blackImageSoundDelay = 0f; // BlackImage音の遅延（BlackImageアニメーション開始からの時間）
     public AudioClip lineSound; // 白い線が動く時の効果音
+    [Range(0f, 1f)]
+    public float lineSoundVolume = 1f; // Line音の音量
     public float lineSoundDelay = 0f; // Line音の遅延（Lineアニメーション開始からの時間）
     
     [Header("Animation Settings")]
@@ -45,6 +51,16 @@ public class ResultPanelButton : MonoBehaviour
     public float iconPopupDuration = 0.6f; // Iconポップアップ時間
     public float iconOvershoot = 1.1f; // Iconオーバーシュート倍率
     
+    [Header("GoBack Button Animation")]
+    public GameObject goBackSceneImage; // 白いImage（GoBackSceneImage）
+    public GameObject nextText; // Textオブジェクト（Next）
+    public float goBackDelay = 0.2f; // GoBackボタン出現の遅延（Icon開始からの時間）
+    public float goBackScaleDuration = 0.5f; // GoBackボタンスケール時間
+    public float nextTextDelay = 0.5f; // Nextテキスト出現の遅延（GoBackアニメーション完了からの時間）
+    public float nextTextFadeDuration = 0.8f; // NextテキストフェードIN/OUT時間（1サイクル）
+    public float nextTextMinAlpha = 0.3f; // Nextテキストの最小透明度
+    public float nextTextMaxAlpha = 1f; // Nextテキストの最大透明度
+    
     private Button button;
     private AudioSource audioSource;
     private CanvasGroup blackImageCanvasGroup;
@@ -65,6 +81,11 @@ public class ResultPanelButton : MonoBehaviour
     private Vector3 scoreUnderOriginalPos;
     private Vector3 comboAboveOriginalPos;
     private Vector3 comboUnderOriginalPos;
+    
+    // GoBackボタン関連
+    private RectTransform goBackRect;
+    private Button goBackButton;
+    private CanvasGroup nextTextCanvasGroup;
 
     void Start()
     {
@@ -132,6 +153,32 @@ public class ResultPanelButton : MonoBehaviour
         InitializeIconPanel(playerWinnerPanel, ref playerWinnerRect);
         InitializeIconPanel(playerLoserPanel, ref playerLoserRect);
         
+        // GoBackボタンの初期設定
+        if (goBackSceneImage != null)
+        {
+            goBackRect = goBackSceneImage.GetComponent<RectTransform>();
+            goBackButton = goBackSceneImage.GetComponent<Button>();
+            goBackRect.localScale = Vector3.zero;
+            goBackSceneImage.SetActive(false);
+            
+            // ボタンを無効化
+            if (goBackButton != null)
+            {
+                goBackButton.interactable = false;
+            }
+        }
+        
+        // Nextテキストの初期設定
+        if (nextText != null)
+        {
+            nextTextCanvasGroup = nextText.GetComponent<CanvasGroup>();
+            if (nextTextCanvasGroup == null)
+            {
+                nextTextCanvasGroup = nextText.AddComponent<CanvasGroup>();
+            }
+            nextTextCanvasGroup.alpha = 0f;
+        }
+        
         // ボタンクリックイベント
         if (button != null)
         {
@@ -180,11 +227,11 @@ public class ResultPanelButton : MonoBehaviour
         // ボタンクリック効果音（遅延付き）
         if (buttonClickSoundDelay > 0)
         {
-            LeanTween.delayedCall(buttonClickSoundDelay, () => PlaySound(buttonClickSound));
+            LeanTween.delayedCall(buttonClickSoundDelay, () => PlaySound(buttonClickSound, buttonClickSoundVolume));
         }
         else
         {
-            PlaySound(buttonClickSound);
+            PlaySound(buttonClickSound, buttonClickSoundVolume);
         }
         
         // BlackImageの拡大アニメーション
@@ -196,11 +243,11 @@ public class ResultPanelButton : MonoBehaviour
             float blackSoundTime = blackImageDelay + blackImageSoundDelay;
             if (blackSoundTime > 0)
             {
-                LeanTween.delayedCall(blackSoundTime, () => PlaySound(blackImageSound));
+                LeanTween.delayedCall(blackSoundTime, () => PlaySound(blackImageSound, blackImageSoundVolume));
             }
             else
             {
-                PlaySound(blackImageSound);
+                PlaySound(blackImageSound, blackImageSoundVolume);
             }
             
             blackImage.SetActive(true);
@@ -232,11 +279,11 @@ public class ResultPanelButton : MonoBehaviour
                 // Line効果音（Lineアニメーション開始時からの遅延）
                 if (lineSoundDelay > 0)
                 {
-                    LeanTween.delayedCall(lineSoundDelay, () => PlaySound(lineSound));
+                    LeanTween.delayedCall(lineSoundDelay, () => PlaySound(lineSound, lineSoundVolume));
                 }
                 else
                 {
-                    PlaySound(lineSound);
+                    PlaySound(lineSound, lineSoundVolume);
                 }
                 
                 lineObject.SetActive(true);
@@ -280,6 +327,10 @@ public class ResultPanelButton : MonoBehaviour
         // Iconアニメーション
         float iconStartTime = comboStartTime + iconDelay;
         AnimateIconPanels(iconStartTime);
+        
+        // GoBackボタンアニメーション
+        float goBackStartTime = iconStartTime + goBackDelay;
+        AnimateGoBackButton(goBackStartTime);
     }
     
     void AnimateScorePanels(float delay)
@@ -381,11 +432,59 @@ public class ResultPanelButton : MonoBehaviour
         }
     }
     
-    void PlaySound(AudioClip clip)
+    void AnimateGoBackButton(float delay)
+    {
+        if (goBackSceneImage != null && goBackRect != null)
+        {
+            LeanTween.delayedCall(delay, () =>
+            {
+                Debug.Log("GoBackSceneImage animation start");
+                goBackSceneImage.SetActive(true);
+                goBackRect.localScale = Vector3.zero;
+                
+                // スケールアニメーション（0 → 1）
+                LeanTween.scale(goBackSceneImage, Vector3.one, goBackScaleDuration)
+                    .setEase(LeanTweenType.easeOutBack)
+                    .setOnComplete(() =>
+                    {
+                        // アニメーション完了後、ボタンを有効化
+                        if (goBackButton != null)
+                        {
+                            goBackButton.interactable = true;
+                            Debug.Log("GoBackButton enabled");
+                        }
+                        
+                        // Nextテキストをフェードイン
+                        AnimateNextText();
+                    });
+            });
+        }
+    }
+    
+    void AnimateNextText()
+    {
+        if (nextText != null && nextTextCanvasGroup != null)
+        {
+            LeanTween.delayedCall(nextTextDelay, () =>
+            {
+                Debug.Log("NextText fade loop start");
+                
+                // 最小透明度からスタート
+                nextTextCanvasGroup.alpha = nextTextMinAlpha;
+                
+                // フェードイン→フェードアウトをループ
+                LeanTween.alphaCanvas(nextTextCanvasGroup, nextTextMaxAlpha, nextTextFadeDuration / 2f)
+                    .setEase(LeanTweenType.easeInOutQuad)
+                    .setLoopPingPong(); // ピンポンループ（往復）
+            });
+        }
+    }
+    
+    void PlaySound(AudioClip clip, float volume = 1f)
     {
         if (audioSource != null && clip != null)
         {
-            audioSource.PlayOneShot(clip);
+            audioSource.PlayOneShot(clip, volume);
         }
     }
     

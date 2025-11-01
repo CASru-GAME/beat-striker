@@ -1,0 +1,13 @@
+Font: Bangers  Style: Regular
+Point Size: 84   Padding: 0   SP/PD Ratio: 0.0%
+
+Characters included: 95/96
+Missing characters: 1
+Excluded characters: 0
+
+Characters missing from font file:
+----------------------------------------
+ID: 9	Hex: 9	Char [	]
+
+Characters excluded from packing:
+----------------------------------------

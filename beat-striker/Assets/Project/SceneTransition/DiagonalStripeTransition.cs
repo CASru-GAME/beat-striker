@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
+using Core.App.Presenters.Scene.Types;
+using Core.App.Types;
+using Core.Utils;
 
 public class DiagonalStripeTransition : MonoBehaviour
 {
@@ -66,6 +68,28 @@ public class DiagonalStripeTransition : MonoBehaviour
         }
         
         CreateStripes();
+    }
+
+    void Start()
+    {
+        // 遷移開始通知を購読
+        this.GetBus().Subscribe<AppMessages.OnTransitionAnimationStarted>(OnTransitionStartedMessage);
+    }
+
+    void OnDestroy()
+    {
+        // 購読解除
+        this.GetBus().Unsubscribe<AppMessages.OnTransitionAnimationStarted>(OnTransitionStartedMessage);
+    }
+
+    // App側から遷移開始通知を受け取る
+    void OnTransitionStartedMessage(AppMessages.OnTransitionAnimationStarted msg)
+    {
+        Debug.Log($"OnTransitionAnimationStarted received: {msg.scene}");
+        if (!isTransitioning)
+        {
+            StartCoroutine(PlayTransitionAnimation());
+        }
     }
     
     void CreateStripes()
@@ -143,33 +167,26 @@ public class DiagonalStripeTransition : MonoBehaviour
         Debug.Log($"Created {stripes.Count} stripes");
     }
     
-    public void LoadScene(string sceneName)
+    IEnumerator PlayTransitionAnimation()
     {
-        if (!isTransitioning)
-        {
-            StartCoroutine(TransitionToScene(sceneName));
-        }
-    }
-    
-    IEnumerator TransitionToScene(string sceneName)
-    {
-        Debug.Log($"TransitionToScene started: {sceneName}");
+        Debug.Log("PlayTransitionAnimation started");
         isTransitioning = true;
         
-        // フェードイン（ストライプを順次表示）
+        // フェードイン(ストライプを順次表示)
         yield return StartCoroutine(FadeIn());
         
-        Debug.Log($"Loading scene: {sceneName}");
-        // シーンロード
-        SceneManager.LoadScene(sceneName);
+        Debug.Log("Publishing RequireLoadScene");
+        // アニメーション完了後にロード許可を送る
+        this.GetBus().Publish(new AppMessages.RequireLoadScene());
         
         // 少し待機
         yield return new WaitForSeconds(0.1f);
         
-        // フェードアウト（ストライプを順次非表示）
+        // フェードアウト(ストライプを順次非表示)
         yield return StartCoroutine(FadeOut());
         
         isTransitioning = false;
+        Debug.Log("PlayTransitionAnimation complete");
     }
     
     IEnumerator FadeIn()
@@ -192,8 +209,7 @@ public class DiagonalStripeTransition : MonoBehaviour
             Vector2 endSize = new Vector2(stripe.sizeDelta.x, diagonal * 2f);
             
             stripe.sizeDelta = startSize;
-            
-            Debug.Log($"Stripe {i} expanding: {startSize.y} -> {endSize.y}");
+        
             
             // アニメーション（サイズを変更して伸びる）
             LeanTween.cancel(stripe.gameObject);
@@ -259,11 +275,5 @@ public class DiagonalStripeTransition : MonoBehaviour
         // 最後のストライプが完了するまで待機
         yield return new WaitForSeconds(transitionDuration);
         Debug.Log("FadeOut complete");
-    }
-    
-    // ボタンから呼び出す用
-    public void TransitionTo(string sceneName)
-    {
-        LoadScene(sceneName);
     }
 }

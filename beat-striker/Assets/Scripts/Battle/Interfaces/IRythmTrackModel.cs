@@ -1,5 +1,6 @@
 
 using Core.App.Types;
+using System.Collections.Generic;
 
 namespace Core.Battle {
     public interface IRythmTrackModelGetter {
@@ -9,7 +10,7 @@ namespace Core.Battle {
 
     public interface IRythmTrackModel: IRythmTrackModelGetter {
         BeatResult Beat(PlayerId playerId);
-        void AddTime(float time);
+        List<PlayerId> SetTime(float time);
         void Reset();
     }
 }

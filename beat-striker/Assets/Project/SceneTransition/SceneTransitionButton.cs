@@ -1,21 +1,18 @@
 using UnityEngine;
+using Core.App.Types;
+using Core.App.Presenters.Scene.Types;
+using Core.Utils;
 
 public class SceneTransitionButton : MonoBehaviour
 {
     [Header("Scene Settings")]
-    public string targetSceneName; // 遷移先のシーン名
+    public AppScene targetScene; // 遷移先のシーン
     
-    // Botanボタンから呼び出す
+    // Buttonボタンから呼び出す
     public void OnClick()
     {
-        if (DiagonalStripeTransition.Instance != null && !string.IsNullOrEmpty(targetSceneName))
-        {
-            Debug.Log($"Scene transition to: {targetSceneName}");
-            DiagonalStripeTransition.Instance.TransitionTo(targetSceneName);
-        }
-        else
-        {
-            Debug.LogWarning("DiagonalStripeTransition.Instance is null or targetSceneName is empty!");
-        }
+        Debug.Log($"Button clicked - Publishing RequireTransition to: {targetScene}");
+        // 次シーンへの遷移要求
+        this.GetBus().Publish(new AppMessages.RequireTransition(targetScene));
     }
 }

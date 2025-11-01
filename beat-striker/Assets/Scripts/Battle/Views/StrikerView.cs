@@ -114,6 +114,10 @@ namespace Core.Battle {
             rb.linearVelocity = dashSpeed * this.direction;
         }
 
+        public void Dash(Vector2 dir) {
+            rb.linearVelocity = dashSpeed * dir * new Vector2(Mathf.Sign(transform.forward.x), 1);
+        }
+
         public void Attack() {
             anim.SetTrigger(Anime.DoAttack.ToString());
         }
@@ -165,12 +169,6 @@ namespace Core.Battle {
             this.strikerHit.TakeDamage(status);
         }
 
-        private void OnCollisionEnter(Collision collision) {
-            var view = collision.gameObject.GetComponent<StrikerView>();
-            if (view == null) return;
-            view.TakeDamage(new HitStatus(CalcHit(new HitStatus(new HitPoint(10)))));
-        }
-
         private void OnCollisionStay(Collision collision) {
             foreach (var contact in collision.contacts) {
                 if (contact.normal.y > 0.5f) {
@@ -216,7 +214,7 @@ namespace Core.Battle {
         }
 
         public void OnDead() {
-            anim.SetTrigger(Anime.OnDead.ToString());
+            anim.SetBool(Anime.IsDead.ToString(), true);
         }
 
         public void OnIntro() {
@@ -225,6 +223,11 @@ namespace Core.Battle {
 
         public void OnVictory() {
             anim.SetTrigger(Anime.OnVictory.ToString());
+        }
+
+        public void OnReset() {
+            anim.SetTrigger(Anime.OnReset.ToString());
+            anim.SetBool(Anime.IsDead.ToString(), false);
         }
 
         public HitPoint CalcHit(HitStatus status) {
