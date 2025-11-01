@@ -2,6 +2,7 @@ namespace Core.Battle {
     public enum Anime {
         DoAttack,
         DoCharge,
+OnCharged,
         DoSpecial,
         DoGuard,
         IsGround,

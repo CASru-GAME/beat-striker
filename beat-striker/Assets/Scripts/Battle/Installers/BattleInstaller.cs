@@ -33,6 +33,7 @@ namespace Core.Battle {
         public List<IStrikerView> strikerViews = new();
         public IRythmTrackModelGetter rythmTrackModel;
         [SerializeField] bool DebugMode = false;
+        [SerializeField] float bpm = 110f;
 
         void Awake() {
             var app = GameObject.Find("App").GetComponent<AppFlowScope>();
@@ -45,7 +46,7 @@ namespace Core.Battle {
             var life = GetComponent<Life>();
             var bus = this.GetBus();
             var battleModel = new BattleModel(playerCount);
-            var rythmTrackModel = new RythmTrackModel(Enumerable.Range(1, 100).Select(x => (float)x).ToArray(),
+            var rythmTrackModel = new RythmTrackModel(Enumerable.Range(1, 1000).Select(x => x * 60f / bpm).ToArray(),
                 perfectWindow,
                 goodWindow,
                 timeOffset
