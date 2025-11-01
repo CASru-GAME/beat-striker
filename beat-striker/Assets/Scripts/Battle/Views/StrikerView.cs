@@ -65,7 +65,7 @@ namespace Core.Battle {
         }
 
         public void ChargeEnd() {
-            anim.SetTrigger(Anime.DoCharge.ToString());
+            anim.SetTrigger(Anime.OnCharged.ToString());
         }
 
         public void Special() {
