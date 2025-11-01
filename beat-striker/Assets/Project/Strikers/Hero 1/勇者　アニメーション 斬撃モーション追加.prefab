@@ -1506,6 +1506,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7572278347082041203}
+  - component: {fileID: 4702887466958848332}
+  - component: {fileID: 8588332088400185510}
   m_Layer: 0
   m_Name: weapon sword
   m_TagString: Untagged
@@ -1529,6 +1531,41 @@ Transform:
   - {fileID: 581749527163067122}
   m_Father: {fileID: 6686604327324090833}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &4702887466958848332
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7354614345598530351}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.0022920857
+  m_Height: 0.006625442
+  m_Direction: 1
+  m_Center: {x: -0.006052037, y: 0.006561068, z: 0.0054793}
+--- !u!114 &8588332088400185510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7354614345598530351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2dca13b43d4d46fa936ba5b74cc7908, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Core.Battle::Colliden
 --- !u!1 &7734460119559982039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1705,6 +1742,9 @@ MonoBehaviour:
   dashSpeed: 65
   walkSpeed: 5
   rotationSpeed: 1000
+  collidenRefs:
+  - key: sword
+    colliden: {fileID: 8588332088400185510}
 --- !u!114 &6782361523718265940
 MonoBehaviour:
   m_ObjectHideFlags: 0
