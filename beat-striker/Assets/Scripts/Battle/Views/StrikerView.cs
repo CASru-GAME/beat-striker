@@ -1,5 +1,6 @@
 
 
+using System;
 using Core.Battle;
 using UnityEngine;
 
@@ -18,9 +19,20 @@ namespace Core.Battle {
         private bool isGuard = false;
         private float? targetRotationAngle = null;
         private IStrikerHit strikerHit;
-        
+
         private Vector3 initialPosition;
         private Quaternion initialRotation;
+
+        [SerializeField] private CollidenRef[] collidenRefs;
+
+        public Colliden GetColliden(string key) {
+            foreach (var collidenRef in collidenRefs) {
+                if (collidenRef.key == key) {
+                    return collidenRef.colliden;
+                }
+            }
+            return null;
+        }
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
@@ -40,7 +52,7 @@ namespace Core.Battle {
         }
 
         public void Dash() {
-            if(this.direction == Vector2.zero) return;
+            if (this.direction == Vector2.zero) return;
             rb.linearVelocity = dashSpeed * this.direction;
         }
 
@@ -119,7 +131,7 @@ namespace Core.Battle {
                 targetRotationAngle = targetDirection.x > 0 ? 90f : -90f;
             }
             if (!targetRotationAngle.HasValue) return;
-            
+
             float currentAngle = transform.eulerAngles.y;
             float angleDifference = Mathf.DeltaAngle(currentAngle, targetRotationAngle.Value);
             float rotationThisFrame = rotationSpeed * Time.deltaTime;
@@ -163,7 +175,7 @@ namespace Core.Battle {
             }
             return new HitPoint(status.damage.value);
         }
-        
+
         public void SavePosition() {
             initialPosition = transform.position;
             initialRotation = transform.rotation;
@@ -172,14 +184,25 @@ namespace Core.Battle {
         public void ResetPosition() {
             transform.position = initialPosition;
             transform.rotation = initialRotation;
-            
+
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-            
+
             direction = Vector2.zero;
             targetRotationAngle = null;
-            
+
             isGuard = false;
         }
+
+        public Vector2 GetForwardDirection() {
+            Vector3 forward = transform.forward;
+            return new Vector2(forward.x, forward.z).normalized;
+        }
     }
+}
+
+[Serializable]
+public class CollidenRef {
+    public string key;
+    public Colliden colliden;
 }
