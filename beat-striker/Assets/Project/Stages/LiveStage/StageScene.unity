@@ -7652,7 +7652,7 @@ MonoBehaviour:
   strikerPrefabs:
   - strikerId:
       value: Hero
-    prefab: {fileID: 8351331065704730106, guid: 3b7581cee8f7a45ab87fbd3d933fbc9f, type: 3}
+    prefab: {fileID: 4214249293695766473, guid: fd2ccb3870c294339b9e81d85943f5e9, type: 3}
   excellentScore: 1000
   goodScore: 500
   specialGain: 10
