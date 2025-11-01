@@ -402,6 +402,20 @@ MonoBehaviour:
   damage: 8
   hitEffectPrefab: {fileID: 0}
   spawnNormalizedTime: 0.5
+  projectileWaves: 5
+  waveInterval: 0.2
+  waveHeights:
+  - 0
+  - 0.5
+  - 1
+  - 0.5
+  - 0
+  waveHueOffsets:
+  - 0
+  - 0.2
+  - 0.4
+  - 0.6
+  - 0.8
 --- !u!1101 &-2171949212510578035
 AnimatorStateTransition:
   m_ObjectHideFlags: 1
@@ -1185,7 +1199,7 @@ AnimatorStateMachine:
     m_Position: {x: 520, y: 350, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -4173319041577661556}
-    m_Position: {x: 270, y: -30, z: 0}
+    m_Position: {x: 260, y: -20, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 8282426871862088094}
     m_Position: {x: 220, y: 430, z: 0}
