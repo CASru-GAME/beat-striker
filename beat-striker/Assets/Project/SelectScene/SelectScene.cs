@@ -6,6 +6,7 @@ using Core.Utils;
 using UnityEngine;
 
 public class SelectScene : MonoBehaviour {
+    public bool[] isSelected = new bool[2];
     void Start() {
         this.GetBus().Subscribe<AppMessages.OnTransitionAnimationStarted>(HandleTrackSelection);
     }

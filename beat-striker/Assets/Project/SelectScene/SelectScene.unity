@@ -248,7 +248,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cadb8d6dc5a782f43a81a0a4e0aca1dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionButton
-  targetSceneName: BattleUI
+  targetScene: 0
 --- !u!82 &46347809
 AudioSource:
   m_ObjectHideFlags: 0
@@ -540,6 +540,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 647e239ecb78c1341a3725f63b4ab139, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Characterselectbutton
+  selectScene: {fileID: 1486525828}
   image: {fileID: 2136343323}
   image2: {fileID: 1961836058}
   text: {fileID: 882545516}
@@ -1069,7 +1070,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a98ebbea0705064d98ea95401a3e7a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Backbutton
-  previousSceneName: 
+  previousScene: 1
   clickSound: {fileID: 8300000, guid: fffdef6c6ce19b5409acca832a61af2e, type: 3}
   debounceTime: 0.1
 --- !u!114 &206647242
@@ -1122,7 +1123,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cadb8d6dc5a782f43a81a0a4e0aca1dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionButton
-  targetSceneName: StageselectScene1
+  targetScene: 0
 --- !u!1 &213814562
 GameObject:
   m_ObjectHideFlags: 0
@@ -3064,6 +3065,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 647e239ecb78c1341a3725f63b4ab139, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Characterselectbutton
+  selectScene: {fileID: 1486525828}
   image: {fileID: 500913799}
   image2: {fileID: 1520165192}
   text: {fileID: 808341881}
@@ -3289,6 +3291,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 647e239ecb78c1341a3725f63b4ab139, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Characterselectbutton
+  selectScene: {fileID: 1486525828}
   image: {fileID: 298844347}
   image2: {fileID: 1420517965}
   text: {fileID: 193546659}
@@ -3500,6 +3503,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f423d0e13be84fe3afba191f44115dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SelectScene
+  isSelected: 0000
 --- !u!1 &1520165190
 GameObject:
   m_ObjectHideFlags: 0
@@ -4335,6 +4339,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 647e239ecb78c1341a3725f63b4ab139, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Characterselectbutton
+  selectScene: {fileID: 1486525828}
   image: {fileID: 358701534}
   image2: {fileID: 772466484}
   text: {fileID: 1738114149}
@@ -4703,7 +4708,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cadb8d6dc5a782f43a81a0a4e0aca1dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionButton
-  targetSceneName: BattleUI
+  targetScene: 0
 --- !u!114 &1992377606
 MonoBehaviour:
   m_ObjectHideFlags: 0

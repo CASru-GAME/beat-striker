@@ -6,18 +6,21 @@ using Core.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.TextCore.Text;
+using Core.App.Presenters.Scene.States;
 
 [RequireComponent(typeof(Botan))]
 [RequireComponent(typeof(AudioSource))]
 public class Characterselectbutton : MonoBehaviour
 {
+    public SelectScene selectScene;
     Botan botan;
     public RawImage image;
     public RawImage image2; // 追加の画像
     public TextMeshProUGUI text; // 追加のテキスト
     public AudioClip hoverSound;
     AudioSource audioSource;
-    [SerializeField] string strikerId;
+    [SerializeField] string strikerId; // プレイヤーごとの選択状態
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
         botan = GetComponent<Botan>();
@@ -39,7 +42,13 @@ public class Characterselectbutton : MonoBehaviour
         botan.onClick += (e) => {
             this.GetBus().Publish(new AppMessages.SelectStriker(new PlayerId(e.EventData.pointerId), new StrikerId(strikerId)));
             Debug.Log($"Published SelectStriker for Player {e.EventData.pointerId} and Striker {strikerId}");
-            this.GetBus().Publish(new AppMessages.RequireTransition(AppScene.Battle));
+            if(!selectScene.isSelected[e.EventData.pointerId]) {
+                selectScene.isSelected[e.EventData.pointerId] = true;
+            }
+            // 両方のプレイヤーが選択したらバトルシーンへ遷移
+            if(selectScene.isSelected[0] && selectScene.isSelected[1]) {
+                Debug.Log("Both players have selected their strikers. Transitioning to Battle scene.");
+            }
         };
         botan.onHoverExit += (e) => {
             image.color = Color.gray;
