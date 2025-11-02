@@ -986,14 +986,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardSwieper
   cardPrefab: {fileID: 1564934000947877569, guid: 2ae12b781ca914d24adac9a5734b0bfb, type: 3}
   musics:
-  - description: "\u30B9\u30C8\u30EA\u30FC\u30C8\u7C21\u5358"
-    clip: {fileID: 8300000, guid: 1a6d13c29c2e67d48889ce196ed81579, type: 3}
+  - description: "\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA"
+    clip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
     trackId:
-      value: 
-  - description: "\u30B9\u30C8\u30EA\u30FC\u30C8\u96E3\u3057\u3044"
-    clip: {fileID: 8300000, guid: 1a6d13c29c2e67d48889ce196ed81579, type: 3}
-    trackId:
-      value: 
+      value: Azuno
   rightButton: {fileID: 1064152681}
   leftButton: {fileID: 2007859908}
   buttonClickSound: {fileID: 8300000, guid: f19bb0e40152d164aa3c01317f9d47f9, type: 3}
@@ -1777,6 +1773,7 @@ MonoBehaviour:
   targetAlpha: 0
   musicSelection: {fileID: 1700114825}
   musicSlideDistance: 500
+  stageId: Street
   blackObject: {fileID: 0}
   blackFadeDuration: 0.5
 --- !u!82 &1197106002
@@ -2700,6 +2697,7 @@ MonoBehaviour:
   targetAlpha: 0
   musicSelection: {fileID: 1700114825}
   musicSlideDistance: 500
+  stageId: Stage
   blackObject: {fileID: 0}
   blackFadeDuration: 0.5
 --- !u!114 &1703879381
@@ -3291,7 +3289,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a98ebbea0705064d98ea95401a3e7a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Backbutton
-  previousSceneName: 
+  previousScene: 0
   clickSound: {fileID: 8300000, guid: fffdef6c6ce19b5409acca832a61af2e, type: 3}
   debounceTime: 0.1
 --- !u!114 &1854520120
@@ -3371,7 +3369,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cadb8d6dc5a782f43a81a0a4e0aca1dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionButton
-  targetSceneName: TitleScene
+  targetScene: 0
 --- !u!1001 &1860228364
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3380,6 +3378,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3559071986890918602, guid: 9c507950677e942f89f05cea204c4621, type: 3}
+      propertyPath: firstScene
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3992655297025828580, guid: 9c507950677e942f89f05cea204c4621, type: 3}
       propertyPath: m_Name
       value: App

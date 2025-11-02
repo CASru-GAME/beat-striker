@@ -12,11 +12,12 @@ public class AttackSMB : StateMachineBehaviour {
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {
         strikerView = animator.GetComponent<StrikerView>();
         colliden = strikerView.GetColliden(collidenKey);
-        colliden.OnEnterCollision += OnEnterCollision;
+        colliden.OnEnterTrigger += OnEnterTrigger;
     }
 
-    public void OnEnterCollision(Collision collision) {
-        var view = collision.gameObject.GetComponent<StrikerView>();
+    public void OnEnterTrigger(Collider collider) {
+        Debug.Log($"{strikerView.gameObject.name} collided with {collider.gameObject.name}");
+        var view = collider.gameObject.GetComponent<StrikerView>();
         if (view == null) return;
         view.TakeDamage(new HitStatus(new HitPoint(damage)));
     }
@@ -26,6 +27,6 @@ public class AttackSMB : StateMachineBehaviour {
     }
 
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {
-        colliden.OnEnterCollision -= OnEnterCollision;
+        colliden.OnEnterTrigger -= OnEnterTrigger;
     }
 }

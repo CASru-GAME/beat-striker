@@ -359,6 +359,7 @@ GameObject:
   - component: {fileID: 401508076367048804}
   - component: {fileID: 4229114843288827611}
   - component: {fileID: 9113717017793622758}
+  - component: {fileID: 7069878617302979566}
   m_Layer: 5
   m_Name: ResCanvas
   m_TagString: Untagged
@@ -449,6 +450,20 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &7069878617302979566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 681175283561000685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46f30b825dc934c9089314b1b9089b5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ResultScene
+  player1PortraitImage: {fileID: 6973277300313211966}
+  player2PortraitImage: {fileID: 7270343188546675031}
 --- !u!1 &825668708631949300
 GameObject:
   m_ObjectHideFlags: 0
@@ -1413,6 +1428,8 @@ MonoBehaviour:
   nextTextFadeDuration: 1.5
   nextTextMinAlpha: 0
   nextTextMaxAlpha: 1
+  autoStart: 1
+  autoStartDelay: 0.5
 --- !u!114 &6000820525367771875
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4443,7 +4460,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3433510754037486185
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10683,7 +10700,7 @@ GameObject:
   - component: {fileID: 6108739787703381131}
   - component: {fileID: 3980639406450991731}
   m_Layer: 5
-  m_Name: ResultPanel
+  m_Name: ResultPane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

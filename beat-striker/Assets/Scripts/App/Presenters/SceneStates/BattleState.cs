@@ -23,6 +23,7 @@ namespace Core.App.Presenters.Scene.States {
         public void Enter() {
             context.bus.Subscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
             context.cursorRegistry.SetCursorsActive(false);
+            context.bus.Publish(new AppMessages.StopBGM()); 
         }
 
         public void Exit() {

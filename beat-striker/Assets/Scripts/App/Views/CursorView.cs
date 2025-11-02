@@ -15,7 +15,8 @@ using UnityEngine.UI;
 [RequireComponent(typeof(RectTransform))]
 public class CursorView : MonoBehaviour, ICursorView {
     [SerializeField] private TextMeshProUGUI text;
-    [SerializeField] private Color[] playerColors;
+    [SerializeField] private Image spriteRenderer;
+    [SerializeField] private Sprite[] playerColors;
     [SerializeField] private float moveSpeed = 5000f;
     [SerializeField] private float accelerationFactor = 0.3f;
     private float movingTime = 0f;
@@ -35,7 +36,7 @@ public class CursorView : MonoBehaviour, ICursorView {
         this.playerId = playerId;
         text.text = $"P{playerId.value + 1}";
         if (playerId.value >= 0 && playerId.value < playerColors.Length) {
-            text.color = playerColors[playerId.value];
+            spriteRenderer.sprite = playerColors[playerId.value];
         }
     }
 

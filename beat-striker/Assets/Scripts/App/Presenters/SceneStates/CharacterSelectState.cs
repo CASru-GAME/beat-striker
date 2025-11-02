@@ -36,6 +36,7 @@ namespace Core.App.Presenters.Scene.States {
             context.cursorRegistry.SetCursorsActive(true);
             context.bus.Subscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
             context.bus.Subscribe<AppMessages.SelectStriker>(OnStrikerSelected);
+            context.bus.Publish(new AppMessages.PlayBGM(BGMType.MainBGM));
         }
 
         public void Exit() {

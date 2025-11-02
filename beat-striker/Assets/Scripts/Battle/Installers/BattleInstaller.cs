@@ -43,6 +43,7 @@ namespace Core.Battle {
         public IRythmTrackModelGetter rythmTrackModel;
         [SerializeField] bool DebugMode = false;
         [SerializeField] float bpm = 110f;
+        private BattleFlowPresenter mutator;
 
         void Awake() {
             var app = GameObject.Find("App").GetComponent<AppFlowScope>();
@@ -66,7 +67,7 @@ namespace Core.Battle {
                 timeOffset
             );
             this.rythmTrackModel = rythmTrackModel;
-            var mutator = new BattleFlowPresenter(bus, life, battleModel, rythmTrackModel, this, view, trackId);
+            this.mutator = new BattleFlowPresenter(bus, life, battleModel, rythmTrackModel, this, view, trackId);
             view.Construct(audioSource, beatAudioSource, trackAudio.audioClip, beatClip);
             view.SetRythmTrackModel(rythmTrackModel);
 
@@ -90,6 +91,12 @@ namespace Core.Battle {
 
         }
 
+        void Update() {
+            if (mutator != null) {
+                mutator.OnUpdate(Time.deltaTime);
+            }
+        }
+
         public void ResetBattle() {
             if (rythmTrackModel is IRythmTrackModel rythmTrackModelMutable) {
                 rythmTrackModelMutable.Reset();
@@ -103,6 +110,7 @@ namespace Core.Battle {
 
             foreach (var strikerView in strikerViews) {
                 strikerView.ResetPosition();
+                strikerView.OnReset();
             }
         }
 

@@ -1,16 +1,23 @@
 using System;
+using Core.App.Presenters.Scene.Types;
+using Core.App.Installers;
+using Core.App.Types;
 using Core.Battle;
+using Core.GamePad.Types;
 using Core.Utils;
 using TMPro;
 using UnityEngine;
-
-[RequireComponent(typeof(Canvas))]
+using UnityEngine.UI;
 public class BattleCanvas : MonoBehaviour {
     [SerializeField] TextMeshProUGUI BattleStartText;
     [SerializeField] TextMeshProUGUI BattleFinishText;
     [SerializeField] TextMeshProUGUI RoundNumberText; // 新しいテキスト（Round 1など）
     [SerializeField] CanvasGroup RoundNumberCanvasGroup; // RoundNumberTextのCanvasGroup
     [SerializeField] CanvasGroup fadePanel; // 暗転用のパネル
+
+    [Header("Striker Portraits")]
+    [SerializeField] Image player1PortraitImage; // Player1の顔写真を表示するImage
+    [SerializeField] Image player2PortraitImage; // Player2の顔写真を表示するImage
 
     [Header("Sound Effects")]
     [SerializeField] AudioClip roundSound; // Round表示時の効果音
@@ -32,6 +39,10 @@ public class BattleCanvas : MonoBehaviour {
     private IBus bus;
 
     [SerializeField] GameObject resultPrefab;
+    [SerializeField] Canvas menuCanvasPrefab;
+    
+    private bool isResultShowing = false;
+    private Canvas menuCanvasInstance = null;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake() {
@@ -47,10 +58,14 @@ public class BattleCanvas : MonoBehaviour {
             fadePanel.gameObject.SetActive(false);
         }
 
+        // ストライカーの顔写真を読み込む
+        LoadStrikerPortraits();
+
         bus.Subscribe<BattleMessages.OnOutroStarted>(OnOutroStarted);
         bus.Subscribe<BattleMessages.OnBattleFinished>(OnBattleFinished);
         bus.Subscribe<BattleMessages.OnRoundStarted>(OnRoundStarted);
         bus.Subscribe<BattleMessages.OnResultStarted>(OnResultStarted);
+        bus.Subscribe<BattleMessages.RequestShowMenu>(OnRequestShowMenu);
     }
 
     void OnDestroy() {
@@ -58,6 +73,7 @@ public class BattleCanvas : MonoBehaviour {
         bus.Unsubscribe<BattleMessages.OnBattleFinished>(OnBattleFinished);
         bus.Unsubscribe<BattleMessages.OnRoundStarted>(OnRoundStarted);
         bus.Unsubscribe<BattleMessages.OnResultStarted>(OnResultStarted);
+        bus.Unsubscribe<BattleMessages.RequestShowMenu>(OnRequestShowMenu);
     }
 
     // Update is called once per frame
@@ -206,7 +222,45 @@ public class BattleCanvas : MonoBehaviour {
 
     void OnResultStarted(BattleMessages.OnResultStarted msg) {
         Debug.Log("Result Started");
-        Instantiate(resultPrefab);
+        
+        // Winテキストを消す（LeanTweenもキャンセル）
+        if (BattleFinishText != null) {
+            LeanTween.cancel(BattleFinishText.gameObject);
+            BattleFinishText.gameObject.SetActive(false);
+            Debug.Log("Win text hidden");
+        }
+        
+        GameObject resultInstance = Instantiate(resultPrefab);
+        if (resultInstance != null) {
+            resultInstance.SetActive(true);
+            
+            // Canvas の Sort Order を高く設定して、他のUIより前面に表示
+            Canvas resultCanvas = resultInstance.GetComponent<Canvas>();
+            if (resultCanvas != null) {
+                resultCanvas.sortingOrder = 100;
+                Debug.Log($"Result Canvas sortingOrder set to 100");
+            }
+            
+            // すべての子オブジェクトを再帰的にアクティブにする
+            SetActiveRecursively(resultInstance.transform, true);
+            
+            Debug.Log($"Result prefab instantiated and activated: {resultInstance.name}");
+        } else {
+            Debug.LogError("Failed to instantiate result prefab!");
+        }
+        
+        // リザルト表示中フラグを立てて、Aボタンを購読
+        isResultShowing = true;
+        bus.Subscribe<GamePadMessages.Inputed>(OnGamePadInputedForMenu);
+    }
+    
+    void SetActiveRecursively(Transform parent, bool active) {
+        foreach (Transform child in parent) {
+            child.gameObject.SetActive(active);
+            Debug.Log($"Setting {child.name} active: {active}");
+            // 再帰的に子の子もアクティブにする
+            SetActiveRecursively(child, active);
+        }
     }
 
     void PlaySound(AudioClip clip) {
@@ -219,6 +273,94 @@ public class BattleCanvas : MonoBehaviour {
         audioSource.Play();
 
         Destroy(soundObject, clip.length);
+    }
+
+    void OnRequestShowMenu(BattleMessages.RequestShowMenu msg) {
+        Debug.Log("Received RequestShowMenu message");
+        ShowMenuCanvas();
+    }
+
+    void OnGamePadInputedForMenu(GamePadMessages.Inputed msg) {
+        // リザルト表示中でない、またはメニューが既に表示されている場合は無視
+        if (!isResultShowing || menuCanvasInstance != null) return;
+        
+        // Aボタン（通常はSouthボタン）が押された場合
+        if (msg.button == GamePadButton.South && msg.action == GamePadAction.Down) {
+            ShowMenuCanvas();
+        }
+    }
+
+    void ShowMenuCanvas() {
+        // 既にメニューが表示されている場合は何もしない
+        if (menuCanvasInstance != null) {
+            Debug.Log("Menu Canvas already displayed");
+            return;
+        }
+        
+        if (menuCanvasPrefab == null) {
+            Debug.LogWarning("MenuCanvasPrefab is not assigned!");
+            return;
+        }
+
+        Debug.Log("Showing Menu Canvas");
+        
+        // メニューCanvasをインスタンス化
+        menuCanvasInstance = Instantiate(menuCanvasPrefab);
+        if (menuCanvasInstance != null) {
+            menuCanvasInstance.gameObject.SetActive(true);
+            
+            // Sort Orderを最も高く設定（リザルトより上）
+            menuCanvasInstance.sortingOrder = 300;
+            
+            Debug.Log($"Menu Canvas instantiated with sortingOrder: {menuCanvasInstance.sortingOrder}");
+            
+            // カーソルをメニューの上に移動
+            bus.Publish(new AppMessages.SetCursorSortingOrder(400));
+            Debug.Log("Cursor sortingOrder set to 400");
+        }
+    }
+
+    void LoadStrikerPortraits()
+    {
+        // AppFlowScopeからストライカー情報を取得
+        var appFlowScope = AppFlowScope.GetInstance();
+        if (appFlowScope == null)
+        {
+            Debug.LogError("AppFlowScope instance not found!");
+            return;
+        }
+
+        // BattleSettingModelからストライカーIDを取得
+        var battleSettingModel = appFlowScope.battleSettingModel;
+        if (battleSettingModel == null)
+        {
+            Debug.LogError("BattleSettingModel not found!");
+            return;
+        }
+
+        // Player1のストライカーIDを取得して顔写真を設定
+        var player1StrikerId = battleSettingModel.GetStriker(new PlayerId(0));
+        if (player1PortraitImage != null)
+        {
+            var portrait = appFlowScope.GetStrikerPortrait(player1StrikerId);
+            if (portrait != null)
+            {
+                player1PortraitImage.sprite = portrait;
+                Debug.Log($"Player1 portrait set for StrikerId: {player1StrikerId}");
+            }
+        }
+
+        // Player2のストライカーIDを取得して顔写真を設定
+        var player2StrikerId = battleSettingModel.GetStriker(new PlayerId(1));
+        if (player2PortraitImage != null)
+        {
+            var portrait = appFlowScope.GetStrikerPortrait(player2StrikerId);
+            if (portrait != null)
+            {
+                player2PortraitImage.sprite = portrait;
+                Debug.Log($"Player2 portrait set for StrikerId: {player2StrikerId}");
+            }
+        }
     }
 
 }

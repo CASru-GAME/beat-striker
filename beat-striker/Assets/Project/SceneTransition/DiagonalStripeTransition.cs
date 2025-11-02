@@ -209,8 +209,7 @@ public class DiagonalStripeTransition : MonoBehaviour
             Vector2 endSize = new Vector2(stripe.sizeDelta.x, diagonal * 2f);
             
             stripe.sizeDelta = startSize;
-            
-            Debug.Log($"Stripe {i} expanding: {startSize.y} -> {endSize.y}");
+        
             
             // アニメーション（サイズを変更して伸びる）
             LeanTween.cancel(stripe.gameObject);

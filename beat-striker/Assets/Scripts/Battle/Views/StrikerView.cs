@@ -1,6 +1,7 @@
 
 
 using System;
+using System.Collections;
 using Core.Battle;
 using UnityEngine;
 
@@ -23,7 +24,10 @@ namespace Core.Battle {
         private Vector3 initialPosition;
         private Quaternion initialRotation;
 
-        [SerializeField] private CollidenRef[] collidenRefs;
+    [SerializeField] private CollidenRef[] collidenRefs;
+    [Header("Special spawn settings")]
+    [SerializeField] private float specialSpawnHeight = 2.0f;
+    [SerializeField] private float specialSpawnForward = 0.8f;
 
         public Colliden GetColliden(string key) {
             foreach (var collidenRef in collidenRefs) {
@@ -38,6 +42,60 @@ namespace Core.Battle {
             rb = GetComponent<Rigidbody>();
             anim = GetComponent<Animator>();
         }
+
+            // 必殺技の時間差発射用メソッド
+            public void SpawnSpecialProjectiles(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval, float heightOffset = 0f, float hueOffset = 0f) {
+                if (slashPrefab == null) {
+                    Debug.LogWarning("StrikerView.SpawnSpecialProjectiles: slashPrefab not assigned.");
+                    return;
+                }
+                StartCoroutine(SpawnProjectilesCoroutine(slashPrefab, count, spreadAngle, speed, damage, hitEffectPrefab, spawnInterval, heightOffset, hueOffset));
+            }
+
+            private IEnumerator SpawnProjectilesCoroutine(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval, float heightOffset, float hueOffset) {
+                Transform spawnTransform = null;
+                try {
+                    var c = GetColliden("sword");
+                    if (c != null) spawnTransform = c.transform;
+                } catch { }
+
+                // 発射位置を設定（Inspectorで調整できるspecialSpawnHeight/specialSpawnForwardを使用 + 高さオフセット）
+                float finalHeight = specialSpawnHeight + heightOffset;
+                Vector3 origin = transform.position + Vector3.up * finalHeight + transform.forward * specialSpawnForward;
+                if (spawnTransform != null) {
+                    origin = spawnTransform.position + Vector3.up * (finalHeight - 1.0f); // 剣の位置から少し上に
+                }
+
+                for (int i = 0; i < count; i++) {
+                    // キャラクターの向いている方向を中心に扇形で配置
+                    float characterYRotation = transform.eulerAngles.y;
+                    float t = (count == 1) ? 0f : ((float)i / (count - 1) - 0.5f); // -0.5 .. 0.5
+                    float angle = characterYRotation + (t * spreadAngle); // spreadAngleを前方中心の扇形として使用
+
+                    Quaternion rot = Quaternion.Euler(0f, angle, 0f);
+                    Debug.Log($"Spawning projectile {i+1}/{count} at origin {origin}, spread angle: {t * spreadAngle}° (final: {angle}°)");
+                    GameObject go = Instantiate(slashPrefab, origin, rot);
+
+                    Debug.Log($"Instantiated projectile at {go.transform.position}");
+                    var sp = go.GetComponent<SlashProjectile>();
+                    if (sp != null) {
+                        sp.speed = speed;
+                        sp.damage = damage;
+                        sp.hitEffectPrefab = hitEffectPrefab;
+                        sp.owner = this;
+                        Debug.Log($"Spawned slash projectile {i+1}/{count} with hitEffectPrefab: {(hitEffectPrefab ? hitEffectPrefab.name : "null")}");
+                    }
+                    
+                    // 色相オフセットをCrescentMeshGeneratorに設定
+                    var crescentGen = go.GetComponentInChildren<Core.Battle.CrescentMeshGenerator>();
+                    if (crescentGen != null) {
+                        crescentGen.SetHueOffset(hueOffset);
+                        Debug.Log($"Set hue offset {hueOffset} on projectile {i+1}/{count}");
+                    }
+
+                    yield return new WaitForSeconds(spawnInterval);
+                }
+            }
 
         public void Construct(IStrikerHit strikerHit) {
             this.strikerHit = strikerHit;
@@ -54,6 +112,10 @@ namespace Core.Battle {
         public void Dash() {
             if (this.direction == Vector2.zero) return;
             rb.linearVelocity = dashSpeed * this.direction;
+        }
+
+        public void Dash(Vector2 dir) {
+            rb.linearVelocity = dashSpeed * dir * new Vector2(Mathf.Sign(transform.forward.x), 1);
         }
 
         public void Attack() {
@@ -107,12 +169,6 @@ namespace Core.Battle {
             this.strikerHit.TakeDamage(status);
         }
 
-        private void OnCollisionEnter(Collision collision) {
-            var view = collision.gameObject.GetComponent<StrikerView>();
-            if (view == null) return;
-            view.TakeDamage(new HitStatus(CalcHit(new HitStatus(new HitPoint(10)))));
-        }
-
         private void OnCollisionStay(Collision collision) {
             foreach (var contact in collision.contacts) {
                 if (contact.normal.y > 0.5f) {
@@ -158,7 +214,7 @@ namespace Core.Battle {
         }
 
         public void OnDead() {
-            anim.SetTrigger(Anime.OnDead.ToString());
+            anim.SetBool(Anime.IsDead.ToString(), true);
         }
 
         public void OnIntro() {
@@ -167,6 +223,11 @@ namespace Core.Battle {
 
         public void OnVictory() {
             anim.SetTrigger(Anime.OnVictory.ToString());
+        }
+
+        public void OnReset() {
+            anim.SetTrigger(Anime.OnReset.ToString());
+            anim.SetBool(Anime.IsDead.ToString(), false);
         }
 
         public HitPoint CalcHit(HitStatus status) {
