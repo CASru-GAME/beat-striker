@@ -93,6 +93,22 @@ namespace Core.App.Presenters.Scene.Types {
 
         public class StopBGM { }
 
+        public class SetCursorsActive {
+            public readonly bool active;
+
+            public SetCursorsActive(bool active) {
+                this.active = active;
+            }
+        }
+
+        public class SetCursorSortingOrder {
+            public readonly int sortingOrder;
+
+            public SetCursorSortingOrder(int sortingOrder) {
+                this.sortingOrder = sortingOrder;
+            }
+        }
+
     }
 
 

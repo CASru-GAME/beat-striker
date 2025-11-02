@@ -1,3 +1,4 @@
+using Core.App.Presenters.Scene.Types;
 using Core.Utils;
 using UnityEngine;
 
@@ -15,6 +16,15 @@ namespace Core.Battle {
 
         public void Enter() {
             Debug.Log("Entering Result State");
+            
+            // Core.Appのカーソルを有効化
+            bus.Publish(new AppMessages.SetCursorsActive(true));
+            
+            // カーソルのソート順序をリザルトパネルより上に設定
+            bus.Publish(new AppMessages.SetCursorSortingOrder(200));
+            
+            Debug.Log("Cursor enabled for Result State");
+            
             bus.Publish(new BattleMessages.OnResultStarted(battleModel));
             // Logic for entering the result state
         }

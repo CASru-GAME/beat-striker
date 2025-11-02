@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Core.App.Models;
 using Core.App.Presenters.Scene;
+using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
 using Core.App.Views;
 using Core.App.Views.Scene;
@@ -17,6 +18,12 @@ namespace Core.App.Installers {
         public string sceneName;
     }
 
+    [System.Serializable]
+    public struct StrikerPortraitEntry {
+        public StrikerId strikerId;
+        public Sprite portrait;
+    }
+
     [RequireComponent(typeof(SceneView))]
     [RequireComponent(typeof(Life))]
     [RequireComponent(typeof(BGMView))]
@@ -30,6 +37,7 @@ namespace Core.App.Installers {
         [SerializeField] StrikerId defaultStrikerId;
         [SerializeField] StageId defaultStageId;
         [SerializeField] TrackId defaultTrackId;
+        [SerializeField] public StrikerPortraitEntry[] strikerPortraits; // ストライカーIDと顔写真の一覧
         Life life;
 
         ICursorRegistry cursorRegistry;
@@ -68,7 +76,11 @@ namespace Core.App.Installers {
             
             // Lifeを有効化してからPresenterを作成（これによりBGMManagerのSubscribeが先に実行される）
             life.SetEnable(true);
-            var presenter = new SceneStatePresenter(initialScene, sceneView, bus, battleSettingModel, this, cursorRegistry, life);
+            
+            // カーソルソート順序変更のメッセージをサブスクライブ
+            bus.Subscribe<AppMessages.SetCursorSortingOrder>(OnSetCursorSortingOrder);
+            
+            var statePresenter = new SceneStatePresenter(initialScene, sceneView, bus, battleSettingModel, this, cursorRegistry, life);
 
         }
         
@@ -102,6 +114,29 @@ namespace Core.App.Installers {
         public void CreateCursor(PlayerId id) {
             var cursor = Instantiate(cursorPrefab,canvas.transform);
             cursor.Construct(id, playerRegistry);
+        }
+
+        private void OnSetCursorSortingOrder(AppMessages.SetCursorSortingOrder message) {
+            if (canvas != null) {
+                canvas.sortingOrder = message.sortingOrder;
+                Debug.Log($"Cursor Canvas sortingOrder set to {message.sortingOrder}");
+            }
+        }
+
+        // ストライカーIDから顔写真を取得するメソッド
+        public Sprite GetStrikerPortrait(StrikerId strikerId) {
+            foreach (var entry in strikerPortraits) {
+                if (entry.strikerId == strikerId) {
+                    return entry.portrait;
+                }
+            }
+            Debug.LogWarning($"Portrait not found for StrikerId: {strikerId}");
+            return null;
+        }
+
+        // シングルトンインスタンスを取得
+        public static AppFlowScope GetInstance() {
+            return instance;
         }
     }
 }

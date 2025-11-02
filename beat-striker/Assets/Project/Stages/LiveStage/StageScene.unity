@@ -520,7 +520,7 @@ Transform:
   m_GameObject: {fileID: 185632236}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 3.81, y: 0, z: 11.48}
+  m_LocalPosition: {x: 4.02, y: 3.08, z: 11.48}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2361,7 +2361,7 @@ Transform:
   m_GameObject: {fileID: 1016674323}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -2.76, y: 0, z: 11.97}
+  m_LocalPosition: {x: -2.34, y: 2.92, z: 11.97}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6619,6 +6619,10 @@ PrefabInstance:
       propertyPath: defaultTrackId.value
       value: Azuno
       objectReference: {fileID: 0}
+    - target: {fileID: 3559071986890918602, guid: 9c507950677e942f89f05cea204c4621, type: 3}
+      propertyPath: defaultStrikerId.value
+      value: Worrier
+      objectReference: {fileID: 0}
     - target: {fileID: 3992655297025828580, guid: 9c507950677e942f89f05cea204c4621, type: 3}
       propertyPath: m_Name
       value: App
@@ -6728,6 +6732,10 @@ PrefabInstance:
       propertyPath: playerPosition
       value: 
       objectReference: {fileID: 1382093129}
+    - target: {fileID: 6991520288329421104, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 10.124634
+      objectReference: {fileID: 0}
     - target: {fileID: 8778802113235280856, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
       propertyPath: 'playerTransforms.Array.data[0]'
       value: 
@@ -6736,6 +6744,10 @@ PrefabInstance:
       propertyPath: 'playerTransforms.Array.data[1]'
       value: 
       objectReference: {fileID: 932946622}
+    - target: {fileID: 8778802113235280856, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: strikerPrefabs.Array.data[2].strikerId.value
+      value: Worrier
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

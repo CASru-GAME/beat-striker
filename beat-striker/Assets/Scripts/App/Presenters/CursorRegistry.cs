@@ -24,11 +24,13 @@ public class CursorRegistry : ICursorRegistry {
     private void OnEnable() {
         bus.Subscribe<AppMessages.PlayerJoined>(OnPlayerJoined);
         bus.Subscribe<AppMessages.PlayerLeft>(OnPlayerLeft);
+        bus.Subscribe<AppMessages.SetCursorsActive>(OnSetCursorsActive);
     }
 
     private void OnDisable() {
         bus.Unsubscribe<AppMessages.PlayerJoined>(OnPlayerJoined);
         bus.Unsubscribe<AppMessages.PlayerLeft>(OnPlayerLeft);
+        bus.Unsubscribe<AppMessages.SetCursorsActive>(OnSetCursorsActive);
     }
 
     private void OnPlayerJoined(AppMessages.PlayerJoined message) {
@@ -38,6 +40,11 @@ public class CursorRegistry : ICursorRegistry {
 
     private void OnPlayerLeft(AppMessages.PlayerLeft message) {
         UpdateCursors();
+    }
+
+    private void OnSetCursorsActive(AppMessages.SetCursorsActive message) {
+        Debug.Log($"CursorRegistry OnSetCursorsActive: {message.active}");
+        SetCursorsActive(message.active);
     }
 
 
