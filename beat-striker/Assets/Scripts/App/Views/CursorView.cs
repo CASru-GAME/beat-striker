@@ -103,6 +103,7 @@ public class CursorView : MonoBehaviour, ICursorView {
         //lastHoveredは更新しないこと
 
         if (currentHovered) {
+            Debug.Log("Cursor click executed");
             ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerDownHandler);
         }
     }

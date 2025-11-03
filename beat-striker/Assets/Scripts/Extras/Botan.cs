@@ -15,6 +15,7 @@ namespace Core {
         private int hoverCount = 0;
         [Header("クリック音(指定しなくて良い)")]
         public AudioClip clickSound;
+        public Action<BotanEventData> onExit;
 
         public void OnPointerEnter(PointerEventData eventData) {
             ++hoverCount;
@@ -33,6 +34,7 @@ namespace Core {
             onClickEvent?.Invoke();
             onClick?.Invoke(new BotanEventData(eventData));
             if (clickSound != null) {
+                Debug.Log("Click sound played");
                 AudioSource.PlayClipAtPoint(clickSound, Camera.main.transform.position);
             }
         }
