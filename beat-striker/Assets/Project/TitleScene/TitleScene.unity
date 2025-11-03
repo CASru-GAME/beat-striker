@@ -933,11 +933,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1075654889}
   - component: {fileID: 1075654893}
-  - component: {fileID: 1075654892}
   - component: {fileID: 1075654891}
-  - component: {fileID: 1075654895}
   - component: {fileID: 1075654890}
-  - component: {fileID: 1075654894}
   m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
@@ -960,10 +957,10 @@ RectTransform:
   - {fileID: 1466725708}
   m_Father: {fileID: 984328592}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1.7809, y: -154}
-  m_SizeDelta: {x: 160, y: 30}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1075654890
 MonoBehaviour:
@@ -979,31 +976,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Core.Extras::Core.Botan
   onClickEvent:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1075654892}
-        m_TargetAssemblyTypeName: SceneTransitionButton, Assembly-CSharp
-        m_MethodName: OnClick
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1075654895}
-        m_TargetAssemblyTypeName: ButtonClickSound, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
+  clickSound: {fileID: 8300000, guid: b180fa53e62476549938b0109856ae5b, type: 3}
 --- !u!114 &1075654891
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1034,19 +1008,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &1075654892
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1075654888}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cadb8d6dc5a782f43a81a0a4e0aca1dd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionButton
-  targetScene: 1
 --- !u!222 &1075654893
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1055,121 +1016,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1075654888}
   m_CullTransparentMesh: 1
---- !u!82 &1075654894
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1075654888}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
-  m_PlayOnAwake: 1
-  m_Volume: 1
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 500
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
---- !u!114 &1075654895
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1075654888}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d499ed4e340f0f64eb7aefebc0256ec7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonClickSound
-  clickSound: {fileID: 8300000, guid: b180fa53e62476549938b0109856ae5b, type: 3}
-  volume: 1
-  delay: 0
-  debounceTime: 0.1
-  showDebugLog: 0
-  autoDetectOtherComponents: 1
 --- !u!1 &1150704727
 GameObject:
   m_ObjectHideFlags: 0
@@ -1498,10 +1344,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1075654889}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -64, y: 0.000002861023}
-  m_SizeDelta: {x: 0, y: 35.4114}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -64, y: -179}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1466725709
 MonoBehaviour:
@@ -1657,6 +1503,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1652473643}
   - component: {fileID: 1652473642}
+  - component: {fileID: 1652473644}
   m_Layer: 0
   m_Name: SceneTransitionManager
   m_TagString: Untagged
@@ -1676,16 +1523,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bbb2a515e47e1cd4b8a558d8412af5c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DiagonalStripeTransition
-  stripeCount: 10
-  transitionDuration: 0.5
-  stripeDelay: 0.008
-  stripeColor: {r: 0, g: 0, b: 0, a: 1}
-  stripeSpacingMultiplier: 2
-  stripeWidthMultiplier: 1.42
-  rightTopOffset: {x: 0.1, y: 1}
-  leftBottomOffset: {x: -0.1, y: -1}
-  transitionCanvas: {fileID: 0}
-  stripePrefab: {fileID: 0}
+  visual: {fileID: 1652473644}
 --- !u!4 &1652473643
 Transform:
   m_ObjectHideFlags: 0
@@ -1702,6 +1540,28 @@ Transform:
   - {fileID: 812942025}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1652473644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1652473641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab807cdf82e0b4e28980da4a3e0a337d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DiagonalStripeVisual
+  stripeCount: 7
+  transitionDuration: 1
+  stripeDelay: 0.05
+  stripeColor: {r: 0, g: 0, b: 0, a: 1}
+  stripeSpacingMultiplier: 2.5
+  stripeWidthMultiplier: 0.8
+  rightTopOffset: {x: 0.5, y: 1}
+  leftBottomOffset: {x: -0.5, y: -1}
+  transitionCanvas: {fileID: 812942028}
+  stripePrefab: {fileID: 0}
 --- !u!1 &1652748501
 GameObject:
   m_ObjectHideFlags: 0
