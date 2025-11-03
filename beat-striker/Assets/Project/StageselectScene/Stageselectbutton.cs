@@ -4,7 +4,6 @@ using System.Collections;
 using Core;
 using Core.Utils;
 using Core.App.Presenters.Scene.Types;
-using UnityEditor.SceneManagement;
 using Core.App.Types;
 
 [RequireComponent(typeof(Botan))]
