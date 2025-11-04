@@ -1,5 +1,6 @@
 
 using Core.App.Types;
+using UnityEngine;
 
 namespace Core.App.Presenters.Scene.Types {
 
@@ -66,12 +67,20 @@ namespace Core.App.Presenters.Scene.Types {
         }
 
         public class SelectStriker {
-            public readonly StrikerId striker;
+            public readonly StrikerId? striker;
             public readonly PlayerId playerId;
 
-            public SelectStriker(PlayerId playerId, StrikerId striker) {
+            public SelectStriker(PlayerId playerId, StrikerId? striker) {
                 this.playerId = playerId;
                 this.striker = striker;
+            }
+        }
+
+        public class Changed_AllStrikersSelected {
+            public readonly bool allSelected = true;
+
+            public Changed_AllStrikersSelected(bool allSelected) {
+                this.allSelected = allSelected;
             }
         }
 
@@ -109,9 +118,18 @@ namespace Core.App.Presenters.Scene.Types {
             }
         }
 
+
+        public class CursorPositionUpdated {
+            public readonly PlayerId playerId;
+            public readonly Vector2 position;
+
+            public CursorPositionUpdated(PlayerId playerId, Vector2 position) {
+                this.playerId = playerId;
+                this.position = position;
+            }
+        }
+
     }
-
-
 
 
 }

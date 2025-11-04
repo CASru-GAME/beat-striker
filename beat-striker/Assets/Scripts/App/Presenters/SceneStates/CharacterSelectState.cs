@@ -30,6 +30,14 @@ namespace Core.App.Presenters.Scene.States {
 
         private void OnStrikerSelected(AppMessages.SelectStriker message) {
             context.setting.SetStriker(message.playerId, message.striker);
+            foreach (var playerId in context.playerRegistry.GetAllPlayerIds()) {
+                var striker = context.setting.GetStriker(playerId);
+                if (striker == null) {
+                    context.bus.Publish(new AppMessages.Changed_AllStrikersSelected(false));
+                    return;
+                }
+            }
+            context.bus.Publish(new AppMessages.Changed_AllStrikersSelected(true));
         }
 
         public void Enter() {

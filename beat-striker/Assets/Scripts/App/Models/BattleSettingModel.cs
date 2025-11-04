@@ -17,12 +17,16 @@ namespace Core.App.Models {
             this.defaultStrikerId = defaultStrikerId;
         }
 
-        public StrikerId GetStriker(PlayerId playerId) {
-            return strikers.ContainsKey(playerId.value) ? strikers[playerId.value] : defaultStrikerId;
+        public StrikerId? GetStriker(PlayerId playerId) {
+            return strikers.ContainsKey(playerId.value) ? strikers[playerId.value] : null;
         }
 
-        public void SetStriker(PlayerId playerId, StrikerId striker) {
-            strikers[playerId.value] = striker;
+        public void SetStriker(PlayerId playerId, StrikerId? striker) {
+            if (striker.HasValue) {
+                strikers[playerId.value] = striker.Value;
+            } else {
+                strikers.Remove(playerId.value);
+            }
         }
         
     }

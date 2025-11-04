@@ -80,7 +80,7 @@ namespace Core.App.Installers {
             // カーソルソート順序変更のメッセージをサブスクライブ
             bus.Subscribe<AppMessages.SetCursorSortingOrder>(OnSetCursorSortingOrder);
             
-            var statePresenter = new SceneStatePresenter(initialScene, sceneView, bus, battleSettingModel, this, cursorRegistry, life);
+            var statePresenter = new SceneStatePresenter(initialScene, sceneView, bus, battleSettingModel, this, cursorRegistry, life, playerRegistry);
 
         }
         

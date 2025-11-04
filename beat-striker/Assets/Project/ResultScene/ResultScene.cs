@@ -50,9 +50,9 @@ public class ResultScene : MonoBehaviour
 
         // Player1のストライカーIDを取得して顔写真を設定
         var player1StrikerId = battleSettingModel.GetStriker(new PlayerId(0));
-        if (player1PortraitImage != null)
+        if (player1PortraitImage != null && player1StrikerId != null)
         {
-            var portrait = appFlowScope.GetStrikerPortrait(player1StrikerId);
+            var portrait = appFlowScope.GetStrikerPortrait(player1StrikerId.Value);
             if (portrait != null)
             {
                 player1PortraitImage.sprite = portrait;
@@ -62,9 +62,9 @@ public class ResultScene : MonoBehaviour
 
         // Player2のストライカーIDを取得して顔写真を設定
         var player2StrikerId = battleSettingModel.GetStriker(new PlayerId(1));
-        if (player2PortraitImage != null)
+        if (player2PortraitImage != null && player2StrikerId != null)
         {
-            var portrait = appFlowScope.GetStrikerPortrait(player2StrikerId);
+            var portrait = appFlowScope.GetStrikerPortrait(player2StrikerId.Value);
             if (portrait != null)
             {
                 player2PortraitImage.sprite = portrait;

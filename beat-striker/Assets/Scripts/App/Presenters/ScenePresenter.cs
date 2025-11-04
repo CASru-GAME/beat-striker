@@ -19,8 +19,9 @@ namespace Core.App.Presenters.Scene {
             IBattleSettingModel setting,
             ICursorFactory cursorFactory,
             ICursorRegistry cursorRegistry,
-            ILife life) {
-            var context = new SceneStateContext(view, bus, setting, this, this, cursorFactory, cursorRegistry);
+            ILife life,
+            IPlayerRegistry playerRegistry) {
+            var context = new SceneStateContext(view, bus, setting, this, this, cursorFactory, cursorRegistry, playerRegistry);
             currentState = CreateSceneState(firstScene, context);
             currentState.Enter();
             life.Link(OnEnable, OnDisable);
