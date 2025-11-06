@@ -39,10 +39,8 @@ public class BattleCanvas : MonoBehaviour {
     private IBus bus;
 
     [SerializeField] GameObject resultPrefab;
-    [SerializeField] Canvas menuCanvasPrefab;
-    
+
     private bool isResultShowing = false;
-    private Canvas menuCanvasInstance = null;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake() {
@@ -58,14 +56,29 @@ public class BattleCanvas : MonoBehaviour {
             fadePanel.gameObject.SetActive(false);
         }
 
-        // ストライカーの顔写真を読み込む
-        LoadStrikerPortraits();
-
         bus.Subscribe<BattleMessages.OnOutroStarted>(OnOutroStarted);
         bus.Subscribe<BattleMessages.OnBattleFinished>(OnBattleFinished);
         bus.Subscribe<BattleMessages.OnRoundStarted>(OnRoundStarted);
         bus.Subscribe<BattleMessages.OnResultStarted>(OnResultStarted);
-        bus.Subscribe<BattleMessages.RequestShowMenu>(OnRequestShowMenu);
+    }
+
+    void Start() {
+        // BattleゲームオブジェクトからBattleInstallerを取得
+        var battleObject = GameObject.Find("Battle");
+        if (battleObject != null) {
+            var battleInstaller = battleObject.GetComponent<BattleInstaller>();
+            if (battleInstaller != null) {
+                Debug.Log("[BattleCanvas] BattleInstaller found, getting battleModel");
+                SetBattleModel(battleInstaller.battleModel);
+                LoadStrikerPortraits();
+            }
+            else {
+                Debug.LogError("[BattleCanvas] BattleInstaller component not found on Battle GameObject!");
+            }
+        }
+        else {
+            Debug.LogError("[BattleCanvas] Battle GameObject not found in scene!");
+        }
     }
 
     void OnDestroy() {
@@ -73,7 +86,7 @@ public class BattleCanvas : MonoBehaviour {
         bus.Unsubscribe<BattleMessages.OnBattleFinished>(OnBattleFinished);
         bus.Unsubscribe<BattleMessages.OnRoundStarted>(OnRoundStarted);
         bus.Unsubscribe<BattleMessages.OnResultStarted>(OnResultStarted);
-        bus.Unsubscribe<BattleMessages.RequestShowMenu>(OnRequestShowMenu);
+        bus.Unsubscribe<GamePadMessages.Inputed>(OnGamePadInputedForMenu);
     }
 
     // Update is called once per frame
@@ -222,38 +235,39 @@ public class BattleCanvas : MonoBehaviour {
 
     void OnResultStarted(BattleMessages.OnResultStarted msg) {
         Debug.Log("Result Started");
-        
+
         // Winテキストを消す（LeanTweenもキャンセル）
         if (BattleFinishText != null) {
             LeanTween.cancel(BattleFinishText.gameObject);
             BattleFinishText.gameObject.SetActive(false);
             Debug.Log("Win text hidden");
         }
-        
+
         GameObject resultInstance = Instantiate(resultPrefab);
         if (resultInstance != null) {
             resultInstance.SetActive(true);
-            
+
             // Canvas の Sort Order を高く設定して、他のUIより前面に表示
             Canvas resultCanvas = resultInstance.GetComponent<Canvas>();
             if (resultCanvas != null) {
                 resultCanvas.sortingOrder = 100;
                 Debug.Log($"Result Canvas sortingOrder set to 100");
             }
-            
+
             // すべての子オブジェクトを再帰的にアクティブにする
             SetActiveRecursively(resultInstance.transform, true);
-            
+
             Debug.Log($"Result prefab instantiated and activated: {resultInstance.name}");
-        } else {
+        }
+        else {
             Debug.LogError("Failed to instantiate result prefab!");
         }
-        
+
         // リザルト表示中フラグを立てて、Aボタンを購読
         isResultShowing = true;
         bus.Subscribe<GamePadMessages.Inputed>(OnGamePadInputedForMenu);
     }
-    
+
     void SetActiveRecursively(Transform parent, bool active) {
         foreach (Transform child in parent) {
             child.gameObject.SetActive(active);
@@ -275,91 +289,94 @@ public class BattleCanvas : MonoBehaviour {
         Destroy(soundObject, clip.length);
     }
 
-    void OnRequestShowMenu(BattleMessages.RequestShowMenu msg) {
-        Debug.Log("Received RequestShowMenu message");
-        ShowMenuCanvas();
-    }
-
     void OnGamePadInputedForMenu(GamePadMessages.Inputed msg) {
         // リザルト表示中でない、またはメニューが既に表示されている場合は無視
-        if (!isResultShowing || menuCanvasInstance != null) return;
-        
+        if (!isResultShowing) return;
+
         // Aボタン（通常はSouthボタン）が押された場合
-        if (msg.button == GamePadButton.South && msg.action == GamePadAction.Down) {
-            ShowMenuCanvas();
+        if ((msg.button == GamePadButton.South || msg.button == GamePadButton.East) && msg.action == GamePadAction.Down) {
+            bus.Publish(new AppMessages.RequireTransition(AppScene.Menu));
         }
     }
 
-    void ShowMenuCanvas() {
-        // 既にメニューが表示されている場合は何もしない
-        if (menuCanvasInstance != null) {
-            Debug.Log("Menu Canvas already displayed");
-            return;
-        }
-        
-        if (menuCanvasPrefab == null) {
-            Debug.LogWarning("MenuCanvasPrefab is not assigned!");
-            return;
-        }
+    private IBattleModel battleModel;
 
-        Debug.Log("Showing Menu Canvas");
-        
-        // メニューCanvasをインスタンス化
-        menuCanvasInstance = Instantiate(menuCanvasPrefab);
-        if (menuCanvasInstance != null) {
-            menuCanvasInstance.gameObject.SetActive(true);
-            
-            // Sort Orderを最も高く設定（リザルトより上）
-            menuCanvasInstance.sortingOrder = 300;
-            
-            Debug.Log($"Menu Canvas instantiated with sortingOrder: {menuCanvasInstance.sortingOrder}");
-            
-            // カーソルをメニューの上に移動
-            bus.Publish(new AppMessages.SetCursorSortingOrder(400));
-            Debug.Log("Cursor sortingOrder set to 400");
-        }
+    void SetBattleModel(IBattleModel model) {
+        this.battleModel = model;
     }
 
-    void LoadStrikerPortraits()
-    {
+    void LoadStrikerPortraits() {
+        Debug.Log("[Portrait] LoadStrikerPortraits called");
+
+        // BattleModelからストライカーIDを取得
+        if (battleModel == null) {
+            Debug.Log("[Portrait] BattleModel not set!");
+            return;
+        }
+        Debug.Log("[Portrait] BattleModel is set");
+
         // AppFlowScopeからストライカー情報を取得
         var appFlowScope = AppFlowScope.GetInstance();
-        if (appFlowScope == null)
-        {
-            Debug.LogError("AppFlowScope instance not found!");
+        if (appFlowScope == null) {
+            Debug.Log("[Portrait] AppFlowScope instance not found!");
             return;
         }
-
-        // BattleSettingModelからストライカーIDを取得
-        var battleSettingModel = appFlowScope.battleSettingModel;
-        if (battleSettingModel == null)
-        {
-            Debug.LogError("BattleSettingModel not found!");
-            return;
-        }
+        Debug.Log("[Portrait] AppFlowScope instance found");
 
         // Player1のストライカーIDを取得して顔写真を設定
-        var player1StrikerId = battleSettingModel.GetStriker(new PlayerId(0));
-        if (player1PortraitImage != null || player1StrikerId != null)
-        {
-            var portrait = appFlowScope.GetStrikerPortrait(player1StrikerId.Value);
-            if (portrait != null)
-            {
-                player1PortraitImage.sprite = portrait;
-                Debug.Log($"Player1 portrait set for StrikerId: {player1StrikerId}");
+        var player1StrikerId = battleModel.GetStriker(new PlayerId(0));
+        Debug.Log($"[Portrait] Player1 StrikerId from BattleModel: {(player1StrikerId.HasValue ? player1StrikerId.Value.value : "null")}");
+
+        if (player1PortraitImage != null) {
+            Debug.Log("[Portrait] player1PortraitImage is assigned");
+            if (player1StrikerId != null && player1StrikerId.HasValue) {
+                Debug.Log($"[Portrait] Player1 StrikerId obtained: {player1StrikerId.Value.value}");
+                var portrait = appFlowScope.GetStrikerPortrait(player1StrikerId.Value);
+                if (portrait != null) {
+                    player1PortraitImage.sprite = portrait;
+                    player1PortraitImage.enabled = true;
+                    player1PortraitImage.color = Color.white;
+                    Debug.Log($"[Portrait] Player1 portrait successfully set for StrikerId: {player1StrikerId.Value.value}, Texture: {portrait.name}");
+                    Debug.Log($"[Portrait] Player1 Image enabled: {player1PortraitImage.enabled}, Active: {player1PortraitImage.gameObject.activeSelf}, Color: {player1PortraitImage.color}");
+                }
+                else {
+                    Debug.Log($"[Portrait] Player1 portrait not found for StrikerId: {player1StrikerId.Value.value}");
+                }
             }
+            else {
+                Debug.Log("[Portrait] Player1 StrikerId is null or has no value");
+            }
+        }
+        else {
+            Debug.Log("[Portrait] player1PortraitImage is not assigned!");
         }
 
         // Player2のストライカーIDを取得して顔写真を設定
-        var player2StrikerId = battleSettingModel.GetStriker(new PlayerId(1));
-        if (player2PortraitImage != null || player2StrikerId != null)
-        {
-            var portrait = appFlowScope.GetStrikerPortrait(player2StrikerId.Value);
-            if (portrait != null)
-            {
-                player2PortraitImage.sprite = portrait;
-                Debug.Log($"Player2 portrait set for StrikerId: {player2StrikerId}");
+        var player2StrikerId = battleModel.GetStriker(new PlayerId(1));
+        Debug.Log($"[Portrait] Player2 StrikerId from BattleModel: {(player2StrikerId.HasValue ? player2StrikerId.Value.value : "null")}");
+
+        if (player2PortraitImage != null) {
+            Debug.Log("[Portrait] player2PortraitImage is assigned");
+            if (player2StrikerId != null && player2StrikerId.HasValue) {
+                Debug.Log($"[Portrait] Player2 StrikerId obtained: {player2StrikerId.Value.value}");
+                var portrait = appFlowScope.GetStrikerPortrait(player2StrikerId.Value);
+                if (portrait != null) {
+                    player2PortraitImage.sprite = portrait;
+                    player2PortraitImage.enabled = true;
+                    player2PortraitImage.color = Color.white;
+                    Debug.Log($"[Portrait] Player2 portrait successfully set for StrikerId: {player2StrikerId.Value.value}, Texture: {portrait.name}");
+                    Debug.Log($"[Portrait] Player2 Image enabled: {player2PortraitImage.enabled}, Active: {player2PortraitImage.gameObject.activeSelf}, Color: {player2PortraitImage.color}");
+                }
+                else {
+                    Debug.Log($"[Portrait] Player2 portrait not found for StrikerId: {player2StrikerId.Value.value}");
+                }
             }
+            else {
+                Debug.Log("[Portrait] Player2 StrikerId is null or has no value");
+            }
+        }
+        else {
+            Debug.Log("[Portrait] player2PortraitImage is not assigned!");
         }
     }
 

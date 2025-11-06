@@ -153,6 +153,7 @@ namespace Tests.EditMode {
 
         public PlayerId? lastLoser = null;
         public int nextRoundCallCount = 0;
+        private readonly Dictionary<int, StrikerId> strikers = new();
 
         public PlayerId GetWinner(int round) {
             if (roundWinners.TryGetValue(round, out var p)) return p;
@@ -183,6 +184,21 @@ namespace Tests.EditMode {
 
         public PlayerId GetFinalWinner() {
             return finalWinner;
+        }
+
+        public StrikerId? GetStriker(PlayerId playerId) {
+            if (strikers.ContainsKey(playerId.value)) {
+                return strikers[playerId.value];
+            }
+            return null;
+        }
+
+        public void SetStriker(PlayerId playerId, StrikerId? striker) {
+            if (striker.HasValue) {
+                strikers[playerId.value] = striker.Value;
+            } else {
+                strikers.Remove(playerId.value);
+            }
         }
     }
 

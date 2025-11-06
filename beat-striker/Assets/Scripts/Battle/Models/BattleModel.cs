@@ -9,6 +9,7 @@ namespace Core.Battle {
         private readonly List<PlayerId>[] deadPlayers;
         private readonly List<PlayerId> allPlayers;
         private int currentRound = 0;
+        private readonly Dictionary<int, StrikerId> strikers = new();
 
         public BattleModel(int playerCount) {
             this.allPlayers = Enumerable.Range(0, playerCount).Select(i => new PlayerId(i)).ToList();
@@ -83,6 +84,21 @@ namespace Core.Battle {
         public int GetWinCount(PlayerId playerId) {
             var winCounts = GetWinCounts();
             return winCounts.ContainsKey(playerId) ? winCounts[playerId] : 0;
+        }
+
+        public StrikerId? GetStriker(PlayerId playerId) {
+            if (strikers.ContainsKey(playerId.value)) {
+                return strikers[playerId.value];
+            }
+            return null;
+        }
+
+        public void SetStriker(PlayerId playerId, StrikerId? striker) {
+            if (striker.HasValue) {
+                strikers[playerId.value] = striker.Value;
+            } else {
+                strikers.Remove(playerId.value);
+            }
         }
     }
 }

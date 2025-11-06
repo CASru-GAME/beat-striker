@@ -18,7 +18,9 @@ public class Selecter : MonoBehaviour
     void Awake() {
         this.GetBus().Subscribe<AppMessages.CursorPositionUpdated>(OnCursorPositionUpdated);
         this.GetBus().Subscribe<AppMessages.SelectStriker>(OnSelectStriker);
-        text.text = $"{playerId.value + 1}P";
+        if (text != null) {
+            text.text = $"{playerId.value + 1}P";
+        }
     }
     
     void OnCursorPositionUpdated(AppMessages.CursorPositionUpdated msg) {

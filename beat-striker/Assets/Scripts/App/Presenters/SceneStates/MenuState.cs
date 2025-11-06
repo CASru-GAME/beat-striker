@@ -3,24 +3,18 @@ using Core.App.Types;
 
 namespace Core.App.Presenters.Scene.States {
 
-    public class TitleState : ISceneState {
+    public class MenuState : ISceneState {
         private readonly SceneStateContext context;
 
-        public TitleState(SceneStateContext context) {
+        public MenuState(SceneStateContext context) {
             this.context = context;
         }
 
         private void OnAppFlowMessage(AppMessages.RequireTransition message) {
-            if (message.scene == AppScene.Menu) {
+            if (message.scene == AppScene.Title || message.scene == AppScene.Menu || message.scene == AppScene.StageSelect || message.scene == AppScene.CharacterSelect) {
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    AppScene.Menu
-                ));
-            }
-            else if (message.scene == AppScene.StageSelect) {
-                context.controller.ChangeState(new TransitionState(
-                    context,
-                    AppScene.StageSelect
+                    message.scene
                 ));
             }
         }
