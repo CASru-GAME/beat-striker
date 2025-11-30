@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UniGLTF.M17N;
 
 namespace UniGLTF.EditorSettingsValidator

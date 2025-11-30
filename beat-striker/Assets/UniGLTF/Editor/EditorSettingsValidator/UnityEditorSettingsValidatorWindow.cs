@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UniGLTF.M17N;
 using UnityEditor;
 using UnityEngine;

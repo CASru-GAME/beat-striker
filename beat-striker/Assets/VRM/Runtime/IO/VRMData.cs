@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using UniGLTF;
 using UniGLTF.Utils;

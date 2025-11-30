@@ -1,4 +1,4 @@
-﻿namespace UniGLTF
+namespace UniGLTF
 {
     public static partial class UniGLTFVersion
     {

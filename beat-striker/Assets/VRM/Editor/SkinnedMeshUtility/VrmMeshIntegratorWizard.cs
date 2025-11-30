@@ -1,4 +1,4 @@
-﻿#pragma warning disable 0414, 0649
+#pragma warning disable 0414, 0649
 using UnityEditor;
 using UnityEngine;
 using UniGLTF.M17N;

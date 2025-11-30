@@ -1,4 +1,4 @@
-﻿using UniGLTF;
+using UniGLTF;
 using UnityEditor;
 using UnityEngine;
 

@@ -1,4 +1,4 @@
-﻿namespace UniGLTF.EditorSettingsValidator
+namespace UniGLTF.EditorSettingsValidator
 {
     public interface IUnitySettingsValidator
     {

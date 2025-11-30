@@ -1,4 +1,4 @@
-﻿namespace VRM
+namespace VRM
 {
     public class VRMAOTCodeGenerator
     {

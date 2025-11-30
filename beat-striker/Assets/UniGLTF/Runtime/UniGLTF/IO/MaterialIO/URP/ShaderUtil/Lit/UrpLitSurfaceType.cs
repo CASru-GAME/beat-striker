@@ -1,4 +1,4 @@
-﻿namespace UniGLTF
+namespace UniGLTF
 {
     public enum UrpLitSurfaceType
     {

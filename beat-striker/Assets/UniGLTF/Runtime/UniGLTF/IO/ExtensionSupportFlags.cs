@@ -1,4 +1,4 @@
-﻿namespace UniGLTF
+namespace UniGLTF
 {
     public sealed class ExtensionSupportFlags
     {

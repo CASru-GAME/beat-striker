@@ -1,4 +1,4 @@
-﻿/// <summary>
+/// <summary>
 /// https://gist.github.com/szimek/763999
 /// </summary>
 namespace UniGLTF

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UniGLTF;
 using UnityEngine;
 using ColorSpace = UniGLTF.ColorSpace;
