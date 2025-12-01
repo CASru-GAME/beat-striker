@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UniGLTF;
 using UniGLTF.Extensions.VRMC_materials_mtoon;

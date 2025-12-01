@@ -1,4 +1,4 @@
-﻿using UniGLTF.Utils;
+using UniGLTF.Utils;
 using UnityEngine;
 
 namespace UniVRM10

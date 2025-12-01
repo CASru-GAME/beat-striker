@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UniGLTF;
 using UniGLTF.Extensions.VRMC_materials_mtoon;
 using UnityEngine;

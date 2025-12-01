@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UniGLTF.Extensions.VRMC_node_constraint;
 using UniGLTF.Utils;
 using UnityEngine;
