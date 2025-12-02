@@ -22,6 +22,13 @@ namespace Core.App.Presenters.Scene.States {
                     AppScene.Title
                 ));
             }
+            else if (message.scene == AppScene.Menu) {
+                Debug.Log("StageSelectState: Transitioning to Menu");
+                context.controller.ChangeState(new TransitionState(
+                    context,
+                    AppScene.Menu
+                ));
+            }
             else if (message.scene == AppScene.CharacterSelect) {
                 Debug.Log("StageSelectState: Transitioning to CharacterSelect");
                 context.controller.ChangeState(new TransitionState(

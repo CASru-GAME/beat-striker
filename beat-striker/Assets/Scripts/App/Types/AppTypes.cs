@@ -9,6 +9,7 @@ namespace Core.App.Types {
         Battle,
         Battle_Stage,
         Battle_Street,
+ Menu,
         None
     }
 

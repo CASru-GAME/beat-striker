@@ -20,6 +20,12 @@ namespace Core.App.Presenters.Scene.States {
                     AppScene.StageSelect
                 ));
             }
+            else if (message.scene == AppScene.Menu) {
+                context.controller.ChangeState(new TransitionState(
+                    context,
+                    AppScene.Menu
+                ));
+            }
             else if (message.scene == AppScene.Battle) {
                 context.controller.ChangeState(new TransitionState(
                     context,

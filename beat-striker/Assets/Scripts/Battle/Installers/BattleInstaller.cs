@@ -41,9 +41,11 @@ namespace Core.Battle {
         public List<IStrikerModelGetter> strikerModels = new();
         public List<IStrikerView> strikerViews = new();
         public IRythmTrackModelGetter rythmTrackModel;
+        public IBattleModel battleModel;
         [SerializeField] bool DebugMode = false;
         [SerializeField] float bpm = 110f;
         private BattleFlowPresenter mutator;
+        [SerializeField] private StrikerId defaultStrikerId;
 
         void Awake() {
             var app = GameObject.Find("App").GetComponent<AppFlowScope>();
@@ -61,6 +63,7 @@ namespace Core.Battle {
             var life = GetComponent<Life>();
             var bus = this.GetBus();
             var battleModel = new BattleModel(playerCount);
+            this.battleModel = battleModel;
             var rythmTrackModel = new RythmTrackModel(Enumerable.Range(1, 1000).Select(x => x * 60f / bpm).ToArray(),
                 perfectWindow,
                 goodWindow,
@@ -75,6 +78,12 @@ namespace Core.Battle {
                 var transform = playerTransforms[i];
                 var playerId = new PlayerId(i);
                 var strikerId = settingModel.GetStriker(playerId);
+                if(strikerId.HasValue == false) {
+                    strikerId = defaultStrikerId;
+                }
+                // BattleModelにもStrikerIdを設定
+                battleModel.SetStriker(playerId, strikerId);
+                
                 var strikerPrefab = strikerPrefabs.FirstOrDefault(x => x.strikerId == strikerId).prefab;
                 var instance = Instantiate(strikerPrefab);
                 instance.transform.SetPositionAndRotation(transform.position, transform.rotation);

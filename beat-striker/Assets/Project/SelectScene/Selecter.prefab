@@ -188,7 +188,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Selecter
   offsetY: 90
-  text: {fileID: 0}
+  text: {fileID: 5881204678966660640}
   scaleUpFactor: 1.3
   animationDuration: 0.2
 --- !u!222 &9134312754337618603

@@ -1,8 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using Core.App.Presenters.Scene.Types;
+using Core.App.Types;
+using Core.Utils;
+using Core;
 
-public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+[RequireComponent(typeof(Botan))]
+public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Image References")]
     public Image[] gradientImages; // グラデーションの四角いImageの配列（左から右の順）
@@ -23,36 +28,40 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
     private CanvasGroup[] imageCanvasGroups;
     private AudioSource audioSource;
     private bool isHovering = false;
+
+    public AppScene scene = AppScene.Menu;
+    private Botan botan;
     
     void Start()
     {
+
+        botan = GetComponent<Botan>();
         // AudioSourceを取得または追加
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
         }
-        
+
         // 各ImageにCanvasGroupを追加
-        if (gradientImages != null && gradientImages.Length > 0)
-        {
+        if (gradientImages != null && gradientImages.Length > 0) {
             imageCanvasGroups = new CanvasGroup[gradientImages.Length];
-            
-            for (int i = 0; i < gradientImages.Length; i++)
-            {
-                if (gradientImages[i] != null)
-                {
+
+            for (int i = 0; i < gradientImages.Length; i++) {
+                if (gradientImages[i] != null) {
                     imageCanvasGroups[i] = gradientImages[i].GetComponent<CanvasGroup>();
-                    if (imageCanvasGroups[i] == null)
-                    {
+                    if (imageCanvasGroups[i] == null) {
                         imageCanvasGroups[i] = gradientImages[i].gameObject.AddComponent<CanvasGroup>();
                     }
-                    
+
                     // 初期状態：透明
                     imageCanvasGroups[i].alpha = 0f;
                 }
             }
         }
+        botan.onClick += (e) => {
+            OnPointerClick(e.EventData);
+        };
     }
     
     // Unity Event System用のホバー検知
@@ -111,6 +120,7 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
         if (audioSource != null && clickSound != null)
         {
             audioSource.PlayOneShot(clickSound, clickSoundVolume);
+            this.GetBus().Publish(new AppMessages.RequireTransition(scene));
         }
     }
 }

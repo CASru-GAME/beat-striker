@@ -134,6 +134,8 @@ MonoBehaviour:
     sceneName: StageScene
   - scene: 5
     sceneName: StreetScene
+  - scene: 6
+    sceneName: BackScene
   firstScene: 0
   defaultStrikerId:
     value: Hero

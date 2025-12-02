@@ -62,6 +62,10 @@ namespace Core.App.Installers {
             
             // BGMマネージャー初期化
             var bgmView = GetComponent<BGMView>();
+            if (bgmView == null) {
+                Debug.LogError("BGMView component not found on AppFlowScope!");
+                return;
+            }
             bgmManager = new BGMManager(bgmView, bus, life);
             
             playerRegistry = new PlayerRegistry(bus, life);

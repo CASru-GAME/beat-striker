@@ -42,6 +42,7 @@ namespace Core.App.Presenters.Scene {
         public ISceneState CreateSceneState(AppScene scene, SceneStateContext context) {
             return scene switch {
                 AppScene.Title => new TitleState(context),
+                AppScene.Menu => new MenuState(context),
                 AppScene.StageSelect => new StageSelectState(context),
                 AppScene.CharacterSelect => new CharacterSelectState(context),
                 AppScene.Battle => new BattleState(context),
