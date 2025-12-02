@@ -74,7 +74,5 @@ namespace Core.Battle {
             }
         }
 
-        public class RequestShowMenu { }
-
     }
 }

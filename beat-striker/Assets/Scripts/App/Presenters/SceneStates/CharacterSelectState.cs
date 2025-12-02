@@ -20,6 +20,12 @@ namespace Core.App.Presenters.Scene.States {
                     AppScene.StageSelect
                 ));
             }
+            else if (message.scene == AppScene.Menu) {
+                context.controller.ChangeState(new TransitionState(
+                    context,
+                    AppScene.Menu
+                ));
+            }
             else if (message.scene == AppScene.Battle) {
                 context.controller.ChangeState(new TransitionState(
                     context,
@@ -30,6 +36,14 @@ namespace Core.App.Presenters.Scene.States {
 
         private void OnStrikerSelected(AppMessages.SelectStriker message) {
             context.setting.SetStriker(message.playerId, message.striker);
+            foreach (var playerId in context.playerRegistry.GetAllPlayerIds()) {
+                var striker = context.setting.GetStriker(playerId);
+                if (striker == null) {
+                    context.bus.Publish(new AppMessages.Changed_AllStrikersSelected(false));
+                    return;
+                }
+            }
+            context.bus.Publish(new AppMessages.Changed_AllStrikersSelected(true));
         }
 
         public void Enter() {

@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Core;
+using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
 using Core.GamePad.Types;
 using Core.Utils;
@@ -25,11 +26,13 @@ public class CursorView : MonoBehaviour, ICursorView {
     private RectTransform movableAreaRectTransform;
     private GameObject lastHoveredObject;
     private PlayerId playerId;
+    private IBus bus;
 
 
     void Awake() {
         rectTransform = GetComponent<RectTransform>();
         movableAreaRectTransform = transform.parent.GetComponent<RectTransform>();
+        bus = this.GetBus();
     }
     
     public void Construct(PlayerId playerId, ICursorPresenter presenter) {
@@ -79,6 +82,7 @@ public class CursorView : MonoBehaviour, ICursorView {
 
         movingTime += Time.deltaTime;
         rectTransform.anchoredPosition += moveSpeed * (1 - Mathf.Exp(-accelerationFactor * movingTime)) * Time.deltaTime * currentDirection;
+        bus.Publish(new AppMessages.CursorPositionUpdated(playerId, transform.position));
 
         rectTransform.anchoredPosition = new Vector2(
             Mathf.Clamp(rectTransform.anchoredPosition.x, -movableAreaRectTransform.rect.width / 2, movableAreaRectTransform.rect.width / 2),
@@ -103,7 +107,8 @@ public class CursorView : MonoBehaviour, ICursorView {
         //lastHoveredは更新しないこと
 
         if (currentHovered) {
-            ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerClickHandler);
+            Debug.Log("Cursor click executed");
+            ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerDownHandler);
         }
     }
 

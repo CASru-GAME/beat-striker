@@ -116,14 +116,18 @@ namespace Tests.EditMode {
 
         readonly Dictionary<int, StrikerId> strikers = new();
 
-        public StrikerId GetStriker(PlayerId playerId) {
+        public void SetStriker(PlayerId playerId, StrikerId? striker) {
+            if (striker.HasValue) {
+                strikers[playerId.value] = striker.Value;
+            } else {
+                strikers.Remove(playerId.value);
+            }
+        }
+
+        public StrikerId? GetStriker(PlayerId playerId) {
             return strikers.TryGetValue(playerId.value, out var s)
                 ? s
                 : new StrikerId("");
-        }
-
-        public void SetStriker(PlayerId playerId, StrikerId striker) {
-            strikers[playerId.value] = striker;
         }
     }
 
@@ -402,7 +406,8 @@ namespace Tests.EditMode {
                 new FakeBattleSettingModel(),
                 new FakeCursorFactory(),
                 new FakeCursorRegistry(),
-                new FakeLife()
+                new FakeLife(),
+                new FakePlayerRegistryMutable()
             );
             var log = new List<string>();
             var s1 = new LogFakeState("S1", log);
@@ -431,7 +436,8 @@ namespace Tests.EditMode {
                 new FakeSceneStateController(),
                 new FakeSceneStateFactory(),
                 new FakeCursorFactory(),
-                new FakeCursorRegistry()
+                new FakeCursorRegistry(),
+                new FakePlayerRegistryMutable()
             );
             var presenter = new SceneStatePresenter(
                 AppScene.Title,
@@ -440,7 +446,8 @@ namespace Tests.EditMode {
                 ctx.setting,
                 ctx.cursorFactory,
                 ctx.cursorRegistry,
-                new FakeLife()
+                new FakeLife(),
+                new FakePlayerRegistryMutable()
             );
 
             Assert.That(presenter.CreateSceneState(AppScene.Title, ctx), Is.TypeOf<TitleState>());
@@ -477,7 +484,8 @@ namespace Tests.EditMode {
                 controller,
                 factory,
                 new FakeCursorFactory(),
-                cursorReg
+                cursorReg,
+                new FakePlayerRegistryMutable()
             );
         }
 
@@ -543,7 +551,9 @@ namespace Tests.EditMode {
             var pid = new PlayerId(7);
             var striker = new StrikerId("strikerX");
             bus.Publish(new AppMsg.SelectStriker(pid, striker));
-            Assert.That(setting.GetStriker(pid).value, Is.EqualTo("strikerX"));
+            var retrievedStriker = setting.GetStriker(pid);
+            Assert.NotNull(retrievedStriker);
+            Assert.That(retrievedStriker!.Value.value, Is.EqualTo("strikerX"));
 
             // Next要求でTransitionStateにChangeState
             bus.Publish(new AppMsg.RequireTransition(AppScene.Battle));

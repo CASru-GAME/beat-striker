@@ -134,6 +134,8 @@ MonoBehaviour:
     sceneName: StageScene
   - scene: 5
     sceneName: StreetScene
+  - scene: 6
+    sceneName: BackScene
   firstScene: 0
   defaultStrikerId:
     value: Hero
@@ -141,6 +143,13 @@ MonoBehaviour:
     value: Stage
   defaultTrackId:
     value: Azuno
+  strikerPortraits:
+  - strikerId:
+      value: Hero
+    portrait: {fileID: 21300000, guid: a1415a821ad9549bc96291c0a4d9ca73, type: 3}
+  - strikerId:
+      value: Worrier
+    portrait: {fileID: 21300000, guid: b814cbc60148c49bab4089f4b826fb53, type: 3}
 --- !u!114 &-7378754032342270837
 MonoBehaviour:
   m_ObjectHideFlags: 0

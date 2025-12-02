@@ -1,33 +1,39 @@
-
-using System;
-using System.Collections;
+using Core.App.Installers;
 using Core.App.Presenters.Scene.Types;
+using Core.App.Types;
 using Core.Utils;
 using UnityEngine;
 
-public class SelectScene : MonoBehaviour {
-    public bool[] isSelected = new bool[2];
+public class SelectScene : MonoBehaviour
+{
+    public Transform selectorsParent;
+    public Selecter selecterPrefab;
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
-        this.GetBus().Subscribe<AppMessages.OnTransitionAnimationStarted>(HandleTrackSelection);
+        this.GetBus().Subscribe<AppMessages.PlayerJoined>(OnPlayerJoined);
+        this.GetBus().Subscribe<AppMessages.PlayerLeft>(OnPlayerLeft);
+        var registry = GameObject.Find("App").GetComponent<AppFlowScope>().playerRegistry;
+        foreach (var player in registry.GetAllPlayerIds()) {
+            var selecter = Instantiate(selecterPrefab, selectorsParent);
+            selecter.playerId = player;
+        }
     }
 
-    void Update() {
-
+    void OnPlayerJoined(AppMessages.PlayerJoined msg) {
+        var selecter = Instantiate(selecterPrefab, selectorsParent);
+        selecter.playerId = msg.playerId;
     }
-
-    void HandleTrackSelection(AppMessages.OnTransitionAnimationStarted msg) {
-        //遷移アニメーションを記述する
-        StartCoroutine(Animation());
+    void OnPlayerLeft(AppMessages.PlayerLeft msg) {
+        foreach (Transform child in selectorsParent) {
+            var selecter = child.GetComponent<Selecter>();
+            if (selecter != null && selecter.playerId.Equals(msg.playerId)) {
+                Destroy(child.gameObject);
+                break;
+            }
+        }
     }
-
-    private IEnumerator Animation() {
-        //ここにアニメーションを記述する
-        yield return new WaitForSeconds(1.0f); //仮で1秒待つ
-
-        this.GetBus().Publish(new AppMessages.RequireLoadScene());
-    }
-
     void OnDestroy() {
-        this.GetBus().Unsubscribe<AppMessages.OnTransitionAnimationStarted>(HandleTrackSelection);
+        this.GetBus().Unsubscribe<AppMessages.PlayerJoined>(OnPlayerJoined);
+        this.GetBus().Unsubscribe<AppMessages.PlayerLeft>(OnPlayerLeft);
     }
 }

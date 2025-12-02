@@ -19,8 +19,9 @@ namespace Core.App.Presenters.Scene {
             IBattleSettingModel setting,
             ICursorFactory cursorFactory,
             ICursorRegistry cursorRegistry,
-            ILife life) {
-            var context = new SceneStateContext(view, bus, setting, this, this, cursorFactory, cursorRegistry);
+            ILife life,
+            IPlayerRegistry playerRegistry) {
+            var context = new SceneStateContext(view, bus, setting, this, this, cursorFactory, cursorRegistry, playerRegistry);
             currentState = CreateSceneState(firstScene, context);
             currentState.Enter();
             life.Link(OnEnable, OnDisable);
@@ -41,6 +42,7 @@ namespace Core.App.Presenters.Scene {
         public ISceneState CreateSceneState(AppScene scene, SceneStateContext context) {
             return scene switch {
                 AppScene.Title => new TitleState(context),
+                AppScene.Menu => new MenuState(context),
                 AppScene.StageSelect => new StageSelectState(context),
                 AppScene.CharacterSelect => new CharacterSelectState(context),
                 AppScene.Battle => new BattleState(context),

@@ -189,7 +189,6 @@ public class ResultPanelButton : MonoBehaviour
             if (goBackButton != null)
             {
                 goBackButton.interactable = false;
-                goBackButton.onClick.AddListener(OnGoBackButtonClicked);
             }
         }
         
@@ -526,17 +525,20 @@ public class ResultPanelButton : MonoBehaviour
         }
     }
     
-    void OnGoBackButtonClicked()
-    {
-        Debug.Log("GoBackButton clicked - Publishing RequestShowMenu");
-        bus.Publish(new BattleMessages.RequestShowMenu());
-    }
-    
     void PlaySound(AudioClip clip, float volume = 1f)
     {
         if (audioSource != null && clip != null)
         {
             audioSource.PlayOneShot(clip, volume);
+        }
+    }
+    
+    void OnDestroy()
+    {
+        // イベントリスナーを解除
+        if (button != null)
+        {
+            button.onClick.RemoveListener(OnButtonClick);
         }
     }
     
