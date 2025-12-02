@@ -32,8 +32,9 @@ namespace Tests.EditMode {
             return currentTime;
         }
 
-        public void SetTime(float time) {
+        public List<PlayerId> SetTime(float time) {
             currentTime = time;
+            return new List<PlayerId>();
         }
 
         public float GetNextBeatTime(PlayerId playerId, int offset) {
@@ -60,6 +61,7 @@ namespace Tests.EditMode {
         public bool onDeadCalled = false;
         public bool onIntroCalled = false;
         public bool onVictoryCalled = false;
+        public bool onResetCalled = false;
 
         public HitPoint lastCalcHitInput;
         public float lastCalcHitReturned;
@@ -88,6 +90,7 @@ namespace Tests.EditMode {
         public void OnDead() { onDeadCalled = true; }
         public void OnIntro() { onIntroCalled = true; }
         public void OnVictory() { onVictoryCalled = true; }
+        public void OnReset() { onResetCalled = true; }
 
         public HitPoint CalcHit(HitStatus status) {
             lastCalcHitInput = status.damage;
@@ -112,6 +115,7 @@ namespace Tests.EditMode {
             onDeadCalled = false;
             onIntroCalled = false;
             onVictoryCalled = false;
+            onResetCalled = false;
             lastCalcHitReturned = 0f;
         }
 

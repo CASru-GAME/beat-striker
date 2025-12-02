@@ -47,7 +47,7 @@ public class CursorPresenter: ICursorPresenter {
             return;
         }
 
-        if (mes.button == GamePadButton.East) {
+        if (mes.button == GamePadButton.East && mes.action == GamePadAction.Down) {
             view.OnClick();
         }
     }

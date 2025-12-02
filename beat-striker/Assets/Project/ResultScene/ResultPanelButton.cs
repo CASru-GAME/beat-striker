@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Core.Battle;
+using Core.Utils;
 
 [RequireComponent(typeof(Button))]
 public class ResultPanelButton : MonoBehaviour
@@ -61,6 +63,10 @@ public class ResultPanelButton : MonoBehaviour
     public float nextTextMinAlpha = 0.3f; // Nextテキストの最小透明度
     public float nextTextMaxAlpha = 1f; // Nextテキストの最大透明度
     
+    [Header("Auto Start")]
+    public bool autoStart = true; // 自動的にアニメーションを開始するか
+    public float autoStartDelay = 0.5f; // 自動開始の遅延時間
+    
     private Button button;
     private AudioSource audioSource;
     private CanvasGroup blackImageCanvasGroup;
@@ -86,9 +92,11 @@ public class ResultPanelButton : MonoBehaviour
     private RectTransform goBackRect;
     private Button goBackButton;
     private CanvasGroup nextTextCanvasGroup;
+    private IBus bus;
 
     void Start()
     {
+        bus = this.GetBus();
         button = GetComponent<Button>();
         audioSource = GetComponent<AudioSource>();
         
@@ -99,6 +107,22 @@ public class ResultPanelButton : MonoBehaviour
         }
         
         Debug.Log($"ResultPanelButton Start - Button: {button != null}");
+        Debug.Log($"ResultPanelButton GameObject: {gameObject.name}, Active: {gameObject.activeInHierarchy}");
+        
+        // Canvas確認
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas != null) {
+            Debug.Log($"Canvas found: {canvas.name}, Enabled: {canvas.enabled}, RenderMode: {canvas.renderMode}, SortOrder: {canvas.sortingOrder}");
+        } else {
+            Debug.LogWarning("No Canvas found in parent hierarchy!");
+        }
+        
+        // 親階層を確認
+        Transform current = transform;
+        while (current != null) {
+            Debug.Log($"Hierarchy: {current.name}, Active: {current.gameObject.activeInHierarchy}, ActiveSelf: {current.gameObject.activeSelf}");
+            current = current.parent;
+        }
         
         // BlackImageの初期設定
         if (blackImage != null)
@@ -165,6 +189,7 @@ public class ResultPanelButton : MonoBehaviour
             if (goBackButton != null)
             {
                 goBackButton.interactable = false;
+                goBackButton.onClick.AddListener(OnGoBackButtonClicked);
             }
         }
         
@@ -188,6 +213,19 @@ public class ResultPanelButton : MonoBehaviour
         else
         {
             Debug.LogError("Button component not found!");
+        }
+        
+        // 自動開始
+        if (autoStart)
+        {
+            Debug.Log($"Auto-starting animation after {autoStartDelay} seconds");
+            LeanTween.delayedCall(autoStartDelay, () => {
+                if (!hasPlayed)
+                {
+                    Debug.Log("Auto-starting animation now");
+                    StartAnimation();
+                }
+            });
         }
     }
     
@@ -221,8 +259,14 @@ public class ResultPanelButton : MonoBehaviour
             return;
         }
         
-        hasPlayed = true;
         Debug.Log("Button clicked!");
+        StartAnimation();
+    }
+    
+    void StartAnimation()
+    {
+        hasPlayed = true;
+        Debug.Log("Starting result animation");
         
         // ボタンクリック効果音（遅延付き）
         if (buttonClickSoundDelay > 0)
@@ -251,6 +295,7 @@ public class ResultPanelButton : MonoBehaviour
             }
             
             blackImage.SetActive(true);
+            Debug.Log($"BlackImage activated: {blackImage.activeInHierarchy}, Parent: {(blackImage.transform.parent != null ? blackImage.transform.parent.name + " (Active: " + blackImage.transform.parent.gameObject.activeInHierarchy + ")" : "null")}");
             
             // フェードイン＆スケールアニメーション
             LeanTween.cancel(blackImage);
@@ -287,6 +332,7 @@ public class ResultPanelButton : MonoBehaviour
                 }
                 
                 lineObject.SetActive(true);
+                Debug.Log($"LineObject activated: {lineObject.activeInHierarchy}, Parent: {(lineObject.transform.parent != null ? lineObject.transform.parent.name + " (Active: " + lineObject.transform.parent.gameObject.activeInHierarchy + ")" : "null")}");
                 
                 LeanTween.cancel(lineObject);
                 
@@ -475,9 +521,15 @@ public class ResultPanelButton : MonoBehaviour
                 // フェードイン→フェードアウトをループ
                 LeanTween.alphaCanvas(nextTextCanvasGroup, nextTextMaxAlpha, nextTextFadeDuration / 2f)
                     .setEase(LeanTweenType.easeInOutQuad)
-                    .setLoopPingPong(); // ピンポンループ（往復）
+                    .setLoopPingPong(); // ピンポンループ(往復)
             });
         }
+    }
+    
+    void OnGoBackButtonClicked()
+    {
+        Debug.Log("GoBackButton clicked - Publishing RequestShowMenu");
+        bus.Publish(new BattleMessages.RequestShowMenu());
     }
     
     void PlaySound(AudioClip clip, float volume = 1f)

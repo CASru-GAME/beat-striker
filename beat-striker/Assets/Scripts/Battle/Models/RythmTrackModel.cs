@@ -55,17 +55,29 @@ namespace Core.Battle {
             return currentTime;
         }
 
-        public void SetTime(float time) {
+        public List<PlayerId> SetTime(float time) {
             currentTime = time;
+            var missedPlayers = new List<PlayerId>();
+            
             for (int pid = 0; pid < nextBeatIndex.Length; pid++) {
                 int playerBeatIndex = nextBeatIndex[pid];
+                int initialIndex = playerBeatIndex;
+                
                 while (true) {
                     if (playerBeatIndex >= beatTimes.Length) break;
                     if (beatTimes[playerBeatIndex] > currentTime - goodWindow) break;
                     playerBeatIndex++;
                 }
+                
+                // 見逃したビートがあれば追加（1つでもスキップされたら）
+                if (playerBeatIndex > initialIndex) {
+                    missedPlayers.Add(new PlayerId(pid));
+                }
+                
                 nextBeatIndex[pid] = playerBeatIndex;
             }
+            
+            return missedPlayers;
         }
 
         public void Reset() {

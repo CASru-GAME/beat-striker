@@ -31,6 +31,7 @@ namespace Core.Battle {
         }
 
         public void Exit() {
+            resetter.ResetBattle();
             bus.Unsubscribe<BattleMessages.NotifyIntroAnimationFinished>(OnIntroAnimationFinished);
         }
 

@@ -11,6 +11,7 @@ namespace Core.App.Presenters.Scene {
         public readonly ICursorRegistry cursorRegistry;
         public readonly ISceneStateController controller;
         public readonly ISceneStateFactory factory;
+        public readonly IPlayerRegistry playerRegistry;
 
 
         public SceneStateContext(
@@ -20,7 +21,9 @@ namespace Core.App.Presenters.Scene {
             ISceneStateController controller,
             ISceneStateFactory factory,
             ICursorFactory cursorFactory,
-            ICursorRegistry cursorRegistry
+            ICursorRegistry cursorRegistry,
+
+            IPlayerRegistry playerRegistry
         ) {
             this.view = view;
             this.bus = bus;
@@ -29,6 +32,7 @@ namespace Core.App.Presenters.Scene {
             this.factory = factory;
             this.cursorFactory = cursorFactory;
             this.cursorRegistry = cursorRegistry;
+            this.playerRegistry = playerRegistry;
         }
 
     }

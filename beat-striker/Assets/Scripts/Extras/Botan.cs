@@ -7,12 +7,15 @@ using UnityEngine.EventSystems;
 namespace Core {
     [AddComponentMenu(" Button", 0)]
     public class Botan : MonoBehaviour,
-        IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler {
+        IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler {
         public event Action<BotanEventData> onHover;
         public event Action<BotanEventData> onHoverExit;
         public event Action<BotanEventData> onClick;
         public UnityEvent onClickEvent;
         private int hoverCount = 0;
+        [Header("クリック音(指定しなくて良い)")]
+        public AudioClip clickSound;
+        public Action<BotanEventData> onExit;
 
         public void OnPointerEnter(PointerEventData eventData) {
             ++hoverCount;
@@ -27,9 +30,13 @@ namespace Core {
             onHoverExit?.Invoke(new BotanEventData(eventData));
         }
 
-        public void OnPointerClick(PointerEventData eventData) {
+        public void OnPointerDown(PointerEventData eventData) {
             onClickEvent?.Invoke();
             onClick?.Invoke(new BotanEventData(eventData));
+            if (clickSound != null) {
+                Debug.Log("Click sound played");
+                AudioSource.PlayClipAtPoint(clickSound, Camera.main.transform.position);
+            }
         }
     }
 

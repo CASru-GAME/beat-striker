@@ -4,7 +4,6 @@ using System.Collections;
 using Core;
 using Core.Utils;
 using Core.App.Presenters.Scene.Types;
-using UnityEditor.SceneManagement;
 using Core.App.Types;
 
 [RequireComponent(typeof(Botan))]
@@ -18,17 +17,15 @@ public class Stageselectbutton : MonoBehaviour
     public float hoverSoundVolume = 1f; // ホバー音の音量
     AudioSource audioSource;
     public Panel panel; // Panel参照
+    public Transform popParent; // Popupの親Transform
     public enum MoveType { None, Right, Left }
     public MoveType moveType = MoveType.None;
-    public GameObject popupPanel;
-    public CanvasGroup popupCanvasGroup;
-    public float popupDelay = 0.3f;
-    public float fadeSpeed = 6.0f;
+    public MusicPopup popupPrefab; // MusicPopupのPrefab
+    private MusicPopup currentPopup; // インスタンス化されたMusicPopup
     private static bool isPopupShown = false;
-    public float targetAlpha = 0f;
-    public RectTransform musicSelection;
-    public float musicSlideDistance = 500f;
-    private bool isPopupFadeInComplete = false;
+    
+    // ステージID
+    public string stageId = ""; // インスペクターで設定するステージID
     
     // black表示用
     public GameObject blackObject; // blackのImageオブジェクト
@@ -39,12 +36,10 @@ public class Stageselectbutton : MonoBehaviour
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
-        popupPanel.SetActive(false);
         botan = GetComponent<Botan>();
         audioSource = GetComponent<AudioSource>();
 
         image.color = Color.gray;
-        if (popupCanvasGroup != null) popupCanvasGroup.alpha = 0f;
         
         // blackオブジェクトにCanvasGroupを追加/取得して初期状態で非表示に
         if (blackObject != null)
@@ -89,10 +84,15 @@ public class Stageselectbutton : MonoBehaviour
         };
         botan.onClick += (e) => {
             Debug.Log("clicked");
-            if (popupPanel != null && popupCanvasGroup != null) {
-                StartCoroutine(ShowPopupWithFadeAndMusicSlide());
+            if (popupPrefab != null) {
+                // Popupをインスタンス化
+                if (currentPopup == null)
+                {
+                    currentPopup = Instantiate(popupPrefab, popParent);
+                }
+                currentPopup.Show();
                 isPopupShown = true;
-                this.GetBus().Publish(new AppMessages.SelectStage(new StageId("どっちか")));
+                this.GetBus().Publish(new AppMessages.SelectStage(new StageId(stageId)));
             }
         };
         botan.onHoverExit += (e) => {
@@ -115,33 +115,17 @@ public class Stageselectbutton : MonoBehaviour
                 LeanTween.alphaCanvas(blackCanvasGroup, 0f, blackFadeDuration).setEase(LeanTweenType.easeInQuad);
             }
         };
-        
     }
-    IEnumerator ShowPopupWithFadeAndMusicSlide()
+    
+    public void HidePopup()
     {
-        popupPanel.SetActive(true);
-        popupCanvasGroup.alpha = 0f;
-        targetAlpha = 1f;
-
-        if (musicSelection != null)
+        // 表示されていなかったら何もしない
+        if (!isPopupShown) return;
+        
+        if (currentPopup != null)
         {
-            Vector3 centerPos = musicSelection.localPosition;
-            Vector3 rightOff = centerPos + new Vector3(musicSlideDistance, 0f, 0f);
-            musicSelection.localPosition = rightOff;
-        }
-        yield return new WaitForSeconds(popupDelay);
-        while (popupCanvasGroup.alpha < 0.99f) 
-        {
-
-            popupCanvasGroup.alpha = Mathf.Lerp(popupCanvasGroup.alpha, targetAlpha, Time.deltaTime * fadeSpeed);
-            yield return null;
-        }
-        popupCanvasGroup.alpha = 1f;
-        isPopupFadeInComplete = true;
-        if (musicSelection != null)
-        {
-            Vector3 centerPos = musicSelection.localPosition - new Vector3(musicSlideDistance, 0f, 0f);
-            LeanTween.moveLocal(musicSelection.gameObject, centerPos, 0.4f).setEase(LeanTweenType.easeOutQuad);
+            currentPopup.Hide();
+            isPopupShown = false;
         }
     }
     
