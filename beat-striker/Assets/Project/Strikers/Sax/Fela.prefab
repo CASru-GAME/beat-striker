@@ -170,8 +170,8 @@ Rigidbody:
   m_GameObject: {fileID: 8405685953907551051}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 10
-  m_AngularDamping: 0.05
+  m_LinearDamping: 20
+  m_AngularDamping: 0.1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -223,9 +223,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd850a13dc7f54a2ba56ef052d1400c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Core.Battle::Core.Battle.StrikerView
-  dashSpeed: 30
+  dashSpeed: 70
   walkSpeed: 2
-  rotationSpeed: 360
+  rotationSpeed: 2000
   collidenRefs: []
   specialSpawnHeight: 2
   specialSpawnForward: 0.8

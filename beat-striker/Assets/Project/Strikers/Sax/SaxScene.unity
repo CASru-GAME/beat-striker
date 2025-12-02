@@ -426,7 +426,7 @@ Transform:
   m_GameObject: {fileID: 932946621}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 3.3900013, y: -1.9499999, z: 0.5400002}
+  m_LocalPosition: {x: 3.3900013, y: -1.9499999, z: 0.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -694,10 +694,10 @@ MonoBehaviour:
   camTransform1: {fileID: 185632237}
   playerTransform1: {fileID: 1568525173}
   camTransformFinal: {fileID: 1458915842}
-  forwardDistance: 4
-  forwardDuration: 2
-  orbitDuration: 2
-  orbitAngle: -20
+  forwardDistance: 1
+  forwardDuration: 1
+  orbitDuration: 1
+  orbitAngle: -10
   outroDistance: 3
   outroDuration: 1
   outroWaitDuration: 3
@@ -853,7 +853,7 @@ Transform:
   m_GameObject: {fileID: 1635008633}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -3.4299998, y: -2.25, z: 0.24999976}
+  m_LocalPosition: {x: -3.4299998, y: -2.25, z: 0.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -965,6 +965,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3559071986890918602, guid: 9c507950677e942f89f05cea204c4621, type: 3}
+      propertyPath: firstScene
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 3559071986890918602, guid: 9c507950677e942f89f05cea204c4621, type: 3}
       propertyPath: defaultTrackId.value
       value: Azuno
@@ -1078,6 +1082,46 @@ PrefabInstance:
       propertyPath: playerPosition
       value: 
       objectReference: {fileID: 1382093129}
+    - target: {fileID: 3231889541675242297, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: Loop
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3587950757328120313, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3587950757328120313, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3587950757328120313, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8334294981550816226, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8334294981550816226, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8334294981550816226, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8778802113235280856, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: bpm
+      value: 130
+      objectReference: {fileID: 0}
+    - target: {fileID: 8778802113235280856, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: goodWindow
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8778802113235280856, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: timeOffset
+      value: -0.2
+      objectReference: {fileID: 0}
     - target: {fileID: 8778802113235280856, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
       propertyPath: 'playerTransforms.Array.data[0]'
       value: 
@@ -1090,6 +1134,10 @@ PrefabInstance:
       propertyPath: strikerPrefabs.Array.data[0].prefab
       value: 
       objectReference: {fileID: -3553512238060714679, guid: 0964bf0418d9447a28f889821917dd09, type: 3}
+    - target: {fileID: 8778802113235280856, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
+      propertyPath: trackAudios.Array.data[0].audioClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 83579df36a8c84ea9b88aae568eb8b44, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
