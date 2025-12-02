@@ -1,4 +1,4 @@
-﻿#if MTOON_URP
+#if MTOON_URP
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 

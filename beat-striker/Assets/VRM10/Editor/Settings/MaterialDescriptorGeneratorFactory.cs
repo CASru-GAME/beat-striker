@@ -1,4 +1,4 @@
-﻿using UniGLTF;
+using UniGLTF;
 using UnityEngine;
 
 namespace VRM10.Settings

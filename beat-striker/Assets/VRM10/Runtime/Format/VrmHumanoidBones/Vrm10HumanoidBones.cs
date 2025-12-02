@@ -1,4 +1,4 @@
-﻿namespace UniVRM10
+namespace UniVRM10
 {
     /// <summary>
     /// https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_vrm-1.0/humanoid.md

@@ -1,4 +1,4 @@
-﻿namespace UniVRM10
+namespace UniVRM10
 {
     internal struct Vrm0XMToonTextureIndexMap
     {

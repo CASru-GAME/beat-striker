@@ -1,4 +1,4 @@
-﻿namespace VRM10.MToon10
+namespace VRM10.MToon10
 {
     public enum MToon10TransparentWithZWriteMode
     {
