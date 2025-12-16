@@ -5,12 +5,11 @@ using UnityEngine;
 
 namespace Core.Battle {
 
-    [RequireComponent(typeof(Animator))]
     [RequireComponent(typeof(Rigidbody))]
     public class StrikerView : MonoBehaviour, IStrikerView {
         private Vector2 direction;
         private Rigidbody rb;
-        private Animator anim;
+        [SerializeField] private Animator anim;
         private bool isGround = false, preIsGround = false;
         [SerializeField] float dashSpeed = 50f;
         [SerializeField] float walkSpeed = 5f;
@@ -38,7 +37,7 @@ namespace Core.Battle {
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
-            anim = GetComponent<Animator>();
+            anim ??= GetComponent<Animator>();   
         }
 
             // 必殺技の時間差発射用メソッド
