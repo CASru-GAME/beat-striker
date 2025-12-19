@@ -1,0 +1,20 @@
+using UnityEngine;
+
+namespace Core.Striker.Components
+{
+    [AddComponentMenu("Striker/Components/Charger")]
+    public class StrikerCharger : MonoBehaviour
+    {
+        public bool IsCharged { get; private set; }
+
+        public void Charge()
+        {
+            IsCharged = true;
+        }
+
+        public void ChargeEnd()
+        {
+            IsCharged = false;
+        }
+    }
+}

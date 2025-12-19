@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections;
+using Core.App.Interfaces;
+using Core.App.Types;
 using Core.Battle;
 using UnityEngine;
 
@@ -98,6 +100,11 @@ namespace Core.Battle {
 
         public void Construct(IStrikerHit strikerHit) {
             this.strikerHit = strikerHit;
+        }
+        
+        public IStrikerModelGetter Construct(PlayerId playerId, ScoreRule rule, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry) {
+            // StrikerViewはStrikerInstaller経由で初期化される
+            throw new System.NotSupportedException("StrikerView should be constructed via StrikerInstaller.");
         }
 
         public void ChangeDirection(Vector2 direction) {
