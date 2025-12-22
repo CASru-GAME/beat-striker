@@ -485,14 +485,14 @@ namespace Tests.EditMode {
             life.Enable();
 
             // ダメージ10 → HP90, Deadではない
-            presenter.TakeDamage(new HitStatus(new HitPoint(10f)));
+            presenter.GiveHit(new HitStatus(new HitPoint(10f)));
             Assert.True(view.onHitCalled);
             Assert.False(view.onDeadCalled);
             Assert.That(model.HitPoint.value, Is.EqualTo(90f).Within(1e-5));
 
             // 大ダメージで即死 → OnDead() & NotifyPlayerDead がPublishされる
             view.ResetFlags();
-            presenter.TakeDamage(new HitStatus(new HitPoint(1000f)));
+            presenter.GiveHit(new HitStatus(new HitPoint(1000f)));
             Assert.True(view.onHitCalled);
             Assert.True(view.onDeadCalled);
             Assert.True(model.IsDead());

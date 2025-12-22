@@ -172,7 +172,7 @@ namespace Core.Battle {
         }
 
         public void TakeDamage(HitStatus status) {
-            this.strikerHit.TakeDamage(status);
+            this.strikerHit.GiveHit(status);
         }
 
         private void OnCollisionStay(Collision collision) {

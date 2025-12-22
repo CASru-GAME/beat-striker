@@ -2,23 +2,25 @@ using UnityEngine;
 
 namespace Core.Striker
 {
-    [AddComponentMenu("Striker/States/Attack State")]
+    [AddComponentMenu(" StrikerStates/Attack State")]
     public class StrikerAttackState : StrikerState
     {
         [SerializeField] private AnimationClip animationClip;
         [SerializeField] private StrikerState idleState;
+        private IStrikerHub currentHub;
 
-        public override void Enter()
+        public override void Enter(StrikerStateContext context)
         {
+            currentHub = context.Hub;
             if (animationClip != null)
             {
-                hub.PlayAnimation(animationClip, OnAnimationComplete);
+                context.Hub.PlayAnimation(animationClip, OnAnimationComplete);
             }
         }
 
         private void OnAnimationComplete()
         {
-             hub.ChangeState(idleState);
+             currentHub?.ChangeState(idleState);
         }
     }
 }

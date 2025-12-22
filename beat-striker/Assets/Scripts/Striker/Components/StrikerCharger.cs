@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Core.Striker.Components
 {
-    [AddComponentMenu("Striker/Components/Charger")]
+    [AddComponentMenu(" StrikerComponents/Charger", 0)]
     public class StrikerCharger : MonoBehaviour
     {
         public bool IsCharged { get; private set; }

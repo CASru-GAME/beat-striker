@@ -2,23 +2,25 @@ using UnityEngine;
 
 namespace Core.Striker
 {
-    [AddComponentMenu("Striker/States/Charge End State")]
+    [AddComponentMenu(" StrikerStates/Charge End State")]
     public class StrikerChargeEndState : StrikerState
     {
         [SerializeField] private AnimationClip animationClip;
         [SerializeField] private StrikerState idleState;
+        private IStrikerHub currentHub;
 
-        public override void Enter()
+        public override void Enter(StrikerStateContext context)
         {
+            currentHub = context.Hub;
             if (animationClip != null)
             {
-                hub.PlayAnimation(animationClip, OnAnimationComplete);
+                context.Hub.PlayAnimation(animationClip, OnAnimationComplete);
             }
         }
 
         private void OnAnimationComplete()
         {
-             hub.ChangeState(idleState);
+             currentHub?.ChangeState(idleState);
         }
     }
 }

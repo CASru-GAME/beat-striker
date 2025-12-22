@@ -104,7 +104,7 @@ namespace Core.Battle {
             view.ChangeDirection(msg.direction);
         }
 
-        public void TakeDamage(HitStatus status) {
+        public void GiveHit(HitStatus status) {
             if (model.IsDead()) return;
             
             view.OnHit();

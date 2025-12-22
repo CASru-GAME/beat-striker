@@ -3,22 +3,20 @@ using UnityEngine;
 
 namespace Core.Striker
 {
-    [AddComponentMenu("Striker/States/Charge State")]
+    [AddComponentMenu(" StrikerStates/Charge State")]
     public class StrikerChargeState : StrikerState
     {
         [SerializeField] private AnimationClip animationClip;
         private Components.StrikerCharger charger;
 
-        public override void Setup(IStrikerHub hub, Rigidbody rb, Animator anim)
+        private void Awake()
         {
-            base.Setup(hub, rb, anim);
             charger = GetComponent<Components.StrikerCharger>();
         }
 
-        public override void Enter()
+        public override void Enter(StrikerStateContext context)
         {
-            if (animationClip != null) hub.PlayAnimation(animationClip);
-            base.Enter();
+            if (animationClip != null) context.Hub.PlayAnimation(animationClip);
             if(charger != null) charger.Charge();
         }
 

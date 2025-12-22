@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Core.Striker.Components
 {
-    [AddComponentMenu("Striker/Components/Ground Check")]
+    [AddComponentMenu(" StrikerComponents/Ground Check", 0)]
     public class StrikerGroundCheck : MonoBehaviour
     {
         public bool IsGround { get; private set; }
