@@ -15,20 +15,20 @@ namespace Core.Striker {
             groundCheck = GetComponent<Components.StrikerGroundCheck>();
         }
 
-        public override void Enter(StrikerStateContext context) {
-            if (animationClip != null) context.Hub.PlayAnimation(animationClip);
+        public override void Enter(IStrikerHub hub) {
+            if (animationClip != null) hub.PlayAnimation(animationClip);
         }
 
-        public override void OnUpdate(StrikerStateContext context) {
+        public override void OnUpdate(IStrikerHub hub) {
             if (groundCheck != null && !groundCheck.IsGround) return;
             
             // Movement logic
-            var direction = context.Hub.InputDirection;
+            var direction = hub.InputDirection;
             
-            if (direction != Vector2.zero && Mathf.Abs(context.Rigidbody.linearVelocity.x) < walkSpeed && !targetRotationAngle.HasValue) {
-                var v = context.Rigidbody.linearVelocity;
+            if (direction != Vector2.zero && Mathf.Abs(hub.Rigidbody.linearVelocity.x) < walkSpeed && !targetRotationAngle.HasValue) {
+                var v = hub.Rigidbody.linearVelocity;
                 v.x = walkSpeed * direction.x;
-                context.Rigidbody.linearVelocity = v;
+                hub.Rigidbody.linearVelocity = v;
             }
 
             RotateTowardsDirection(direction);

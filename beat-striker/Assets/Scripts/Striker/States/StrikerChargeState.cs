@@ -14,9 +14,9 @@ namespace Core.Striker
             charger = GetComponent<Components.StrikerCharger>();
         }
 
-        public override void Enter(StrikerStateContext context)
+        public override void Enter(IStrikerHub hub)
         {
-            if (animationClip != null) context.Hub.PlayAnimation(animationClip);
+            if (animationClip != null) hub.PlayAnimation(animationClip);
             if(charger != null) charger.Charge();
         }
 

@@ -5,15 +5,15 @@ namespace Core.Striker
 {
     public interface IStrikerState
     {
-        void Enter(StrikerStateContext context);
+        void Enter(IStrikerHub hub);
         void Exit();
-        void OnUpdate(StrikerStateContext context);
+        void OnUpdate(IStrikerHub hub);
 
-        void OnHit(StrikerStateContext context,HitStatus status);
-        void OnAttackRequested(StrikerStateContext context);
-        void OnChargeRequested(StrikerStateContext context);
-        void OnGuardRequested(StrikerStateContext context);
-        void OnDashRequested(StrikerStateContext context);
-        void OnMiss(StrikerStateContext context);
+        void OnHit(IStrikerHub hub,HitStatus status);
+        void OnAttackRequested(IStrikerHub hub);
+        void OnChargeRequested(IStrikerHub hub);
+        void OnGuardRequested(IStrikerHub hub);
+        void OnDashRequested(IStrikerHub hub);
+        void OnMiss(IStrikerHub hub);
     }
 }

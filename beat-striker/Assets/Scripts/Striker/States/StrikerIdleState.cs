@@ -6,11 +6,11 @@ namespace Core.Striker {
     public class StrikerIdleState : StrikerState {
         [SerializeField] private AnimationClip animationClip;
 
-        public override void Enter(StrikerStateContext context) {
-            if (animationClip != null) context.Hub.PlayAnimation(animationClip);
+        public override void Enter(IStrikerHub hub) {
+            if (animationClip != null) hub.PlayAnimation(animationClip);
         }
 
-        public override void OnUpdate(StrikerStateContext context) {
+        public override void OnUpdate(IStrikerHub hub) {
             // Idle logic
         }
     }

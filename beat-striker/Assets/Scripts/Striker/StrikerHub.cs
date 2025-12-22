@@ -9,6 +9,8 @@ using Core.Battle;
 using Core.GamePad.Types;
 using Core.Striker.Components;
 using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Animations;
 
 namespace Core.Striker {
     [RequireComponent(typeof(Life))]
@@ -40,15 +42,27 @@ namespace Core.Striker {
         private bool isInputEnabled = false;
 
         public Vector2 InputDirection { get; private set; }
+        public Rigidbody Rigidbody => rb;
 
         private IStrikerState currentState;
-        private StrikerStateContext stateContext;
         private Coroutine currentAnimationCoroutine;
+
+        // Playable API
+        private PlayableGraph playableGraph;
+        private AnimationMixerPlayable mixer;
+        private AnimationClipPlayable currentClipPlayable;
 
         private void Awake() {
             rb = GetComponent<Rigidbody>();
             anim = GetComponent<Animator>();
-            stateContext = new StrikerStateContext(this, rb, anim);
+
+            // PlayableGraphの初期化
+            playableGraph = PlayableGraph.Create("StrikerAnimationGraph");
+            playableGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
+            
+            mixer = AnimationMixerPlayable.Create(playableGraph, 1);
+            var output = AnimationPlayableOutput.Create(playableGraph, "Animation", anim);
+            output.SetSourcePlayable(mixer);
 
             ChangeState(defaultState);
         }
@@ -86,7 +100,7 @@ namespace Core.Striker {
         }
 
         private void Update() {
-            currentState.OnUpdate(stateContext);
+            currentState.OnUpdate(this);
         }
 
         public void ChangeState(IStrikerState newState) {
@@ -100,24 +114,72 @@ namespace Core.Striker {
 
             currentState?.Exit();
             currentState = newState;
-            currentState.Enter(stateContext);
+            currentState.Enter(this);
         }
 
-        public void PlayAnimation(AnimationClip clip, Action onComplete = null) {
+        public void PlayAnimation(AnimationClip clip, float fadeTime, float speed, Action onComplete) {
             if (anim == null || clip == null) return;
 
             if (currentAnimationCoroutine != null) {
                 StopCoroutine(currentAnimationCoroutine);
             }
 
-            currentAnimationCoroutine = StartCoroutine(PlayAnimationCoroutine(clip, onComplete));
+            currentAnimationCoroutine = StartCoroutine(PlayAnimationCoroutine(clip, fadeTime, speed, onComplete));
         }
 
-        private IEnumerator PlayAnimationCoroutine(AnimationClip clip, Action onComplete) {
-            anim.Play(clip.name);
-            yield return new WaitForSeconds(clip.length);
+        private IEnumerator PlayAnimationCoroutine(AnimationClip clip, float fadeTime, float speed, Action onComplete) {
+            if (currentClipPlayable.IsValid()) {
+                // フェードアウト処理
+                if (fadeTime > 0f) {
+                    float elapsed = 0f;
+                    float startWeight = mixer.GetInputWeight(0);
+                    
+                    while (elapsed < fadeTime) {
+                        elapsed += Time.deltaTime;
+                        float weight = Mathf.Lerp(startWeight, 0f, elapsed / fadeTime);
+                        mixer.SetInputWeight(0, weight);
+                        yield return null;
+                    }
+                }
+
+                mixer.DisconnectInput(0);
+                currentClipPlayable.Destroy();
+            }
+
+            currentClipPlayable = AnimationClipPlayable.Create(playableGraph, clip);
+            currentClipPlayable.SetSpeed(speed);
+            mixer.ConnectInput(0, currentClipPlayable, 0);
+            
+            playableGraph.Play();
+            currentClipPlayable.SetTime(0);
+
+            // フェードイン処理
+            if (fadeTime > 0f) {
+                float elapsed = 0f;
+                
+                while (elapsed < fadeTime) {
+                    elapsed += Time.deltaTime;
+                    float weight = Mathf.Lerp(0f, 1f, elapsed / fadeTime);
+                    mixer.SetInputWeight(0, weight);
+                    yield return null;
+                }
+                mixer.SetInputWeight(0, 1f);
+            } else {
+                mixer.SetInputWeight(0, 1f);
+            }
+
+            while (currentClipPlayable.GetTime() < currentClipPlayable.GetDuration()) {
+                yield return null;
+            }
+            
             currentAnimationCoroutine = null;
             onComplete?.Invoke();
+        }
+
+        private void OnDestroy() {
+            if (playableGraph.IsValid()) {
+                playableGraph.Destroy();
+            }
         }
 
         // Logic from StrikerPresenter
@@ -185,7 +247,7 @@ namespace Core.Striker {
         public void GiveHit(HitStatus status) {
             if (model.IsDead()) return;
 
-            currentState.OnHit(stateContext, status);
+            currentState.OnHit(this, status);
         }
 
         public void ApplyDamage(HitPoint damage) {
@@ -197,15 +259,15 @@ namespace Core.Striker {
 
         // Note: For requests, we now need to fetch the state instance.
         public void Dash() {
-            currentState.OnAttackRequested(stateContext);
+            currentState.OnAttackRequested(this);
         }
 
         public void Attack() {
-            currentState.OnDashRequested(stateContext);
+            currentState.OnDashRequested(this);
         }
         // Charge logic: Request charge state. State entry calls Charger.Charge()?
         public void Charge() {
-            currentState.OnChargeRequested(stateContext);
+            currentState.OnChargeRequested(this);
         }
 
         public void Special() {
@@ -217,11 +279,11 @@ namespace Core.Striker {
         }
 
         public void Guard(){
-            currentState.OnGuardRequested(stateContext);
+            currentState.OnGuardRequested(this);
         }
 
         public void OnMiss() { 
-            currentState.OnMiss(stateContext);
+            currentState.OnMiss(this);
         }
 
         public void OnDead() {

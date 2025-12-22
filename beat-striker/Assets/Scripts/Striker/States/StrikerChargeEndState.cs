@@ -9,12 +9,12 @@ namespace Core.Striker
         [SerializeField] private StrikerState idleState;
         private IStrikerHub currentHub;
 
-        public override void Enter(StrikerStateContext context)
+        public override void Enter(IStrikerHub hub)
         {
-            currentHub = context.Hub;
+            currentHub = hub;
             if (animationClip != null)
             {
-                context.Hub.PlayAnimation(animationClip, OnAnimationComplete);
+                hub.PlayAnimation(animationClip, 0f, 1f, OnAnimationComplete);
             }
         }
 
