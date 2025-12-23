@@ -797,6 +797,32 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!1 &1549992129 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 62880537731055331, guid: 0101498d816bfc54683dce80f8a115f0, type: 3}
+  m_PrefabInstance: {fileID: 1916398978694536209}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1549992131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1549992129}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a942e03b39600e41a1b161e958048f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VRM10::UniVRM10.VRM10SpringBoneJoint
+  m_stiffnessForce: 0.98029554
+  m_gravityPower: 0
+  m_gravityDir: {x: 0, y: -1, z: 0}
+  m_dragForce: 0.4
+  m_jointRadius: 0.02
+  m_anglelimitType: 3
+  m_limitSpaceOffset: {x: 0, y: 0, z: 0, w: 1}
+  m_pitch: 3.1415927
+  m_yaw: 0
 --- !u!1 &1568525172
 GameObject:
   m_ObjectHideFlags: 0
@@ -957,6 +983,32 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 50b2ebc5686784b6f8d03d0c315a4742, type: 3}
+--- !u!1 &1778193651 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2363100029363982913, guid: 0101498d816bfc54683dce80f8a115f0, type: 3}
+  m_PrefabInstance: {fileID: 1916398978694536209}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1778193653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1778193651}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a942e03b39600e41a1b161e958048f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VRM10::UniVRM10.VRM10SpringBoneJoint
+  m_stiffnessForce: 1
+  m_gravityPower: 0
+  m_gravityDir: {x: 0, y: -1, z: 0}
+  m_dragForce: 0.4
+  m_jointRadius: 0.04545455
+  m_anglelimitType: 0
+  m_limitSpaceOffset: {x: 0, y: 0, z: 0, w: 1}
+  m_pitch: 3.1415927
+  m_yaw: 0
 --- !u!1001 &1916398978694536209
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -968,6 +1020,18 @@ PrefabInstance:
     - target: {fileID: 4711179319276715905, guid: 0101498d816bfc54683dce80f8a115f0, type: 3}
       propertyPath: m_Name
       value: Magic.boneb
+      objectReference: {fileID: 0}
+    - target: {fileID: 5095309689461363894, guid: 0101498d816bfc54683dce80f8a115f0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.171
+      objectReference: {fileID: 0}
+    - target: {fileID: 5095309689461363894, guid: 0101498d816bfc54683dce80f8a115f0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.153
+      objectReference: {fileID: 0}
+    - target: {fileID: 5095309689461363894, guid: 0101498d816bfc54683dce80f8a115f0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.049
       objectReference: {fileID: 0}
     - target: {fileID: 7997581550255824279, guid: 0101498d816bfc54683dce80f8a115f0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1012,7 +1076,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2363100029363982913, guid: 0101498d816bfc54683dce80f8a115f0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1778193653}
+    - targetCorrespondingSourceObject: {fileID: 62880537731055331, guid: 0101498d816bfc54683dce80f8a115f0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1549992131}
   m_SourcePrefab: {fileID: 100100000, guid: 0101498d816bfc54683dce80f8a115f0, type: 3}
 --- !u!1001 &6887505131142916338
 PrefabInstance:

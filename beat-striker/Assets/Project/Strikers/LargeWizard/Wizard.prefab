@@ -170,6 +170,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Magic.bonec
       objectReference: {fileID: 0}
+    - target: {fileID: 602026509518421357, guid: 4148b00655d4d32489cf5f0d2e104b9d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.193
+      objectReference: {fileID: 0}
     - target: {fileID: 1144061141385143964, guid: 4148b00655d4d32489cf5f0d2e104b9d, type: 3}
       propertyPath: m_DirtyAABB
       value: 0
@@ -329,7 +333,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -4327321129474003597, guid: 4148b00655d4d32489cf5f0d2e104b9d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4920904242864250851}
+    - targetCorrespondingSourceObject: {fileID: 3006928552751935236, guid: 4148b00655d4d32489cf5f0d2e104b9d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5469691254498839684}
   m_SourcePrefab: {fileID: -3956505258223990651, guid: 4148b00655d4d32489cf5f0d2e104b9d, type: 3}
 --- !u!4 &4109864427670440522 stripped
 Transform:
@@ -341,3 +351,51 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 4870552773557632513, guid: 4148b00655d4d32489cf5f0d2e104b9d, type: 3}
   m_PrefabInstance: {fileID: 9120231190211872314}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &4423614204098685769 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4327321129474003597, guid: 4148b00655d4d32489cf5f0d2e104b9d, type: 3}
+  m_PrefabInstance: {fileID: 9120231190211872314}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4920904242864250851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4423614204098685769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a942e03b39600e41a1b161e958048f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VRM10::UniVRM10.VRM10SpringBoneJoint
+  m_stiffnessForce: 1
+  m_gravityPower: 0
+  m_gravityDir: {x: 0, y: -1, z: 0}
+  m_dragForce: 0.4
+  m_jointRadius: 0.02
+  m_anglelimitType: 3
+  m_limitSpaceOffset: {x: 0, y: 0, z: 0, w: 1}
+  m_pitch: 3.1415927
+  m_yaw: 0
+--- !u!1 &6281202496023456062 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3006928552751935236, guid: 4148b00655d4d32489cf5f0d2e104b9d, type: 3}
+  m_PrefabInstance: {fileID: 9120231190211872314}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5469691254498839684
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6281202496023456062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35bfb658269b2af478e501de243deda6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VRM10::UniVRM10.VRM10SpringBoneCollider
+  ColliderType: 0
+  Offset: {x: 0, y: 0, z: 0}
+  Radius: 0.148
+  Tail: {x: 0, y: 0, z: 0}
+  Normal: {x: 0, y: 1, z: 0}
