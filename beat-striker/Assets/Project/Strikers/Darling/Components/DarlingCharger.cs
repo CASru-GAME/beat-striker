@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace Core.Striker.Components
+namespace Core.Striker.Darling.Components
 {
     [AddComponentMenu(" StrikerComponents/Charger", 0)]
-    public class StrikerCharger : MonoBehaviour
+    public class DarlingCharger : MonoBehaviour
     {
         public int Count { get; private set; }
 

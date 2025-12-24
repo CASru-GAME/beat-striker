@@ -2,30 +2,28 @@ using Core.Battle;
 using UnityEngine;
 
 namespace Core.Striker {
-    public abstract class StrikerState : MonoBehaviour, IStrikerState {
-        public virtual void Enter(IStrikerHub hub) { }
-        public virtual void Exit() { }
+    public abstract class StrikerState : StrikerNode, IStrikerState {
 
-        public void OnAttackRequested(IStrikerHub hub) {
+        public sealed override void OnTryTransition(IStrikerNodeContext context) {
+            context.ChangeState(this);
         }
 
-        public void OnChargeRequested(IStrikerHub hub) {
-        }
+        public abstract void OnEnter(IStrikerContext hub);
 
-        public void OnDashRequested(IStrikerHub hub) {
-        }
+        public abstract void OnUpdate(IStrikerStateContext hub);
 
-        public void OnGuardRequested(IStrikerHub hub) {
-        }
+        public abstract void OnExit(IStrikerContext hub);
+        
+        public abstract void OnAttackRequested(IStrikerStateContext hub);
 
-        public void OnHit(IStrikerHub hub, HitStatus status) {
-        }
+        public abstract void OnChargeRequested(IStrikerStateContext hub);
 
-        public void OnMiss(IStrikerHub hub) {
-        }
+        public abstract void OnDashRequested(IStrikerStateContext hub);
 
-        public virtual void OnUpdate(IStrikerHub hub) { 
+        public abstract void OnGuardRequested(IStrikerStateContext hub);
 
-        }
+        public abstract void OnHit(IStrikerStateContext hub, HitStatus status);
+
+        public abstract void OnMiss(IStrikerStateContext hub);
     }
 }

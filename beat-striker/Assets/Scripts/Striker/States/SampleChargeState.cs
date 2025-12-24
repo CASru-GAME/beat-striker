@@ -1,49 +1,43 @@
 using Core.Battle;
+using Core.Striker.Components;
 using UnityEngine;
 
 namespace Core.Striker {
-    [AddComponentMenu(" StrikerStates/Walk State")]
-    public class StrikerWalkState : StrikerState {
+
+    public class SampleChargeState : StrikerState {
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] private float walkSpeed = 5f;
-    
-        [SerializeField] private StrikerNode locomotion,attack,dash,hit,charge;
+        [SerializeField] private StrikerNode hit;
+        [SerializeField] private StrikerCharger charger;
 
         public override void OnEnter(IStrikerContext hub) {
-            hub.PlayAnimation(animationClip);
+            hub.PlayAnimation(animationClip, OnAnimationComplete);
         }
 
         public override void OnUpdate(IStrikerStateContext hub) {
-            var direction = hub.InputDirection;
-            
-            if (direction != Vector2.zero && Mathf.Abs(hub.Rigidbody.linearVelocity.x) < walkSpeed) {
-                var v = hub.Rigidbody.linearVelocity;
-                v.x = walkSpeed * direction.x;
-                hub.Rigidbody.linearVelocity = v;
-            }
-
-            hub.TryTransition(locomotion);
         }
 
         public override void OnExit(IStrikerContext hub) {
         }
 
+        private void OnAnimationComplete(IStrikerStateContext hub) {
+            charger.Charge();
+            hub.TryTransition();
+        }
+
         public override void OnAttackRequested(IStrikerStateContext hub) {
-            hub.TryTransition(attack);
         }
 
         public override void OnChargeRequested(IStrikerStateContext hub) {
-            hub.TryTransition(charge);
         }
 
         public override void OnDashRequested(IStrikerStateContext hub) {
-            hub.TryTransition(dash);
         }
 
         public override void OnGuardRequested(IStrikerStateContext hub) {
         }
 
         public override void OnHit(IStrikerStateContext hub, HitStatus status) {
+            hub.TryTransition(hit);
         }
 
         public override void OnMiss(IStrikerStateContext hub) {

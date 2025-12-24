@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace Core.Striker.Components {
+namespace Core.Striker.Darling.Components {
     [AddComponentMenu(" StrikerComponents/Ground Check", 0)]
-    public class StrikerGroundCheck : MonoBehaviour {
+    public class DarlingGroundCheck : MonoBehaviour {
         public bool IsGrounded { get; private set; }
 
         private void OnCollisionStay(Collision collision) {

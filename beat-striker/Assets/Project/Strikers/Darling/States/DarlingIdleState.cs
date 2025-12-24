@@ -1,12 +1,11 @@
 using Core.Battle;
+using Core.Striker.Components;
 using UnityEngine;
 
-namespace Core.Striker {
-    [AddComponentMenu(" StrikerStates/Walk State")]
-    public class StrikerWalkState : StrikerState {
+namespace Core.Striker.Darling.States {
+
+    public class DarlingIdleState : StrikerState {
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] private float walkSpeed = 5f;
-    
         [SerializeField] private StrikerNode locomotion,attack,dash,hit,charge;
 
         public override void OnEnter(IStrikerContext hub) {
@@ -14,14 +13,6 @@ namespace Core.Striker {
         }
 
         public override void OnUpdate(IStrikerStateContext hub) {
-            var direction = hub.InputDirection;
-            
-            if (direction != Vector2.zero && Mathf.Abs(hub.Rigidbody.linearVelocity.x) < walkSpeed) {
-                var v = hub.Rigidbody.linearVelocity;
-                v.x = walkSpeed * direction.x;
-                hub.Rigidbody.linearVelocity = v;
-            }
-
             hub.TryTransition(locomotion);
         }
 

@@ -15,25 +15,22 @@ using UnityEngine.Animations;
 namespace Core.Striker {
     [RequireComponent(typeof(Life))]
     [RequireComponent(typeof(Rigidbody))]
-    [RequireComponent(typeof(Animator))]
+    [RequireComponent(typeof(CapsuleCollider))]
     [AddComponentMenu(" Striker Hub", 0)]
-    public class StrikerHub : MonoBehaviour, IStrikerHub, IStrikerHit {
+    public class StrikerHub : MonoBehaviour, IStrikerStateContext, IStrikerNodeContext, IStrikerHit {
         [Header("Striker Settings")]
         [SerializeField] private HitPoint maxHitPoint = new(100);
         [SerializeField] private SpecialPoint maxSpecialPoint = new(100);
 
         [Header("References")]
         [SerializeField] private StrikerState defaultState;
-
-        [Header("Special spawn settings")]
-        [SerializeField] private float specialSpawnHeight = 2.0f;
-        [SerializeField] private float specialSpawnForward = 0.8f;
+        [SerializeField] private StrikerState deadState, VictoryState, IntroState;
 
         private Rigidbody rb;
-        private Animator anim;
+        [SerializeField] private Animator animator;
         private Vector3 initialPosition;
         private Quaternion initialRotation;
-
+        
         private IBus bus;
         private IStrikerModel model;
         private IPlayerRegistry playerRegistry;
@@ -54,14 +51,13 @@ namespace Core.Striker {
 
         private void Awake() {
             rb = GetComponent<Rigidbody>();
-            anim = GetComponent<Animator>();
 
             // PlayableGraphの初期化
             playableGraph = PlayableGraph.Create("StrikerAnimationGraph");
             playableGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
             
             mixer = AnimationMixerPlayable.Create(playableGraph, 1);
-            var output = AnimationPlayableOutput.Create(playableGraph, "Animation", anim);
+            var output = AnimationPlayableOutput.Create(playableGraph, "Animation", animator);
             output.SetSourcePlayable(mixer);
 
             ChangeState(defaultState);
@@ -106,30 +102,40 @@ namespace Core.Striker {
         public void ChangeState(IStrikerState newState) {
             if (newState == currentState) return;
 
-            // 実行中のアニメーションコルーチンを停止
             if (currentAnimationCoroutine != null) {
                 StopCoroutine(currentAnimationCoroutine);
                 currentAnimationCoroutine = null;
             }
 
-            currentState?.Exit();
+            currentState?.OnExit(this);
             currentState = newState;
-            currentState.Enter(this);
+            currentState.OnEnter(this);
         }
 
-        public void PlayAnimation(AnimationClip clip, float fadeTime, float speed, Action onComplete) {
-            if (anim == null || clip == null) return;
+        public void ChangeState() {
+            ChangeState(defaultState);
+        }
+
+        public void TryTransition(IStrikerNode node) {
+            node.OnTryTransition(this);
+        }
+
+        public void TryTransition() {
+            ChangeState();
+        }
+
+        public void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null) {
+            if (animator == null || animation.clip == null) return;
 
             if (currentAnimationCoroutine != null) {
                 StopCoroutine(currentAnimationCoroutine);
             }
 
-            currentAnimationCoroutine = StartCoroutine(PlayAnimationCoroutine(clip, fadeTime, speed, onComplete));
+            currentAnimationCoroutine = StartCoroutine(PlayAnimationCoroutine(animation.clip, animation.fadeTime, animation.speed, onComplete));
         }
 
-        private IEnumerator PlayAnimationCoroutine(AnimationClip clip, float fadeTime, float speed, Action onComplete) {
+        private IEnumerator PlayAnimationCoroutine(AnimationClip clip, float fadeTime, float speed, Action<IStrikerStateContext> onComplete) {
             if (currentClipPlayable.IsValid()) {
-                // フェードアウト処理
                 if (fadeTime > 0f) {
                     float elapsed = 0f;
                     float startWeight = mixer.GetInputWeight(0);
@@ -153,7 +159,6 @@ namespace Core.Striker {
             playableGraph.Play();
             currentClipPlayable.SetTime(0);
 
-            // フェードイン処理
             if (fadeTime > 0f) {
                 float elapsed = 0f;
                 
@@ -173,7 +178,7 @@ namespace Core.Striker {
             }
             
             currentAnimationCoroutine = null;
-            onComplete?.Invoke();
+            onComplete?.Invoke(this);
         }
 
         private void OnDestroy() {
@@ -288,10 +293,16 @@ namespace Core.Striker {
 
         public void OnDead() {
             bus.Publish(new BattleMessages.NotifyPlayerDead(model.PlayerId));
+            ChangeState(deadState);
         }
 
-        public void OnIntro() { /* Request Intro state? */ }
-        public void OnVictory() { /* Request Victory state? */ }
+        public void OnIntro() {
+            ChangeState(IntroState);
+        }
+
+        public void OnVictory() {
+            ChangeState(VictoryState);
+        }
 
         public void OnReset() {
             ChangeState(defaultState);

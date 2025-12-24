@@ -1,9 +1,9 @@
 using Core.Battle;
 using UnityEngine;
 
-namespace Core.Striker {
+namespace Core.Striker.Darling.States {
     [AddComponentMenu(" StrikerStates/Walk State")]
-    public class StrikerWalkState : StrikerState {
+    public class DarlingWalkState : StrikerState {
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private float walkSpeed = 5f;
     
