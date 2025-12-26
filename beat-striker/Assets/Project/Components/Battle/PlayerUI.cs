@@ -16,7 +16,7 @@ public class PlayerUI : MonoBehaviour {
     IStrikerModelGetter strikerModel;
     IRythmTrackModelGetter rythmTrackModel;
 
-    void Awake() {
+    void Start() {
         strikerModel = BattleInstaller.strikerModels[playerId];
         rythmTrackModel = BattleInstaller.rythmTrackModel;
 

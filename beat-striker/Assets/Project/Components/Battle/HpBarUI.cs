@@ -21,6 +21,8 @@ public class HpBarUI : MonoBehaviour {
     }
 
     void Update() {
+        if (strikerModel == null) return;
+        
         float currentHpRatio = strikerModel.HitPoint.value / strikerModel.MaxHitPoint.value;
         
         // HPの比率が変わった時だけアニメーション

@@ -1,6 +1,6 @@
 
 namespace Core.Battle {
     public interface IStrikerHit {
-        void TakeDamage(HitStatus status);
+        void GiveHit(HitStatus status);
     }
 }

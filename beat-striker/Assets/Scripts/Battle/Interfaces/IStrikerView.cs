@@ -1,5 +1,6 @@
 
 
+using Core.App.Interfaces;
 using Core.App.Types;
 using UnityEngine;
 
@@ -27,5 +28,8 @@ namespace Core.Battle
         void ResetPosition();
         void SavePosition();
         Vector2 GetForwardDirection();
+        
+        // Striker構築用メソッド
+        IStrikerModelGetter Construct(PlayerId playerId, ScoreRule rule, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry);
     }
 }

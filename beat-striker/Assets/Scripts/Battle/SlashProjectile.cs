@@ -12,8 +12,8 @@ namespace Core.Battle {
         public GameObject hitEffectPrefab;
         [SerializeField] public float hitEffectScale = 2f; // ヒットエフェクトのサイズ倍率
 
-        // owner to avoid hitting the spawner
-        public StrikerView owner;
+        // owner to avoid hitting the spawner (MonoBehaviourならStrikerViewでもStrikerHubでも対応可能)
+        public MonoBehaviour owner;
 
         protected virtual void Start()
         {
@@ -40,7 +40,8 @@ namespace Core.Battle {
                 Debug.Log("SlashProjectile: collided object has no StrikerView, ignoring.");
                 return;
             }
-            if (owner != null && target == owner) {
+            // StrikerViewかStrikerHubかに関わらず、同じGameObjectなら無視
+            if (owner != null && (target == owner || target.gameObject == owner.gameObject)) {
                 Debug.Log("SlashProjectile: hit owner, ignoring.");
                 return;
             }

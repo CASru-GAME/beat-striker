@@ -14,7 +14,7 @@ namespace Core.Battle {
     [Serializable]
     public struct StrikerPrefab {
         public StrikerId strikerId;
-        public StrikerInstaller prefab;
+        public GameObject prefab;
     }
 
     [Serializable]
@@ -88,10 +88,27 @@ namespace Core.Battle {
                 var instance = Instantiate(strikerPrefab);
                 instance.transform.SetPositionAndRotation(transform.position, transform.rotation);
                 transform.SetParent(instance.transform);
-                var (IStrikerModel, IRythmTrackModel, IStrikerView) = instance.Construct(playerId, rule, rythmTrackModel, playerRegistry);
-                this.strikerModels.Add(IStrikerModel);
-                this.strikerViews.Add(IStrikerView);
-                IStrikerView.SavePosition();
+                
+                // StrikerInstallerがある場合はそれ経由で構築、それ以外はIStrikerView経由
+                var strikerInstaller = instance.GetComponent<StrikerInstaller>();
+                if (strikerInstaller != null) {
+                    // StrikerInstaller経由で構築
+                    var (strikerModel, _, strikerView) = strikerInstaller.Construct(playerId, rule, rythmTrackModel, playerRegistry);
+                    this.strikerModels.Add(strikerModel);
+                    this.strikerViews.Add(strikerView);
+                    strikerView.SavePosition();
+                } else {
+                    // StrikerHub等：自己完結型のConstruct
+                    var strikerView = instance.GetComponent<IStrikerView>();
+                    if (strikerView != null) {
+                        var strikerModel = strikerView.Construct(playerId, rule, rythmTrackModel, playerRegistry);
+                        this.strikerModels.Add(strikerModel);
+                        this.strikerViews.Add(strikerView);
+                        strikerView.SavePosition();
+                    } else {
+                        Debug.LogError($"Prefab {strikerPrefab.name} does not implement IStrikerView");
+                    }
+                }
             }
 
             if(DebugMode) {
