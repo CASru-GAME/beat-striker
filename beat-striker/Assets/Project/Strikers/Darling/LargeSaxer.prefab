@@ -477,7 +477,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.Darling.States.DarlingWalkState
   animationClip:
-    clip: {fileID: 7400000, guid: 4a5fbbb45d18f47fe96a37bbe523a9c3, type: 2}
+    clip: {fileID: 3094330708855449807, guid: 2d87094962c8b48478651fa8fe1f7a5a, type: 3}
     fadeTime: 0
     speed: 1
   walkSpeed: 1
