@@ -1260,7 +1260,7 @@ PrefabInstance:
     - target: {fileID: 8778802113235280856, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
       propertyPath: strikerPrefabs.Array.data[0].prefab
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 8930430944951882798, guid: d6a552a84fb33df4ba6f8e4c1aeeb51d, type: 3}
     - target: {fileID: 8778802113235280856, guid: 7c357dc6871404ea19e793e97b12576e, type: 3}
       propertyPath: trackAudios.Array.data[0].audioClip
       value: 
