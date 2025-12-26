@@ -3,10 +3,10 @@ using UnityEngine;
 namespace Core.Striker
 {
     [System.Serializable]
-    public struct StrikerAnimationClip
+    public class StrikerAnimationClip
     {
         public AnimationClip clip;
-        public float fadeTime;
-        public float speed;
+        public float fadeTime = 0.3f;
+        public float speed = 1;
     }
 }

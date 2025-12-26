@@ -6,9 +6,10 @@ namespace Core.Striker.Darling.States {
 
     public class DarlingIdleState : StrikerState {
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] private StrikerNode locomotion,attack,dash,hit,charge;
+        [SerializeField] private StrikerNode locomotion,attack,hit,charge;
 
         public override void OnEnter(IStrikerContext hub) {
+            Debug.Log("Enter Darling Idle State");
             hub.PlayAnimation(animationClip);
         }
 
@@ -17,6 +18,7 @@ namespace Core.Striker.Darling.States {
         }
 
         public override void OnExit(IStrikerContext hub) {
+            Debug.Log("Exit Darling Idle State");
         }
 
         public override void OnAttackRequested(IStrikerStateContext hub) {
@@ -28,7 +30,7 @@ namespace Core.Striker.Darling.States {
         }
 
         public override void OnDashRequested(IStrikerStateContext hub) {
-            hub.TryTransition(dash);
+
         }
 
         public override void OnGuardRequested(IStrikerStateContext hub) {

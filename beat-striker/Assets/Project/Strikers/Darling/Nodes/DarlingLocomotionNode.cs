@@ -17,8 +17,8 @@ namespace Core.Striker.Darling.Nodes {
             var IsGrounded = groundCheck.IsGrounded;
 
             if (IsGrounded && speed < walkSpeedThreshold) {
-                if(direction.x > 0) hub.TryTransition(walkForward);
-                else if(direction.x < 0) hub.TryTransition(walkBackward);
+                if(hub.InputDirection.x > 0) hub.TryTransition(walkForward);
+                else if(hub.InputDirection.x < 0) hub.TryTransition(walkBackward);
                 else hub.TryTransition(idle);
             }
             else {

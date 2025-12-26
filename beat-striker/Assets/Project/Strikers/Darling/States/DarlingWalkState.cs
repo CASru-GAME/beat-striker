@@ -7,7 +7,7 @@ namespace Core.Striker.Darling.States {
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private float walkSpeed = 5f;
     
-        [SerializeField] private StrikerNode locomotion,attack,dash,hit,charge;
+        [SerializeField] private StrikerNode locomotion,attack,hit,charge;
 
         public override void OnEnter(IStrikerContext hub) {
             hub.PlayAnimation(animationClip);
@@ -37,7 +37,6 @@ namespace Core.Striker.Darling.States {
         }
 
         public override void OnDashRequested(IStrikerStateContext hub) {
-            hub.TryTransition(dash);
         }
 
         public override void OnGuardRequested(IStrikerStateContext hub) {
