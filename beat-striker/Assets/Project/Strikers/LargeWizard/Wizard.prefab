@@ -138,6 +138,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8363538714606418450}
     m_Modifications:
+    - target: {fileID: 4498609013062797607, guid: 0c3a811b6e4ec064b8e117d8637d84a6, type: 3}
+      propertyPath: m_dragForce
+      value: 0.458
+      objectReference: {fileID: 0}
+    - target: {fileID: 4498609013062797607, guid: 0c3a811b6e4ec064b8e117d8637d84a6, type: 3}
+      propertyPath: m_gravityPower
+      value: 0.7586207
+      objectReference: {fileID: 0}
+    - target: {fileID: 4498609013062797607, guid: 0c3a811b6e4ec064b8e117d8637d84a6, type: 3}
+      propertyPath: m_stiffnessForce
+      value: 1.8866996
+      objectReference: {fileID: 0}
+    - target: {fileID: 5341054100921085515, guid: 0c3a811b6e4ec064b8e117d8637d84a6, type: 3}
+      propertyPath: m_gravityPower
+      value: 0.6009852
+      objectReference: {fileID: 0}
     - target: {fileID: 6515703180903589205, guid: 0c3a811b6e4ec064b8e117d8637d84a6, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -148,7 +164,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6515703180903589205, guid: 0c3a811b6e4ec064b8e117d8637d84a6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -0.411
       objectReference: {fileID: 0}
     - target: {fileID: 6515703180903589205, guid: 0c3a811b6e4ec064b8e117d8637d84a6, type: 3}
       propertyPath: m_LocalRotation.w
