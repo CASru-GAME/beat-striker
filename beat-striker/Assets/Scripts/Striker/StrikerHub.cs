@@ -48,18 +48,20 @@ namespace Core.Striker {
         private PlayableGraph playableGraph;
         private AnimationMixerPlayable mixer;
         private AnimationClipPlayable currentClipPlayable;
+        private AnimationClipPlayable previousClipPlayable;
 
         private void Awake() {
             rb = GetComponent<Rigidbody>();
+            rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
 
             // PlayableGraphの初期化
             playableGraph = PlayableGraph.Create("StrikerAnimationGraph");
             playableGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
             
-            mixer = AnimationMixerPlayable.Create(playableGraph, 1);
+            // クロスフェード用に2スロット作成
+            mixer = AnimationMixerPlayable.Create(playableGraph, 2);
             var output = AnimationPlayableOutput.Create(playableGraph, "Animation", animator);
             output.SetSourcePlayable(mixer);
-
             ChangeState(defaultState);
         }
 
@@ -100,7 +102,7 @@ namespace Core.Striker {
         }
 
         public void ChangeState(IStrikerState newState) {
-            if (newState == currentState) return;
+            if (newState == null || newState == currentState) return;
 
             if (currentAnimationCoroutine != null) {
                 StopCoroutine(currentAnimationCoroutine);
@@ -135,45 +137,60 @@ namespace Core.Striker {
         }
 
         private IEnumerator PlayAnimationCoroutine(AnimationClip clip, float fadeTime, float speed, Action<IStrikerStateContext> onComplete) {
-            if (currentClipPlayable.IsValid()) {
-                if (fadeTime > 0f) {
-                    float elapsed = 0f;
-                    float startWeight = mixer.GetInputWeight(0);
-                    
-                    while (elapsed < fadeTime) {
-                        elapsed += Time.deltaTime;
-                        float weight = Mathf.Lerp(startWeight, 0f, elapsed / fadeTime);
-                        mixer.SetInputWeight(0, weight);
-                        yield return null;
-                    }
-                }
-
-                mixer.DisconnectInput(0);
-                currentClipPlayable.Destroy();
+            // 前のアニメーションをクリーンアップ
+            if (previousClipPlayable.IsValid()) {
+                mixer.DisconnectInput(1);
+                previousClipPlayable.Destroy();
             }
 
+            // 現在のアニメーションを前のスロットに移動
+            if (currentClipPlayable.IsValid()) {
+                previousClipPlayable = currentClipPlayable;
+                mixer.DisconnectInput(0);
+                mixer.ConnectInput(1, previousClipPlayable, 0);
+                mixer.SetInputWeight(1, mixer.GetInputWeight(0));
+            }
+
+            // 新しいアニメーションを作成してスロット0に接続
             currentClipPlayable = AnimationClipPlayable.Create(playableGraph, clip);
             currentClipPlayable.SetSpeed(speed);
+            currentClipPlayable.SetTime(0);
             mixer.ConnectInput(0, currentClipPlayable, 0);
             
             playableGraph.Play();
-            currentClipPlayable.SetTime(0);
 
-            if (fadeTime > 0f) {
+            if (fadeTime > 0f && previousClipPlayable.IsValid()) {
+                // クロスフェード: 両方のウェイトを同時に変化
                 float elapsed = 0f;
+                float startWeightPrev = mixer.GetInputWeight(1);
                 
                 while (elapsed < fadeTime) {
                     elapsed += Time.deltaTime;
-                    float weight = Mathf.Lerp(0f, 1f, elapsed / fadeTime);
-                    mixer.SetInputWeight(0, weight);
+                    float t = elapsed / fadeTime;
+                    mixer.SetInputWeight(0, Mathf.Lerp(0f, 1f, t));      // 新しいアニメーションをフェードイン
+                    mixer.SetInputWeight(1, Mathf.Lerp(startWeightPrev, 0f, t)); // 古いアニメーションをフェードアウト
                     yield return null;
                 }
+                
+                // フェード完了後、前のアニメーションを破棄
                 mixer.SetInputWeight(0, 1f);
+                mixer.SetInputWeight(1, 0f);
+                mixer.DisconnectInput(1);
+                previousClipPlayable.Destroy();
+                previousClipPlayable = default;
             } else {
+                // フェードなしの場合は即座に切り替え
                 mixer.SetInputWeight(0, 1f);
+                if (previousClipPlayable.IsValid()) {
+                    mixer.SetInputWeight(1, 0f);
+                    mixer.DisconnectInput(1);
+                    previousClipPlayable.Destroy();
+                    previousClipPlayable = default;
+                }
             }
 
-            while (currentClipPlayable.GetTime() < currentClipPlayable.GetDuration()) {
+            // アニメーション終了を待機
+            while (currentClipPlayable.IsValid() && currentClipPlayable.GetTime() < currentClipPlayable.GetDuration()) {
                 yield return null;
             }
             
