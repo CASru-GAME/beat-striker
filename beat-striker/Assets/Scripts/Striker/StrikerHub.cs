@@ -189,13 +189,25 @@ namespace Core.Striker {
                 }
             }
 
-            // アニメーション終了を待機
-            while (currentClipPlayable.IsValid() && currentClipPlayable.GetTime() < currentClipPlayable.GetDuration()) {
-                yield return null;
+            // ループしないアニメーションの場合は終了を待機して最後のフレームで止める
+            if (!clip.isLooping) {
+                float clipDuration = clip.length / speed;
+                while (currentClipPlayable.IsValid() && currentClipPlayable.GetTime() < clipDuration) {
+                    yield return null;
+                }
+                
+                // 最後のフレームで止める
+                if (currentClipPlayable.IsValid()) {
+                    currentClipPlayable.SetSpeed(0);
+                    currentClipPlayable.SetTime(clip.length);
+                }
+                
+                currentAnimationCoroutine = null;
+                onComplete?.Invoke(this);
+            } else {
+                // ループアニメーションの場合はコルーチン終了
+                currentAnimationCoroutine = null;
             }
-            
-            currentAnimationCoroutine = null;
-            onComplete?.Invoke(this);
         }
 
         private void OnDestroy() {
@@ -281,11 +293,11 @@ namespace Core.Striker {
 
         // Note: For requests, we now need to fetch the state instance.
         public void Dash() {
-            currentState.OnAttackRequested(this);
+            currentState.OnDashRequested(this);
         }
 
         public void Attack() {
-            currentState.OnDashRequested(this);
+            currentState.OnAttackRequested(this);
         }
         // Charge logic: Request charge state. State entry calls Charger.Charge()?
         public void Charge() {

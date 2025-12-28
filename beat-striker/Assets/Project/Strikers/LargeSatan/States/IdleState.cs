@@ -4,11 +4,10 @@ using Core.Striker;
 
 namespace Core.LargeSatan {
     
-    public class IdleState : StrikerState {
+    public class IdleState : LocomotionGroupState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] StrikerState walkState;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -17,10 +16,7 @@ namespace Core.LargeSatan {
         }
 
         // このステートにいる間、毎フレーム呼ばれる
-        public override void OnUpdate(IStrikerStateContext context) {
-            if(context.InputDirection.x != 0) {
-                context.TryTransition(walkState);
-            }
+        public override void OnLocomotionUpdate(IStrikerStateContext context) {
         }
 
         // 他のステートに遷移する直前に呼ばれる
@@ -35,9 +31,6 @@ namespace Core.LargeSatan {
         public override void OnChargeRequested(IStrikerStateContext context) {
         }
 
-        // ダッシュコマンドが押された時に呼ばれる
-        public override void OnDashRequested(IStrikerStateContext context) {
-        }
 
         // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {

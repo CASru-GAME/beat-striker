@@ -1,11 +1,10 @@
 using Core.Battle;
 using UnityEngine;
 using Core.Striker;
-using UnityEditor.Experimental.GraphView;
 
 namespace Core.LargeSatan {
     
-    public class WalkState : LocomotionGroupState {
+    public class WalkBackwardState : LocomotionGroupState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
