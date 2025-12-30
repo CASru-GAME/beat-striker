@@ -13,7 +13,6 @@ namespace Core.LargeSatan {
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
-            Debug.Log("j");
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
             context.Rigidbody.linearVelocity = jumpSpeed * context.InputDirection;

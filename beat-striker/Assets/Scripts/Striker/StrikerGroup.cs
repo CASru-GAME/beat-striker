@@ -2,10 +2,7 @@ using Core.Battle;
 using UnityEngine;
 
 namespace Core.Striker {
-    public abstract class StrikerState : StrikerNode, IStrikerState {
-        public sealed override void OnTryTransition(IStrikerNodeContext context) {
-            context.ChangeState(this);
-        }
+    public abstract class StrikerGroup : MonoBehaviour {
 
         public virtual void OnEnter(IStrikerContext hub) { }
         public virtual void OnUpdate(IStrikerStateContext hub) { }

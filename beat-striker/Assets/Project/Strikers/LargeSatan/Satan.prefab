@@ -111,6 +111,7 @@ GameObject:
   - component: {fileID: 8937601008905073280}
   - component: {fileID: 11034109240377141}
   - component: {fileID: 8716767000433258826}
+  - component: {fileID: 8515823221661986454}
   m_Layer: 0
   m_Name: Satan
   m_TagString: Untagged
@@ -225,6 +226,18 @@ MonoBehaviour:
   deadState: {fileID: 0}
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
+--- !u!114 &8515823221661986454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1517210810096820132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5047db66322504bd5b9bb23dd4877cb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.AnimationPlayer
   animator: {fileID: 6094059094907432188}
 --- !u!1 &2580775139249287558
 GameObject:
@@ -276,7 +289,6 @@ MonoBehaviour:
     speed: 1
   locomotionNode: {fileID: 3444350880286515863}
   walkSpeed: 1
-  dashNode: {fileID: 6544772151032152558}
 --- !u!1 &3012253909273130681
 GameObject:
   m_ObjectHideFlags: 0

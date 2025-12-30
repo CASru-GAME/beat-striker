@@ -4,10 +4,11 @@ using Core.Striker;
 
 namespace Core.LargeSatan {
     
-    public class WalkBackwardState : LocomotionGroupState {
+    public class WalkBackwardState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
+        [SerializeField] StrikerNode locomotionNode;
         [SerializeField] float walkSpeed;
 
         // このステートに遷移した直後に呼ばれる
@@ -17,10 +18,12 @@ namespace Core.LargeSatan {
         }
 
         // このステートにいる間、毎フレーム呼ばれる
-        public override void OnLocomotionUpdate(IStrikerStateContext context) {
+        public override void OnUpdate(IStrikerStateContext context) {
             var v = context.Rigidbody.linearVelocity;
             v.x = context.InputDirection.x * walkSpeed;
             context.Rigidbody.linearVelocity = v;
+
+            context.TryTransition(locomotionNode);
         }
 
         // 他のステートに遷移する直前に呼ばれる
@@ -33,6 +36,10 @@ namespace Core.LargeSatan {
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
+        }
+
+        // ダッシュコマンドが押された時に呼ばれる
+        public override void OnDashRequested(IStrikerStateContext context) {
         }
 
         // ガードコマンドが押された時に呼ばれる
