@@ -2,8 +2,7 @@ using Core.Battle;
 using UnityEngine;
 
 namespace Core.Striker {
-    public abstract class StrikerGroup : MonoBehaviour {
-
+    public abstract class StrikerGroup : MonoBehaviour, IStrikerGroup {
         public virtual void OnEnter(IStrikerContext hub) { }
         public virtual void OnUpdate(IStrikerStateContext hub) { }
         public virtual void OnExit(IStrikerContext hub) { }

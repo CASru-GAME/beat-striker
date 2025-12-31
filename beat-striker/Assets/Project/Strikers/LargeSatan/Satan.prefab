@@ -91,6 +91,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 513e4f239b53240279fab978e5f60495, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.FallState
+  parents: []
   animationClip:
     clip: {fileID: 7400000, guid: 5ec5ac53d2ae042bf9e7403a5be2a994, type: 2}
     fadeTime: 0.3
@@ -283,12 +284,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0178b7bf307674df792e7783b57ac9e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.WalkBackwardState
+  parents: []
   animationClip:
     clip: {fileID: 7400000, guid: 426a8e28f4b7f49688fb43c07992a824, type: 2}
     fadeTime: 0.3
     speed: 1
   locomotionNode: {fileID: 3444350880286515863}
   walkSpeed: 1
+  dashNode: {fileID: 6544772151032152558}
 --- !u!1 &3012253909273130681
 GameObject:
   m_ObjectHideFlags: 0
@@ -333,6 +336,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67ff8c9c95df24ca992bbe4174aba9c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LargeSatanState
+  parents: []
   animationClip:
     clip: {fileID: 7400000, guid: 814b130d40ac549a3a2653d3aa2b3995, type: 2}
     fadeTime: 0.3
@@ -382,6 +386,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1131a6cc23914c46ba94eec41c81e81, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.WalkState
+  parents: []
   animationClip:
     clip: {fileID: 7400000, guid: 5642b8270a36542db9118c44d1d58eab, type: 2}
     fadeTime: 0.3
@@ -517,6 +522,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 267c84a4f7e694d12abde2dd1b9abadb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.JumpUpwardState
+  parents: []
   animationClip:
     clip: {fileID: 7400000, guid: c77cf359840404cc0856cbf4601dc1f6, type: 2}
     fadeTime: 0.3
@@ -567,6 +573,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8474815124dac4e96aa70e6f780f3dfc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.IdleState
+  parents: []
   animationClip:
     clip: {fileID: 7400000, guid: 2355edfbfe7044958b42a7fa13e9e9d6, type: 2}
     fadeTime: 0.3

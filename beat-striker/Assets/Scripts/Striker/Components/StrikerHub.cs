@@ -31,7 +31,7 @@ namespace Core.Striker {
         private Rigidbody rb;
         private Vector3 initialPosition;
         private Quaternion initialRotation;
-        
+
         private IBus bus;
         private IStrikerModel model;
         private IPlayerRegistry playerRegistry;
@@ -183,11 +183,11 @@ namespace Core.Striker {
             model.GainSpecial(new SpecialPoint(-model.MaxSpecialPoint.value));
         }
 
-        public void Guard(){
+        public void Guard() {
             stateMachine.CurrentState.OnGuardRequested(stateMachine);
         }
 
-        public void OnMiss() { 
+        public void OnMiss() {
             stateMachine.CurrentState.OnMiss(stateMachine);
         }
 
@@ -249,5 +249,19 @@ namespace Core.Striker {
         public HitPoint CalcHit(HitStatus status) {
             throw new NotImplementedException();
         }
+    }
+
+    /// <summary>
+    /// Striker専用ステートマシン
+    /// 汎用StateMachineを継承し、IStrikerStateContext/IStrikerNodeContextの追加プロパティを実装
+    /// </summary>
+    public class StrikerStateMachine :
+        StateMachine<IStrikerNode, IStrikerState, IStrikerContext, StrikerStateMachine>,
+        IStrikerStateContext, IStrikerNodeContext {
+        public Rigidbody Rigidbody => context.Rigidbody;
+        public Vector2 InputDirection => context.InputDirection;
+
+        public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = default)
+            : base(context, defaultState) { }
     }
 }

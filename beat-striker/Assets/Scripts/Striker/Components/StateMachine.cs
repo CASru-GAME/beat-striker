@@ -2,6 +2,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using Core.Battle;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ namespace Core.Striker {
     /// </summary>
     public abstract class StateMachine<TNode, TState, TContext, TSelf> : INodeContext<TNode, TState>
         where TNode : INode<TSelf>
-        where TState : IState<TContext>
+        where TState : IState<TContext, TState>
         where TSelf : StateMachine<TNode, TState, TContext, TSelf>
     {
         private TState currentState;
@@ -28,9 +29,29 @@ namespace Core.Striker {
 
         public void ChangeState(TState newState) {
             if (newState == null || ReferenceEquals(newState, currentState)) return;
+
+            var oldParents = currentState != null
+                ? new HashSet<IGroup<TContext>>(currentState.Parents ?? Array.Empty<IGroup<TContext>>())
+                : new HashSet<IGroup<TContext>>();
+            var newParents = new HashSet<IGroup<TContext>>(newState.Parents ?? Array.Empty<IGroup<TContext>>());
+
+            // 現ステートを先にExit
             currentState?.OnExit(context);
+
+            // 旧にあって新にない親をExit
+            foreach (var parent in oldParents) {
+                if (!newParents.Contains(parent)) parent.OnExit(context);
+            }
+
+            // 新にあって旧にない親をEnter
+            foreach (var parent in newParents) {
+                if (!oldParents.Contains(parent)) parent.OnEnter(context);
+            }
+
+            // 新しいステートをEnter
+            newState.OnEnter(context);
+
             currentState = newState;
-            currentState.OnEnter(context);
         }
 
         public void TryTransition(TNode node) {
@@ -40,20 +61,5 @@ namespace Core.Striker {
         public void Reset(TState defaultState) {
             ChangeState(defaultState);
         }
-    }
-
-    /// <summary>
-    /// Striker専用ステートマシン
-    /// 汎用StateMachineを継承し、IStrikerStateContext/IStrikerNodeContextの追加プロパティを実装
-    /// </summary>
-    public class StrikerStateMachine : 
-        StateMachine<IStrikerNode, IStrikerState, IStrikerContext, StrikerStateMachine>,
-        IStrikerStateContext, IStrikerNodeContext
-    {
-        public Rigidbody Rigidbody => context.Rigidbody;
-        public Vector2 InputDirection => context.InputDirection;
-
-        public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = default)
-            : base(context, defaultState) { }
     }
 }
