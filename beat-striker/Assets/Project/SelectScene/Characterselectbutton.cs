@@ -1,9 +1,6 @@
 
 using Core;
-using Core.App;
-using Core.App.Installers;
 using Core.App.Presenters.Scene.Types;
-using Core.App.Interfaces;
 using Core.App.Types;
 using Core.Utils;
 using UnityEngine;
@@ -13,10 +10,12 @@ using UnityEngine.TextCore.Text;
 using Core.App.Presenters.Scene.States;
 using System.Collections;
 using System.Linq;
+using Core.App.Installers;
 
 [RequireComponent(typeof(Botan))]
 [RequireComponent(typeof(AudioSource))]
-public class Characterselectbutton : MonoBehaviour {
+public class Characterselectbutton : MonoBehaviour
+{
     Botan botan;
     public RawImage image;
     public RawImage image2; // 追加の画像
@@ -24,13 +23,10 @@ public class Characterselectbutton : MonoBehaviour {
     public AudioClip hoverSound;
     AudioSource audioSource;
     [SerializeField] string strikerId;
-    private IAppModel appModel;
-
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake() {
         botan = GetComponent<Botan>();
         audioSource = GetComponent<AudioSource>();
-        appModel = AppFlowScope.GetInstance().GetAppModel();
 
         image.color = Color.gray;
         if (image2 != null) image2.color = Color.gray;
@@ -44,18 +40,18 @@ public class Characterselectbutton : MonoBehaviour {
                 audioSource.PlayOneShot(hoverSound);
             }
             int playerId = e.EventData.pointerId;
-            appModel.FireSelectStriker(new StrikerSelection(new PlayerId(playerId), null));
+            this.GetBus().Publish(new AppMessages.SelectStriker(new PlayerId(playerId), null));
         };
         botan.onClick += (e) => {
             int playerId = e.EventData.pointerId;
-            appModel.FireSelectStriker(new StrikerSelection(new PlayerId(playerId), new StrikerId(strikerId)));
+            this.GetBus().Publish(new AppMessages.SelectStriker(new PlayerId(playerId), new StrikerId(strikerId)));
         };
         botan.onHoverExit += (e) => {
             image.color = Color.gray;
             if (image2 != null) image2.color = Color.gray;
             if (text != null) text.color = Color.gray;
 
-
+            
         };
     }
 

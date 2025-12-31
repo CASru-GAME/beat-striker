@@ -61,41 +61,4 @@ namespace Core.GamePad.Types {
     public enum GamePadAction {
         Up, Down
     }
-
-    /// <summary>
-    /// ゲームパッド入力データ
-    /// </summary>
-    public readonly struct GamePadInput {
-        public readonly GamePadId gamePadId;
-        public readonly GamePadButton button;
-        public readonly GamePadAction action;
-        
-        // Properties for case-consistent access
-        public GamePadId GamePadId => gamePadId;
-        public GamePadButton Button => button;
-        public GamePadAction Action => action;
-        
-        public GamePadInput(GamePadId gamePadId, GamePadButton button, GamePadAction action) {
-            this.gamePadId = gamePadId;
-            this.button = button;
-            this.action = action;
-        }
-    }
-    
-    /// <summary>
-    /// 方向変更データ
-    /// </summary>
-    public readonly struct DirectionChange {
-        public readonly GamePadId gamePadId;
-        public readonly UnityEngine.Vector2 direction;
-        
-        // Properties for case-consistent access
-        public GamePadId GamePadId => gamePadId;
-        public UnityEngine.Vector2 Direction => direction;
-        
-        public DirectionChange(GamePadId gamePadId, UnityEngine.Vector2 direction) {
-            this.gamePadId = gamePadId;
-            this.direction = direction;
-        }
-    }
 }

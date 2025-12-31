@@ -1,14 +1,16 @@
+
+
 using System;
 using System.Collections;
 using Core.App.Interfaces;
 using Core.App.Types;
-using Core.Utils;
+using Core.Battle;
 using UnityEngine;
 
 namespace Core.Battle {
 
     [RequireComponent(typeof(Rigidbody))]
-    public class StrikerView : MonoBehaviour, IStrikerView, IStrikerHit {
+    public class StrikerView : MonoBehaviour, IStrikerView {
         private Vector2 direction;
         private Rigidbody rb;
         [SerializeField] private Animator anim;
@@ -18,24 +20,15 @@ namespace Core.Battle {
         [SerializeField] float rotationSpeed = 360f;
         private bool isGuard = false;
         private float? targetRotationAngle = null;
+        private IStrikerHit strikerHit;
 
         private Vector3 initialPosition;
         private Quaternion initialRotation;
 
-        [SerializeField] private CollidenRef[] collidenRefs;
-        [Header("Special spawn settings")]
-        [SerializeField] private float specialSpawnHeight = 2.0f;
-        [SerializeField] private float specialSpawnForward = 0.8f;
-
-        // Model references (set via Construct)
-        private IStrikerModel model;
-        private IRythmTrackModel rythmTrackModel;
-        private IPlayerRegistry playerRegistry;
-        private IBattleModel battleModel;
-
-        // Subscriptions
-        private CompositeDisposable subscriptions;
-        private bool isInputEnabled = false;
+    [SerializeField] private CollidenRef[] collidenRefs;
+    [Header("Special spawn settings")]
+    [SerializeField] private float specialSpawnHeight = 2.0f;
+    [SerializeField] private float specialSpawnForward = 0.8f;
 
         public Colliden GetColliden(string key) {
             foreach (var collidenRef in collidenRefs) {
@@ -48,113 +41,70 @@ namespace Core.Battle {
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
-            anim ??= GetComponent<Animator>();
+            anim ??= GetComponent<Animator>();   
         }
 
-        public void SpawnSpecialProjectiles(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval, float heightOffset = 0f, float hueOffset = 0f) {
-            if (slashPrefab == null) {
-                Debug.LogWarning("StrikerView.SpawnSpecialProjectiles: slashPrefab not assigned.");
-                return;
-            }
-            StartCoroutine(SpawnProjectilesCoroutine(slashPrefab, count, spreadAngle, speed, damage, hitEffectPrefab, spawnInterval, heightOffset, hueOffset));
-        }
-
-        private IEnumerator SpawnProjectilesCoroutine(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval, float heightOffset, float hueOffset) {
-            Transform spawnTransform = null;
-            try {
-                var c = GetColliden("sword");
-                if (c != null) spawnTransform = c.transform;
-            }
-            catch { }
-
-            float finalHeight = specialSpawnHeight + heightOffset;
-            Vector3 origin = transform.position + Vector3.up * finalHeight + transform.forward * specialSpawnForward;
-            if (spawnTransform != null) {
-                origin = spawnTransform.position + Vector3.up * (finalHeight - 1.0f);
+            // 必殺技の時間差発射用メソッド
+            public void SpawnSpecialProjectiles(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval, float heightOffset = 0f, float hueOffset = 0f) {
+                if (slashPrefab == null) {
+                    Debug.LogWarning("StrikerView.SpawnSpecialProjectiles: slashPrefab not assigned.");
+                    return;
+                }
+                StartCoroutine(SpawnProjectilesCoroutine(slashPrefab, count, spreadAngle, speed, damage, hitEffectPrefab, spawnInterval, heightOffset, hueOffset));
             }
 
-            for (int i = 0; i < count; i++) {
-                float characterYRotation = transform.eulerAngles.y;
-                float t = (count == 1) ? 0f : ((float)i / (count - 1) - 0.5f);
-                float angle = characterYRotation + (t * spreadAngle);
+            private IEnumerator SpawnProjectilesCoroutine(GameObject slashPrefab, int count, float spreadAngle, float speed, int damage, GameObject hitEffectPrefab, float spawnInterval, float heightOffset, float hueOffset) {
+                Transform spawnTransform = null;
+                try {
+                    var c = GetColliden("sword");
+                    if (c != null) spawnTransform = c.transform;
+                } catch { }
 
-                Quaternion rot = Quaternion.Euler(0f, angle, 0f);
-                GameObject go = Instantiate(slashPrefab, origin, rot);
-
-                var sp = go.GetComponent<SlashProjectile>();
-                if (sp != null) {
-                    sp.speed = speed;
-                    sp.damage = damage;
-                    sp.hitEffectPrefab = hitEffectPrefab;
-                    sp.owner = this;
+                // 発射位置を設定（Inspectorで調整できるspecialSpawnHeight/specialSpawnForwardを使用 + 高さオフセット）
+                float finalHeight = specialSpawnHeight + heightOffset;
+                Vector3 origin = transform.position + Vector3.up * finalHeight + transform.forward * specialSpawnForward;
+                if (spawnTransform != null) {
+                    origin = spawnTransform.position + Vector3.up * (finalHeight - 1.0f); // 剣の位置から少し上に
                 }
 
-                var crescentGen = go.GetComponentInChildren<Core.Battle.CrescentMeshGenerator>();
-                if (crescentGen != null) {
-                    crescentGen.SetHueOffset(hueOffset);
+                for (int i = 0; i < count; i++) {
+                    // キャラクターの向いている方向を中心に扇形で配置
+                    float characterYRotation = transform.eulerAngles.y;
+                    float t = (count == 1) ? 0f : ((float)i / (count - 1) - 0.5f); // -0.5 .. 0.5
+                    float angle = characterYRotation + (t * spreadAngle); // spreadAngleを前方中心の扇形として使用
+
+                    Quaternion rot = Quaternion.Euler(0f, angle, 0f);
+                    Debug.Log($"Spawning projectile {i+1}/{count} at origin {origin}, spread angle: {t * spreadAngle}° (final: {angle}°)");
+                    GameObject go = Instantiate(slashPrefab, origin, rot);
+
+                    Debug.Log($"Instantiated projectile at {go.transform.position}");
+                    var sp = go.GetComponent<SlashProjectile>();
+                    if (sp != null) {
+                        sp.speed = speed;
+                        sp.damage = damage;
+                        sp.hitEffectPrefab = hitEffectPrefab;
+                        sp.owner = this;
+                        Debug.Log($"Spawned slash projectile {i+1}/{count} with hitEffectPrefab: {(hitEffectPrefab ? hitEffectPrefab.name : "null")}");
+                    }
+                    
+                    // 色相オフセットをCrescentMeshGeneratorに設定
+                    var crescentGen = go.GetComponentInChildren<Core.Battle.CrescentMeshGenerator>();
+                    if (crescentGen != null) {
+                        crescentGen.SetHueOffset(hueOffset);
+                        Debug.Log($"Set hue offset {hueOffset} on projectile {i+1}/{count}");
+                    }
+
+                    yield return new WaitForSeconds(spawnInterval);
                 }
-
-                yield return new WaitForSeconds(spawnInterval);
             }
+
+        public void Construct(IStrikerHit strikerHit) {
+            this.strikerHit = strikerHit;
         }
-
-        /// <summary>
-        /// Construct view with model and events - no presenter needed
-        /// </summary>
-        public void Construct(IStrikerModel model, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry, IBattleModel battleModel) {
-            this.model = model;
-            this.rythmTrackModel = rythmTrackModel;
-            this.playerRegistry = playerRegistry;
-            this.battleModel = battleModel;
-
-            subscriptions = new CompositeDisposable();
-
-            // Subscribe to model events
-            subscriptions.Add(model.SubscribeDied(OnModelDied));
-
-            // Subscribe to battle events
-            subscriptions.Add(battleModel.SubscribeRequireIntroPose(OnRequireIntroPose));
-            subscriptions.Add(battleModel.SubscribeRequireVictoryPose(OnRequireVictoryPose));
-            subscriptions.Add(battleModel.SubscribeBattleStarted(OnBattleStarted));
-            subscriptions.Add(battleModel.SubscribeRoundFinished(OnBattleFinished));
-            subscriptions.Add(battleModel.SubscribeOutroStarted(OnBattleFinished));
-            subscriptions.Add(rythmTrackModel.SubscribeMissedBeat(OnMissedBeat));
-        }
-
+        
         public IStrikerModelGetter Construct(PlayerId playerId, ScoreRule rule, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry) {
-            throw new System.NotSupportedException("StrikerView should be constructed via StrikerInstaller with IBattleModel.");
-        }
-
-        private void OnDestroy() {
-            subscriptions?.Dispose();
-        }
-
-        // Battle events handlers
-        private void OnRequireIntroPose(PlayerId playerId) {
-            if (model.PlayerId != playerId) return;
-            OnIntro();
-        }
-
-        private void OnRequireVictoryPose(PlayerId playerId) {
-            if (model.PlayerId != playerId) return;
-            OnVictory();
-        }
-
-        private void OnBattleStarted(IBattlemodelGetter _) {
-            isInputEnabled = true;
-        }
-
-        private void OnBattleFinished(IBattlemodelGetter _) {
-            isInputEnabled = false;
-        }
-
-        private void OnMissedBeat(PlayerId playerId) {
-            if (model.PlayerId != playerId || model.IsDead()) return;
-            OnMiss();
-        }
-
-        private void OnModelDied() {
-            OnDead();
+            // StrikerViewはStrikerInstaller経由で初期化される
+            throw new System.NotSupportedException("StrikerView should be constructed via StrikerInstaller.");
         }
 
         public void ChangeDirection(Vector2 direction) {
@@ -213,6 +163,7 @@ namespace Core.Battle {
                 anim.SetFloat(Anime.MoveY.ToString(), velocity.y / velocityMagnitude);
             }
 
+
             if (direction != Vector2.zero && Mathf.Abs(rb.linearVelocity.x) < walkSpeed && !targetRotationAngle.HasValue) {
                 var v = rb.linearVelocity;
                 v.x = walkSpeed * direction.x;
@@ -220,12 +171,8 @@ namespace Core.Battle {
             }
         }
 
-        public void GiveHit(HitStatus status) {
-            if (model.IsDead()) return;
-
-            OnHit();
-            var damage = CalcHit(status);
-            model.TakeDamage(damage);
+        public void TakeDamage(HitStatus status) {
+            this.strikerHit.GiveHit(status);
         }
 
         private void OnCollisionStay(Collision collision) {
@@ -319,10 +266,10 @@ namespace Core.Battle {
             return new Vector2(forward.x, forward.z).normalized;
         }
     }
+}
 
-    [Serializable]
-    public class CollidenRef {
-        public string key;
-        public Colliden colliden;
-    }
+[Serializable]
+public class CollidenRef {
+    public string key;
+    public Colliden colliden;
 }

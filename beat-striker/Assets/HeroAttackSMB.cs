@@ -27,11 +27,11 @@ public class HeroAttackSMB : StateMachineBehaviour {
     }
 
     void OnEnterTrigger(Collider other) {
+        var target = other.GetComponent<StrikerView>();
         Debug.Log("HeroAttackSMB.OnEnterTrigger called. Other=" + (other ? other.name : "null") + ", colliden=" + (colliden ? colliden.name : "null"));
-        var hitTarget = other.GetComponentInParent<IStrikerHit>();
-        if (hitTarget != null) {
-            Debug.Log("Hit target: " + other.name);
-            hitTarget.GiveHit(new HitStatus(new HitPoint(10)));
+        if (target != null) {
+            Debug.Log("Hit target: " + target.name);
+            target.TakeDamage(new HitStatus(new HitPoint(10)));
 
             // ヒットエフェクトの生成
             if (hitEffectPrefab == null) {

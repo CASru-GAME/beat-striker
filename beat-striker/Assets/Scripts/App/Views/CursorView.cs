@@ -1,15 +1,11 @@
 
 
 
-using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Core;
-using Core.App;
-using Core.App.Interfaces;
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
-using Core.GamePad.Models;
 using Core.GamePad.Types;
 using Core.Utils;
 using TMPro;
@@ -30,56 +26,21 @@ public class CursorView : MonoBehaviour, ICursorView {
     private RectTransform movableAreaRectTransform;
     private GameObject lastHoveredObject;
     private PlayerId playerId;
-    private IAppModel appModel;
-    private IGamePadInputModel gamePadInputModel;
-    private CompositeDisposable subscriptions;
+    private IBus bus;
+
 
     void Awake() {
         rectTransform = GetComponent<RectTransform>();
         movableAreaRectTransform = transform.parent.GetComponent<RectTransform>();
+        bus = this.GetBus();
     }
-
-    public void Construct(PlayerId playerId, IAppModel appModel, IGamePadInputModel gamePadInputModel) {
+    
+    public void Construct(PlayerId playerId, ICursorPresenter presenter) {
         this.playerId = playerId;
-        this.appModel = appModel;
-        this.gamePadInputModel = gamePadInputModel;
-
         text.text = $"P{playerId.value + 1}";
         if (playerId.value >= 0 && playerId.value < playerColors.Length) {
             spriteRenderer.sprite = playerColors[playerId.value];
         }
-
-        subscriptions = new CompositeDisposable();
-        subscriptions.Add(gamePadInputModel.SubscribeInputed(OnGamePadInputed));
-        subscriptions.Add(gamePadInputModel.SubscribeDirectionChanged(OnDirectionChanged));
-        subscriptions.Add(appModel.SubscribeRequireCursorDestroyed(OnCursorSceneExited));
-    }
-
-    private void OnDestroy() {
-        subscriptions?.Dispose();
-    }
-
-    private void OnDirectionChanged(DirectionChange change) {
-        if (new PlayerId(change.gamePadId.value) != playerId) return;
-        OnMove(change.direction);
-    }
-
-    private void OnGamePadInputed(GamePadInput input) {
-        if (new PlayerId(input.gamePadId.value) != playerId) return;
-
-        if (input.button == GamePadButton.Direction && input.action == GamePadAction.Up) {
-            OnMoveEnd();
-            return;
-        }
-
-        if (input.button == GamePadButton.East && input.action == GamePadAction.Down) {
-            OnClick();
-        }
-    }
-
-    private void OnCursorSceneExited(CursorDestroyRequest request) {
-        if (!request.IsTarget(playerId)) return;
-        Destroy(gameObject);
     }
 
     private PointerEventData CreatePointerEventData() {
@@ -121,7 +82,7 @@ public class CursorView : MonoBehaviour, ICursorView {
 
         movingTime += Time.deltaTime;
         rectTransform.anchoredPosition += moveSpeed * (1 - Mathf.Exp(-accelerationFactor * movingTime)) * Time.deltaTime * currentDirection;
-        appModel.FireCursorPositionUpdated(new CursorPositionUpdate(playerId, transform.position));
+        bus.Publish(new AppMessages.CursorPositionUpdated(playerId, transform.position));
 
         rectTransform.anchoredPosition = new Vector2(
             Mathf.Clamp(rectTransform.anchoredPosition.x, -movableAreaRectTransform.rect.width / 2, movableAreaRectTransform.rect.width / 2),

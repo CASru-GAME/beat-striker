@@ -1,14 +1,9 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
-using Core.App;
-using Core.App.Interfaces;
-using Core.App.Installers;
 using Core.Utils;
 using Core.App.Presenters.Scene.Types;
-using Core.App.Types;
 using Unity.VisualScripting;
 
 [RequireComponent(typeof(RectTransform))]
@@ -22,26 +17,23 @@ public class DiagonalStripeVisual : MonoBehaviour {
     [SerializeField] private GameObject destroyOnComplete;
 
     private bool isTransitioning = false;
-    private IAppModel appModel;
-    private IDisposable transitionSub;
 
     void Awake() {
-        appModel = AppFlowScope.GetInstance().GetAppModel();
-        transitionSub = appModel.SubscribeTransitionAnimationStarted(OnTransitionStartedMessage);
+        this.GetBus().Subscribe<AppMessages.OnTransitionAnimationStarted>(OnTransitionStartedMessage);
 
         rectTransform = GetComponent<RectTransform>();
 
         InitializeStripes();
     }
 
-    void OnTransitionStartedMessage(AppScene scene) {
+    void OnTransitionStartedMessage(AppMessages.OnTransitionAnimationStarted msg) {
         if (!isTransitioning) {
             StartCoroutine(PlayTransitionAnimation());
         }
     }
 
     void OnDestroy() {
-        transitionSub?.Dispose();
+        this.GetBus().Unsubscribe<AppMessages.OnTransitionAnimationStarted>(OnTransitionStartedMessage);
     }
 
     IEnumerator PlayTransitionAnimation() {
@@ -51,7 +43,7 @@ public class DiagonalStripeVisual : MonoBehaviour {
 
         Debug.Log("Publishing RequireLoadScene");
 
-        appModel.FireRequireLoadScene();
+        this.GetBus().Publish(new AppMessages.RequireLoadScene());
 
         yield return new WaitForSeconds(0.1f);
 
@@ -87,7 +79,7 @@ public class DiagonalStripeVisual : MonoBehaviour {
         float height = rectTransform.rect.height;
         float requiredWidth = Mathf.Abs(width * Mathf.Cos(diagonalStripeRad)) + Mathf.Abs(height * Mathf.Sin(diagonalStripeRad));
         float requiredHeight = Mathf.Abs(width * Mathf.Sin(diagonalStripeRad)) + Mathf.Abs(height * Mathf.Cos(diagonalStripeRad));
-
+        
         rectTransform.sizeDelta = new Vector2(requiredWidth, requiredHeight);
     }
 

@@ -1,4 +1,3 @@
-using Core.App.Interfaces;
 using Core.App.Models;
 using Core.Utils;
 
@@ -6,7 +5,7 @@ namespace Core.App.Presenters.Scene {
 
     public class SceneStateContext {
         public readonly ISceneView view;
-        public readonly IAppModel events; // Keeping name 'events' to minimize churn
+        public readonly IBus bus;
         public readonly IBattleSettingModel setting;
         public readonly ICursorFactory cursorFactory;
         public readonly ICursorRegistry cursorRegistry;
@@ -17,7 +16,7 @@ namespace Core.App.Presenters.Scene {
 
         public SceneStateContext(
             ISceneView view,
-            IAppModel events,
+            IBus bus,
             IBattleSettingModel setting,
             ISceneStateController controller,
             ISceneStateFactory factory,
@@ -27,7 +26,7 @@ namespace Core.App.Presenters.Scene {
             IPlayerRegistry playerRegistry
         ) {
             this.view = view;
-            this.events = events;
+            this.bus = bus;
             this.setting = setting;
             this.controller = controller;
             this.factory = factory;

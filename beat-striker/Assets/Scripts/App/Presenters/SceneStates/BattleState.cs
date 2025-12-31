@@ -1,35 +1,33 @@
-using System;
+
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
-using Core.Utils;
 
 namespace Core.App.Presenters.Scene.States {
 
     public class BattleState : ISceneState {
         private readonly SceneStateContext context;
-        private IDisposable transitionSubscription;
 
         public BattleState(SceneStateContext context) {
             this.context = context;
         }
 
-        private void OnRequireTransition(AppScene scene) {
-            if (scene == AppScene.Menu) {
+        private void OnAppFlowMessage(AppMessages.RequireTransition message) {
+            if (message.scene == AppScene.Menu) {
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    scene
+                    message.scene
                 ));
             }
         }
 
         public void Enter() {
-            transitionSubscription = context.events.SubscribeRequireTransition(OnRequireTransition);
+            context.bus.Subscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
             context.cursorRegistry.SetCursorsActive(false);
-            context.events.FireStopBGM(); 
+            context.bus.Publish(new AppMessages.StopBGM()); 
         }
 
         public void Exit() {
-            transitionSubscription?.Dispose();
+            context.bus.Unsubscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
         }
     }
 }

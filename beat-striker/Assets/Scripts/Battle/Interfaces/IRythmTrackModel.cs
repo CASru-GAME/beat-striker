@@ -1,5 +1,4 @@
 
-using System;
 using Core.App.Types;
 using System.Collections.Generic;
 
@@ -13,8 +12,5 @@ namespace Core.Battle {
         BeatResult Beat(PlayerId playerId);
         List<PlayerId> SetTime(float time);
         void Reset();
-        
-        // Observable subscription for missed beats
-        IDisposable SubscribeMissedBeat(Action<PlayerId> listener);
     }
 }

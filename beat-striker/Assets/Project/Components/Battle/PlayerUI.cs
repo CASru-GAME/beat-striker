@@ -5,20 +5,20 @@ using TMPro;
 using UnityEngine;
 
 public class PlayerUI : MonoBehaviour {
-    [SerializeField] public int playerId;
+    [SerializeField] int playerId;
     [SerializeField] BattleInstaller BattleInstaller;
     [SerializeField] Transform playerPosition;
     [SerializeField] HpBarUI hpBarUI;
     [SerializeField] SpecialBarUI specialBarUI;
     [SerializeField] ComboUI comboUI;
     [SerializeField] RingUI ringUI;
-
+    
     IStrikerModelGetter strikerModel;
     IRythmTrackModelGetter rythmTrackModel;
 
-    public void Construct(IStrikerModelGetter strikerModel, IRythmTrackModelGetter rythmTrackModel) {
-        this.strikerModel = strikerModel;
-        this.rythmTrackModel = rythmTrackModel;
+    void Start() {
+        strikerModel = BattleInstaller.strikerModels[playerId];
+        rythmTrackModel = BattleInstaller.rythmTrackModel;
 
         hpBarUI.Construct(strikerModel);
         specialBarUI.Construct(strikerModel);

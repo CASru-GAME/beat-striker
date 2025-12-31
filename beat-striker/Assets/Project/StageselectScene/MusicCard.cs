@@ -4,10 +4,8 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
 using Core;
-using Core.App;
-using Core.App.Installers;
+using Core.Utils;
 using Core.App.Presenters.Scene.Types;
-using Core.App.Interfaces;
 using Core.App.Types;
 
 [RequireComponent(typeof(AudioSource))]
@@ -18,13 +16,11 @@ public class MusicCard : MonoBehaviour {
     [SerializeField] AudioClip clickSound; // クリック時の効果音
     private Vector3 originalScale;
     private SelectableMusic currentMusic;
-    private IAppModel appModel;
 
     void Awake() {
         audioSource = GetComponent<AudioSource>();
         originalScale = transform.localScale;
-        appModel = AppFlowScope.GetInstance().GetAppModel();
-
+        
         botan.onHover += (e) => {
             audioSource.Play();
             transform.localScale = originalScale * 1.1f;
@@ -47,14 +43,14 @@ public class MusicCard : MonoBehaviour {
 
             Debug.Log("MusicCard: Selected Track ID: " + currentMusic.trackId);
             Debug.Log("MusicCard: Publishing SelectTrack message");
-            appModel.FireSelectTrack(currentMusic.trackId);
-
+            this.GetBus().Publish(new AppMessages.SelectTrack(currentMusic.trackId));
+            
             Debug.Log("MusicCard: Publishing RequireTransition to CharacterSelect");
-            appModel.FireRequireTransition(AppScene.CharacterSelect);
-
+            this.GetBus().Publish(new AppMessages.RequireTransition(AppScene.CharacterSelect));
+            
             Debug.Log("MusicCard: Messages published successfully");
         };
-    }
+    } 
 
     public void SetMusic(SelectableMusic music) {
         audioSource.clip = music.clip;

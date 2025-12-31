@@ -1,35 +1,32 @@
-using System;
+
 using Core.App.Presenters.Scene.Types;
-using Core.App.Interfaces;
 using Core.App.Types;
-using Core.Utils;
 using UnityEngine;
 
 namespace Core.App.Presenters.Scene.States {
 
     public class CharacterSelectState : ISceneState {
         private readonly SceneStateContext context;
-        private readonly CompositeDisposable subscriptions = new();
 
         public CharacterSelectState(SceneStateContext context) {
             this.context = context;
         }
 
-        private void OnRequireTransition(AppScene scene) {
-            Debug.Log("CharacterSelectState received RequireTransition to " + scene);
-            if (scene == AppScene.StageSelect) {
+        private void OnAppFlowMessage(AppMessages.RequireTransition message) {
+            Debug.Log("CharacterSelectState received RequireTransition to " + message.scene);
+            if (message.scene == AppScene.StageSelect) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     AppScene.StageSelect
                 ));
             }
-            else if (scene == AppScene.Menu) {
+            else if (message.scene == AppScene.Menu) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     AppScene.Menu
                 ));
             }
-            else if (scene == AppScene.Battle) {
+            else if (message.scene == AppScene.Battle) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     context.setting.Stage.value == "Street" ? AppScene.Battle_Street : AppScene.Battle_Stage
@@ -37,27 +34,28 @@ namespace Core.App.Presenters.Scene.States {
             }
         }
 
-        private void OnStrikerSelected(StrikerSelection selection) {
-            context.setting.SetStriker(selection.playerId, selection.strikerId);
+        private void OnStrikerSelected(AppMessages.SelectStriker message) {
+            context.setting.SetStriker(message.playerId, message.striker);
             foreach (var playerId in context.playerRegistry.GetAllPlayerIds()) {
                 var striker = context.setting.GetStriker(playerId);
                 if (striker == null) {
-                    context.events.FireAllStrikersSelectedChanged(false);
+                    context.bus.Publish(new AppMessages.Changed_AllStrikersSelected(false));
                     return;
                 }
             }
-            context.events.FireAllStrikersSelectedChanged(true);
+            context.bus.Publish(new AppMessages.Changed_AllStrikersSelected(true));
         }
 
         public void Enter() {
             context.cursorRegistry.SetCursorsActive(true);
-            subscriptions.Add(context.events.SubscribeRequireTransition(OnRequireTransition));
-            subscriptions.Add(context.events.SubscribeSelectStriker(OnStrikerSelected));
-            context.events.FirePlayBGM(BGMType.MainBGM);
+            context.bus.Subscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
+            context.bus.Subscribe<AppMessages.SelectStriker>(OnStrikerSelected);
+            context.bus.Publish(new AppMessages.PlayBGM(BGMType.MainBGM));
         }
 
         public void Exit() {
-            subscriptions.Dispose();
+            context.bus.Unsubscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
+            context.bus.Unsubscribe<AppMessages.SelectStriker>(OnStrikerSelected);
         }
     }
 }

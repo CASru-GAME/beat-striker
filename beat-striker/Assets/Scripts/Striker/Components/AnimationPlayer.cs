@@ -13,10 +13,16 @@ namespace Core.Striker {
         private AnimationMixerPlayable mixer;
         private AnimationClipPlayable currentClipPlayable;
         private AnimationClipPlayable previousClipPlayable;
-        private bool initialized;
 
         void Awake() {
-            EnsureGraph();
+            // PlayableGraphの初期化
+            playableGraph = PlayableGraph.Create("StrikerAnimationGraph");
+            playableGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
+            
+            // クロスフェード用に2スロット作成
+            mixer = AnimationMixerPlayable.Create(playableGraph, 2);
+            var output = AnimationPlayableOutput.Create(playableGraph, "Animation", animator);
+            output.SetSourcePlayable(mixer);
         }
 
         void OnDestroy() {
@@ -26,8 +32,7 @@ namespace Core.Striker {
         }
 
         public void PlayAnimation(StrikerAnimationClip animation, Action onComplete = null) {
-            if (animation.clip == null) return;
-            if (!EnsureGraph()) return;
+            if (animator == null || animation.clip == null) return;
 
             if (currentAnimationCoroutine != null) {
                 StopCoroutine(currentAnimationCoroutine);
@@ -36,28 +41,6 @@ namespace Core.Striker {
             currentAnimationCoroutine = StartCoroutine(PlayAnimationCoroutine(animation.clip, animation.fadeTime, animation.speed, () => {
                 onComplete?.Invoke();
             }));
-        }
-
-        private bool EnsureGraph() {
-            if (initialized && playableGraph.IsValid()) return true;
-
-            if (animator == null) {
-                animator = GetComponent<Animator>();
-                if (animator == null) {
-                    Debug.LogError("AnimationPlayer: Animator missing; cannot play animations.");
-                    return false;
-                }
-            }
-
-            playableGraph = PlayableGraph.Create("StrikerAnimationGraph");
-            playableGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-
-            mixer = AnimationMixerPlayable.Create(playableGraph, 2);
-            var output = AnimationPlayableOutput.Create(playableGraph, "Animation", animator);
-            output.SetSourcePlayable(mixer);
-
-            initialized = true;
-            return true;
         }
 
         private IEnumerator PlayAnimationCoroutine(AnimationClip clip, float fadeTime, float speed, Action onComplete) {

@@ -1,11 +1,8 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 using Core;
-using Core.App;
-using Core.App.Installers;
-using Core.App.Interfaces;
 using Core.App.Types;
+using Core.App.Installers;
 using System.Linq;
 using Core.Utils;
 using Core.App.Presenters.Scene.Types;
@@ -51,12 +48,8 @@ public class StartButtonAnimation : MonoBehaviour {
 
     public Botan backgroundBotan; // 背景のBotanコンポーネント
 
-    private IAppModel appModel;
-    private IDisposable allStrikersSelectedSub;
-
     void Awake() {
-        appModel = AppFlowScope.GetInstance().GetAppModel();
-        allStrikersSelectedSub = appModel.SubscribeAllStrikersSelectedChanged(OnAllStrikersSelected);
+        this.GetBus().Subscribe<AppMessages.Changed_AllStrikersSelected>(OnAllStrikersSelected);
         // 初期位置を保存
         if (whiteLineAbove != null) {
             aboveEndPos = whiteLineAbove.anchoredPosition;
@@ -99,11 +92,11 @@ public class StartButtonAnimation : MonoBehaviour {
     }
 
     void OnDestroy() {
-        allStrikersSelectedSub?.Dispose();
+        this.GetBus().Unsubscribe<AppMessages.Changed_AllStrikersSelected>(OnAllStrikersSelected);
     }
 
-    void OnAllStrikersSelected(bool allSelected) {
-        if (allSelected) {
+    void OnAllStrikersSelected(AppMessages.Changed_AllStrikersSelected msg) {
+        if (msg.allSelected) {
             // クリックフィードバック（効果音とへこみ）
             foreach (var b in characterSelectButton) {
                 b.PlayClickFeedback(clickTarget, scaleDownAmount, scaleDuration);
@@ -123,7 +116,7 @@ public class StartButtonAnimation : MonoBehaviour {
             }
         }
     }
-
+    
     void AnimateLines() {
         // 赤いLine（左から右へ）
         if (whiteLineAbove != null) {
@@ -218,7 +211,7 @@ public class StartButtonAnimation : MonoBehaviour {
             PlaySoundAtVolume(blackImageClickSound, blackImageClickSoundVolume);
         }
 
-        appModel.FireRequireTransition(AppScene.Battle);
+        this.GetBus().Publish(new AppMessages.RequireTransition(AppScene.Battle));
     }
 
     void PlaySoundAtVolume(AudioClip clip, float volume) {

@@ -17,8 +17,9 @@ public class AttackSMB : StateMachineBehaviour {
 
     public void OnEnterTrigger(Collider collider) {
         Debug.Log($"{strikerView.gameObject.name} collided with {collider.gameObject.name}");
-            var hitTarget = collider.gameObject.GetComponentInParent<IStrikerHit>();
-            if (hitTarget != null) hitTarget.GiveHit(new HitStatus(new HitPoint(damage)));
+        var view = collider.gameObject.GetComponent<StrikerView>();
+        if (view == null) return;
+        view.TakeDamage(new HitStatus(new HitPoint(damage)));
     }
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {

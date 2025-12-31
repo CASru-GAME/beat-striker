@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Core.Battle;
+using Core.Utils;
 
 [RequireComponent(typeof(Button))]
 public class ResultPanelButton : MonoBehaviour
@@ -91,9 +92,11 @@ public class ResultPanelButton : MonoBehaviour
     private RectTransform goBackRect;
     private Button goBackButton;
     private CanvasGroup nextTextCanvasGroup;
+    private IBus bus;
 
     void Start()
     {
+        bus = this.GetBus();
         button = GetComponent<Button>();
         audioSource = GetComponent<AudioSource>();
         
