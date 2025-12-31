@@ -1,6 +1,7 @@
-
-
+using System;
 using System.Collections.Generic;
+using Core.App;
+using Core.App.Interfaces;
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
 using Core.Utils;
@@ -10,41 +11,40 @@ public class CursorRegistry : ICursorRegistry {
     private readonly Dictionary<PlayerId, bool> cursors;
     private readonly ICursorFactory cursorFactory;
     private readonly IPlayerRegistry playerRegistry;
-    private readonly IBus bus;
+    private readonly IAppModel appModel;
+    private readonly CompositeDisposable subscriptions = new();
     private bool isActive = false;
 
-    public CursorRegistry(ICursorFactory factory, IPlayerRegistry playerRegistry, IBus bus, ILife life) {
+    public CursorRegistry(ICursorFactory factory, IPlayerRegistry playerRegistry, IAppModel appModel, ILife life) {
         cursors = new();
         cursorFactory = factory;
         this.playerRegistry = playerRegistry;
-        this.bus = bus;
+        this.appModel = appModel;
         life.Link(OnEnable, OnDisable);
     }
 
     private void OnEnable() {
-        bus.Subscribe<AppMessages.PlayerJoined>(OnPlayerJoined);
-        bus.Subscribe<AppMessages.PlayerLeft>(OnPlayerLeft);
-        bus.Subscribe<AppMessages.SetCursorsActive>(OnSetCursorsActive);
+        subscriptions.Add(appModel.SubscribePlayerJoined(OnPlayerJoined));
+        subscriptions.Add(appModel.SubscribePlayerLeft(OnPlayerLeft));
+        subscriptions.Add(appModel.SubscribeSetCursorsActive(OnSetCursorsActive));
     }
 
     private void OnDisable() {
-        bus.Unsubscribe<AppMessages.PlayerJoined>(OnPlayerJoined);
-        bus.Unsubscribe<AppMessages.PlayerLeft>(OnPlayerLeft);
-        bus.Unsubscribe<AppMessages.SetCursorsActive>(OnSetCursorsActive);
+        subscriptions.Dispose();
     }
 
-    private void OnPlayerJoined(AppMessages.PlayerJoined message) {
-        Debug.Log("CursorRegistry OnPlayerJoined: " + message.playerId.value);
+    private void OnPlayerJoined(PlayerId playerId) {
+        Debug.Log("CursorRegistry OnPlayerJoined: " + playerId.value);
         UpdateCursors();
     }
 
-    private void OnPlayerLeft(AppMessages.PlayerLeft message) {
+    private void OnPlayerLeft(PlayerId playerId) {
         UpdateCursors();
     }
 
-    private void OnSetCursorsActive(AppMessages.SetCursorsActive message) {
-        Debug.Log($"CursorRegistry OnSetCursorsActive: {message.active}");
-        SetCursorsActive(message.active);
+    private void OnSetCursorsActive(bool active) {
+        Debug.Log($"CursorRegistry OnSetCursorsActive: {active}");
+        SetCursorsActive(active);
     }
 
 
@@ -61,7 +61,7 @@ public class CursorRegistry : ICursorRegistry {
             foreach (var playerId in existingPlayerIds) {
                 if (!currentPlayerIds.Contains(playerId)) {
                     cursors.Remove(playerId);
-                    bus.Publish(new AppMessages.RequireCursorDestroyed(playerId));
+                    appModel.FireRequireCursorDestroyed(new CursorDestroyRequest(playerId));
                 }
             }
 
@@ -74,7 +74,7 @@ public class CursorRegistry : ICursorRegistry {
         }
         else {
             cursors.Clear();
-            bus.Publish(new AppMessages.RequireCursorDestroyed());
+            appModel.FireRequireCursorDestroyed(CursorDestroyRequest.All());
         }
     }
 }

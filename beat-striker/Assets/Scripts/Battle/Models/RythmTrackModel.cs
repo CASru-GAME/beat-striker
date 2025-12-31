@@ -1,6 +1,8 @@
 
+using System;
 using System.Collections.Generic;
 using Core.App.Types;
+using Core.Utils;
 using UnityEngine;
 
 namespace Core.Battle {
@@ -12,6 +14,8 @@ namespace Core.Battle {
         private float goodWindow;
         private float timeOffset;
         private int[] nextBeatIndex = new int[4];
+        
+        private readonly Subject<PlayerId> onMissedBeat = new();
 
         public RythmTrackModel(float[] beatTimes, float perfectWindow, float goodWindow, float timeOffset) {
             this.beatTimes = beatTimes;
@@ -20,6 +24,8 @@ namespace Core.Battle {
             this.timeOffset = timeOffset;
             this.currentTime = timeOffset;
         }
+
+        public IDisposable SubscribeMissedBeat(Action<PlayerId> listener) => onMissedBeat.Subscribe(listener);
 
         public BeatResult Beat(PlayerId playerId) {
             var pid = playerId.value;
@@ -71,7 +77,9 @@ namespace Core.Battle {
                 
                 // 見逃したビートがあれば追加（1つでもスキップされたら）
                 if (playerBeatIndex > initialIndex) {
-                    missedPlayers.Add(new PlayerId(pid));
+                    var playerId = new PlayerId(pid);
+                    missedPlayers.Add(playerId);
+                    onMissedBeat.Fire(playerId);
                 }
                 
                 nextBeatIndex[pid] = playerBeatIndex;

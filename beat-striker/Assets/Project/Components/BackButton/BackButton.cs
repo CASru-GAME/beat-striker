@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Collections;
-using Core.Utils;
+using Core.App;
+using Core.App.Installers;
 using Core.App.Presenters.Scene.Types;
+using Core.App.Interfaces;
 using Core.App.Types;
 using Core;
 using UnityEngine.UI;
@@ -17,12 +19,15 @@ public class Backbutton : MonoBehaviour {
     public float scaleAnimationDuration = 0.2f;
     private float originalAlpha;
     private Vector3 originalScale;
+    private IAppModel appModel;
 
     void Awake() {
         button = GetComponent<Botan>();
         button.onClick += GoToSceneAfterSound;
         originalAlpha = image.color.a;
         originalScale = transform.localScale;
+        appModel = AppFlowScope.GetInstance().GetAppModel();
+
         button.onHover += data => {
             var col = image.color;
             col.a = hoveredAlpha;
@@ -40,8 +45,6 @@ public class Backbutton : MonoBehaviour {
     }
 
     void GoToSceneAfterSound(BotanEventData data) {
-        this.GetBus().Publish(new AppMessages.RequireTransition(previousScene));
-
+        appModel.FireRequireTransition(previousScene);
     }
-
 }

@@ -1,9 +1,11 @@
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 using Core.Utils;
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
 using Core.App.Views;
+using Core.App.Interfaces;
 
 namespace Core.App.Models {
     public interface IBGMManager {
@@ -13,30 +15,30 @@ namespace Core.App.Models {
 
     public class BGMManager : IBGMManager {
         private readonly IBGMView view;
-        private readonly IBus bus;
+        private readonly IAppModel appModel;
+        private readonly CompositeDisposable subscriptions = new();
 
-        public BGMManager(IBGMView view, IBus bus, ILife life) {
+        public BGMManager(IBGMView view, IAppModel appModel, ILife life) {
             this.view = view;
-            this.bus = bus;
+            this.appModel = appModel;
             
             life.Link(OnEnable, OnDisable);
         }
 
         private void OnEnable() {
-            bus.Subscribe<AppMessages.PlayBGM>(OnPlayBGM);
-            bus.Subscribe<AppMessages.StopBGM>(OnStopBGM);
+            subscriptions.Add(appModel.SubscribePlayBGM(OnPlayBGM));
+            subscriptions.Add(appModel.SubscribeStopBGM(OnStopBGM));
         }
 
         private void OnDisable() {
-            bus.Unsubscribe<AppMessages.PlayBGM>(OnPlayBGM);
-            bus.Unsubscribe<AppMessages.StopBGM>(OnStopBGM);
+            subscriptions.Dispose();
         }
 
-        private void OnPlayBGM(AppMessages.PlayBGM message) {
-            PlayBGM(message.bgmType);
+        private void OnPlayBGM(BGMType bgmType) {
+            PlayBGM(bgmType);
         }
 
-        private void OnStopBGM(AppMessages.StopBGM message) {
+        private void OnStopBGM() {
             StopBGM();
         }
 

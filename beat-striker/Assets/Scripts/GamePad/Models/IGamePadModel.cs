@@ -8,14 +8,26 @@ namespace Core.GamePad.Models {
         /// <summary>ゲームパッドID</summary>
         GamePadId Id { get; }
 
+        /// <summary>
+        /// 初期化（共有入力モデルを設定）
+        /// </summary>
+        void Initialize(IGamePadInputModel sharedModel);
+
         /// <summary>現在の入力方向を取得</summary>
         Vector2 GetDirection();
 
         /// <summary>
-        /// 入力方向を適用し、状態変化を返す
+        /// 入力方向を処理する
         /// </summary>
-        /// <param name="v">入力ベクトル</param>
-        DirectionResult ApplyDirection(Vector2 v);
+        void HandleDirection(Vector2 v);
+
+        /// <summary>
+        /// ボタン入力を処理する
+        /// </summary>
+        void HandleButton(GamePadButton button, GamePadAction action);
+
+        void OnEnable();
+        void OnDisable();
     }
 
 

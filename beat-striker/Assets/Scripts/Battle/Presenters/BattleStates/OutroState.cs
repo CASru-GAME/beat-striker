@@ -1,42 +1,26 @@
-using Core.App.Types;
-using Core.Utils;
 using UnityEngine;
+using Core.App.Types;
 
 namespace Core.Battle {
     public class OutroState : IBattleState {
-        private readonly IBattleStateMutator mutator;
-        private readonly IBus bus;
-        private readonly IBattleModel battleModel;
-        private readonly IRythmTrackModel rythmTrackModel;
-        private readonly IBattleResetter resetter;
-        private readonly IBattleView view;
-        private readonly TrackId trackId;
+        private readonly IBattleModel model;
 
-        public OutroState(IBattleStateMutator mutator, IBus bus, IBattleModel battleModel, IRythmTrackModel rythmTrackModel, IBattleResetter resetter, IBattleView view, TrackId trackId) {
-            this.mutator = mutator;
-            this.bus = bus;
-            this.battleModel = battleModel;
-            this.rythmTrackModel = rythmTrackModel;
-            this.resetter = resetter;
-            this.view = view;
-            this.trackId = trackId;
+        public OutroState(IBattleModel model) {
+            this.model = model;
         }
 
         public void Enter() {
             Debug.Log("Entering Outro State");
-            bus.Publish(new BattleMessages.OnOutroStarted(battleModel));
-            bus.Subscribe<BattleMessages.NotifyOutroAnimationFinished>(OnOutroAnimationFinished);
-        }
-
-        private void OnOutroAnimationFinished(BattleMessages.NotifyOutroAnimationFinished message) {
-            mutator.ChangeState(new ResultState(mutator, bus, battleModel));
+            model.FireOutroStarted();
+            
+            var winner = model.GetFinalWinner();
+            model.FireRequireVictoryPose(winner);
         }
 
         public void OnUpdate(float deltaTime) {
         }
 
         public void Exit() {
-            bus.Unsubscribe<BattleMessages.NotifyOutroAnimationFinished>(OnOutroAnimationFinished);
         }
     }
 }

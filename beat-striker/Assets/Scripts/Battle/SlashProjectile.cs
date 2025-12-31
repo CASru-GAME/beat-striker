@@ -46,9 +46,15 @@ namespace Core.Battle {
                 return;
             }
 
-            // apply damage
+            // apply damage via IStrikerHit interface
+            var hitTarget = other.GetComponentInParent<IStrikerHit>();
+            if (hitTarget == null) {
+                Debug.Log("SlashProjectile: target has no IStrikerHit, ignoring.");
+                return;
+            }
+            
             Debug.Log($"SlashProjectile: hitting target {target.name} for {damage} damage.");
-            target.TakeDamage(new HitStatus(new HitPoint(damage)));
+            hitTarget.GiveHit(new HitStatus(new HitPoint(damage)));
 
             // spawn hit effect if assigned
             if (hitEffectPrefab != null)

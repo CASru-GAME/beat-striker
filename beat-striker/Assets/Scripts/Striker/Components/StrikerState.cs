@@ -50,6 +50,7 @@ namespace Core.Striker {
         }
 
         void IStrikerState.OnDashRequested(IStrikerStateContext ctx) {
+            // Debug.Log($"[StrikerState] OnDashRequested in {this.GetType().Name}"); // Optional: log context
             foreach (var p in parents) {
                 p.OnDashRequested(ctx);
             }

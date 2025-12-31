@@ -1,7 +1,7 @@
-
-
+using System;
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
+using Core.Utils;
 using UnityEngine;
 
 namespace Core.App.Presenters.Scene {
@@ -10,6 +10,7 @@ namespace Core.App.Presenters.Scene {
         private readonly AppScene nextScene;
         private readonly ISceneState nextState;
         private bool sceneLoadRequested = false;
+        private IDisposable loadSceneSubscription;
 
         public TransitionState(SceneStateContext context, AppScene nextScene) {
             this.context = context;
@@ -19,8 +20,8 @@ namespace Core.App.Presenters.Scene {
 
         public void Enter() {
             sceneLoadRequested = false;
-            context.bus.Publish(new AppMessages.OnTransitionAnimationStarted(nextScene));
-            context.bus.Subscribe<AppMessages.RequireLoadScene>(OnAppFlowMessage);
+            context.events.FireTransitionAnimationStarted(nextScene);
+            loadSceneSubscription = context.events.SubscribeRequireLoadScene(OnRequireLoadScene);
             CheckTimeout();
         }
 
@@ -31,7 +32,7 @@ namespace Core.App.Presenters.Scene {
             }
         }
 
-        private void OnAppFlowMessage(AppMessages.RequireLoadScene message) {
+        private void OnRequireLoadScene() {
             sceneLoadRequested = true;
             context.view.LoadScene(nextScene, OnSceneLoadCompleted);
         }
@@ -43,7 +44,7 @@ namespace Core.App.Presenters.Scene {
         }
 
         public void Exit() {
-            context.bus.Unsubscribe<AppMessages.RequireLoadScene>(OnAppFlowMessage);
+            loadSceneSubscription?.Dispose();
         }
     }
 }

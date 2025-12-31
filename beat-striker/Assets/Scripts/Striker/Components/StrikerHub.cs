@@ -2,10 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Core.App.Interfaces;
-using Core.App.Models;
 using Core.App.Types;
 using Core.Utils;
 using Core.Battle;
+using Core.GamePad;
 using Core.GamePad.Types;
 using Core.Striker.Components;
 using UnityEngine;
@@ -18,7 +18,7 @@ namespace Core.Striker {
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(CapsuleCollider))]
     [AddComponentMenu(" Striker Hub", 0)]
-    public class StrikerHub : MonoBehaviour, IStrikerView, IStrikerHit, IStrikerContext {
+    public class StrikerHub : MonoBehaviour, IStrikerViewWithEvents, IStrikerHit, IStrikerContext {
 
         [Header("Striker Settings")]
         [SerializeField] private HitPoint maxHitPoint = new(100);
@@ -32,14 +32,17 @@ namespace Core.Striker {
         private Vector3 initialPosition;
         private Quaternion initialRotation;
 
-        private IBus bus;
+        // Observable model and events
         private IStrikerModel model;
         private IPlayerRegistry playerRegistry;
         private IRythmTrackModel rythmTrackModel;
+        private IBattleModel battleModel;
 
+        // Subscriptions
+        private CompositeDisposable subscriptions;
         private bool isInputEnabled = false;
 
-        public Vector2 InputDirection { get; private set; }
+        public Vector2 InputDirection => model?.InputDirection ?? Vector2.zero;
         public Rigidbody Rigidbody => rb;
 
         private StrikerStateMachine stateMachine;
@@ -51,9 +54,6 @@ namespace Core.Striker {
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
 
             animationPlayer = GetComponent<AnimationPlayer>();
-        }
-
-        private void Start() {
             stateMachine = new StrikerStateMachine(this, defaultState);
         }
 
@@ -61,92 +61,95 @@ namespace Core.Striker {
             stateMachine.CurrentState.OnUpdate(stateMachine);
         }
 
-        public IStrikerModelGetter Construct(PlayerId playerId, ScoreRule rule, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry) {
-            this.bus = this.GetBus();
+        /// <summary>
+        /// Construct with observable model and events - no event bus needed
+        /// </summary>
+        public IStrikerModelGetter Construct(PlayerId playerId, ScoreRule rule, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry, IBattleModel battleModel) {
             this.rythmTrackModel = rythmTrackModel;
             this.playerRegistry = playerRegistry;
-            this.model = new StrikerModel(playerId, maxHitPoint, maxSpecialPoint, rule);
+            this.battleModel = battleModel;
+            this.model = new StrikerModel(playerId, maxHitPoint, maxSpecialPoint, rule, rythmTrackModel);
 
-            bus.Subscribe<GamePadMessages.Inputed>(OnGamePadInputed);
-            bus.Subscribe<GamePadMessages.DirectionChanged>(OnGamePadDirectionChanged);
-            bus.Subscribe<BattleMessages.RequireIntroPose>(OnIntroMessage);
-            bus.Subscribe<BattleMessages.RequireVictoryPose>(OnVictoryMessage);
-            bus.Subscribe<BattleMessages.OnBattleStarted>(OnRoundStart);
-            bus.Subscribe<BattleMessages.OnBattleFinished>(OnRoundEnd);
-            bus.Subscribe<BattleMessages.OnBeat>(OnBeatMessage);
+            subscriptions = new CompositeDisposable();
+
+            // Subscribe to model events (observable pattern)
+            subscriptions.Add(model.SubscribeDied(OnModelDied));
+            subscriptions.Add(model.SubscribeBeatResult(OnBeatResult));
+
+            // Subscribe to action events from Model
+            subscriptions.Add(model.SubscribeAttack(() => Attack()));
+            subscriptions.Add(model.SubscribeDash(() => Dash()));
+            subscriptions.Add(model.SubscribeCharge(() => Charge()));
+            subscriptions.Add(model.SubscribeGuard(() => Guard()));
+            subscriptions.Add(model.SubscribeMiss(() => OnMiss()));
+            // Special event from Model assumes successful execution logic in Model
+            subscriptions.Add(model.SubscribeSpecial(() => {
+                // Trigger Special Animation/State if needed. 
+            }));
+
+            // Subscribe to battle events (replaces event bus)
+            subscriptions.Add(battleModel.SubscribeRequireIntroPose(OnIntroPoseRequested));
+            subscriptions.Add(battleModel.SubscribeRequireVictoryPose(OnVictoryPoseRequested));
+            subscriptions.Add(battleModel.SubscribeBattleStarted(_ => OnRoundStart()));
+            subscriptions.Add(battleModel.SubscribeRoundFinished(_ => OnRoundEnd()));
+            subscriptions.Add(battleModel.SubscribeOutroStarted(_ => OnRoundEnd()));
+            subscriptions.Add(rythmTrackModel.SubscribeMissedBeat(OnMissedBeat));
 
             return model;
         }
 
+        /// <summary>
+        /// Legacy construct interface (throws if used without BattleEvents)
+        /// </summary>
+        public IStrikerModelGetter Construct(PlayerId playerId, ScoreRule rule, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry) {
+            throw new NotSupportedException("StrikerHub requires BattleEvents. Use Construct with BattleEvents parameter.");
+        }
+
         void OnDestroy() {
-            bus.Unsubscribe<GamePadMessages.Inputed>(OnGamePadInputed);
-            bus.Unsubscribe<GamePadMessages.DirectionChanged>(OnGamePadDirectionChanged);
-            bus.Unsubscribe<BattleMessages.RequireIntroPose>(OnIntroMessage);
-            bus.Unsubscribe<BattleMessages.RequireVictoryPose>(OnVictoryMessage);
-            bus.Unsubscribe<BattleMessages.OnBattleStarted>(OnRoundStart);
-            bus.Unsubscribe<BattleMessages.OnBattleFinished>(OnRoundEnd);
-            bus.Unsubscribe<BattleMessages.OnBeat>(OnBeatMessage);
+            subscriptions?.Dispose();
         }
 
-        // Logic from StrikerPresenter
-        private void OnGamePadInputed(GamePadMessages.Inputed msg) {
-            var player = playerRegistry.ToPlayerId(msg.gamePadId);
+        // GamePad input handling (called from external GamePad system)
+        public void HandleGamePadInput(GamePadInput input) {
+            var player = playerRegistry.ToPlayerId(input.gamePadId);
             if (isInputEnabled == false || player == null || model.PlayerId != player || model.IsDead()) return;
 
-            if (msg.action == GamePadAction.Down) {
-                if (msg.button == GamePadButton.South) { if (Beat()) Dash(); }
-                else if (msg.button == GamePadButton.East) { if (Beat()) Attack(); }
-                else if (msg.button == GamePadButton.West) { if (Beat()) { Charge(); } } // Charge request
-                else if (msg.button == GamePadButton.North) {
-                    if (Beat()) {
-                        Special();
-                    }
-                }
-                else if (msg.button == GamePadButton.LeftTrigger) { if (Beat()) Guard(); }
-            }
-
-            if (msg.action == GamePadAction.Up && msg.button == GamePadButton.Direction) {
-                CancelDirection();
-            }
+            model.HandleInput(input);
         }
 
-        private void OnGamePadDirectionChanged(GamePadMessages.DirectionChanged msg) {
-            var player = playerRegistry.ToPlayerId(msg.gamePadId);
+        public void HandleDirectionChanged(DirectionChange change) {
+            var player = playerRegistry.ToPlayerId(change.gamePadId);
             if (isInputEnabled == false || player == null || model.PlayerId != player || model.IsDead()) return;
 
-            ChangeDirection(msg.direction);
+            model.HandleDirection(change.direction);
         }
 
-        private bool Beat() {
-            var res = rythmTrackModel.Beat(model.PlayerId);
-            model.AddBeatResult(res);
-            bus.Publish(new BattleMessages.OnBeat(model.PlayerId, res));
-            if (res.status != BeatStatus.Miss) {
-                model.GainSpecial();
-                return true;
-            }
-            else {
-                OnMiss();
-                return false;
-            }
+        private void OnBeatResult(BeatResult result) {
+            // React to beat result if needed
         }
 
-        private void OnBeatMessage(BattleMessages.OnBeat msg) {
-            if (model.PlayerId != msg.playerId || model.IsDead()) return;
-            if (msg.result.status == BeatStatus.Miss) OnMiss();
+        private void OnMissedBeat(PlayerId playerId) {
+            if (model.PlayerId != playerId || model.IsDead()) return;
+            OnMiss();
         }
 
-        private void OnRoundStart(BattleMessages.OnBattleStarted msg) => isInputEnabled = true;
+        private void OnRoundStart() {
+            isInputEnabled = true;
+            model.SetInputEnabled(true);
+        }
 
-        private void OnRoundEnd(BattleMessages.OnBattleFinished msg) => isInputEnabled = false;
+        private void OnRoundEnd() {
+            isInputEnabled = false;
+            model.SetInputEnabled(false);
+        }
 
-        private void OnIntroMessage(BattleMessages.RequireIntroPose msg) {
-            if (model.PlayerId != msg.playerId) return;
+        private void OnIntroPoseRequested(PlayerId playerId) {
+            if (model.PlayerId != playerId) return;
             OnIntro();
         }
 
-        private void OnVictoryMessage(BattleMessages.RequireVictoryPose msg) {
-            if (model.PlayerId != msg.playerId) return;
+        private void OnVictoryPoseRequested(PlayerId playerId) {
+            if (model.PlayerId != playerId) return;
             OnVictory();
         }
 
@@ -158,12 +161,14 @@ namespace Core.Striker {
 
         public void ApplyDamage(HitPoint damage) {
             model.TakeDamage(damage);
-            if (model.IsDead()) {
-                OnDead();
-            }
+        }
+
+        private void OnModelDied() {
+            stateMachine.ChangeState(deadState);
         }
 
         public void Dash() {
+            Debug.Log("[StrikerHub] Dash Requested");
             stateMachine.CurrentState.OnDashRequested(stateMachine);
         }
 
@@ -176,11 +181,7 @@ namespace Core.Striker {
         }
 
         public void Special() {
-            if (model.SpecialPoint.value < model.MaxSpecialPoint.value) {
-                OnMiss();
-                return;
-            }
-            model.GainSpecial(new SpecialPoint(-model.MaxSpecialPoint.value));
+            // Logic delegated to Model.
         }
 
         public void Guard() {
@@ -192,7 +193,6 @@ namespace Core.Striker {
         }
 
         public void OnDead() {
-            bus.Publish(new BattleMessages.NotifyPlayerDead(model.PlayerId));
             stateMachine.ChangeState(deadState);
         }
 
@@ -217,7 +217,7 @@ namespace Core.Striker {
             transform.SetPositionAndRotation(initialPosition, initialRotation);
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-            InputDirection = Vector2.zero;
+            model.HandleDirection(Vector2.zero);
         }
 
         public Vector2 GetForwardDirection() {
@@ -226,11 +226,11 @@ namespace Core.Striker {
         }
 
         public void ChangeDirection(Vector2 direction) {
-            InputDirection = direction;
+            // Legacy - now handled by Model via HandleDirection
         }
 
         public void CancelDirection() {
-            InputDirection = Vector2.zero;
+            model.HandleDirection(Vector2.zero);
         }
 
         // IStrikerContext の実装

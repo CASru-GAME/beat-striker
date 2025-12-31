@@ -3,19 +3,15 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Core.App.Installers;
 using Core.App.Types;
-using Core.Utils;
 
 public class ResultScene : MonoBehaviour
 {
     [SerializeField] Image player1PortraitImage; // Player1の顔写真を表示するImage
     [SerializeField] Image player2PortraitImage; // Player2の顔写真を表示するImage
 
-    private IBus bus;
-
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        bus = this.GetBus();
         LoadStrikerPortraits();
     }
 

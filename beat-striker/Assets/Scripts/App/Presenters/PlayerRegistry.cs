@@ -1,22 +1,29 @@
 
 
 
+using System;
 using System.Collections.Generic;
+using Core.App.Interfaces;
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
+using Core.GamePad;
+using Core.GamePad.Models;
 using Core.GamePad.Types;
 using Core.Utils;
 using UnityEngine;
 
-namespace Core.App{
+namespace Core.App {
     public class PlayerRegistry : IPlayerRegistry {
         private const int MAXPLAYERS = 100;
         private readonly Dictionary<int, PlayerId> playerMap = new();
-        private readonly IBus bus;
+        private readonly IAppModel appModel;
+        private readonly IGamePadInputModel gamePadInputModel;
+        private readonly CompositeDisposable subscriptions = new();
 
-        public PlayerRegistry(IBus bus, ILife life) {
+        public PlayerRegistry(IAppModel appModel, IGamePadInputModel gamePadInputModel, ILife life) {
             Debug.Log("PlayerRegistry Constructor");
-            this.bus = bus;
+            this.appModel = appModel;
+            this.gamePadInputModel = gamePadInputModel;
             life.Link(OnEnable, OnDisable);
         }
 
@@ -29,32 +36,31 @@ namespace Core.App{
 
         public void OnEnable() {
             Debug.Log("PlayerRegistry OnEnable");
-            bus.Subscribe<GamePadMessages.Joined>(OnGamePadJoined);
-            bus.Subscribe<GamePadMessages.Left>(OnGamePadLeft);
+            subscriptions.Add(gamePadInputModel.SubscribeJoined(OnGamePadJoined));
+            subscriptions.Add(gamePadInputModel.SubscribeLeft(OnGamePadLeft));
         }
 
         public void OnDisable() {
-            bus.Unsubscribe<GamePadMessages.Joined>(OnGamePadJoined);
-            bus.Unsubscribe<GamePadMessages.Left>(OnGamePadLeft);
+            subscriptions.Dispose();
         }
 
-        private void OnGamePadJoined(GamePadMessages.Joined message) {
-            Debug.Log($"GamePad Joined: {message.gamePadId.value}");
+        private void OnGamePadJoined(GamePadId gamePadId) {
+            Debug.Log($"GamePad Joined: {gamePadId.value}");
             for (int playerIdValue = 0; playerIdValue < MAXPLAYERS; playerIdValue++) {
                 var pid = new PlayerId(playerIdValue);
                 if (!playerMap.ContainsValue(pid)) {
-                    playerMap[message.gamePadId.value] = pid;
-                    bus.Publish(new AppMessages.PlayerJoined(pid));
+                    playerMap[gamePadId.value] = pid;
+                    appModel.FirePlayerJoined(pid);
                     break;
                 }
             }
         }
 
-        private void OnGamePadLeft(GamePadMessages.Left message) {
-            var playerId = ToPlayerId(message.gamePadId);
+        private void OnGamePadLeft(GamePadId gamePadId) {
+            var playerId = ToPlayerId(gamePadId);
             if (playerId == null) return;
 
-            playerMap.Remove(message.gamePadId.value);
+            playerMap.Remove(gamePadId.value);
 
             bool otherGamePadExists = false;
             foreach (var mappedPlayerId in playerMap.Values) {
@@ -65,7 +71,7 @@ namespace Core.App{
             }
 
             if (!otherGamePadExists) {
-                bus.Publish(new AppMessages.PlayerLeft(playerId.Value));
+                appModel.FirePlayerLeft(playerId.Value);
             }
         }
 

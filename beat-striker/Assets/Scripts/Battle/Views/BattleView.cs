@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 
 namespace Core.Battle {
-    public class BattleView: MonoBehaviour, IBattleView {
+    public class BattleView : MonoBehaviour, IBattleView {
         private AudioSource audioSource;
         private AudioSource beatAudioSource;
         private AudioClip audioClip;
@@ -27,8 +27,18 @@ namespace Core.Battle {
             lastBeatTime = -1f;
         }
 
+        public void SetBattleModel(IBattleModel battleModel) {
+            // Subscribe to events
+            battleModel.SubscribeBattleStarted(_ => PlayTrack(default));
+            battleModel.SubscribeRoundFinished(_ => StopTrack());
+            battleModel.SubscribeOutroStarted(_ => StopTrack());
+        }
+
         void Update() {
             if (rythmTrackModel != null && audioSource.isPlaying) {
+                // Sync model time with audio time
+                rythmTrackModel.SetTime(audioSource.time);
+
                 float nextBeatTime = rythmTrackModel.GetNextBeatTime(new PlayerId(0), 0);
                 if (!float.IsNaN(nextBeatTime) && rythmTrackModel.GetTime() >= nextBeatTime && nextBeatTime != lastBeatTime) {
                     if (beatClip != null && beatAudioSource != null) {

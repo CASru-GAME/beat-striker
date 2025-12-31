@@ -52,9 +52,9 @@ public class WarrierChargeAttackSMB : StateMachineBehaviour {
     void OnEnterTrigger(Collider other) {
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
-        var target = other.GetComponent<StrikerView>();
-        if (target != null) {
-            target.TakeDamage(new HitStatus(new HitPoint(damage)));
+        var hitTarget = other.GetComponentInParent<IStrikerHit>();
+        if (hitTarget != null) {
+            hitTarget.GiveHit(new HitStatus(new HitPoint(damage)));
         }
         else if (virgine) {
             virgine = false;

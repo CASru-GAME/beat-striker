@@ -1,38 +1,39 @@
+using System;
 using System.Collections;
+using Core.App;
+using Core.App.Installers;
+using Core.App.Interfaces;
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
-using Core.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-public class StageselectScene : MonoBehaviour
- {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
+public class StageselectScene : MonoBehaviour {
+    private IAppModel appModel;
+    private IDisposable transitionSubscription;
+
     void Start() {
-        this.GetBus().Subscribe<AppMessages.OnTransitionAnimationStarted>(OnTransitionStartedMessage);
+        appModel = AppFlowScope.GetInstance().GetAppModel();
+        transitionSubscription = appModel.SubscribeTransitionAnimationStarted(OnTransitionStarted);
     }
 
-
-
-    // Update is called once per frame
     void Update() {
-
     }
 
-    void OnTransitionStartedMessage(AppMessages.OnTransitionAnimationStarted msg) {
-        Debug.Log("StageselectScene: OnTransitionStartedMessage received");
+    void OnTransitionStarted(AppScene scene) {
+        Debug.Log("StageselectScene: OnTransitionStarted received");
         //遷移アニメーションを記述する
         StartCoroutine(Animation());
     }
-
 
     IEnumerator Animation() {
         //ここにアニメーションを記述する
         yield return new WaitForSeconds(1.0f); //仮で1秒待つ
 
-        this.GetBus().Publish(new AppMessages.RequireLoadScene());
+        appModel.FireRequireLoadScene();
     }
 
     void OnDestroy() {
-        this.GetBus().Unsubscribe<AppMessages.OnTransitionAnimationStarted>(OnTransitionStartedMessage);
+        transitionSubscription?.Dispose();
     }
 }

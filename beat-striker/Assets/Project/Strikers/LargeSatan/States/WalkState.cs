@@ -42,6 +42,7 @@ namespace Core.LargeSatan {
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
+            Debug.Log($"[WalkState] OnDashRequested. DashNode assigned: {dashNode != null}");
             context.TryTransition(dashNode);
         }
 

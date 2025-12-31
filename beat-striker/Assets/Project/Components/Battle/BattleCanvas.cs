@@ -1,10 +1,13 @@
 using System;
-using Core.App.Presenters.Scene.Types;
+using Core.App;
 using Core.App.Installers;
+using Core.App.Presenters.Scene.Types;
+using Core.App.Interfaces;
 using Core.App.Types;
 using Core.Battle;
+using Core.GamePad;
+using Core.GamePad.Models;
 using Core.GamePad.Types;
-using Core.Utils;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,7 +39,15 @@ public class BattleCanvas : MonoBehaviour {
     [SerializeField] float fadeHoldDuration = 0.5f; // 暗転を保持する時間
     [SerializeField] float delayBeforeRoundText = 0.5f; // 明転後、Roundテキスト表示までの待機時間
 
-    private IBus bus;
+    private IBattleModel battleModel; // Already defined below, will merge.
+    private IAppModel appModel;
+    private IGamePadInputModel gamePadInputModel;
+
+    private IDisposable outroSubscription;
+    private IDisposable battleFinishedSubscription;
+    private IDisposable roundStartedSubscription;
+    private IDisposable resultStartedSubscription;
+    private IDisposable gamePadInputSubscription;
 
     [SerializeField] GameObject resultPrefab;
 
@@ -44,7 +55,6 @@ public class BattleCanvas : MonoBehaviour {
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake() {
-        this.bus = this.GetBus();
         Debug.Log("BattleCanvas Awake");
         BattleFinishText.gameObject.SetActive(false);
         BattleStartText.gameObject.SetActive(false);
@@ -56,10 +66,10 @@ public class BattleCanvas : MonoBehaviour {
             fadePanel.gameObject.SetActive(false);
         }
 
-        bus.Subscribe<BattleMessages.OnOutroStarted>(OnOutroStarted);
-        bus.Subscribe<BattleMessages.OnBattleFinished>(OnBattleFinished);
-        bus.Subscribe<BattleMessages.OnRoundStarted>(OnRoundStarted);
-        bus.Subscribe<BattleMessages.OnResultStarted>(OnResultStarted);
+        // AppModelとGamePadInputModelを取得
+        var appFlowScope = AppFlowScope.GetInstance();
+        appModel = appFlowScope.GetAppModel();
+        gamePadInputModel = appFlowScope.GetGamePadInputModel();
     }
 
     void Start() {
@@ -71,6 +81,25 @@ public class BattleCanvas : MonoBehaviour {
                 Debug.Log("[BattleCanvas] BattleInstaller found, getting battleModel");
                 SetBattleModel(battleInstaller.battleModel);
                 LoadStrikerPortraits();
+
+                // Initialize PlayerUIs
+                var playerUIs = FindObjectsByType<PlayerUI>(FindObjectsSortMode.None);
+                foreach (var ui in playerUIs) {
+                    if (battleInstaller.strikerModels.Count > ui.playerId && battleInstaller.strikerModels[ui.playerId] != null) {
+                        ui.Construct(battleInstaller.strikerModels[ui.playerId], battleInstaller.rythmTrackModel);
+                    }
+                    else {
+                        Debug.LogError($"[BattleCanvas] StrikerModel not found for player {ui.playerId}");
+                    }
+                }
+
+                // BattleModelからイベントをサブスクライブ
+                // battleModel is set via SetBattleModel or direct access here
+                var model = battleInstaller.battleModel;
+                outroSubscription = model.SubscribeOutroStarted(OnOutroStarted);
+                battleFinishedSubscription = model.SubscribeBattleFinished(OnBattleFinished);
+                roundStartedSubscription = model.SubscribeRoundStarted(OnRoundStarted);
+                resultStartedSubscription = model.SubscribeResultStarted(OnResultStarted);
             }
             else {
                 Debug.LogError("[BattleCanvas] BattleInstaller component not found on Battle GameObject!");
@@ -82,11 +111,11 @@ public class BattleCanvas : MonoBehaviour {
     }
 
     void OnDestroy() {
-        bus.Unsubscribe<BattleMessages.OnOutroStarted>(OnOutroStarted);
-        bus.Unsubscribe<BattleMessages.OnBattleFinished>(OnBattleFinished);
-        bus.Unsubscribe<BattleMessages.OnRoundStarted>(OnRoundStarted);
-        bus.Unsubscribe<BattleMessages.OnResultStarted>(OnResultStarted);
-        bus.Unsubscribe<GamePadMessages.Inputed>(OnGamePadInputedForMenu);
+        outroSubscription?.Dispose();
+        battleFinishedSubscription?.Dispose();
+        roundStartedSubscription?.Dispose();
+        resultStartedSubscription?.Dispose();
+        gamePadInputSubscription?.Dispose();
     }
 
     // Update is called once per frame
@@ -94,11 +123,11 @@ public class BattleCanvas : MonoBehaviour {
 
     }
 
-    void OnRoundStarted(BattleMessages.OnRoundStarted msg) {
+    void OnRoundStarted(IBattlemodelGetter battlemodel) {
         Debug.Log("Round Started Animation");
 
         // ラウンド番号を+1して表示
-        int roundNumber = msg.battlemodel.GetCurrentRound() + 1;
+        int roundNumber = battlemodel.GetCurrentRound() + 1;
 
         // RoundNumberTextが設定されているか確認
         if (RoundNumberText == null) {
@@ -165,11 +194,11 @@ public class BattleCanvas : MonoBehaviour {
         // 指定時間後に消える
         LeanTween.delayedCall(fightDisplayDuration, () => {
             BattleStartText.gameObject.SetActive(false);
-            bus.Publish(new BattleMessages.NotifyRoundStartAnimationFinished());
+            battleModel.OnRoundStartAnimationFinished(); // Direct call to Model
         });
     }
 
-    void OnBattleFinished(BattleMessages.OnBattleFinished msg) {
+    void OnBattleFinished(PlayerId winner) {
         Debug.Log("Battle Finished");
 
         BattleFinishText.gameObject.SetActive(true);
@@ -194,7 +223,7 @@ public class BattleCanvas : MonoBehaviour {
     void ShowFadeTransition() {
         if (fadePanel == null) {
             Debug.LogWarning("Fade panel is not assigned!");
-            bus.Publish(new BattleMessages.NotifyRoundFinishAnimationFinished());
+            battleModel.OnRoundFinishAnimationFinished(); // Direct call to Model
             return;
         }
 
@@ -206,7 +235,7 @@ public class BattleCanvas : MonoBehaviour {
             .setEase(LeanTweenType.easeInOutQuad)
             .setOnComplete(() => {
                 // 完全に暗くなったタイミングで次のRound準備を開始
-                bus.Publish(new BattleMessages.NotifyRoundFinishAnimationFinished());
+                battleModel.OnRoundFinishAnimationFinished(); // Direct call to Model
 
                 // 暗転を保持
                 LeanTween.delayedCall(fadeHoldDuration, () => {
@@ -220,7 +249,7 @@ public class BattleCanvas : MonoBehaviour {
             });
     }
 
-    void OnOutroStarted(BattleMessages.OnOutroStarted msg) {
+    void OnOutroStarted(IBattlemodelGetter battlemodel) {
         Debug.Log("Battle All Finished");
         BattleFinishText.text = $"Game Set";
         BattleFinishText.gameObject.SetActive(true);
@@ -233,7 +262,7 @@ public class BattleCanvas : MonoBehaviour {
         });
     }
 
-    void OnResultStarted(BattleMessages.OnResultStarted msg) {
+    void OnResultStarted(IBattlemodelGetter battlemodel) {
         Debug.Log("Result Started");
 
         // Winテキストを消す（LeanTweenもキャンセル）
@@ -265,7 +294,7 @@ public class BattleCanvas : MonoBehaviour {
 
         // リザルト表示中フラグを立てて、Aボタンを購読
         isResultShowing = true;
-        bus.Subscribe<GamePadMessages.Inputed>(OnGamePadInputedForMenu);
+        gamePadInputSubscription = gamePadInputModel.SubscribeInputed(OnGamePadInputedForMenu);
     }
 
     void SetActiveRecursively(Transform parent, bool active) {
@@ -289,17 +318,17 @@ public class BattleCanvas : MonoBehaviour {
         Destroy(soundObject, clip.length);
     }
 
-    void OnGamePadInputedForMenu(GamePadMessages.Inputed msg) {
+    void OnGamePadInputedForMenu(GamePadInput input) {
         // リザルト表示中でない、またはメニューが既に表示されている場合は無視
         if (!isResultShowing) return;
 
         // Aボタン（通常はSouthボタン）が押された場合
-        if ((msg.button == GamePadButton.South || msg.button == GamePadButton.East) && msg.action == GamePadAction.Down) {
-            bus.Publish(new AppMessages.RequireTransition(AppScene.Menu));
+        if ((input.Button == GamePadButton.South || input.Button == GamePadButton.East) && input.Action == GamePadAction.Down) {
+            appModel.FireRequireTransition(AppScene.Menu);
         }
     }
 
-    private IBattleModel battleModel;
+
 
     void SetBattleModel(IBattleModel model) {
         this.battleModel = model;

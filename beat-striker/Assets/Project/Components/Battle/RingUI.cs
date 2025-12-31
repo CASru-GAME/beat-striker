@@ -1,6 +1,6 @@
+using System;
 using Core.App.Types;
 using Core.Battle;
-using Core.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,6 +14,10 @@ public class RingUI : MonoBehaviour {
     private float ringFirstAlpha;
     private float centerRingFirstAlpha;
     [SerializeField] float windowScale = 3f;
+
+    private IBattleModel battleModel;
+    private IDisposable battleStartedSubscription;
+    private IDisposable beatSubscription;
 
     public void Construct(IRythmTrackModelGetter rythmTrackModel, int playerId, Transform playerPosition) {
         this.rythmTrackModel = rythmTrackModel;
@@ -29,22 +33,31 @@ public class RingUI : MonoBehaviour {
     void Start() {
         ringFirstAlpha = rings[0].color.a;
         centerRingFirstAlpha = centerRing[0].color.a;
-        this.GetBus().Subscribe<BattleMessages.OnBattleStarted>(OnBattleStarted);
-        this.GetBus().Subscribe<BattleMessages.OnBeat>(OnBeat);
+
+        // BattleゲームオブジェクトからBattleInstallerを取得
+        var battleObject = GameObject.Find("Battle");
+        if (battleObject != null) {
+            var battleInstaller = battleObject.GetComponent<BattleInstaller>();
+            if (battleInstaller != null) {
+                battleModel = battleInstaller.battleModel;
+                battleStartedSubscription = battleModel.SubscribeBattleStarted(OnBattleStarted);
+                beatSubscription = battleModel.SubscribeBeat(OnBeat);
+            }
+        }
     }
 
     void OnDestroy() {
-        this.GetBus().Unsubscribe<BattleMessages.OnBattleStarted>(OnBattleStarted);
-        this.GetBus().Unsubscribe<BattleMessages.OnBeat>(OnBeat);
+        battleStartedSubscription?.Dispose();
+        beatSubscription?.Dispose();
     }
 
-    void OnBattleStarted(BattleMessages.OnBattleStarted msg) {
+    void OnBattleStarted(IBattlemodelGetter battlemodel) {
         centerRing[0].gameObject.SetActive(true);
         rings.ForEach(r => r.gameObject.SetActive(true));
     }
 
-    void OnBeat(BattleMessages.OnBeat msg) {
-        if (msg.playerId.value != playerId) return;
+    void OnBeat(BeatInfo beat) {
+        if (beat.PlayerId.value != playerId) return;
 
         Color color = centerRing[0].color;
         color.a = 1f;
@@ -55,7 +68,8 @@ public class RingUI : MonoBehaviour {
 
     void Update() {
         if (centerRing[0].gameObject.activeSelf == false) return;
-        
+        if (playerPosition == null || rythmTrackModel == null) return;
+
         Vector3 screenPos = Camera.main.WorldToScreenPoint(playerPosition.position);
         this.transform.position = screenPos;
 

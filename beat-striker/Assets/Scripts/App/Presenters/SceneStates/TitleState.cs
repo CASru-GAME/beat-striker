@@ -1,23 +1,26 @@
+using System;
 using Core.App.Presenters.Scene.Types;
 using Core.App.Types;
+using Core.Utils;
 
 namespace Core.App.Presenters.Scene.States {
 
     public class TitleState : ISceneState {
         private readonly SceneStateContext context;
+        private IDisposable transitionSubscription;
 
         public TitleState(SceneStateContext context) {
             this.context = context;
         }
 
-        private void OnAppFlowMessage(AppMessages.RequireTransition message) {
-            if (message.scene == AppScene.Menu) {
+        private void OnRequireTransition(AppScene scene) {
+            if (scene == AppScene.Menu) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     AppScene.Menu
                 ));
             }
-            else if (message.scene == AppScene.StageSelect) {
+            else if (scene == AppScene.StageSelect) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     AppScene.StageSelect
@@ -27,12 +30,12 @@ namespace Core.App.Presenters.Scene.States {
 
         public void Enter() {
             context.cursorRegistry.SetCursorsActive(true);
-            context.bus.Subscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
-            context.bus.Publish(new AppMessages.PlayBGM(BGMType.MainBGM));
+            transitionSubscription = context.events.SubscribeRequireTransition(OnRequireTransition);
+            context.events.FirePlayBGM(BGMType.MainBGM);
         }
 
         public void Exit() {
-            context.bus.Unsubscribe<AppMessages.RequireTransition>(OnAppFlowMessage);
+            transitionSubscription?.Dispose();
         }
     }
 }

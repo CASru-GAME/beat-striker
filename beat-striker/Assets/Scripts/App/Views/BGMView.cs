@@ -20,20 +20,14 @@ namespace Core.App.Views {
         private AudioSource audioSource;
         private Dictionary<BGMType, AudioClip> bgmClips;
         private BGMType? currentBGMType;
+        private bool initialized = false;
 
         void Awake() {
-            audioSource = GetComponent<AudioSource>();
-            audioSource.loop = true;
-            
-            bgmClips = new Dictionary<BGMType, AudioClip>();
-            foreach (var entry in bgmEntries) {
-                if (entry.clip != null) {
-                    bgmClips[entry.bgmType] = entry.clip;
-                }
-            }
+            EnsureInitialized();
         }
 
         public void PlayBGM(BGMType bgmType) {
+            if (!EnsureInitialized()) return;
             if (currentBGMType == bgmType && audioSource.isPlaying) {
                 return; // 同じBGMが既に再生中なら何もしない
             }
@@ -49,8 +43,32 @@ namespace Core.App.Views {
         }
 
         public void StopBGM() {
+            if (!EnsureInitialized()) return;
             audioSource.Stop();
             currentBGMType = null;
+        }
+
+        private bool EnsureInitialized() {
+            if (initialized) return true;
+
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null) {
+                Debug.LogError("BGMView: AudioSource missing; cannot play BGM.");
+                return false;
+            }
+
+            audioSource.loop = true;
+
+            bgmClips ??= new Dictionary<BGMType, AudioClip>();
+            bgmClips.Clear();
+            foreach (var entry in bgmEntries) {
+                if (entry.clip != null) {
+                    bgmClips[entry.bgmType] = entry.clip;
+                }
+            }
+
+            initialized = true;
+            return true;
         }
     }
 }
