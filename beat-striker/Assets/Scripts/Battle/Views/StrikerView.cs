@@ -2,17 +2,18 @@
 
 using System;
 using System.Collections;
+using Core.App.Interfaces;
+using Core.App.Types;
 using Core.Battle;
 using UnityEngine;
 
 namespace Core.Battle {
 
-    [RequireComponent(typeof(Animator))]
     [RequireComponent(typeof(Rigidbody))]
     public class StrikerView : MonoBehaviour, IStrikerView {
         private Vector2 direction;
         private Rigidbody rb;
-        private Animator anim;
+        [SerializeField] private Animator anim;
         private bool isGround = false, preIsGround = false;
         [SerializeField] float dashSpeed = 50f;
         [SerializeField] float walkSpeed = 5f;
@@ -40,7 +41,7 @@ namespace Core.Battle {
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
-            anim = GetComponent<Animator>();
+            anim ??= GetComponent<Animator>();   
         }
 
             // 必殺技の時間差発射用メソッド
@@ -99,6 +100,11 @@ namespace Core.Battle {
 
         public void Construct(IStrikerHit strikerHit) {
             this.strikerHit = strikerHit;
+        }
+        
+        public IStrikerModelGetter Construct(PlayerId playerId, ScoreRule rule, IRythmTrackModel rythmTrackModel, IPlayerRegistry playerRegistry) {
+            // StrikerViewはStrikerInstaller経由で初期化される
+            throw new System.NotSupportedException("StrikerView should be constructed via StrikerInstaller.");
         }
 
         public void ChangeDirection(Vector2 direction) {
@@ -166,7 +172,7 @@ namespace Core.Battle {
         }
 
         public void TakeDamage(HitStatus status) {
-            this.strikerHit.TakeDamage(status);
+            this.strikerHit.GiveHit(status);
         }
 
         private void OnCollisionStay(Collision collision) {

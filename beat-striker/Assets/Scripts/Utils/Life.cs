@@ -20,6 +20,13 @@ public sealed class Life : MonoBehaviour, ILife, ILifeMutater {
         OnDisabled.Invoke();
     }
 
+    void OnDestroy() {
+        if (isEnabled) {
+            isEnabled = false;
+            OnDisabled.Invoke();
+        }
+    }
+
     public void Link(Action onEnabled, Action onDisabled) {
         OnEnabled += onEnabled;
         OnDisabled += onDisabled;

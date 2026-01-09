@@ -10,6 +10,8 @@ public class SpecialBarUI : MonoBehaviour {
     }
 
     void Update() {
+        if (strikerModel == null) return;
+        
         SpecialBar.localScale = new Vector3(
             strikerModel.SpecialPoint.value / strikerModel.MaxSpecialPoint.value,
             SpecialBar.localScale.y,
