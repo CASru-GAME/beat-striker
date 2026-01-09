@@ -1,5 +1,55 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2084210381849555145
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3614084544661336488}
+  - component: {fileID: 4035908089033393783}
+  m_Layer: 0
+  m_Name: LandState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3614084544661336488
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2084210381849555145}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 25.940369, y: 1.69373, z: -1.1262}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8380984889257325473}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4035908089033393783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2084210381849555145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d77576ac99f51cc4faf96e8bb985b283, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.LandState
+  parents: []
+  animationClip:
+    clip: {fileID: -4929904068723975490, guid: 64a82731da8b4664d9db8cba8ff8be07, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  locomotionNode: {fileID: 1432364514060763731}
 --- !u!1 &4152865175717847198
 GameObject:
   m_ObjectHideFlags: 0
@@ -51,6 +101,7 @@ MonoBehaviour:
     speed: 1
   LocomotionNode: {fileID: 9003054617170473871}
   walkSpeed: 1
+  dashNode: {fileID: 8771342012821869200}
 --- !u!1 &5952540631131663762
 GameObject:
   m_ObjectHideFlags: 0
@@ -84,8 +135,115 @@ Transform:
   - {fileID: 3321194424016327279}
   - {fileID: 7866493627626442219}
   - {fileID: 5027469129663102734}
+  - {fileID: 6348016921829876499}
+  - {fileID: 329877032853596368}
+  - {fileID: 7434386062963362342}
+  - {fileID: 5076827465951644992}
+  - {fileID: 3614084544661336488}
   m_Father: {fileID: 2330143910543542143}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6474261331107641650
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5076827465951644992}
+  - component: {fileID: 983164252959465538}
+  m_Layer: 0
+  m_Name: FallState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5076827465951644992
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6474261331107641650}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 25.940369, y: 1.69373, z: -1.1262}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8380984889257325473}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &983164252959465538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6474261331107641650}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4387aa669d6b314f9dce5285002d1f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.FallState
+  parents: []
+  animationClip:
+    clip: {fileID: 3649519150315028757, guid: 00ee63432b0f8ae40abf76a1ff4494da, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  groundChecker: {fileID: 0}
+  landNode: {fileID: 4035908089033393783}
+--- !u!1 &7849499207664077290
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7434386062963362342}
+  - component: {fileID: 2476849582304005226}
+  m_Layer: 0
+  m_Name: JumpUpwardState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7434386062963362342
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7849499207664077290}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 25.940369, y: 1.69373, z: -1.1262}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8380984889257325473}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2476849582304005226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7849499207664077290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3db2ffdac4844614494764dc262300f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.JumpUpwardState
+  parents: []
+  animationClip:
+    clip: {fileID: 7238280004761517075, guid: 00ee63432b0f8ae40abf76a1ff4494da, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  fallNode: {fileID: 983164252959465538}
+  jumpSpeed: 20
 --- !u!1 &7989208376359094496
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,6 +342,54 @@ MonoBehaviour:
     speed: 1
   LocomotionNode: {fileID: 9003054617170473871}
   walkSpeed: 1
+  dashNode: {fileID: 8771342012821869200}
+--- !u!1 &8108395538771284674
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6348016921829876499}
+  - component: {fileID: 1432364514060763731}
+  m_Layer: 0
+  m_Name: LocomotionNode
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6348016921829876499
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8108395538771284674}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 25.940369, y: 1.69373, z: -1.1262}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8380984889257325473}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1432364514060763731
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8108395538771284674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eae2977e33c47e42b326231676c6e71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.LocomotionNode
+  idleState: {fileID: 1985320574669446085}
+  walkState: {fileID: 4310332486249398312}
+  walkBackwardState: {fileID: 2890591802639966240}
 --- !u!1 &8127836327120072719
 GameObject:
   m_ObjectHideFlags: 0
@@ -194,6 +400,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2330143910543542143}
   - component: {fileID: 5771499241811273855}
+  - component: {fileID: 5492444878982572749}
   - component: {fileID: 4895445519820553725}
   - component: {fileID: 5330593865981743280}
   - component: {fileID: 2083707028823512949}
@@ -234,6 +441,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.AnimationPlayer
   animator: {fileID: 8429576891772216631}
+--- !u!114 &5492444878982572749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8127836327120072719}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9ab1e8c1b7374641941ae66fa94c6d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.GroundChecker
 --- !u!54 &4895445519820553725
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -300,6 +519,51 @@ MonoBehaviour:
   deadState: {fileID: 0}
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
+--- !u!1 &8245299372334630726
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 329877032853596368}
+  - component: {fileID: 8771342012821869200}
+  m_Layer: 0
+  m_Name: DashNode
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &329877032853596368
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8245299372334630726}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 25.940369, y: 1.69373, z: -1.1262}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8380984889257325473}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8771342012821869200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8245299372334630726}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3f03db3418a5d24580f38db3f5b52ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.DashNode
+  jumpUpwardNode: {fileID: 2476849582304005226}
 --- !u!1 &8481079745086656535
 GameObject:
   m_ObjectHideFlags: 0
@@ -346,10 +610,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.IdleState
   parents: []
   animationClip:
-    clip: {fileID: 1509172082130825177, guid: 00ee63432b0f8ae40abf76a1ff4494da, type: 3}
+    clip: {fileID: 7400000, guid: 2355edfbfe7044958b42a7fa13e9e9d6, type: 2}
     fadeTime: 0.3
     speed: 1
   LocomotionNode: {fileID: 9003054617170473871}
+  DashNode: {fileID: 8771342012821869200}
 --- !u!1001 &3993692813309942582
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -9,6 +9,7 @@ namespace Core.LargeWizard {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode LocomotionNode;
+        [SerializeField] StrikerNode DashNode;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -36,6 +37,7 @@ namespace Core.LargeWizard {
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
+            context.TryTransition(DashNode);
         }
 
         // ガードコマンドが押された時に呼ばれる

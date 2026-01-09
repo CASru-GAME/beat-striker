@@ -4,32 +4,28 @@ using Core.Striker;
 
 namespace Core.LargeWizard {
     
-    public class WalkBackwardState : StrikerState {
+    public class LandState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] StrikerNode LocomotionNode;
-        [SerializeField] float walkSpeed;
-        [SerializeField] StrikerNode dashNode;
+        [SerializeField] StrikerNode locomotionNode;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip);
+            context.PlayAnimation(animationClip, OnAnimationEnd);
         }
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
-            var v = context.Rigidbody.linearVelocity;
-            v.x = context.InputDirection.x * walkSpeed;
-            context.Rigidbody.linearVelocity = v;
-            // 入力に応じて待機ステートに遷移する例
-
-            context.TryTransition(LocomotionNode);
         }
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
+        }
+
+        void OnAnimationEnd(IStrikerStateContext context) {
+            context.TryTransition(locomotionNode);
         }
 
         // 攻撃コマンドが押された時に呼ばれる
@@ -42,7 +38,6 @@ namespace Core.LargeWizard {
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
-            context.TryTransition(dashNode);
         }
 
         // ガードコマンドが押された時に呼ばれる
