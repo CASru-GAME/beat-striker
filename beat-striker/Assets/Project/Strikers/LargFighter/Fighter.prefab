@@ -248,6 +248,7 @@ Transform:
   m_Children:
   - {fileID: 694298591057853328}
   - {fileID: 7217837801879794519}
+  - {fileID: 8637123197721764802}
   - {fileID: 8800686554811422194}
   m_Father: {fileID: 6456379581928961853}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -297,6 +298,58 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargFighter.LocomotionNode
   idleState: {fileID: 8957211815729255939}
   walkState: {fileID: 7536035976743905941}
+  walkBackwardState: {fileID: 6506998535478474786}
+--- !u!1 &6822573736974235589
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8637123197721764802}
+  - component: {fileID: 6506998535478474786}
+  m_Layer: 0
+  m_Name: WalkBackwardState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8637123197721764802
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6822573736974235589}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.022003174, y: 0.2208252, z: 0.11425781}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3404428735013544275}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6506998535478474786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6822573736974235589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95e887417d2f79441ae95b5626e48733, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargFighter.WalkBackwardState
+  parents: []
+  animationClip:
+    clip: {fileID: 5357022660520970664, guid: f2cb84add4e1e314681db2c45585fecc, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  locomotionNode: {fileID: 6346885288397484558}
+  walkSpeed: 1
 --- !u!1001 &609031573079576573
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -14,7 +14,7 @@ namespace Core.LargFighter {
                 context.TryTransition(walkState);
             }
             else if(context.InputDirection.x < 0) {
-                context.TryTransition
+                context.TryTransition(walkBackwardState);
             }
             else {
                 context.TryTransition(idleState);
