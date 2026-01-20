@@ -139,5 +139,117 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -1728013695380148634, guid: 8f30a9c3a5db8f347bf3ccd3f0515e93, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4884961077554447754}
+    - targetCorrespondingSourceObject: {fileID: -1728013695380148634, guid: 8f30a9c3a5db8f347bf3ccd3f0515e93, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -7471951866171880870}
+    - targetCorrespondingSourceObject: {fileID: -1728013695380148634, guid: 8f30a9c3a5db8f347bf3ccd3f0515e93, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -1097815368548143672}
+    - targetCorrespondingSourceObject: {fileID: -1728013695380148634, guid: 8f30a9c3a5db8f347bf3ccd3f0515e93, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 413084953596309618}
+    - targetCorrespondingSourceObject: {fileID: -1728013695380148634, guid: 8f30a9c3a5db8f347bf3ccd3f0515e93, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5134104461894842489}
   m_SourcePrefab: {fileID: -3956505258223990651, guid: 8f30a9c3a5db8f347bf3ccd3f0515e93, type: 3}
+--- !u!1 &9082218996028480966 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -1728013695380148634, guid: 8f30a9c3a5db8f347bf3ccd3f0515e93, type: 3}
+  m_PrefabInstance: {fileID: 1589307489144157088}
+  m_PrefabAsset: {fileID: 0}
+--- !u!54 &4884961077554447754
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9082218996028480966}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 120
+  m_CollisionDetection: 0
+--- !u!114 &-7471951866171880870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9082218996028480966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd850a13dc7f54a2ba56ef052d1400c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Core.Battle::Core.Battle.StrikerView
+  dashSpeed: 50
+  walkSpeed: 5
+  rotationSpeed: 360
+  collidenRefs: []
+  specialSpawnHeight: 2
+  specialSpawnForward: 0.8
+--- !u!114 &-1097815368548143672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9082218996028480966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ff959505dd3b44b7bd1f8727eb18f4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Utils::Life
+--- !u!114 &413084953596309618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9082218996028480966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0335bd459de9a41e0b45a2078f2f17f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Core.Battle::Core.Battle.StrikerInstaller
+--- !u!136 &5134104461894842489
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9082218996028480966}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.1889801
+  m_Height: 1.8484802
+  m_Direction: 1
+  m_Center: {x: -0.011062622, y: 0.8939667, z: 0.0037155151}
