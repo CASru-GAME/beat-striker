@@ -46,7 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.LandState
   parents: []
   animationClip:
-    clip: {fileID: -4929904068723975490, guid: f009218c8b492ae4cab2cf322eebe9b8, type: 3}
+    clip: {fileID: 9197060619526105886, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
     fadeTime: 0.3
     speed: 1
   locomotionNode: {fileID: 707581214265331847}
@@ -96,7 +96,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.FallState
   parents: []
   animationClip:
-    clip: {fileID: 3649519150315028757, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: -1504929105726005784, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
     fadeTime: 0.3
     speed: 1
   groundChecker: {fileID: 0}
@@ -151,7 +151,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5047db66322504bd5b9bb23dd4877cb3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.AnimationPlayer
-  animator: {fileID: 0}
+  animator: {fileID: 2773073631056466501}
 --- !u!54 &377675457221837653
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -177,7 +177,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!136 &1271092332621198190
 CapsuleCollider:
@@ -372,7 +372,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.JumpUpwardState
   parents: []
   animationClip:
-    clip: {fileID: 7238280004761517075, guid: f009218c8b492ae4cab2cf322eebe9b8, type: 3}
+    clip: {fileID: -2993534804863918692, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
     fadeTime: 0.3
     speed: 1
   fallNode: {fileID: 3250182338819609899}
@@ -423,9 +423,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.WalkState
   parents: []
   animationClip:
-    clip: {fileID: -4799524434163024911, guid: f009218c8b492ae4cab2cf322eebe9b8, type: 3}
+    clip: {fileID: -3419257869308726280, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
     fadeTime: 0.3
-    speed: 1
+    speed: 0.1
   LocomotionNode: {fileID: 707581214265331847}
   walkSpeed: 10
   dashNode: {fileID: 4775238104718049240}
@@ -475,9 +475,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.WalkBackwardState
   parents: []
   animationClip:
-    clip: {fileID: 4645002924746930528, guid: f009218c8b492ae4cab2cf322eebe9b8, type: 3}
+    clip: {fileID: 6723761709308234962, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
     fadeTime: 0.3
-    speed: 1
+    speed: 0.1
   LocomotionNode: {fileID: 707581214265331847}
   walkSpeed: 5
   dashNode: {fileID: 4775238104718049240}
@@ -527,7 +527,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.IdleState
   parents: []
   animationClip:
-    clip: {fileID: 1509172082130825177, guid: f009218c8b492ae4cab2cf322eebe9b8, type: 3}
+    clip: {fileID: -449244673057268443, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
     fadeTime: 0.3
     speed: 1
   LocomotionNode: {fileID: 707581214265331847}
@@ -777,5 +777,10 @@ PrefabInstance:
 --- !u!4 &2482882149848866868 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5159078012444724336, guid: 37d428df5c910584396dd6cdd0df9fbd, type: 3}
+  m_PrefabInstance: {fileID: 7344317897879956548}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &2773073631056466501 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 4870552773557632513, guid: 37d428df5c910584396dd6cdd0df9fbd, type: 3}
   m_PrefabInstance: {fileID: 7344317897879956548}
   m_PrefabAsset: {fileID: 0}
