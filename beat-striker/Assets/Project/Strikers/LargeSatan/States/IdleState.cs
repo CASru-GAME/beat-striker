@@ -11,6 +11,7 @@ namespace Core.LargeSatan {
         [SerializeField] StrikerNode locomotionNode;
         [SerializeField] StrikerNode dashNode;
         [SerializeField] StrikerNode attackNode;
+        [SerializeField] StrikerNode stunState;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -48,6 +49,7 @@ namespace Core.LargeSatan {
 
         // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
+            context.TryTransition(stunState);
         }
 
         // ミスした時に呼ばれる

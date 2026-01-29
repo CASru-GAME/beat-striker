@@ -17,7 +17,7 @@ namespace Core.Striker {
     [RequireComponent(typeof(AnimationPlayer))]
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(CapsuleCollider))]
-    [AddComponentMenu(" Striker Hub", 0)]
+    [AddComponentMenu(" 🟠Striker Hub", 0)]
     public class StrikerHub : MonoBehaviour, IStrikerView, IStrikerHit, IStrikerContext {
 
         [Header("Striker Settings")]

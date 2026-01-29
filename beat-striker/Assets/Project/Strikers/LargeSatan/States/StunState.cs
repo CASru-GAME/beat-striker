@@ -1,37 +1,24 @@
 using Core.Battle;
 using UnityEngine;
 using Core.Striker;
-using Unity.VisualScripting;
-using R3;
-using System;
 
 namespace Core.LargeSatan {
     
-    public class AttackState : StrikerState {
+    public class StunState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
-        [SerializeField] HitBox hitBox;
-        IDisposable disposable;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip,OnAnimationEnd);
-            disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
-                if(collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                    hurtbox.GiveHit(new HitStatus());
-                }
-            });
-
+            context.PlayAnimation(animationClip, OnAnimationEnd);
         }
 
-        public void OnAnimationEnd(IStrikerStateContext context) {
+        void OnAnimationEnd(IStrikerStateContext context) {
             context.TryTransition(nextNode);
         }
-        
-        
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
@@ -39,7 +26,6 @@ namespace Core.LargeSatan {
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
-            disposable.Dispose();
         }
 
         // 攻撃コマンドが押された時に呼ばれる
