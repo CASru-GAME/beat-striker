@@ -1,16 +1,24 @@
 using UnityEngine;
 using System;
 using Core.Battle;
+using R3;
 
 [AddComponentMenu(" 🟠HitBox", 0)]
 [RequireComponent(typeof(Rigidbody))]
 public class HitBox : MonoBehaviour {
-    public event Action<Collider> OnEnterTrigger;
-    public event Action<Collider> OnExitTrigger;
-    public event Action<Collider> OnStayTrigger;
-    public event Action<Collision> OnEnterCollision;
-    public event Action<Collision> OnExitCollision;
-    public event Action<Collision> OnStayCollision;
+    public Observable<Collider> OnEnterTrigger => onEnterTrigger;
+    public Observable<Collider> OnExitTrigger => onExitTrigger;
+    public Observable<Collider> OnStayTrigger => onStayTrigger;
+    public Observable<Collision> OnEnterCollision => onEnterCollision;
+    public Observable<Collision> OnExitCollision => onExitCollision;
+    public Observable<Collision> OnStayCollision => onStayCollision;
+
+    readonly Subject<Collider> onEnterTrigger = new();
+    readonly Subject<Collider> onExitTrigger = new();
+    readonly Subject<Collider> onStayTrigger = new();
+    readonly Subject<Collision> onEnterCollision = new();
+    readonly Subject<Collision> onExitCollision = new();
+    readonly Subject<Collision> onStayCollision = new();
 
     public void Awake() {
         if (TryGetComponent<Collider>(out var collider)) {
@@ -31,10 +39,10 @@ public class HitBox : MonoBehaviour {
         }
     }
 
-    void OnTriggerEnter(Collider other) => OnEnterTrigger?.Invoke(other);
-    void OnTriggerExit(Collider other) => OnExitTrigger?.Invoke(other);
-    void OnTriggerStay(Collider other) => OnStayTrigger?.Invoke(other);
-    void OnCollisionEnter(Collision collision) => OnEnterCollision?.Invoke(collision);
-    void OnCollisionExit(Collision collision) => OnExitCollision?.Invoke(collision);
-    void OnCollisionStay(Collision collision) => OnStayCollision?.Invoke(collision);
+    void OnTriggerEnter(Collider other) => onEnterTrigger.OnNext(other);
+    void OnTriggerExit(Collider other) => onExitTrigger.OnNext(other);
+    void OnTriggerStay(Collider other) => onStayTrigger.OnNext(other);
+    void OnCollisionEnter(Collision collision) => onEnterCollision.OnNext(collision);
+    void OnCollisionExit(Collision collision) => onExitCollision.OnNext(collision);
+    void OnCollisionStay(Collision collision) => onStayCollision.OnNext(collision);
 }
