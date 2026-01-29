@@ -402,6 +402,10 @@ MonoBehaviour:
     speed: 1
   nextNode: {fileID: 3444350880286515863}
   hitBox: {fileID: 1959988949070900764}
+  particlePrefab: {fileID: 8810921521921811724, guid: 791869b43f6664df4b8fabe66e83c25f, type: 3}
+  audioClip: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
+  damage: 10
+  nockbackSpeed: 10
 --- !u!1 &2580775139249287558
 GameObject:
   m_ObjectHideFlags: 0
@@ -446,14 +450,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0178b7bf307674df792e7783b57ac9e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.WalkBackwardState
-  parents: []
+  parents:
+  - {fileID: 6395781302704401615}
   animationClip:
     clip: {fileID: 7400000, guid: 426a8e28f4b7f49688fb43c07992a824, type: 2}
     fadeTime: 0.3
     speed: 1
-  locomotionNode: {fileID: 3444350880286515863}
   walkSpeed: 1
-  dashNode: {fileID: 6544772151032152558}
 --- !u!1 &3012253909273130681
 GameObject:
   m_ObjectHideFlags: 0
@@ -548,14 +551,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1131a6cc23914c46ba94eec41c81e81, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.WalkState
-  parents: []
+  parents:
+  - {fileID: 6395781302704401615}
   animationClip:
     clip: {fileID: 7400000, guid: 5642b8270a36542db9118c44d1d58eab, type: 2}
     fadeTime: 0.3
     speed: 1
-  locomotionNode: {fileID: 3444350880286515863}
   walkSpeed: 1
-  dashNode: {fileID: 6544772151032152558}
 --- !u!1 &4253945209429252678
 GameObject:
   m_ObjectHideFlags: 0
@@ -601,6 +603,54 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.DashNode
   jumpUpwardNode: {fileID: 1086792214149039917}
+--- !u!1 &4348688388906509257
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1849438670973751508}
+  - component: {fileID: 6395781302704401615}
+  m_Layer: 0
+  m_Name: LocomotionGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1849438670973751508
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4348688388906509257}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.0005, y: 0.67295, z: 0.0810101}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7201851954051567416}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6395781302704401615
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4348688388906509257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ced54f33c0396493e83e1f7f9d553210, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LocomotionGroup
+  locomotionNode: {fileID: 3444350880286515863}
+  dashNode: {fileID: 6544772151032152558}
+  attackNode: {fileID: 9214202796625303400}
+  stunState: {fileID: 3199232662557460761}
 --- !u!1 &5451931231840996846
 GameObject:
   m_ObjectHideFlags: 0
@@ -673,6 +723,7 @@ Transform:
   - {fileID: 1425690710777153012}
   - {fileID: 7181211830687872934}
   - {fileID: 4800021711829065458}
+  - {fileID: 1849438670973751508}
   m_Father: {fileID: 8056188703651194701}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6726206674975669680
@@ -936,15 +987,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8474815124dac4e96aa70e6f780f3dfc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.IdleState
-  parents: []
+  parents:
+  - {fileID: 6395781302704401615}
   animationClip:
     clip: {fileID: 7400000, guid: 2355edfbfe7044958b42a7fa13e9e9d6, type: 2}
     fadeTime: 0.3
     speed: 1
-  locomotionNode: {fileID: 3444350880286515863}
-  dashNode: {fileID: 6544772151032152558}
-  attackNode: {fileID: 9214202796625303400}
-  stunState: {fileID: 3199232662557460761}
 --- !u!1001 &3944313083013593709
 PrefabInstance:
   m_ObjectHideFlags: 0

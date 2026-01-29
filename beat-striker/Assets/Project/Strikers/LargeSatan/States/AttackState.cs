@@ -15,13 +15,27 @@ namespace Core.LargeSatan {
         [SerializeField] HitBox hitBox;
         IDisposable disposable;
 
+        [SerializeField] ParticleSystem particlePrefab;
+        [SerializeField] AudioClip audioClip;
+
+        [SerializeField] float damage = 10;
+        [SerializeField] float nockbackSpeed = 10;
+
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip,OnAnimationEnd);
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
                 if(collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                    hurtbox.GiveHit(new HitStatus());
+                    var hitPoint = collider.ClosestPoint(hitBox.transform.position);
+                    var particleInstance = Instantiate(particlePrefab, hitPoint, Quaternion.identity);
+                    particleInstance.Play();
+
+                    AudioSource.PlayClipAtPoint(audioClip,hitPoint);
+
+                    var nockBackDirection = Mathf.Sign(hitPoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
+
+                    hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
                 }
             });
 

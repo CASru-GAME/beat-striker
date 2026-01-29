@@ -1,4 +1,6 @@
-using System.Numerics;
+
+
+using UnityEngine;
 
 namespace Core.Battle {
     public enum Anime {
@@ -51,16 +53,16 @@ OnReset
 
     public readonly struct HitStatus {
         public readonly float Damage;
-        public readonly Vector2 Knockback;
+        public readonly Vector2 KnockbackVelocity;
         
         public HitStatus(float damage) {
             this.Damage = damage;
-            this.Knockback = Vector2.Zero;
+            this.KnockbackVelocity = Vector2.zero;
         }
 
         public HitStatus(float damage, Vector2 knockback) {
             this.Damage = damage;
-            this.Knockback = knockback;
+            this.KnockbackVelocity = knockback;
         }
     }
 }
