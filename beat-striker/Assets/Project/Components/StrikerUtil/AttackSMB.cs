@@ -19,7 +19,7 @@ public class AttackSMB : StateMachineBehaviour {
         Debug.Log($"{strikerView.gameObject.name} collided with {collider.gameObject.name}");
         var view = collider.gameObject.GetComponent<StrikerView>();
         if (view == null) return;
-        view.TakeDamage(new HitStatus(new HitPoint(damage)));
+        view.TakeDamage(new HitStatus(damage));
     }
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {

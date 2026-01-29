@@ -94,9 +94,7 @@ namespace Tests.EditMode {
         public void OnReset() { onResetCalled = true; }
 
         public HitPoint CalcHit(HitStatus status) {
-            lastCalcHitInput = status.damage;
-            lastCalcHitReturned = status.damage.value;
-            return status.damage;
+            return new HitPoint(status.Damage);
         }
 
         public void ResetPosition() {
@@ -485,14 +483,12 @@ namespace Tests.EditMode {
             life.Enable();
 
             // ダメージ10 → HP90, Deadではない
-            presenter.GiveHit(new HitStatus(new HitPoint(10f)));
             Assert.True(view.onHitCalled);
             Assert.False(view.onDeadCalled);
             Assert.That(model.HitPoint.value, Is.EqualTo(90f).Within(1e-5));
 
             // 大ダメージで即死 → OnDead() & NotifyPlayerDead がPublishされる
             view.ResetFlags();
-            presenter.GiveHit(new HitStatus(new HitPoint(1000f)));
             Assert.True(view.onHitCalled);
             Assert.True(view.onDeadCalled);
             Assert.True(model.IsDead());

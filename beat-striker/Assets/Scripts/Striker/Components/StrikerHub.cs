@@ -156,8 +156,8 @@ namespace Core.Striker {
             stateMachine.CurrentState.OnHit(stateMachine, status);
         }
 
-        public void ApplyDamage(HitPoint damage) {
-            model.TakeDamage(damage);
+        public void ApplyDamage(float damage) {
+            model.TakeDamage(new HitPoint(damage));
             if (model.IsDead()) {
                 OnDead();
             }

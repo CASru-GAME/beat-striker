@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace Core.Battle {
     public enum Anime {
         DoAttack,
@@ -47,11 +49,18 @@ OnReset
         }
     }
 
-    public struct HitStatus {
-        public HitPoint damage;
+    public readonly struct HitStatus {
+        public readonly float Damage;
+        public readonly Vector2 Knockback;
         
-        public HitStatus(HitPoint damage) {
-            this.damage = damage;
+        public HitStatus(float damage) {
+            this.Damage = damage;
+            this.Knockback = Vector2.Zero;
+        }
+
+        public HitStatus(float damage, Vector2 knockback) {
+            this.Damage = damage;
+            this.Knockback = knockback;
         }
     }
 }
