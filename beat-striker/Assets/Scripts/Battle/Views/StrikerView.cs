@@ -1,3 +1,5 @@
+
+
 using System;
 using System.Collections;
 using Core.App.Interfaces;
@@ -236,9 +238,9 @@ namespace Core.Battle {
 
         public HitPoint CalcHit(HitStatus status) {
             if (isGuard) {
-                return new HitPoint(status.damage.value / 2);
+                return new HitPoint(0);
             }
-            return new HitPoint(status.damage.value);
+            return new HitPoint(0);
         }
 
         public void SavePosition() {
