@@ -17,7 +17,7 @@ namespace Core.Striker {
     [RequireComponent(typeof(AnimationPlayer))]
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(CapsuleCollider))]
-    [AddComponentMenu(" Striker Hub", 0)]
+    [AddComponentMenu(" 🟠Striker Hub", 0)]
     public class StrikerHub : MonoBehaviour, IStrikerView, IStrikerHit, IStrikerContext {
 
         [Header("Striker Settings")]
@@ -156,8 +156,8 @@ namespace Core.Striker {
             stateMachine.CurrentState.OnHit(stateMachine, status);
         }
 
-        public void ApplyDamage(HitPoint damage) {
-            model.TakeDamage(damage);
+        public void ApplyDamage(float damage) {
+            model.TakeDamage(new HitPoint(damage));
             if (model.IsDead()) {
                 OnDead();
             }

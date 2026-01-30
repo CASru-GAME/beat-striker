@@ -1,3 +1,7 @@
+
+
+using UnityEngine;
+
 namespace Core.Battle {
     public enum Anime {
         DoAttack,
@@ -47,11 +51,18 @@ OnReset
         }
     }
 
-    public struct HitStatus {
-        public HitPoint damage;
+    public readonly struct HitStatus {
+        public readonly float Damage;
+        public readonly Vector2 KnockbackVelocity;
         
-        public HitStatus(HitPoint damage) {
-            this.damage = damage;
+        public HitStatus(float damage) {
+            this.Damage = damage;
+            this.KnockbackVelocity = Vector2.zero;
+        }
+
+        public HitStatus(float damage, Vector2 knockback) {
+            this.Damage = damage;
+            this.KnockbackVelocity = knockback;
         }
     }
 }
