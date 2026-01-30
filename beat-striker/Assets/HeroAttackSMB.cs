@@ -31,7 +31,7 @@ public class HeroAttackSMB : StateMachineBehaviour {
         Debug.Log("HeroAttackSMB.OnEnterTrigger called. Other=" + (other ? other.name : "null") + ", colliden=" + (colliden ? colliden.name : "null"));
         if (target != null) {
             Debug.Log("Hit target: " + target.name);
-            target.TakeDamage(new HitStatus(new HitPoint(10)));
+            target.TakeDamage(new HitStatus(10));
 
             // ヒットエフェクトの生成
             if (hitEffectPrefab == null) {
