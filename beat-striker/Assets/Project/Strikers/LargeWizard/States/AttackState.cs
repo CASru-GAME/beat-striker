@@ -1,27 +1,28 @@
 using Core.Battle;
 using UnityEngine;
 using Core.Striker;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Core.LargeWizard {
     
-    public class IdleState : StrikerState {
+    public class AttackState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] StrikerNode LocomotionNode;
-        [SerializeField] StrikerNode DashNode;
-        [SerializeField] StrikerNode AttackNode;
+        [SerializeField] StrikerNode nextNode;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip);
+            context.PlayAnimation(animationClip,OnAnimationEnd);
         }
+
+        public void OnAnimationEnd(IStrikerStateContext context) {
+            context.TryTransition(nextNode);
+        } 
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
-            // 入力に応じて歩行ステートに遷移する例
-            context.TryTransition(LocomotionNode);
         }
 
         // 他のステートに遷移する直前に呼ばれる
@@ -30,7 +31,6 @@ namespace Core.LargeWizard {
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
-            context.TryTransition(AttackNode);
         }
 
         // チャージコマンドが押された時に呼ばれる
@@ -39,7 +39,6 @@ namespace Core.LargeWizard {
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
-            context.TryTransition(DashNode);
         }
 
         // ガードコマンドが押された時に呼ばれる
