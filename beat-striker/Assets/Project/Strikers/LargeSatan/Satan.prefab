@@ -397,7 +397,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AttackState
   parents: []
   animationClip:
-    clip: {fileID: 7400000, guid: 9b85379a746ab4742956c67eb97011e6, type: 2}
+    clip: {fileID: 7400000, guid: 61a771842a110490f90a332205457fc9, type: 2}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 3444350880286515863}
@@ -776,7 +776,7 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 1
   fallNode: {fileID: 5108383347425668583}
-  jumpSpeed: 15
+  jumpSpeed: 10
 --- !u!1 &7062815537291613985
 GameObject:
   m_ObjectHideFlags: 0
