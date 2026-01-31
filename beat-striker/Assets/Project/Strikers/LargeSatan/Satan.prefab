@@ -351,6 +351,56 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hurtbox
   isGuarding: 1
   strikerHub: {fileID: 8716767000433258826}
+--- !u!1 &2088919174887837049
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 225902090445379099}
+  - component: {fileID: 7615511255632755114}
+  m_Layer: 0
+  m_Name: GuardState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &225902090445379099
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2088919174887837049}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.01354, y: 0.76932, z: 0.23645997}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7201851954051567416}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7615511255632755114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2088919174887837049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aac56f22eac514e41a244e7dce151b9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LargeSatanState
+  parents: []
+  animationClip:
+    clip: {fileID: 7400000, guid: 15481560e7a4b441babdfe3afbb19be0, type: 2}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 3444350880286515863}
 --- !u!1 &2433935694402992007
 GameObject:
   m_ObjectHideFlags: 0
@@ -456,7 +506,7 @@ MonoBehaviour:
     clip: {fileID: 7400000, guid: 426a8e28f4b7f49688fb43c07992a824, type: 2}
     fadeTime: 0.3
     speed: 1
-  walkSpeed: 1
+  walkSpeed: 2
 --- !u!1 &3012253909273130681
 GameObject:
   m_ObjectHideFlags: 0
@@ -505,7 +555,7 @@ MonoBehaviour:
   animationClip:
     clip: {fileID: 7400000, guid: 814b130d40ac549a3a2653d3aa2b3995, type: 2}
     fadeTime: 0.3
-    speed: 1
+    speed: 4
   locomotionNode: {fileID: 3444350880286515863}
 --- !u!1 &3344641484141464587
 GameObject:
@@ -557,7 +607,7 @@ MonoBehaviour:
     clip: {fileID: 7400000, guid: 5642b8270a36542db9118c44d1d58eab, type: 2}
     fadeTime: 0.3
     speed: 1
-  walkSpeed: 1
+  walkSpeed: 2
 --- !u!1 &4253945209429252678
 GameObject:
   m_ObjectHideFlags: 0
@@ -651,6 +701,7 @@ MonoBehaviour:
   dashNode: {fileID: 6544772151032152558}
   attackNode: {fileID: 9214202796625303400}
   stunState: {fileID: 3199232662557460761}
+  guardState: {fileID: 7615511255632755114}
 --- !u!1 &5451931231840996846
 GameObject:
   m_ObjectHideFlags: 0
@@ -724,6 +775,7 @@ Transform:
   - {fileID: 7181211830687872934}
   - {fileID: 4800021711829065458}
   - {fileID: 1849438670973751508}
+  - {fileID: 225902090445379099}
   m_Father: {fileID: 8056188703651194701}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6726206674975669680
@@ -774,9 +826,9 @@ MonoBehaviour:
   animationClip:
     clip: {fileID: 7400000, guid: c77cf359840404cc0856cbf4601dc1f6, type: 2}
     fadeTime: 0.3
-    speed: 1
+    speed: 3
   fallNode: {fileID: 5108383347425668583}
-  jumpSpeed: 10
+  jumpSpeed: 13
 --- !u!1 &7062815537291613985
 GameObject:
   m_ObjectHideFlags: 0

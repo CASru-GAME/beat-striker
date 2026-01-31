@@ -4,29 +4,30 @@ using Core.Striker;
 
 namespace Core.LargeSatan {
     
-    public class LocomotionGroup : StrikerGroup {
-        [SerializeField] StrikerNode locomotionNode;
-        [SerializeField] StrikerNode dashNode;
-        [SerializeField] StrikerNode attackNode;
-        [SerializeField] StrikerNode stunState;
-        [SerializeField] StrikerNode guardState;
+    public class GuardState : StrikerState {
 
-        // このグループに入った時に呼ばれる（前のステートがこのグループに所属していなかった場合）
+        // このステートにいる間、再生されるアニメーションクリップ
+        [SerializeField] private StrikerAnimationClip animationClip;
+        [SerializeField] private StrikerNode nextNode;
+
+        // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            // アニメーションの再生を開始する
+            context.PlayAnimation(animationClip, context => {
+                context.TryTransition(nextNode);
+            });
         }
 
-        // このグループに所属するステートにいる間、毎フレーム呼ばれる
+        // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
-            context.TryTransition(locomotionNode);
         }
 
-        // このグループから出る時に呼ばれる（次のステートがこのグループに所属していない場合）
+        // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
         }
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
-            context.TryTransition(attackNode);
         }
 
         // チャージコマンドが押された時に呼ばれる
@@ -35,18 +36,15 @@ namespace Core.LargeSatan {
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
-            context.TryTransition(dashNode);
         }
 
         // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {
-            context.TryTransition(guardState);
         }
 
         // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
-            context.Rigidbody.linearVelocity = status.KnockbackVelocity;
-            context.TryTransition(stunState);
+            context.Rigidbody.linearVelocity = 0.5f * status.KnockbackVelocity;
         }
 
         // ミスした時に呼ばれる

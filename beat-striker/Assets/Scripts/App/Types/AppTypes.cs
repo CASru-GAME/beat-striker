@@ -17,8 +17,9 @@ namespace Core.App.Types {
         MainBGM
     }
 
-    public readonly struct PlayerId {
-        public readonly int value;
+    [Serializable]
+    public struct PlayerId {
+        public int value;
         public PlayerId(int value) {
             this.value = value;
         }
