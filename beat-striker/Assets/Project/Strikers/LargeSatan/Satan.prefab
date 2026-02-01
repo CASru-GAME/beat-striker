@@ -142,6 +142,58 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AttackNode
   attackState: {fileID: 6465224874055907323}
+  beamState: {fileID: 6507103576790693652}
+  energyStorage: {fileID: 1367031812415324009}
+--- !u!1 &828572033645621295
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8956782202065690917}
+  - component: {fileID: 6507103576790693652}
+  m_Layer: 0
+  m_Name: BeamState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8956782202065690917
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 828572033645621295}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.01354, y: 0.76932, z: 0.23645997}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7201851954051567416}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6507103576790693652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 828572033645621295}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32cc03bff059e43c8bae1916ab98763c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.BeamState
+  parents: []
+  animationClip:
+    clip: {fileID: 7400000, guid: 1d5a9fc15857c449d84350763a38b5e2, type: 2}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 3444350880286515863}
 --- !u!1 &1516419187170184297
 GameObject:
   m_ObjectHideFlags: 0
@@ -204,6 +256,7 @@ GameObject:
   - component: {fileID: 8056188703651194701}
   - component: {fileID: 2375621691354580434}
   - component: {fileID: 4726074325913578082}
+  - component: {fileID: 1367031812415324009}
   - component: {fileID: 8937601008905073280}
   - component: {fileID: 11034109240377141}
   - component: {fileID: 8716767000433258826}
@@ -258,6 +311,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b941191e3ad474c41b38e2c8f2339313, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.GroundChecker
+--- !u!114 &1367031812415324009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1517210810096820132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2e0a826197b54c51a683137c8c0cf45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.EnergyStorage
 --- !u!54 &8937601008905073280
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -456,6 +521,57 @@ MonoBehaviour:
   audioClip: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   damage: 10
   nockbackSpeed: 10
+--- !u!1 &2488664861138987599
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7670338563451008460}
+  - component: {fileID: 3098814545267038612}
+  m_Layer: 0
+  m_Name: ChargeState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7670338563451008460
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2488664861138987599}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.01354, y: 0.76932, z: 0.23645997}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7201851954051567416}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3098814545267038612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2488664861138987599}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e0d90a4174924978bae6b75c17a5716, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LargeSatanState
+  parents: []
+  animationClip:
+    clip: {fileID: 7400000, guid: 7ff004fe10f934c4bb24d1b14ed56790, type: 2}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 3444350880286515863}
+  energyStorage: {fileID: 1367031812415324009}
 --- !u!1 &2580775139249287558
 GameObject:
   m_ObjectHideFlags: 0
@@ -702,6 +818,7 @@ MonoBehaviour:
   attackNode: {fileID: 9214202796625303400}
   stunState: {fileID: 3199232662557460761}
   guardState: {fileID: 7615511255632755114}
+  chargeState: {fileID: 3098814545267038612}
 --- !u!1 &5451931231840996846
 GameObject:
   m_ObjectHideFlags: 0
@@ -776,6 +893,8 @@ Transform:
   - {fileID: 4800021711829065458}
   - {fileID: 1849438670973751508}
   - {fileID: 225902090445379099}
+  - {fileID: 7670338563451008460}
+  - {fileID: 8956782202065690917}
   m_Father: {fileID: 8056188703651194701}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6726206674975669680
