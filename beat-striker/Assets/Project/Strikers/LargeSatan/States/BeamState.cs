@@ -9,6 +9,8 @@ namespace Core.LargeSatan {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
+        [SerializeField] ParticleSystem beamPrefab;
+        [SerializeField] Transform beamPosition;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -16,6 +18,9 @@ namespace Core.LargeSatan {
             context.PlayAnimation(animationClip, context => {
                 context.TryTransition(nextNode);
             });
+
+            var particleInstance = Instantiate(beamPrefab, beamPosition.position, beamPosition.rotation);
+            particleInstance.Play();
         }
 
         // このステートにいる間、毎フレーム呼ばれる

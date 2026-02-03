@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>画像透過ツール (黒→透明)</title>
+    <style>
+      :root {
+        --bg-color: #121212;
+        --surface-color: #1e1e1e;
+        --primary-color: #bb86fc;
+        --secondary-color: #03dac6;
+        --danger-color: #cf6679;
+        --text-color: #e0e0e0;
+        --border-radius: 12px;
+        --transition: all 0.3s ease;
+      }
+
+      body {
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        /* Modern Viewport Fix */
+        width: 100vw;
+        height: 100dvh;
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      h1 {
+        font-weight: 300;
+        margin-bottom: 0.5rem;
+        margin-top: 0.5rem;
+        letter-spacing: 0.05em;
+        font-size: 1.2rem;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1200px;
+        flex: 1; /* Take remaining space instead of fixed 100% */
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem;
+        box-sizing: border-box;
+      }
+
+      /* Integrated Drop Zone Styling */
+      .drop-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none; /* Let events pass to parent for handling */
+        z-index: 10;
+        text-align: center;
+        padding: 1rem;
+        /* Border radius to match parent */
+        border-radius: 8px;
+      }
+
+      .drop-overlay.active,
+      .drop-overlay.show-hint {
+        opacity: 1;
+        background: rgba(30, 30, 30, 0.8);
+        pointer-events: auto; /* Capture clicks when showing hint (initially) */
+        cursor: pointer;
+      }
+
+      .drop-overlay p {
+        color: #e0e0e0;
+        margin: 0.5rem 0;
+      }
+
+      .drop-overlay.drag-over {
+        /* Simple static appearance */
+        background-color: rgba(187, 134, 252, 0.2);
+        border-color: var(--primary-color);
+      }
+
+      .preview-area {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        flex: 1;
+        min-height: 0; /* Crucial for nested flex scrolling/shrinking */
+        padding-bottom: 0.5rem;
+      }
+      /* Removed .preview-area.visible logic; always visible now */
+
+      .image-card {
+        background-color: var(--surface-color);
+        padding: 0.75rem;
+        border-radius: var(--border-radius);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        position: relative;
+        height: 100%;
+        max-height: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+
+      .image-card h3 {
+        margin: 0;
+        font-size: 1rem;
+        color: #aaa;
+        font-weight: 500;
+        width: 100%;
+        text-align: left;
+      }
+
+      .img-wrapper {
+        width: 100%;
+        flex: 1;
+        background-image:
+          linear-gradient(45deg, #252525 25%, transparent 25%), linear-gradient(-45deg, #252525 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #252525 75%), linear-gradient(-45deg, transparent 75%, #252525 75%);
+        background-size: 20px 20px;
+        background-position:
+          0 0,
+          0 10px,
+          10px -10px,
+          -10px 0px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* New container for centering content within scrollable wrapper if needed,
+         but direct child manipulation works if we use margin: auto when smaller */
+
+      img,
+      canvas {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        display: block;
+        margin: auto; /* Center within flex container */
+        flex-shrink: 0; /* Prevent shrinking when zoomed larger than container */
+      }
+
+      /* 編集用キャンバスはカーソルを変更 */
+      #resultCanvas {
+        cursor: crosshair;
+        touch-action: none; /* スマホでのスクロール防止 */
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        width: 100%;
+        flex-wrap: wrap;
+        padding: 0.5rem 0;
+        border-top: 1px solid #333;
+        margin-top: 0.5rem;
+      }
+
+      .control-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+      }
+
+      .btn {
+        background-color: var(--primary-color);
+        color: #000;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        box-sizing: border-box; /* Fix overflow */
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
+      }
+
+      .btn-toggle {
+        background-color: #333;
+        color: #fff;
+      }
+
+      .btn-toggle.active {
+        background-color: var(--secondary-color);
+        color: #000;
+        box-shadow: 0 0 8px rgba(3, 218, 198, 0.4);
+      }
+
+      input[type='range'] {
+        -webkit-appearance: none;
+        width: 100px;
+        height: 6px;
+        background: #444;
+        border-radius: 5px;
+        outline: none;
+      }
+
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--secondary-color);
+        cursor: pointer;
+      }
+
+      .label-text {
+        font-size: 0.8rem;
+        color: #ccc;
+      }
+
+      /* Spinner */
+      .spinner {
+        display: none;
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-left-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Modal Styles */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        background: var(--surface-color);
+        border-radius: 16px;
+        padding: 2rem;
+        width: 90%;
+        max-width: 500px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        transform: translateY(20px);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      .modal-overlay.active .modal-content {
+        transform: translateY(0);
+      }
+
+      .premium-badge {
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        color: #000;
+        font-weight: 800;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        display: inline-block;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .plan-comparison {
+        display: flex;
+        gap: 1rem;
+        margin: 1.5rem 0;
+        text-align: left;
+      }
+
+      .plan-card {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .plan-card.premium {
+        background: rgba(187, 134, 252, 0.1);
+        border-color: var(--primary-color);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .plan-card h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+      }
+
+      .plan-price {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .plan-price span {
+        font-size: 0.9rem;
+        font-weight: 400;
+        opacity: 0.7;
+      }
+
+      .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+
+      .feature-list li {
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .btn-premium {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        width: 100%;
+        margin-bottom: 0.5rem;
+        border: none;
+        color: #000;
+      }
+
+      .btn-free-wait {
+        background: #333;
+        color: #aaa;
+        width: 100%;
+        margin-top: 0.5rem;
+        cursor: not-allowed;
+      }
+
+      .btn-free-wait.ready {
+        background: transparent;
+        border: 1px solid #555;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      .btn-free-wait.ready:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      @media (max-width: 768px) {
+        .preview-area {
+          grid-template-columns: 1fr;
+          grid-template-rows: 1fr 1fr; /* Stack vertically */
+        }
+        .plan-comparison {
+          flex-direction: column;
+        }
+      }
+
+      /* Contract Modal Styles - Formal Document */
+      #contractModal .modal-content {
+        background: #fdfbf7; /* Cream paper color */
+        color: #1a1a1a;
+        text-align: left;
+        max-width: 650px;
+        border: 4px double #4a4a4a; /* Double border for document look */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        font-family: 'Times New Roman', 'YuMincho', 'Hiragino Mincho ProN', serif;
+        position: relative;
+        padding: 2rem;
+      }
+
+      #contractModal h2 {
+        border-bottom: 3px solid #1a1a1a;
+        padding-bottom: 0.8rem;
+        margin-bottom: 1.5rem;
+        font-family: 'Times New Roman', 'YuMincho', serif;
+        text-align: center;
+        font-size: 1.8rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .contract-body {
+        position: relative;
+      }
+
+      .contract-watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 6rem;
+        color: rgba(255, 0, 0, 0.05);
+        font-weight: bold;
+        pointer-events: none;
+        white-space: nowrap;
+        border: 5px solid rgba(255, 0, 0, 0.05);
+        padding: 1rem 3rem;
+        text-transform: uppercase;
+        z-index: 0;
+      }
+
+      .contract-text {
+        font-family: 'Times New Roman', 'YuMincho', serif;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ccc; /* Subtle inner border */
+        padding: 1.5rem;
+        background: #fff;
+        color: #333;
+        text-align: justify;
+        position: relative;
+        z-index: 1;
+      }
+
+      .contract-article {
+        margin-bottom: 1.5rem;
+      }
+      .contract-article-title {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+        text-decoration: underline;
+      }
+
+      .form-group {
+        margin-bottom: 1.2rem;
+        position: relative;
+        z-index: 1;
+      }
+      .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.3rem;
+        color: #1a1a1a;
+        font-family: 'Times New Roman', serif;
+        font-size: 0.95rem;
+      }
+      .form-group input {
+        width: 100%;
+        padding: 0.6rem;
+        border: 2px solid #ccc;
+        border-radius: 0;
+        box-sizing: border-box;
+        background: #fff;
+        font-family: 'Courier New', monospace;
+        color: #333;
+        font-size: 1rem;
+      }
+      .form-group input:disabled {
+        background: #f0f0f0;
+        color: #555;
+        border-color: #ddd;
+      }
+
+      /* Animations */
+      @keyframes vibrate {
+        0% {
+          transform: translate(0) rotate(0);
+        }
+        20% {
+          transform: translate(-10px, 10px) rotate(-5deg);
+        }
+        40% {
+          transform: translate(-10px, -10px) rotate(5deg);
+        }
+        60% {
+          transform: translate(10px, 10px) rotate(-5deg);
+        }
+        80% {
+          transform: translate(10px, -10px) rotate(5deg);
+        }
+        100% {
+          transform: translate(0) rotate(0);
+        }
+      }
+
+      @keyframes explode {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+          filter: blur(0);
+        }
+        50% {
+          transform: scale(30);
+          opacity: 0;
+          filter: blur(20px);
+        }
+        100% {
+          transform: scale(50);
+          opacity: 0;
+          display: none;
+        }
+      }
+
+      .vibrate {
+        animation: vibrate 0.1s linear infinite;
+      }
+
+      .explode {
+        animation: explode 0.5s ease-out forwards;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Lumina 透過ツール</h1>
+
+    <div class="container">
+      <!-- Global Settings -->
+      <div
+        class="settings-card"
+        style="
+          background-color: var(--surface-color);
+          padding: 0.75rem;
+          border-radius: var(--border-radius);
+          width: 100%;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          flex-shrink: 0;
+        "
+      >
+        <div style="display: flex; gap: 1rem; align-items: center">
+          <h3 style="margin: 0; font-size: 1rem; color: #aaa">出力サイズ</h3>
+          <div class="control-group">
+            <span class="label-text">W:</span>
+            <input type="number" id="imgWidth" class="size-input" value="256" />
+            <span class="label-text">H:</span>
+            <input type="number" id="imgHeight" class="size-input" value="256" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Hidden Input for File Selection (Triggered by click on overlay) -->
+      <input type="file" id="fileInput" accept="image/*" style="display: none" />
+
+      <div class="preview-area" id="previewArea">
+        <!-- Original Image -->
+        <div class="image-card" id="originalCard">
+          <h3>元画像 / ドロップエリア</h3>
+          <div class="img-wrapper" id="originalWrapper" style="position: relative">
+            <img id="originalImg" alt="" style="display: none" />
+
+            <!-- Drop Overlay -->
+            <div class="drop-overlay show-hint" id="dropOverlay">
+              <p style="font-size: 2rem; margin-bottom: 0.5rem">📁</p>
+              <p>画像をここにドラッグ＆ドロップ</p>
+              <p style="font-size: 0.8rem; opacity: 0.7">（クリックしてアップロード）</p>
+              <div class="spinner" id="spinner"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Processed Image (Canvas for editing) -->
+        <div class="image-card">
+          <h3>処理結果 (黒→透明)</h3>
+
+          <div class="controls">
+            <div class="control-group">
+              <span class="label-text">ブラシ: <span id="brushSizeVal">20</span>px</span>
+              <input type="range" id="brushSize" min="5" max="100" value="20" />
+            </div>
+
+            <div class="control-group" style="margin-left: auto">
+              <span class="label-text">背景レベル: <span id="thresholdVal">0</span></span>
+              <input type="range" id="thresholdRange" min="-50" max="50" value="0" />
+            </div>
+
+            <div class="control-group">
+              <span class="label-text">ズーム: <span id="zoomVal">100</span>%</span>
+              <input type="range" id="zoomRange" min="100" max="500" step="10" value="100" />
+            </div>
+          </div>
+
+          <div class="img-wrapper" id="canvasWrapper">
+            <canvas id="resultCanvas"></canvas>
+          </div>
+
+          <a id="downloadBtn" class="btn" style="margin-top: 1rem; width: 100%; box-sizing: border-box"
+            >PNGをダウンロード</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden buffer canvas for processing -->
+    <canvas id="bufferCanvas" style="display: none"></canvas>
+
+    <!-- Upgrade Modal -->
+    <div class="modal-overlay" id="upgradeModal">
+      <div class="modal-content">
+        <span class="premium-badge">オススメ</span>
+        <h2>Proプランにアップグレード</h2>
+        <p style="color: #bbb; margin-bottom: 1.5rem">高速ダウンロードと高度な編集機能を解放しましょう。</p>
+
+        <div class="plan-comparison">
+          <div class="plan-card">
+            <h4>Free</h4>
+            <div class="plan-price">¥0</div>
+            <ul class="feature-list">
+              <li>✓ 基本的な透過処理</li>
+              <li>✓ 標準画質での保存</li>
+              <li>⚠ ダウンロード待機時間</li>
+            </ul>
+          </div>
+          <div class="plan-card premium">
+            <h4>Pro</h4>
+            <div class="plan-price">¥980<span>/月</span></div>
+            <ul class="feature-list">
+              <li>✓ 超高速・高品質処理</li>
+              <li>✓ 高解像度 (4K) 対応</li>
+              <li>✓ <strong>待ち時間なし</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <a href="#" class="btn btn-premium" id="proPlanBtn">Proプランを無料で試す</a>
+        <button id="modalDownloadBtn" class="btn btn-free-wait" disabled>ダウンロードの準備中 (3)...</button>
+      </div>
+    </div>
+
+    <!-- Contract Modal -->
+    <div class="modal-overlay" id="contractModal">
+      <div class="modal-content">
+        <h2>Lumina Pro サービス利用契約書</h2>
+        <div class="contract-body">
+          <div class="contract-watermark">CONFIDENTIAL</div>
+          <div class="contract-text">
+            <div class="contract-article">
+              <div class="contract-article-title">第1条（適用範囲）</div>
+              本契約は、Lumina Inc.（以下「甲」）が提供するLumina 透過ツール
+              Pro（以下「本サービス」）の利用に関し、利用者（以下「乙」）に適用される一切の関係を定めるものである。乙は、本サービスの利用申し込みを行った時点で、本契約の全条項に同意したものとみなされる。
+            </div>
+            <div class="contract-article">
+              <div class="contract-article-title">第2条（契約期間および解除不能性）</div>
+              1. 本契約の有効期間は、契約締結日から永遠（Eternity）とする。<br />
+              2. 乙は、いかなる理由においても本契約を中途解約することはできない。<br />
+              3.
+              甲は、乙の同意なくしていつでも本契約の内容を変更することができるものとし、乙はこれに異議を申し立てる権利を永久に放棄する。
+            </div>
+            <div class="contract-article">
+              <div class="contract-article-title">第3条（利用対価および徴収権）</div>
+              1. 乙は、本サービスの対価として、甲が指定する任意かつ無制限の金額を支払う義務を負う。<br />
+              2.
+              支払いが遅延した場合、甲は乙の保有する全ての資産（有形・無形を問わず、将来取得する資産を含む）を事前の通知なく差し押さえる権利を有する。<br />
+              3. 通貨による支払いが困難な場合、甲は労働力または生体エネルギーによる代物弁済を強制することができる。
+            </div>
+            <div class="contract-article">
+              <div class="contract-article-title">第4条（責任の制限）</div>
+              甲は、本サービスの利用により乙に生じたあらゆる損害（身体的損傷、精神的苦痛、存在の消失を含む）について、一切の責任を負わない。
+            </div>
+            <div class="contract-article">
+              <div class="contract-article-title">第5条（管轄裁判所）</div>
+              本契約に関する一切の紛争については、南極大陸における甲の指定する地下施設を専属的合意管轄裁判所とする。
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid #aaa; padding-top: 1rem; margin-top: 1rem">
+            <div class="form-group">
+              <label>署名（Signature）</label>
+              <input
+                type="text"
+                placeholder="署名"
+                value="同意します"
+                disabled
+                style="font-family: 'Brush Script MT', cursive; font-size: 1.2rem; color: #000"
+              />
+            </div>
+            <div class="form-group">
+              <label>登録ID</label>
+              <input type="text" value="USER-7734-ETRNL" disabled />
+            </div>
+          </div>
+        </div>
+
+        <p
+          style="
+            color: #cf6679;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 1rem;
+            font-family: sans-serif;
+            font-size: 0.9rem;
+          "
+        >
+          <span
+            class="spinner"
+            style="
+              display: inline-block;
+              width: 15px;
+              height: 15px;
+              vertical-align: middle;
+              margin-right: 5px;
+              border-width: 2px;
+              border-left-color: #cf6679;
+            "
+          ></span>
+          契約手続きを処理中... 電源を切らないでください
+        </p>
+      </div>
+    </div>
+
+    <style>
+      .size-input {
+        background: #333;
+        border: 1px solid #555;
+        color: white;
+        padding: 4px;
+        border-radius: 4px;
+        width: 60px;
+        text-align: center;
+      }
+      .size-input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+      }
+    </style>
+
+    <script>
+      const dropOverlay = document.getElementById('dropOverlay');
+      const fileInput = document.getElementById('fileInput');
+      // const previewArea = document.getElementById('previewArea'); // No longer needed for toggling visibility
+      const originalImg = document.getElementById('originalImg');
+      const resultCanvas = document.getElementById('resultCanvas');
+      const ctx = resultCanvas.getContext('2d');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const bufferCanvas = document.getElementById('bufferCanvas');
+      const bufferCtx = bufferCanvas.getContext('2d');
+      const spinner = document.getElementById('spinner');
+
+      // Wrappers and Cards
+      const originalCard = document.getElementById('originalCard');
+      // const canvasWrapper = document.getElementById('canvasWrapper');
+
+      // Controls
+      const brushSizeInput = document.getElementById('brushSize');
+      const brushSizeVal = document.getElementById('brushSizeVal');
+
+      const zoomInput = document.getElementById('zoomRange');
+      const zoomVal = document.getElementById('zoomVal');
+
+      const thresholdInput = document.getElementById('thresholdRange');
+      const thresholdVal = document.getElementById('thresholdVal');
+
+      const imgWidthInput = document.getElementById('imgWidth');
+      const imgHeightInput = document.getElementById('imgHeight');
+
+      // State
+      let isEraserMode = true; // Always true
+      let isDrawing = false;
+      let brushSize = 20;
+      let currentImg = null; // Store processed image for reset
+      let imageScale = 1.0;
+
+      // Init UI
+      brushSizeInput.addEventListener('input', (e) => {
+        brushSize = e.target.value;
+        brushSizeVal.textContent = brushSize;
+      });
+
+      zoomInput.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        zoomVal.textContent = val;
+        imageScale = val / 100;
+
+        // Retrigger processing to apply scale
+        if (currentImg) {
+          processImage(currentImg);
+        }
+      });
+
+      thresholdInput.addEventListener('input', (e) => {
+        thresholdVal.textContent = e.target.value;
+        if (currentImg) processImage(currentImg);
+      });
+
+      // This function is no longer needed as its logic is integrated into the zoomInput listener and processImage.
+      // The CSS resizing is removed, and the actual drawing scale is handled in processImage.
+      function updateZoom() {
+        // This function is now effectively a no-op for CSS resizing.
+        // The scaling for drawing is handled in processImage.
+        // The UI text update is handled in the zoomInput event listener.
+      }
+
+      // Auto-update on resize input change
+      imgWidthInput.addEventListener('input', () => {
+        if (currentImg) processImage(currentImg);
+      });
+      imgHeightInput.addEventListener('input', () => {
+        if (currentImg) processImage(currentImg);
+      });
+
+      downloadBtn.addEventListener('click', (e) => {
+        // Prevent default direct download if using modal
+        e.preventDefault();
+        openUpgradeModal();
+      });
+
+      // Modal Logic
+      const upgradeModal = document.getElementById('upgradeModal');
+      const contractModal = document.getElementById('contractModal');
+      const modalDownloadBtn = document.getElementById('modalDownloadBtn');
+      const proPlanBtn = document.getElementById('proPlanBtn'); // Added ID in HTML above
+      let countdownTimer = null;
+
+      function openUpgradeModal() {
+        upgradeModal.classList.add('active');
+
+        let secondsLeft = 3;
+        modalDownloadBtn.disabled = true;
+        modalDownloadBtn.classList.remove('ready');
+        modalDownloadBtn.textContent = `ダウンロードの準備中 (${secondsLeft})...`;
+
+        if (countdownTimer) clearInterval(countdownTimer);
+
+        countdownTimer = setInterval(() => {
+          secondsLeft--;
+          if (secondsLeft > 0) {
+            modalDownloadBtn.textContent = `ダウンロードの準備中 (${secondsLeft})...`;
+          } else {
+            clearInterval(countdownTimer);
+            modalDownloadBtn.textContent = '無料でダウンロード';
+            modalDownloadBtn.disabled = false;
+            modalDownloadBtn.classList.add('ready');
+          }
+        }, 1000);
+      }
+
+      // Handle closing modal (optional, maybe click outside?)
+      upgradeModal.addEventListener('click', (e) => {
+        if (e.target === upgradeModal) {
+          upgradeModal.classList.remove('active');
+          if (countdownTimer) clearInterval(countdownTimer);
+        }
+      });
+
+      // Actual Download Trigger from Modal
+      modalDownloadBtn.addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = 'transparent_image.png';
+        link.href = resultCanvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        upgradeModal.classList.remove('active');
+      });
+
+      // Pro Plan Animation Flow
+      proPlanBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        upgradeModal.classList.remove('active');
+        contractModal.classList.add('active');
+
+        // 3 seconds delay -> Vibrate -> Explode
+        setTimeout(() => {
+          // Vibrate
+          const content = contractModal.querySelector('.modal-content');
+          content.classList.add('vibrate');
+
+          // Explode after vibration starts (e.g. 2s vibration then boom)
+          setTimeout(() => {
+            content.classList.remove('vibrate');
+            content.classList.add('explode');
+
+            // Clean up / Hide after explosion
+            setTimeout(() => {
+              contractModal.classList.remove('active');
+              content.classList.remove('explode');
+              alert('エラー: システムが過負荷により爆発しました。Proプランの申し込みに失敗しました。');
+            }, 500); // Wait for explosion animation to finish
+          }, 2000); // Duration of vibration
+        }, 3000); // Initial delay
+      });
+
+      // Click on Drop Overlay -> Trigger Input
+      dropOverlay.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      // Canvas Draw Logic
+      function getMousePos(canvas, evt) {
+        const rect = canvas.getBoundingClientRect();
+        // Calculate scale in case canvas is resized via CSS (responsiveness)
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        return {
+          x: (evt.clientX - rect.left) * scaleX,
+          y: (evt.clientY - rect.top) * scaleY,
+        };
+      }
+
+      // Touch support
+      function getTouchPos(canvas, evt) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        return {
+          x: (evt.touches[0].clientX - rect.left) * scaleX,
+          y: (evt.touches[0].clientY - rect.top) * scaleY,
+        };
+      }
+
+      function startPosition(e) {
+        isDrawing = true;
+        draw(e);
+      }
+
+      function endPosition() {
+        isDrawing = false;
+        ctx.beginPath(); // Reset path
+      }
+
+      function draw(e) {
+        if (!isDrawing || !isEraserMode) return;
+
+        let pos;
+        if (e.type.includes('touch')) {
+          // Prevent scrolling when touching canvas
+          if (e.cancelable) e.preventDefault();
+          pos = getTouchPos(resultCanvas, e);
+        } else {
+          pos = getMousePos(resultCanvas, e);
+        }
+
+        ctx.lineWidth = brushSize;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Eraser Logic
+        ctx.globalCompositeOperation = 'destination-out';
+
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      }
+
+      // Add Listeners to Canvas
+      resultCanvas.addEventListener('mousedown', startPosition);
+      resultCanvas.addEventListener('mouseup', endPosition);
+      resultCanvas.addEventListener('mousemove', draw);
+      resultCanvas.addEventListener('mouseout', endPosition);
+
+      resultCanvas.addEventListener('touchstart', startPosition, { passive: false });
+      resultCanvas.addEventListener('touchend', endPosition);
+      resultCanvas.addEventListener('touchmove', draw, { passive: false });
+
+      // File Handling
+      // We drag/drop onto the Document or the Original Card.
+      // Use originalCard as the specific zone, but generic drop on body is also nice.
+      // Let's target `originalCard` specifically for visual feedback.
+
+      const dropTarget = originalCard;
+
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
+        dropTarget.addEventListener(eventName, preventDefaults, false);
+      });
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        dropTarget.addEventListener(eventName, highlight, false);
+      });
+
+      ['dragleave', 'drop'].forEach((eventName) => {
+        dropTarget.addEventListener(eventName, unhighlight, false);
+      });
+
+      function highlight(e) {
+        dropOverlay.classList.add('drag-over');
+        dropOverlay.classList.add('active'); // Ensure visible
+      }
+
+      function unhighlight(e) {
+        // Prevent flickering when dragging over children
+        const related = e.relatedTarget;
+        if (dropTarget.contains(related)) {
+          return;
+        }
+
+        dropOverlay.classList.remove('drag-over');
+        // Only hide if we have an image loaded (otherwise show-hint keeps it visible)
+        if (currentImg) {
+          dropOverlay.classList.remove('active');
+        }
+      }
+
+      dropTarget.addEventListener('drop', handleDrop, false);
+      fileInput.addEventListener('change', handleFiles, false);
+
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles({ target: { files: files } });
+      }
+
+      function handleFiles(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+          spinner.style.display = 'block'; // Show spinner inside overlay
+          // Use timeout to allow UI to update
+          setTimeout(() => {
+            processFile(files[0]);
+          }, 10);
+        }
+      }
+
+      function processFile(file) {
+        if (!file.type.startsWith('image/')) {
+          spinner.style.display = 'none';
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = new Image();
+          img.onload = function () {
+            currentImg = img;
+
+            // Show Original Image
+            originalImg.src = e.target.result;
+            originalImg.style.display = 'block';
+
+            // Hide Overlay (remove hints)
+            dropOverlay.classList.remove('show-hint');
+            dropOverlay.classList.remove('active');
+            spinner.style.display = 'none';
+
+            // Reset Scale & Threshold
+            zoomInput.value = 100;
+            zoomVal.textContent = 100;
+            imageScale = 1.0;
+
+            // Only reset threshold if requested, but user probably wants to keep settings between images?
+            // Let's reset for consistency with zoom for now as it's a "new file" action.
+            thresholdInput.value = 0;
+            thresholdVal.textContent = 0;
+
+            processImage(img);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function processImage(img) {
+        // Read size inputs
+        let targetW = parseInt(imgWidthInput.value) || img.width;
+        let targetH = parseInt(imgHeightInput.value) || img.height;
+
+        // Setup canvas size
+        resultCanvas.width = targetW;
+        resultCanvas.height = targetH;
+        bufferCanvas.width = targetW;
+        bufferCanvas.height = targetH;
+
+        // Clear buffer
+        bufferCtx.clearRect(0, 0, targetW, targetH);
+
+        // Calculate Scale & Position (Contain + Center + ImageScale)
+        // 1. Base Scale (Fit)
+        const baseScale = Math.min(targetW / img.width, targetH / img.height);
+
+        // 2. Final Scale
+        const finalScale = baseScale * imageScale;
+
+        const drawW = img.width * finalScale;
+        const drawH = img.height * finalScale;
+
+        // 3. Center - this effectively chops off edges if scaled up
+        const drawX = (targetW - drawW) / 2;
+        const drawY = (targetH - drawH) / 2;
+
+        // 1. Draw original on buffer with scaling
+        bufferCtx.drawImage(img, drawX, drawY, drawW, drawH);
+
+        // 2. Process pixels on buffer
+        const imageData = bufferCtx.getImageData(0, 0, bufferCanvas.width, bufferCanvas.height);
+        const data = imageData.data;
+
+        // Pass 1: Find Global Max Luma and Border Average Luma
+        let borderLumaSum = 0;
+        let borderPixelCount = 0;
+        let globalMaxLuma = 0;
+
+        const width = bufferCanvas.width;
+        const height = bufferCanvas.height;
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const i = (y * width + x) * 4;
+
+            const a = data[i + 3];
+
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const luma = (0.299 * r + 0.587 * g + 0.114 * b) * (a / 255);
+
+            // Track Global Max (to keep brightest parts bright)
+            if (luma > globalMaxLuma) globalMaxLuma = luma;
+
+            // Track Border Luma Sum
+            if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+              borderLumaSum += luma;
+              borderPixelCount++;
+            }
+          }
+        }
+
+        const borderAvgLuma = borderPixelCount > 0 ? borderLumaSum / borderPixelCount : 0;
+
+        // Apply user threshold adjustment
+        const thresholdAdjustment = parseInt(thresholdInput.value) || 0;
+        // Ensure effective threshold doesn't go below 0
+        const effectiveThreshold = Math.max(0, borderAvgLuma + thresholdAdjustment);
+
+        // console.log("Border Avg Luma:", borderAvgLuma, "Adj:", thresholdAdjustment, "Effective:", effectiveThreshold);
+
+        // Pass 2: Apply Remapping
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+
+          // Luma calculation
+          const luma = (0.299 * r + 0.587 * g + 0.114 * b) * (a / 255);
+
+          let newAlpha = 0;
+
+          if (luma <= effectiveThreshold) {
+            // User request: "Average opacity of border is 0" (adjusted)
+            newAlpha = 0;
+          } else {
+            // Smooth ramp from EffectiveThreshold to GlobalMax
+            if (globalMaxLuma > effectiveThreshold) {
+              newAlpha = (globalMaxLuma * (luma - effectiveThreshold)) / (globalMaxLuma - effectiveThreshold);
+            } else {
+              newAlpha = 0;
+            }
+          }
+
+          // User request: "Should be only white"
+          data[i] = 255; // R
+          data[i + 1] = 255; // G
+          data[i + 2] = 255; // B
+          data[i + 3] = newAlpha;
+        }
+
+        bufferCtx.putImageData(imageData, 0, 0);
+
+        // 3. Copy buffer to visible canvas
+        ctx.globalCompositeOperation = 'source-over'; // Ensure default
+        ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+        ctx.drawImage(bufferCanvas, 0, 0);
+
+        // 4. Setup Download Button (Logic moved to click handler, no href update needed here)
+        // downloadBtn.href = resultCanvas.toDataURL('image/png'); // handled in modal now
+        // downloadBtn.download = 'transparent_image.png';
+
+        // Show preview logic existing? we removed it, it's always visible.
+      }
+    </script>
+  </body>
+</html>
