@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Core.Battle;
 using UnityEngine;
@@ -6,6 +7,8 @@ namespace Core.Striker {
     public abstract class StrikerState : StrikerNode, IStrikerState {
         [SerializeField] private List<StrikerGroup> parents = new List<StrikerGroup>();
         public virtual IEnumerable<IGroup<IStrikerContext>> Parents => parents;
+
+        private readonly List<(float delay, float elapsedTime, Action<IStrikerStateContext> action)> timeActions = new();
 
         public sealed override void OnTryTransition(IStrikerNodeContext context) {
             context.ChangeState(this);
@@ -22,6 +25,18 @@ namespace Core.Striker {
         public virtual void OnMiss(IStrikerStateContext hub) { }
 
         void IStrikerState.OnUpdate(IStrikerStateContext ctx) {
+            // タイムアクション処理
+            for (int i = timeActions.Count - 1; i >= 0; i--) {
+                var (delay, elapsedTime, action) = timeActions[i];
+                elapsedTime += Time.deltaTime;
+                if (elapsedTime >= delay) {
+                    action?.Invoke(ctx);
+                    timeActions.RemoveAt(i);
+                } else {
+                    timeActions[i] = (delay, elapsedTime, action);
+                }
+            }
+
             foreach (var p in parents) {
                 p.OnUpdate(ctx);
             }
@@ -68,6 +83,15 @@ namespace Core.Striker {
                 p.OnMiss(ctx);
             }
             OnMiss(ctx);
+        }
+
+        protected void ScheduleStateEvent(float delay, Action<IStrikerStateContext> action) {
+            timeActions.Add((delay, 0f, action));
+        }
+
+        void IStrikerState.OnExit(IStrikerContext ctx) {
+            timeActions.Clear();
+            OnExit(ctx);
         }
     }
 }

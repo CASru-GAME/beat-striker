@@ -9,8 +9,10 @@ namespace Core.LargeSatan {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
-        [SerializeField] ParticleSystem beamPrefab;
-        [SerializeField] Transform beamPosition;
+
+        [SerializeField] GameObject beamPrefab;
+        [SerializeField] Transform firePosition;
+        [SerializeField] float fireTime = 0.3f;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -19,8 +21,9 @@ namespace Core.LargeSatan {
                 context.TryTransition(nextNode);
             });
 
-            var particleInstance = Instantiate(beamPrefab, beamPosition.position, beamPosition.rotation);
-            particleInstance.Play();
+            ScheduleStateEvent(fireTime,context => {
+                var particleInstance = Instantiate(beamPrefab, firePosition.position, context.Rigidbody.transform.rotation);
+            });
         }
 
         // このステートにいる間、毎フレーム呼ばれる

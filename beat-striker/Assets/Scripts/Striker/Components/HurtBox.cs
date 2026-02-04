@@ -2,12 +2,15 @@ using UnityEngine;
 using System;
 using Core.Striker;
 using Core.Battle;
+using R3;
 
 [AddComponentMenu(" 🟠HurtBox", 0)]
 public class Hurtbox : MonoBehaviour
 {
     [SerializeField] bool isGuarding = true;
     [SerializeField] StrikerHub strikerHub;
+    readonly Subject<HitStatus> onHit = new();
+    public Observable<HitStatus> OnHit => onHit;
 
     public bool IsGuarding { get => isGuarding; set => isGuarding = value; }
 
@@ -17,14 +20,19 @@ public class Hurtbox : MonoBehaviour
         else {
             Debug.LogError($"Hurtbox requires a Collider component. {this.gameObject.name} has no Collider.");
         }
+        if (strikerHub) {
+            onHit.Subscribe(status => {
+                strikerHub.GiveHit(status);
+            }).AddTo(this);
+        }
     }
 
     public HitResult GiveHit(HitStatus hitStatus) {
+        onHit.OnNext(hitStatus);
+        
         if(isGuarding) {
-            strikerHub.GiveHit(hitStatus);
             return new HitResult(HitResult.Status.Guarded);
         }
-        strikerHub.GiveHit(hitStatus);
         return new HitResult(HitResult.Status.Success);
     }
 }

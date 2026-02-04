@@ -55,6 +55,7 @@ namespace Core.Striker {
         void OnGuardRequested(IStrikerStateContext context);
         void OnDashRequested(IStrikerStateContext context);
         void OnMiss(IStrikerStateContext context);
+        new void OnExit(IStrikerContext context);
     }
 
     // 親リストを持たないストライカー用のグループインターフェース
