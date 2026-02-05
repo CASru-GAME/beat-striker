@@ -1,5 +1,11 @@
 
+using System;
+using System.Collections.Generic;
 using UnityEngine;
+
+namespace System.Runtime.CompilerServices {
+    public static class IsExternalInit { }
+}
 
 namespace Core.Striker.Components {
 
@@ -20,9 +26,36 @@ namespace Core.Striker.Components {
             aSource.Play();
 
             // 再生終了後に自動破棄する設定
-            Object.Destroy(tempGO, clip.length);
+            UnityEngine.Object.Destroy(tempGO, clip.length);
 
             return aSource; // これを保持しておけば、あとから Stop() できる
+        }
+
+        public static TSource MinBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector) where TSource : class {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+
+            var comparer = Comparer<TKey>.Default;
+
+            using (var iterator = source.GetEnumerator()) {
+                if (!iterator.MoveNext()) {
+                    return null;
+                }
+
+                var minElement = iterator.Current;
+                var minKey = selector(minElement);
+
+                while (iterator.MoveNext()) {
+                    var currentElement = iterator.Current;
+                    var currentKey = selector(currentElement);
+
+                    if (comparer.Compare(currentKey, minKey) < 0) {
+                        minElement = currentElement;
+                        minKey = currentKey;
+                    }
+                }
+
+                return minElement;
+            }
         }
     }
 }
