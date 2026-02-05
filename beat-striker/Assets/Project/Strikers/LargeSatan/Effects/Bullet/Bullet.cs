@@ -1,4 +1,5 @@
 using Core.Battle;
+using Core.Striker.Components;
 using UnityEngine;
 
 namespace Core.LargeSatan {
@@ -13,12 +14,19 @@ namespace Core.LargeSatan {
         [SerializeField] GameObject rotationTarget;
         [SerializeField] float rotationSpeed = 700;
 
+        [SerializeField] GameObject impactPrefab;
+        [SerializeField] GameObject trail;
+
+        [SerializeField] AudioClip whizClip;
+        [SerializeField] AudioClip impactClip;
+
         void Awake() {
             rb = GetComponent<Rigidbody>();
         }
 
         void Start() {
             rb.linearVelocity = speed * rb.transform.forward;
+            whizClip.PlayAtPoint(transform);
         }
 
         void Update() {
@@ -29,6 +37,15 @@ namespace Core.LargeSatan {
             if (other.TryGetComponent<Hurtbox>(out var hurtbox)) {
                 var nockBackDirection = rb.linearVelocity.normalized;
                 hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
+
+                var hitPoint = other.ClosestPoint(transform.position);
+
+                impactClip.PlayAtPoint(hitPoint);
+
+                Destroy(Instantiate(impactPrefab, hitPoint, transform.rotation), 5f);
+                trail.transform.SetParent(null);
+                Destroy(trail, 5f);
+                Destroy(this.gameObject);
             }
         }
     }

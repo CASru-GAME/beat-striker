@@ -80,7 +80,7 @@ TrailRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Time: 5
+  m_Time: 0.5
   m_PreviewTimeScale: 1
   m_Parameters:
     serializedVersion: 3
@@ -233,6 +233,10 @@ MonoBehaviour:
   speed: 20
   rotationTarget: {fileID: 2109323346404395806}
   rotationSpeed: 700
+  impactPrefab: {fileID: 6593143823394576965, guid: e765c90571da548e4aac5881d6c06000, type: 3}
+  trail: {fileID: 3630615224797867197}
+  whizClip: {fileID: 8300000, guid: c1f7a78d1b1c54b3591ecef70c2c93da, type: 3}
+  impactClip: {fileID: 8300000, guid: c731ae3db31e94d4689c3ba0bd6ee471, type: 3}
 --- !u!135 &6653142625779470977
 SphereCollider:
   m_ObjectHideFlags: 0
