@@ -4,12 +4,13 @@ using Core.Striker;
 
 namespace Core.LargeHero {
     
-    public class IdleState : StrikerState {
+    public class FallState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] StrikerNode LocomotionNode;
-        [SerializeField] StrikerNode dashNode;
+        [SerializeField] GroundChecker groundChecker;
+        [SerializeField] StrikerNode landNode;
+        // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip);
@@ -17,10 +18,9 @@ namespace Core.LargeHero {
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
-            if(context.InputDirection.x != 0) {
-                context.TryTransition(LocomotionNode);
+            if(groundChecker.IsGrounded) {
+                context.TryTransition(landNode);
             }
-        
         }
 
         // 他のステートに遷移する直前に呼ばれる
@@ -37,7 +37,6 @@ namespace Core.LargeHero {
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
-            context.TryTransition(dashNode);
         }
 
         // ガードコマンドが押された時に呼ばれる
