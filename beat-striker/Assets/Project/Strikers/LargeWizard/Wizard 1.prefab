@@ -446,7 +446,7 @@ MonoBehaviour:
   nextNode: {fileID: 707581214265331847}
   hitBox: {fileID: 8792560517527999783}
   particlePrefab: {fileID: 4708080876874530975, guid: 76678952e24000149adf24ffce136dda, type: 3}
-  audioClip: {fileID: 0}
+  audioClip: {fileID: 8300000, guid: c594405fdabc834478bb45225f11331e, type: 3}
   damage: 10
   knockbackSpeed: 10
 --- !u!1 &3683428354690999460
