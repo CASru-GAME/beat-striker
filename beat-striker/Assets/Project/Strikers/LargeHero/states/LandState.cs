@@ -12,7 +12,7 @@ namespace Core.LargeHero {
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip);
+            context.PlayAnimation(animationClip, OnAnimationEnd);
         }
 
         // このステートにいる間、毎フレーム呼ばれる

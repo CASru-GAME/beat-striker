@@ -10,6 +10,7 @@ namespace Core.LargeHero {
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode locomotionNode;
         [SerializeField] float walkSpeed;
+        [SerializeField]StrikerNode dashNode;
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
@@ -39,6 +40,7 @@ namespace Core.LargeHero {
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
+            context.TryTransition(dashNode);
         }
 
         // ガードコマンドが押された時に呼ばれる

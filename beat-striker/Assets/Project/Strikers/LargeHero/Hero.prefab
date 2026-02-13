@@ -51,6 +51,7 @@ MonoBehaviour:
     speed: 1
   locomotionNode: {fileID: 1934183999574950063}
   walkSpeed: 1
+  dashNode: {fileID: 9038803477243429045}
 --- !u!1 &3685882681109880954
 GameObject:
   m_ObjectHideFlags: 0
@@ -102,6 +103,7 @@ MonoBehaviour:
     speed: 1
   locomotionNode: {fileID: 1934183999574950063}
   walkSpeed: 1
+  dashNode: {fileID: 9038803477243429045}
 --- !u!1 &3769293245103731280
 GameObject:
   m_ObjectHideFlags: 0
@@ -112,7 +114,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8826172421002723856}
   - component: {fileID: 393165507195732606}
-  - component: {fileID: 4302020545482576989}
   m_Layer: 0
   m_Name: IdleState
   m_TagString: Untagged
@@ -153,22 +154,7 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 1
   LocomotionNode: {fileID: 1934183999574950063}
-  dashNode: {fileID: 0}
---- !u!114 &4302020545482576989
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3769293245103731280}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d9b407b0a334bf4d82f9fef882e942d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.LocomotionNode
-  idlestate: {fileID: 0}
-  walkstate: {fileID: 0}
-  walkbackwardstate: {fileID: 0}
+  dashNode: {fileID: 9038803477243429045}
 --- !u!1 &4619036879945846839
 GameObject:
   m_ObjectHideFlags: 0

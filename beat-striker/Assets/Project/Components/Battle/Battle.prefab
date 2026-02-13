@@ -81,16 +81,16 @@ MonoBehaviour:
   strikerPrefabs:
   - strikerId:
       value: Hero
-    prefab: {fileID: 2847316718028651352, guid: f7ef57081d2c5224fb87ff15e5468e4a, type: 3}
+    prefab: {fileID: 4619036879945846839, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
   - strikerId:
       value: Wizard
-    prefab: {fileID: 2488487057952320721, guid: abcbcf0e618bd49cc9663ce849d82f66, type: 3}
+    prefab: {fileID: 0}
   - strikerId:
       value: Worrier
-    prefab: {fileID: 4214249293695766473, guid: fd2ccb3870c294339b9e81d85943f5e9, type: 3}
+    prefab: {fileID: 0}
   - strikerId:
       value: Satan
-    prefab: {fileID: 4214249293695766473, guid: fd2ccb3870c294339b9e81d85943f5e9, type: 3}
+    prefab: {fileID: 0}
   trackAudios:
   - trackId:
       value: Azuno
@@ -4321,7 +4321,6 @@ MonoBehaviour:
   fadeHoldDuration: 0.7
   delayBeforeRoundText: 1
   resultPrefab: {fileID: 681175283561000685, guid: 23de23668708d4e60b91f322962becf1, type: 3}
-  menuCanvasPrefab: {fileID: 1273623521365973063, guid: 98a20284c7add4b7590cd7cd5a82a045, type: 3}
 --- !u!223 &882985995837171714
 Canvas:
   m_ObjectHideFlags: 0
