@@ -9,6 +9,8 @@ namespace Core.LargeSatan {
         [SerializeField] StrikerNode dashNode;
         [SerializeField] StrikerNode attackNode;
         [SerializeField] StrikerNode stunState;
+        [SerializeField] StrikerNode guardState;
+        [SerializeField] StrikerNode chargeState;
 
         // このグループに入った時に呼ばれる（前のステートがこのグループに所属していなかった場合）
         public override void OnEnter(IStrikerContext context) {
@@ -30,6 +32,7 @@ namespace Core.LargeSatan {
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
+            context.TryTransition(chargeState);
         }
 
         // ダッシュコマンドが押された時に呼ばれる
@@ -39,6 +42,7 @@ namespace Core.LargeSatan {
 
         // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {
+            context.TryTransition(guardState);
         }
 
         // 攻撃を受けた時に呼ばれる
