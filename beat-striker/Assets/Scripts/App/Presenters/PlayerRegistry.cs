@@ -30,11 +30,13 @@ namespace Core.App{
         public void OnEnable() {
             Debug.Log("PlayerRegistry OnEnable");
             bus.Subscribe<GamePadMessages.Joined>(OnGamePadJoined);
+            bus.Subscribe<AppMessages.JoinedWithPlayerId>(OnGamePadJoinedWithPlayerId);
             bus.Subscribe<GamePadMessages.Left>(OnGamePadLeft);
         }
 
         public void OnDisable() {
             bus.Unsubscribe<GamePadMessages.Joined>(OnGamePadJoined);
+            bus.Unsubscribe<AppMessages.JoinedWithPlayerId>(OnGamePadJoinedWithPlayerId);
             bus.Unsubscribe<GamePadMessages.Left>(OnGamePadLeft);
         }
 
@@ -48,6 +50,12 @@ namespace Core.App{
                     break;
                 }
             }
+        }
+
+        private void OnGamePadJoinedWithPlayerId(AppMessages.JoinedWithPlayerId message) {
+            Debug.Log($"GamePad Joined with PlayerId: {message.gamePadId.value} -> {message.playerId.value}");
+            playerMap[message.gamePadId.value] = message.playerId;
+            bus.Publish(new AppMessages.PlayerJoined(message.playerId));
         }
 
         private void OnGamePadLeft(GamePadMessages.Left message) {

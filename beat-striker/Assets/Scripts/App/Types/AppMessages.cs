@@ -1,5 +1,6 @@
 
 using Core.App.Types;
+using Core.GamePad.Types;
 using UnityEngine;
 
 namespace Core.App.Presenters.Scene.Types {
@@ -126,6 +127,19 @@ namespace Core.App.Presenters.Scene.Types {
             public CursorPositionUpdated(PlayerId playerId, Vector2 position) {
                 this.playerId = playerId;
                 this.position = position;
+            }
+        }
+
+        /// <summary>
+        /// 指定したPlayerIdでゲームパッドが参加したことを示すメッセージ
+        /// </summary>
+        public class JoinedWithPlayerId {
+            public readonly GamePadId gamePadId;
+            public readonly PlayerId playerId;
+
+            public JoinedWithPlayerId(GamePadId gamePadId, Core.App.Types.PlayerId playerId) {
+                this.gamePadId = gamePadId;
+                this.playerId = playerId;
             }
         }
 
