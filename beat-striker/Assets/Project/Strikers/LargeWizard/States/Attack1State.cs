@@ -4,15 +4,18 @@ using Core.Striker;
 
 namespace Core.LargeWizard {
     
-    public class LargeWizardState : StrikerState {
+    public class Attack1State : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
+        [SerializeField] StrikerNode nextNode;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip);
+            context.PlayAnimation(animationClip, context => {
+                context.TryTransition(nextNode);
+            });
         }
 
         // このステートにいる間、毎フレーム呼ばれる

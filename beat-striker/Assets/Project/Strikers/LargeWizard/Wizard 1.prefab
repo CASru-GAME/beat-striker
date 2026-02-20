@@ -194,6 +194,7 @@ GameObject:
   - component: {fileID: 1535010232785782084}
   - component: {fileID: 3525668192126175518}
   - component: {fileID: 1223836351378418454}
+  - component: {fileID: 8599359020340622459}
   - component: {fileID: 377675457221837653}
   - component: {fileID: 1271092332621198190}
   - component: {fileID: 1829485864700888609}
@@ -249,6 +250,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9ab1e8c1b7374641941ae66fa94c6d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.GroundChecker
+--- !u!114 &8599359020340622459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2145360790748758675}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e384bafe358a1b4abad1c5510b37626, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.EnergyStorage
 --- !u!54 &377675457221837653
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -394,6 +407,7 @@ Transform:
   - {fileID: 5627472480660901862}
   - {fileID: 924816658567410061}
   - {fileID: 4478157019123781173}
+  - {fileID: 7081092529338615846}
   m_Father: {fileID: 1535010232785782084}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3169582615008757670
@@ -446,6 +460,7 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
+  energyStorage: {fileID: 8599359020340622459}
 --- !u!1 &3173104478399551077
 GameObject:
   m_ObjectHideFlags: 0
@@ -745,6 +760,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.AttackNode
   attackState: {fileID: 1588872990873593035}
+  attack1State: {fileID: 4324538208326174747}
+  energyStorage: {fileID: 8599359020340622459}
 --- !u!1 &5801689502406555063
 GameObject:
   m_ObjectHideFlags: 0
@@ -796,6 +813,56 @@ MonoBehaviour:
     fadeTime: 0
     speed: 0.45
   walkSpeed: 2
+--- !u!1 &7302355662261391067
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7081092529338615846}
+  - component: {fileID: 4324538208326174747}
+  m_Layer: 0
+  m_Name: Attack1State
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7081092529338615846
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7302355662261391067}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.15899, y: 0.47164, z: 0.12314}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4324538208326174747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7302355662261391067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68850c860b4184347a1be9eec19217ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack1State
+  parents: []
+  animationClip:
+    clip: {fileID: 7791916682545647297, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 707581214265331847}
 --- !u!1 &7550960389641837493
 GameObject:
   m_ObjectHideFlags: 0
