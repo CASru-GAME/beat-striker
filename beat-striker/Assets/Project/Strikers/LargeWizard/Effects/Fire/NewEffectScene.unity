@@ -1067,7 +1067,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73b3a4b32a2d3405494f65466258eaa9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Emitter
-  prefab: {fileID: 0}
+  prefab: {fileID: 3295605662574902340, guid: f75a7422d1cf6944b88b9eccbf28a3db, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

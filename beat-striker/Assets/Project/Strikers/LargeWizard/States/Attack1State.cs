@@ -10,11 +10,19 @@ namespace Core.LargeWizard {
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
 
+        [SerializeField] GameObject beamPrefab;
+        [SerializeField] Transform firePosition;
+        [SerializeField] float fireTime = 0.3f;
+
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, context => {
                 context.TryTransition(nextNode);
+            });
+
+            ScheduleStateEvent(fireTime,context => {
+                var particleInstance = Instantiate(beamPrefab, firePosition.position, context.Rigidbody.rotation);
             });
         }
 
