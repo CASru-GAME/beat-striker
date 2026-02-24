@@ -207,8 +207,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1350733093031947850}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.972, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -892,7 +892,7 @@ MonoBehaviour:
   animationClip:
     clip: {fileID: 7791916682545647297, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
     fadeTime: 0.3
-    speed: 1
+    speed: 0.5
   nextNode: {fileID: 707581214265331847}
   beamPrefab: {fileID: 3295605662574902340, guid: f75a7422d1cf6944b88b9eccbf28a3db, type: 3}
   firePosition: {fileID: 1825252972272839792}
