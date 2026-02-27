@@ -7,6 +7,7 @@ namespace Core.LargeWizard {
     public class AttackNode : StrikerNode {
         [SerializeField] StrikerState attackState;
         [SerializeField] StrikerState attack1State;
+        [SerializeField] StrikerState attack2State;
         [SerializeField] EnergyStorage energyStorage;
 
         // このノードに遷移した時に呼ばれる
@@ -15,8 +16,12 @@ namespace Core.LargeWizard {
             if (energy == 0) {
                 context.TryTransition(attackState);
             }
-            else {
+            else if (energy == 1) {
                 context.TryTransition(attack1State);
+            }
+
+            else if (energy >= 2) {
+                context.TryTransition(attack2State);
             }
 
 
