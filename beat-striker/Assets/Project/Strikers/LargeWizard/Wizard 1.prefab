@@ -696,7 +696,7 @@ MonoBehaviour:
     fadeTime: 0
     speed: 1
   fallNode: {fileID: 3250182338819609899}
-  jumpSpeed: 10
+  jumpSpeed: 20
 --- !u!1 &5731792501487714426
 GameObject:
   m_ObjectHideFlags: 0
@@ -900,6 +900,7 @@ MonoBehaviour:
   nextNode: {fileID: 707581214265331847}
   rockPrefab: {fileID: 4793939790490883922, guid: 293e8d717f381ec499f372708db3a639, type: 3}
   fireTime: 0.3
+  spawnHeight: 5
 --- !u!1 &6214818628964368519
 GameObject:
   m_ObjectHideFlags: 0

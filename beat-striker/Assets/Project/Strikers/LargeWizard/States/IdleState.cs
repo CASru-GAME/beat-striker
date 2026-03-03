@@ -15,9 +15,5 @@ namespace Core.LargeWizard {
             context.PlayAnimation(animationClip);
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
-        public override void OnUpdate(IStrikerStateContext context) {
-        }
-
     }
 }
