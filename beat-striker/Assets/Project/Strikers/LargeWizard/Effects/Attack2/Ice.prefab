@@ -80,6 +80,8 @@ MonoBehaviour:
   lifetime: 2
   colliderEnableRatio: 0.3
   impactPrefab: {fileID: 4971847399818931446, guid: 3358bdba5eb832146a8ddb52266e2242, type: 3}
+  positionOffset: {x: 0, y: 0, z: 1.5}
+  rotationOffset: {x: 0, y: 180, z: 0}
 --- !u!65 &2869254374944055428
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -99,8 +101,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.8902881, y: 2.86626, z: 2.2691855}
-  m_Center: {x: -0.020148993, y: 1.3635185, z: -0.07954669}
+  m_Size: {x: 1.8902881, y: 2.86626, z: 2.1648555}
+  m_Center: {x: -0.020148993, y: 1.3635185, z: 0.6429662}
 --- !u!1001 &2069234617518104421
 PrefabInstance:
   m_ObjectHideFlags: 0

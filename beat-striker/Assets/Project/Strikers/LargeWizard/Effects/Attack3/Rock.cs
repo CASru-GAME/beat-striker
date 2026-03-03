@@ -4,14 +4,11 @@ using UnityEngine;
 namespace Core.LargeWizard {
 
     [RequireComponent(typeof(Rigidbody))]
-    public class Ice : MonoBehaviour {
+    public class Rock : MonoBehaviour {
         [SerializeField] float damage = 10f;
         [SerializeField] float knockbackSpeed = 10f;
 
-        [Header("Growth Animation")]
-        [SerializeField] float growDuration = 0.3f;    // 生え切るまでの時間
-        [SerializeField] float lifetime = 2f;          // 生成後に自動破棄されるまでの時間
-        [SerializeField] float colliderEnableRatio = 0.3f; // コライダーを有効にする成長割合 (0~1)
+        [SerializeField] float lifetime = 5f;          // 生成後に自動破棄されるまでの時間
 
         [SerializeField] GameObject impactPrefab;
 
@@ -19,10 +16,6 @@ namespace Core.LargeWizard {
         [SerializeField] Vector3 positionOffset;   // 生成位置からのオフセット
         [SerializeField] Vector3 rotationOffset;   // 追加の回転（オイラー角）
 
-        Vector3 targetScale;
-        float elapsed;
-        bool grown;
-        Collider iceCollider;
         Vector3 attackerPosition;
 
         void Awake() {
@@ -30,13 +23,9 @@ namespace Core.LargeWizard {
             transform.position += positionOffset;
             transform.rotation *= Quaternion.Euler(rotationOffset);
 
-            // 目標スケールを保存し、Y方向を0にして地面から生えるように見せる
-            targetScale = transform.localScale;
-            transform.localScale = new Vector3(targetScale.x, 0f, targetScale.z);
-
-            // コライダーを無効化しておき、成長途中で有効にする
-            iceCollider = GetComponent<Collider>();
-            iceCollider.enabled = false;
+            // Rigidbodyの重力を有効にして落下させる
+            var rb = GetComponent<Rigidbody>();
+            rb.useGravity = true;
         }
 
         /// <summary>
@@ -48,29 +37,6 @@ namespace Core.LargeWizard {
 
         void Start() {
             Destroy(gameObject, lifetime);
-        }
-
-        void Update() {
-            if (grown) return;
-
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / growDuration);
-
-            // EaseOutBack で勢いよく突き出す演出
-            float ease = 1f + 2.70158f * Mathf.Pow(t - 1f, 3f) + 1.70158f * Mathf.Pow(t - 1f, 2f);
-
-            transform.localScale = new Vector3(
-                targetScale.x,
-                targetScale.y * ease,
-                targetScale.z
-            );
-
-            // ある程度成長したらコライダーを有効化し、OnTriggerEnter を発火させる
-            if (!iceCollider.enabled && t >= colliderEnableRatio) {
-                iceCollider.enabled = true;
-            }
-
-            if (t >= 1f) grown = true;
         }
 
         void OnTriggerEnter(Collider other) {

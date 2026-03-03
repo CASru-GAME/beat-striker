@@ -440,6 +440,7 @@ Transform:
   - {fileID: 4478157019123781173}
   - {fileID: 7081092529338615846}
   - {fileID: 5881392693029680116}
+  - {fileID: 7989888310175932541}
   m_Father: {fileID: 1535010232785782084}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3169582615008757670
@@ -794,6 +795,7 @@ MonoBehaviour:
   attackState: {fileID: 1588872990873593035}
   attack1State: {fileID: 4324538208326174747}
   attack2State: {fileID: 7010646026458285884}
+  attack3State: {fileID: 6075840688452119110}
   energyStorage: {fileID: 8599359020340622459}
 --- !u!1 &5801689502406555063
 GameObject:
@@ -846,6 +848,58 @@ MonoBehaviour:
     fadeTime: 0
     speed: 0.45
   walkSpeed: 2
+--- !u!1 &5967169009218175757
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7989888310175932541}
+  - component: {fileID: 6075840688452119110}
+  m_Layer: 0
+  m_Name: Attack3State
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7989888310175932541
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5967169009218175757}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.15899, y: 0.38756, z: 0.12315}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6075840688452119110
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5967169009218175757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbac8ad390461444c916ae13f245d232, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack3State
+  parents: []
+  animationClip:
+    clip: {fileID: 5332256259459953303, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 707581214265331847}
+  rockPrefab: {fileID: 4793939790490883922, guid: 293e8d717f381ec499f372708db3a639, type: 3}
+  fireTime: 0.3
 --- !u!1 &6214818628964368519
 GameObject:
   m_ObjectHideFlags: 0
@@ -896,13 +950,11 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
-  hitBox: {fileID: 8792560517527999783}
   icePrefab: {fileID: 3449808654560837077, guid: 0c4b00a58e8c7304db00cde5d352cd03, type: 3}
   groundMask:
     serializedVersion: 2
     m_Bits: 0
-  damage: 10
-  knockbackSpeed: 10
+  fireTime: 0.3
 --- !u!1 &7302355662261391067
 GameObject:
   m_ObjectHideFlags: 0
