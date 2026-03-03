@@ -26,6 +26,7 @@ namespace Core.LargeWizard {
             context.PlayAnimation(animationClip,OnAnimationEnd);
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
                 if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                    
                     var hitpoint = collider.ClosestPoint(hitBox.transform.position);
                     var particleInstance = Instantiate(particlePrefab, hitpoint, Quaternion.identity);
                     particleInstance.Play();

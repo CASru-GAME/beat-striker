@@ -47,8 +47,8 @@ MonoBehaviour:
   parents: []
   animationClip:
     clip: {fileID: 9197060619526105886, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
-    fadeTime: 0.3
-    speed: 0.45
+    fadeTime: 0
+    speed: 1
   locomotionNode: {fileID: 707581214265331847}
 --- !u!1 &177629509416908658
 GameObject:
@@ -545,7 +545,7 @@ MonoBehaviour:
     speed: 1
   nextNode: {fileID: 707581214265331847}
   hitBox: {fileID: 8792560517527999783}
-  particlePrefab: {fileID: 4708080876874530975, guid: 76678952e24000149adf24ffce136dda, type: 3}
+  particlePrefab: {fileID: 5092115694173076053, guid: 17e171716995c5b4a9fa9d11d9d2e987, type: 3}
   audioClip: {fileID: 8300000, guid: c594405fdabc834478bb45225f11331e, type: 3}
   damage: 10
   knockbackSpeed: 10
@@ -694,7 +694,7 @@ MonoBehaviour:
   animationClip:
     clip: {fileID: -2993534804863918692, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
     fadeTime: 0
-    speed: 1
+    speed: 2
   fallNode: {fileID: 3250182338819609899}
   jumpSpeed: 20
 --- !u!1 &5731792501487714426
@@ -1254,8 +1254,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.88025045, y: 0.67910033, z: 0.6978769}
-  m_Center: {x: 1.0053477, y: 1.8361611, z: 0.011813521}
+  m_Size: {x: 0.2468493, y: 0.67910033, z: 0.25098935}
+  m_Center: {x: 1.0107421, y: 1.8361611, z: 0.083938584}
 --- !u!54 &9015538672518739599
 Rigidbody:
   m_ObjectHideFlags: 0
