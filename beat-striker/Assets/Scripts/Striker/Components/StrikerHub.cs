@@ -260,8 +260,17 @@ namespace Core.Striker {
         IStrikerStateContext, IStrikerNodeContext {
         public Rigidbody Rigidbody => context.Rigidbody;
         public Vector2 InputDirection => context.InputDirection;
+        
 
         public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = default)
             : base(context, defaultState) { }
+
+        public void ApplyDamage(float damage) {
+            context.ApplyDamage(damage);
+        }
+
+        public void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null) {
+            context.PlayAnimation(animation,onComplete);
+        }
     }
 }
