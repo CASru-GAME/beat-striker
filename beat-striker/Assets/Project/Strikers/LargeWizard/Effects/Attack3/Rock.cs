@@ -10,8 +10,6 @@ namespace Core.LargeWizard {
 
         [SerializeField] float lifetime = 5f;          // 生成後に自動破棄されるまでの時間
 
-        [SerializeField] GameObject impactPrefab;
-
         [Header("Position / Rotation Offset")]
         [SerializeField] Vector3 positionOffset;   // 生成位置からのオフセット
         [SerializeField] Vector3 rotationOffset;   // 追加の回転（オイラー角）
@@ -48,7 +46,7 @@ namespace Core.LargeWizard {
                 hurtbox.GiveHit(new HitStatus(damage, knockbackDir * knockbackSpeed));
 
                 var hitPoint = other.ClosestPoint(transform.position);
-                Destroy(Instantiate(impactPrefab, hitPoint, transform.rotation), 5f);
+                Destroy(gameObject, 5f);
             }
         }
     }

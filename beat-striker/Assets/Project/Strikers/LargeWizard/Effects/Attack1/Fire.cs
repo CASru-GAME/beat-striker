@@ -11,6 +11,7 @@ namespace Core.LargeWizard {
         Rigidbody rb;
 
         [SerializeField] GameObject impactPrefab;
+        [SerializeField] AudioClip audioClip;
         [SerializeField] GameObject trail;
 
         void Awake() {
@@ -32,6 +33,7 @@ namespace Core.LargeWizard {
 
                 var hitPoint = other.ClosestPoint(transform.position);
                 Destroy(Instantiate(impactPrefab, hitPoint, transform.rotation), 5f);
+                AudioSource.PlayClipAtPoint(audioClip, hitPoint);
                 trail.transform.SetParent(null);
                 Destroy(trail, 5f);
                 Destroy(this.gameObject);

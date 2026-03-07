@@ -231,6 +231,7 @@ MonoBehaviour:
   nockbackSpeed: 10
   speed: 20
   impactPrefab: {fileID: 2662001439135803105, guid: 75138a5d551570e44b742c7e6a1bebb6, type: 3}
+  audioClip: {fileID: 8300000, guid: 866865d01aaa6ec4aadd749de3db7e81, type: 3}
   trail: {fileID: 977642696518137299}
 --- !u!135 &8729262217227970870
 SphereCollider:

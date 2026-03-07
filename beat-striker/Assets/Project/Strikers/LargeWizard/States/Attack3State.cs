@@ -13,6 +13,7 @@ namespace Core.LargeWizard {
 
         [Header("Rock attack settings")]
         [SerializeField] GameObject rockPrefab;             // 頭上に生成する岩のプレハブ
+        [SerializeField] AudioClip audioClip;             // 岩生成時の音
         [SerializeField] float fireTime = 0.3f;           // 岩を生成するタイミング（秒）
         [SerializeField] float spawnHeight = 5f;           // 相手の頭上からの生成高さ
 
@@ -29,6 +30,7 @@ namespace Core.LargeWizard {
                 var spawnPos = opponent.transform.position + Vector3.up * spawnHeight;
                 var rock = Instantiate(rockPrefab, spawnPos, Quaternion.identity);
                 rock.GetComponent<Rock>().SetAttackerPosition(ctx.Rigidbody.transform.position);
+                AudioSource.PlayClipAtPoint(audioClip, rockPrefab.transform.position);
             });
         }
 

@@ -9,8 +9,9 @@ namespace Core.LargeWizard {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
+        [SerializeField] AudioClip audioClip;
 
-        [SerializeField] GameObject beamPrefab;
+        [SerializeField] GameObject firePrefab;
         [SerializeField] Transform firePosition;
         [SerializeField] float fireTime = 0.3f;
 
@@ -21,8 +22,10 @@ namespace Core.LargeWizard {
                 context.TryTransition(nextNode);
             });
 
+            AudioSource.PlayClipAtPoint(audioClip, firePrefab.transform.position);
+
             ScheduleStateEvent(fireTime,context => {
-                var particleInstance = Instantiate(beamPrefab, firePosition.position, context.Rigidbody.rotation);
+                var particleInstance = Instantiate(firePrefab, firePosition.position, context.Rigidbody.rotation);
             });
         }
 

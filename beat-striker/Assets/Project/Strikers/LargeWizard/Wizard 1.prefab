@@ -46,7 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.LandState
   parents: []
   animationClip:
-    clip: {fileID: 9197060619526105886, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: 9197060619526105886, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
     speed: 1
   locomotionNode: {fileID: 707581214265331847}
@@ -96,7 +96,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.FallState
   parents: []
   animationClip:
-    clip: {fileID: -1504929105726005784, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: -1504929105726005784, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
     speed: 0.2
   groundChecker: {fileID: 1223836351378418454}
@@ -489,7 +489,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.ChargeState
   parents: []
   animationClip:
-    clip: {fileID: 2499177954120741571, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: 2499177954120741571, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
@@ -540,13 +540,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.AttackState
   parents: []
   animationClip:
-    clip: {fileID: 7791916682545647297, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: 7791916682545647297, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
   hitBox: {fileID: 8792560517527999783}
   particlePrefab: {fileID: 5092115694173076053, guid: 17e171716995c5b4a9fa9d11d9d2e987, type: 3}
-  audioClip: {fileID: 8300000, guid: c594405fdabc834478bb45225f11331e, type: 3}
+  audioClip: {fileID: 8300000, guid: 6a4cc43d09991df42925ab69078dc1e9, type: 3}
   damage: 10
   knockbackSpeed: 10
 --- !u!1 &3683428354690999460
@@ -642,7 +642,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.StunState
   parents: []
   animationClip:
-    clip: {fileID: -3551865654841311323, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: -3551865654841311323, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
@@ -692,7 +692,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.JumpUpwardState
   parents: []
   animationClip:
-    clip: {fileID: -2993534804863918692, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: -2993534804863918692, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
     speed: 2
   fallNode: {fileID: 3250182338819609899}
@@ -744,7 +744,7 @@ MonoBehaviour:
   parents:
   - {fileID: 7199184492773224269}
   animationClip:
-    clip: {fileID: -3419257869308726280, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: -3419257869308726280, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
     speed: 0.45
   walkSpeed: 2
@@ -844,7 +844,7 @@ MonoBehaviour:
   parents:
   - {fileID: 7199184492773224269}
   animationClip:
-    clip: {fileID: 6723761709308234962, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: 6723761709308234962, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
     speed: 0.45
   walkSpeed: 2
@@ -894,12 +894,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack3State
   parents: []
   animationClip:
-    clip: {fileID: 5332256259459953303, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: 5332256259459953303, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
   rockPrefab: {fileID: 4793939790490883922, guid: 293e8d717f381ec499f372708db3a639, type: 3}
-  fireTime: 0.3
+  audioClip: {fileID: 8300000, guid: f71556e7226e6674fa5b3fb7568539fa, type: 3}
+  fireTime: 0.5
   spawnHeight: 5
 --- !u!1 &6214818628964368519
 GameObject:
@@ -947,11 +948,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack2State
   parents: []
   animationClip:
-    clip: {fileID: -5612658629409835226, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: -5612658629409835226, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
   icePrefab: {fileID: 3449808654560837077, guid: 0c4b00a58e8c7304db00cde5d352cd03, type: 3}
+  audioClip1: {fileID: 8300000, guid: 21594ada729263045a68121b996d7114, type: 3}
+  audioClip2: {fileID: 8300000, guid: 4e706ebf9352de1459f4b13fd98bfdd1, type: 3}
   groundMask:
     serializedVersion: 2
     m_Bits: 0
@@ -1002,11 +1005,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack1State
   parents: []
   animationClip:
-    clip: {fileID: 7791916682545647297, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: 7791916682545647297, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0.3
     speed: 0.5
   nextNode: {fileID: 707581214265331847}
-  beamPrefab: {fileID: 3295605662574902340, guid: f75a7422d1cf6944b88b9eccbf28a3db, type: 3}
+  audioClip: {fileID: 8300000, guid: 2ae61b8ee18bf594f8cee97c2f34ed54, type: 3}
+  firePrefab: {fileID: 3295605662574902340, guid: f75a7422d1cf6944b88b9eccbf28a3db, type: 3}
   firePosition: {fileID: 1825252972272839792}
   fireTime: 0.3
 --- !u!1 &7550960389641837493
@@ -1056,7 +1060,7 @@ MonoBehaviour:
   parents:
   - {fileID: 7199184492773224269}
   animationClip:
-    clip: {fileID: -449244673057268443, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: -449244673057268443, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0.3
     speed: 0.45
 --- !u!1 &7760132438464499455
@@ -1105,7 +1109,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.GuardState
   parents: []
   animationClip:
-    clip: {fileID: 3299788110970749302, guid: 17f469ac84f3b0d48b1461a644549743, type: 3}
+    clip: {fileID: 3299788110970749302, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}

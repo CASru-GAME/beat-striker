@@ -12,6 +12,8 @@ namespace Core.LargeWizard {
 
         [Header("Ice attack settings")]
         [SerializeField] GameObject icePrefab;             // 地面から生える氷のプレハブ
+        [SerializeField] AudioClip audioClip1;             // 氷生成時の音
+        [SerializeField] AudioClip audioClip2;             // 氷が攻撃判定を発生させるときの音
         [SerializeField] LayerMask groundMask;             // 地面レイヤー
         [SerializeField] float fireTime = 0.3f;           // 氷を生成するタイミング（秒）
 
@@ -34,6 +36,9 @@ namespace Core.LargeWizard {
 
                 var ice = Instantiate(icePrefab, spawnPos, Quaternion.identity);
                 ice.GetComponent<Ice>().SetAttackerPosition(ctx.Rigidbody.transform.position);
+
+                AudioSource.PlayClipAtPoint(audioClip1, icePrefab.transform.position);
+                AudioSource.PlayClipAtPoint(audioClip2, icePrefab.transform.position);
             });
         }
 
