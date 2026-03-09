@@ -48,7 +48,7 @@ namespace Core.Battle {
 
             // apply damage
             Debug.Log($"SlashProjectile: hitting target {target.name} for {damage} damage.");
-            target.TakeDamage(new HitStatus(new HitPoint(damage)));
+            target.TakeDamage(new HitStatus(damage));
 
             // spawn hit effect if assigned
             if (hitEffectPrefab != null)

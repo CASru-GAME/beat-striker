@@ -54,7 +54,7 @@ public class WarrierChargeAttackSMB : StateMachineBehaviour {
 
         var target = other.GetComponent<StrikerView>();
         if (target != null) {
-            target.TakeDamage(new HitStatus(new HitPoint(damage)));
+            target.TakeDamage(new HitStatus(damage));
         }
         else if (virgine) {
             virgine = false;

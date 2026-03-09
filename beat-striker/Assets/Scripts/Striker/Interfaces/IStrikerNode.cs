@@ -33,7 +33,7 @@ namespace Core.Striker {
         Rigidbody Rigidbody { get; }
         Vector2 InputDirection { get; }
         void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
-        void ApplyDamage(HitPoint damage);
+        void ApplyDamage(float damage);
     }
 
     public interface IStrikerStateContext : IStateContext<IStrikerNode> {
@@ -55,6 +55,7 @@ namespace Core.Striker {
         void OnGuardRequested(IStrikerStateContext context);
         void OnDashRequested(IStrikerStateContext context);
         void OnMiss(IStrikerStateContext context);
+        new void OnExit(IStrikerContext context);
     }
 
     // 親リストを持たないストライカー用のグループインターフェース

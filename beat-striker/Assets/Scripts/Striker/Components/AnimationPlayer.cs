@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Animations;
+using UniVRM10;
 
 namespace Core.Striker {
 
@@ -15,7 +16,17 @@ namespace Core.Striker {
         private AnimationClipPlayable previousClipPlayable;
 
         void Awake() {
-            // PlayableGraphの初期化
+            // アニメータが設定されていない場合、子オブジェクトからVRMInstanceと一緒にあるAnimatorを探して設定
+            if (animator == null) {
+                var vrmInstance = GetComponentInChildren<Vrm10Instance>();
+                if (vrmInstance != null) {
+                    animator = vrmInstance.GetComponent<Animator>();
+                }
+                else {
+                    Debug.LogError($"AnimationPlayer requires an Animator component. Please assign it in the inspector or ensure a Vrm10Instance is present. GameObject: {this.gameObject.name}");
+                }
+            }
+            
             playableGraph = PlayableGraph.Create("StrikerAnimationGraph");
             playableGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
             
@@ -23,6 +34,8 @@ namespace Core.Striker {
             mixer = AnimationMixerPlayable.Create(playableGraph, 2);
             var output = AnimationPlayableOutput.Create(playableGraph, "Animation", animator);
             output.SetSourcePlayable(mixer);
+
+
         }
 
         void OnDestroy() {
