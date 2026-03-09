@@ -4,34 +4,32 @@ using Core.Striker;
 
 namespace Core.LargFighter {
     
-    public class WalkState : StrikerState {
+    public class JumpUpwardState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] StrikerNode locomotionNode;
-        [SerializeField] float walkSpeed;
-        [SerializeField] StrikerNode dashNode;
+        [SerializeField] StrikerNode fallNode;
+        [SerializeField] float jumpSpeed;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip);
+            context.PlayAnimation(animationClip, OnAnimationEnd);
+            context.Rigidbody.linearVelocity = jumpSpeed * context.InputDirection;
         }
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
-            var v = context.Rigidbody.linearVelocity;
-            v.x = context.InputDirection.x * walkSpeed;
-            context.Rigidbody.linearVelocity = v;
-
-            context.TryTransition(locomotionNode);
-          
         }
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
         }
 
+        void OnAnimationEnd(IStrikerStateContext context) {
+            context.TryTransition(fallNode);
+        }
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
         }
@@ -42,7 +40,6 @@ namespace Core.LargFighter {
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
-            context.TryTransition(dashNode);
         }
 
         // ガードコマンドが押された時に呼ばれる
