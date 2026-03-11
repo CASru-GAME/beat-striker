@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using Core.App.Interfaces;
 using Core.App.Models;
 using Core.App.Types;
-using Core.Utils;
 using Core.Battle;
 using Core.GamePad.Types;
 using Core.Striker.Components;
+using Core.Utils;
 using UnityEngine;
-using UnityEngine.Playables;
 using UnityEngine.Animations;
+using UnityEngine.Playables;
 
 namespace Core.Striker {
 
@@ -98,9 +98,7 @@ namespace Core.Striker {
                 else if (msg.button == GamePadButton.East) { if (Beat()) Attack(); }
                 else if (msg.button == GamePadButton.West) { if (Beat()) { Charge(); } } // Charge request
                 else if (msg.button == GamePadButton.North) {
-                    if (Beat()) {
-                        Special();
-                    }
+                    if (Beat()) Guard();
                 }
                 else if (msg.button == GamePadButton.LeftTrigger) { if (Beat()) Guard(); }
             }
@@ -260,7 +258,7 @@ namespace Core.Striker {
         IStrikerStateContext, IStrikerNodeContext {
         public Rigidbody Rigidbody => context.Rigidbody;
         public Vector2 InputDirection => context.InputDirection;
-        
+
 
         public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = default)
             : base(context, defaultState) { }
@@ -270,7 +268,7 @@ namespace Core.Striker {
         }
 
         public void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null) {
-            context.PlayAnimation(animation,onComplete);
+            context.PlayAnimation(animation, onComplete);
         }
     }
 }
