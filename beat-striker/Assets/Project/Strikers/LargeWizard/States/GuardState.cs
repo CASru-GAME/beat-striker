@@ -1,6 +1,8 @@
 using Core.Battle;
 using UnityEngine;
 using Core.Striker;
+using R3;
+using System;
 
 namespace Core.LargeWizard {
     
@@ -10,6 +12,9 @@ namespace Core.LargeWizard {
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerNode nextNode;
 
+        [SerializeField] Hurtbox shield;
+        IDisposable disposable;
+
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext 
         context) {
@@ -17,6 +22,12 @@ namespace Core.LargeWizard {
             context.PlayAnimation(animationClip,context => {
                 context.TryTransition(nextNode);
             });
+
+            disposable = shield.OnHit.Subscribe(hit => {
+                context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
+            });
+
+            shield.gameObject.SetActive(true);
         }
 
         // このステートにいる間、毎フレーム呼ばれる
@@ -25,6 +36,8 @@ namespace Core.LargeWizard {
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
+            disposable.Dispose();
+            shield.gameObject.SetActive(false);
         }
 
         // 攻撃コマンドが押された時に呼ばれる
