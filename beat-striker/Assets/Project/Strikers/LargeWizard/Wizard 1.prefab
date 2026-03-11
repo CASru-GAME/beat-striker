@@ -294,6 +294,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e384bafe358a1b4abad1c5510b37626, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.EnergyStorage
+  charge1Prefab: {fileID: 1356817928146153194, guid: ade121c1a76c8eb4f9bdfb5418eec180, type: 3}
+  charge2Prefab: {fileID: 1356817928146153194, guid: b693be0a663212d4e85bf7eaa8d4f101, type: 3}
+  charge3Prefab: {fileID: 1356817928146153194, guid: 3c07f00c6e162c24792953e09de9e91a, type: 3}
+  chargeOffset: {x: 0, y: 2.3, z: -0.6}
 --- !u!54 &377675457221837653
 Rigidbody:
   m_ObjectHideFlags: 0
