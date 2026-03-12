@@ -4,27 +4,28 @@ using Core.Striker;
 
 namespace Core.LargeHero {
     
-    public class FallState : StrikerState {
+    public class ChargeState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
+        [SerializeField] StrikerNode nextNode;
+        [SerializeField] StrikerNode airNextNode;
         [SerializeField] GroundChecker groundChecker;
-        [SerializeField] StrikerNode landNode;
-        [SerializeField] StrikerNode attackNode;
-        [SerializeField] StrikerNode chargeNode;
-        [SerializeField] float linearDamping;
+        [SerializeField] EnergyStorage energyStorage;
+        [SerializeField] float linearDamping = 20;
+
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip);
             context.Rigidbody.linearDamping = linearDamping;
+            context.PlayAnimation(animationClip, context => {
+                energyStorage.StoreEnergy(1);
+                context.TryTransition(groundChecker.IsGrounded ? nextNode : airNextNode);
+            });
         }
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
-            if(groundChecker.IsGrounded) {
-                context.TryTransition(landNode);
-            }
         }
 
         // 他のステートに遷移する直前に呼ばれる
@@ -34,12 +35,10 @@ namespace Core.LargeHero {
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
-              context.TryTransition(attackNode);
         }
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
-            context.TryTransition(chargeNode);
         }
 
         // ダッシュコマンドが押された時に呼ばれる

@@ -1,45 +1,49 @@
 using Core.Battle;
 using UnityEngine;
 using Core.Striker;
+using System;
+using R3;  
 
 namespace Core.LargeHero {
     
-    public class FallState : StrikerState {
+    public class GuardState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] GroundChecker groundChecker;
-        [SerializeField] StrikerNode landNode;
-        [SerializeField] StrikerNode attackNode;
-        [SerializeField] StrikerNode chargeNode;
-        [SerializeField] float linearDamping;
+        [SerializeField] private StrikerNode nextNode;
+        [SerializeField] Hurtbox shield;
+        IDisposable disposable;
+
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            Debug.Log("GuardStateに遷移");
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip);
-            context.Rigidbody.linearDamping = linearDamping;
+            context.PlayAnimation(animationClip, context => {context.TryTransition(nextNode);
+            });
+            disposable = shield.OnHit.Subscribe(hit => {
+
+                context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
+            });
+            shield.gameObject.SetActive(true);
+        
         }
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
-            if(groundChecker.IsGrounded) {
-                context.TryTransition(landNode);
-            }
         }
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
-            context.Rigidbody.linearDamping = 0f;
+            disposable.Dispose();
+            shield.gameObject.SetActive(false);
         }
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
-              context.TryTransition(attackNode);
         }
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
-            context.TryTransition(chargeNode);
         }
 
         // ダッシュコマンドが押された時に呼ばれる
@@ -52,6 +56,7 @@ namespace Core.LargeHero {
 
         // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
+            context.Rigidbody.linearVelocity = status.KnockbackVelocity;
         }
 
         // ミスした時に呼ばれる

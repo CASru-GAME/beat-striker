@@ -97,12 +97,12 @@ namespace Core.Striker {
                 if (msg.button == GamePadButton.South) { if (Beat()) Dash(); }
                 else if (msg.button == GamePadButton.East) { if (Beat()) Attack(); }
                 else if (msg.button == GamePadButton.West) { if (Beat()) { Charge(); } } // Charge request
-                else if (msg.button == GamePadButton.North) {
+                else if (msg.button == GamePadButton.LeftTrigger) {
                     if (Beat()) {
                         Special();
                     }
                 }
-                else if (msg.button == GamePadButton.LeftTrigger) { if (Beat()) Guard(); }
+                else if (msg.button == GamePadButton.North) { if (Beat()) Guard(); }
             }
 
             if (msg.action == GamePadAction.Up && msg.button == GamePadButton.Direction) {

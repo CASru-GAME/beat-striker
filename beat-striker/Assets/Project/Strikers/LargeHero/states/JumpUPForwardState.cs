@@ -8,12 +8,17 @@ namespace Core.LargeHero {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode fallNode;
+        [SerializeField] StrikerNode attackNode;
+        [SerializeField] StrikerNode chargeNode;
         [SerializeField] float jumpSpeed;
+        [SerializeField] float linearDamping;
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+        
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
             context.Rigidbody.linearVelocity = jumpSpeed * context.InputDirection;
+            context.Rigidbody.linearDamping = linearDamping;
         }
     
 
@@ -24,6 +29,7 @@ namespace Core.LargeHero {
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
+            context.Rigidbody.linearDamping = 0f;
         }
         
         void OnAnimationEnd(IStrikerStateContext context){
@@ -31,10 +37,12 @@ namespace Core.LargeHero {
         }
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
+            context.TryTransition(attackNode);
         }
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
+            context.TryTransition(chargeNode);
         }
 
         // ダッシュコマンドが押された時に呼ばれる

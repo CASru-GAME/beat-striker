@@ -4,54 +4,53 @@ using Core.Striker;
 
 namespace Core.LargeHero {
     
-    public class FallState : StrikerState {
-
-        // このステートにいる間、再生されるアニメーションクリップ
-        [SerializeField] private StrikerAnimationClip animationClip;
+    public class LocomotionGroup : StrikerGroup {
+        [SerializeField] StrikerNode locomotionNode;
         [SerializeField] GroundChecker groundChecker;
-        [SerializeField] StrikerNode landNode;
         [SerializeField] StrikerNode attackNode;
-        [SerializeField] StrikerNode chargeNode;
-        [SerializeField] float linearDamping;
-        // このステートに遷移した直後に呼ばれる
+        [SerializeField] StrikerNode airAttackNode;
+        [SerializeField] StrikerNode dashNode;
+        [SerializeField] StrikerNode stunState;
+        [SerializeField] StrikerNode guardState;
+        [SerializeField] StrikerNode chargeState;
+
+        // このグループに入った時に呼ばれる（前のステートがこのグループに所属していなかった場合）
         public override void OnEnter(IStrikerContext context) {
-            // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip);
-            context.Rigidbody.linearDamping = linearDamping;
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
+        // このグループに所属するステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
-            if(groundChecker.IsGrounded) {
-                context.TryTransition(landNode);
-            }
+            context.TryTransition(locomotionNode);
         }
 
-        // 他のステートに遷移する直前に呼ばれる
+        // このグループから出る時に呼ばれる（次のステートがこのグループに所属していない場合）
         public override void OnExit(IStrikerContext context) {
-            context.Rigidbody.linearDamping = 0f;
         }
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
-              context.TryTransition(attackNode);
+            context.TryTransition(groundChecker.IsGrounded ? attackNode : airAttackNode);
         }
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
-            context.TryTransition(chargeNode);
+            context.TryTransition(chargeState);
         }
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
+            context.TryTransition(dashNode);
         }
 
         // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {
+            context.TryTransition(guardState);
         }
 
         // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
+            context.Rigidbody.linearVelocity = status.KnockbackVelocity;
+            context.TryTransition(stunState);
         }
 
         // ミスした時に呼ばれる
