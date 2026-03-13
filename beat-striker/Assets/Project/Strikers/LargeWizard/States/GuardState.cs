@@ -11,9 +11,15 @@ namespace Core.LargeWizard {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerNode nextNode;
+        [SerializeField] AudioClip audioClip;          // ガードが発動したときの音
 
         [SerializeField] Hurtbox shield;
+        [SerializeField, Min(0f)] float shieldScaleSpeed = 6f;
+
         IDisposable disposable;
+        Vector3 defaultShieldScale;
+        bool hasDefaultShieldScale;
+        bool isShieldScaling;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext 
@@ -27,16 +33,45 @@ namespace Core.LargeWizard {
                 context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
             });
 
+            if (!hasDefaultShieldScale) {
+                defaultShieldScale = shield.transform.localScale;
+                hasDefaultShieldScale = true;
+            }
+
             shield.gameObject.SetActive(true);
+            shield.transform.localScale = Vector3.zero;
+
+            if (shieldScaleSpeed <= 0f) {
+                shield.transform.localScale = defaultShieldScale;
+                isShieldScaling = false;
+                return;
+            }
+
+            isShieldScaling = true;
+
+            AudioSource.PlayClipAtPoint(audioClip, shield.transform.position);
         }
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
+            if (!isShieldScaling) return;
+
+            shield.transform.localScale = Vector3.MoveTowards(
+                shield.transform.localScale,
+                defaultShieldScale,
+                shieldScaleSpeed * Time.deltaTime
+            );
+
+            if (shield.transform.localScale == defaultShieldScale) {
+                isShieldScaling = false;
+            }
         }
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
             disposable.Dispose();
+            shield.transform.localScale = defaultShieldScale;
+            isShieldScaling = false;
             shield.gameObject.SetActive(false);
         }
 

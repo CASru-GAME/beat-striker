@@ -10,6 +10,7 @@ namespace Core.LargeWizard {
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] EnergyStorage energyStorage;
+        [SerializeField] AudioClip audioClip;          // チャージが完了したときの音
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -17,6 +18,8 @@ namespace Core.LargeWizard {
             context.PlayAnimation(animationClip, context => {
                 energyStorage.StoreEnergy(1);
                 context.TryTransition(nextNode);
+
+                AudioSource.PlayClipAtPoint(audioClip, context.Rigidbody.transform.position);
             });
         }
 
