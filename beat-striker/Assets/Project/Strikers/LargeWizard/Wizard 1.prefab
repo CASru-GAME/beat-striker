@@ -441,6 +441,7 @@ Transform:
   - {fileID: 3386931230689547467}
   - {fileID: 8478017178241817068}
   - {fileID: 5627472480660901862}
+  - {fileID: 1702687919367486756}
   - {fileID: 924816658567410061}
   - {fileID: 4478157019123781173}
   - {fileID: 7081092529338615846}
@@ -492,7 +493,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12e424db83d1d184caa3323019b34515, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.ChargeState
-  parents: []
+  parents:
+  - {fileID: 1012561812567522805}
   animationClip:
     clip: {fileID: 2499177954120741571, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
@@ -544,7 +546,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5a51286a292cee45975729a60ae7d93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.AttackState
-  parents: []
+  parents:
+  - {fileID: 1012561812567522805}
   animationClip:
     clip: {fileID: 7791916682545647297, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
@@ -652,6 +655,51 @@ MonoBehaviour:
     fadeTime: 0
     speed: 1
   nextNode: {fileID: 707581214265331847}
+--- !u!1 &4404737297509214527
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1702687919367486756}
+  - component: {fileID: 1012561812567522805}
+  m_Layer: 0
+  m_Name: StunGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1702687919367486756
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4404737297509214527}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1.11558, y: 0, z: 2.0224}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1012561812567522805
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4404737297509214527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3f0c3d0f464054469df5f17d9e36960, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.StunGroup
+  stunState: {fileID: 9011587962571819027}
 --- !u!1 &5007407367764718778
 GameObject:
   m_ObjectHideFlags: 0
@@ -929,7 +977,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbac8ad390461444c916ae13f245d232, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack3State
-  parents: []
+  parents:
+  - {fileID: 1012561812567522805}
   animationClip:
     clip: {fileID: 5332256259459953303, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
@@ -983,7 +1032,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fb5418d924f9ab43ae25a4684f772b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack2State
-  parents: []
+  parents:
+  - {fileID: 1012561812567522805}
   animationClip:
     clip: {fileID: -5612658629409835226, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
@@ -1109,7 +1159,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68850c860b4184347a1be9eec19217ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack1State
-  parents: []
+  parents:
+  - {fileID: 1012561812567522805}
   animationClip:
     clip: {fileID: 7791916682545647297, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0

@@ -35,14 +35,7 @@ namespace Core.LargeWizard {
 
                     var hitpoint = collider.ClosestPoint(hitBox.transform.position);
                     hitsInFrame.Add(new(hitpoint, hurtbox));
-                    var particleInstance = Instantiate(particlePrefab, hitpoint, Quaternion.identity);
-                    particleInstance.Play();
 
-                    AudioSource.PlayClipAtPoint(audioClip, hitpoint);
-
-                    var nockBackDirection = Mathf.Sign(hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
-
-                    hurtbox.GiveHit(new HitStatus(damage, knockbackSpeed * nockBackDirection));
                 }
             });
             hitsInFrame.Clear();
@@ -57,11 +50,18 @@ namespace Core.LargeWizard {
         public override void OnUpdate(IStrikerStateContext context) {
             if (!hitInState && hitsInFrame.Count >= 1) {
                 var closestHit = hitsInFrame.MinBy(e => Vector3.Distance(e.hitPoint, hitBox.transform.position));
-                
-                Instantiate(particlePrefab, closestHit.hitPoint, Quaternion.identity);
+
+
+                var particleInstance = Instantiate(particlePrefab, closestHit.hitPoint, Quaternion.identity);
+                particleInstance.Play();
+
                 AudioSource.PlayClipAtPoint(audioClip, closestHit.hitPoint);
+
                 var nockBackDirection = Mathf.Sign(closestHit.hitPoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
+
                 closestHit.hurtBox.GiveHit(new HitStatus(damage, knockbackSpeed * nockBackDirection));
+
+                Destroy(particleInstance.gameObject, 5f);
 
                 hitsInFrame.Clear();
                 hitInState = true;
