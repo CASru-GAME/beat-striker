@@ -26,9 +26,5 @@ namespace Core.LargeHero {
             context.Rigidbody.linearVelocity = v;
         }
 
-        public override void OnAttackRequested(IStrikerStateContext context) {
-            context.TryTransition(attackNode);
-        }
-
     }
 }

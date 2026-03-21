@@ -11,13 +11,10 @@ namespace Core.LargeHero {
         [SerializeField] GroundChecker groundChecker;
         [SerializeField] StrikerNode landNode;
         [SerializeField] StrikerNode attackNode;
-        [SerializeField] StrikerNode chargeNode;
-        [SerializeField] float linearDamping;
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip);
-            context.Rigidbody.linearDamping = linearDamping;
         }
 
         // このステートにいる間、毎フレーム呼ばれる
@@ -29,7 +26,6 @@ namespace Core.LargeHero {
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
-            context.Rigidbody.linearDamping = 0f;
         }
 
         // 攻撃コマンドが押された時に呼ばれる
@@ -39,7 +35,6 @@ namespace Core.LargeHero {
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
-            context.TryTransition(chargeNode);
         }
 
         // ダッシュコマンドが押された時に呼ばれる

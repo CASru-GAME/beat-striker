@@ -8,12 +8,15 @@ using Core.Striker.Components;
 
 
 namespace Core.LargeHero {
+    
+    /// <summary>
+    /// 斬撃1ステート。ヒット成功後にコマンドで斬撃2へチェインする。
+    /// </summary>
+    public class Slash3State : StrikerState {
 
-    public class AirAttackState : StrikerState {
-
-        // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
+        [SerializeField] StrikerNode comboNode;   // → 斬撃2
         [SerializeField] HitBox hitBox;
         IDisposable disposable;
 
@@ -22,35 +25,33 @@ namespace Core.LargeHero {
         [SerializeField] TrailRenderer swordTrail;
 
         [SerializeField] float damage = 10;
-        [SerializeField] float nockbackSpeed = 10;
+        [SerializeField] float nockbackSpeed = 3;
 
         readonly List<Hit> hitsInFrame = new ();
         bool hitInState;
+        bool comboRequested;
         public record Hit(Vector3 hitpoint, Hurtbox hurtbox);
 
-        // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            comboRequested = false;
+
             context.PlayAnimation(animationClip, OnAnimationEnd);
             swordTrail.Clear();
             swordTrail.enabled = true;
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
-
-                Debug.Log("AirAttackState: OnEnterTrigger");
                 if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
                     var hitpoint = collider.ClosestPoint(hitBox.transform.position);
                     hitsInFrame.Add(new (hitpoint, hurtbox));
                 }
-
             });
             hitsInFrame.Clear();
             hitInState = false;
         }
 
-        public void OnAnimationEnd(IStrikerStateContext context) {
+        void OnAnimationEnd(IStrikerStateContext context) {
             context.TryTransition(nextNode);
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
             if (!hitInState && hitsInFrame.Count >= 1) {
                 var closestHit = hitsInFrame.MinBy(e => Vector3.Distance(e.hitpoint, hitBox.transform.position));
@@ -66,35 +67,14 @@ namespace Core.LargeHero {
             }
         }
 
-        // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
             swordTrail.enabled = false;
             swordTrail.Clear();
             disposable.Dispose();
         }
 
-        // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
-        }
-
-        // チャージコマンドが押された時に呼ばれる
-        public override void OnChargeRequested(IStrikerStateContext context) {
-        }
-
-        // ダッシュコマンドが押された時に呼ばれる
-        public override void OnDashRequested(IStrikerStateContext context) {
-        }
-
-        // ガードコマンドが押された時に呼ばれる
-        public override void OnGuardRequested(IStrikerStateContext context) {
-        }
-
-        // 攻撃を受けた時に呼ばれる
-        public override void OnHit(IStrikerStateContext context, HitStatus status) {
-        }
-
-        // ミスした時に呼ばれる
-        public override void OnMiss(IStrikerStateContext context) {
+                context.TryTransition(comboNode);
         }
 
     }

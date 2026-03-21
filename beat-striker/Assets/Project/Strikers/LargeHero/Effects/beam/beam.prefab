@@ -503,7 +503,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: af4b5e9d3e6591d489b8d236da055447, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: e709a8c3759bac74ab31758936eb4795, type: 2}
+      objectReference: {fileID: 2100000, guid: 9b009017f900de34b8dcad551ddb572c, type: 2}
     - target: {fileID: 919132149155446097, guid: af4b5e9d3e6591d489b8d236da055447, type: 3}
       propertyPath: m_Name
       value: "\u30D3\u30FC\u30E0"
@@ -577,7 +577,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: af4b5e9d3e6591d489b8d236da055447, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: b882701406e4bd34f92d240e9abb6239, type: 2}
+      objectReference: {fileID: 2100000, guid: 134db9cb19a24c94baff0a4c0439ba4e, type: 2}
     - target: {fileID: 919132149155446097, guid: af4b5e9d3e6591d489b8d236da055447, type: 3}
       propertyPath: m_Name
       value: "\u30D3\u30FC\u30E0 (1)"

@@ -6,9 +6,7 @@ namespace Core.LargeHero {
     
     public class LocomotionGroup : StrikerGroup {
         [SerializeField] StrikerNode locomotionNode;
-        [SerializeField] GroundChecker groundChecker;
         [SerializeField] StrikerNode attackNode;
-        [SerializeField] StrikerNode airAttackNode;
         [SerializeField] StrikerNode dashNode;
         [SerializeField] StrikerNode stunState;
         [SerializeField] StrikerNode guardState;
@@ -29,7 +27,7 @@ namespace Core.LargeHero {
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
-            context.TryTransition(groundChecker.IsGrounded ? attackNode : airAttackNode);
+            context.TryTransition(attackNode);
         }
 
         // チャージコマンドが押された時に呼ばれる

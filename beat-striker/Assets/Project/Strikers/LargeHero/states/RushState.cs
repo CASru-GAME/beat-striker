@@ -6,10 +6,9 @@ using System;
 using System.Collections.Generic;
 using Core.Striker.Components;
 
-
 namespace Core.LargeHero {
-
-    public class AirAttackState : StrikerState {
+    
+    public class RushState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -19,10 +18,10 @@ namespace Core.LargeHero {
 
         [SerializeField] ParticleSystem particleprefab;
         [SerializeField] AudioClip audioClip;
-        [SerializeField] TrailRenderer swordTrail;
 
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 10;
+        [SerializeField] float rushSpeed = 10f;
 
         readonly List<Hit> hitsInFrame = new ();
         bool hitInState;
@@ -30,23 +29,25 @@ namespace Core.LargeHero {
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
-            swordTrail.Clear();
-            swordTrail.enabled = true;
-            disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
 
-                Debug.Log("AirAttackState: OnEnterTrigger");
+            var direction = Mathf.Sign(context.InputDirection.x);
+            var v = context.Rigidbody.linearVelocity;
+            v.x = direction * rushSpeed;
+            context.Rigidbody.linearVelocity = v;
+
+            disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
                 if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
                     var hitpoint = collider.ClosestPoint(hitBox.transform.position);
                     hitsInFrame.Add(new (hitpoint, hurtbox));
                 }
-
             });
             hitsInFrame.Clear();
             hitInState = false;
         }
 
-        public void OnAnimationEnd(IStrikerStateContext context) {
+        void OnAnimationEnd(IStrikerStateContext context) {
             context.TryTransition(nextNode);
         }
 
@@ -68,8 +69,6 @@ namespace Core.LargeHero {
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
-            swordTrail.enabled = false;
-            swordTrail.Clear();
             disposable.Dispose();
         }
 

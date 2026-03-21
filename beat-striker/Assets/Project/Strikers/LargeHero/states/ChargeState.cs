@@ -9,18 +9,27 @@ namespace Core.LargeHero {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
-        [SerializeField] StrikerNode airNextNode;
-        [SerializeField] GroundChecker groundChecker;
         [SerializeField] EnergyStorage energyStorage;
-        [SerializeField] float linearDamping = 20;
+        [SerializeField] ParticleSystem particleprefab;
+
+        void OnEnable() {
+            particleprefab.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particleprefab.Clear();
+        }
+
+        void OnDisable() {
+            particleprefab.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particleprefab.Clear();
+        }
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            particleprefab.Clear();
+            particleprefab.Play();
             // アニメーションの再生を開始する
-            context.Rigidbody.linearDamping = linearDamping;
             context.PlayAnimation(animationClip, context => {
                 energyStorage.StoreEnergy(1);
-                context.TryTransition(groundChecker.IsGrounded ? nextNode : airNextNode);
+                context.TryTransition(nextNode);
             });
         }
 
@@ -30,7 +39,8 @@ namespace Core.LargeHero {
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
-            context.Rigidbody.linearDamping = 0f;
+            particleprefab.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particleprefab.Clear();
         }
 
         // 攻撃コマンドが押された時に呼ばれる

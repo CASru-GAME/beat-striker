@@ -15,9 +15,5 @@ namespace Core.LargeHero {
             context.PlayAnimation(animationClip);
         }
 
-        public override void OnAttackRequested(IStrikerStateContext context) {
-            context.TryTransition(attackNode);
-        }
-
     }
 }
