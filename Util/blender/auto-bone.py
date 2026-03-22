@@ -1,5 +1,6 @@
 import bpy
 import math
+import bmesh
 
 def setup_bone_rotation_limits():
     """
@@ -49,7 +50,9 @@ def setup_bone_rotation_limits():
         "ToeBase": [-45, 45, 0, 0, 0, 0],
         
         # === 指 (Fingers) ===
-        "Thumb": [-45, 45, -45, 45, -45, 45],
+        "Thumb2": [-10, 90, 0, 0, 0, 0], # X軸は左右で共通向きなので元に戻す
+        "Thumb3": [-10, 90, 0, 0, 0, 0],
+        "Thumb": [-45, 45, -45, 45, -45, 45], # 根本(Thumb1など)は自由に動く
         "Index": [0, 0, 0, 0, -10, 90], # 指の曲がる方向を上下逆に変更
         "Middle": [0, 0, 0, 0, -10, 90],
         "Ring": [0, 0, 0, 0, -10, 90],
@@ -81,25 +84,228 @@ def setup_bone_rotation_limits():
             # 関節のローカル座標(Local Space)で回転を制限する設定
             constraint.owner_space = 'LOCAL'
             
+            # 基準となっているボーン（プラスマイナス）が実は右側（_R_）の向きで書かれていた可能性があるため、
+            # 左側（_L_）のボーンのX・Z軸を反転させるように修正します。
+            l_min_x, l_max_x = limit[0], limit[1]
+            l_min_y, l_max_y = limit[2], limit[3]
+            l_min_z, l_max_z = limit[4], limit[5]
+            
+            if "_L_" in pb.name:
+                # 指のZ軸などは左右対称（反転）が必要ですが、
+                # 腕や脚のX軸は左右で曲がる方向（プラスマイナス）が同じ設定になっているようです
+                l_min_z, l_max_z = -limit[5], -limit[4]
+                
+                # X軸（腕、脚、そして親指）はモデリングの仕様で左右とも共通しているため反転させません
+            
             # X軸の制限
             constraint.use_limit_x = True
-            constraint.min_x = math.radians(limit[0])
-            constraint.max_x = math.radians(limit[1])
+            constraint.min_x = math.radians(l_min_x)
+            constraint.max_x = math.radians(l_max_x)
             
             # Y軸の制限
             constraint.use_limit_y = True
-            constraint.min_y = math.radians(limit[2])
-            constraint.max_y = math.radians(limit[3])
+            constraint.min_y = math.radians(l_min_y)
+            constraint.max_y = math.radians(l_max_y)
             
             # Z軸の制限
             constraint.use_limit_z = True
-            constraint.min_z = math.radians(limit[4])
-            constraint.max_z = math.radians(limit[5])
+            constraint.min_z = math.radians(l_min_z)
+            constraint.max_z = math.radians(l_max_z)
 
             applied_count += 1
             # print(f"[{pb.name}] に可動域制限を適用しました: {limit}")
 
     print(f"完了: 合計 {applied_count} 個のボーンに可動域制限を設定しました。")
 
-if __name__ == "__main__":
+def create_cube_shape(name="WG_Cube_Red"):
+    # 既に同名の形状オブジェクトがあれば再利用
+    if name in bpy.data.objects:
+        return bpy.data.objects[name]
+    
+    mesh = bpy.data.meshes.new(name+"_Mesh")
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=1)
+    bm.to_mesh(mesh)
+    bm.free()
+    
+    # ビューポートやレンダリングには表示させない（ボーンの形としてのみ使うため）
+    obj.hide_viewport = True
+    obj.hide_render = True
+    return obj
+
+def setup_ik():
+    """
+    手首と足首にIKボーンを生成し、赤い立方体のシェイプを割り当ててIKコンストレイントを設定します。
+    """
+    obj = bpy.context.object
+    if not obj or obj.type != 'ARMATURE':
+        print("エラー: アーマチュア（ボーン構造）オブジェクトを選択した状態で実行してください。")
+        return
+        
+    bpy.ops.object.mode_set(mode='EDIT')
+    amt = obj.data
+    
+    # 対象ボーン: (追従させる先ボーン, IKボーンの名前, IKチェーンの長さ)
+    ik_map = {
+        "J_Bip_L_LowerArm": ("J_Bip_L_Hand", "IK_L_Hand", 2),
+        "J_Bip_R_LowerArm": ("J_Bip_R_Hand", "IK_R_Hand", 2),
+        "J_Bip_L_LowerLeg": ("J_Bip_L_Foot", "IK_L_Foot", 2),
+        "J_Bip_R_LowerLeg": ("J_Bip_R_Foot", "IK_R_Foot", 2),
+    }
+    
+    ik_added = {}
+    
+    # IK用ボーンを生成
+    for bone_name, (target_name, ik_name, chain_len) in ik_map.items():
+        if bone_name in amt.edit_bones and target_name in amt.edit_bones:
+            target_bone = amt.edit_bones[target_name]
+            
+            if ik_name not in amt.edit_bones:
+                ik_bone = amt.edit_bones.new(ik_name)
+                ik_bone.head = target_bone.head
+                # ボーンサイズを少し長めにして見やすく
+                ik_bone.tail = target_bone.head + (target_bone.tail - target_bone.head) * 1.5 
+                
+                # 腕や足の動きに引きずられないようにRootにペアレント（存在すれば）
+                if "Root" in amt.edit_bones:
+                    ik_bone.parent = amt.edit_bones["Root"]
+                else:
+                    ik_bone.parent = None
+                    
+                ik_bone.use_deform = False # メッシュを変形させない
+            ik_added[bone_name] = ik_name
+
+    bpy.ops.object.mode_set(mode='POSE')
+    
+    # 赤い立方体オブジェクトを作成または取得
+    shape_obj = create_cube_shape()
+    
+    for bone_name, ik_name in ik_added.items():
+        pb = obj.pose.bones.get(bone_name)
+        ik_pb = obj.pose.bones.get(ik_name)
+        
+        if pb and ik_pb:
+            # --- 形状と色を設定 ---
+            ik_pb.custom_shape = shape_obj
+            # THEME01 が標準の「赤色」カラーコード
+            if hasattr(ik_pb, "color"):
+                ik_pb.color.palette = 'THEME01'
+            else:
+                # Blender 3.x 等の互換用処理
+                grp_name = "IK_Bones_Red"
+                if grp_name not in obj.pose.bone_groups:
+                    grp = obj.pose.bone_groups.new(name=grp_name)
+                    grp.color_set = 'THEME01'
+                ik_pb.bone_group = obj.pose.bone_groups[grp_name]
+            
+            # --- 古いコンストレイントをクリーンアップ ---
+            for c in list(pb.constraints):
+                if c.type == 'IK' and c.name == "Auto_IK":
+                    pb.constraints.remove(c)
+            
+            # --- IKコンストレイントを追加 (LowerArm / LowerLeg に適用) ---
+            ik_c = pb.constraints.new(type='IK')
+            ik_c.name = "Auto_IK"
+            ik_c.target = obj
+            ik_c.subtarget = ik_name
+            ik_c.chain_count = ik_map[bone_name][2]
+            
+            # --- 手・足先をIKコントローラーの回転に追従 (Copy Rotation) ---
+            target_name = ik_map[bone_name][0]
+            target_pb = obj.pose.bones.get(target_name)
+            if target_pb:
+                for c in list(target_pb.constraints):
+                    if c.type == 'COPY_ROTATION' and c.name == "Auto_IK_Rot":
+                        target_pb.constraints.remove(c)
+                
+                rot_c = target_pb.constraints.new('COPY_ROTATION')
+                rot_c.name = "Auto_IK_Rot"
+                rot_c.target = obj
+                rot_c.subtarget = ik_name
+                # 見たままの角度に追従するようにワールド空間を使用
+                rot_c.target_space = 'WORLD'
+                rot_c.owner_space = 'WORLD'
+                
+    print(f"完了: IKコントローラーを {len(ik_added)} 箇所に設定しました。")
+
+def hide_extra_bones():
+    """
+    体の基準ボーン (J_Bip_系)、IKコントローラー、および Root 以外の
+    揺れモノや補助ボーンなどを非表示にして見た目をすっきりさせます。
+    """
+    obj = bpy.context.object
+    if not obj or obj.type != 'ARMATURE':
+        return
+        
+    amt = obj.data
+    hidden_count = 0
+    
+    for bone in amt.bones:
+        # 体のボーン、IKボーン、Rootボーンは残す
+        is_body_bone = "J_Bip_" in bone.name or "IK_" in bone.name or bone.name == "Root"
+        
+        if not is_body_bone:
+            bone.hide = True
+            hidden_count += 1
+        else:
+            bone.hide = False
+            
+    print(f"完了: 余計なボーン {hidden_count} 個を非表示に設定しました。")
+
+def setup_finger_links():
+    """
+    指の第3関節が第2関節の回転に自動的に連動するように（Copy Rotation）設定します。
+    """
+    obj = bpy.context.object
+    if not obj or obj.type != 'ARMATURE':
+        return
+        
+    bpy.ops.object.mode_set(mode='POSE')
+    
+    fingers = ["Index", "Middle", "Ring", "Little"]
+    sides = ["L", "R"]
+    
+    linked_count = 0
+    
+    for side in sides:
+        for finger in fingers:
+            bone2_name = f"J_Bip_{side}_{finger}2"
+            bone3_name = f"J_Bip_{side}_{finger}3"
+            
+            pb2 = obj.pose.bones.get(bone2_name)
+            pb3 = obj.pose.bones.get(bone3_name)
+            
+            if pb2 and pb3:
+                # 既存のリンク設定をクリーンアップ
+                for c in list(pb3.constraints):
+                    if c.type == 'COPY_ROTATION' and c.name == "Auto_Finger_Link":
+                        pb3.constraints.remove(c)
+                
+                # Copy Rotationを追加して第2関節の曲がりに追従させる
+                c = pb3.constraints.new('COPY_ROTATION')
+                c.name = "Auto_Finger_Link"
+                c.target = obj
+                c.subtarget = bone2_name
+                
+                # 自分自身の軸（Local Space）でそのままコピー
+                c.target_space = 'LOCAL'
+                c.owner_space = 'LOCAL'
+                
+                # 第3関節は少しだけ曲がりを浅くする（自然な指の曲がり味付け）
+                c.influence = 0.8
+                
+                linked_count += 1
+                
+    print(f"完了: 指の第3関節の連動を {linked_count} 箇所に設定しました。")
+
+def main():
     setup_bone_rotation_limits()
+    setup_ik()
+    setup_finger_links()
+    hide_extra_bones()
+
+if __name__ == "__main__":
+    main()
