@@ -40,19 +40,19 @@ def setup_bone_rotation_limits():
         # === 腕 (Arms) ===
         "Shoulder": [-30, 30, -20, 20, -20, 20],
         "UpperArm": [-90, 90, -45, 90, -90, 90],
-        "LowerArm": [0, 150, 0, 0, 0, 0], # 肘の曲がる方向を逆に変更
-        "Hand": [-90, 90, -45, 45, -45, 45],
+        "LowerArm": [0, 150, -20, 180, 0, 0], # 肘の曲がる方向を逆に変更
+        "Hand": [-30, 30, -70, 180, -70, 70],
         
         # === 脚 (Legs) ===
         "UpperLeg": [-45, 120, -45, 45, -45, 45], # 前後逆に変更
         "LowerLeg": [-150, 0, 0, 0, 0, 0], # 膝の曲がる方向を逆に変更
-        "Foot": [-45, 45, -20, 20, -20, 20],
+        "Foot": [-40, 20, -15, 15, -15, 15], # X-はつま先下げ、X+はつま先上げ。Y/Zはひねり。
         "ToeBase": [-45, 45, 0, 0, 0, 0],
         
         # === 指 (Fingers) ===
         "Thumb2": [-10, 90, 0, 0, 0, 0], # X軸は左右で共通向きなので元に戻す
         "Thumb3": [-10, 90, 0, 0, 0, 0],
-        "Thumb": [-45, 45, -45, 45, -45, 45], # 根本(Thumb1など)は自由に動く
+        "Thumb": [-45, 70, -70, 30, -30, 30], # 根本(Thumb1など)は自由に動く
         "Index": [0, 0, 0, 0, -10, 90], # 指の曲がる方向を上下逆に変更
         "Middle": [0, 0, 0, 0, -10, 90],
         "Ring": [0, 0, 0, 0, -10, 90],
@@ -97,25 +97,36 @@ def setup_bone_rotation_limits():
                 
                 # X軸（腕、脚、そして親指）はモデリングの仕様で左右とも共通しているため反転させません
             
-            # X軸の制限
             constraint.use_limit_x = True
             constraint.min_x = math.radians(l_min_x)
             constraint.max_x = math.radians(l_max_x)
-            
-            # Y軸の制限
+
             constraint.use_limit_y = True
             constraint.min_y = math.radians(l_min_y)
             constraint.max_y = math.radians(l_max_y)
-            
-            # Z軸の制限
+
             constraint.use_limit_z = True
             constraint.min_z = math.radians(l_min_z)
             constraint.max_z = math.radians(l_max_z)
+
+            # --- IKソルバー用の制限 (Inverse Kinematicsパネルの設定) を有効化 ---
+            pb.use_ik_limit_x = True
+            pb.ik_min_x = math.radians(l_min_x)
+            pb.ik_max_x = math.radians(l_max_x)
+
+            pb.use_ik_limit_y = True
+            pb.ik_min_y = math.radians(l_min_y)
+            pb.ik_max_y = math.radians(l_max_y)
+
+            pb.use_ik_limit_z = True
+            pb.ik_min_z = math.radians(l_min_z)
+            pb.ik_max_z = math.radians(l_max_z)
 
             applied_count += 1
             # print(f"[{pb.name}] に可動域制限を適用しました: {limit}")
 
     print(f"完了: 合計 {applied_count} 個のボーンに可動域制限を設定しました。")
+    return limits_dict
 
 def create_cube_shape(name="WG_Cube_Red"):
     # 既に同名の形状オブジェクトがあれば再利用
@@ -136,9 +147,9 @@ def create_cube_shape(name="WG_Cube_Red"):
     obj.hide_render = True
     return obj
 
-def setup_ik():
+def setup_ik(limits_dict):
     """
-    手首と足首にIKボーンを生成し、赤い立方体のシェイプを割り当ててIKコンストレイントを設定します。
+    足首にIKボーンを生成し、赤い立方体のシェイプを割り当ててIKコンストレイントを設定します。
     """
     obj = bpy.context.object
     if not obj or obj.type != 'ARMATURE':
@@ -150,8 +161,6 @@ def setup_ik():
     
     # 対象ボーン: (追従させる先ボーン, IKボーンの名前, IKチェーンの長さ)
     ik_map = {
-        "J_Bip_L_LowerArm": ("J_Bip_L_Hand", "IK_L_Hand", 2),
-        "J_Bip_R_LowerArm": ("J_Bip_R_Hand", "IK_R_Hand", 2),
         "J_Bip_L_LowerLeg": ("J_Bip_L_Foot", "IK_L_Foot", 2),
         "J_Bip_R_LowerLeg": ("J_Bip_R_Foot", "IK_R_Foot", 2),
     }
@@ -168,6 +177,8 @@ def setup_ik():
                 ik_bone.head = target_bone.head
                 # ボーンサイズを少し長めにして見やすく
                 ik_bone.tail = target_bone.head + (target_bone.tail - target_bone.head) * 1.5 
+                # ボーンのRoll(軸の傾き)をターゲットと同じにしてXYZ軸の向きを一致させる
+                ik_bone.roll = target_bone.roll
                 
                 # 腕や足の動きに引きずられないようにRootにペアレント（存在すれば）
                 if "Root" in amt.edit_bones:
@@ -228,6 +239,17 @@ def setup_ik():
                 # 見たままの角度に追従するようにワールド空間を使用
                 rot_c.target_space = 'WORLD'
                 rot_c.owner_space = 'WORLD'
+
+                # COPY_ROTATION の後に LIMIT_ROTATION が適用されるように、既存の制限を一番下に移動
+                for i, c in enumerate(target_pb.constraints):
+                    if c.name == "Auto_Limit_Rotation":
+                        target_pb.constraints.move(i, len(target_pb.constraints) - 1)
+                        break
+
+            # --- IKコントローラー自体の回転制限（不要になったためクリーンアップのみ実行） ---
+            for c in list(ik_pb.constraints):
+                if c.type == 'LIMIT_ROTATION' and c.name == "Auto_IK_Limit":
+                    ik_pb.constraints.remove(c)
                 
     print(f"完了: IKコントローラーを {len(ik_added)} 箇所に設定しました。")
 
@@ -301,9 +323,19 @@ def setup_finger_links():
                 
     print(f"完了: 指の第3関節の連動を {linked_count} 箇所に設定しました。")
 
+
+def set_transform_orientation_to_local():
+    """
+    トランスフォーム座標系を自動で「ローカル」に設定します。
+    """
+    if hasattr(bpy.context.scene, "transform_orientation_slots"):
+        bpy.context.scene.transform_orientation_slots[0].type = 'LOCAL'
+    print("完了: トランスフォーム座標系を「ローカル」に設定しました。")
+
 def main():
-    setup_bone_rotation_limits()
-    setup_ik()
+    set_transform_orientation_to_local()
+    limits_dict = setup_bone_rotation_limits()
+    setup_ik(limits_dict)
     setup_finger_links()
     hide_extra_bones()
 
