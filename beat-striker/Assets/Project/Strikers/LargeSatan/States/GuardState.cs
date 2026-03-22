@@ -15,6 +15,7 @@ namespace Core.LargeSatan {
         [SerializeField] Hurtbox shield;
         IDisposable disposable;
 
+
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
