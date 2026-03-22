@@ -10,6 +10,8 @@ namespace Core.LargeHero {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
+        [SerializeField] private StrikerAnimationClip secondaryAnimationClip;
+        [SerializeField] private bool useSecondaryAnimation;
         [SerializeField] private StrikerNode nextNode;
         [SerializeField] Hurtbox shield;
         IDisposable disposable;
@@ -18,7 +20,8 @@ namespace Core.LargeHero {
         public override void OnEnter(IStrikerContext context) {
             Debug.Log("GuardStateに遷移");
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip, context => {context.TryTransition(nextNode);
+            var clip = useSecondaryAnimation ? secondaryAnimationClip : animationClip;
+            context.PlayAnimation(clip, context => {context.TryTransition(nextNode);
             });
             disposable = shield.OnHit.Subscribe(hit => {
 
