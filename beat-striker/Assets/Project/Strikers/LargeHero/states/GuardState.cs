@@ -13,6 +13,11 @@ namespace Core.LargeHero {
         [SerializeField] private StrikerAnimationClip secondaryAnimationClip;
         [SerializeField] private bool useSecondaryAnimation;
         [SerializeField] private StrikerNode nextNode;
+        [SerializeField] private Animator slimeAnimator;
+        [SerializeField] private string slimeEnterStateName = "Attack01";
+        [SerializeField] private bool playSlimeExitState;
+        [SerializeField] private string slimeExitStateName = "IdleNormal";
+        [SerializeField] private int slimeAnimatorLayer;
         [SerializeField] Hurtbox shield;
         IDisposable disposable;
 
@@ -23,6 +28,7 @@ namespace Core.LargeHero {
             var clip = useSecondaryAnimation ? secondaryAnimationClip : animationClip;
             context.PlayAnimation(clip, context => {context.TryTransition(nextNode);
             });
+            slimeAnimator.Play(slimeEnterStateName, slimeAnimatorLayer, 0f);
             disposable = shield.OnHit.Subscribe(hit => {
 
                 context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
@@ -39,6 +45,9 @@ namespace Core.LargeHero {
         public override void OnExit(IStrikerContext context) {
             disposable.Dispose();
             shield.gameObject.SetActive(false);
+            if (playSlimeExitState) {
+                slimeAnimator.Play(slimeExitStateName, slimeAnimatorLayer, 0f);
+            }
         }
 
         // 攻撃コマンドが押された時に呼ばれる
