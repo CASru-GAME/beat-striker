@@ -63,7 +63,7 @@ namespace Alice {
                 subscriptions.Add(subscription);
 
 
-                Debug.Log($"Deployed Striker {config.Strikers[i]} for Player {i}".ToGreen());
+                Debug.Log($"Deployed Striker {config.Strikers[i]} for Player {i}".ToCyan());
             }
         }
 

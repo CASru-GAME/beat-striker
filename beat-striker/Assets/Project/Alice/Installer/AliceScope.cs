@@ -18,6 +18,7 @@ namespace Alice {
             builder.Register<IStrikerRegistry, StrikerRegistry>(Lifetime.Singleton);
             builder.Register<IStrikerFactory, StrikerHubFactory>(Lifetime.Singleton);
             builder.Register<IBattleDeployer, BattleDeployer>(Lifetime.Singleton);
+            builder.Register<IBattleFlow, BattleFlow>(Lifetime.Singleton);
             builder.Register<IBeatjudge, BeatJudge>(Lifetime.Singleton);
             builder.Register<IMusicPlayer, MusicPlayer>(Lifetime.Singleton);
 
@@ -26,6 +27,17 @@ namespace Alice {
             builder.RegisterInstance(GetComponent<BeatConfig>());
             builder.RegisterInstance(GetComponent<AudioSource>());
             builder.RegisterEntryPoint<PlayerJoinHandler>(Lifetime.Singleton);
+            builder.RegisterEntryPoint<BattleStartHandler>(Lifetime.Singleton);
+
+            builder.RegisterBuildCallback(container => {
+                _ = container.Resolve<IGamePadRegistry>();
+                _ = container.Resolve<IStrikerRegistry>();
+                _ = container.Resolve<IStrikerFactory>();
+                _ = container.Resolve<IBattleDeployer>();
+                _ = container.Resolve<IBattleFlow>();
+                _ = container.Resolve<IBeatjudge>();
+                _ = container.Resolve<IMusicPlayer>();
+            });
         }
 
         sealed class PlayerJoinHandler : IInitializable, IDisposable {
@@ -50,5 +62,6 @@ namespace Alice {
                 container.InjectGameObject(playerInput.gameObject);
             }
         }
+
     }
 }

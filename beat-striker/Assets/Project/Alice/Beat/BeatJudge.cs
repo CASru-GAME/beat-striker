@@ -11,7 +11,7 @@ namespace Alice {
         public Observable<BeatResult> OnBeat { get; }
         public Observable<BeatResult> OnBeatExecuted { get; }
 
-        public record BeatResult(float Time, bool IsSuccess);
+        public record BeatResult(float Time, bool IsSuccess, GamePadButton Button);
     }
 
     public interface IBeatjudge {
@@ -35,14 +35,15 @@ namespace Alice {
             }
 
             for(int i = 0; i < beatPlayer.Length; i++) {
-                var gamePad = gamePadRegistry.Get(i);
+                var playerIndex = i;
+                var gamePad = gamePadRegistry.Get(playerIndex);
                 var subscription = gamePad.OnButtonDown.Subscribe(button => {
                     var time = audioSource.time;
                     var res = TryJudge(time, out var beatTime);
                     if(res) {
-                        ScheduleSuccessLog(beatTime, i);
+                        ScheduleSuccessLog(beatTime, playerIndex, button);
                     }
-                    beatPlayer[i].onBeat.OnNext(new IBeatPlayer.BeatResult(time, res));
+                    beatPlayer[playerIndex].onBeat.OnNext(new IBeatPlayer.BeatResult(time, res, button));
                 });
                 subscriptions.Add(subscription);
             }
@@ -78,13 +79,12 @@ namespace Alice {
             return false;
         }
 
-        void ScheduleSuccessLog(float beatTime, int playerId) {
+        void ScheduleSuccessLog(float beatTime, int playerId, GamePadButton button) {
             IDisposable logSubscription = null;
             logSubscription = Observable.EveryUpdate().Subscribe(_ => {
                 if (audioSource.time < beatTime) return;
 
-                Debug.Log($"Player {playerId} hit beat at {beatTime:F3}s");
-                beatPlayer[playerId].onBeatResult.OnNext(new IBeatPlayer.BeatResult(beatTime, true));
+                beatPlayer[playerId].onBeatResult.OnNext(new IBeatPlayer.BeatResult(beatTime, true, button));
                 logSubscription.Dispose();
             });
 

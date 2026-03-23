@@ -41,6 +41,14 @@ namespace App {
             return $"<color=#00ff00>{text}</color>";
         }
 
+        public static string ToOrange(this string text) {
+            return $"<color=#ffa500>{text}</color>";
+        }
+
+        public static string ToCyan(this string text) {
+            return $"<color=#00ffff>{text}</color>";
+        }
+
         public static string ToBold(this string text) {
             return $"<b>{text}</b>";
         }

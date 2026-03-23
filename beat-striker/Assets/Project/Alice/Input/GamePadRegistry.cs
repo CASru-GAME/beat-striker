@@ -54,7 +54,7 @@ namespace Alice {
         public void RequestUnregister(int playerId) {
             var playerGamePad = registry.Find(p => p.PlayerId == playerId);
             if(playerGamePad != null && playerGamePad.Current.TryGetValue(out var gamePad)) {
-                Debug.Log($"Unregistered GamePad {gamePad.DeviceName} from Player {playerId}".ToGreen());
+                Debug.Log($"Unregistered GamePad {gamePad.DeviceName} from Player {playerId}".ToOrange());
                 playerGamePad.Current = null;
             }
         }
@@ -62,7 +62,7 @@ namespace Alice {
         public void RequestUnregister(GamePad gamePad) {
             var playerGamePads = registry.FindAll(p => p.Current == gamePad);
             foreach (var playerGamePad in playerGamePads) {
-                Debug.Log($"Unregistered GamePad {gamePad.DeviceName} from Player {playerGamePad.PlayerId}".ToGreen());
+                Debug.Log($"Unregistered GamePad {gamePad.DeviceName} from Player {playerGamePad.PlayerId}".ToOrange());
                 playerGamePad.Current = null;
             }
         }
