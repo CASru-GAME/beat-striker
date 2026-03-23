@@ -4,7 +4,7 @@ using VContainer.Unity;
 namespace App {
     public class AppScope : LifetimeScope {
         protected override void Configure(IContainerBuilder builder) {
-            //builder.Register<ISceneFlow, SceneFlow>(Lifetime.Singleton);
+            builder.Register<ISceneFlow, SceneFlow>(Lifetime.Singleton);
         }
     }
 }

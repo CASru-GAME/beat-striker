@@ -2,18 +2,24 @@ using System;
 using System.Collections.Generic;
 using Core;
 using R3;
+using UnityEngine;
 
-/**namespace App {
-    public class SceneFlow {
+namespace App {
+    public class SceneFlow : MonoBehaviour {
         readonly IConsensusStateMachine stateMachine = new ConsensusStateMachine();
         public IOwnableConsensusState TransitionInState { get; private set; } = new ConsensusState();
         public IOwnableConsensusState MainState { get; private set; } = new ConsensusState();
         public IOwnableConsensusState TransitionOutState { get; private set; } = new ConsensusState();
 
         public SceneFlow(GlobalSceneFlow sceneFlowHub) {
-            sceneFlowHub.TransitionInState.OnEnter.Subscribe(_ => stateMachine.RequestChangeState(TransitionInState));
-            sceneFlowHub.MainState.OnEnter.Subscribe(_ => stateMachine.RequestChangeState(MainState));
-            sceneFlowHub.TransitionOutState.OnEnter.Subscribe(_ => stateMachine.RequestChangeState(TransitionOutState));
+            var transitionInState = sceneFlowHub.TransitionInState.Own();
+            TransitionInState.OnExit.Subscribe(_ => transitionInState.Release()).AddTo(this);
+            sceneFlowHub.MainState.Own();
+            sceneFlowHub.TransitionOutState.Own();
+        }
+
+        void Start() {
+            stateMachine.RequestChangeState();
         }
     }
 
@@ -24,9 +30,9 @@ using R3;
         public IOwnableConsensusState TransitionInState { get; private set; } = new ConsensusState();
 
         public SceneTransitionFlow(GlobalSceneFlow sceneFlowHub) {
-            sceneFlowHub.TransitionOutState.OnEnter.Subscribe(_ => stateMachine.RequestChangeState(TransitionOutState));
-            sceneFlowHub.SceneLoadState.OnEnter.Subscribe(_ => stateMachine.RequestChangeState(SceneLoadState));
-            sceneFlowHub.NextTransitionInState.OnEnter.Subscribe(_ => stateMachine.RequestChangeState(TransitionInState));
+            sceneFlowHub.TransitionOutState.Own();
+            sceneFlowHub.SceneLoadState.Own();
+            sceneFlowHub.NextTransitionInState.Own();
         }
     }
 
@@ -47,4 +53,4 @@ using R3;
             stateMachine.RequestChangeState();
         }
     }
-}**/
+}

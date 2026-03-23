@@ -71,7 +71,7 @@ namespace App {
             }
             public bool IsValid { get; private set; } = true;
             public void Release() {
-                if(!IsValid) return;
+                if (!IsValid) return;
                 IsValid = false;
                 parent.totalOwners--;
                 if (parent.totalOwners == 0) {
@@ -88,56 +88,75 @@ namespace App {
         IConsensusStateCallback currentState;
         IConsensusStateCallback pendingState;
         IDisposable pendingCanExitSubscription;
+        int nestDepth = 0;
 
         public ConsensusStateMachine() {
             currentState = defaultState;
         }
 
         void CommitStateChange(IConsensusStateCallback newState) {
-            currentState.OnExit();
-            currentState = newState;
-            currentState.OnEnter();
+            nestDepth++;
+            try {
+                currentState.OnExit();
+                currentState = newState;
+                currentState.OnEnter();
+            }
+            finally {
+                nestDepth--;
+            }
         }
 
-        void CommitPendingStateChange() {
-            if (pendingState == null) return;
+        bool TryCommitPendingStateChange() {
+            nestDepth++;
+            try {
+                if (pendingState == null) return false;
+                if (!currentState.CanExit.CurrentValue) return false;
 
-            var nextState = pendingState;
-            pendingState = null;
+                var nextState = pendingState;
+                pendingState = null;
 
-            pendingCanExitSubscription?.Dispose();
-            pendingCanExitSubscription = null;
+                pendingCanExitSubscription?.Dispose();
+                pendingCanExitSubscription = null;
 
-            CommitStateChange(nextState);
+                CommitStateChange(nextState);
+
+                return true;
+            }
+            finally {
+                nestDepth--;
+            }
         }
 
         public IConsensusStateMachine.ChangeStateResult RequestChangeState(IConsensusStateCallback newState = null) {
-            if (pendingState != null) return IConsensusStateMachine.ChangeStateResult.AlreadyPending;
+            nestDepth++;
+            try {
+                if (pendingState != null) return IConsensusStateMachine.ChangeStateResult.AlreadyPending;
 
-            newState ??= defaultState;
+                newState ??= defaultState;
 
-            if (!currentState.OnExitRequested()) {
-                return IConsensusStateMachine.ChangeStateResult.RejectedByConsensus;
-            }
+                if (!currentState.OnExitRequested()) {
+                    return IConsensusStateMachine.ChangeStateResult.RejectedByConsensus;
+                }
 
-            if (!currentState.CanExit.CurrentValue) {
                 pendingState = newState;
+
+                if (TryCommitPendingStateChange()) {
+                    return IConsensusStateMachine.ChangeStateResult.Success;
+                }
 
                 pendingCanExitSubscription?.Dispose();
                 pendingCanExitSubscription = currentState.CanExit
                     .Where(canExit => canExit)
                     .Take(1)
-                    .Subscribe(_ => CommitPendingStateChange());
+                    .Subscribe(_ => TryCommitPendingStateChange());
 
-                if (currentState.CanExit.CurrentValue) {
-                    CommitPendingStateChange();
-                }
-
-                return IConsensusStateMachine.ChangeStateResult.WaitingForCurrentStateToExit;
+                return pendingState == null
+                    ? IConsensusStateMachine.ChangeStateResult.Success
+                    : IConsensusStateMachine.ChangeStateResult.WaitingForCurrentStateToExit;
             }
-
-            CommitStateChange(newState);
-            return IConsensusStateMachine.ChangeStateResult.Success;
+            finally {
+                nestDepth--;
+            }
         }
     }
 }
