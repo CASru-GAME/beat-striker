@@ -3,10 +3,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace System.Runtime.CompilerServices {
-    public static class IsExternalInit { }
-}
-
 namespace Core.Striker.Components {
 
     public static class Extentions {
