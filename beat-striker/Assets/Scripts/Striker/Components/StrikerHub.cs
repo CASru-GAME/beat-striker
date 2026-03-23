@@ -38,19 +38,45 @@ namespace Core.Striker {
         private IRythmTrackModel rythmTrackModel;
 
         private bool isInputEnabled = false;
+        private float currentHitPoint;
 
         public Vector2 InputDirection { get; private set; }
         public Rigidbody Rigidbody => rb;
+        public float CurrentHitPoint => currentHitPoint;
+        public float MaxHitPoint => maxHitPoint.value;
+        public HitPoint InspectorMaxHitPoint => maxHitPoint;
+        public SpecialPoint InspectorMaxSpecialPoint => maxSpecialPoint;
+        public StrikerState InspectorDefaultState => defaultState;
+        public StrikerState InspectorDeadState => deadState;
+        public StrikerState InspectorVictoryState => VictoryState;
+        public StrikerState InspectorIntroState => IntroState;
 
         private StrikerStateMachine stateMachine;
 
         private AnimationPlayer animationPlayer;
 
         private void Awake() {
+            if (FindAnyObjectByType<Alice.AliceScope>() != null) {
+                EnsureAliceRuntimeHub();
+                enabled = false;
+                return;
+            }
+
             rb = GetComponent<Rigidbody>();
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
 
             animationPlayer = GetComponent<AnimationPlayer>();
+            model = new StrikerModel(new PlayerId(-1), maxHitPoint, maxSpecialPoint, new ScoreRule(0, 0, 0));
+            currentHitPoint = maxHitPoint.value;
+        }
+
+        public Alice.AliceStrikerHub EnsureAliceRuntimeHub() {
+            var runtime = GetComponent<Alice.AliceStrikerHub>();
+            if (runtime == null) {
+                runtime = gameObject.AddComponent<Alice.AliceStrikerHub>();
+            }
+            runtime.InitializeFromLegacy(this);
+            return runtime;
         }
 
         private void Start() {
@@ -66,6 +92,7 @@ namespace Core.Striker {
             this.rythmTrackModel = rythmTrackModel;
             this.playerRegistry = playerRegistry;
             this.model = new StrikerModel(playerId, maxHitPoint, maxSpecialPoint, rule);
+            this.currentHitPoint = model.HitPoint.value;
 
             bus.Subscribe<GamePadMessages.Inputed>(OnGamePadInputed);
             bus.Subscribe<GamePadMessages.DirectionChanged>(OnGamePadDirectionChanged);
@@ -79,6 +106,8 @@ namespace Core.Striker {
         }
 
         void OnDestroy() {
+            if (bus == null) return;
+
             bus.Unsubscribe<GamePadMessages.Inputed>(OnGamePadInputed);
             bus.Unsubscribe<GamePadMessages.DirectionChanged>(OnGamePadDirectionChanged);
             bus.Unsubscribe<BattleMessages.RequireIntroPose>(OnIntroMessage);
@@ -90,6 +119,7 @@ namespace Core.Striker {
 
         // Logic from StrikerPresenter
         private void OnGamePadInputed(GamePadMessages.Inputed msg) {
+            if (playerRegistry == null || model == null || rythmTrackModel == null) return;
             var player = playerRegistry.ToPlayerId(msg.gamePadId);
             if (isInputEnabled == false || player == null || model.PlayerId != player || model.IsDead()) return;
 
@@ -111,6 +141,7 @@ namespace Core.Striker {
         }
 
         private void OnGamePadDirectionChanged(GamePadMessages.DirectionChanged msg) {
+            if (playerRegistry == null || model == null) return;
             var player = playerRegistry.ToPlayerId(msg.gamePadId);
             if (isInputEnabled == false || player == null || model.PlayerId != player || model.IsDead()) return;
 
@@ -151,31 +182,41 @@ namespace Core.Striker {
         }
 
         public void GiveHit(HitStatus status) {
+            if (model == null || stateMachine == null) return;
             if (model.IsDead()) return;
 
             stateMachine.CurrentState.OnHit(stateMachine, status);
         }
 
         public void ApplyDamage(float damage) {
-            model.TakeDamage(new HitPoint(damage));
-            if (model.IsDead()) {
+            currentHitPoint = Mathf.Max(0f, currentHitPoint - damage);
+
+            if (model != null) {
+                model.TakeDamage(new HitPoint(damage));
+            }
+
+            if (currentHitPoint <= 0f) {
                 OnDead();
             }
         }
 
         public void Dash() {
+            if (stateMachine == null || currentHitPoint <= 0f) return;
             stateMachine.CurrentState.OnDashRequested(stateMachine);
         }
 
         public void Attack() {
+            if (stateMachine == null || currentHitPoint <= 0f) return;
             stateMachine.CurrentState.OnAttackRequested(stateMachine);
         }
 
         public void Charge() {
+            if (stateMachine == null || currentHitPoint <= 0f) return;
             stateMachine.CurrentState.OnChargeRequested(stateMachine);
         }
 
         public void Special() {
+            if (model == null || stateMachine == null || model.IsDead()) return;
             if (model.SpecialPoint.value < model.MaxSpecialPoint.value) {
                 OnMiss();
                 return;
@@ -184,15 +225,20 @@ namespace Core.Striker {
         }
 
         public void Guard() {
+            if (stateMachine == null || currentHitPoint <= 0f) return;
             stateMachine.CurrentState.OnGuardRequested(stateMachine);
         }
 
         public void OnMiss() {
+            if (stateMachine == null || currentHitPoint <= 0f) return;
             stateMachine.CurrentState.OnMiss(stateMachine);
         }
 
         public void OnDead() {
-            bus.Publish(new BattleMessages.NotifyPlayerDead(model.PlayerId));
+            if (bus != null && model != null) {
+                bus.Publish(new BattleMessages.NotifyPlayerDead(model.PlayerId));
+            }
+            if (stateMachine == null) return;
             stateMachine.ChangeState(deadState);
         }
 
@@ -205,6 +251,8 @@ namespace Core.Striker {
         }
 
         public void OnReset() {
+            currentHitPoint = maxHitPoint.value;
+            model.Reset();
             stateMachine.Reset(defaultState);
         }
 

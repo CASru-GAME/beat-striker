@@ -10,6 +10,7 @@ namespace Alice {
         Observable<Unit> BattleFinished { get; }
         Observable<Unit> OutroStarted { get; }
 
+        void PrepareBattle();
         void StartBattle();
         void NotifyIntroAnimationFinished();
         void NotifyRoundStartAnimationFinished();
@@ -22,6 +23,7 @@ namespace Alice {
         readonly IBattleDeployer battleDeployer;
         readonly IMusicPlayer musicPlayer;
         int currentRound;
+        bool battlePrepared;
         bool battleStarted;
         bool battleFinished;
 
@@ -37,16 +39,24 @@ namespace Alice {
             this.battleDeployer = battleDeployer;
             this.musicPlayer = musicPlayer;
             currentRound = 1;
+            battlePrepared = false;
             battleStarted = false;
             battleFinished = false;
+        }
+
+        public void PrepareBattle() {
+            if (battlePrepared) return;
+
+            battlePrepared = true;
+            battleDeployer.Deploy();
         }
 
         public void StartBattle() {
             if (battleStarted) return;
 
+            PrepareBattle();
             battleStarted = true;
             Debug.Log("Battle Started".ToCyan());
-            battleDeployer.Deploy();
             musicPlayer.Play();
             roundStartedSubject.OnNext(currentRound);
         }

@@ -1,0 +1,131 @@
+using R3;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace Alice {
+    public class AliceRingUI : MonoBehaviour {
+        BeatConfig beatConfig;
+        AudioSource audioSource;
+        int playerId;
+        Transform playerPosition;
+
+        [SerializeField] Image[] centerRing;
+        [SerializeField] Image[] rings;
+        [SerializeField] float ringRadiusPerSecond = 1f;
+        [SerializeField] float windowScale = 3f;
+
+        float ringFirstAlpha;
+        float centerRingFirstAlpha;
+        CompositeDisposable disposables = new();
+        bool battleViewActive;
+        Track selectedTrack;
+
+        public void Construct(
+            int playerId,
+            Transform playerPosition,
+            BeatConfig beatConfig,
+            AudioSource audioSource,
+            IBeatPlayer beatPlayer
+        ) {
+            this.playerId = playerId;
+            this.playerPosition = playerPosition;
+            this.beatConfig = beatConfig;
+            this.audioSource = audioSource;
+            selectedTrack = beatConfig.SelectedTrack;
+
+            disposables.Dispose();
+            disposables = new CompositeDisposable();
+            beatPlayer.OnBeatExecuted.Subscribe(_ => OnBeat()).AddTo(disposables);
+        }
+
+        void Awake() {
+            centerRing[0].gameObject.SetActive(false);
+            foreach (var ring in rings) {
+                ring.gameObject.SetActive(false);
+            }
+        }
+
+        void Start() {
+            ringFirstAlpha = rings[0].color.a;
+            centerRingFirstAlpha = centerRing[0].color.a;
+        }
+
+        void OnDestroy() {
+            disposables.Dispose();
+        }
+
+        public void ActivateBattleView() {
+            battleViewActive = true;
+            centerRing[0].gameObject.SetActive(true);
+            foreach (var ring in rings) {
+                ring.gameObject.SetActive(true);
+            }
+        }
+
+        void OnBeat() {
+            var color = centerRing[0].color;
+            color.a = 1f;
+            centerRing[0].color = color;
+
+            LeanTween.alpha(centerRing[0].rectTransform, centerRingFirstAlpha, 0.3f);
+        }
+
+        void Update() {
+            if (!battleViewActive) return;
+            if (selectedTrack == null) return;
+
+            var screenPos = Camera.main.WorldToScreenPoint(playerPosition.position);
+            transform.position = screenPos;
+
+            var beats = selectedTrack.beats;
+            var now = GetCurrentTrackTime();
+            var firstUpcoming = GetFirstUpcomingBeatIndex(beats, now);
+
+            for (var i = 0; i < rings.Length; i++) {
+                if (firstUpcoming < 0) {
+                    rings[i].gameObject.SetActive(false);
+                    continue;
+                }
+
+                var targetIndex = firstUpcoming + i;
+                if (targetIndex < 0 || targetIndex >= beats.Length) {
+                    rings[i].gameObject.SetActive(false);
+                    continue;
+                }
+
+                var nextBeatTime = beats[targetIndex];
+
+                if (float.IsNaN(nextBeatTime)) {
+                    rings[i].gameObject.SetActive(false);
+                    continue;
+                }
+
+                rings[i].gameObject.SetActive(true);
+                var timeSpan = nextBeatTime - now;
+                if (timeSpan < 0f) timeSpan = 0f;
+
+                var scale = ringRadiusPerSecond * timeSpan + 1f;
+                rings[i].transform.localScale = scale * Vector3.one;
+
+                var alpha = ringFirstAlpha * Mathf.Clamp01(windowScale - scale);
+                var color = rings[i].color;
+                color.a = alpha;
+                rings[i].color = color;
+            }
+        }
+
+        float GetCurrentTrackTime() {
+            return audioSource.time + beatConfig.ViewTimeOffset;
+        }
+
+        int GetFirstUpcomingBeatIndex(float[] beats, float now) {
+            for (var i = 0; i < beats.Length; i++) {
+                if (beats[i] >= now) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+    }
+}

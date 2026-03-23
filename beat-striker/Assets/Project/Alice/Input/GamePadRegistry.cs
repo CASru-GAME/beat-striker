@@ -27,6 +27,7 @@ namespace Alice {
     public interface IPlayerGamePad {
         public int PlayerId { get; }
         public Observable<Vector2> OnDirection { get; }
+        public Observable<Unit> OnDirectionCanceled { get; }
         public Observable<GamePadButton> OnButtonDown { get; }
         public Observable<GamePadButton> OnButtonUp { get; }
     }
@@ -89,14 +90,17 @@ namespace Alice {
             }
 
             public Observable<Vector2> OnDirection => onDirection;
+            public Observable<Unit> OnDirectionCanceled => onDirectionCanceled;
             public Observable<GamePadButton> OnButtonDown => onButtonDown;
             public Observable<GamePadButton> OnButtonUp => onButtonUp;
 
             Option<GamePad> current;
             readonly Subject<Vector2> onDirection = new();
+            readonly Subject<Unit> onDirectionCanceled = new();
             readonly Subject<GamePadButton> onButtonDown = new();
             readonly Subject<GamePadButton> onButtonUp = new();
             IDisposable directionSubscription;
+            IDisposable directionCanceledSubscription;
             IDisposable buttonDownSubscription;
             IDisposable buttonUpSubscription;
 
@@ -107,11 +111,13 @@ namespace Alice {
 
             void SwitchCurrent() {
                 directionSubscription?.Dispose();
+                directionCanceledSubscription?.Dispose();
                 buttonDownSubscription?.Dispose();
                 buttonUpSubscription?.Dispose();
 
                 if (current.TryGetValue(out var gamePad)) {
                     directionSubscription = gamePad.OnDirectionAsObservable.Subscribe(onDirection.OnNext);
+                    directionCanceledSubscription = gamePad.OnDirectionCanceledAsObservable.Subscribe(onDirectionCanceled.OnNext);
                     buttonDownSubscription = gamePad.OnButtonDownAsObservable.Subscribe(onButtonDown.OnNext);
                     buttonUpSubscription = gamePad.OnButtonUpAsObservable.Subscribe(onButtonUp.OnNext);
                 }

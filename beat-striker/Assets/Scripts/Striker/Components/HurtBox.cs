@@ -9,6 +9,7 @@ public class Hurtbox : MonoBehaviour
 {
     [SerializeField] bool isGuarding = true;
     [SerializeField] StrikerHub strikerHub;
+    IStrikerHit runtimeStrikerHit;
     readonly Subject<HitStatus> onHit = new();
     public Observable<HitStatus> OnHit => onHit;
 
@@ -21,8 +22,9 @@ public class Hurtbox : MonoBehaviour
             Debug.LogError($"Hurtbox requires a Collider component. {this.gameObject.name} has no Collider.");
         }
         if (strikerHub) {
+            runtimeStrikerHit = strikerHub.EnsureAliceRuntimeHub();
             onHit.Subscribe(status => {
-                strikerHub.GiveHit(status);
+                runtimeStrikerHit.GiveHit(status);
             }).AddTo(this);
         }
     }

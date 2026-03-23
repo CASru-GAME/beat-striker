@@ -31,6 +31,8 @@ namespace Alice {
         }
 
         void Start() {
+            battleFlow.PrepareBattle();
+
             battleFlow.OutroStarted
                 .Subscribe(_ => OnOutro())
                 .AddTo(disposables);

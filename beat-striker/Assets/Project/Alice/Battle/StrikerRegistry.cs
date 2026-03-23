@@ -3,28 +3,27 @@
 
 using System.Collections.Generic;
 using App;
-using Core.Striker;
 using UnityEngine;
 
 namespace Alice {
 
     public interface IStrikerRegistry {
-        Option<StrikerHub> Get(int playerId);
-        void RequestRegister(int playerId, StrikerHub hub);
+        Option<AliceStrikerHub> Get(int playerId);
+        void RequestRegister(int playerId, AliceStrikerHub hub);
         void RequestUnregister(int playerId);
     }
 
     public class StrikerRegistry : IStrikerRegistry {
-        readonly Dictionary<int, StrikerHub> strikerHubs = new Dictionary<int, StrikerHub>();
+        readonly Dictionary<int, AliceStrikerHub> strikerHubs = new Dictionary<int, AliceStrikerHub>();
 
-        public Option<StrikerHub> Get(int playerId) {
+        public Option<AliceStrikerHub> Get(int playerId) {
             if (strikerHubs.TryGetValue(playerId, out var hub)) {
                 return hub;
             }
             return null;
         }
 
-        public void RequestRegister(int playerId, StrikerHub hub) {
+        public void RequestRegister(int playerId, AliceStrikerHub hub) {
             if (!strikerHubs.ContainsKey(playerId)) {
                 strikerHubs.Add(playerId, hub);
             }

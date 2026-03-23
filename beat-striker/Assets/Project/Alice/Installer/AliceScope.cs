@@ -27,7 +27,6 @@ namespace Alice {
             builder.RegisterInstance(GetComponent<BeatConfig>());
             builder.RegisterInstance(GetComponent<AudioSource>());
             builder.RegisterEntryPoint<PlayerJoinHandler>(Lifetime.Singleton);
-            builder.RegisterEntryPoint<BattleStartHandler>(Lifetime.Singleton);
 
             builder.RegisterBuildCallback(container => {
                 _ = container.Resolve<IGamePadRegistry>();

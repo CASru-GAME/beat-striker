@@ -17,10 +17,12 @@ namespace Alice {
         private GameInput input;
         bool isRegistered;
         readonly Subject<Vector2> onDirection = new();
+        readonly Subject<Unit> onDirectionCanceled = new();
         readonly Subject<GamePadButton> onButtonDown = new();
         readonly Subject<GamePadButton> onButtonUp = new();
 
         public Observable<Vector2> OnDirectionAsObservable => onDirection;
+        public Observable<Unit> OnDirectionCanceledAsObservable => onDirectionCanceled;
         public Observable<GamePadButton> OnButtonDownAsObservable => onButtonDown;
         public Observable<GamePadButton> OnButtonUpAsObservable => onButtonUp;
         public string DeviceName => playerInput.currentControlScheme;
@@ -76,12 +78,17 @@ namespace Alice {
         void OnDestroy() {
             input.Dispose();
             onDirection.Dispose();
+            onDirectionCanceled.Dispose();
             onButtonDown.Dispose();
             onButtonUp.Dispose();
         }
 
-        public void OnDirection(InputAction.CallbackContext c)
-            => onDirection.OnNext(c.ReadValue<Vector2>());
+        public void OnDirection(InputAction.CallbackContext c) {
+            onDirection.OnNext(c.ReadValue<Vector2>());
+            if (c.canceled) {
+                onDirectionCanceled.OnNext(Unit.Default);
+            }
+        }
 
         public void OnNorth(InputAction.CallbackContext c) {
             EmitButton(c, GamePadButton.North);
