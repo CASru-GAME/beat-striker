@@ -1,13 +1,9 @@
-using System;
+using R3;
 using Core.App.Presenters.Scene.Types;
-using Core.App.Installers;
-using Core.App.Types;
-using Core.Battle;
-using Core.GamePad.Types;
-using Core.Utils;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace Alice {
     public class BattleCanvas : MonoBehaviour {
@@ -34,13 +30,11 @@ namespace Alice {
         [SerializeField] float fadeHoldDuration = 0.5f; // 暗転を保持する時間
         [SerializeField] float delayBeforeRoundText = 0.5f; // 明転後、Roundテキスト表示までの待機時間
 
-        private IBus bus;
-
-        [SerializeField] GameObject resultPrefab;
+        private IBattleFlow battleFlow;
+        private CompositeDisposable disposables = new();
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Awake() {
-            this.bus = this.GetBus();
             Debug.Log("BattleCanvas Awake");
             BattleFinishText.gameObject.SetActive(false);
             BattleStartText.gameObject.SetActive(false);
@@ -51,36 +45,29 @@ namespace Alice {
                 fadePanel.alpha = 0f;
                 fadePanel.gameObject.SetActive(false);
             }
+        }
 
-            bus.Subscribe<BattleMessages.OnOutroStarted>(OnOutroStarted);
-            bus.Subscribe<BattleMessages.OnBattleFinished>(OnBattleFinished);
-            bus.Subscribe<BattleMessages.OnRoundStarted>(OnRoundStarted);
-            bus.Subscribe<BattleMessages.OnResultStarted>(OnResultStarted);
+        [Inject]
+        public void Construct(IBattleFlow battleFlow) {
+            this.battleFlow = battleFlow;
         }
 
         void Start() {
-            // BattleゲームオブジェクトからBattleInstallerを取得
-            var battleObject = GameObject.Find("Battle");
-            if (battleObject != null) {
-                var battleInstaller = battleObject.GetComponent<BattleInstaller>();
-                if (battleInstaller != null) {
-                    Debug.Log("[BattleCanvas] BattleInstaller found, getting battleModel");
-                    SetBattleModel(battleInstaller.battleModel);
-                }
-                else {
-                    Debug.LogError("[BattleCanvas] BattleInstaller component not found on Battle GameObject!");
-                }
-            }
-            else {
-                Debug.LogError("[BattleCanvas] Battle GameObject not found in scene!");
-            }
+            battleFlow.RoundStarted
+                .Subscribe(OnRoundStarted)
+                .AddTo(disposables);
+
+            battleFlow.BattleFinished
+                .Subscribe(_ => OnBattleFinished())
+                .AddTo(disposables);
+
+            battleFlow.OutroStarted
+                .Subscribe(_ => OnOutroStarted())
+                .AddTo(disposables);
         }
 
         void OnDestroy() {
-            bus.Unsubscribe<BattleMessages.OnOutroStarted>(OnOutroStarted);
-            bus.Unsubscribe<BattleMessages.OnBattleFinished>(OnBattleFinished);
-            bus.Unsubscribe<BattleMessages.OnRoundStarted>(OnRoundStarted);
-            bus.Unsubscribe<BattleMessages.OnResultStarted>(OnResultStarted);
+            disposables.Dispose();
         }
 
         // Update is called once per frame
@@ -88,11 +75,8 @@ namespace Alice {
 
         }
 
-        void OnRoundStarted(BattleMessages.OnRoundStarted msg) {
+        void OnRoundStarted(int roundNumber) {
             Debug.Log("Round Started Animation");
-
-            // ラウンド番号を+1して表示
-            int roundNumber = msg.battlemodel.GetCurrentRound() + 1;
 
             // RoundNumberTextが設定されているか確認
             if (RoundNumberText == null) {
@@ -159,11 +143,11 @@ namespace Alice {
             // 指定時間後に消える
             LeanTween.delayedCall(fightDisplayDuration, () => {
                 BattleStartText.gameObject.SetActive(false);
-                bus.Publish(new BattleMessages.NotifyRoundStartAnimationFinished());
+                battleFlow.NotifyRoundStartAnimationFinished();
             });
         }
 
-        void OnBattleFinished(BattleMessages.OnBattleFinished msg) {
+            void OnBattleFinished() {
             Debug.Log("Battle Finished");
 
             BattleFinishText.gameObject.SetActive(true);
@@ -188,7 +172,7 @@ namespace Alice {
         void ShowFadeTransition() {
             if (fadePanel == null) {
                 Debug.LogWarning("Fade panel is not assigned!");
-                bus.Publish(new BattleMessages.NotifyRoundFinishAnimationFinished());
+                battleFlow.NotifyRoundFinishAnimationFinished();
                 return;
             }
 
@@ -200,7 +184,7 @@ namespace Alice {
                 .setEase(LeanTweenType.easeInOutQuad)
                 .setOnComplete(() => {
                     // 完全に暗くなったタイミングで次のRound準備を開始
-                    bus.Publish(new BattleMessages.NotifyRoundFinishAnimationFinished());
+                        battleFlow.NotifyRoundFinishAnimationFinished();
 
                     // 暗転を保持
                     LeanTween.delayedCall(fadeHoldDuration, () => {
@@ -214,7 +198,7 @@ namespace Alice {
                 });
         }
 
-        void OnOutroStarted(BattleMessages.OnOutroStarted msg) {
+        void OnOutroStarted() {
             Debug.Log("Battle All Finished");
             BattleFinishText.text = $"Game Set";
             BattleFinishText.gameObject.SetActive(true);
@@ -227,45 +211,7 @@ namespace Alice {
             });
         }
 
-        void OnResultStarted(BattleMessages.OnResultStarted msg) {
-            Debug.Log("Result Started");
 
-            // Winテキストを消す（LeanTweenもキャンセル）
-            if (BattleFinishText != null) {
-                LeanTween.cancel(BattleFinishText.gameObject);
-                BattleFinishText.gameObject.SetActive(false);
-                Debug.Log("Win text hidden");
-            }
-
-            GameObject resultInstance = Instantiate(resultPrefab);
-            if (resultInstance != null) {
-                resultInstance.SetActive(true);
-
-                // Canvas の Sort Order を高く設定して、他のUIより前面に表示
-                Canvas resultCanvas = resultInstance.GetComponent<Canvas>();
-                if (resultCanvas != null) {
-                    resultCanvas.sortingOrder = 100;
-                    Debug.Log($"Result Canvas sortingOrder set to 100");
-                }
-
-                // すべての子オブジェクトを再帰的にアクティブにする
-                SetActiveRecursively(resultInstance.transform, true);
-
-                Debug.Log($"Result prefab instantiated and activated: {resultInstance.name}");
-            }
-            else {
-                Debug.LogError("Failed to instantiate result prefab!");
-            }
-        }
-
-        void SetActiveRecursively(Transform parent, bool active) {
-            foreach (Transform child in parent) {
-                child.gameObject.SetActive(active);
-                Debug.Log($"Setting {child.name} active: {active}");
-                // 再帰的に子の子もアクティブにする
-                SetActiveRecursively(child, active);
-            }
-        }
 
         void PlaySound(AudioClip clip) {
             if (clip == null) return;
@@ -277,12 +223,6 @@ namespace Alice {
             audioSource.Play();
 
             Destroy(soundObject, clip.length);
-        }
-
-        private IBattleModel battleModel;
-
-        void SetBattleModel(IBattleModel model) {
-            this.battleModel = model;
         }
 
     }

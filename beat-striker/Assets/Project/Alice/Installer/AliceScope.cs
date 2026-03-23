@@ -37,7 +37,15 @@ namespace Alice {
                 _ = container.Resolve<IBattleFlow>();
                 _ = container.Resolve<IBeatjudge>();
                 _ = container.Resolve<IMusicPlayer>();
+                InjectSceneObjects(container);
             });
+        }
+
+        void InjectSceneObjects(IObjectResolver container) {
+            var rootObjects = gameObject.scene.GetRootGameObjects();
+            foreach (var root in rootObjects) {
+                container.InjectGameObject(root);
+            }
         }
 
         sealed class PlayerJoinHandler : IInitializable, IDisposable {

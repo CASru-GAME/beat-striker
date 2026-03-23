@@ -1,9 +1,8 @@
 using UnityEngine;
 using System.Collections;
-using Core.Utils;
-using Core.App.Presenters.Scene.Types;
-using Core.Battle;
+using R3;
 using Core.App.Types;
+using VContainer;
 
 namespace Alice {
     public class StageCamera : MonoBehaviour {
@@ -23,18 +22,24 @@ namespace Alice {
         [SerializeField] private float outroDuration = 1f;
         [SerializeField] private float outroWaitDuration = 3f;
 
-        [SerializeField] BattleCanvas battleCanvas;
+        IBattleFlow battleFlow;
+        private CompositeDisposable disposables = new();
 
-        void Awake() {
-            this.GetBus().Subscribe<BattleMessages.OnOutroStarted>(OnOutro);
-        }
-
-        void OnDestroy() {
-            this.GetBus().Unsubscribe<BattleMessages.OnOutroStarted>(OnOutro);
+        [Inject]
+        public void Construct(IBattleFlow battleFlow) {
+            this.battleFlow = battleFlow;
         }
 
         void Start() {
+            battleFlow.OutroStarted
+                .Subscribe(_ => OnOutro())
+                .AddTo(disposables);
+
             StartCoroutine(StartCameraSequence());
+        }
+
+        void OnDestroy() {
+            disposables.Dispose();
         }
 
         private IEnumerator StartCameraSequence() {
@@ -52,20 +57,18 @@ namespace Alice {
 
             // transform0の位置にワープしてplayerTransform0を見ながら公転
             transform.position = camTransform0.position;
-            this.GetBus().Publish(new BattleMessages.RequireIntroPose(new PlayerId(0)));
             LookAt(playerTransform0.transform);
             yield return StartCoroutine(OrbitAroundTarget(playerTransform0.transform, orbitDuration, orbitAngle));
 
             // transform1の位置にワープしてplayerTransform1を見ながら公転
             transform.position = camTransform1.position;
-            this.GetBus().Publish(new BattleMessages.RequireIntroPose(new PlayerId(1)));
             LookAt(playerTransform1.transform);
             yield return StartCoroutine(OrbitAroundTarget(playerTransform1.transform, orbitDuration, -orbitAngle));
 
             // transformFinalにワープ
             transform.SetPositionAndRotation(camTransformFinal.position, camTransformFinal.rotation);
 
-            this.GetBus().Publish(new BattleMessages.NotifyIntroAnimationFinished());
+            battleFlow?.NotifyIntroAnimationFinished();
         }
 
         private IEnumerator OrbitAroundTarget(Transform target, float duration, float angle) {
@@ -95,8 +98,8 @@ namespace Alice {
             }
         }
 
-        void OnOutro(BattleMessages.OnOutroStarted msg) {
-            var winner = msg.battlemodel.GetFinalWinner();
+        void OnOutro() {
+            var winner = new PlayerId(0);
             Transform targetTransform = winner.value == 0 ? playerTransform0 : playerTransform1;
             StartCoroutine(MoveToWinner(targetTransform, winner));
         }
@@ -121,11 +124,8 @@ namespace Alice {
             transform.position = targetPosition;
             LookAt(target);
 
-            this.GetBus().Publish(new BattleMessages.RequireVictoryPose(winner));
-
             yield return new WaitForSeconds(outroWaitDuration);
-
-            this.GetBus().Publish(new BattleMessages.NotifyOutroAnimationFinished());
+            battleFlow?.NotifyOutroAnimationFinished();
         }
     }
 }
