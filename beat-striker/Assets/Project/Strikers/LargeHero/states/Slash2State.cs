@@ -1,0 +1,81 @@
+using Core.Battle;
+using UnityEngine;
+using Core.Striker;
+using R3;
+using System;
+using System.Collections.Generic;
+using Core.Striker.Components;
+
+
+namespace Core.LargeHero {
+    
+    /// <summary>
+    /// 斬撃1ステート。ヒット成功後にコマンドで斬撃2へチェインする。
+    /// </summary>
+    public class Slash2State : StrikerState {
+
+        [SerializeField] private StrikerAnimationClip animationClip;
+        [SerializeField] StrikerNode nextNode;
+        [SerializeField] StrikerNode comboNode;   // → 斬撃2
+        [SerializeField] HitBox hitBox;
+        IDisposable disposable;
+
+        [SerializeField] ParticleSystem particleprefab;
+        [SerializeField] AudioClip audioClip;
+        [SerializeField] TrailRenderer swordTrail;
+
+        [SerializeField] float damage = 10;
+        [SerializeField] float nockbackSpeed = 3;
+
+        readonly List<Hit> hitsInFrame = new ();
+        bool hitInState;
+        bool comboRequested;
+        public record Hit(Vector3 hitpoint, Hurtbox hurtbox);
+
+        public override void OnEnter(IStrikerContext context) {
+            comboRequested = false;
+
+            context.PlayAnimation(animationClip, OnAnimationEnd);
+            swordTrail.Clear();
+            swordTrail.enabled = true;
+            disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
+                if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                    var hitpoint = collider.ClosestPoint(hitBox.transform.position);
+                    hitsInFrame.Add(new (hitpoint, hurtbox));
+                }
+            });
+            hitsInFrame.Clear();
+            hitInState = false;
+        }
+
+        void OnAnimationEnd(IStrikerStateContext context) {
+            context.TryTransition(nextNode);
+        }
+
+        public override void OnUpdate(IStrikerStateContext context) {
+            if (!hitInState && hitsInFrame.Count >= 1) {
+                var closestHit = hitsInFrame.MinBy(e => Vector3.Distance(e.hitpoint, hitBox.transform.position));
+
+                Instantiate(particleprefab, closestHit.hitpoint, Quaternion.identity);
+                AudioSource.PlayClipAtPoint(audioClip, closestHit.hitpoint);
+
+                var nockBackDirection = Mathf.Sign(closestHit.hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
+                closestHit.hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
+
+                hitsInFrame.Clear();
+                hitInState = true;
+            }
+        }
+
+        public override void OnExit(IStrikerContext context) {
+            swordTrail.enabled = false;
+            swordTrail.Clear();
+            disposable.Dispose();
+        }
+
+        public override void OnAttackRequested(IStrikerStateContext context) {
+                context.TryTransition(comboNode);
+        }
+
+    }
+}

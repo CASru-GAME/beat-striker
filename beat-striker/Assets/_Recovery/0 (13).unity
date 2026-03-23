@@ -581,7 +581,7 @@ MonoBehaviour:
   playerId:
     value: 1
   button: 3
-  interval: 1
+  interval: 10
   pressDuration: 0.1
   autoStart: 1
   registerToPlayerRegistry: 1

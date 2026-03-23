@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using Core.App.Interfaces;
 using Core.App.Models;
 using Core.App.Types;
+using Core.Utils;
 using Core.Battle;
 using Core.GamePad.Types;
 using Core.Striker.Components;
-using Core.Utils;
 using UnityEngine;
-using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityEngine.Animations;
 
 namespace Core.Striker {
 
@@ -97,10 +97,12 @@ namespace Core.Striker {
                 if (msg.button == GamePadButton.South) { if (Beat()) Dash(); }
                 else if (msg.button == GamePadButton.East) { if (Beat()) Attack(); }
                 else if (msg.button == GamePadButton.West) { if (Beat()) { Charge(); } } // Charge request
-                else if (msg.button == GamePadButton.North) {
-                    if (Beat()) Guard();
+                else if (msg.button == GamePadButton.LeftTrigger) {
+                    if (Beat()) {
+                        Special();
+                    }
                 }
-                else if (msg.button == GamePadButton.LeftTrigger) { if (Beat()) Guard(); }
+                else if (msg.button == GamePadButton.North) { if (Beat()) Guard(); }
             }
 
             if (msg.action == GamePadAction.Up && msg.button == GamePadButton.Direction) {
@@ -259,10 +261,6 @@ namespace Core.Striker {
         public Rigidbody Rigidbody => context.Rigidbody;
         public Vector2 InputDirection => context.InputDirection;
 
-
-        public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = default)
-            : base(context, defaultState) { }
-
         public void ApplyDamage(float damage) {
             context.ApplyDamage(damage);
         }
@@ -270,5 +268,8 @@ namespace Core.Striker {
         public void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null) {
             context.PlayAnimation(animation, onComplete);
         }
+
+        public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = default)
+            : base(context, defaultState) { }
     }
 }
