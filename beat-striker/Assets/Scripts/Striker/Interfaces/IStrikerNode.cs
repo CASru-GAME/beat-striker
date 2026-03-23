@@ -39,6 +39,8 @@ namespace Core.Striker {
     public interface IStrikerStateContext : IStateContext<IStrikerNode> {
         Rigidbody Rigidbody { get; }
         Vector2 InputDirection { get; }
+        void ApplyDamage(float damage);
+        void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
     }
 
     public interface IStrikerNodeContext : INodeContext<IStrikerNode, IStrikerState> {

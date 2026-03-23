@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 37d428df5c910584396dd6cdd0df9fbd
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mannto
+    second: {fileID: 2100000, guid: 06444cc0204aa9f4aa5f61a04ed7871e, type: 2}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: f66ead3390398f443aa127b741826ad9, type: 3}
+  MigrateToVrm1: 1
+  RenderPipeline: 0

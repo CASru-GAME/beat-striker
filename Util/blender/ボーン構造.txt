@@ -1,0 +1,85 @@
+==============================
+MODEL NAME: Armature (Body Bones Only)
+==============================
+【リグ座標系・可動域の仕様メモ】
+このアーマチュア（J_Bip_系）のローカル座標は以下の軸方向で関節が曲がるように設定されている。
+自動スクリプト等で Limit Rotation（回転制限）をかける際の基準となる：
+
+・肘 (LowerArm)
+  - 主軸: X軸
+  - X+方向: 腕を内側（自分側）へ畳む
+  - X-方向: 逆に曲がる（関節技方向のため基本0に制限）
+  - 可動域例: [0, 150]
+
+・股関節 (UpperLeg)
+  - 主軸: X軸
+  - X+方向: 脚を前方へ振り上げる
+  - X-方向: 脚を後方へ引く
+  - 可動域例: [-45, 120]
+
+・膝 (LowerLeg)
+  - 主軸: X軸
+  - X-方向: ふくらはぎ側（後ろ）へ畳む
+  - X+方向: 逆に曲がる（逆関節のため基本0に制限）
+  - 可動域例: [-150, 0]
+
+・指 (Fingers: Index, Middle, Ring, Little)
+  - 主軸: Z軸 （※X軸ではない点に注意）
+  - Z+方向: 手のひら側へ握り込む
+  - Z-方向: 手の甲側へ反る
+  - 可動域例: [-10, 90]
+
+==============================
+Bone: Root (Parent: None)
+  Bone: J_Bip_C_Hips (Parent: Root)
+    Bone: J_Bip_C_Spine (Parent: J_Bip_C_Hips)
+      Bone: J_Bip_C_Chest (Parent: J_Bip_C_Spine)
+        Bone: J_Bip_C_UpperChest (Parent: J_Bip_C_Chest)
+          Bone: J_Bip_C_Neck (Parent: J_Bip_C_UpperChest)
+            Bone: J_Bip_C_Head (Parent: J_Bip_C_Neck)
+          Bone: J_Bip_L_Shoulder (Parent: J_Bip_C_UpperChest)
+            Bone: J_Bip_L_UpperArm (Parent: J_Bip_L_Shoulder)
+              Bone: J_Bip_L_LowerArm (Parent: J_Bip_L_UpperArm)
+                Bone: J_Bip_L_Hand (Parent: J_Bip_L_LowerArm)
+                  Bone: J_Bip_L_Index1 (Parent: J_Bip_L_Hand)
+                    Bone: J_Bip_L_Index2 (Parent: J_Bip_L_Index1)
+                      Bone: J_Bip_L_Index3 (Parent: J_Bip_L_Index2)
+                  Bone: J_Bip_L_Little1 (Parent: J_Bip_L_Hand)
+                    Bone: J_Bip_L_Little2 (Parent: J_Bip_L_Little1)
+                      Bone: J_Bip_L_Little3 (Parent: J_Bip_L_Little2)
+                  Bone: J_Bip_L_Middle1 (Parent: J_Bip_L_Hand)
+                    Bone: J_Bip_L_Middle2 (Parent: J_Bip_L_Middle1)
+                      Bone: J_Bip_L_Middle3 (Parent: J_Bip_L_Middle2)
+                  Bone: J_Bip_L_Ring1 (Parent: J_Bip_L_Hand)
+                    Bone: J_Bip_L_Ring2 (Parent: J_Bip_L_Ring1)
+                      Bone: J_Bip_L_Ring3 (Parent: J_Bip_L_Ring2)
+                  Bone: J_Bip_L_Thumb1 (Parent: J_Bip_L_Hand)
+                    Bone: J_Bip_L_Thumb2 (Parent: J_Bip_L_Thumb1)
+                      Bone: J_Bip_L_Thumb3 (Parent: J_Bip_L_Thumb2)
+          Bone: J_Bip_R_Shoulder (Parent: J_Bip_C_UpperChest)
+            Bone: J_Bip_R_UpperArm (Parent: J_Bip_R_Shoulder)
+              Bone: J_Bip_R_LowerArm (Parent: J_Bip_R_UpperArm)
+                Bone: J_Bip_R_Hand (Parent: J_Bip_R_LowerArm)
+                  Bone: J_Bip_R_Index1 (Parent: J_Bip_R_Hand)
+                    Bone: J_Bip_R_Index2 (Parent: J_Bip_R_Index1)
+                      Bone: J_Bip_R_Index3 (Parent: J_Bip_R_Index2)
+                  Bone: J_Bip_R_Little1 (Parent: J_Bip_R_Hand)
+                    Bone: J_Bip_R_Little2 (Parent: J_Bip_R_Little1)
+                      Bone: J_Bip_R_Little3 (Parent: J_Bip_R_Little2)
+                  Bone: J_Bip_R_Middle1 (Parent: J_Bip_R_Hand)
+                    Bone: J_Bip_R_Middle2 (Parent: J_Bip_R_Middle1)
+                      Bone: J_Bip_R_Middle3 (Parent: J_Bip_R_Middle2)
+                  Bone: J_Bip_R_Ring1 (Parent: J_Bip_R_Hand)
+                    Bone: J_Bip_R_Ring2 (Parent: J_Bip_R_Ring1)
+                      Bone: J_Bip_R_Ring3 (Parent: J_Bip_R_Ring2)
+                  Bone: J_Bip_R_Thumb1 (Parent: J_Bip_R_Hand)
+                    Bone: J_Bip_R_Thumb2 (Parent: J_Bip_R_Thumb1)
+                      Bone: J_Bip_R_Thumb3 (Parent: J_Bip_R_Thumb2)
+    Bone: J_Bip_L_UpperLeg (Parent: J_Bip_C_Hips)
+      Bone: J_Bip_L_LowerLeg (Parent: J_Bip_L_UpperLeg)
+        Bone: J_Bip_L_Foot (Parent: J_Bip_L_LowerLeg)
+          Bone: J_Bip_L_ToeBase (Parent: J_Bip_L_Foot)
+    Bone: J_Bip_R_UpperLeg (Parent: J_Bip_C_Hips)
+      Bone: J_Bip_R_LowerLeg (Parent: J_Bip_R_UpperLeg)
+        Bone: J_Bip_R_Foot (Parent: J_Bip_R_LowerLeg)
+          Bone: J_Bip_R_ToeBase (Parent: J_Bip_R_Foot)

@@ -1,12 +1,13 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Playables;
 using UnityEngine.Animations;
+using UnityEngine.Playables;
 using UniVRM10;
 
 namespace Core.Striker {
 
+    [AddComponentMenu(" 🟠AnimationPlayer", 0)]
     public class AnimationPlayer : MonoBehaviour {
         [SerializeField] Animator animator;
         private Coroutine currentAnimationCoroutine;
@@ -16,20 +17,17 @@ namespace Core.Striker {
         private AnimationClipPlayable previousClipPlayable;
 
         void Awake() {
-            // アニメータが設定されていない場合、子オブジェクトからVRMInstanceと一緒にあるAnimatorを探して設定
+            // アニメータが設定されていない場合、自分を含む子オブジェクトからAnimatorを探して設定
             if (animator == null) {
-                var vrmInstance = GetComponentInChildren<Vrm10Instance>();
-                if (vrmInstance != null) {
-                    animator = vrmInstance.GetComponent<Animator>();
-                }
-                else {
-                    Debug.LogError($"AnimationPlayer requires an Animator component. Please assign it in the inspector or ensure a Vrm10Instance is present. GameObject: {this.gameObject.name}");
+                animator = GetComponentInChildren<Animator>();
+                if (animator == null) {
+                    Debug.LogError($"AnimationPlayer requires an Animator component. Please assign it in the inspector or ensure an Animator is present in children. GameObject: {this.gameObject.name}");
                 }
             }
-            
+
             playableGraph = PlayableGraph.Create("StrikerAnimationGraph");
             playableGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-            
+
             // クロスフェード用に2スロット作成
             mixer = AnimationMixerPlayable.Create(playableGraph, 2);
             var output = AnimationPlayableOutput.Create(playableGraph, "Animation", animator);
@@ -76,14 +74,14 @@ namespace Core.Striker {
             currentClipPlayable.SetSpeed(speed);
             currentClipPlayable.SetTime(0);
             mixer.ConnectInput(0, currentClipPlayable, 0);
-            
+
             playableGraph.Play();
 
             if (fadeTime > 0f && previousClipPlayable.IsValid()) {
                 // クロスフェード: 両方のウェイトを同時に変化
                 float elapsed = 0f;
                 float startWeightPrev = mixer.GetInputWeight(1);
-                
+
                 while (elapsed < fadeTime) {
                     elapsed += Time.deltaTime;
                     float t = elapsed / fadeTime;
@@ -91,14 +89,15 @@ namespace Core.Striker {
                     mixer.SetInputWeight(1, Mathf.Lerp(startWeightPrev, 0f, t)); // 古いアニメーションをフェードアウト
                     yield return null;
                 }
-                
+
                 // フェード完了後、前のアニメーションを破棄
                 mixer.SetInputWeight(0, 1f);
                 mixer.SetInputWeight(1, 0f);
                 mixer.DisconnectInput(1);
                 previousClipPlayable.Destroy();
                 previousClipPlayable = default;
-            } else {
+            }
+            else {
                 // フェードなしの場合は即座に切り替え
                 mixer.SetInputWeight(0, 1f);
                 if (previousClipPlayable.IsValid()) {
@@ -115,16 +114,17 @@ namespace Core.Striker {
                 while (currentClipPlayable.IsValid() && currentClipPlayable.GetTime() < clipDuration) {
                     yield return null;
                 }
-                
+
                 // 最後のフレームで止める
                 if (currentClipPlayable.IsValid()) {
                     currentClipPlayable.SetSpeed(0);
                     currentClipPlayable.SetTime(clip.length);
                 }
-                
+
                 currentAnimationCoroutine = null;
                 onComplete?.Invoke();
-            } else {
+            }
+            else {
                 // ループアニメーションの場合はコルーチン終了
                 currentAnimationCoroutine = null;
             }

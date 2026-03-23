@@ -261,6 +261,14 @@ namespace Core.Striker {
         public Rigidbody Rigidbody => context.Rigidbody;
         public Vector2 InputDirection => context.InputDirection;
 
+        public void ApplyDamage(float damage) {
+            context.ApplyDamage(damage);
+        }
+
+        public void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null) {
+            context.PlayAnimation(animation, onComplete);
+        }
+
         public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = default)
             : base(context, defaultState) { }
     }
