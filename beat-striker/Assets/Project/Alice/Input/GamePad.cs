@@ -1,0 +1,118 @@
+
+
+
+using System.Collections.Generic;
+using App;
+using R3;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using VContainer;
+
+namespace Alice {
+
+    [RequireComponent(typeof(PlayerInput))]
+    public class GamePad : MonoBehaviour, GameInput.IPlayerActions {
+        IGamePadRegistry registry;
+        private PlayerInput playerInput;
+        private GameInput input;
+        bool isRegistered;
+        readonly Subject<Vector2> onDirection = new();
+        readonly Subject<GamePadButton> onButtonDown = new();
+        readonly Subject<GamePadButton> onButtonUp = new();
+
+        public Observable<Vector2> OnDirectionAsObservable => onDirection;
+        public Observable<GamePadButton> OnButtonDownAsObservable => onButtonDown;
+        public Observable<GamePadButton> OnButtonUpAsObservable => onButtonUp;
+        public string DeviceName => playerInput.currentControlScheme;
+
+        void Awake() {
+            input = new GameInput();
+            playerInput = GetComponent<PlayerInput>();
+        }
+
+        [Inject]
+        public void Construct(IGamePadRegistry registry) {
+            this.registry = registry;
+
+            if (isActiveAndEnabled) {
+                RegisterIfNeeded();
+            }
+        }
+        
+        void OnEnable() {
+            input.asset.devices = playerInput.devices;
+            input.Player.AddCallbacks(this);
+            input.Player.Enable();
+            playerInput.onControlsChanged += OnControlsChanged;
+
+            RegisterIfNeeded();
+        }
+
+        void OnDisable() {
+            input.Player.RemoveCallbacks(this);
+            input.Player.Disable();
+            playerInput.onControlsChanged -= OnControlsChanged;
+
+            if (isRegistered) {
+                registry.RequestUnregister(this);
+                isRegistered = false;
+            }
+        }
+
+        void RegisterIfNeeded() {
+            if (isRegistered || registry == null) {
+                return;
+            }
+
+            registry.RequestRegister(this);
+            isRegistered = true;
+        }
+
+        private void OnControlsChanged(PlayerInput changed) {
+            if (changed == playerInput)
+                input.asset.devices = playerInput.devices;
+        }
+
+        void OnDestroy() {
+            input.Dispose();
+            onDirection.Dispose();
+            onButtonDown.Dispose();
+            onButtonUp.Dispose();
+        }
+
+        public void OnDirection(InputAction.CallbackContext c)
+            => onDirection.OnNext(c.ReadValue<Vector2>());
+
+        public void OnNorth(InputAction.CallbackContext c) {
+            EmitButton(c, GamePadButton.North);
+        }
+
+        public void OnWest(InputAction.CallbackContext c) {
+            EmitButton(c, GamePadButton.West);
+        }
+
+        public void OnSouth(InputAction.CallbackContext c) {
+            EmitButton(c, GamePadButton.South);
+        }
+
+        public void OnEast(InputAction.CallbackContext c) {
+            EmitButton(c, GamePadButton.East);
+        }
+
+        public void OnLeft(InputAction.CallbackContext c) {
+            EmitButton(c, GamePadButton.Left);
+        }
+
+        public void OnRight(InputAction.CallbackContext c) {
+            EmitButton(c, GamePadButton.Right);
+        }
+
+        void EmitButton(InputAction.CallbackContext c, GamePadButton button) {
+            if (c.started) {
+                onButtonDown.OnNext(button);
+            } else if (c.canceled) {
+                onButtonUp.OnNext(button);
+            }
+        }
+    }
+}
