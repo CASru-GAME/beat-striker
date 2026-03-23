@@ -3,6 +3,12 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace App {
+    public record SceneTransitionRequest(string SceneName);
+
+    public interface ISceneLoader {
+        void LoadScene(SceneTransitionRequest scene, System.Action onComplete);
+    }
+
     public class SceneLoader : MonoBehaviour, ISceneLoader {
 
         void Awake() {

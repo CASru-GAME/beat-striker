@@ -78,12 +78,12 @@
   <Project Path="Unity.Settings.Editor.csproj" />
   <Project Path="Unity.InputSystem.TestFramework.csproj" />
   <Project Path="Unity.CollabProxy.Editor.csproj" />
+  <Project Path="Core.Common.csproj" />
   <Project Path="Unity.ShaderGraph.Utilities.csproj" />
   <Project Path="Unity.VisualScripting.Shared.Editor.csproj" />
   <Project Path="R3.Unity.TextMeshPro.csproj" />
   <Project Path="PlayMode.csproj" />
   <Project Path="UniHumanoid.Editor.csproj" />
-  <Project Path="Core.Common.csproj" />
   <Project Path="Unity.TerrainTools.csproj" />
   <Project Path="Unity.RenderPipeline.Universal.ShaderLibrary.csproj" />
   <Project Path="VRM10.MToon10.Editor.csproj" />

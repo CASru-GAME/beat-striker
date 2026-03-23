@@ -3,15 +3,10 @@ using R3;
 
 namespace App {
 
-    public interface IConsensusRequest {
-        public void Diny();
-        public void Approve();
-    }
-
     public interface IConsensusStateCallback {
         public void OnEnter();
         public ReadOnlyReactiveProperty<bool> CanExit { get; }
-        public void OnExitRequested();
+        public bool OnExitRequested();
         public void OnExit();
     }
 
@@ -23,8 +18,8 @@ namespace App {
 
     public interface IOwnableConsensusState {
         public IConsunsusStateOwnership Own();
+        public FuncSubject<Unit, bool> OnExitRequested { get; }
         public Observable<Unit> OnEnter { get; }
-        public Observable<Unit> OnExitRequested { get; }
         public Observable<Unit> OnExit { get; }
     }
 
@@ -35,19 +30,20 @@ namespace App {
             Success,
             WaitingForCurrentStateToExit,
             AlreadyPending,
+            RejectedByConsensus,
         }
     }
 
     public class ConsensusState : IConsensusStateCallback, IOwnableConsensusState {
         private int totalOwners = 0;
         private readonly ReactiveProperty<bool> canExit = new(true);
+        private readonly FuncSubject<Unit, bool> onExitRequested = new();
         private readonly Subject<Unit> onEnter = new();
-        private readonly Subject<Unit> onExitRequested = new();
         private readonly Subject<Unit> onExit = new();
 
         ReadOnlyReactiveProperty<bool> IConsensusStateCallback.CanExit => canExit;
+        FuncSubject<Unit, bool> IOwnableConsensusState.OnExitRequested => onExitRequested;
         Observable<Unit> IOwnableConsensusState.OnEnter => onEnter;
-        Observable<Unit> IOwnableConsensusState.OnExitRequested => onExitRequested;
         Observable<Unit> IOwnableConsensusState.OnExit => onExit;
 
         public IConsunsusStateOwnership Own() {
@@ -60,8 +56,8 @@ namespace App {
             onEnter.OnNext(Unit.Default);
         }
 
-        void IConsensusStateCallback.OnExitRequested() {
-            onExitRequested.OnNext(Unit.Default);
+        bool IConsensusStateCallback.OnExitRequested() {
+            return onExitRequested.InvokeAllAnd(Unit.Default);
         }
 
         void IConsensusStateCallback.OnExit() {
@@ -83,6 +79,7 @@ namespace App {
                 }
             }
         }
+
     }
 
 
@@ -119,7 +116,9 @@ namespace App {
 
             newState ??= defaultState;
 
-            currentState.OnExitRequested();
+            if (!currentState.OnExitRequested()) {
+                return IConsensusStateMachine.ChangeStateResult.RejectedByConsensus;
+            }
 
             if (!currentState.CanExit.CurrentValue) {
                 pendingState = newState;
@@ -134,7 +133,7 @@ namespace App {
                     CommitPendingStateChange();
                 }
 
-                return IConsensusStateMachine.ChangeStateResult.AlreadyPending;
+                return IConsensusStateMachine.ChangeStateResult.WaitingForCurrentStateToExit;
             }
 
             CommitStateChange(newState);
