@@ -1,39 +1,9 @@
 fileFormatVersion: 2
-guid: 3140584aae95f2b4e91cbec7203684d2
+guid: f2b9f33eeed3c1c438cc4a427b50da83
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u30DE\u30C6\u30EA\u30A2\u30EB"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u30DE\u30C6\u30EA\u30A2\u30EB.001"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u30DE\u30C6\u30EA\u30A2\u30EB.002"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u30DE\u30C6\u30EA\u30A2\u30EB.003"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u30DE\u30C6\u30EA\u30A2\u30EB.004"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u80F4\u4F53"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -52,7 +22,7 @@ ModelImporter:
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
     importConstraints: 0
-    animationCompression: 1
+    animationCompression: 3
     animationRotationError: 0.5
     animationPositionError: 0.5
     animationScaleError: 0.5
@@ -128,9 +98,9 @@ ModelImporter:
     skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   autoGenerateAvatarMappingIfUnspecified: 1
-  animationType: 2
+  animationType: 3
   humanoidOversampling: 1
-  avatarSetup: 0
+  avatarSetup: 1
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
   importBlendShapeDeformPercent: 1
   remapMaterialsIfMaterialImportModeIsNone: 0

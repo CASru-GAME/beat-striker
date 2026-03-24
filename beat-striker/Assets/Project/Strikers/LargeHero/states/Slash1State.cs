@@ -5,6 +5,7 @@ using R3;
 using System;
 using System.Collections.Generic;
 using Core.Striker.Components;
+using UnityEngine.UIElements;
 
 
 namespace Core.LargeHero {
@@ -22,6 +23,7 @@ namespace Core.LargeHero {
 
         [SerializeField] ParticleSystem particleprefab;
         [SerializeField] AudioClip audioClip;
+        [SerializeField] AudioClip guradhitsound;
         [SerializeField] TrailRenderer swordTrail;
 
         [SerializeField] float damage = 10;
@@ -57,7 +59,14 @@ namespace Core.LargeHero {
                 var closestHit = hitsInFrame.MinBy(e => Vector3.Distance(e.hitpoint, hitBox.transform.position));
 
                 Instantiate(particleprefab, closestHit.hitpoint, Quaternion.identity);
-                AudioSource.PlayClipAtPoint(audioClip, closestHit.hitpoint);
+
+                if (closestHit.hurtbox.IsGuarding) {
+                    AudioSource.PlayClipAtPoint(guradhitsound, closestHit.hitpoint);
+                }
+                
+                else {
+                    AudioSource.PlayClipAtPoint(audioClip, closestHit.hitpoint);
+                }
 
                 var nockBackDirection = Mathf.Sign(closestHit.hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
                 closestHit.hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));

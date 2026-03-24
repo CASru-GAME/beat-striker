@@ -1,39 +1,9 @@
 fileFormatVersion: 2
-guid: 3140584aae95f2b4e91cbec7203684d2
+guid: 49cfd4eb1a395e14189832e8f653bb1d
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u30DE\u30C6\u30EA\u30A2\u30EB"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u30DE\u30C6\u30EA\u30A2\u30EB.001"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u30DE\u30C6\u30EA\u30A2\u30EB.002"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u30DE\u30C6\u30EA\u30A2\u30EB.003"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u30DE\u30C6\u30EA\u30A2\u30EB.004"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: "\u80F4\u4F53"
-    second: {fileID: 2100000, guid: d18e0fa99c293914a96e17f3ba1a9c10, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0

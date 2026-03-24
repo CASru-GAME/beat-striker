@@ -13,22 +13,25 @@ namespace Core.LargeHero {
         [SerializeField] private StrikerAnimationClip secondaryAnimationClip;
         [SerializeField] private bool useSecondaryAnimation;
         [SerializeField] private StrikerNode nextNode;
-        [SerializeField] private Animator slimeAnimator;
-        [SerializeField] private string slimeEnterStateName = "Attack01";
-        [SerializeField] private bool playSlimeExitState;
-        [SerializeField] private string slimeExitStateName = "IdleNormal";
-        [SerializeField] private int slimeAnimatorLayer;
+        [SerializeField] private Tracker tracker;
+        [SerializeField] private Transform trackerTarget;
+        [SerializeField] private AnimationPlayer animationPlayer;
         [SerializeField] Hurtbox shield;
+        [SerializeField] GameObject sword;
         IDisposable disposable;
+        private Tracker.TargetHandle targetHandle;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             Debug.Log("GuardStateに遷移");
+            // キャラクターの剣を隠す
+            sword.SetActive(false);
             // アニメーションの再生を開始する
             var clip = useSecondaryAnimation ? secondaryAnimationClip : animationClip;
             context.PlayAnimation(clip, context => {context.TryTransition(nextNode);
             });
-            slimeAnimator.Play(slimeEnterStateName, slimeAnimatorLayer, 0f);
+            animationPlayer.PlayAnimation(secondaryAnimationClip);
+            targetHandle = tracker.AddTarget(trackerTarget);
             disposable = shield.OnHit.Subscribe(hit => {
 
                 context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
@@ -45,9 +48,9 @@ namespace Core.LargeHero {
         public override void OnExit(IStrikerContext context) {
             disposable.Dispose();
             shield.gameObject.SetActive(false);
-            if (playSlimeExitState) {
-                slimeAnimator.Play(slimeExitStateName, slimeAnimatorLayer, 0f);
-            }
+            // 剣を再度表示する
+            sword.SetActive(true);
+            tracker.RemoveTarget(targetHandle); 
         }
 
         // 攻撃コマンドが押された時に呼ばれる
@@ -69,6 +72,7 @@ namespace Core.LargeHero {
         // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
             context.Rigidbody.linearVelocity = status.KnockbackVelocity;
+            context.ApplyDamage(status.Damage);
         }
 
         // ミスした時に呼ばれる

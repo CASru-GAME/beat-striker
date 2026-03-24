@@ -11,6 +11,7 @@ namespace Core.LargeHero {
         [SerializeField] StrikerNode nextNode;
         [SerializeField] EnergyStorage energyStorage;
         [SerializeField] ParticleSystem particleprefab;
+        [SerializeField] AudioClip audioClip;
 
         void OnEnable() {
             particleprefab.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -24,8 +25,10 @@ namespace Core.LargeHero {
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            particleprefab. gameObject.SetActive(true);
             particleprefab.Clear();
             particleprefab.Play();
+            AudioSource.PlayClipAtPoint(audioClip, context.Rigidbody.position);
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, context => {
                 energyStorage.StoreEnergy(1);
@@ -39,6 +42,7 @@ namespace Core.LargeHero {
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
+            particleprefab.gameObject.SetActive(false);
             particleprefab.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             particleprefab.Clear();
         }
