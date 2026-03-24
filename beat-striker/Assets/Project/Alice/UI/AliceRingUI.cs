@@ -1,4 +1,5 @@
 using R3;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,14 +12,19 @@ namespace Alice {
 
         [SerializeField] Image[] centerRing;
         [SerializeField] Image[] rings;
+        [SerializeField] TextMeshProUGUI judgeText;
+        [SerializeField] ParticleSystem successParticle;
         [SerializeField] float ringRadiusPerSecond = 1f;
         [SerializeField] float windowScale = 3f;
+        [SerializeField] float judgeTextFadeDuration = 0.6f;
+        [SerializeField] float judgeTextDropDistance = 48f;
 
         float ringFirstAlpha;
         float centerRingFirstAlpha;
         CompositeDisposable disposables = new();
         bool battleViewActive;
         Track selectedTrack;
+        Vector2 judgeTextStartAnchoredPosition;
 
         public void Construct(
             int playerId,
@@ -35,11 +41,13 @@ namespace Alice {
 
             disposables.Dispose();
             disposables = new CompositeDisposable();
-            beatPlayer.OnBeatExecuted.Subscribe(_ => OnBeat()).AddTo(disposables);
+            beatPlayer.OnBeat.Subscribe(result => OnBeat(result)).AddTo(disposables);
         }
 
         void Awake() {
             centerRing[0].gameObject.SetActive(false);
+            judgeTextStartAnchoredPosition = judgeText.rectTransform.anchoredPosition;
+            judgeText.gameObject.SetActive(false);
             foreach (var ring in rings) {
                 ring.gameObject.SetActive(false);
             }
@@ -62,12 +70,43 @@ namespace Alice {
             }
         }
 
-        void OnBeat() {
+        void OnBeat(IBeatPlayer.BeatResult result) {
             var color = centerRing[0].color;
             color.a = 1f;
             centerRing[0].color = color;
 
             LeanTween.alpha(centerRing[0].rectTransform, centerRingFirstAlpha, 0.3f);
+
+            judgeText.gameObject.SetActive(true);
+            judgeText.text = result.IsSuccess ? "good" : "miss";
+            var judgeColor = judgeText.color;
+            judgeColor.a = 1f;
+            judgeText.color = judgeColor;
+            judgeText.rectTransform.anchoredPosition = judgeTextStartAnchoredPosition;
+
+            LeanTween.cancel(judgeText.gameObject);
+            var targetAnchoredPosition = judgeTextStartAnchoredPosition + Vector2.down * judgeTextDropDistance;
+            LeanTween.value(judgeText.gameObject, judgeTextStartAnchoredPosition, targetAnchoredPosition, judgeTextFadeDuration)
+                .setEase(LeanTweenType.easeInSine)
+                .setOnUpdate((Vector2 position) => {
+                    judgeText.rectTransform.anchoredPosition = position;
+                });
+
+            LeanTween.value(judgeText.gameObject, 1f, 0f, judgeTextFadeDuration)
+                .setOnUpdate((float alpha) => {
+                    var currentColor = judgeText.color;
+                    currentColor.a = alpha;
+                    judgeText.color = currentColor;
+                })
+                .setOnComplete(() => {
+                    judgeText.rectTransform.anchoredPosition = judgeTextStartAnchoredPosition;
+                    judgeText.gameObject.SetActive(false);
+                });
+
+            if (!result.IsSuccess) return;
+
+            successParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            successParticle.Play(true);
         }
 
         void Update() {
