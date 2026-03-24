@@ -10,6 +10,7 @@ namespace Alice {
         public float bpm = 110;
         public float offset = 0;
         public float[] beats;
+        public AudioClip beatSound;
     }
 
     public class BeatConfig : MonoBehaviour {

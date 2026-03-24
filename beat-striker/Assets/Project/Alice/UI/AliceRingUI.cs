@@ -18,6 +18,7 @@ namespace Alice {
         [SerializeField] float windowScale = 3f;
         [SerializeField] float judgeTextFadeDuration = 0.6f;
         [SerializeField] float judgeTextDropDistance = 48f;
+        [SerializeField] AudioClip successSound, missSound;
 
         float ringFirstAlpha;
         float centerRingFirstAlpha;
@@ -71,6 +72,8 @@ namespace Alice {
         }
 
         void OnBeat(IBeatPlayer.BeatResult result) {
+            AudioSource.PlayClipAtPoint(result.IsSuccess ? successSound : missSound, Vector3.zero);
+
             var color = centerRing[0].color;
             color.a = 1f;
             centerRing[0].color = color;
