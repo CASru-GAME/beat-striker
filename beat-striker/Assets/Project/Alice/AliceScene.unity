@@ -911,11 +911,11 @@ MonoBehaviour:
   ratioDistanceMin: 2
   ratioDistanceMax: 12
   nearDistanceViewportRatio: 0.266
-  farDistanceViewportRatio: 0.4
+  farDistanceViewportRatio: 0.343
   zoomSmoothTime: 0.2
   centerSmoothTime: 0.15
   minFov: 40
-  maxFov: 70
+  maxFov: 159
 --- !u!1 &1568525172
 GameObject:
   m_ObjectHideFlags: 0
@@ -1048,9 +1048,9 @@ MonoBehaviour:
   - {fileID: 932946622}
   strikers: 0000000001000000
   strikerEntries:
-  - striker: 0
-    prefab: {fileID: 8540004002704815348, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
   - striker: 1
+    prefab: {fileID: 8540004002704815348, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
+  - striker: 0
     prefab: {fileID: 1829485864700888609, guid: ecee9c48169c8dc428a6839126804337, type: 3}
 --- !u!114 &1802787762
 MonoBehaviour:
@@ -1067,7 +1067,7 @@ MonoBehaviour:
   m_NotificationBehavior: 0
   m_MaxPlayerCount: -1
   m_AllowJoining: 1
-  m_JoinBehavior: 0
+  m_JoinBehavior: 2
   m_PlayerJoinedEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -1109,9 +1109,9 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.225
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -1208,13 +1208,14 @@ MonoBehaviour:
   selectedTrackName: F
   tracks:
   - Name: F
-    AudioClip: {fileID: 8300000, guid: c493688271cbd41c6995ae11f69676e9, type: 3}
-    bpm: 120
-    offset: 0.01
+    AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
+    bpm: 110
+    offset: 0
     beats: []
-  commandTimeOffset: 0.01
-  viewTimeOffset: 0.01
-  perfectWindow: 0.1
+    beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
+  commandTimeOffset: -0.1
+  viewTimeOffset: 0
+  perfectWindow: 0.3
 --- !u!23 &14034975155717343
 MeshRenderer:
   m_ObjectHideFlags: 0
