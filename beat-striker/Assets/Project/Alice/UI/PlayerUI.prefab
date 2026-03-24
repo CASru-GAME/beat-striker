@@ -6311,6 +6311,8 @@ MonoBehaviour:
   windowScale: 3
   judgeTextFadeDuration: 0.3
   judgeTextDropDistance: 5
+  successSound: {fileID: 8300000, guid: f9398444eb0b1b34c8a5c0b08e139af8, type: 3}
+  missSound: {fileID: 8300000, guid: 63d68b446e452af4a8a4608dd9771d89, type: 3}
 --- !u!222 &1677541946082611596
 CanvasRenderer:
   m_ObjectHideFlags: 0
