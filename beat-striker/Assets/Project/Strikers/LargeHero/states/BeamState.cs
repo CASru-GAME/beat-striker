@@ -13,6 +13,7 @@ namespace Core.LargeHero {
         [SerializeField] GameObject beamPrefab;
         [SerializeField] Transform firePosition;
         [SerializeField] float fireTime = 0.3f;
+        [SerializeField] AudioClip audioClip;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -25,6 +26,7 @@ namespace Core.LargeHero {
             ScheduleStateEvent(fireTime, context => {
                 var particleInstance =
                 Instantiate(beamPrefab, firePosition.position, context. Rigidbody.transform.rotation);
+                AudioSource.PlayClipAtPoint(audioClip, firePosition.position);
             });
         }
 
