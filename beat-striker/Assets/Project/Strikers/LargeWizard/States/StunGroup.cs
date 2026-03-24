@@ -39,6 +39,7 @@ namespace Core.LargeWizard {
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
             context.Rigidbody.linearVelocity = status.KnockbackVelocity;
             context.TryTransition(stunState);
+            context.ApplyDamage(status.Damage);
         }
 
         // ミスした時に呼ばれる

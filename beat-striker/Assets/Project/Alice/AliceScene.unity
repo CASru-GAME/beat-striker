@@ -911,11 +911,11 @@ MonoBehaviour:
   ratioDistanceMin: 2
   ratioDistanceMax: 12
   nearDistanceViewportRatio: 0.266
-  farDistanceViewportRatio: 0.343
+  farDistanceViewportRatio: 0.655
   zoomSmoothTime: 0.2
   centerSmoothTime: 0.15
   minFov: 40
-  maxFov: 159
+  maxFov: 80
 --- !u!1 &1568525172
 GameObject:
   m_ObjectHideFlags: 0
@@ -1209,11 +1209,17 @@ MonoBehaviour:
   tracks:
   - Name: F
     AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
-    bpm: 110
+    bpm: 55
     offset: 0
     beats: []
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
-  commandTimeOffset: -0.1
+  - Name: A
+    AudioClip: {fileID: 8300000, guid: 83579df36a8c84ea9b88aae568eb8b44, type: 3}
+    bpm: 128
+    offset: 0
+    beats: []
+    beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
+  commandTimeOffset: 0
   viewTimeOffset: 0
   perfectWindow: 0.3
 --- !u!23 &14034975155717343
