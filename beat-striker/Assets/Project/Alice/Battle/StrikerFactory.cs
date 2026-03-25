@@ -21,8 +21,8 @@ namespace Alice {
             playerTransform.SetParent(instance.transform);
             container.InjectGameObject(instance.gameObject);
             var runtime = instance.EnsureAliceRuntimeHub();
-            runtime.SetPlayerId(playerId);
             container.Inject(runtime);
+            runtime.SetPlayerId(playerId);
             return runtime;
         }
     }

@@ -22,10 +22,7 @@ namespace Alice {
         IReadOnlyList<BattleCommandLog> CommandHistory { get; }
     }
 
-    [RequireComponent(typeof(AnimationPlayer))]
-    [RequireComponent(typeof(Rigidbody))]
-    [RequireComponent(typeof(CapsuleCollider))]
-    public class AliceStrikerHub : MonoBehaviour, IStrikerContext, IReadOnlyBattleEntity {
+    public class AliceStrikerHub : IStrikerContext, IReadOnlyBattleEntity, IDisposable {
         [Inject] IBattleFlow battleFlow;
         [Inject] IStrikerRegistry strikerRegistry;
 
@@ -75,27 +72,18 @@ namespace Alice {
             currentStateName = currentStateNameSubject.ToReadOnlyReactiveProperty();
         }
 
-        void Awake() {
-            rb = GetComponent<Rigidbody>();
-            rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
-            animationPlayer = GetComponent<AnimationPlayer>();
-            previousFramePosition = rb.position;
-            frameVelocity = Vector3.zero;
-        }
-
-        void Start() {
+        public void Tick(float deltaTime) {
             if (!initialized) return;
-            stateMachine = new StrikerStateMachine(this, defaultState);
-            stateNameSubscription = stateMachine.CurrentStateName.Subscribe(currentStateNameSubject.OnNext);
-        }
 
-        void Update() {
-            var deltaTime = Time.deltaTime;
+            if (stateMachine == null) {
+                stateMachine = new StrikerStateMachine(this, defaultState);
+                stateNameSubscription = stateMachine.CurrentStateName.Subscribe(currentStateNameSubject.OnNext);
+            }
+
             var currentPosition = rb.position;
             frameVelocity = deltaTime > 0f ? (currentPosition - previousFramePosition) / deltaTime : Vector3.zero;
             previousFramePosition = currentPosition;
 
-            if (stateMachine == null) return;
             stateMachine.CurrentState.OnUpdate(stateMachine);
         }
 
@@ -107,7 +95,12 @@ namespace Alice {
             victoryState = legacy.InspectorVictoryState;
             introState = legacy.InspectorIntroState;
             aiBrain = legacy.InspectorAiBrain;
+            rb = legacy.Rigidbody;
+            rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
+            animationPlayer = legacy.GetAnimationPlayer();
             currentHitPoint = maxHitPoint.value;
+            previousFramePosition = rb.position;
+            frameVelocity = Vector3.zero;
             initialized = true;
         }
 
@@ -121,7 +114,7 @@ namespace Alice {
             onHit.OnNext(Unit.Default);
         }
 
-        void OnDestroy() {
+        public void Dispose() {
             stateNameSubscription?.Dispose();
             onHit.Dispose();
             currentStateName.Dispose();
