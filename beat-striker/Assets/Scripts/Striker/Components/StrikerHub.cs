@@ -56,6 +56,9 @@ namespace Core.Striker {
         public int PlayerId => model.PlayerId.value;
 
         private StrikerStateMachine stateMachine;
+        private IDisposable stateNameSubscription;
+        private readonly BehaviorSubject<string> currentStateNameSubject = new(string.Empty);
+        private readonly ReadOnlyReactiveProperty<string> currentStateName;
 
         private AnimationPlayer animationPlayer;
         public IEnumerable<Alice.IReadOnlyBattleEntity> GetAllStrikers() {
@@ -67,10 +70,15 @@ namespace Core.Striker {
         public Vector3 Position => Rigidbody.position;
         public Vector3 Velocity => Rigidbody.linearVelocity;
         public float HitPoint => currentHitPoint;
+        ReadOnlyReactiveProperty<string> Alice.IReadOnlyBattleEntity.CurrentStateName => currentStateName;
 
         Observable<Unit> Alice.IReadOnlyBattleEntity.OnHit => throw new NotImplementedException();
 
         public IReadOnlyList<Alice.BattleCommandLog> CommandHistory => throw new NotImplementedException();
+
+        public StrikerHub() {
+            currentStateName = currentStateNameSubject.ToReadOnlyReactiveProperty();
+        }
 
         private void Awake() {
             if (FindAnyObjectByType<Alice.AliceScope>() != null) {
@@ -98,6 +106,7 @@ namespace Core.Striker {
 
         private void Start() {
             stateMachine = new StrikerStateMachine(this, defaultState);
+            stateNameSubscription = stateMachine.CurrentStateName.Subscribe(currentStateNameSubject.OnNext);
         }
 
         private void Update() {
@@ -123,6 +132,10 @@ namespace Core.Striker {
         }
 
         void OnDestroy() {
+            stateNameSubscription?.Dispose();
+            currentStateName.Dispose();
+            currentStateNameSubject.Dispose();
+
             if (bus == null) return;
 
             bus.Unsubscribe<GamePadMessages.Inputed>(OnGamePadInputed);
@@ -318,11 +331,15 @@ namespace Core.Striker {
 
     /// <summary>
     /// Striker専用ステートマシン
-    /// 汎用StateMachineを継承し、IStrikerStateContext/IStrikerNodeContextの追加プロパティを実装
+    /// 遷移ロジックを内包した単一のステートマシン実装
     /// </summary>
-    public class StrikerStateMachine :
-        StateMachine<IStrikerNode, IStrikerState, IStrikerContext, StrikerStateMachine>,
-        IStrikerStateContext, IStrikerNodeContext {
+    public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
+        IStrikerState currentState;
+        readonly IStrikerContext context;
+        readonly BehaviorSubject<string> currentStateNameSubject = new(string.Empty);
+        public ReadOnlyReactiveProperty<string> CurrentStateName { get; }
+        public IStrikerState CurrentState => currentState;
+
         public Rigidbody Rigidbody => context.Rigidbody;
         public Vector2 InputDirection => context.InputDirection;
         public IEnumerable<Alice.IReadOnlyBattleEntity> GetAllStrikers() => context.GetAllStrikers();
@@ -335,7 +352,58 @@ namespace Core.Striker {
             context.PlayAnimation(animation, onComplete);
         }
 
-        public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = default)
-            : base(context, defaultState) { }
+        public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = null)
+        {
+            this.context = context;
+            CurrentStateName = currentStateNameSubject.ToReadOnlyReactiveProperty();
+            if (defaultState != null) {
+                ChangeState(defaultState);
+            }
+            PublishCurrentStateName();
+        }
+        
+
+        public void ChangeState(IStrikerState newState) {
+            if (newState == null || ReferenceEquals(newState, currentState)) return;
+
+            var oldParents = currentState != null
+                ? new HashSet<IStrikerGroup>(currentState.Parents ?? Array.Empty<IStrikerGroup>())
+                : new HashSet<IStrikerGroup>();
+            var newParents = new HashSet<IStrikerGroup>(newState.Parents ?? Array.Empty<IStrikerGroup>());
+
+            currentState?.OnExit(context);
+
+            foreach (var parent in oldParents) {
+                if (!newParents.Contains(parent)) parent.OnExit(context);
+            }
+
+            foreach (var parent in newParents) {
+                if (!oldParents.Contains(parent)) parent.OnEnter(context);
+            }
+
+            newState.OnEnter(context);
+            currentState = newState;
+            PublishCurrentStateName();
+        }
+
+        public void TryTransition(IStrikerNode node) {
+            node?.OnTryTransition(this);
+        }
+
+        public void Reset(IStrikerState defaultState) {
+            ChangeState(defaultState);
+            PublishCurrentStateName();
+        }
+
+        void PublishCurrentStateName() {
+            currentStateNameSubject.OnNext(ResolveCurrentStateName());
+        }
+
+        string ResolveCurrentStateName() {
+            if (CurrentState is Component stateComponent) {
+                return stateComponent.gameObject.name;
+            }
+            return CurrentState?.GetType().Name ?? string.Empty;
+        }
     }
 }

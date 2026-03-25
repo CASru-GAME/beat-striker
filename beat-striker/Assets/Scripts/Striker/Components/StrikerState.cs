@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Core.Striker {
     public abstract class StrikerState : StrikerNode, IStrikerState {
         [SerializeField] private List<StrikerGroup> parents = new List<StrikerGroup>();
-        public virtual IEnumerable<IGroup<IStrikerContext>> Parents => parents;
+        public virtual IEnumerable<IStrikerGroup> Parents => parents;
 
         private readonly List<(float delay, float elapsedTime, Action<IStrikerStateContext> action)> timeActions = new();
 

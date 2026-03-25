@@ -5,31 +5,6 @@ using Core.Battle;
 using UnityEngine;
 
 namespace Core.Striker {
-
-    public interface IStateContext<in TNode> {
-        void TryTransition(TNode node);
-    }
-
-    public interface INodeContext<in TNode, in TState> : IStateContext<TNode> {
-        void ChangeState(TState state);
-    }
-
-    public interface INode<in TNodeContext> {
-        void OnTryTransition(TNodeContext context);
-    }
-
-    public interface IState<in TContext, TState> where TState : IState<TContext, TState> {
-        IEnumerable<IGroup<TContext>> Parents { get; }
-        void OnEnter(TContext context);
-        void OnExit(TContext context);
-    }
-
-    // 親リストを持たない単純なグループ向けのインターフェース
-    public interface IGroup<in TContext> {
-        void OnEnter(TContext context);
-        void OnExit(TContext context);
-    }
-
     public interface IStrikerContext {
         Rigidbody Rigidbody { get; }
         Vector2 InputDirection { get; }
@@ -38,7 +13,8 @@ namespace Core.Striker {
         void ApplyDamage(float damage);
     }
 
-    public interface IStrikerStateContext : IStateContext<IStrikerNode> {
+    public interface IStrikerStateContext {
+        void TryTransition(IStrikerNode node);
         Rigidbody Rigidbody { get; }
         Vector2 InputDirection { get; }
         IEnumerable<IReadOnlyBattleEntity> GetAllStrikers();
@@ -46,13 +22,18 @@ namespace Core.Striker {
         void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
     }
 
-    public interface IStrikerNodeContext : INodeContext<IStrikerNode, IStrikerState> {
-        Vector2 InputDirection { get; }
+    public interface IStrikerNodeContext : IStrikerStateContext {
+        void ChangeState(IStrikerState state);
     }
 
-    public interface IStrikerNode : INode<IStrikerNodeContext> { }
+    public interface IStrikerNode {
+        void OnTryTransition(IStrikerNodeContext context);
+    }
 
-    public interface IStrikerState : IState<IStrikerContext, IStrikerState> {
+    public interface IStrikerState {
+        IEnumerable<IStrikerGroup> Parents { get; }
+        void OnEnter(IStrikerContext context);
+        void OnExit(IStrikerContext context);
         void OnUpdate(IStrikerStateContext context);
         void OnHit(IStrikerStateContext context, HitStatus status);
         void OnAttackRequested(IStrikerStateContext context);
@@ -60,11 +41,11 @@ namespace Core.Striker {
         void OnGuardRequested(IStrikerStateContext context);
         void OnDashRequested(IStrikerStateContext context);
         void OnMiss(IStrikerStateContext context);
-        new void OnExit(IStrikerContext context);
     }
 
-    // 親リストを持たないストライカー用のグループインターフェース
-    public interface IStrikerGroup : IGroup<IStrikerContext> {
+    public interface IStrikerGroup {
+        void OnEnter(IStrikerContext context);
+        void OnExit(IStrikerContext context);
         void OnUpdate(IStrikerStateContext context);
         void OnHit(IStrikerStateContext context, HitStatus status);
         void OnAttackRequested(IStrikerStateContext context);

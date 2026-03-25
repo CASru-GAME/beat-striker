@@ -1,3 +1,5 @@
+using System;
+using R3;
 using UnityEngine;
 
 namespace Alice {
@@ -11,6 +13,8 @@ namespace Alice {
         IReadOnlyBattleEntity targetEnemy;
         bool aiEnabled;
         int lastHandledEnemyCommandHistoryCount;
+        IDisposable selfStateNameSubscription;
+        IDisposable targetStateNameSubscription;
 
         void Update() {
             if (!aiEnabled) {
@@ -78,12 +82,22 @@ namespace Alice {
             aiEnabled = true;
             targetEnemy = null;
             lastHandledEnemyCommandHistoryCount = 0;
+
+            selfStateNameSubscription?.Dispose();
+            selfStateNameSubscription = SelfStriker.CurrentStateName.Subscribe(stateName => {
+                Debug.Log($"[BeatAiBrain] Self State Changed: {stateName}");
+            });
         }
 
         protected override void OnAiDisabled() {
             aiEnabled = false;
             targetEnemy = null;
             lastHandledEnemyCommandHistoryCount = 0;
+
+            selfStateNameSubscription?.Dispose();
+            selfStateNameSubscription = null;
+            targetStateNameSubscription?.Dispose();
+            targetStateNameSubscription = null;
         }
 
         IReadOnlyBattleEntity ResolveTargetEnemy() {
@@ -98,11 +112,14 @@ namespace Alice {
 
                 if (targetEnemy != opponent) {
                     lastHandledEnemyCommandHistoryCount = 0;
+                    SubscribeTargetStateName(opponent);
                 }
                 targetEnemy = opponent;
                 return targetEnemy;
             }
 
+            targetStateNameSubscription?.Dispose();
+            targetStateNameSubscription = null;
             targetEnemy = null;
             return null;
         }
@@ -137,6 +154,18 @@ namespace Alice {
             var jumpDirection = new Vector2(horizontal, 1f).normalized;
             Press(GamePadButton.South);
             EmitDirectionFor(jumpDirection, jumpHoldDuration);
+        }
+
+        void SubscribeTargetStateName(IReadOnlyBattleEntity target) {
+            targetStateNameSubscription?.Dispose();
+            targetStateNameSubscription = target.CurrentStateName.Subscribe(stateName => {
+                Debug.Log($"[BeatAiBrain] Target State Changed (Player {target.PlayerId}): {stateName}");
+            });
+        }
+
+        void OnDestroy() {
+            selfStateNameSubscription?.Dispose();
+            targetStateNameSubscription?.Dispose();
         }
     }
 }
