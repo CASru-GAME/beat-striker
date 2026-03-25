@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Core.App.Types;
-using Core.Battle;
-using Core.Striker;
-using Core.Striker.Components;
+using Alice;
 using R3;
 using UnityEngine;
 using VContainer;

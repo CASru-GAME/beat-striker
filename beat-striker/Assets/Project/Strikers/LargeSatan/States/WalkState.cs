@@ -1,6 +1,5 @@
-using Core.Battle;
 using UnityEngine;
-using Core.Striker;
+using Alice;
 using UnityEditor.Experimental.GraphView;
 
 namespace Core.LargeSatan {

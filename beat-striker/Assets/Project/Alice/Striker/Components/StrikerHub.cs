@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Core.Striker.Components;
+using Alice;
 using UnityEngine;
 using R3;
 
-namespace Core.Striker {
+namespace Alice {
 
     [RequireComponent(typeof(AnimationPlayer))]
     [RequireComponent(typeof(Rigidbody))]

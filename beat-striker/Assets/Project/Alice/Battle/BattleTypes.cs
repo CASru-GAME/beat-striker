@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace Core.Battle {
+namespace Alice {
 
     public readonly struct HitStatus {
         public readonly float Damage;
@@ -10,7 +10,7 @@ namespace Core.Battle {
         
         public HitStatus(float damage) {
             this.Damage = damage;
-            this.KnockbackVelocity = Vector2.zero;
+            this.KnockbackVelocity = Vector3.zero;
         }
 
         public HitStatus(float damage, Vector3 knockback) {

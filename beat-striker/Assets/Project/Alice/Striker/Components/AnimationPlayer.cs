@@ -5,7 +5,7 @@ using UnityEngine.Animations;
 using UnityEngine.Playables;
 using UniVRM10;
 
-namespace Core.Striker {
+namespace Alice {
 
     [AddComponentMenu(" 🟠AnimationPlayer", 0)]
     public class AnimationPlayer : MonoBehaviour {

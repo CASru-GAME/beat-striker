@@ -1,8 +1,8 @@
-using Core.Striker;
+using Alice;
 using UnityEditor;
 using UnityEngine;
 
-namespace Core.Striker.Editor {
+namespace Alice.Editor {
     [CustomPropertyDrawer(typeof(StrikerAnimationClip))]
     public class StrikerAnimationClipDrawer : PropertyDrawer {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {

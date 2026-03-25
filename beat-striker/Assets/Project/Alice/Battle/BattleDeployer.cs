@@ -3,7 +3,7 @@ using R3;
 using System;
 using System.Collections.Generic;
 using App;
-using Core.Striker;
+using Alice;
 using UnityEngine;
 
 namespace Alice {

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core.Striker.Components {
+namespace Alice {
 
     public static class Extentions {
 

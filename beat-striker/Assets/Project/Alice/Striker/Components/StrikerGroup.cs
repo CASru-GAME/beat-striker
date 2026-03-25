@@ -1,7 +1,7 @@
-using Core.Battle;
+using Alice;
 using UnityEngine;
 
-namespace Core.Striker {
+namespace Alice {
     public abstract class StrikerGroup : MonoBehaviour, IStrikerGroup {
         public virtual void OnEnter(IStrikerContext hub) { }
         public virtual void OnUpdate(IStrikerStateContext hub) { }

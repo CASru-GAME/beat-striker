@@ -1,4 +1,4 @@
-using Core.Striker;
+using Alice;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;

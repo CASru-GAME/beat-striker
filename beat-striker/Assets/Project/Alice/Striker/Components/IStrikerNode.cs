@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Alice;
-using Core.Battle;
 using UnityEngine;
 
-namespace Core.Striker {
+namespace Alice {
     public interface IStrikerContext {
         Rigidbody Rigidbody { get; }
         Vector2 InputDirection { get; }

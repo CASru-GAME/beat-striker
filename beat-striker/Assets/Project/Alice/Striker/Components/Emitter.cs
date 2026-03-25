@@ -1,7 +1,5 @@
 using UnityEngine;
 using System;
-using Core.Striker;
-using Core.Battle;
 using R3;
 
 public class Emitter : MonoBehaviour {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Core.Striker
+namespace Alice
 {
     [System.Serializable]
     public class StrikerAnimationClip

@@ -1,7 +1,6 @@
 using UnityEngine;
 using System;
-using Core.Striker;
-using Core.Battle;
+using Alice;
 using R3;
 
 [RequireComponent(typeof(Rigidbody))]

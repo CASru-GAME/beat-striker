@@ -1,9 +1,9 @@
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
-using Core.Striker;
+using Alice;
 
-namespace Core.Striker.Editor
+namespace Alice.Editor
 {
     [CustomEditor(typeof(StrikerState), true)]
     public class StrikerStateEditor : UnityEditor.Editor

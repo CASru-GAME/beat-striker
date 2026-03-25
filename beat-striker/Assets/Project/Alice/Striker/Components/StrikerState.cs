@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Core.Battle;
+using Alice;
 using UnityEngine;
 
-namespace Core.Striker {
+namespace Alice {
     public abstract class StrikerState : StrikerNode, IStrikerState {
         [SerializeField] private List<StrikerGroup> parents = new List<StrikerGroup>();
         public virtual IEnumerable<IStrikerGroup> Parents => parents;

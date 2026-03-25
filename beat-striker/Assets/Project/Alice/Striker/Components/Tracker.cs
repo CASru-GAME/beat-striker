@@ -43,6 +43,7 @@ public class Tracker : MonoBehaviour {
             CaptureRelativeTransform(target);
         }
 
+
         // 元の状態を保存
         originalState = new TargetState(null, target, relativePosition, relativeRotation);
     }
