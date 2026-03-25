@@ -23,8 +23,6 @@ namespace Core.Striker {
         [SerializeField] private Alice.AiBrain aiBrain;
 
         private Rigidbody rb;
-        private Vector3 initialPosition;
-        private Quaternion initialRotation;
 
         public Rigidbody Rigidbody => rb;
         public float MaxHitPoint => maxHitPoint.value;
@@ -60,10 +58,6 @@ namespace Core.Striker {
             return animationPlayer;
         }
 
-        private void Start() {
-            SavePosition();
-        }
-
         private void Update() {
             aliceRuntime?.Tick(Time.deltaTime);
         }
@@ -72,30 +66,6 @@ namespace Core.Striker {
             aliceRuntime?.Dispose();
         }
 
-        public void SavePosition() {
-            initialPosition = transform.position;
-            initialRotation = transform.rotation;
-        }
-
-        public void ResetPosition() {
-            transform.SetPositionAndRotation(initialPosition, initialRotation);
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            aliceRuntime?.CancelDirection();
-        }
-
-        public Vector2 GetForwardDirection() {
-            Vector3 forward = transform.forward;
-            return new Vector2(forward.x, forward.z).normalized;
-        }
-
-        public void ChangeDirection(Vector2 direction) {
-            aliceRuntime?.ChangeDirection(direction);
-        }
-
-        public void CancelDirection() {
-            aliceRuntime?.CancelDirection();
-        }
     }
 
     /// <summary>

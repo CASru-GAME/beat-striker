@@ -19,7 +19,11 @@ public class WarrierChargeAttackSMB : StateMachineBehaviour {
 
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {
-        colliden = animator.GetComponent<StrikerView>().GetColliden("Ax");
+        colliden = FindColliden(animator, "Ax");
+        if (colliden == null) {
+            Debug.LogError("WarrierChargeAttackSMB: Colliden 'Ax' not found.");
+            return;
+        }
         trailer = colliden.transform.GetComponentInChildren<TrailRenderer>();
         trailer.enabled = true;
         colliden.OnEnterTrigger += OnEnterTrigger;
@@ -33,6 +37,9 @@ public class WarrierChargeAttackSMB : StateMachineBehaviour {
     }
 
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {
+        if (colliden == null || trailer == null || rb == null) {
+            return;
+        }
         colliden.OnEnterTrigger -= OnEnterTrigger;
         rb.linearDamping = linearDampingBefore;
 
@@ -52,9 +59,9 @@ public class WarrierChargeAttackSMB : StateMachineBehaviour {
     void OnEnterTrigger(Collider other) {
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
-        var target = other.GetComponent<StrikerView>();
-        if (target != null) {
-            target.TakeDamage(new HitStatus(damage));
+        var hurtbox = other.GetComponent<Hurtbox>();
+        if (hurtbox != null) {
+            hurtbox.GiveHit(new HitStatus(damage));
         }
         else if (virgine) {
             virgine = false;
@@ -62,5 +69,15 @@ public class WarrierChargeAttackSMB : StateMachineBehaviour {
             GameObject effect = GameObject.Instantiate(hitEffectPrefab, trailer.transform.position, Quaternion.identity);
             GameObject.Destroy(effect, 2f);
         }
+    }
+
+    static Colliden FindColliden(Animator animator, string collidenName) {
+        var collidens = animator.GetComponentsInChildren<Colliden>(true);
+        foreach (var item in collidens) {
+            if (item.name == collidenName) {
+                return item;
+            }
+        }
+        return null;
     }
 }
