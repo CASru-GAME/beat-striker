@@ -26,8 +26,8 @@ namespace Alice {
         [Inject] IBattleFlow battleFlow;
         [Inject] IStrikerRegistry strikerRegistry;
 
-        HitPoint maxHitPoint;
-        SpecialPoint maxSpecialPoint;
+        float maxHitPoint;
+        float maxSpecialPoint;
         StrikerState defaultState;
         StrikerState deadState;
         StrikerState victoryState;
@@ -55,7 +55,7 @@ namespace Alice {
         public Rigidbody Rigidbody => rb;
         public float CurrentHitPoint => currentHitPoint;
         public AiBrain AiBrain => aiBrain;
-        public float MaxHitPoint => maxHitPoint.value;
+        public float MaxHitPoint => maxHitPoint;
         public Vector3 Position => Rigidbody.position;
         public Vector3 Velocity => frameVelocity;
         public float HitPoint => currentHitPoint;
@@ -98,7 +98,7 @@ namespace Alice {
             rb = legacy.Rigidbody;
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
             animationPlayer = legacy.GetAnimationPlayer();
-            currentHitPoint = maxHitPoint.value;
+            currentHitPoint = maxHitPoint;
             previousFramePosition = rb.position;
             frameVelocity = Vector3.zero;
             initialized = true;
@@ -186,7 +186,7 @@ namespace Alice {
         }
 
         public void OnReset() {
-            currentHitPoint = maxHitPoint.value;
+            currentHitPoint = maxHitPoint;
             inputDirection = Vector2.zero;
             commandHistory.Clear();
             previousFramePosition = rb.position;

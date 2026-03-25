@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Core.Battle;
 using Core.Striker.Components;
 using UnityEngine;
 using R3;
@@ -14,8 +13,8 @@ namespace Core.Striker {
     public class StrikerHub : MonoBehaviour {
 
         [Header("Striker Settings")]
-        [SerializeField] private HitPoint maxHitPoint = new(100);
-        [SerializeField] private SpecialPoint maxSpecialPoint = new(100);
+        [SerializeField] private float maxHitPoint = 100f;
+        [SerializeField] private float maxSpecialPoint = 100f;
 
         [Header("References")]
         [SerializeField] private StrikerState defaultState;
@@ -25,9 +24,9 @@ namespace Core.Striker {
         private Rigidbody rb;
 
         public Rigidbody Rigidbody => rb;
-        public float MaxHitPoint => maxHitPoint.value;
-        public HitPoint InspectorMaxHitPoint => maxHitPoint;
-        public SpecialPoint InspectorMaxSpecialPoint => maxSpecialPoint;
+        public float MaxHitPoint => maxHitPoint;
+        public float InspectorMaxHitPoint => maxHitPoint;
+        public float InspectorMaxSpecialPoint => maxSpecialPoint;
         public StrikerState InspectorDefaultState => defaultState;
         public StrikerState InspectorDeadState => deadState;
         public StrikerState InspectorVictoryState => VictoryState;
@@ -35,9 +34,8 @@ namespace Core.Striker {
         public Alice.AiBrain InspectorAiBrain => aiBrain;
         private Alice.AliceStrikerHub aliceRuntime;
 
+
         private AnimationPlayer animationPlayer;
-        public float CurrentHitPoint => aliceRuntime?.CurrentHitPoint ?? maxHitPoint.value;
-        public int PlayerId => aliceRuntime?.PlayerId ?? -1;
 
         private void Awake() {
             rb = GetComponent<Rigidbody>();

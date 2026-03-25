@@ -42,7 +42,6 @@
   <Project Path="Extentions.csproj" />
   <Project Path="Unity.VisualScripting.Flow.csproj" />
   <Project Path="Unity.Splines.Editor.csproj" />
-  <Project Path="Core.Battle.csproj" />
   <Project Path="Unity.PerformanceTesting.csproj" />
   <Project Path="Unity.Formats.Alembic.Runtime.csproj" />
   <Project Path="Unity.TextMeshPro.csproj" />
@@ -82,7 +81,7 @@
   <Project Path="Unity.ShaderGraph.Utilities.csproj" />
   <Project Path="Unity.VisualScripting.Shared.Editor.csproj" />
   <Project Path="R3.Unity.TextMeshPro.csproj" />
-  <Project Path="PlayMode.csproj" />
+  <Project Path="Core.Battle.csproj" />
   <Project Path="UniHumanoid.Editor.csproj" />
   <Project Path="Unity.TerrainTools.csproj" />
   <Project Path="Unity.RenderPipeline.Universal.ShaderLibrary.csproj" />
@@ -95,11 +94,9 @@
   <Project Path="Unity.RenderPipelines.Universal.Shaders.csproj" />
   <Project Path="Unity.RenderPipelines.Core.Runtime.Shared.csproj" />
   <Project Path="Core.Extras.csproj" />
-  <Project Path="EditMode.csproj" />
   <Project Path="Unity.2D.Sprite.AIIntegration.Editor.csproj" />
   <Project Path="UniGLTF.UniUnlit.csproj" />
   <Project Path="UniGLTF.UniUnlit.Editor.csproj" />
-  <Project Path="TestUtils.csproj" />
   <Project Path="Unity.VisualScripting.DocCodeExamples.csproj" />
   <Project Path="VRM10.MToon10.Tests.csproj" />
   <Project Path="Unity.PlasticSCM.Editor.Entities.csproj" />
