@@ -1,4 +1,5 @@
 using R3;
+using System;
 using UnityEngine;
 using VContainer;
 
@@ -11,11 +12,8 @@ namespace Alice {
         readonly Subject<GamePadButton> onButtonDown = new();
         readonly Subject<GamePadButton> onButtonUp = new();
 
-        BeatConfig beatConfig;
-        AudioSource audioSource;
-        float[] beats;
-        int beatIndex;
-        int lastTriggeredBeatIndex = -1;
+        IMusicPlayer musicPlayer;
+        IDisposable aiSubscription;
         bool isAiMode;
 
         public Observable<Vector2> OnDirectionAsObservable => onDirection;
@@ -25,9 +23,8 @@ namespace Alice {
         public string DeviceName => nameof(AiBrain);
 
         [Inject]
-        public void Construct(BeatConfig beatConfig, AudioSource audioSource) {
-            this.beatConfig = beatConfig;
-            this.audioSource = audioSource;
+        public void Construct(IMusicPlayer musicPlayer) {
+            this.musicPlayer = musicPlayer;
         }
 
         public void SetAiMode(bool isAiMode) {
@@ -38,44 +35,18 @@ namespace Alice {
             this.isAiMode = isAiMode;
             if (isAiMode) {
                 OnAiEnabled();
+                aiSubscription = musicPlayer.OnGoodZoneEntered.Subscribe(signal => {
+                    if (!this.isAiMode) {
+                        return;
+                    }
+                    OnGoodZoneEntered();
+                });
             } else {
-                OnAiDisafaaegag();
+                OnAiDisabled();
                 CancelDirection();
+                aiSubscription?.Dispose();
+                aiSubscription = null;
             }
-        }
-
-        void Start() {
-            beats = beatConfig.SelectedTrack.beats;
-            beatIndex = 0;
-        }
-
-        void Update() {
-            if (!isAiMode) {
-                return;
-            }
-
-            if (beatIndex >= beats.Length) {
-                return;
-            }
-
-            var judgeTime = audioSource.time + beatConfig.CommandTimeOffset;
-            while (beatIndex < beats.Length && judgeTime > beats[beatIndex] + beatConfig.PerfectWindow) {
-                beatIndex++;
-            }
-
-            if (beatIndex >= beats.Length) {
-                return;
-            }
-
-            var windowStart = beats[beatIndex] - beatConfig.PerfectWindow;
-            if (judgeTime < windowStart || lastTriggeredBeatIndex == beatIndex) {
-                return;
-            }
-
-            EmitDirection(directionInput);
-            Press(OnBeat(beatIndex));
-            lastTriggeredBeatIndex = beatIndex;
-            beatIndex++;
         }
 
         protected void EmitDirection(Vector2 direction) {
@@ -91,11 +62,12 @@ namespace Alice {
             onButtonUp.OnNext(button);
         }
 
-        protected abstract GamePadButton OnBeat(int beatIndex);
+        protected virtual void OnGoodZoneEntered() { }
         protected virtual void OnAiEnabled() { }
-        protected virtual void OnAiDisafaaegag() { }
+        protected virtual void OnAiDisabled() { }
 
         void OnDestroy() {
+            aiSubscription?.Dispose();
             onDirection.Dispose();
             onDirectionCanceled.Dispose();
             onButtonDown.Dispose();

@@ -74,7 +74,7 @@ namespace Alice {
                 }));
 
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
-                subscriptions.Add(beatPlayer.OnBeatExecuted.Subscribe(beatResult => {
+                subscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
                     switch (beatResult.Button) {
                         case GamePadButton.North:
                             instance.Special();
