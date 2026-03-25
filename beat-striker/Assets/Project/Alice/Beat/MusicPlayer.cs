@@ -79,16 +79,16 @@ namespace Alice {
 
             for (var i = 0; i < beats.Length; i++) {
                 var beatTime = beats[i];
-                var windowStart = beatTime - beatConfig.PerfectWindow;
-                var windowEnd = beatTime + beatConfig.PerfectWindow;
-
-                if (judgeTime < windowStart) {
-                    return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Miss, -1, 0f);
+                if (judgeTime > beatTime) {
+                    continue;
                 }
 
-                if (judgeTime <= windowEnd) {
+                var windowStart = beatTime - beatConfig.PerfectWindow;
+                if (judgeTime >= windowStart) {
                     return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Good, i, beatTime);
                 }
+
+                return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Miss, -1, 0f);
             }
 
             return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Miss, -1, 0f);

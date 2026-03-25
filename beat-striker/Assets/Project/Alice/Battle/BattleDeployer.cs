@@ -62,14 +62,17 @@ namespace Alice {
                 if (aiBrain == null) {
                     Debug.LogError($"AiBrain not found for Player {playerId} / Striker {config.Strikers[i]}");
                 }
+
                 subscriptions.Add(gamePad.HasGamePad.Subscribe(hasGamePad => {
                     if (aiBrain == null) {
                         return;
                     }
 
-                    aiBrain.SetAiMode(!hasGamePad);
                     if (!hasGamePad) {
+                        aiBrain.EnableAiMode(instance);
                         gamePadRegistry.RequestRegisterLowPriority(playerId, aiBrain);
+                    } else {
+                        aiBrain.DisableAiMode();
                     }
                 }));
 
@@ -83,6 +86,7 @@ namespace Alice {
 
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
                 subscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
+                    instance.RecordExecutedCommand(new BattleCommandLog(beatResult.Time, beatResult.Button));
                     Debug.Log($"Player {playerId} executed command {beatResult.Button} at time {beatResult.Time} (Good: {beatResult.IsSuccess})");
                     switch (beatResult.Button) {
                         case GamePadButton.North:

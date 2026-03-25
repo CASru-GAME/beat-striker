@@ -46,13 +46,9 @@ namespace Alice {
 
                     var result = musicPlayer.JudgeTiming(time);
                     var isForcedMiss = player.IsPostBeatCommandLocked();
-                    var isGood = !isForcedMiss && result.Zone == BeatJudgeZone.Good;
+                    var isGood = !isForcedMiss && result.Zone == BeatJudgeZone.Good && time < result.BeatTime;
                     if (isGood) {
-                        if (time >= result.BeatTime) {
-                            player.onBeatResult.OnNext(new IBeatPlayer.BeatResult(time, true, button));
-                        } else {
-                            player.SavePendingCommand(result.BeatIndex, button);
-                        }
+                        player.SavePendingCommand(result.BeatIndex, button);
                     }
 
                     player.RegisterPostBeatCommandAttempt();

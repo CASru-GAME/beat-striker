@@ -9,7 +9,7 @@ public class Hurtbox : MonoBehaviour
 {
     [SerializeField] bool isGuarding = true;
     [SerializeField] StrikerHub strikerHub;
-    IStrikerHit runtimeStrikerHit;
+    Alice.AliceStrikerHub runtimeStrikerHit;
     readonly Subject<HitStatus> onHit = new();
     public Observable<HitStatus> OnHit => onHit;
 

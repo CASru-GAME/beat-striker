@@ -1,17 +1,32 @@
 using System;
+using System.Collections.Generic;
 using Core.App.Types;
 using Core.Battle;
 using Core.Striker;
 using Core.Striker.Components;
+using R3;
 using UnityEngine;
 using VContainer;
 
 namespace Alice {
+    public record BattleCommandLog(float Time, GamePadButton Button);
+
+    public interface IReadOnlyBattleEntity {
+        int PlayerId { get; }
+        Vector3 Position { get; }
+        Vector3 Velocity { get; }
+        float HitPoint { get; }
+        float MaxHitPoint { get; }
+        Observable<Unit> OnHit { get; }
+        IReadOnlyList<BattleCommandLog> CommandHistory { get; }
+    }
+
     [RequireComponent(typeof(AnimationPlayer))]
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(CapsuleCollider))]
-    public class AliceStrikerHub : MonoBehaviour, IStrikerHit, IStrikerContext {
+    public class AliceStrikerHub : MonoBehaviour, IStrikerContext, IReadOnlyBattleEntity {
         [Inject] IBattleFlow battleFlow;
+        [Inject] IStrikerRegistry strikerRegistry;
 
         HitPoint maxHitPoint;
         SpecialPoint maxSpecialPoint;
@@ -24,17 +39,30 @@ namespace Alice {
         AnimationPlayer animationPlayer;
         StrikerStateMachine stateMachine;
         AiBrain aiBrain;
+        readonly Subject<Unit> onHit = new();
 
         Vector2 inputDirection;
         float currentHitPoint;
         int playerId;
         bool initialized;
+        readonly List<BattleCommandLog> commandHistory = new();
+        const int MAX_COMMAND_HISTORY_COUNT = 32;
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
         public float CurrentHitPoint => currentHitPoint;
-        public float MaxHitPoint => maxHitPoint.value;
         public AiBrain AiBrain => aiBrain;
+        public float MaxHitPoint => maxHitPoint.value;
+        public Vector3 Position => Rigidbody.position;
+        public Vector3 Velocity => Rigidbody.linearVelocity;
+        public float HitPoint => currentHitPoint;
+        public IEnumerable<IReadOnlyBattleEntity> GetAllStrikers() {
+            return strikerRegistry.GetAllStrikers();
+        }
+        public int PlayerId => playerId;
+        public IReadOnlyList<BattleCommandLog> CommandHistory => commandHistory;
+
+        public Observable<Unit> OnHit => onHit;
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
@@ -71,12 +99,24 @@ namespace Alice {
         public void GiveHit(HitStatus status) {
             if (stateMachine == null || currentHitPoint <= 0f) return;
             stateMachine.CurrentState.OnHit(stateMachine, status);
+            onHit.OnNext(Unit.Default);
+        }
+
+        void OnDestroy() {
+            onHit.Dispose();
         }
 
         public void ApplyDamage(float damage) {
             currentHitPoint = Mathf.Max(0f, currentHitPoint - damage);
             if (currentHitPoint <= 0f) {
                 OnDead();
+            }
+        }
+
+        public void RecordExecutedCommand(BattleCommandLog commandLog) {
+            commandHistory.Add(commandLog);
+            if (commandHistory.Count > MAX_COMMAND_HISTORY_COUNT) {
+                commandHistory.RemoveAt(0);
             }
         }
 
@@ -133,6 +173,7 @@ namespace Alice {
         public void OnReset() {
             currentHitPoint = maxHitPoint.value;
             inputDirection = Vector2.zero;
+            commandHistory.Clear();
             if (stateMachine != null) {
                 stateMachine.Reset(defaultState);
             }

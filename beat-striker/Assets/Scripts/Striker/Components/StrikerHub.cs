@@ -11,6 +11,7 @@ using Core.Striker.Components;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Animations;
+using R3;
 
 namespace Core.Striker {
 
@@ -18,7 +19,7 @@ namespace Core.Striker {
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(CapsuleCollider))]
     [AddComponentMenu(" 🟠Striker Hub", 0)]
-    public class StrikerHub : MonoBehaviour, IStrikerView, IStrikerHit, IStrikerContext {
+    public class StrikerHub : MonoBehaviour, IStrikerView, IStrikerHit, IStrikerContext, Alice.IReadOnlyBattleEntity {
 
         [Header("Striker Settings")]
         [SerializeField] private HitPoint maxHitPoint = new(100);
@@ -52,10 +53,24 @@ namespace Core.Striker {
         public StrikerState InspectorVictoryState => VictoryState;
         public StrikerState InspectorIntroState => IntroState;
         public Alice.AiBrain InspectorAiBrain => aiBrain;
+        public int PlayerId => model.PlayerId.value;
 
         private StrikerStateMachine stateMachine;
 
         private AnimationPlayer animationPlayer;
+        public IEnumerable<Alice.IReadOnlyBattleEntity> GetAllStrikers() {
+            var runtime = EnsureAliceRuntimeHub();
+            if (runtime != null) return runtime.GetAllStrikers();
+            Debug.LogError($"Getting all strikers for player {model.PlayerId}, but legacy AllStrikers is not implemented. Returning empty list.");
+            return new List<Alice.IReadOnlyBattleEntity>();
+        }
+        public Vector3 Position => Rigidbody.position;
+        public Vector3 Velocity => Rigidbody.linearVelocity;
+        public float HitPoint => currentHitPoint;
+
+        Observable<Unit> Alice.IReadOnlyBattleEntity.OnHit => throw new NotImplementedException();
+
+        public IReadOnlyList<Alice.BattleCommandLog> CommandHistory => throw new NotImplementedException();
 
         private void Awake() {
             if (FindAnyObjectByType<Alice.AliceScope>() != null) {
@@ -310,6 +325,7 @@ namespace Core.Striker {
         IStrikerStateContext, IStrikerNodeContext {
         public Rigidbody Rigidbody => context.Rigidbody;
         public Vector2 InputDirection => context.InputDirection;
+        public IEnumerable<Alice.IReadOnlyBattleEntity> GetAllStrikers() => context.GetAllStrikers();
 
         public void ApplyDamage(float damage) {
             context.ApplyDamage(damage);

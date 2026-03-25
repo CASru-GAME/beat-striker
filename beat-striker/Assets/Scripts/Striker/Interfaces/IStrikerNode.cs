@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Alice;
 using Core.Battle;
 using UnityEngine;
 
@@ -32,6 +33,7 @@ namespace Core.Striker {
     public interface IStrikerContext {
         Rigidbody Rigidbody { get; }
         Vector2 InputDirection { get; }
+        IEnumerable<IReadOnlyBattleEntity> GetAllStrikers();
         void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
         void ApplyDamage(float damage);
     }
@@ -39,6 +41,7 @@ namespace Core.Striker {
     public interface IStrikerStateContext : IStateContext<IStrikerNode> {
         Rigidbody Rigidbody { get; }
         Vector2 InputDirection { get; }
+        IEnumerable<IReadOnlyBattleEntity> GetAllStrikers();
         void ApplyDamage(float damage);
         void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
     }

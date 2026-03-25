@@ -265,6 +265,7 @@ GameObject:
   - component: {fileID: 8716767000433258826}
   - component: {fileID: 8515823221661986454}
   - component: {fileID: 4310568605961233167}
+  - component: {fileID: -8670412383998784199}
   m_Layer: 0
   m_Name: Satan
   m_TagString: Untagged
@@ -392,6 +393,7 @@ MonoBehaviour:
   deadState: {fileID: 0}
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
+  aiBrain: {fileID: -8670412383998784199}
 --- !u!114 &8515823221661986454
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -419,6 +421,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hurtbox
   isGuarding: 1
   strikerHub: {fileID: 8716767000433258826}
+--- !u!114 &-8670412383998784199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1517210810096820132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7672d8190b3c74e14a342c1c9309ff0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BeatAiBrain
+  keepDistance: 1.2
+  keepDistanceTolerance: 0.4
+  attackDistance: 1.5
+  longJumpDistance: 4
 --- !u!1 &2088919174887837049
 GameObject:
   m_ObjectHideFlags: 0

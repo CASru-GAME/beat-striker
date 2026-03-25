@@ -48,6 +48,7 @@ namespace Core.LargeSatan {
         // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
             context.Rigidbody.linearVelocity = status.KnockbackVelocity;
+            context.ApplyDamage(status.Damage);
             context.TryTransition(stunState);
         }
 
