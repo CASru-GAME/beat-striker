@@ -58,10 +58,18 @@ namespace Alice {
                 strikerRegistry.RequestRegister(i, instance);
 
                 var gamePad = gamePadRegistry.Get(playerId);
+                var aiBrain = instance.AiBrain;
+                if (aiBrain == null) {
+                    Debug.LogError($"AiBrain not found for Player {playerId} / Striker {config.Strikers[i]}");
+                }
                 subscriptions.Add(gamePad.HasGamePad.Subscribe(hasGamePad => {
-                    instance.AiBrain.SetAiMode(!hasGamePad);
+                    if (aiBrain == null) {
+                        return;
+                    }
+
+                    aiBrain.SetAiMode(!hasGamePad);
                     if (!hasGamePad) {
-                        gamePadRegistry.RequestRegisterLowPriority(playerId, instance.AiBrain);
+                        gamePadRegistry.RequestRegisterLowPriority(playerId, aiBrain);
                     }
                 }));
 
@@ -75,6 +83,7 @@ namespace Alice {
 
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
                 subscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
+                    Debug.Log($"Player {playerId} executed command {beatResult.Button} at time {beatResult.Time} (Good: {beatResult.IsSuccess})");
                     switch (beatResult.Button) {
                         case GamePadButton.North:
                             instance.Special();

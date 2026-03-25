@@ -30,6 +30,7 @@ namespace Alice {
         int beatSoundIndex;
         int goodWindowIndex;
         int beatTimingIndex;
+        float lastPlaybackTime;
 
         public Observable<IMusicPlayer.BeatSignal> OnGoodZoneEntered => onGoodZoneEntered;
         public Observable<IMusicPlayer.BeatSignal> OnBeatTiming => onBeatTiming;
@@ -51,8 +52,16 @@ namespace Alice {
             beatSoundIndex = 0;
             goodWindowIndex = 0;
             beatTimingIndex = 0;
+            lastPlaybackTime = -1f;
             beatSoundSubscription = Observable.EveryUpdate().Subscribe(_ => {
                 if (!audioSource.isPlaying) return;
+                var currentTime = audioSource.time;
+                if (lastPlaybackTime >= 0f && currentTime < lastPlaybackTime) {
+                    beatSoundIndex = 0;
+                    goodWindowIndex = 0;
+                    beatTimingIndex = 0;
+                }
+
                 EmitGoodZoneEvents();
                 EmitBeatTimingEvents();
 
@@ -60,6 +69,8 @@ namespace Alice {
                     AudioSource.PlayClipAtPoint(selectedTrack.beatSound, Vector3.zero);
                     beatSoundIndex += 1;
                 }
+
+                lastPlaybackTime = currentTime;
             });
         }
 

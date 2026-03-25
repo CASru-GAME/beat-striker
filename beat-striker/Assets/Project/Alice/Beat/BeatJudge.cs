@@ -22,6 +22,7 @@ namespace Alice {
         readonly IMusicPlayer musicPlayer;
         readonly List<IDisposable> subscriptions = new();
         BeatPlayer[] beatPlayer = new BeatPlayer[2];
+        float lastCommandPlaybackTime = -1f;
 
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer) {
             this.musicPlayer = musicPlayer;
@@ -34,19 +35,35 @@ namespace Alice {
                 var playerIndex = i;
                 var gamePad = gamePadRegistry.Get(playerIndex);
                 var subscription = gamePad.OnButtonDown.Subscribe(button => {
+                    var player = beatPlayer[playerIndex];
                     var time = musicPlayer.CurrentPlaybackTime;
-                    var result = musicPlayer.JudgeTiming(time);
-                    var isGood = result.Zone == BeatJudgeZone.Good;
-                    if (isGood) {
-                        beatPlayer[playerIndex].SavePendingCommand(result.BeatIndex, button);
+                    if (lastCommandPlaybackTime >= 0f && time < lastCommandPlaybackTime) {
+                        for (var j = 0; j < beatPlayer.Length; j++) {
+                            beatPlayer[j].ResetForLoop();
+                        }
                     }
-                    beatPlayer[playerIndex].onBeat.OnNext(new IBeatPlayer.BeatResult(time, isGood, button));
+                    lastCommandPlaybackTime = time;
+
+                    var result = musicPlayer.JudgeTiming(time);
+                    var isForcedMiss = player.IsPostBeatCommandLocked();
+                    var isGood = !isForcedMiss && result.Zone == BeatJudgeZone.Good;
+                    if (isGood) {
+                        if (time >= result.BeatTime) {
+                            player.onBeatResult.OnNext(new IBeatPlayer.BeatResult(time, true, button));
+                        } else {
+                            player.SavePendingCommand(result.BeatIndex, button);
+                        }
+                    }
+
+                    player.RegisterPostBeatCommandAttempt();
+                    player.onBeat.OnNext(new IBeatPlayer.BeatResult(time, isGood, button));
                 });
                 subscriptions.Add(subscription);
             }
 
             subscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
                 for (var playerIndex = 0; playerIndex < beatPlayer.Length; playerIndex++) {
+                    beatPlayer[playerIndex].EnterPostBeatPeriod(signal.BeatIndex);
                     if (!beatPlayer[playerIndex].TryConsumePendingCommand(signal.BeatIndex, out var button)) {
                         continue;
                     }
@@ -72,6 +89,8 @@ namespace Alice {
 
         class BeatPlayer : IBeatPlayer {
             readonly Dictionary<int, GamePadButton> pendingCommands = new Dictionary<int, GamePadButton>();
+            int postBeatPeriodIndex = -1;
+            bool hasCommandAfterBeat;
             public Subject<IBeatPlayer.BeatResult> onBeat = new Subject<IBeatPlayer.BeatResult>();
             public Subject<IBeatPlayer.BeatResult> onBeatResult = new Subject<IBeatPlayer.BeatResult>();
 
@@ -89,6 +108,29 @@ namespace Alice {
 
                 pendingCommands.Remove(beatIndex);
                 return true;
+            }
+
+            public void EnterPostBeatPeriod(int beatIndex) {
+                postBeatPeriodIndex = beatIndex;
+                hasCommandAfterBeat = false;
+            }
+
+            public bool IsPostBeatCommandLocked() {
+                return postBeatPeriodIndex >= 0 && hasCommandAfterBeat;
+            }
+
+            public void RegisterPostBeatCommandAttempt() {
+                if (postBeatPeriodIndex < 0) {
+                    return;
+                }
+
+                hasCommandAfterBeat = true;
+            }
+
+            public void ResetForLoop() {
+                pendingCommands.Clear();
+                postBeatPeriodIndex = -1;
+                hasCommandAfterBeat = false;
             }
         }
     }
