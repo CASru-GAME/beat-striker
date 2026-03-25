@@ -23,6 +23,7 @@ namespace Alice {
         Rigidbody rb;
         AnimationPlayer animationPlayer;
         StrikerStateMachine stateMachine;
+        AiBrain aiBrain;
 
         Vector2 inputDirection;
         float currentHitPoint;
@@ -33,6 +34,7 @@ namespace Alice {
         public Rigidbody Rigidbody => rb;
         public float CurrentHitPoint => currentHitPoint;
         public float MaxHitPoint => maxHitPoint.value;
+        public AiBrain AiBrain => aiBrain;
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
@@ -57,6 +59,7 @@ namespace Alice {
             deadState = legacy.InspectorDeadState;
             victoryState = legacy.InspectorVictoryState;
             introState = legacy.InspectorIntroState;
+            aiBrain = legacy.InspectorAiBrain;
             currentHitPoint = maxHitPoint.value;
             initialized = true;
         }

@@ -27,6 +27,7 @@ namespace Core.Striker {
         [Header("References")]
         [SerializeField] private StrikerState defaultState;
         [SerializeField] private StrikerState deadState, VictoryState, IntroState;
+        [SerializeField] private Alice.AiBrain aiBrain;
 
         private Rigidbody rb;
         private Vector3 initialPosition;
@@ -50,6 +51,7 @@ namespace Core.Striker {
         public StrikerState InspectorDeadState => deadState;
         public StrikerState InspectorVictoryState => VictoryState;
         public StrikerState InspectorIntroState => IntroState;
+        public Alice.AiBrain InspectorAiBrain => aiBrain;
 
         private StrikerStateMachine stateMachine;
 

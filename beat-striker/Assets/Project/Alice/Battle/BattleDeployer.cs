@@ -58,6 +58,13 @@ namespace Alice {
                 strikerRegistry.RequestRegister(i, instance);
 
                 var gamePad = gamePadRegistry.Get(playerId);
+                subscriptions.Add(gamePad.HasGamePad.Subscribe(hasGamePad => {
+                    instance.AiBrain.SetAiMode(!hasGamePad);
+                    if (!hasGamePad) {
+                        gamePadRegistry.RequestRegisterLowPriority(playerId, instance.AiBrain);
+                    }
+                }));
+
                 subscriptions.Add(gamePad.OnDirection.Subscribe(direction => {
                     instance.ChangeDirection(direction);
                 }));
