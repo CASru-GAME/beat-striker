@@ -1046,12 +1046,12 @@ MonoBehaviour:
   playerTransforms:
   - {fileID: 1635008634}
   - {fileID: 932946622}
-  strikers: 0300000000000000
+  strikers: 0300000003000000
   strikerEntries:
   - striker: 1
     prefab: {fileID: 8540004002704815348, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
   - striker: 0
-    prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
+    prefab: {fileID: 1829485864700888609, guid: ecee9c48169c8dc428a6839126804337, type: 3}
   - striker: 3
     prefab: {fileID: 8716767000433258826, guid: 87169d78f0bd74eef97e10ce4e031118, type: 3}
 --- !u!114 &1802787762
