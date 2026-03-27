@@ -11,7 +11,7 @@ using VContainer;
 namespace Alice {
 
     [RequireComponent(typeof(PlayerInput))]
-    public class GamePad : MonoBehaviour, GameInput.IPlayerActions {
+    public class GamePad : MonoBehaviour, GameInput.IPlayerActions, IGamePad {
         IGamePadRegistry registry;
         private PlayerInput playerInput;
         private GameInput input;

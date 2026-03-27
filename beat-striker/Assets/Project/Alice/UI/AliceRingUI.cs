@@ -42,7 +42,7 @@ namespace Alice {
 
             disposables.Dispose();
             disposables = new CompositeDisposable();
-            beatPlayer.OnBeat.Subscribe(result => OnBeat(result)).AddTo(disposables);
+            beatPlayer.OnBeatCommandRequested.Subscribe(result => OnBeat(result)).AddTo(disposables);
         }
 
         void Awake() {

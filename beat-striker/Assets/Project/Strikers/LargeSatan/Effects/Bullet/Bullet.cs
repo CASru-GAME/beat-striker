@@ -1,5 +1,4 @@
-using Core.Battle;
-using Core.Striker.Components;
+using Alice;
 using UnityEngine;
 
 namespace Core.LargeSatan {

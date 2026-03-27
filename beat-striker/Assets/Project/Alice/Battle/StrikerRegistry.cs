@@ -9,6 +9,7 @@ namespace Alice {
 
     public interface IStrikerRegistry {
         Option<AliceStrikerHub> Get(int playerId);
+        IEnumerable<AliceStrikerHub> GetAllStrikers();
         void RequestRegister(int playerId, AliceStrikerHub hub);
         void RequestUnregister(int playerId);
     }
@@ -21,6 +22,14 @@ namespace Alice {
                 return hub;
             }
             return null;
+        }
+
+        public IEnumerable<AliceStrikerHub> GetAllStrikers() {
+            var list = new List<AliceStrikerHub>();
+            foreach (var pair in strikerHubs) {
+                list.Add(pair.Value);
+            }
+            return list;
         }
 
         public void RequestRegister(int playerId, AliceStrikerHub hub) {

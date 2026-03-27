@@ -1,10 +1,8 @@
-using Core.Battle;
 using UnityEngine;
-using Core.Striker;
 using R3;
 using System;
 using System.Collections.Generic;
-using Core.Striker.Components;
+using Alice;
 
 namespace Core.LargeSatan {
 

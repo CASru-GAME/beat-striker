@@ -3,7 +3,7 @@ using R3;
 using System;
 using System.Collections.Generic;
 using App;
-using Core.Striker;
+using Alice;
 using UnityEngine;
 
 namespace Alice {
@@ -58,6 +58,24 @@ namespace Alice {
                 strikerRegistry.RequestRegister(i, instance);
 
                 var gamePad = gamePadRegistry.Get(playerId);
+                var aiBrain = instance.AiBrain;
+                if (aiBrain == null) {
+                    Debug.LogError($"AiBrain not found for Player {playerId} / Striker {config.Strikers[i]}");
+                }
+
+                subscriptions.Add(gamePad.HasGamePad.Subscribe(hasGamePad => {
+                    if (aiBrain == null) {
+                        return;
+                    }
+
+                    if (!hasGamePad) {
+                        aiBrain.EnableAiMode(instance);
+                        gamePadRegistry.RequestRegisterLowPriority(playerId, aiBrain);
+                    } else {
+                        aiBrain.DisableAiMode();
+                    }
+                }));
+
                 subscriptions.Add(gamePad.OnDirection.Subscribe(direction => {
                     instance.ChangeDirection(direction);
                 }));
@@ -67,7 +85,9 @@ namespace Alice {
                 }));
 
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
-                subscriptions.Add(beatPlayer.OnBeatExecuted.Subscribe(beatResult => {
+                subscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
+                    instance.RecordExecutedCommand(new BattleCommandLog(beatResult.Time, beatResult.Button));
+                    Debug.Log($"Player {playerId} executed command {beatResult.Button} at time {beatResult.Time} (Good: {beatResult.IsSuccess})");
                     switch (beatResult.Button) {
                         case GamePadButton.North:
                             instance.Special();
