@@ -226,8 +226,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0200d3af8b397ff4fa6ceadac6c573cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Rock
-  damage: 10
-  knockbackSpeed: 10
+  damage: 25
+  knockbackSpeed: 20
   lifetime: 2
   positionOffset: {x: 0, y: 0, z: 0}
   rotationOffset: {x: 0, y: 0, z: 0}
