@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using Core.Battle;
+using Alice;
 using Core.Utils;
 
 [RequireComponent(typeof(Button))]

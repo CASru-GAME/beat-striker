@@ -6307,7 +6307,7 @@ MonoBehaviour:
   - {fileID: 6384045388916240869}
   judgeText: {fileID: 0}
   successParticle: {fileID: 0}
-  ringRadiusPerSecond: 1
+  ringRadiusPerSecond: 2
   windowScale: 3
   judgeTextFadeDuration: 0.3
   judgeTextDropDistance: 5

@@ -1,6 +1,5 @@
-using Core.Battle;
 using UnityEngine;
-using Core.Striker;
+using Alice;
 using R3;
 using System;
 
@@ -10,9 +9,7 @@ namespace Core.LargeSatan {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] private StrikerAnimationClip slimeanimationClip;
         [SerializeField] private StrikerNode nextNode;
-        [SerializeField] private AnimationPlayer slimePlayer;
 
         [SerializeField] Hurtbox shield;
         IDisposable disposable;
@@ -30,8 +27,6 @@ namespace Core.LargeSatan {
             });
 
             shield.gameObject.SetActive(true);
-
-            slimePlayer.PlayAnimation(slimeanimationClip);
         }
 
         // このステートにいる間、毎フレーム呼ばれる

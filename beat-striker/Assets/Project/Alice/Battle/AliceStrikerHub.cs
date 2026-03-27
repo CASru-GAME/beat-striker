@@ -1,20 +1,31 @@
 using System;
+using System.Collections.Generic;
 using Core.App.Types;
-using Core.Battle;
-using Core.Striker;
-using Core.Striker.Components;
+using Alice;
+using R3;
 using UnityEngine;
 using VContainer;
 
 namespace Alice {
-    [RequireComponent(typeof(AnimationPlayer))]
-    [RequireComponent(typeof(Rigidbody))]
-    [RequireComponent(typeof(CapsuleCollider))]
-    public class AliceStrikerHub : MonoBehaviour, IStrikerHit, IStrikerContext {
-        [Inject] IBattleFlow battleFlow;
+    public record BattleCommandLog(float Time, GamePadButton Button);
 
-        HitPoint maxHitPoint;
-        SpecialPoint maxSpecialPoint;
+    public interface IReadOnlyBattleEntity {
+        int PlayerId { get; }
+        Vector3 Position { get; }
+        Vector3 Velocity { get; }
+        float HitPoint { get; }
+        float MaxHitPoint { get; }
+        Observable<Unit> OnHit { get; }
+        ReadOnlyReactiveProperty<string> CurrentStateName { get; }
+        IReadOnlyList<BattleCommandLog> CommandHistory { get; }
+    }
+
+    public class AliceStrikerHub : IStrikerContext, IReadOnlyBattleEntity, IDisposable {
+        [Inject] IBattleFlow battleFlow;
+        [Inject] IStrikerRegistry strikerRegistry;
+
+        float maxHitPoint;
+        float maxSpecialPoint;
         StrikerState defaultState;
         StrikerState deadState;
         StrikerState victoryState;
@@ -23,30 +34,54 @@ namespace Alice {
         Rigidbody rb;
         AnimationPlayer animationPlayer;
         StrikerStateMachine stateMachine;
+        AiBrain aiBrain;
+        readonly Subject<Unit> onHit = new();
+        readonly BehaviorSubject<string> currentStateNameSubject = new(string.Empty);
+        readonly ReadOnlyReactiveProperty<string> currentStateName;
+        IDisposable stateNameSubscription;
 
         Vector2 inputDirection;
         float currentHitPoint;
         int playerId;
         bool initialized;
+        Vector3 previousFramePosition;
+        Vector3 frameVelocity;
+        readonly List<BattleCommandLog> commandHistory = new();
+        const int MAX_COMMAND_HISTORY_COUNT = 32;
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
         public float CurrentHitPoint => currentHitPoint;
-        public float MaxHitPoint => maxHitPoint.value;
+        public AiBrain AiBrain => aiBrain;
+        public float MaxHitPoint => maxHitPoint;
+        public Vector3 Position => Rigidbody.position;
+        public Vector3 Velocity => frameVelocity;
+        public float HitPoint => currentHitPoint;
+        public ReadOnlyReactiveProperty<string> CurrentStateName => currentStateName;
+        public IEnumerable<IReadOnlyBattleEntity> GetAllStrikers() {
+            return strikerRegistry.GetAllStrikers();
+        }
+        public int PlayerId => playerId;
+        public IReadOnlyList<BattleCommandLog> CommandHistory => commandHistory;
 
-        void Awake() {
-            rb = GetComponent<Rigidbody>();
-            rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
-            animationPlayer = GetComponent<AnimationPlayer>();
+        public Observable<Unit> OnHit => onHit;
+
+        public AliceStrikerHub() {
+            currentStateName = currentStateNameSubject.ToReadOnlyReactiveProperty();
         }
 
-        void Start() {
+        public void Tick(float deltaTime) {
             if (!initialized) return;
-            stateMachine = new StrikerStateMachine(this, defaultState);
-        }
 
-        void Update() {
-            if (stateMachine == null) return;
+            if (stateMachine == null) {
+                stateMachine = new StrikerStateMachine(this, defaultState);
+                stateNameSubscription = stateMachine.CurrentStateName.Subscribe(currentStateNameSubject.OnNext);
+            }
+
+            var currentPosition = rb.position;
+            frameVelocity = deltaTime > 0f ? (currentPosition - previousFramePosition) / deltaTime : Vector3.zero;
+            previousFramePosition = currentPosition;
+
             stateMachine.CurrentState.OnUpdate(stateMachine);
         }
 
@@ -57,7 +92,13 @@ namespace Alice {
             deadState = legacy.InspectorDeadState;
             victoryState = legacy.InspectorVictoryState;
             introState = legacy.InspectorIntroState;
-            currentHitPoint = maxHitPoint.value;
+            aiBrain = legacy.InspectorAiBrain;
+            rb = legacy.Rigidbody;
+            rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
+            animationPlayer = legacy.GetAnimationPlayer();
+            currentHitPoint = maxHitPoint;
+            previousFramePosition = rb.position;
+            frameVelocity = Vector3.zero;
             initialized = true;
         }
 
@@ -68,12 +109,27 @@ namespace Alice {
         public void GiveHit(HitStatus status) {
             if (stateMachine == null || currentHitPoint <= 0f) return;
             stateMachine.CurrentState.OnHit(stateMachine, status);
+            onHit.OnNext(Unit.Default);
+        }
+
+        public void Dispose() {
+            stateNameSubscription?.Dispose();
+            onHit.Dispose();
+            currentStateName.Dispose();
+            currentStateNameSubject.Dispose();
         }
 
         public void ApplyDamage(float damage) {
             currentHitPoint = Mathf.Max(0f, currentHitPoint - damage);
             if (currentHitPoint <= 0f) {
                 OnDead();
+            }
+        }
+
+        public void RecordExecutedCommand(BattleCommandLog commandLog) {
+            commandHistory.Add(commandLog);
+            if (commandHistory.Count > MAX_COMMAND_HISTORY_COUNT) {
+                commandHistory.RemoveAt(0);
             }
         }
 
@@ -128,8 +184,11 @@ namespace Alice {
         }
 
         public void OnReset() {
-            currentHitPoint = maxHitPoint.value;
+            currentHitPoint = maxHitPoint;
             inputDirection = Vector2.zero;
+            commandHistory.Clear();
+            previousFramePosition = rb.position;
+            frameVelocity = Vector3.zero;
             if (stateMachine != null) {
                 stateMachine.Reset(defaultState);
             }

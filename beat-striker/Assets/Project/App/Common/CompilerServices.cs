@@ -7,6 +7,10 @@ namespace System.Runtime.CompilerServices {
 }
 
 namespace App {
+    public static class Exten{
+        public static Option<T> ToOption<T>(this T value) where T : class => value;
+    }
+
     public readonly struct Option<T> where T : class {
         private readonly T _value;
 
