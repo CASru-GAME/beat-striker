@@ -5310,7 +5310,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.WalkBackwardState
   parents:
-  - {fileID: 0}
+  - {fileID: 1972027998712673296}
   animationClip:
     clip: {fileID: 7400000, guid: 426a8e28f4b7f49688fb43c07992a824, type: 2}
     fadeTime: 0.3
@@ -5318,7 +5318,7 @@ MonoBehaviour:
   locomotionNode: {fileID: 1934183999574950063}
   walkSpeed: 1
   dashNode: {fileID: 9038803477243429045}
-  attackNode: {fileID: 0}
+  attackNode: {fileID: 6134694730007770578}
 --- !u!1 &3685882681109880954
 GameObject:
   m_ObjectHideFlags: 0
@@ -5364,7 +5364,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.WalkState
   parents:
-  - {fileID: 0}
+  - {fileID: 1972027998712673296}
   animationClip:
     clip: {fileID: 7400000, guid: 5642b8270a36542db9118c44d1d58eab, type: 2}
     fadeTime: 0.3
@@ -5372,7 +5372,7 @@ MonoBehaviour:
   locomotionNode: {fileID: 1934183999574950063}
   walkSpeed: 1
   dashNode: {fileID: 9038803477243429045}
-  attackNode: {fileID: 0}
+  attackNode: {fileID: 6134694730007770578}
 --- !u!1 &3721905164662017108
 GameObject:
   m_ObjectHideFlags: 0
@@ -5478,12 +5478,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.IdleState
   parents:
-  - {fileID: 0}
+  - {fileID: 1972027998712673296}
   animationClip:
     clip: {fileID: 7400000, guid: 2355edfbfe7044958b42a7fa13e9e9d6, type: 2}
     fadeTime: 0.3
     speed: 1
-  attackNode: {fileID: 0}
+  attackNode: {fileID: 6134694730007770578}
 --- !u!1 &4190906411300203009
 GameObject:
   m_ObjectHideFlags: 0
@@ -10461,10 +10461,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54baaaa8ee1084a0fa1270acba05a20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.StrikerHub
+  maxHitPoint: 100
+  maxSpecialPoint: 100
   defaultState: {fileID: 393165507195732606}
   deadState: {fileID: 0}
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
+  aiBrain: {fileID: 0}
 --- !u!114 &7700695864620580821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10882,13 +10885,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.JumpUPForwardState
   parents:
-  - {fileID: 0}
+  - {fileID: 7727835158553190740}
   animationClip:
     clip: {fileID: 7400000, guid: c77cf359840404cc0856cbf4601dc1f6, type: 2}
     fadeTime: 0.3
     speed: 1
   fallNode: {fileID: 4019688610311916205}
-  attackNode: {fileID: 0}
+  attackNode: {fileID: 6134694730007770578}
   jumpSpeed: 100
 --- !u!1 &6386548147410278632
 GameObject:
@@ -11024,14 +11027,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.FallState
   parents:
-  - {fileID: 0}
+  - {fileID: 7727835158553190740}
   animationClip:
     clip: {fileID: 7400000, guid: 5ec5ac53d2ae042bf9e7403a5be2a994, type: 2}
     fadeTime: 0.3
     speed: 1
   groundChecker: {fileID: 5540710793521517555}
   landNode: {fileID: 8598810826195224236}
-  attackNode: {fileID: 0}
+  attackNode: {fileID: 6134694730007770578}
 --- !u!1 &7144170272828046003
 GameObject:
   m_ObjectHideFlags: 0
