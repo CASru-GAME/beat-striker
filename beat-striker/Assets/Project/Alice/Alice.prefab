@@ -51,7 +51,7 @@ MonoBehaviour:
   m_NotificationBehavior: 0
   m_MaxPlayerCount: -1
   m_AllowJoining: 1
-  m_JoinBehavior: 2
+  m_JoinBehavior: 0
   m_PlayerJoinedEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -102,7 +102,7 @@ MonoBehaviour:
   - striker: 1
     prefab: {fileID: 1829485864700888609, guid: ecee9c48169c8dc428a6839126804337, type: 3}
   - striker: 3
-    prefab: {fileID: 8716767000433258826, guid: 87169d78f0bd74eef97e10ce4e031118, type: 3}
+    prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
 --- !u!114 &1214249696447149568
 MonoBehaviour:
   m_ObjectHideFlags: 0
