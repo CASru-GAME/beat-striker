@@ -10445,10 +10445,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.26735705
+  m_Radius: 0.17165175
   m_Height: 1.6805973
   m_Direction: 1
-  m_Center: {x: -0.025070138, y: 0.7988572, z: 0}
+  m_Center: {x: 0.0041352212, y: 0.7988572, z: 0}
 --- !u!114 &8540004002704815348
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10461,13 +10461,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54baaaa8ee1084a0fa1270acba05a20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.StrikerHub
-  maxHitPoint: 100
-  maxSpecialPoint: 100
   defaultState: {fileID: 393165507195732606}
   deadState: {fileID: 0}
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
-  aiBrain: {fileID: 0}
 --- !u!114 &7700695864620580821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10891,7 +10888,7 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 1
   fallNode: {fileID: 4019688610311916205}
-  attackNode: {fileID: 6134694730007770578}
+  attackNode: {fileID: 2246691098674093691}
   jumpSpeed: 100
 --- !u!1 &6386548147410278632
 GameObject:
@@ -11034,7 +11031,7 @@ MonoBehaviour:
     speed: 1
   groundChecker: {fileID: 5540710793521517555}
   landNode: {fileID: 8598810826195224236}
-  attackNode: {fileID: 6134694730007770578}
+  attackNode: {fileID: 2246691098674093691}
 --- !u!1 &7144170272828046003
 GameObject:
   m_ObjectHideFlags: 0
@@ -11363,8 +11360,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.0050604576, y: 0.0043096393, z: 0.011470052}
-  m_Center: {x: -0.00012371491, y: 0.0004082223, z: 0.0042709955}
+  m_Size: {x: 0.0050395946, y: 0.0047433893, z: 0.0062719267}
+  m_Center: {x: -0.00011328439, y: 0.00019134562, z: 0.0073090573}
 --- !u!114 &6121226824295966727
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11402,7 +11399,7 @@ Transform:
   m_GameObject: {fileID: 7921874835016137745}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.008, y: -0.0001, z: 0.0197}
+  m_LocalPosition: {x: 0, y: -0.0001, z: 0.01294}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

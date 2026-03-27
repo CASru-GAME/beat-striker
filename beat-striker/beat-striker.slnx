@@ -5,7 +5,9 @@
   <Project Path="UniGLTF.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="VRM10.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Extentions.csproj" />
+  <Project Path="Core.Battle.csproj" />
   <Project Path="SpringBoneJobs.csproj" />
   <Project Path="VrmLibTests.csproj" />
   <Project Path="VrmLib.csproj" />
@@ -17,14 +19,16 @@
   <Project Path="BS.Editor.csproj" />
   <Project Path="GamePad.csproj" />
   <Project Path="Core.Common.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="PlayMode.csproj" />
   <Project Path="UniHumanoid.Editor.csproj" />
   <Project Path="VRM10.MToon10.Editor.csproj" />
   <Project Path="VRM10.Tests.csproj" />
   <Project Path="Utils.csproj" />
   <Project Path="Core.Extras.csproj" />
+  <Project Path="EditMode.csproj" />
   <Project Path="UniGLTF.UniUnlit.csproj" />
   <Project Path="UniGLTF.UniUnlit.Editor.csproj" />
+  <Project Path="TestUtils.csproj" />
   <Project Path="VRM10.MToon10.Tests.csproj" />
   <Project Path="FastSpringBone10.csproj" />
   <Project Path="UniHumanoid.Editor.Tests.csproj" />
