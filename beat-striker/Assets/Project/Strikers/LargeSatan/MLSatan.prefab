@@ -701,10 +701,10 @@ MonoBehaviour:
   parents:
   - {fileID: 6395781302704401615}
   animationClip:
-    clip: {fileID: 7400000, guid: 426a8e28f4b7f49688fb43c07992a824, type: 2}
+    clip: {fileID: -6390879764439932706, guid: a0636f03f9f3e41758a3766278078ffe, type: 3}
     fadeTime: 0.3
     speed: 1
-  walkSpeed: 2
+  walkSpeed: 1
 --- !u!1 &2984966043328174211
 GameObject:
   m_ObjectHideFlags: 0
@@ -833,9 +833,9 @@ MonoBehaviour:
   parents:
   - {fileID: 6395781302704401615}
   animationClip:
-    clip: {fileID: 7400000, guid: 5642b8270a36542db9118c44d1d58eab, type: 2}
+    clip: {fileID: -6390879764439932706, guid: a0636f03f9f3e41758a3766278078ffe, type: 3}
     fadeTime: 0.3
-    speed: 1
+    speed: 2
   walkSpeed: 2
 --- !u!1 &4253945209429252678
 GameObject:
@@ -1217,7 +1217,7 @@ Transform:
   m_GameObject: {fileID: 7062815537291613985}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.513, y: 0.888, z: -0.363}
+  m_LocalPosition: {x: 0.482, y: 0.881, z: -0.363}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1345,7 +1345,7 @@ MonoBehaviour:
   parents:
   - {fileID: 6395781302704401615}
   animationClip:
-    clip: {fileID: 7400000, guid: 2355edfbfe7044958b42a7fa13e9e9d6, type: 2}
+    clip: {fileID: 8321385359659378562, guid: a0636f03f9f3e41758a3766278078ffe, type: 3}
     fadeTime: 0.3
     speed: 1
 --- !u!1001 &7032927292768088168

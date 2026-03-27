@@ -1046,14 +1046,14 @@ MonoBehaviour:
   playerTransforms:
   - {fileID: 1635008634}
   - {fileID: 932946622}
-  strikers: 0300000000000000
+  strikers: 0300000003000000
   strikerEntries:
   - striker: 1
     prefab: {fileID: 8540004002704815348, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
-  - striker: 0
-    prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
   - striker: 3
-    prefab: {fileID: 8716767000433258826, guid: 87169d78f0bd74eef97e10ce4e031118, type: 3}
+    prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
+  - striker: 0
+    prefab: {fileID: 8540004002704815348, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
 --- !u!114 &1802787762
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1207,7 +1207,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c730978ac0eb145c9afe9127f5a6da02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BeatConfig
-  selectedTrackName: A
+  selectedTrackName: C
   tracks:
   - Name: F
     AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
@@ -1221,9 +1221,21 @@ MonoBehaviour:
     offset: 0
     beats: []
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
+  - Name: B
+    AudioClip: {fileID: 8300000, guid: 813c0b1b710a04cea866e61e51daa989, type: 3}
+    bpm: 110
+    offset: 0
+    beats: []
+    beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
+  - Name: C
+    AudioClip: {fileID: 8300000, guid: 62df61faddbdc4059b98c3473fcf6704, type: 3}
+    bpm: 150
+    offset: 0
+    beats: []
+    beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
   commandTimeOffset: 0
   viewTimeOffset: 0
-  perfectWindow: 0.5
+  perfectWindow: 1
 --- !u!23 &14034975155717343
 MeshRenderer:
   m_ObjectHideFlags: 0
