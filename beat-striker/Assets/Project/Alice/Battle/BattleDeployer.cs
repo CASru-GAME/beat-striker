@@ -87,7 +87,6 @@ namespace Alice {
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
                 subscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
                     instance.RecordExecutedCommand(new BattleCommandLog(beatResult.Time, beatResult.Button));
-                    Debug.Log($"Player {playerId} executed command {beatResult.Button} at time {beatResult.Time} (Good: {beatResult.IsSuccess})");
                     switch (beatResult.Button) {
                         case GamePadButton.North:
                             instance.Special();
