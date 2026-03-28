@@ -22,19 +22,17 @@ namespace Alice {
         [SerializeField] private float outroDistance = 3f;
         [SerializeField] private float outroDuration = 1f;
         [SerializeField] private float outroWaitDuration = 3f;
-        [SerializeField] private float ratioDistanceMin = 2f;
-        [SerializeField] private float ratioDistanceMax = 12f;
-        [SerializeField, Range(0.1f, 0.95f)] private float nearDistanceViewportRatio = 0.28f;
-        [SerializeField, Range(0.1f, 0.95f)] private float farDistanceViewportRatio = 0.4f;
+        [SerializeField] private float maxPlayersDistanceToFitOnScreen = 12f;
+        [SerializeField] private AnimationCurve normalizedDistanceToDiagonalRatio = new AnimationCurve(
+            new Keyframe(0f, 0.28f),
+            new Keyframe(1f, 0.4f));
         [SerializeField] private float zoomSmoothTime = 0.2f;
         [SerializeField] private float centerSmoothTime = 0.15f;
-        [SerializeField] private float minFov = 20f;
-        [SerializeField] private float maxFov = 70f;
 
         IBattleFlow battleFlow;
         private CompositeDisposable disposables = new();
         private Camera stageCamera;
-        private float zoomVelocity;
+        private float cameraDepthVelocity;
         private Vector3 centerMoveVelocity;
         private Vector2 desiredCenterViewport;
         private bool isBattleZoomActive;
@@ -134,14 +132,8 @@ namespace Alice {
         }
 
         private void UpdateBattleZoom() {
+            MoveCameraForwardToFitPlayers();
             MoveParallelToPlayersCenter();
-
-            float targetFov = CalculateTargetFov(playerTransform0.position, playerTransform1.position);
-            stageCamera.fieldOfView = Mathf.SmoothDamp(
-                stageCamera.fieldOfView,
-                targetFov,
-                ref zoomVelocity,
-                zoomSmoothTime);
         }
 
         private Vector3 GetPlayersCenter() {
@@ -173,24 +165,35 @@ namespace Alice {
                 centerSmoothTime);
         }
 
-        private float CalculateTargetFov(Vector3 player0, Vector3 player1) {
-            Vector3 camSpace0 = transform.InverseTransformPoint(player0);
-            Vector3 camSpace1 = transform.InverseTransformPoint(player1);
+        private void MoveCameraForwardToFitPlayers() {
+            Vector3 camSpace0 = transform.InverseTransformPoint(playerTransform0.position);
+            Vector3 camSpace1 = transform.InverseTransformPoint(playerTransform1.position);
 
-            float horizontalDistance = Mathf.Abs(camSpace1.x - camSpace0.x);
-            float averageDepth = Mathf.Max(0.01f, (camSpace0.z + camSpace1.z) * 0.5f);
-            float ratio = CalculateDistanceBasedRatio(horizontalDistance);
+            Vector2 playersDeltaInCameraPlane = new Vector2(
+                camSpace1.x - camSpace0.x,
+                camSpace1.y - camSpace0.y);
+            float playersDistance = playersDeltaInCameraPlane.magnitude;
+            float currentDepth = Mathf.Max(0.01f, (camSpace0.z + camSpace1.z) * 0.5f);
+            float diagonalDistanceRatio = CalculateDiagonalDistanceRatio(playersDistance);
+            float diagonalScale = Mathf.Sqrt(stageCamera.aspect * stageCamera.aspect + 1f);
+            float tanHalfVertical = Mathf.Max(0.0001f, Mathf.Tan(stageCamera.fieldOfView * 0.5f * Mathf.Deg2Rad));
+            float targetDepth = playersDistance / (2f * tanHalfVertical * diagonalDistanceRatio * diagonalScale);
 
-            float targetHorizontalFov = 2f * Mathf.Atan(horizontalDistance / (2f * averageDepth * ratio));
-            float targetVerticalFov = 2f * Mathf.Atan(Mathf.Tan(targetHorizontalFov * 0.5f) / stageCamera.aspect);
-            float targetFovDeg = targetVerticalFov * Mathf.Rad2Deg;
+            float smoothedDepth = Mathf.SmoothDamp(
+                currentDepth,
+                targetDepth,
+                ref cameraDepthVelocity,
+                zoomSmoothTime);
+            float depthDelta = currentDepth - smoothedDepth;
 
-            return Mathf.Clamp(targetFovDeg, minFov, maxFov);
+            transform.position += transform.forward * depthDelta;
         }
 
-        private float CalculateDistanceBasedRatio(float playerDistance) {
-            float t = Mathf.InverseLerp(ratioDistanceMin, ratioDistanceMax, playerDistance);
-            return Mathf.Lerp(nearDistanceViewportRatio, farDistanceViewportRatio, t);
+        private float CalculateDiagonalDistanceRatio(float playersDistance) {
+            float safeMaxDistance = Mathf.Max(0.01f, maxPlayersDistanceToFitOnScreen);
+            float normalizedDistance = Mathf.Clamp01(playersDistance / safeMaxDistance);
+            float diagonalDistanceRatio = normalizedDistanceToDiagonalRatio.Evaluate(normalizedDistance);
+            return Mathf.Clamp(diagonalDistanceRatio, 0.05f, 0.95f);
         }
 
         private IEnumerator MoveToWinner(Transform target, PlayerId winner) {
