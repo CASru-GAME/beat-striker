@@ -29,7 +29,9 @@ namespace Core.LargeWizard {
 
                 var spawnPos = opponent.transform.position + Vector3.up * spawnHeight;
                 var rock = Instantiate(rockPrefab, spawnPos, Quaternion.identity);
-                rock.GetComponent<Rock>().SetAttackerPosition(ctx.Rigidbody.transform.position);
+                var rockBehavior = rock.GetComponent<Rock>();
+                rockBehavior.SetAttackerPosition(ctx.Rigidbody.transform.position);
+                rockBehavior.SetAttackerRoot(ctx.Rigidbody.transform.root);
                 AudioSource.PlayClipAtPoint(audioClip, rockPrefab.transform.position);
             });
         }

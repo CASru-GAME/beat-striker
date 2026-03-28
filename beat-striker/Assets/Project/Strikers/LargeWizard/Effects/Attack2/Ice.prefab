@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf3f65e5de6613e418c0384891e71a5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Ice
-  damage: 10
+  damage: 15
   knockbackSpeed: 10
   growDuration: 0.3
   lifetime: 2
@@ -101,8 +101,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.8902881, y: 2.86626, z: 2.1648555}
-  m_Center: {x: -0.020148993, y: 1.3635185, z: 0.6429662}
+  m_Size: {x: 1.8902881, y: 1.0709636, z: 2.6958346}
+  m_Center: {x: -0.020148993, y: 0.46587014, z: 0.90845585}
 --- !u!1001 &2069234617518104421
 PrefabInstance:
   m_ObjectHideFlags: 0
