@@ -24,10 +24,8 @@ namespace Alice {
         IMusicPlayer musicPlayer;
         IStrikerRegistry strikerRegistry;
         IDisposable goodZoneSubscription;
-        IDisposable beatTimingSubscription;
         bool isAiMode;
         IReadOnlyBattleEntity selfStriker;
-        AiAction pendingAction = AiAction.None;
 
         public Observable<Vector2> OnDirectionAsObservable => onDirection;
         public Observable<Unit> OnDirectionCanceledAsObservable => onDirectionCanceled;
@@ -48,7 +46,6 @@ namespace Alice {
             }
             this.selfStriker = self;
             this.isAiMode = true;
-            pendingAction = AiAction.None;
             OnAiEnabled();
 
             goodZoneSubscription = musicPlayer.OnGoodZoneEntered.Subscribe(signal => {
@@ -58,7 +55,7 @@ namespace Alice {
 
                 var opponent = ResolveOpponent(selfStriker);
                 if (opponent == null) {
-                    pendingAction = AiAction.None;
+                    CancelDirection();
                     return;
                 }
 
@@ -68,15 +65,8 @@ namespace Alice {
                     signal,
                     musicPlayer.CurrentPlaybackTime
                 );
-                pendingAction = OnGoodWindow(observation);
-            });
-
-            beatTimingSubscription = musicPlayer.OnBeatTiming.Subscribe(_ => {
-                if (!this.isAiMode) {
-                    return;
-                }
-                ApplyActionAtBeatTiming(pendingAction);
-                pendingAction = AiAction.None;
+                var action = OnGoodWindow(observation);
+                ApplyActionAtGoodWindow(action);
             });
         }
 
@@ -90,9 +80,6 @@ namespace Alice {
             CancelDirection();
             goodZoneSubscription?.Dispose();
             goodZoneSubscription = null;
-            beatTimingSubscription?.Dispose();
-            beatTimingSubscription = null;
-            pendingAction = AiAction.None;
         }
 
         // Note: legacy compatibility methods removed — callers should use EnableAiMode/DisableAiMode directly.
@@ -110,7 +97,7 @@ namespace Alice {
             onButtonUp.OnNext(button);
         }
 
-        void ApplyActionAtBeatTiming(AiAction action) {
+        void ApplyActionAtGoodWindow(AiAction action) {
             if (action.Button.HasValue) {
                 Press(action.Button.Value);
             }
@@ -150,7 +137,6 @@ namespace Alice {
 
         void OnDestroy() {
             goodZoneSubscription?.Dispose();
-            beatTimingSubscription?.Dispose();
             onDirection.Dispose();
             onDirectionCanceled.Dispose();
             onButtonDown.Dispose();

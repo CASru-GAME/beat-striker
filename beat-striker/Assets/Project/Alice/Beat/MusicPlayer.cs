@@ -1,6 +1,6 @@
 
 using System;
-using System.Diagnostics;
+ 
 using R3;
 using UnityEngine;
 
@@ -47,7 +47,6 @@ namespace Alice {
             var clip = selectedTrack.AudioClip;
             audioSource.clip = clip;
             audioSource.Play();
-            Log($"Play track={selectedTrack.Name} bpm={selectedTrack.bpm:F2} offset={selectedTrack.offset:F4} commandOffset={beatConfig.CommandTimeOffset:F4} perfectWindow={beatConfig.PerfectWindow:F4}");
 
             beatSoundSubscription?.Dispose();
             beats = selectedTrack.beats;
@@ -55,12 +54,11 @@ namespace Alice {
             goodWindowIndex = 0;
             beatTimingIndex = 0;
             lastPlaybackTime = -1f;
-            Log($"BeatSequence initialized beatCount={beats.Length}");
+            
             beatSoundSubscription = Observable.EveryUpdate().Subscribe(_ => {
                 if (!audioSource.isPlaying) return;
                 var currentTime = audioSource.time;
                 if (lastPlaybackTime >= 0f && currentTime < lastPlaybackTime) {
-                    Log($"LoopDetected currentTime={currentTime:F4} lastPlaybackTime={lastPlaybackTime:F4} -> reset indices");
                     beatSoundIndex = 0;
                     goodWindowIndex = 0;
                     beatTimingIndex = 0;
@@ -70,7 +68,6 @@ namespace Alice {
                 EmitBeatTimingEvents();
 
                 while (beatSoundIndex < beats.Length && audioSource.time >= beats[beatSoundIndex]) {
-                    Log($"BeatSound beatIndex={beatSoundIndex} beatTime={beats[beatSoundIndex]:F4} audioTime={audioSource.time:F4}");
                     AudioSource.PlayClipAtPoint(selectedTrack.beatSound, Vector3.zero);
                     beatSoundIndex += 1;
                 }
@@ -81,7 +78,7 @@ namespace Alice {
 
         public IMusicPlayer.BeatJudgeResult JudgeTiming(float playbackTime) {
             var judgeTime = playbackTime + beatConfig.CommandTimeOffset;
-            Log($"JudgeTiming playbackTime={playbackTime:F4} judgeTime={judgeTime:F4}");
+            
 
             for (var i = 0; i < beats.Length; i++) {
                 var beatTime = beats[i];
@@ -91,15 +88,13 @@ namespace Alice {
 
                 var windowStart = beatTime - beatConfig.PerfectWindow;
                 if (judgeTime >= windowStart) {
-                    Log($"JudgeTimingResult zone=Good beatIndex={i} beatTime={beatTime:F4} windowStart={windowStart:F4}");
                     return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Good, i, beatTime);
                 }
-
-                Log($"JudgeTimingResult zone=Miss reason=before window beatIndex={i} beatTime={beatTime:F4} windowStart={windowStart:F4}");
+                
                 return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Miss, -1, 0f);
             }
 
-            Log("JudgeTimingResult zone=Miss reason=no upcoming beat");
+            
             return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Miss, -1, 0f);
         }
 
@@ -111,8 +106,6 @@ namespace Alice {
                 if (judgeTime < windowStart) {
                     return;
                 }
-
-                Log($"OnGoodZoneEntered beatIndex={goodWindowIndex} beatTime={beatTime:F4} judgeTime={judgeTime:F4} windowStart={windowStart:F4}");
                 onGoodZoneEntered.OnNext(new IMusicPlayer.BeatSignal(goodWindowIndex, beatTime));
                 goodWindowIndex += 1;
             }
@@ -120,7 +113,6 @@ namespace Alice {
 
         void EmitBeatTimingEvents() {
             while (beatTimingIndex < beats.Length && audioSource.time >= beats[beatTimingIndex]) {
-                Log($"OnBeatTiming beatIndex={beatTimingIndex} beatTime={beats[beatTimingIndex]:F4} audioTime={audioSource.time:F4}");
                 onBeatTiming.OnNext(new IMusicPlayer.BeatSignal(beatTimingIndex, beats[beatTimingIndex]));
                 beatTimingIndex += 1;
             }
@@ -132,10 +124,6 @@ namespace Alice {
             onBeatTiming.Dispose();
         }
 
-        [Conditional("UNITY_EDITOR")]
-        [Conditional("DEVELOPMENT_BUILD")]
-        static void Log(string message) {
-            UnityEngine.Debug.Log($"[MusicPlayer] {message}");
-        }
+        
     }
 }
