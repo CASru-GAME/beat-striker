@@ -181,7 +181,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8342668372415363323, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: perfectWindow
-      value: 0.4
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8342668372415363323, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
+      propertyPath: selectedTrackName
+      value: BS18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

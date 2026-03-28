@@ -119,7 +119,7 @@ MonoBehaviour:
   tracks:
   - Name: Se
     AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
-    bpm: 55
+    bpm: 110
     offset: 0
     beats: []
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
@@ -131,19 +131,19 @@ MonoBehaviour:
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
   - Name: Fi
     AudioClip: {fileID: 8300000, guid: 62df61faddbdc4059b98c3473fcf6704, type: 3}
-    bpm: 128
+    bpm: 150
     offset: 0
     beats: []
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
   - Name: BS18
-    AudioClip: {fileID: 8300000, guid: bfee84556b95a4727a94379c64dcb9fb, type: 3}
+    AudioClip: {fileID: 8300000, guid: c4266cde834724c9585aa2641c14dcf4, type: 3}
     bpm: 128
     offset: 0
     beats: []
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
   - Name: BS
     AudioClip: {fileID: 8300000, guid: 813c0b1b710a04cea866e61e51daa989, type: 3}
-    bpm: 128
+    bpm: 110
     offset: 0
     beats: []
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
