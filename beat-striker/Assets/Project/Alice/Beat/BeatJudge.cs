@@ -1,8 +1,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using R3;
-using TMPro;
 using UnityEngine;
 
 namespace Alice {
@@ -26,9 +26,10 @@ namespace Alice {
 
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer) {
             this.musicPlayer = musicPlayer;
+            Log($"Construct players={beatPlayer.Length}");
 
             for(int i = 0; i < beatPlayer.Length; i++) {
-                beatPlayer[i] = new BeatPlayer();
+                beatPlayer[i] = new BeatPlayer(i);
             }
 
             for(int i = 0; i < beatPlayer.Length; i++) {
@@ -37,7 +38,9 @@ namespace Alice {
                 var subscription = gamePad.OnButtonDown.Subscribe(button => {
                     var player = beatPlayer[playerIndex];
                     var time = musicPlayer.CurrentPlaybackTime;
+                    Log($"Input player={playerIndex} button={button} time={time:F4} last={lastCommandPlaybackTime:F4}");
                     if (lastCommandPlaybackTime >= 0f && time < lastCommandPlaybackTime) {
+                        Log($"LoopDetected time={time:F4} last={lastCommandPlaybackTime:F4} -> reset players");
                         for (var j = 0; j < beatPlayer.Length; j++) {
                             beatPlayer[j].ResetForLoop();
                         }
@@ -45,25 +48,27 @@ namespace Alice {
                     lastCommandPlaybackTime = time;
 
                     var result = musicPlayer.JudgeTiming(time);
-                    var isForcedMiss = player.IsPostBeatCommandLocked();
-                    var isGood = !isForcedMiss && result.Zone == BeatJudgeZone.Good && time < result.BeatTime;
+                    var isTimingGood = result.Zone == BeatJudgeZone.Good && time < result.BeatTime;
+                    Log($"JudgeResult player={playerIndex} zone={result.Zone} beatIndex={result.BeatIndex} beatTime={result.BeatTime:F4} isTimingGood={isTimingGood}");
+                    var isGood = isTimingGood;
                     if (isGood) {
                         player.SavePendingCommand(result.BeatIndex, button);
                     }
-
-                    player.RegisterPostBeatCommandAttempt();
+                    Log($"RequestResult player={playerIndex} button={button} success={isGood}");
                     player.onBeat.OnNext(new IBeatPlayer.BeatResult(time, isGood, button));
                 });
                 subscriptions.Add(subscription);
             }
 
             subscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
+                Log($"OnBeatTiming beatIndex={signal.BeatIndex} beatTime={signal.BeatTime:F4}");
                 for (var playerIndex = 0; playerIndex < beatPlayer.Length; playerIndex++) {
-                    beatPlayer[playerIndex].EnterPostBeatPeriod(signal.BeatIndex);
                     if (!beatPlayer[playerIndex].TryConsumePendingCommand(signal.BeatIndex, out var button)) {
+                        Log($"ExecuteMiss player={playerIndex} beatIndex={signal.BeatIndex} reason=no pending command");
                         continue;
                     }
 
+                    Log($"ExecuteSuccess player={playerIndex} beatIndex={signal.BeatIndex} button={button}");
                     beatPlayer[playerIndex].onBeatResult.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, true, button));
                 }
             }));
@@ -77,56 +82,57 @@ namespace Alice {
         }
 
         public void Dispose() {
+            Log("Dispose subscriptions");
             foreach (var subscription in subscriptions) {
                 subscription.Dispose();
             }
             subscriptions.Clear();
         }
 
+        [Conditional("UNITY_EDITOR")]
+        [Conditional("DEVELOPMENT_BUILD")]
+        static void Log(string message) {
+            UnityEngine.Debug.Log($"[BeatJudge] {message}");
+        }
+
         class BeatPlayer : IBeatPlayer {
+            readonly int playerIndex;
             readonly Dictionary<int, GamePadButton> pendingCommands = new Dictionary<int, GamePadButton>();
-            int postBeatPeriodIndex = -1;
-            bool hasCommandAfterBeat;
             public Subject<IBeatPlayer.BeatResult> onBeat = new Subject<IBeatPlayer.BeatResult>();
             public Subject<IBeatPlayer.BeatResult> onBeatResult = new Subject<IBeatPlayer.BeatResult>();
+
+            public BeatPlayer(int playerIndex) {
+                this.playerIndex = playerIndex;
+            }
 
             public Observable<IBeatPlayer.BeatResult> OnBeatCommandRequested => onBeat;
             public Observable<IBeatPlayer.BeatResult> OnBeatCommandExecuted => onBeatResult;
 
             public void SavePendingCommand(int beatIndex, GamePadButton button) {
                 pendingCommands[beatIndex] = button;
+                Log($"SavePending player={playerIndex} beatIndex={beatIndex} button={button} pendingCount={pendingCommands.Count}");
             }
 
             public bool TryConsumePendingCommand(int beatIndex, out GamePadButton button) {
                 if (!pendingCommands.TryGetValue(beatIndex, out button)) {
+                    Log($"ConsumePendingFail player={playerIndex} beatIndex={beatIndex} pendingCount={pendingCommands.Count}");
                     return false;
                 }
 
                 pendingCommands.Remove(beatIndex);
+                Log($"ConsumePendingSuccess player={playerIndex} beatIndex={beatIndex} button={button} pendingCount={pendingCommands.Count}");
                 return true;
-            }
-
-            public void EnterPostBeatPeriod(int beatIndex) {
-                postBeatPeriodIndex = beatIndex;
-                hasCommandAfterBeat = false;
-            }
-
-            public bool IsPostBeatCommandLocked() {
-                return postBeatPeriodIndex >= 0 && hasCommandAfterBeat;
-            }
-
-            public void RegisterPostBeatCommandAttempt() {
-                if (postBeatPeriodIndex < 0) {
-                    return;
-                }
-
-                hasCommandAfterBeat = true;
             }
 
             public void ResetForLoop() {
                 pendingCommands.Clear();
-                postBeatPeriodIndex = -1;
-                hasCommandAfterBeat = false;
+                Log($"ResetForLoop player={playerIndex}");
+            }
+
+            [Conditional("UNITY_EDITOR")]
+            [Conditional("DEVELOPMENT_BUILD")]
+            static void Log(string message) {
+                UnityEngine.Debug.Log($"[BeatPlayer] {message}");
             }
         }
     }
