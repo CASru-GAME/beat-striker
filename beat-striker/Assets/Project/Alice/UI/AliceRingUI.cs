@@ -43,6 +43,43 @@ namespace Alice {
             disposables.Dispose();
             disposables = new CompositeDisposable();
             beatPlayer.OnBeatCommandRequested.Subscribe(result => OnBeat(result)).AddTo(disposables);
+            beatPlayer.OnBeatPassed.Subscribe(result => OnBeatPassed(result)).AddTo(disposables);
+        }
+
+        void OnBeatPassed(IBeatPlayer.BeatResult result) {
+            AudioSource.PlayClipAtPoint(missSound, Vector3.zero);
+
+            var color = centerRing[0].color;
+            color.a = 1f;
+            centerRing[0].color = color;
+
+            LeanTween.alpha(centerRing[0].rectTransform, centerRingFirstAlpha, 0.3f);
+
+            judgeText.gameObject.SetActive(true);
+            judgeText.text = "pass";
+            var judgeColor = judgeText.color;
+            judgeColor.a = 1f;
+            judgeText.color = judgeColor;
+            judgeText.rectTransform.anchoredPosition = judgeTextStartAnchoredPosition;
+
+            LeanTween.cancel(judgeText.gameObject);
+            var targetAnchoredPosition = judgeTextStartAnchoredPosition + Vector2.down * judgeTextDropDistance;
+            LeanTween.value(judgeText.gameObject, judgeTextStartAnchoredPosition, targetAnchoredPosition, judgeTextFadeDuration)
+                .setEase(LeanTweenType.easeInSine)
+                .setOnUpdate((Vector2 position) => {
+                    judgeText.rectTransform.anchoredPosition = position;
+                });
+
+            LeanTween.value(judgeText.gameObject, 1f, 0f, judgeTextFadeDuration)
+                .setOnUpdate((float alpha) => {
+                    var currentColor = judgeText.color;
+                    currentColor.a = alpha;
+                    judgeText.color = currentColor;
+                })
+                .setOnComplete(() => {
+                    judgeText.rectTransform.anchoredPosition = judgeTextStartAnchoredPosition;
+                    judgeText.gameObject.SetActive(false);
+                });
         }
 
         void Awake() {

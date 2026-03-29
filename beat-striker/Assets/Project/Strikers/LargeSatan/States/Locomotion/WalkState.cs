@@ -9,6 +9,7 @@ namespace Core.LargeSatan {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] float walkSpeed;
+        [SerializeField] StrikerNode locomotionNode;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -21,6 +22,7 @@ namespace Core.LargeSatan {
             var v = context.Rigidbody.linearVelocity;
             v.x = context.InputDirection.x * walkSpeed;
             context.Rigidbody.linearVelocity = v;
+            context.TryTransition(locomotionNode);
         }
 
     }

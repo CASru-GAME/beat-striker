@@ -159,9 +159,9 @@ MonoBehaviour:
     offset: 0
     beats: []
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
-  commandTimeOffset: 0
+  commandTimeOffset: 0.2
   viewTimeOffset: 0
-  perfectWindow: 0.4
+  perfectWindow: 1
 --- !u!114 &8571264011029232787
 MonoBehaviour:
   m_ObjectHideFlags: 0

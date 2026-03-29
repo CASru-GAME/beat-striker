@@ -3,7 +3,7 @@ using Alice;
 
 namespace Core.LargeSatan {
     
-    public class JumpUpwardState : StrikerState {
+    public class JumpBackwardState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -27,30 +27,6 @@ namespace Core.LargeSatan {
 
         void OnAnimationEnd(IStrikerStateContext context){
             context.TryTransition(fallNode);
-        }
-
-        // 攻撃コマンドが押された時に呼ばれる
-        public override void OnAttackRequested(IStrikerStateContext context) {
-        }
-
-        // チャージコマンドが押された時に呼ばれる
-        public override void OnChargeRequested(IStrikerStateContext context) {
-        }
-
-        // ダッシュコマンドが押された時に呼ばれる
-        public override void OnDashRequested(IStrikerStateContext context) {
-        }
-
-        // ガードコマンドが押された時に呼ばれる
-        public override void OnGuardRequested(IStrikerStateContext context) {
-        }
-
-        // 攻撃を受けた時に呼ばれる
-        public override void OnHit(IStrikerStateContext context, HitStatus status) {
-        }
-
-        // ミスした時に呼ばれる
-        public override void OnMiss(IStrikerStateContext context) {
         }
 
     }

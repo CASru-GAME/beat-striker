@@ -3,8 +3,7 @@ using Alice;
 
 namespace Core.LargeSatan {
     
-    public class LocomotionGroup : StrikerGroup {
-        [SerializeField] StrikerNode locomotionNode;
+    public class NormalGroup : StrikerGroup {
         [SerializeField] StrikerNode dashNode;
         [SerializeField] StrikerNode attackNode;
         [SerializeField] StrikerNode stunState;
@@ -13,11 +12,6 @@ namespace Core.LargeSatan {
 
         // このグループに入った時に呼ばれる（前のステートがこのグループに所属していなかった場合）
         public override void OnEnter(IStrikerContext context) {
-        }
-
-        // このグループに所属するステートにいる間、毎フレーム呼ばれる
-        public override void OnUpdate(IStrikerStateContext context) {
-            context.TryTransition(locomotionNode);
         }
 
         // このグループから出る時に呼ばれる（次のステートがこのグループに所属していない場合）
