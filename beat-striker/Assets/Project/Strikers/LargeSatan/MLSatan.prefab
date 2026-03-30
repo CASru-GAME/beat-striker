@@ -249,7 +249,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
-    clip: {fileID: 4196952821910588020, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    clip: {fileID: 30488951364029045, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.2
     speed: 1
   groundChecker: {fileID: 4726074325913578082}
@@ -562,7 +562,10 @@ MonoBehaviour:
     fadeTime: 0.2
     speed: 1
   fallNode: {fileID: 5108383347425668583}
-  jumpSpeed: 15
+  jumpSpeed: 40
+  upwardThreshold: 0.96
+  duration: 0.4
+  endSpeedRatio: 0.01
 --- !u!1 &2088919174887837049
 GameObject:
   m_ObjectHideFlags: 0
@@ -720,7 +723,7 @@ MonoBehaviour:
     fadeTime: 0.1
     speed: 1
   backwardClip:
-    clip: {fileID: 2571749806087342793, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    clip: {fileID: 7322141495444865984, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.1
     speed: 1
   nextNode: {fileID: 5551572408817209888}
@@ -830,7 +833,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
-    clip: {fileID: 6552957420277651325, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    clip: {fileID: 4972606239881407399, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.3
     speed: 1
   locomotionNode: {fileID: 3444350880286515863}
@@ -882,7 +885,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
-    clip: {fileID: -6390879764439932706, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    clip: {fileID: 3645794475287612317, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.2
     speed: 1
   walkSpeed: 0.8
@@ -918,6 +921,63 @@ Transform:
   m_Children: []
   m_Father: {fileID: 7053704820960463492}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3170311701473266641
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5081052142786714084}
+  - component: {fileID: 723661110471405025}
+  m_Layer: 0
+  m_Name: AirJumpState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5081052142786714084
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3170311701473266641}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.01286, y: 0.008949995, z: -0.029299974}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1107516161165938196}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &723661110471405025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3170311701473266641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47c2fdb4babc44d28b09b84e1c430f96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AirJumpState
+  parents: []
+  fowardClip:
+    clip: {fileID: -4408316576235594799, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.2
+    speed: 1
+  backwardClip:
+    clip: {fileID: -4408316576235594799, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.2
+    speed: 1
+  fallNode: {fileID: 5108383347425668583}
+  jumpSpeed: 13
+  duration: 0.5
+  downwardAcceleration: 30
 --- !u!1 &3344641484141464587
 GameObject:
   m_ObjectHideFlags: 0
@@ -965,7 +1025,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
-    clip: {fileID: -6390879764439932706, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    clip: {fileID: 3645794475287612317, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.2
     speed: 1
   walkSpeed: 1
@@ -1002,6 +1062,7 @@ Transform:
   m_Children:
   - {fileID: 1473696550848381764}
   - {fileID: 3876697999397625741}
+  - {fileID: 5081052142786714084}
   m_Father: {fileID: 7201851954051567416}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6544772151032152558
@@ -1018,6 +1079,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.DashNode
   jumpNode: {fileID: 361391877649379335}
   dashNode: {fileID: 2890204996219143338}
+  airJumpNode: {fileID: 723661110471405025}
+  jumpThreshold: 0.34
+  groundChecker: {fileID: 4726074325913578082}
 --- !u!1 &4649621161327191430
 GameObject:
   m_ObjectHideFlags: 0
@@ -1468,7 +1532,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
-    clip: {fileID: 8321385359659378562, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    clip: {fileID: -8035431668443965213, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.3
     speed: 1
   locomotionNode: {fileID: 3444350880286515863}

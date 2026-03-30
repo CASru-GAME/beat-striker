@@ -145,7 +145,7 @@ namespace Alice {
         }
 
         public void ChangeDirection(Vector2 direction) {
-            inputDirection = direction;
+            inputDirection = direction.sqrMagnitude > 0f ? direction.normalized : Vector2.zero;
         }
 
         public void CancelDirection() {
