@@ -30,8 +30,8 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
             var (delay, elapsedTime, action) = timeActions[i];
             elapsedTime += Time.deltaTime;
             if (elapsedTime >= delay) {
-                action?.Invoke(ctx);
                 timeActions.RemoveAt(i);
+                action?.Invoke(ctx);
             }
             else {
                 timeActions[i] = (delay, elapsedTime, action);

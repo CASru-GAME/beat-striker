@@ -20,29 +20,29 @@ namespace Core.LargeSatan {
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
-            context.TryTransition(attackNode);
+            context.TryTransition(attackNode, true);
         }
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
-            context.TryTransition(chargeState);
+            context.TryTransition(chargeState, true);
         }
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
-            context.TryTransition(dashNode);
+            context.TryTransition(dashNode, true);
         }
 
         // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {
-            context.TryTransition(guardState);
+            context.TryTransition(guardState, true);
         }
 
         // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
             context.Rigidbody.linearVelocity = status.KnockbackVelocity;
             context.ApplyDamage(status.Damage);
-            context.TryTransition(stunState);
+            context.TryTransition(stunState, true);
         }
 
         // ミスした時に呼ばれる

@@ -324,6 +324,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1591805828821658779, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
+      propertyPath: missSound
+      value: 
+      objectReference: {fileID: 8300000, guid: f9398444eb0b1b34c8a5c0b08e139af8, type: 3}
     - target: {fileID: 2130564286963212984, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: m_Size.y
       value: 38.492336
@@ -342,15 +346,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2356631244881786875, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: 'strikers.Array.data[1]'
-      value: 3
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2428823588523717095, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: m_Size.y
-      value: 4.006313
+      value: 3.8321812
       objectReference: {fileID: 0}
     - target: {fileID: 2428823588523717095, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: m_Center.y
-      value: -1.3938363
+      value: -1.4809057
       objectReference: {fileID: 0}
     - target: {fileID: 2585762154522490147, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: m_LocalScale.x
@@ -396,13 +400,21 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: -3.9
       objectReference: {fileID: 0}
+    - target: {fileID: 5985229953407415247, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
+      propertyPath: missSound
+      value: 
+      objectReference: {fileID: 8300000, guid: f9398444eb0b1b34c8a5c0b08e139af8, type: 3}
+    - target: {fileID: 5985229953407415247, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
+      propertyPath: successSound
+      value: 
+      objectReference: {fileID: 8300000, guid: f9398444eb0b1b34c8a5c0b08e139af8, type: 3}
     - target: {fileID: 6992310007334014431, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: m_LocalPosition.y
       value: 48.4
       objectReference: {fileID: 0}
     - target: {fileID: 8342668372415363323, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: selectedTrackName
-      value: BF
+      value: BS18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

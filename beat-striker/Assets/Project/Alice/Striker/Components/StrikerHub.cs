@@ -73,6 +73,7 @@ public class StrikerHub : MonoBehaviour {
 public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     IStrikerState currentState;
     bool isChangingState;
+    bool forceSameStateTransitionInProgress;
     readonly IStrikerContext context;
     readonly BehaviorSubject<string> currentStateNameSubject = new(string.Empty);
     public ReadOnlyReactiveProperty<string> CurrentStateName { get; }
@@ -81,6 +82,8 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     public Rigidbody Rigidbody => context.Rigidbody;
     public Vector2 InputDirection => context.InputDirection;
     public IEnumerable<Alice.IReadOnlyBattleEntity> GetAllStrikers() => context.GetAllStrikers();
+    public Alice.IReadOnlyBattleEntity GetSelf() => context.GetSelf();
+    public Alice.IReadOnlyBattleEntity GetOpponent() => context.GetOpponent();
 
     public void ApplyDamage(float damage) {
         context.ApplyDamage(damage);
@@ -100,13 +103,17 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     }
 
 
-    public void ChangeState(IStrikerState newState) {
+    public void ChangeState(IStrikerState newState, bool forceSameStateTransition = false) {
         if (isChangingState) {
             Debug.LogError($"StrikerStateMachine.ChangeState was called during an active transition. current={FormatStateName(currentState)}, requested={FormatStateName(newState)}");
             return;
         }
 
-        if (newState == null || ReferenceEquals(newState, currentState)) return;
+        if (newState == null) return;
+
+        if (!forceSameStateTransition && !forceSameStateTransitionInProgress && ReferenceEquals(newState, currentState)) {
+            return;
+        }
 
         isChangingState = true;
         try {
@@ -134,8 +141,19 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
         }
     }
 
-    public void TryTransition(IStrikerNode node) {
-        node?.OnTryTransition(this);
+    public void TryTransition(IStrikerNode node, bool forceSameStateTransition = false) {
+        if (!forceSameStateTransition) {
+            node?.OnTryTransition(this);
+            return;
+        }
+
+        forceSameStateTransitionInProgress = true;
+        try {
+            node?.OnTryTransition(this);
+        }
+        finally {
+            forceSameStateTransitionInProgress = false;
+        }
     }
 
     public void Reset(IStrikerState defaultState) {

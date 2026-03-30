@@ -61,6 +61,17 @@ namespace Alice {
         public IEnumerable<IReadOnlyBattleEntity> GetAllStrikers() {
             return strikerRegistry.GetAllStrikers();
         }
+        public IReadOnlyBattleEntity GetSelf() {
+            return this;
+        }
+        public IReadOnlyBattleEntity GetOpponent() {
+            foreach (var striker in strikerRegistry.GetAllStrikers()) {
+                if (striker.PlayerId != playerId) {
+                    return striker;
+                }
+            }
+            return this;
+        }
         public int PlayerId => playerId;
         public IReadOnlyList<BattleCommandLog> CommandHistory => commandHistory;
 
