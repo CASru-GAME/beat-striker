@@ -5,8 +5,9 @@ using R3;
 namespace Core.LargeSatan {
 
     public class DashNode : StrikerNode {
-        [SerializeField] StrikerNode jumpNode, dashNode, airJumpNode, airSuperJumpNode;
+        [SerializeField] StrikerNode jumpNode, dashNode, airJumpNode, airSuperJumpNode, diveNode;
         [SerializeField] float jumpThreshold = 0.5f;
+        [SerializeField] float diveThreshold = -0.5f;
         [SerializeField] GroundChecker groundChecker;
         int airJumpCounter = 0;
 
@@ -28,6 +29,9 @@ namespace Core.LargeSatan {
                     context.TryTransition(dashNode);
                 }
             }
+            else if (context.InputDirection.y < diveThreshold) {
+                context.TryTransition(diveNode);
+            }
             else {
                 airJumpCounter++;
                 if (airJumpCounter % 2 == 1) {
@@ -40,3 +44,4 @@ namespace Core.LargeSatan {
         }
     }
 }
+
