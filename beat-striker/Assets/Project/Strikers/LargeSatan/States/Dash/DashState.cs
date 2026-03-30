@@ -36,7 +36,7 @@ namespace Core.LargeSatan {
 
             // アニメーションの再生を開始する
             StrikerAnimationClip clip;
-            if(inputX < 0) {
+            if(enterDirectionSign < 0) {
                 clip = backwardClip;
             } else {
                 clip = fowardClip;
@@ -44,7 +44,7 @@ namespace Core.LargeSatan {
             context.PlayAnimation(clip);
             int speedIndex = Mathf.Min(consecutiveEnterCount, consecutiveDashSpeeds.Length - 1);
             float dashSpeed = consecutiveDashSpeeds[speedIndex];
-            this.initialVelocity = dashSpeed * inputX * Vector2.right;
+            this.initialVelocity = dashSpeed * enterDirectionSign * Vector2.right;
             this.elapsedTime = 0f;
             this.stoppedByOpponentDistance = false;
             context.Rigidbody.linearVelocity = this.initialVelocity;

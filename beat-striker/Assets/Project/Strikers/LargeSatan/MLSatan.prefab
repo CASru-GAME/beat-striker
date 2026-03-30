@@ -250,7 +250,7 @@ MonoBehaviour:
   - {fileID: 1412494263704707963}
   animationClip:
     clip: {fileID: 30488951364029045, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
-    fadeTime: 0.2
+    fadeTime: 0.3
     speed: 1
   groundChecker: {fileID: 4726074325913578082}
   landNode: {fileID: 5551572408817209888}
@@ -967,7 +967,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AirJumpState
   parents: []
   fowardClip:
-    clip: {fileID: -4408316576235594799, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    clip: {fileID: 2471788936881286347, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.2
     speed: 1
   backwardClip:
@@ -1063,6 +1063,7 @@ Transform:
   - {fileID: 1473696550848381764}
   - {fileID: 3876697999397625741}
   - {fileID: 5081052142786714084}
+  - {fileID: 3249730452699767494}
   m_Father: {fileID: 7201851954051567416}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6544772151032152558
@@ -1080,6 +1081,7 @@ MonoBehaviour:
   jumpNode: {fileID: 361391877649379335}
   dashNode: {fileID: 2890204996219143338}
   airJumpNode: {fileID: 723661110471405025}
+  airSuperJumpNode: {fileID: 8284743266976791752}
   jumpThreshold: 0.34
   groundChecker: {fileID: 4726074325913578082}
 --- !u!1 &4649621161327191430
@@ -1536,6 +1538,59 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 1
   locomotionNode: {fileID: 3444350880286515863}
+--- !u!1 &7972368635136924953
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3249730452699767494}
+  - component: {fileID: 8284743266976791752}
+  m_Layer: 0
+  m_Name: AirSuperJumpState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3249730452699767494
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7972368635136924953}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.01286, y: 0.008949995, z: -0.029299974}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1107516161165938196}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8284743266976791752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7972368635136924953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 264a4b30b74a644da9767bf1c8c82692, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AirSuperJumpState
+  parents: []
+  clip:
+    clip: {fileID: -1508617589724229766, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.2
+    speed: 1
+  fallNode: {fileID: 5108383347425668583}
+  jumpSpeed: 8
+  duration: 0.5
+  downwardAcceleration: 30
 --- !u!1 &8335504583372205754
 GameObject:
   m_ObjectHideFlags: 0

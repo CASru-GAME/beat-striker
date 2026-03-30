@@ -19,16 +19,17 @@ namespace Core.LargeSatan {
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
+            var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
             StrikerAnimationClip clip;
-            if(context.InputDirection.y > upwardThreshold) {
+            if(direction.y > upwardThreshold) {
                 clip = upwardClip;
-            } else if(context.InputDirection.x < 0) {
+            } else if(direction.x < 0) {
                 clip = backwardClip;
             } else {
                 clip = fowardClip;
             }
             context.PlayAnimation(clip);
-            this.initialVelocity = jumpSpeed * context.InputDirection;
+            this.initialVelocity = jumpSpeed * direction;
             this.elapsedTime = 0f;
             this.previousUseGravity = context.Rigidbody.useGravity;
             context.Rigidbody.useGravity = false;
