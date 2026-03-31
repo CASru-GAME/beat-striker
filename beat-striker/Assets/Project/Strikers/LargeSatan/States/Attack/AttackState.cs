@@ -20,6 +20,8 @@ namespace Core.LargeSatan {
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 10;
 
+        [SerializeField] EffectPlayer effectPlayer;
+
         readonly List<Hit> hitsInFrame = new();
         bool hitInState;
         public record Hit(Vector3 hitPoint, Hurtbox hurtBox);
@@ -28,6 +30,7 @@ namespace Core.LargeSatan {
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
+            effectPlayer.Emit(effectPlayer.transform);
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
                 if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
                     var hitPoint = collider.ClosestPoint(hitBox.transform.position);

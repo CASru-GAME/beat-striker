@@ -131,7 +131,8 @@ Transform:
   m_LocalPosition: {x: 0.01286, y: 0.77679, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 7181211830687872934}
   m_Father: {fileID: 7201851954051567416}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9214202796625303400
@@ -503,6 +504,50 @@ MonoBehaviour:
   receivedDamagePenaltyScale: 0.04
   winReward: 1
   losePenalty: -1
+--- !u!1 &1664855047052708334
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3852503876839218069}
+  - component: {fileID: 1372486379410882081}
+  m_Layer: 0
+  m_Name: UntilGravityGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3852503876839218069
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1664855047052708334}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.78574, z: -0.029299974}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7201851954051567416}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1372486379410882081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1664855047052708334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d9bc50e433294e73b52c57f04633ea7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.UntilGravityGroup
 --- !u!1 &1863899945261721977
 GameObject:
   m_ObjectHideFlags: 0
@@ -643,11 +688,11 @@ Transform:
   m_GameObject: {fileID: 2433935694402992007}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.01286, y: 0.77679, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7201851954051567416}
+  m_Father: {fileID: 1425690710777153012}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6465224874055907323
 MonoBehaviour:
@@ -661,17 +706,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: daa30f507bde245eaa202f0601ba8274, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AttackState
-  parents: []
+  parents:
+  - {fileID: 1412494263704707963}
+  - {fileID: 1372486379410882081}
   animationClip:
-    clip: {fileID: 7400000, guid: 61a771842a110490f90a332205457fc9, type: 2}
-    fadeTime: 0.3
-    speed: 1
+    clip: {fileID: 8733749732401332308, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.1
+    speed: 1.5
   nextNode: {fileID: 3444350880286515863}
   hitBox: {fileID: 1959988949070900764}
   particlePrefab: {fileID: 8810921521921811724, guid: 791869b43f6664df4b8fabe66e83c25f, type: 3}
   audioClip: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   damage: 10
   nockbackSpeed: 10
+  effectPlayer: {fileID: 839518711300973302}
 --- !u!1 &2485643925861171987
 GameObject:
   m_ObjectHideFlags: 0
@@ -1168,13 +1216,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4649621161327191430}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0.32509062, w: 0.9456829}
+  m_LocalPosition: {x: 0, y: 1.07, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2491027056567117565}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -37.942}
 --- !u!114 &839518711300973302
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1187,7 +1235,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
-  effectPrefab: {fileID: 0}
+  effectPrefab: {fileID: 1727185941713628496, guid: 89a1b52b837324b5fbd8a78fa693257e, type: 3}
   initialPoolSize: 2
   maxPoolSize: 32
 --- !u!1 &5451931231840996846
@@ -1255,10 +1303,10 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1755223434685806416}
+  - {fileID: 3852503876839218069}
   - {fileID: 1329178121020529794}
   - {fileID: 1107516161165938196}
   - {fileID: 1425690710777153012}
-  - {fileID: 7181211830687872934}
   - {fileID: 4800021711829065458}
   - {fileID: 225902090445379099}
   - {fileID: 7670338563451008460}
@@ -1492,8 +1540,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.476735, y: 0.39296055, z: 0.5178139}
-  m_Center: {x: 0.02466613, y: 0.30351955, z: 0.3703884}
+  m_Size: {x: 0.30907142, y: 0.22529697, z: 0.48987007}
+  m_Center: {x: 0.41898602, y: 0.43702942, z: 0.8749316}
 --- !u!54 &7252120132950508261
 Rigidbody:
   m_ObjectHideFlags: 0
