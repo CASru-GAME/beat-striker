@@ -17,6 +17,27 @@ namespace Alice.Editor {
         private static bool isPreviewPlaying;
         private static double lastUpdateTime;
         private static AnimationPlayerEditor activeEditor;
+        private static bool isDisposingPreview;
+        private static readonly List<FollowPairConfig> followPairConfigs = new();
+        private static readonly List<FollowPairRuntime> followPairRuntimes = new();
+
+        private sealed class FollowPairConfig {
+            public GameObject follower;
+            public GameObject target;
+        }
+
+        private readonly struct FollowPairRuntime {
+            public readonly Transform follower;
+            public readonly Transform target;
+            public readonly Vector3 relativePosition;
+            public readonly Quaternion relativeRotation;
+
+            public FollowPairRuntime(Transform follower, Transform target, Vector3 relativePosition, Quaternion relativeRotation) {
+                this.follower = follower;
+                this.target = target;
+                this.relativePosition = relativePosition;
+                this.relativeRotation = relativeRotation;
+            }
         }
 
         private AnimationClip localPreviewClip;
