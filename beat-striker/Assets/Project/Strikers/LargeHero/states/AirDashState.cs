@@ -4,19 +4,29 @@ using Core.Striker;
 
 namespace Core.LargeHero {
     
-    public class StunState : StrikerState {
+    public class AirDashState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
-        [SerializeField] private StrikerAnimationClip animationClip;
+        [SerializeField] private StrikerAnimationClip UpAnimationClip,FrontAnimationClip,BackAnimationClip;
+        [SerializeField] private float speed;
         [SerializeField] StrikerNode nextNode;
+
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
-            Debug.Log("StunStateに遷移");
+            context.Rigidbody.linearVelocity = context.InputDirection * speed;
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip, OnAnimationEnd);
+                StrikerAnimationClip animationClip;
+                if (context.InputDirection.y > 0.5f) {
+                    animationClip = UpAnimationClip;
+                } else if (context.InputDirection.y < -0.5f) {
+                    animationClip = BackAnimationClip;
+                } else {
+                    animationClip = FrontAnimationClip;
+                }
+                
+            context.PlayAnimation(animationClip,context => context.TryTransition(nextNode));
         }
-        void OnAnimationEnd(IStrikerStateContext context)
-        {context. TryTransition(nextNode);}
+
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
         }
@@ -39,12 +49,10 @@ namespace Core.LargeHero {
 
         // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {
-
         }
 
         // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
-            context.ApplyDamage(status.Damage);
         }
 
         // ミスした時に呼ばれる
