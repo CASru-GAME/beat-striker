@@ -1,6 +1,7 @@
 import bpy
 import math
 import bmesh
+import os
 
 def setup_bone_rotation_limits():
     """全ボーンに回転制限を設定（コンストレイントのみ追加）"""
@@ -17,14 +18,13 @@ def setup_bone_rotation_limits():
                 pb.constraints.remove(c)
 
     limits_dict = {
-        # "Hips": [-360, 360, -360, 360, -360, 360], # 1周以上回るボーンのため制限無効
         "Spine": [-20, 20, -20, 20, -20, 20],
         "Chest": [-20, 20, -20, 20, -20, 20],
         "UpperChest": [-20, 20, -20, 20, -20, 20],
         "Neck": [-45, 45, -45, 45, -45, 45],
         "Head": [-45, 45, -45, 45, -60, 60],
         "Shoulder": [-30, 30, -20, 20, -20, 20],
-        "UpperArm": [-130, 130, -130, 130, -130, 130],
+        "UpperArm": [-150, 150, -150, 150, -150, 150],
         "LowerArm": [0, 150, -20, 180, 0, 0],
         "Hand": [-90, 90, -90, 180, -90, 90],
         "UpperLeg": [-45, 180, -45, 45, -45, 45],
@@ -249,6 +249,11 @@ def setup_ik_drivers(obj):
 
 
 class AutoBoneSettings(bpy.types.PropertyGroup):
+    fbx_export_name: bpy.props.StringProperty(
+        name="File Name",
+        description="エクスポートするFBXのファイル名（拡張子は自動）",
+        default="export_anim"
+    )
     auto_bake_limits: bpy.props.BoolProperty(
         name="Auto Bake on Setup",
         description="Setup実行時に全アニメーションの可動域を自動で焼き込むか",
@@ -337,8 +342,12 @@ class AUTOBONE_OT_bake_ik_to_fk(bpy.types.Operator):
                 saved_matrices[b_name] = pb.matrix.copy()
 
         settings = obj.auto_bone_settings
-        if self.bake_target in {"ALL", "ARMS"}: settings.ik_influence_arms = 0.0
-        if self.bake_target in {"ALL", "LEGS"}: settings.ik_influence_legs = 0.0
+        if self.bake_target in {"ALL", "ARMS"}:
+            settings.ik_influence_arms = 0.0
+            obj.keyframe_insert(data_path='auto_bone_settings.ik_influence_arms', group="Auto Bone Settings")
+        if self.bake_target in {"ALL", "LEGS"}:
+            settings.ik_influence_legs = 0.0
+            obj.keyframe_insert(data_path='auto_bone_settings.ik_influence_legs', group="Auto Bone Settings")
         
         bpy.context.view_layer.update()
 
@@ -365,8 +374,74 @@ class AUTOBONE_OT_bake_ik_to_fk(bpy.types.Operator):
                 if limit_c:
                     limit_c.influence = orig_inf
                 bpy.context.view_layer.update()
+                
+                if pb.rotation_mode == 'QUATERNION':
+                    pb.keyframe_insert(data_path="rotation_quaternion")
+                else:
+                    pb.keyframe_insert(data_path="rotation_euler")
+                pb.keyframe_insert(data_path="location")
 
         self.report({'INFO'}, "IKのポーズをFKに焼き込みました！")
+        return {'FINISHED'}
+
+
+class AUTOBONE_OT_bake_fk_to_ik(bpy.types.Operator):
+    bl_idname = "autobone.bake_fk_to_ik"
+    bl_label = "Snap FK to IK"
+    bl_description = "現在のFKのポーズにIKコントローラーを合わせ、IK影響度を1にします"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    bake_target: bpy.props.StringProperty(default="ALL")
+
+    def execute(self, context):
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            return {'CANCELLED'}
+
+        arm_ik_map = {
+            "J_Bip_L_Hand": "IK_L_Hand",
+            "J_Bip_R_Hand": "IK_R_Hand"
+        }
+        leg_ik_map = {
+            "J_Bip_L_Foot": "IK_L_Foot",
+            "J_Bip_R_Foot": "IK_R_Foot"
+        }
+        
+        target_map = {}
+        if self.bake_target in {"ALL", "ARMS"}: target_map.update(arm_ik_map)
+        if self.bake_target in {"ALL", "LEGS"}: target_map.update(leg_ik_map)
+
+        bpy.context.view_layer.update()
+
+        saved_matrices = {}
+        for end_name, ik_name in target_map.items():
+            end_pb = obj.pose.bones.get(end_name)
+            if end_pb:
+                saved_matrices[ik_name] = end_pb.matrix.copy()
+
+        for ik_name, mat in saved_matrices.items():
+            ik_pb = obj.pose.bones.get(ik_name)
+            if ik_pb:
+                ik_pb.matrix = mat
+                ik_pb.scale = (1, 1, 1)
+                
+                if ik_pb.rotation_mode == 'QUATERNION':
+                    ik_pb.keyframe_insert(data_path="rotation_quaternion")
+                else:
+                    ik_pb.keyframe_insert(data_path="rotation_euler")
+                ik_pb.keyframe_insert(data_path="location")
+
+        settings = obj.auto_bone_settings
+        if self.bake_target in {"ALL", "ARMS"}:
+            settings.ik_influence_arms = 1.0
+            obj.keyframe_insert(data_path='auto_bone_settings.ik_influence_arms', group="Auto Bone Settings")
+        if self.bake_target in {"ALL", "LEGS"}:
+            settings.ik_influence_legs = 1.0
+            obj.keyframe_insert(data_path='auto_bone_settings.ik_influence_legs', group="Auto Bone Settings")
+        
+        bpy.context.view_layer.update()
+
+        self.report({'INFO'}, "FKのポーズからIKにスナップしました！")
         return {'FINISHED'}
 
 
@@ -415,6 +490,58 @@ class AUTOBONE_OT_bake_limits_anim(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class AUTOBONE_OT_export_fbx(bpy.types.Operator):
+    bl_idname = "autobone.export_fbx"
+    bl_label = "FBXをエクスポート"
+    bl_description = "設定された内容でFBXを自動エクスポート（Blendファイルと同じ場所に保存）します"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        if not bpy.data.is_saved or not bpy.data.filepath:
+            self.report({'ERROR'}, "先にBlendファイルを保存してください！")
+            return {'CANCELLED'}
+            
+        settings = context.object.auto_bone_settings
+        filename = settings.fbx_export_name.strip()
+        if not filename:
+            filename = "export_anim"
+        if not filename.lower().endswith(".fbx"):
+            filename += ".fbx"
+            
+        dir_path = os.path.dirname(bpy.data.filepath)
+        export_path = os.path.join(dir_path, filename)
+        
+        bpy.ops.export_scene.fbx(
+            filepath=export_path,
+            use_selection=False,
+            use_visible=False,
+            use_active_collection=False,
+            use_custom_props=False,
+            object_types={'ARMATURE'},
+            global_scale=1.0,
+            apply_scale_options='FBX_SCALE_ALL',
+            axis_forward='-Z',
+            axis_up='Y',
+            apply_unit_scale=True,
+            bake_space_transform=True,
+            armature_nodetype='NULL',
+            primary_bone_axis='Y',
+            secondary_bone_axis='X',
+            use_armature_deform_only=False,
+            add_leaf_bones=True,
+            bake_anim=True,
+            bake_anim_use_all_bones=True,
+            bake_anim_use_nla_strips=True,
+            bake_anim_use_all_actions=False,
+            bake_anim_force_startend_keying=True,
+            bake_anim_step=1.0,
+            bake_anim_simplify_factor=1.0
+        )
+        
+        self.report({'INFO'}, f"FBXをエクスポートしました: {filename}")
+        return {'FINISHED'}
+
+
 class AUTOBONE_PT_panel(bpy.types.Panel):
     bl_label = "Auto Bone Setup"
     bl_idname = "AUTOBONE_PT_panel"
@@ -432,6 +559,13 @@ class AUTOBONE_PT_panel(bpy.types.Panel):
             
         settings = obj.auto_bone_settings
         
+        # 編集中のアニメーション選択プルダウン（Blender標準UIを利用）
+        if obj.animation_data:
+            layout.template_ID(obj.animation_data, "action", new="action.new")
+        else:
+            layout.label(text="アニメーションデータがありません", icon='INFO')
+            
+        layout.separator()
         layout.prop(settings, "auto_bake_limits", text="Auto Bake Limits on Setup")
         layout.operator(AUTOBONE_OT_setup.bl_idname, icon='ARMATURE_DATA')
         
@@ -442,16 +576,20 @@ class AUTOBONE_PT_panel(bpy.types.Panel):
         # --- Arms ---
         row = box.row(align=True)
         row.prop(settings, "ik_influence_arms", text="Arms")
-        op = row.operator(AUTOBONE_OT_bake_ik_to_fk.bl_idname, text="", icon='ACTION')
-        op.bake_target = "ARMS"
+        op_ik_fk = row.operator(AUTOBONE_OT_bake_ik_to_fk.bl_idname, text="IK->FK")
+        op_ik_fk.bake_target = "ARMS"
+        op_fk_ik = row.operator(AUTOBONE_OT_bake_fk_to_ik.bl_idname, text="FK->IK")
+        op_fk_ik.bake_target = "ARMS"
         
         box.separator()
         
         # --- Legs ---
         row = box.row(align=True)
         row.prop(settings, "ik_influence_legs", text="Legs")
-        op = row.operator(AUTOBONE_OT_bake_ik_to_fk.bl_idname, text="", icon='ACTION')
-        op.bake_target = "LEGS"
+        op_ik_fk = row.operator(AUTOBONE_OT_bake_ik_to_fk.bl_idname, text="IK->FK")
+        op_ik_fk.bake_target = "LEGS"
+        op_fk_ik = row.operator(AUTOBONE_OT_bake_fk_to_ik.bl_idname, text="FK->IK")
+        op_fk_ik.bake_target = "LEGS"
         
         layout.separator()
         
@@ -467,13 +605,21 @@ class AUTOBONE_PT_panel(bpy.types.Panel):
         layout.label(text="Animation Clamp Tool:")
         layout.operator(AUTOBONE_OT_bake_limits_anim.bl_idname, icon='FILE_TICK')
 
+        layout.separator()
+        layout.label(text="FBX Export:")
+        box_fbx = layout.box()
+        box_fbx.prop(settings, "fbx_export_name", text="", icon='FILE_BLANK')
+        box_fbx.operator(AUTOBONE_OT_export_fbx.bl_idname, icon='EXPORT')
+
 
 classes = (
     AutoBoneSettings,
     AUTOBONE_OT_setup,
     AUTOBONE_OT_bake_ik_to_fk,
+    AUTOBONE_OT_bake_fk_to_ik,
     AUTOBONE_OT_key_ik_influence,
     AUTOBONE_OT_bake_limits_anim,
+    AUTOBONE_OT_export_fbx,
     AUTOBONE_PT_panel,
 )
 
