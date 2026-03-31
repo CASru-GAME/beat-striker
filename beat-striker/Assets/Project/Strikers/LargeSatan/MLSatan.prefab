@@ -720,6 +720,7 @@ MonoBehaviour:
   damage: 10
   nockbackSpeed: 10
   effectPlayer: {fileID: 839518711300973302}
+  slashSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
 --- !u!1 &2485643925861171987
 GameObject:
   m_ObjectHideFlags: 0

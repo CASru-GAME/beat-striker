@@ -21,6 +21,7 @@ namespace Core.LargeSatan {
         [SerializeField] float nockbackSpeed = 10;
 
         [SerializeField] EffectPlayer effectPlayer;
+        [SerializeField] AudioClip slashSound;
 
         readonly List<Hit> hitsInFrame = new();
         bool hitInState;
@@ -30,7 +31,10 @@ namespace Core.LargeSatan {
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
+
             effectPlayer.Emit(effectPlayer.transform);
+            AudioSource.PlayClipAtPoint(slashSound, transform.position);
+
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
                 if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
                     var hitPoint = collider.ClosestPoint(hitBox.transform.position);

@@ -17,14 +17,14 @@ def setup_bone_rotation_limits():
                 pb.constraints.remove(c)
 
     limits_dict = {
-        "Hips": [-360, 360, -360, 360, -360, 360],
+        # "Hips": [-360, 360, -360, 360, -360, 360], # 1周以上回るボーンのため制限無効
         "Spine": [-20, 20, -20, 20, -20, 20],
         "Chest": [-20, 20, -20, 20, -20, 20],
         "UpperChest": [-20, 20, -20, 20, -20, 20],
         "Neck": [-45, 45, -45, 45, -45, 45],
         "Head": [-45, 45, -45, 45, -60, 60],
         "Shoulder": [-30, 30, -20, 20, -20, 20],
-        "UpperArm": [-90, 90, -45, 90, -90, 90],
+        "UpperArm": [-130, 130, -130, 130, -130, 130],
         "LowerArm": [0, 150, -20, 180, 0, 0],
         "Hand": [-90, 90, -90, 180, -90, 90],
         "UpperLeg": [-45, 180, -45, 45, -45, 45],
@@ -152,6 +152,68 @@ def hide_extra_bones():
     for b in amt.bones:
         b.hide = not ("J_Bip_" in b.name or "IK_" in b.name or b.name == "Root")
 
+def is_armature_action(action):
+    for fcurve in action.fcurves:
+        if "pose.bones" in fcurve.data_path:
+            return True
+    return False
+
+def bake_all_actions_limits(context, obj):
+    if not obj or not obj.animation_data:
+        return
+
+    actions = [act for act in bpy.data.actions if is_armature_action(act)]
+    if not actions:
+        return
+
+    target_bones = [pb for pb in obj.pose.bones if pb.constraints.get("Auto_Limit_Rotation")]
+    if not target_bones:
+        return
+
+    orig_action = obj.animation_data.action
+    orig_frame = context.scene.frame_current
+
+    for action in actions:
+        obj.animation_data.action = action
+        
+        frames = set()
+        for fcurve in action.fcurves:
+            for kf in fcurve.keyframe_points:
+                frames.add(int(kf.co[0]))
+        frames = sorted(list(frames))
+        
+        if not frames:
+            continue
+
+        for f in frames:
+            context.scene.frame_set(f)
+            bpy.context.view_layer.update()
+            
+            baked_matrices = {}
+            for pb in target_bones:
+                baked_matrices[pb.name] = pb.matrix.copy()
+
+            for pb in target_bones:
+                limit_c = pb.constraints.get("Auto_Limit_Rotation")
+                orig_inf = limit_c.influence
+                limit_c.influence = 0.0
+                
+                pb.matrix = baked_matrices[pb.name]
+                pb.location = (0, 0, 0)
+                pb.scale = (1, 1, 1)
+                
+                bpy.context.view_layer.update()
+                
+                if pb.rotation_mode == 'QUATERNION':
+                    pb.keyframe_insert(data_path="rotation_quaternion", frame=f)
+                else:
+                    pb.keyframe_insert(data_path="rotation_euler", frame=f)
+                
+                limit_c.influence = orig_inf
+
+    obj.animation_data.action = orig_action
+    context.scene.frame_set(orig_frame)
+
 def setup_ik_drivers(obj):
     arm_ik = ["J_Bip_L_LowerArm", "J_Bip_R_LowerArm"]
     arm_rot = ["J_Bip_L_Hand", "J_Bip_R_Hand"]
@@ -187,6 +249,11 @@ def setup_ik_drivers(obj):
 
 
 class AutoBoneSettings(bpy.types.PropertyGroup):
+    auto_bake_limits: bpy.props.BoolProperty(
+        name="Auto Bake on Setup",
+        description="Setup実行時に全アニメーションの可動域を自動で焼き込むか",
+        default=True
+    )
     ik_influence_arms: bpy.props.FloatProperty(
         name="Arm IK Influence",
         description="腕のIKの影響度",
@@ -214,6 +281,12 @@ class AUTOBONE_OT_setup(bpy.types.Operator):
     def execute(self, context):
         if hasattr(context.scene, "transform_orientation_slots"):
             context.scene.transform_orientation_slots[0].type = 'LOCAL'
+            
+        obj = context.object
+        if obj and obj.type == 'ARMATURE':
+            if obj.auto_bone_settings.auto_bake_limits:
+                bake_all_actions_limits(context, obj)
+            
         l_dict = setup_bone_rotation_limits()
         setup_ik(l_dict)
         setup_finger_links()
@@ -325,6 +398,23 @@ class AUTOBONE_OT_key_ik_influence(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class AUTOBONE_OT_bake_limits_anim(bpy.types.Operator):
+    bl_idname = "autobone.bake_limits_anim"
+    bl_label = "Clamp & Bake All Animations"
+    bl_description = "全ての関連アニメーション(アクション)の全キーフレームに対し、現在の回転制限(Limit Rotation)でクリップされた結果の角度を実際のキーフレームに焼き込みます"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            self.report({'ERROR'}, "アーマチュアを選択してね")
+            return {'CANCELLED'}
+            
+        bake_all_actions_limits(context, obj)
+        self.report({'INFO'}, "全てのアニメーションに回転制限を焼き込んだよ！")
+        return {'FINISHED'}
+
+
 class AUTOBONE_PT_panel(bpy.types.Panel):
     bl_label = "Auto Bone Setup"
     bl_idname = "AUTOBONE_PT_panel"
@@ -342,6 +432,7 @@ class AUTOBONE_PT_panel(bpy.types.Panel):
             
         settings = obj.auto_bone_settings
         
+        layout.prop(settings, "auto_bake_limits", text="Auto Bake Limits on Setup")
         layout.operator(AUTOBONE_OT_setup.bl_idname, icon='ARMATURE_DATA')
         
         layout.separator()
@@ -372,12 +463,17 @@ class AUTOBONE_PT_panel(bpy.types.Panel):
         op_k0.target_part = "ALL"
         op_k0.target_value = 0.0
 
+        layout.separator()
+        layout.label(text="Animation Clamp Tool:")
+        layout.operator(AUTOBONE_OT_bake_limits_anim.bl_idname, icon='FILE_TICK')
+
 
 classes = (
     AutoBoneSettings,
     AUTOBONE_OT_setup,
     AUTOBONE_OT_bake_ik_to_fk,
     AUTOBONE_OT_key_ik_influence,
+    AUTOBONE_OT_bake_limits_anim,
     AUTOBONE_PT_panel,
 )
 
