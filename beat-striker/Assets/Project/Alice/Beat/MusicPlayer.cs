@@ -1,5 +1,6 @@
 
 using System;
+ 
 using R3;
 using UnityEngine;
 
@@ -53,6 +54,7 @@ namespace Alice {
             goodWindowIndex = 0;
             beatTimingIndex = 0;
             lastPlaybackTime = -1f;
+            
             beatSoundSubscription = Observable.EveryUpdate().Subscribe(_ => {
                 if (!audioSource.isPlaying) return;
                 var currentTime = audioSource.time;
@@ -76,6 +78,7 @@ namespace Alice {
 
         public IMusicPlayer.BeatJudgeResult JudgeTiming(float playbackTime) {
             var judgeTime = playbackTime + beatConfig.CommandTimeOffset;
+            
 
             for (var i = 0; i < beats.Length; i++) {
                 var beatTime = beats[i];
@@ -87,10 +90,11 @@ namespace Alice {
                 if (judgeTime >= windowStart) {
                     return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Good, i, beatTime);
                 }
-
+                
                 return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Miss, -1, 0f);
             }
 
+            
             return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Miss, -1, 0f);
         }
 
@@ -102,7 +106,6 @@ namespace Alice {
                 if (judgeTime < windowStart) {
                     return;
                 }
-
                 onGoodZoneEntered.OnNext(new IMusicPlayer.BeatSignal(goodWindowIndex, beatTime));
                 goodWindowIndex += 1;
             }
@@ -120,5 +123,7 @@ namespace Alice {
             onGoodZoneEntered.Dispose();
             onBeatTiming.Dispose();
         }
+
+        
     }
 }

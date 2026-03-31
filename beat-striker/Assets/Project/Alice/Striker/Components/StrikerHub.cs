@@ -72,6 +72,8 @@ public class StrikerHub : MonoBehaviour {
 /// </summary>
 public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     IStrikerState currentState;
+    bool isChangingState;
+    bool forceSameStateTransitionInProgress;
     readonly IStrikerContext context;
     readonly BehaviorSubject<string> currentStateNameSubject = new(string.Empty);
     public ReadOnlyReactiveProperty<string> CurrentStateName { get; }
@@ -80,6 +82,8 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     public Rigidbody Rigidbody => context.Rigidbody;
     public Vector2 InputDirection => context.InputDirection;
     public IEnumerable<Alice.IReadOnlyBattleEntity> GetAllStrikers() => context.GetAllStrikers();
+    public Alice.IReadOnlyBattleEntity GetSelf() => context.GetSelf();
+    public Alice.IReadOnlyBattleEntity GetOpponent() => context.GetOpponent();
 
     public void ApplyDamage(float damage) {
         context.ApplyDamage(damage);
@@ -99,31 +103,57 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     }
 
 
-    public void ChangeState(IStrikerState newState) {
-        if (newState == null || ReferenceEquals(newState, currentState)) return;
-
-        var oldParents = currentState != null
-            ? new HashSet<IStrikerGroup>(currentState.Parents ?? Array.Empty<IStrikerGroup>())
-            : new HashSet<IStrikerGroup>();
-        var newParents = new HashSet<IStrikerGroup>(newState.Parents ?? Array.Empty<IStrikerGroup>());
-
-        currentState?.OnExit(context);
-
-        foreach (var parent in oldParents) {
-            if (!newParents.Contains(parent)) parent.OnExit(context);
+    public void ChangeState(IStrikerState newState, bool forceSameStateTransition = false) {
+        if (isChangingState) {
+            Debug.LogError($"StrikerStateMachine.ChangeState was called during an active transition. current={FormatStateName(currentState)}, requested={FormatStateName(newState)}");
+            return;
         }
 
-        foreach (var parent in newParents) {
-            if (!oldParents.Contains(parent)) parent.OnEnter(context);
+        if (newState == null) return;
+
+        if (!forceSameStateTransition && !forceSameStateTransitionInProgress && ReferenceEquals(newState, currentState)) {
+            return;
         }
 
-        newState.OnEnter(context);
-        currentState = newState;
-        PublishCurrentStateName();
+        isChangingState = true;
+        try {
+            var oldParents = currentState != null
+                ? new HashSet<IStrikerGroup>(currentState.Parents ?? Array.Empty<IStrikerGroup>())
+                : new HashSet<IStrikerGroup>();
+            var newParents = new HashSet<IStrikerGroup>(newState.Parents ?? Array.Empty<IStrikerGroup>());
+
+            currentState?.OnExit(context);
+
+            foreach (var parent in oldParents) {
+                if (!newParents.Contains(parent)) parent.OnExit(context);
+            }
+
+            foreach (var parent in newParents) {
+                if (!oldParents.Contains(parent)) parent.OnEnter(context);
+            }
+
+            newState.OnEnter(context);
+            currentState = newState;
+            PublishCurrentStateName();
+        }
+        finally {
+            isChangingState = false;
+        }
     }
 
-    public void TryTransition(IStrikerNode node) {
-        node?.OnTryTransition(this);
+    public void TryTransition(IStrikerNode node, bool forceSameStateTransition = false) {
+        if (!forceSameStateTransition) {
+            node?.OnTryTransition(this);
+            return;
+        }
+
+        forceSameStateTransitionInProgress = true;
+        try {
+            node?.OnTryTransition(this);
+        }
+        finally {
+            forceSameStateTransitionInProgress = false;
+        }
     }
 
     public void Reset(IStrikerState defaultState) {
@@ -140,5 +170,12 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
             return stateComponent.gameObject.name;
         }
         return CurrentState?.GetType().Name ?? string.Empty;
+    }
+
+    static string FormatStateName(IStrikerState state) {
+        if (state is Component stateComponent) {
+            return stateComponent.gameObject.name;
+        }
+        return state?.GetType().Name ?? "<null>";
     }
 }

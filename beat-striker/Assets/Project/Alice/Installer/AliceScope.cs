@@ -7,7 +7,7 @@ using VContainer;
 using VContainer.Unity;
 
 namespace Alice {
-
+    
     [RequireComponent(typeof(BattleConfig))]
     [RequireComponent(typeof(PlayerInputManager))]
     [RequireComponent(typeof(BeatConfig))]

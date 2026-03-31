@@ -49,6 +49,27 @@ public static class RemoveUIButtonMenu {
         Selection.activeObject = instance;
     }
 
+    [MenuItem("GameObject/🟠 Effect Player", false, 20)]
+    static void CreateEffectPlayer(MenuCommand menuCommand) {
+        var gameObject = new GameObject("EffectPlayer");
+
+        const string effectPlayerScriptPath = "Assets/Project/Alice/Striker/Components/EffectPlayer.cs";
+        var effectPlayerScript = AssetDatabase.LoadAssetAtPath<MonoScript>(effectPlayerScriptPath);
+        var effectPlayerType = effectPlayerScript != null ? effectPlayerScript.GetClass() : null;
+
+        if (effectPlayerType == null || !typeof(Component).IsAssignableFrom(effectPlayerType)) {
+            Object.DestroyImmediate(gameObject);
+            Debug.LogError("EffectPlayer script type could not be resolved.");
+            return;
+        }
+
+        gameObject.AddComponent(effectPlayerType);
+
+        GameObjectUtility.SetParentAndAlign(gameObject, menuCommand.context as GameObject);
+        Undo.RegisterCreatedObjectUndo(gameObject, "Create " + gameObject.name);
+        Selection.activeObject = gameObject;
+    }
+
 }
 
 #endif

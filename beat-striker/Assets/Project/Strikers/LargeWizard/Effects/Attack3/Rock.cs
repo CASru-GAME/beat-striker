@@ -15,6 +15,7 @@ namespace Core.LargeWizard {
         [SerializeField] Vector3 rotationOffset;   // 追加の回転（オイラー角）
 
         Vector3 attackerPosition;
+        Transform attackerRoot;
 
         void Awake() {
             // インスペクタで指定したオフセットを適用
@@ -33,12 +34,18 @@ namespace Core.LargeWizard {
             attackerPosition = position;
         }
 
+        public void SetAttackerRoot(Transform root) {
+            attackerRoot = root;
+        }
+
         void Start() {
             Destroy(gameObject, lifetime);
         }
 
         void OnTriggerEnter(Collider other) {
             if (other.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                if (other.transform.root == attackerRoot) return;
+
                 // 攻撃者から相手への水平方向にノックバック
                 var dir = other.transform.position - attackerPosition;
                 dir.y = 0f;

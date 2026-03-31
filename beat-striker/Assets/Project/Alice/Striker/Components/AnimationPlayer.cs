@@ -12,8 +12,7 @@ public class AnimationPlayer : MonoBehaviour {
     private Coroutine currentAnimationCoroutine;
     private PlayableGraph playableGraph;
     private AnimationMixerPlayable mixer;
-    private AnimationClipPlayable currentClipPlayable;
-    private AnimationClipPlayable previousClipPlayable;
+    private readonly System.Collections.Generic.List<AnimationClipPlayable> activePlayables = new System.Collections.Generic.List<AnimationClipPlayable>();
 
     void Awake() {
         // アニメータが設定されていない場合、自分を含む子オブジェクトからAnimatorを探して設定
@@ -54,77 +53,92 @@ public class AnimationPlayer : MonoBehaviour {
     }
 
     private IEnumerator PlayAnimationCoroutine(AnimationClip clip, float fadeTime, float speed, Action onComplete) {
-        // 前のアニメーションをクリーンアップ
-        if (previousClipPlayable.IsValid()) {
-            mixer.DisconnectInput(1);
-            previousClipPlayable.Destroy();
-        }
+        // 既存のアクティブなプレイアブル群を一つ後ろにシフトして
+        // 新しいプレイアブルをスロット0に挿入できるようにする
+        int oldCount = activePlayables.Count;
+        float[] startWeights = new float[oldCount];
+        for (int i = 0; i < oldCount; ++i) startWeights[i] = mixer.GetInputWeight(i);
 
-        // 現在のアニメーションを前のスロットに移動
-        if (currentClipPlayable.IsValid()) {
-            previousClipPlayable = currentClipPlayable;
-            mixer.DisconnectInput(0);
-            mixer.ConnectInput(1, previousClipPlayable, 0);
-            mixer.SetInputWeight(1, mixer.GetInputWeight(0));
+        // 必要ならミキサーの入力数を拡張
+        mixer.SetInputCount(oldCount + 1);
+
+        // 既存接続を後ろへ移動（後ろから行う）
+        for (int i = oldCount - 1; i >= 0; --i) {
+            mixer.DisconnectInput(i);
+            mixer.ConnectInput(i + 1, activePlayables[i], 0);
+            mixer.SetInputWeight(i + 1, startWeights[i]);
         }
 
         // 新しいアニメーションを作成してスロット0に接続
-        currentClipPlayable = AnimationClipPlayable.Create(playableGraph, clip);
-        currentClipPlayable.SetSpeed(speed);
-        currentClipPlayable.SetTime(0);
-        mixer.ConnectInput(0, currentClipPlayable, 0);
+        var newPlayable = AnimationClipPlayable.Create(playableGraph, clip);
+        newPlayable.SetSpeed(speed);
+        newPlayable.SetTime(0);
+        mixer.ConnectInput(0, newPlayable, 0);
+        mixer.SetInputWeight(0, 0f);
+        activePlayables.Insert(0, newPlayable);
 
         playableGraph.Play();
 
-        if (fadeTime > 0f && previousClipPlayable.IsValid()) {
-            // クロスフェード: 両方のウェイトを同時に変化
+        if (fadeTime > 0f && oldCount > 0) {
+            // クロスフェード: 新しいアニメーションをフェードインし、
+            // 既存のすべてのアニメーションをフェードアウト
             float elapsed = 0f;
-            float startWeightPrev = mixer.GetInputWeight(1);
-
             while (elapsed < fadeTime) {
                 elapsed += Time.deltaTime;
-                float t = elapsed / fadeTime;
-                mixer.SetInputWeight(0, Mathf.Lerp(0f, 1f, t));      // 新しいアニメーションをフェードイン
-                mixer.SetInputWeight(1, Mathf.Lerp(startWeightPrev, 0f, t)); // 古いアニメーションをフェードアウト
+                float t = Mathf.Clamp01(elapsed / fadeTime);
+                mixer.SetInputWeight(0, Mathf.Lerp(0f, 1f, t));
+                for (int j = 0; j < oldCount; ++j) {
+                    mixer.SetInputWeight(j + 1, Mathf.Lerp(startWeights[j], 0f, t));
+                }
                 yield return null;
             }
 
-            // フェード完了後、前のアニメーションを破棄
+            // フェード完了後、以前のプレイアブルを破棄
             mixer.SetInputWeight(0, 1f);
-            mixer.SetInputWeight(1, 0f);
-            mixer.DisconnectInput(1);
-            previousClipPlayable.Destroy();
-            previousClipPlayable = default;
+            for (int j = 0; j < oldCount; ++j) {
+                int idx = 1; // 常に1に移動しているので繰り返して破棄
+                if (mixer.GetInputCount() > idx) {
+                    mixer.DisconnectInput(idx);
+                }
+                activePlayables[idx].Destroy();
+                activePlayables.RemoveAt(idx);
+            }
+            // ミキサーを必要最小数に戻す
+            mixer.SetInputCount(1);
         }
         else {
-            // フェードなしの場合は即座に切り替え
+            // フェードなしの場合は即座に切り替え: 新しいを1.0にして以前を全部破棄
             mixer.SetInputWeight(0, 1f);
-            if (previousClipPlayable.IsValid()) {
-                mixer.SetInputWeight(1, 0f);
-                mixer.DisconnectInput(1);
-                previousClipPlayable.Destroy();
-                previousClipPlayable = default;
+            for (int j = 0; j < oldCount; ++j) {
+                int idx = 1;
+                if (mixer.GetInputCount() > idx) {
+                    mixer.DisconnectInput(idx);
+                }
+                activePlayables[idx].Destroy();
+                activePlayables.RemoveAt(idx);
             }
+            mixer.SetInputCount(1);
         }
 
-        // ループしないアニメーションの場合は終了を待機して最後のフレームで止める
+        // 新しい挿入したプレイアブル（先頭）が現在のアニメーション
+        var currentPlayable = activePlayables.Count > 0 ? activePlayables[0] : default;
+
         if (!clip.isLooping) {
             float clipDuration = clip.length / speed;
-            while (currentClipPlayable.IsValid() && currentClipPlayable.GetTime() < clipDuration) {
+            while (currentPlayable.IsValid() && currentPlayable.GetTime() < clipDuration) {
                 yield return null;
             }
 
             // 最後のフレームで止める
-            if (currentClipPlayable.IsValid()) {
-                currentClipPlayable.SetSpeed(0);
-                currentClipPlayable.SetTime(clip.length);
+            if (currentPlayable.IsValid()) {
+                currentPlayable.SetSpeed(0);
+                currentPlayable.SetTime(clip.length);
             }
 
             currentAnimationCoroutine = null;
             onComplete?.Invoke();
         }
         else {
-            // ループアニメーションの場合はコルーチン終了
             currentAnimationCoroutine = null;
         }
     }

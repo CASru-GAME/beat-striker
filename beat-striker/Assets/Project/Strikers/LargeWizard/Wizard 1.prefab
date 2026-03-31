@@ -44,7 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d77576ac99f51cc4faf96e8bb985b283, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.LandState
-  parents: []
+  parents:
+  - {fileID: 1012561812567522805}
   animationClip:
     clip: {fileID: 9197060619526105886, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
@@ -94,7 +95,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4387aa669d6b314f9dce5285002d1f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.FallState
-  parents: []
+  parents:
+  - {fileID: 7199184492773224269}
   animationClip:
     clip: {fileID: -1504929105726005784, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
@@ -360,10 +362,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54baaaa8ee1084a0fa1270acba05a20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.StrikerHub
+  maxHitPoint: 100
+  maxSpecialPoint: 100
   defaultState: {fileID: 1734285505626645502}
   deadState: {fileID: 0}
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
+  aiBrain: {fileID: 0}
 --- !u!95 &8632360735648339568
 Animator:
   serializedVersion: 7
@@ -556,8 +561,8 @@ MonoBehaviour:
   hitBox: {fileID: 8792560517527999783}
   particlePrefab: {fileID: 5092115694173076053, guid: 17e171716995c5b4a9fa9d11d9d2e987, type: 3}
   audioClip: {fileID: 8300000, guid: 6a4cc43d09991df42925ab69078dc1e9, type: 3}
-  damage: 10
-  knockbackSpeed: 10
+  damage: 5
+  knockbackSpeed: 8
 --- !u!1 &3683428354690999460
 GameObject:
   m_ObjectHideFlags: 0
@@ -605,6 +610,8 @@ MonoBehaviour:
   idleState: {fileID: 1734285505626645502}
   walkState: {fileID: 8360057490504684180}
   walkBackwardState: {fileID: 2087681005699384181}
+  groundChecker: {fileID: 1223836351378418454}
+  fallState: {fileID: 3250182338819609899}
 --- !u!1 &3848778460238411309
 GameObject:
   m_ObjectHideFlags: 0
@@ -653,7 +660,7 @@ MonoBehaviour:
   animationClip:
     clip: {fileID: -3551865654841311323, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
-    speed: 1
+    speed: 1.5
   nextNode: {fileID: 707581214265331847}
 --- !u!1 &4404737297509214527
 GameObject:
@@ -775,13 +782,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3db2ffdac4844614494764dc262300f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.JumpUpwardState
-  parents: []
+  parents:
+  - {fileID: 1012561812567522805}
   animationClip:
     clip: {fileID: -2993534804863918692, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
     speed: 2
   fallNode: {fileID: 3250182338819609899}
-  jumpSpeed: 20
+  jumpSpeed: 15
 --- !u!1 &5731792501487714426
 GameObject:
   m_ObjectHideFlags: 0
@@ -1046,6 +1054,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   fireTime: 0.3
+  groundRayStartHeight: 20
+  groundRayDistance: 50
 --- !u!1 &6329409985884674557
 GameObject:
   m_ObjectHideFlags: 0
@@ -1113,8 +1123,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 12.927236, y: 10.624066, z: 3.2317204}
-  m_Center: {x: -0.31062666, y: 0.47446907, z: -1.1158605}
+  m_Size: {x: 12.927236, y: 10.624066, z: 12.128679}
+  m_Center: {x: -0.31062663, y: 0.47446907, z: -5.5643406}
 --- !u!1 &7302355662261391067
 GameObject:
   m_ObjectHideFlags: 0

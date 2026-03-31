@@ -8,21 +8,25 @@ public interface IStrikerContext {
     Rigidbody Rigidbody { get; }
     Vector2 InputDirection { get; }
     IEnumerable<IReadOnlyBattleEntity> GetAllStrikers();
+    IReadOnlyBattleEntity GetSelf();
+    IReadOnlyBattleEntity GetOpponent();
     void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
     void ApplyDamage(float damage);
 }
 
 public interface IStrikerStateContext {
-    void TryTransition(IStrikerNode node);
+    void TryTransition(IStrikerNode node, bool forceSameStateTransition = false);
     Rigidbody Rigidbody { get; }
     Vector2 InputDirection { get; }
     IEnumerable<IReadOnlyBattleEntity> GetAllStrikers();
+    IReadOnlyBattleEntity GetSelf();
+    IReadOnlyBattleEntity GetOpponent();
     void ApplyDamage(float damage);
     void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
 }
 
 public interface IStrikerNodeContext : IStrikerStateContext {
-    void ChangeState(IStrikerState state);
+    void ChangeState(IStrikerState state, bool forceSameStateTransition = false);
 }
 
 public interface IStrikerNode {

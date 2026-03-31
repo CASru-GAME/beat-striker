@@ -58,6 +58,8 @@ namespace Alice {
                 strikerRegistry.RequestRegister(i, instance);
 
                 var gamePad = gamePadRegistry.Get(playerId);
+                var requestedDirection = Vector2.zero;
+                var hasRequestedDirection = false;
                 var aiBrain = instance.AiBrain;
                 if (aiBrain == null) {
                     Debug.LogError($"AiBrain not found for Player {playerId} / Striker {config.Strikers[i]}");
@@ -77,17 +79,41 @@ namespace Alice {
                 }));
 
                 subscriptions.Add(gamePad.OnDirection.Subscribe(direction => {
-                    instance.ChangeDirection(direction);
+                    requestedDirection = direction;
+                    hasRequestedDirection = true;
                 }));
 
                 subscriptions.Add(gamePad.OnDirectionCanceled.Subscribe(_ => {
-                    instance.CancelDirection();
+                    hasRequestedDirection = false;
+                    requestedDirection = Vector2.zero;
                 }));
 
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
+                subscriptions.Add(beatPlayer.OnBeatCommandRequested.Subscribe(beatResult => {
+                    if (!beatResult.IsSuccess) {
+                        return;
+                    }
+
+                    if (hasRequestedDirection) {
+                        instance.ChangeDirection(requestedDirection);
+                        return;
+                    }
+
+                    instance.CancelDirection();
+                }));
+
+                subscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(_ => {
+                    if (hasRequestedDirection) {
+                        instance.ChangeDirection(requestedDirection);
+                        return;
+                    }
+
+                    requestedDirection = Vector2.zero;
+                    instance.CancelDirection();
+                }));
+
                 subscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
                     instance.RecordExecutedCommand(new BattleCommandLog(beatResult.Time, beatResult.Button));
-                    Debug.Log($"Player {playerId} executed command {beatResult.Button} at time {beatResult.Time} (Good: {beatResult.IsSuccess})");
                     switch (beatResult.Button) {
                         case GamePadButton.North:
                             instance.Special();

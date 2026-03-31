@@ -38,7 +38,9 @@ namespace Core.LargeWizard {
                 }
 
                 var ice = Instantiate(icePrefab, spawnPos, Quaternion.identity);
-                ice.GetComponent<Ice>().SetAttackerPosition(ctx.Rigidbody.transform.position);
+                var iceBehavior = ice.GetComponent<Ice>();
+                iceBehavior.SetAttackerPosition(ctx.Rigidbody.transform.position);
+                iceBehavior.SetAttackerRoot(ctx.Rigidbody.transform.root);
 
                 AudioSource.PlayClipAtPoint(audioClip1, icePrefab.transform.position);
                 AudioSource.PlayClipAtPoint(audioClip2, icePrefab.transform.position);

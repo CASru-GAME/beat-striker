@@ -115,23 +115,53 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c730978ac0eb145c9afe9127f5a6da02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BeatConfig
-  selectedTrackName: A
+  selectedTrackName: BS18
   tracks:
-  - Name: F
+  - Name: Se
     AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
-    bpm: 55
+    bpm: 110
     offset: 0
     beats: []
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
-  - Name: A
+  - Name: Ni
     AudioClip: {fileID: 8300000, guid: 83579df36a8c84ea9b88aae568eb8b44, type: 3}
     bpm: 128
     offset: 0
     beats: []
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
-  commandTimeOffset: 0
+  - Name: Fi
+    AudioClip: {fileID: 8300000, guid: 62df61faddbdc4059b98c3473fcf6704, type: 3}
+    bpm: 150
+    offset: 0
+    beats: []
+    beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
+  - Name: BS18
+    AudioClip: {fileID: 8300000, guid: c4266cde834724c9585aa2641c14dcf4, type: 3}
+    bpm: 128
+    offset: 0
+    beats: []
+    beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
+  - Name: BS
+    AudioClip: {fileID: 8300000, guid: 813c0b1b710a04cea866e61e51daa989, type: 3}
+    bpm: 110
+    offset: 0
+    beats: []
+    beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
+  - Name: BStage
+    AudioClip: {fileID: 8300000, guid: 7ae048916dd31451c97320d14bc258bb, type: 3}
+    bpm: 128
+    offset: 0
+    beats: []
+    beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
+  - Name: BF
+    AudioClip: {fileID: 8300000, guid: 908af2efd514d47f29e3778b8b3c4212, type: 3}
+    bpm: 128
+    offset: 0
+    beats: []
+    beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
+  commandTimeOffset: 0.2
   viewTimeOffset: 0
-  perfectWindow: 0.5
+  perfectWindow: 1
 --- !u!114 &8571264011029232787
 MonoBehaviour:
   m_ObjectHideFlags: 0

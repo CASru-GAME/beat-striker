@@ -1,343 +1,640 @@
 import bpy
 import math
 import bmesh
+import os
 
 def setup_bone_rotation_limits():
-    """
-    アクティブなアーマチュアオブジェクト内の全ボーンに対して、
-    ボーン名に応じた回転可動域（Limit Rotationコンストレイント）を自動設定します。
-    """
+    """全ボーンに回転制限を設定（コンストレイントのみ追加）"""
     obj = bpy.context.object
     if not obj or obj.type != 'ARMATURE':
-        print("エラー: アーマチュア（ボーン構造）オブジェクトを選択した状態で実行してください。")
-        return
+        return None
 
     bpy.ops.object.mode_set(mode='POSE')
 
-    # === リセット処理: 過去にこのスクリプトで付与したコンストレイントを全ボーンから一旦削除 ===
-    reset_count = 0
+    # リセット処理（このスクリプトで付けたものだけ削除）
     for pb in obj.pose.bones:
-        # リストをコピーして回す（削除中のインデックスずれを防ぐため）
         for c in list(pb.constraints):
-            # このスクリプトで付けられた名前のLimit Rotationを削除
             if c.type == 'LIMIT_ROTATION' and c.name.startswith("Auto_Limit_Rotation"):
                 pb.constraints.remove(c)
-                reset_count += 1
-    print(f"リセット処理完了: {reset_count} 個の古い可動域制限を完全に削除しました。")
 
-    # 各部位ごとの回転制限（度数法）: [最小X, 最大X, 最小Y, 最大Y, 最小Z, 最大Z]
-    # ※ リグの軸設定（Local Spaceの軸の向き）によって適切な角度は異なります。
-    # ここでは一般的なVRM等における標準的なXYZ可動域を想定しています。
     limits_dict = {
-        # === 体幹 (Spine, Chest, Neck, Head) ===
-        "Hips": [-30, 30, -30, 30, -30, 30],
         "Spine": [-20, 20, -20, 20, -20, 20],
         "Chest": [-20, 20, -20, 20, -20, 20],
         "UpperChest": [-20, 20, -20, 20, -20, 20],
         "Neck": [-45, 45, -45, 45, -45, 45],
         "Head": [-45, 45, -45, 45, -60, 60],
-        
-        # === 腕 (Arms) ===
         "Shoulder": [-30, 30, -20, 20, -20, 20],
-        "UpperArm": [-90, 90, -45, 90, -90, 90],
-        "LowerArm": [0, 150, -20, 180, 0, 0], # 肘の曲がる方向を逆に変更
-        "Hand": [-30, 30, -70, 180, -70, 70],
-        
-        # === 脚 (Legs) ===
-        "UpperLeg": [-45, 120, -45, 45, -45, 45], # 前後逆に変更
-        "LowerLeg": [-150, 0, 0, 0, 0, 0], # 膝の曲がる方向を逆に変更
-        "Foot": [-40, 20, -15, 15, -15, 15], # X-はつま先下げ、X+はつま先上げ。Y/Zはひねり。
+        "UpperArm": [-150, 150, -150, 150, -150, 150],
+        "LowerArm": [0, 150, -20, 180, 0, 0],
+        "Hand": [-90, 90, -90, 180, -90, 90],
+        "UpperLeg": [-45, 180, -45, 45, -45, 45],
+        "LowerLeg": [-150, 0, 0, 0, 0, 0],
+        "Foot": [-40, 20, -15, 15, -15, 15],
         "ToeBase": [-45, 45, 0, 0, 0, 0],
-        
-        # === 指 (Fingers) ===
-        "Thumb2": [-10, 90, 0, 0, 0, 0], # X軸は左右で共通向きなので元に戻す
+        "Thumb2": [-10, 90, 0, 0, 0, 0],
         "Thumb3": [-10, 90, 0, 0, 0, 0],
-        "Thumb": [-45, 70, -70, 30, -30, 30], # 根本(Thumb1など)は自由に動く
-        "Index": [0, 0, 0, 0, -10, 90], # 指の曲がる方向を上下逆に変更
+        "Thumb": [-45, 70, -100, 70, -30, 30],
+        "Index": [0, 0, 0, 0, -10, 90],
         "Middle": [0, 0, 0, 0, -10, 90],
         "Ring": [0, 0, 0, 0, -10, 90],
         "Little": [0, 0, 0, 0, -10, 90],
     }
 
-    applied_count = 0
-
-    # すべてのポーズボーンをループしてコンストレイントを設定
     for pb in obj.pose.bones:
-        # J_Bip_ (体用基準ボーン) 以外のボーン（J_Sec_などの揺れモノ・補助ボーン、Root等）は完全に処理から除外
-        if "J_Bip_" not in pb.name:
-            continue
-
-        limit = None
-        
-        # ボーン名から該当する部位の制限を検索
-        for key, val in limits_dict.items():
-            if key in pb.name:
-                limit = val
-                break
-        
-        # マッチする部位があった場合、制限を適用
+        if "J_Bip_" not in pb.name: continue
+        limit = next((v for k, v in limits_dict.items() if k in pb.name), None)
         if limit:
-            # 毎回リセットですべて消しているため、常に新規作成する
-            constraint = pb.constraints.new(type='LIMIT_ROTATION')
-            constraint.name = "Auto_Limit_Rotation"
-            
-            # 関節のローカル座標(Local Space)で回転を制限する設定
-            constraint.owner_space = 'LOCAL'
-            
-            # 基準となっているボーン（プラスマイナス）が実は右側（_R_）の向きで書かれていた可能性があるため、
-            # 左側（_L_）のボーンのX・Z軸を反転させるように修正します。
-            l_min_x, l_max_x = limit[0], limit[1]
-            l_min_y, l_max_y = limit[2], limit[3]
-            l_min_z, l_max_z = limit[4], limit[5]
-            
-            if "_L_" in pb.name:
-                # 指のZ軸などは左右対称（反転）が必要ですが、
-                # 腕や脚のX軸は左右で曲がる方向（プラスマイナス）が同じ設定になっているようです
-                l_min_z, l_max_z = -limit[5], -limit[4]
-                
-                # X軸（腕、脚、そして親指）はモデリングの仕様で左右とも共通しているため反転させません
-            
-            constraint.use_limit_x = True
-            constraint.min_x = math.radians(l_min_x)
-            constraint.max_x = math.radians(l_max_x)
-
-            constraint.use_limit_y = True
-            constraint.min_y = math.radians(l_min_y)
-            constraint.max_y = math.radians(l_max_y)
-
-            constraint.use_limit_z = True
-            constraint.min_z = math.radians(l_min_z)
-            constraint.max_z = math.radians(l_max_z)
-
-            # --- IKソルバー用の制限 (Inverse Kinematicsパネルの設定) を有効化 ---
-            pb.use_ik_limit_x = True
-            pb.ik_min_x = math.radians(l_min_x)
-            pb.ik_max_x = math.radians(l_max_x)
-
-            pb.use_ik_limit_y = True
-            pb.ik_min_y = math.radians(l_min_y)
-            pb.ik_max_y = math.radians(l_max_y)
-
-            pb.use_ik_limit_z = True
-            pb.ik_min_z = math.radians(l_min_z)
-            pb.ik_max_z = math.radians(l_max_z)
-
-            applied_count += 1
-            # print(f"[{pb.name}] に可動域制限を適用しました: {limit}")
-
-    print(f"完了: 合計 {applied_count} 個のボーンに可動域制限を設定しました。")
+            c = pb.constraints.new(type='LIMIT_ROTATION')
+            c.name, c.owner_space = "Auto_Limit_Rotation", 'LOCAL'
+            l_min_z, l_max_z = (-limit[5], -limit[4]) if "_L_" in pb.name else (limit[4], limit[5])
+            c.use_limit_x, c.min_x, c.max_x = True, math.radians(limit[0]), math.radians(limit[1])
+            c.use_limit_y, c.min_y, c.max_y = True, math.radians(limit[2]), math.radians(limit[3])
+            c.use_limit_z, c.min_z, c.max_z = True, math.radians(l_min_z), math.radians(l_max_z)
+            # IK用設定
+            pb.use_ik_limit_x, pb.ik_min_x, pb.ik_max_x = True, c.min_x, c.max_x
+            pb.use_ik_limit_y, pb.ik_min_y, pb.ik_max_y = True, c.min_y, c.max_y
+            pb.use_ik_limit_z, pb.ik_min_z, pb.ik_max_z = True, c.min_z, c.max_z
     return limits_dict
 
-def create_cube_shape(name="WG_Cube_Red"):
-    # 既に同名の形状オブジェクトがあれば再利用
-    if name in bpy.data.objects:
-        return bpy.data.objects[name]
-    
+def create_cube_shape(name="WG_Cube"):
+    if name in bpy.data.objects: return bpy.data.objects[name]
     mesh = bpy.data.meshes.new(name+"_Mesh")
     obj = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(obj)
-    
     bm = bmesh.new()
     bmesh.ops.create_cube(bm, size=1)
     bm.to_mesh(mesh)
     bm.free()
-    
-    # ビューポートやレンダリングには表示させない（ボーンの形としてのみ使うため）
-    obj.hide_viewport = True
-    obj.hide_render = True
+    obj.hide_viewport = obj.hide_render = True
     return obj
 
 def setup_ik(limits_dict):
-    """
-    足首にIKボーンを生成し、赤い立方体のシェイプを割り当ててIKコンストレイントを設定します。
-    """
+    """ポーズを維持したままIKを設定 (Blender 4.0+ 対応)"""
     obj = bpy.context.object
-    if not obj or obj.type != 'ARMATURE':
-        print("エラー: アーマチュア（ボーン構造）オブジェクトを選択した状態で実行してください。")
-        return
-        
     bpy.ops.object.mode_set(mode='EDIT')
     amt = obj.data
     
-    # 対象ボーン: (追従させる先ボーン, IKボーンの名前, IKチェーンの長さ)
     ik_map = {
-        "J_Bip_L_LowerLeg": ("J_Bip_L_Foot", "IK_L_Foot", 2),
-        "J_Bip_R_LowerLeg": ("J_Bip_R_Foot", "IK_R_Foot", 2),
+        "J_Bip_L_LowerLeg": ("IK_L_Foot", "J_Bip_L_Foot", 2, 'THEME01'), # 赤
+        "J_Bip_R_LowerLeg": ("IK_R_Foot", "J_Bip_R_Foot", 2, 'THEME01'),
+        "J_Bip_L_LowerArm": ("IK_L_Hand", "J_Bip_L_Hand", 2, 'THEME04'), # 青
+        "J_Bip_R_LowerArm": ("IK_R_Hand", "J_Bip_R_Hand", 2, 'THEME04'),
     }
     
-    ik_added = {}
-    
-    # IK用ボーンを生成
-    for bone_name, (target_name, ik_name, chain_len) in ik_map.items():
-        if bone_name in amt.edit_bones and target_name in amt.edit_bones:
-            target_bone = amt.edit_bones[target_name]
-            
-            if ik_name not in amt.edit_bones:
-                ik_bone = amt.edit_bones.new(ik_name)
-                ik_bone.head = target_bone.head
-                # ボーンサイズを少し長めにして見やすく
-                ik_bone.tail = target_bone.head + (target_bone.tail - target_bone.head) * 1.5 
-                # ボーンのRoll(軸の傾き)をターゲットと同じにしてXYZ軸の向きを一致させる
-                ik_bone.roll = target_bone.roll
-                
-                # 腕や足の動きに引きずられないようにRootにペアレント（存在すれば）
-                if "Root" in amt.edit_bones:
-                    ik_bone.parent = amt.edit_bones["Root"]
-                else:
-                    ik_bone.parent = None
-                    
-                ik_bone.use_deform = False # メッシュを変形させない
-            ik_added[bone_name] = ik_name
+    targets_info = []
+    for joint_n, (ik_n, end_n, c_len, theme) in ik_map.items():
+        if joint_n in amt.edit_bones and end_n in amt.edit_bones:
+            end_eb = amt.edit_bones[end_n]
+            if ik_n not in amt.edit_bones:
+                ik_eb = amt.edit_bones.new(ik_n)
+                ik_eb.head, ik_eb.roll = end_eb.head, end_eb.roll
+                ik_eb.tail = end_eb.head + (end_eb.tail - end_eb.head) * 1.2
+                ik_eb.parent = amt.edit_bones.get("Root")
+                ik_eb.use_deform = False
+            targets_info.append((joint_n, ik_n, end_n, c_len, theme))
 
     bpy.ops.object.mode_set(mode='POSE')
-    
-    # 赤い立方体オブジェクトを作成または取得
     shape_obj = create_cube_shape()
     
-    for bone_name, ik_name in ik_added.items():
-        pb = obj.pose.bones.get(bone_name)
-        ik_pb = obj.pose.bones.get(ik_name)
-        
-        if pb and ik_pb:
-            # --- 形状と色を設定 ---
-            ik_pb.custom_shape = shape_obj
-            # THEME01 が標準の「赤色」カラーコード
-            if hasattr(ik_pb, "color"):
-                ik_pb.color.palette = 'THEME01'
-            else:
-                # Blender 3.x 等の互換用処理
-                grp_name = "IK_Bones_Red"
-                if grp_name not in obj.pose.bone_groups:
-                    grp = obj.pose.bone_groups.new(name=grp_name)
-                    grp.color_set = 'THEME01'
-                ik_pb.bone_group = obj.pose.bone_groups[grp_name]
-            
-            # --- 古いコンストレイントをクリーンアップ ---
-            for c in list(pb.constraints):
-                if c.type == 'IK' and c.name == "Auto_IK":
-                    pb.constraints.remove(c)
-            
-            # --- IKコンストレイントを追加 (LowerArm / LowerLeg に適用) ---
-            ik_c = pb.constraints.new(type='IK')
-            ik_c.name = "Auto_IK"
-            ik_c.target = obj
-            ik_c.subtarget = ik_name
-            ik_c.chain_count = ik_map[bone_name][2]
-            
-            # --- 手・足先をIKコントローラーの回転に追従 (Copy Rotation) ---
-            target_name = ik_map[bone_name][0]
-            target_pb = obj.pose.bones.get(target_name)
-            if target_pb:
-                for c in list(target_pb.constraints):
-                    if c.type == 'COPY_ROTATION' and c.name == "Auto_IK_Rot":
-                        target_pb.constraints.remove(c)
-                
-                rot_c = target_pb.constraints.new('COPY_ROTATION')
-                rot_c.name = "Auto_IK_Rot"
-                rot_c.target = obj
-                rot_c.subtarget = ik_name
-                # 見たままの角度に追従するようにワールド空間を使用
-                rot_c.target_space = 'WORLD'
-                rot_c.owner_space = 'WORLD'
+    for joint_n, ik_n, end_n, c_len, theme in targets_info:
+        joint_pb, ik_pb, end_pb = obj.pose.bones.get(joint_n), obj.pose.bones.get(ik_n), obj.pose.bones.get(end_n)
+        if not (joint_pb and ik_pb and end_pb): continue
 
-                # COPY_ROTATION の後に LIMIT_ROTATION が適用されるように、既存の制限を一番下に移動
-                for i, c in enumerate(target_pb.constraints):
-                    if c.name == "Auto_Limit_Rotation":
-                        target_pb.constraints.move(i, len(target_pb.constraints) - 1)
-                        break
+        # 今のポーズにIKをスナップ
+        ik_pb.matrix = end_pb.matrix.copy()
+        ik_pb.custom_shape = shape_obj
 
-            # --- IKコントローラー自体の回転制限（不要になったためクリーンアップのみ実行） ---
-            for c in list(ik_pb.constraints):
-                if c.type == 'LIMIT_ROTATION' and c.name == "Auto_IK_Limit":
-                    ik_pb.constraints.remove(c)
-                
-    print(f"完了: IKコントローラーを {len(ik_added)} 箇所に設定しました。")
-
-def hide_extra_bones():
-    """
-    体の基準ボーン (J_Bip_系)、IKコントローラー、および Root 以外の
-    揺れモノや補助ボーンなどを非表示にして見た目をすっきりさせます。
-    """
-    obj = bpy.context.object
-    if not obj or obj.type != 'ARMATURE':
-        return
-        
-    amt = obj.data
-    hidden_count = 0
-    
-    for bone in amt.bones:
-        # 体のボーン、IKボーン、Rootボーンは残す
-        is_body_bone = "J_Bip_" in bone.name or "IK_" in bone.name or bone.name == "Root"
-        
-        if not is_body_bone:
-            bone.hide = True
-            hidden_count += 1
+        # --- カラー設定 (ここがエラーの原因だったよ！) ---
+        if hasattr(ik_pb, "color"): 
+            # Blender 4.0以降
+            ik_pb.color.palette = theme
         else:
-            bone.hide = False
-            
-    print(f"完了: 余計なボーン {hidden_count} 個を非表示に設定しました。")
+            # Blender 3.6以前
+            grp_name = f"IK_{theme}"
+            grp = obj.pose.bone_groups.get(grp_name) or obj.pose.bone_groups.new(name=grp_name)
+            grp.color_set = theme
+            ik_pb.bone_group = grp
+
+        # IK適用
+        for c in list(joint_pb.constraints):
+            if c.type == 'IK' and c.name == "Auto_IK": joint_pb.constraints.remove(c)
+        ik_c = joint_pb.constraints.new('IK')
+        ik_c.name, ik_c.target, ik_c.subtarget, ik_c.chain_count = "Auto_IK", obj, ik_n, c_len
+        
+        # 回転コピー
+        for c in list(end_pb.constraints):
+            if c.type == 'COPY_ROTATION' and c.name == "Auto_IK_Rot": end_pb.constraints.remove(c)
+        rot_c = end_pb.constraints.new('COPY_ROTATION')
+        rot_c.name, rot_c.target, rot_c.subtarget = "Auto_IK_Rot", obj, ik_n
+        rot_c.target_space = rot_c.owner_space = 'WORLD'
+
+        # 制限を最後に
+        for i, c in enumerate(end_pb.constraints):
+            if c.name == "Auto_Limit_Rotation":
+                end_pb.constraints.move(i, len(end_pb.constraints) - 1)
+                break
 
 def setup_finger_links():
-    """
-    指の第3関節が第2関節の回転に自動的に連動するように（Copy Rotation）設定します。
-    """
     obj = bpy.context.object
-    if not obj or obj.type != 'ARMATURE':
-        return
-        
     bpy.ops.object.mode_set(mode='POSE')
-    
-    fingers = ["Index", "Middle", "Ring", "Little"]
-    sides = ["L", "R"]
-    
-    linked_count = 0
-    
-    for side in sides:
-        for finger in fingers:
-            bone2_name = f"J_Bip_{side}_{finger}2"
-            bone3_name = f"J_Bip_{side}_{finger}3"
-            
-            pb2 = obj.pose.bones.get(bone2_name)
-            pb3 = obj.pose.bones.get(bone3_name)
-            
+    for s in ["L", "R"]:
+        for f in ["Index", "Middle", "Ring", "Little"]:
+            pb2, pb3 = obj.pose.bones.get(f"J_Bip_{s}_{f}2"), obj.pose.bones.get(f"J_Bip_{s}_{f}3")
             if pb2 and pb3:
-                # 既存のリンク設定をクリーンアップ
                 for c in list(pb3.constraints):
-                    if c.type == 'COPY_ROTATION' and c.name == "Auto_Finger_Link":
-                        pb3.constraints.remove(c)
-                
-                # Copy Rotationを追加して第2関節の曲がりに追従させる
+                    if c.name == "Auto_Finger_Link": pb3.constraints.remove(c)
                 c = pb3.constraints.new('COPY_ROTATION')
-                c.name = "Auto_Finger_Link"
-                c.target = obj
-                c.subtarget = bone2_name
+                c.name, c.target, c.subtarget, c.influence = "Auto_Finger_Link", obj, pb2.name, 0.8
+                c.target_space = c.owner_space = 'LOCAL'
+
+def hide_extra_bones():
+    amt = bpy.context.object.data
+    for b in amt.bones:
+        b.hide = not ("J_Bip_" in b.name or "IK_" in b.name or b.name == "Root")
+
+def is_armature_action(action):
+    for fcurve in action.fcurves:
+        if "pose.bones" in fcurve.data_path:
+            return True
+    return False
+
+def bake_all_actions_limits(context, obj):
+    if not obj or not obj.animation_data:
+        return
+
+    actions = [act for act in bpy.data.actions if is_armature_action(act)]
+    if not actions:
+        return
+
+    target_bones = [pb for pb in obj.pose.bones if pb.constraints.get("Auto_Limit_Rotation")]
+    if not target_bones:
+        return
+
+    orig_action = obj.animation_data.action
+    orig_frame = context.scene.frame_current
+
+    for action in actions:
+        obj.animation_data.action = action
+        
+        frames = set()
+        for fcurve in action.fcurves:
+            for kf in fcurve.keyframe_points:
+                frames.add(int(kf.co[0]))
+        frames = sorted(list(frames))
+        
+        if not frames:
+            continue
+
+        for f in frames:
+            context.scene.frame_set(f)
+            bpy.context.view_layer.update()
+            
+            baked_matrices = {}
+            for pb in target_bones:
+                baked_matrices[pb.name] = pb.matrix.copy()
+
+            for pb in target_bones:
+                limit_c = pb.constraints.get("Auto_Limit_Rotation")
+                orig_inf = limit_c.influence
+                limit_c.influence = 0.0
                 
-                # 自分自身の軸（Local Space）でそのままコピー
-                c.target_space = 'LOCAL'
-                c.owner_space = 'LOCAL'
+                pb.matrix = baked_matrices[pb.name]
+                pb.location = (0, 0, 0)
+                pb.scale = (1, 1, 1)
                 
-                # 第3関節は少しだけ曲がりを浅くする（自然な指の曲がり味付け）
-                c.influence = 0.8
+                bpy.context.view_layer.update()
                 
-                linked_count += 1
+                if pb.rotation_mode == 'QUATERNION':
+                    pb.keyframe_insert(data_path="rotation_quaternion", frame=f)
+                else:
+                    pb.keyframe_insert(data_path="rotation_euler", frame=f)
                 
-    print(f"完了: 指の第3関節の連動を {linked_count} 箇所に設定しました。")
+                limit_c.influence = orig_inf
+
+    obj.animation_data.action = orig_action
+    context.scene.frame_set(orig_frame)
+
+def setup_ik_drivers(obj):
+    arm_ik = ["J_Bip_L_LowerArm", "J_Bip_R_LowerArm"]
+    arm_rot = ["J_Bip_L_Hand", "J_Bip_R_Hand"]
+    leg_ik = ["J_Bip_L_LowerLeg", "J_Bip_R_LowerLeg"]
+    leg_rot = ["J_Bip_L_Foot", "J_Bip_R_Foot"]
+
+    def add_driver(b_name, constraint_name, prop_name):
+        pb = obj.pose.bones.get(b_name)
+        if not pb: return
+        c = pb.constraints.get(constraint_name)
+        if not c: return
+        
+        try:
+            c.driver_remove("influence")
+        except:
+            pass
+            
+        d = c.driver_add("influence").driver
+        d.type = 'AVERAGE'
+        
+        var = d.variables.new()
+        var.name = "var"
+        var.type = 'SINGLE_PROP'
+        target = var.targets[0]
+        target.id_type = 'OBJECT'
+        target.id = obj
+        target.data_path = f'auto_bone_settings.{prop_name}'
+
+    for b_name in arm_ik: add_driver(b_name, "Auto_IK", "ik_influence_arms")
+    for b_name in arm_rot: add_driver(b_name, "Auto_IK_Rot", "ik_influence_arms")
+    for b_name in leg_ik: add_driver(b_name, "Auto_IK", "ik_influence_legs")
+    for b_name in leg_rot: add_driver(b_name, "Auto_IK_Rot", "ik_influence_legs")
 
 
-def set_transform_orientation_to_local():
-    """
-    トランスフォーム座標系を自動で「ローカル」に設定します。
-    """
-    if hasattr(bpy.context.scene, "transform_orientation_slots"):
-        bpy.context.scene.transform_orientation_slots[0].type = 'LOCAL'
-    print("完了: トランスフォーム座標系を「ローカル」に設定しました。")
+class AutoBoneSettings(bpy.types.PropertyGroup):
+    fbx_export_name: bpy.props.StringProperty(
+        name="File Name",
+        description="エクスポートするFBXのファイル名（拡張子は自動）",
+        default="export_anim"
+    )
+    auto_bake_limits: bpy.props.BoolProperty(
+        name="Auto Bake on Setup",
+        description="Setup実行時に全アニメーションの可動域を自動で焼き込むか",
+        default=True
+    )
+    ik_influence_arms: bpy.props.FloatProperty(
+        name="Arm IK Influence",
+        description="腕のIKの影響度",
+        default=1.0,
+        min=0.0,
+        max=1.0,
+        subtype='FACTOR'
+    )
+    ik_influence_legs: bpy.props.FloatProperty(
+        name="Leg IK Influence",
+        description="脚のIKの影響度",
+        default=1.0,
+        min=0.0,
+        max=1.0,
+        subtype='FACTOR'
+    )
 
-def main():
-    set_transform_orientation_to_local()
-    limits_dict = setup_bone_rotation_limits()
-    setup_ik(limits_dict)
-    setup_finger_links()
-    hide_extra_bones()
+
+class AUTOBONE_OT_setup(bpy.types.Operator):
+    bl_idname = "autobone.setup"
+    bl_label = "Setup Auto Bone (IK, Limits)"
+    bl_description = "IKや回転制限などのセットアップを実行します"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        if hasattr(context.scene, "transform_orientation_slots"):
+            context.scene.transform_orientation_slots[0].type = 'LOCAL'
+            
+        obj = context.object
+        if obj and obj.type == 'ARMATURE':
+            if obj.auto_bone_settings.auto_bake_limits:
+                bake_all_actions_limits(context, obj)
+            
+        l_dict = setup_bone_rotation_limits()
+        setup_ik(l_dict)
+        setup_finger_links()
+        hide_extra_bones()
+        
+        obj = context.object
+        if obj and obj.type == 'ARMATURE':
+            setup_ik_drivers(obj)
+            obj.auto_bone_settings.ik_influence_arms = 1.0
+            obj.auto_bone_settings.ik_influence_legs = 1.0
+        
+        self.report({'INFO'}, "だーりん、今度こそ完璧！ポーズも維持してるよ♡")
+        return {'FINISHED'}
+
+
+class AUTOBONE_OT_bake_ik_to_fk(bpy.types.Operator):
+    bl_idname = "autobone.bake_ik_to_fk"
+    bl_label = "Bake IK to FK"
+    bl_description = "現在のIKのポーズをFK（各ボーンのローカル回転）に焼き込み、IK影響度を0にします"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    bake_target: bpy.props.StringProperty(default="ALL")
+
+    def execute(self, context):
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            return {'CANCELLED'}
+
+        arm_bones = [
+            "J_Bip_L_UpperArm", "J_Bip_L_LowerArm", "J_Bip_L_Hand",
+            "J_Bip_R_UpperArm", "J_Bip_R_LowerArm", "J_Bip_R_Hand"
+        ]
+        leg_bones = [
+            "J_Bip_L_UpperLeg", "J_Bip_L_LowerLeg", "J_Bip_L_Foot",
+            "J_Bip_R_UpperLeg", "J_Bip_R_LowerLeg", "J_Bip_R_Foot"
+        ]
+        
+        target_bones = []
+        if self.bake_target in {"ALL", "ARMS"}: target_bones.extend(arm_bones)
+        if self.bake_target in {"ALL", "LEGS"}: target_bones.extend(leg_bones)
+
+        bpy.context.view_layer.update()
+
+        saved_matrices = {}
+        for b_name in target_bones:
+            pb = obj.pose.bones.get(b_name)
+            if pb:
+                saved_matrices[b_name] = pb.matrix.copy()
+
+        settings = obj.auto_bone_settings
+        if self.bake_target in {"ALL", "ARMS"}:
+            settings.ik_influence_arms = 0.0
+            obj.keyframe_insert(data_path='auto_bone_settings.ik_influence_arms', group="Auto Bone Settings")
+        if self.bake_target in {"ALL", "LEGS"}:
+            settings.ik_influence_legs = 0.0
+            obj.keyframe_insert(data_path='auto_bone_settings.ik_influence_legs', group="Auto Bone Settings")
+        
+        bpy.context.view_layer.update()
+
+        # 3. 退避した行列を代入し、FKポーズとして復元
+        # 親から順に行列を代入し、都度updateを呼ばないと子ボーンのローカル値計算がズレる
+        for b_name in target_bones:
+            pb = obj.pose.bones.get(b_name)
+            if pb and b_name in saved_matrices:
+                # 念の為 Limit Rotation を一時的に無効化（逆算時の不要な弾きを防止）
+                limit_c = pb.constraints.get("Auto_Limit_Rotation")
+                orig_inf = 1.0
+                if limit_c:
+                    orig_inf = limit_c.influence
+                    limit_c.influence = 0.0
+                
+                pb.matrix = saved_matrices[b_name]
+                
+                # 追加：位置とスケールのオフセットを強制リセット（ボーンが離れたり伸びたりするのを防ぐ）
+                pb.location = (0, 0, 0)
+                pb.scale = (1, 1, 1)
+                
+                bpy.context.view_layer.update()
+                
+                if limit_c:
+                    limit_c.influence = orig_inf
+                bpy.context.view_layer.update()
+                
+                if pb.rotation_mode == 'QUATERNION':
+                    pb.keyframe_insert(data_path="rotation_quaternion")
+                else:
+                    pb.keyframe_insert(data_path="rotation_euler")
+                pb.keyframe_insert(data_path="location")
+
+        self.report({'INFO'}, "IKのポーズをFKに焼き込みました！")
+        return {'FINISHED'}
+
+
+class AUTOBONE_OT_bake_fk_to_ik(bpy.types.Operator):
+    bl_idname = "autobone.bake_fk_to_ik"
+    bl_label = "Snap FK to IK"
+    bl_description = "現在のFKのポーズにIKコントローラーを合わせ、IK影響度を1にします"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    bake_target: bpy.props.StringProperty(default="ALL")
+
+    def execute(self, context):
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            return {'CANCELLED'}
+
+        arm_ik_map = {
+            "J_Bip_L_Hand": "IK_L_Hand",
+            "J_Bip_R_Hand": "IK_R_Hand"
+        }
+        leg_ik_map = {
+            "J_Bip_L_Foot": "IK_L_Foot",
+            "J_Bip_R_Foot": "IK_R_Foot"
+        }
+        
+        target_map = {}
+        if self.bake_target in {"ALL", "ARMS"}: target_map.update(arm_ik_map)
+        if self.bake_target in {"ALL", "LEGS"}: target_map.update(leg_ik_map)
+
+        bpy.context.view_layer.update()
+
+        saved_matrices = {}
+        for end_name, ik_name in target_map.items():
+            end_pb = obj.pose.bones.get(end_name)
+            if end_pb:
+                saved_matrices[ik_name] = end_pb.matrix.copy()
+
+        for ik_name, mat in saved_matrices.items():
+            ik_pb = obj.pose.bones.get(ik_name)
+            if ik_pb:
+                ik_pb.matrix = mat
+                ik_pb.scale = (1, 1, 1)
+                
+                if ik_pb.rotation_mode == 'QUATERNION':
+                    ik_pb.keyframe_insert(data_path="rotation_quaternion")
+                else:
+                    ik_pb.keyframe_insert(data_path="rotation_euler")
+                ik_pb.keyframe_insert(data_path="location")
+
+        settings = obj.auto_bone_settings
+        if self.bake_target in {"ALL", "ARMS"}:
+            settings.ik_influence_arms = 1.0
+            obj.keyframe_insert(data_path='auto_bone_settings.ik_influence_arms', group="Auto Bone Settings")
+        if self.bake_target in {"ALL", "LEGS"}:
+            settings.ik_influence_legs = 1.0
+            obj.keyframe_insert(data_path='auto_bone_settings.ik_influence_legs', group="Auto Bone Settings")
+        
+        bpy.context.view_layer.update()
+
+        self.report({'INFO'}, "FKのポーズからIKにスナップしました！")
+        return {'FINISHED'}
+
+
+class AUTOBONE_OT_key_ik_influence(bpy.types.Operator):
+    bl_idname = "autobone.key_ik_influence"
+    bl_label = "Key IK Influence"
+    bl_description = "IKの強度を指定値に設定し、キーフレームを自動で挿入します"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    target_part: bpy.props.StringProperty(default="ALL")
+    target_value: bpy.props.FloatProperty(default=1.0)
+
+    def execute(self, context):
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            return {'CANCELLED'}
+
+        settings = obj.auto_bone_settings
+        
+        if self.target_part in {"ALL", "ARMS"}:
+            settings.ik_influence_arms = self.target_value
+            obj.keyframe_insert(data_path='auto_bone_settings.ik_influence_arms', group="Auto Bone Settings")
+            
+        if self.target_part in {"ALL", "LEGS"}:
+            settings.ik_influence_legs = self.target_value
+            obj.keyframe_insert(data_path='auto_bone_settings.ik_influence_legs', group="Auto Bone Settings")
+            
+        self.report({'INFO'}, f"IK Influence {self.target_value} のキーフレームを打ちました！")
+        return {'FINISHED'}
+
+
+class AUTOBONE_OT_bake_limits_anim(bpy.types.Operator):
+    bl_idname = "autobone.bake_limits_anim"
+    bl_label = "Clamp & Bake All Animations"
+    bl_description = "全ての関連アニメーション(アクション)の全キーフレームに対し、現在の回転制限(Limit Rotation)でクリップされた結果の角度を実際のキーフレームに焼き込みます"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            self.report({'ERROR'}, "アーマチュアを選択してね")
+            return {'CANCELLED'}
+            
+        bake_all_actions_limits(context, obj)
+        self.report({'INFO'}, "全てのアニメーションに回転制限を焼き込んだよ！")
+        return {'FINISHED'}
+
+
+class AUTOBONE_OT_export_fbx(bpy.types.Operator):
+    bl_idname = "autobone.export_fbx"
+    bl_label = "FBXをエクスポート"
+    bl_description = "設定された内容でFBXを自動エクスポート（Blendファイルと同じ場所に保存）します"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        if not bpy.data.is_saved or not bpy.data.filepath:
+            self.report({'ERROR'}, "先にBlendファイルを保存してください！")
+            return {'CANCELLED'}
+            
+        settings = context.object.auto_bone_settings
+        filename = settings.fbx_export_name.strip()
+        if not filename:
+            filename = "export_anim"
+        if not filename.lower().endswith(".fbx"):
+            filename += ".fbx"
+            
+        dir_path = os.path.dirname(bpy.data.filepath)
+        export_path = os.path.join(dir_path, filename)
+        
+        bpy.ops.export_scene.fbx(
+            filepath=export_path,
+            use_selection=False,
+            use_visible=False,
+            use_active_collection=False,
+            use_custom_props=False,
+            object_types={'ARMATURE'},
+            global_scale=1.0,
+            apply_scale_options='FBX_SCALE_ALL',
+            axis_forward='-Z',
+            axis_up='Y',
+            apply_unit_scale=True,
+            bake_space_transform=True,
+            armature_nodetype='NULL',
+            primary_bone_axis='Y',
+            secondary_bone_axis='X',
+            use_armature_deform_only=False,
+            add_leaf_bones=True,
+            bake_anim=True,
+            bake_anim_use_all_bones=True,
+            bake_anim_use_nla_strips=True,
+            bake_anim_use_all_actions=False,
+            bake_anim_force_startend_keying=True,
+            bake_anim_step=1.0,
+            bake_anim_simplify_factor=1.0
+        )
+        
+        self.report({'INFO'}, f"FBXをエクスポートしました: {filename}")
+        return {'FINISHED'}
+
+
+class AUTOBONE_PT_panel(bpy.types.Panel):
+    bl_label = "Auto Bone Setup"
+    bl_idname = "AUTOBONE_PT_panel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'Auto Bone'
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+        
+        if not obj or obj.type != 'ARMATURE':
+            layout.label(text="アーマチュアを選択してね")
+            return
+            
+        settings = obj.auto_bone_settings
+        
+        # 編集中のアニメーション選択プルダウン（Blender標準UIを利用）
+        if obj.animation_data:
+            layout.template_ID(obj.animation_data, "action", new="action.new")
+        else:
+            layout.label(text="アニメーションデータがありません", icon='INFO')
+            
+        layout.separator()
+        layout.prop(settings, "auto_bake_limits", text="Auto Bake Limits on Setup")
+        layout.operator(AUTOBONE_OT_setup.bl_idname, icon='ARMATURE_DATA')
+        
+        layout.separator()
+        layout.label(text="IK Influence & Tools:")
+        box = layout.box()
+        
+        # --- Arms ---
+        row = box.row(align=True)
+        row.prop(settings, "ik_influence_arms", text="Arms")
+        op_ik_fk = row.operator(AUTOBONE_OT_bake_ik_to_fk.bl_idname, text="IK->FK")
+        op_ik_fk.bake_target = "ARMS"
+        op_fk_ik = row.operator(AUTOBONE_OT_bake_fk_to_ik.bl_idname, text="FK->IK")
+        op_fk_ik.bake_target = "ARMS"
+        
+        box.separator()
+        
+        # --- Legs ---
+        row = box.row(align=True)
+        row.prop(settings, "ik_influence_legs", text="Legs")
+        op_ik_fk = row.operator(AUTOBONE_OT_bake_ik_to_fk.bl_idname, text="IK->FK")
+        op_ik_fk.bake_target = "LEGS"
+        op_fk_ik = row.operator(AUTOBONE_OT_bake_fk_to_ik.bl_idname, text="FK->IK")
+        op_fk_ik.bake_target = "LEGS"
+        
+        layout.separator()
+        
+        row_keys = layout.row(align=True)
+        op_k1 = row_keys.operator("autobone.key_ik_influence", text="All IK=1 (Key)", icon='KEY_HLT')
+        op_k1.target_part = "ALL"
+        op_k1.target_value = 1.0
+        op_k0 = row_keys.operator("autobone.key_ik_influence", text="All IK=0 (Key)", icon='KEY_DEHLT')
+        op_k0.target_part = "ALL"
+        op_k0.target_value = 0.0
+
+        layout.separator()
+        layout.label(text="Animation Clamp Tool:")
+        layout.operator(AUTOBONE_OT_bake_limits_anim.bl_idname, icon='FILE_TICK')
+
+        layout.separator()
+        layout.label(text="FBX Export:")
+        box_fbx = layout.box()
+        box_fbx.prop(settings, "fbx_export_name", text="", icon='FILE_BLANK')
+        box_fbx.operator(AUTOBONE_OT_export_fbx.bl_idname, icon='EXPORT')
+
+
+classes = (
+    AutoBoneSettings,
+    AUTOBONE_OT_setup,
+    AUTOBONE_OT_bake_ik_to_fk,
+    AUTOBONE_OT_bake_fk_to_ik,
+    AUTOBONE_OT_key_ik_influence,
+    AUTOBONE_OT_bake_limits_anim,
+    AUTOBONE_OT_export_fbx,
+    AUTOBONE_PT_panel,
+)
+
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    bpy.types.Object.auto_bone_settings = bpy.props.PointerProperty(type=AutoBoneSettings)
+
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+    del bpy.types.Object.auto_bone_settings
+
 
 if __name__ == "__main__":
-    main()
+    register()

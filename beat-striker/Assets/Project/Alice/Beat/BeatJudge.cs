@@ -1,8 +1,8 @@
 
 using System;
 using System.Collections.Generic;
+ 
 using R3;
-using TMPro;
 using UnityEngine;
 
 namespace Alice {
@@ -10,6 +10,7 @@ namespace Alice {
     public interface IBeatPlayer{
         public Observable<BeatResult> OnBeatCommandRequested { get; }
         public Observable<BeatResult> OnBeatCommandExecuted { get; }
+        public Observable<BeatResult> OnBeatPassed { get; }
 
         public record BeatResult(float Time, bool IsSuccess, GamePadButton Button);
     }
@@ -26,9 +27,10 @@ namespace Alice {
 
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer) {
             this.musicPlayer = musicPlayer;
+            
 
             for(int i = 0; i < beatPlayer.Length; i++) {
-                beatPlayer[i] = new BeatPlayer();
+                beatPlayer[i] = new BeatPlayer(i);
             }
 
             for(int i = 0; i < beatPlayer.Length; i++) {
@@ -45,26 +47,36 @@ namespace Alice {
                     lastCommandPlaybackTime = time;
 
                     var result = musicPlayer.JudgeTiming(time);
-                    var isForcedMiss = player.IsPostBeatCommandLocked();
-                    var isGood = !isForcedMiss && result.Zone == BeatJudgeZone.Good && time < result.BeatTime;
-                    if (isGood) {
-                        player.SavePendingCommand(result.BeatIndex, button);
+                    var isTimingGood = result.Zone == BeatJudgeZone.Good && time < result.BeatTime;
+                    
+                    var isGood = isTimingGood && player.TrySavePendingCommand(result.BeatIndex, button);
+                    if (isTimingGood && !isGood) {
                     }
-
-                    player.RegisterPostBeatCommandAttempt();
-                    player.onBeat.OnNext(new IBeatPlayer.BeatResult(time, isGood, button));
+                    player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(time, isGood, button));
+                    // Record that player attempted this beat so it's not considered a pass later
+                    player.RecordAttempt(result.BeatIndex);
                 });
                 subscriptions.Add(subscription);
             }
 
             subscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
+                
                 for (var playerIndex = 0; playerIndex < beatPlayer.Length; playerIndex++) {
-                    beatPlayer[playerIndex].EnterPostBeatPeriod(signal.BeatIndex);
                     if (!beatPlayer[playerIndex].TryConsumePendingCommand(signal.BeatIndex, out var button)) {
+                        // If player attempted this beat (but it wasn't saved as pending), it's a miss rather than a pass
+                        if (beatPlayer[playerIndex].HasAttempt(signal.BeatIndex)) {
+                            beatPlayer[playerIndex].ClearAttempt(signal.BeatIndex);
+                            beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, false, default));
+                            continue;
+                        }
+
+                        // No pending command and no attempt -> player passed the beat
+                        beatPlayer[playerIndex].onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, false, default));
                         continue;
                     }
 
-                    beatPlayer[playerIndex].onBeatResult.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, true, button));
+
+                    beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, true, button));
                 }
             }));
         }
@@ -77,57 +89,73 @@ namespace Alice {
         }
 
         public void Dispose() {
+            
             foreach (var subscription in subscriptions) {
                 subscription.Dispose();
             }
             subscriptions.Clear();
         }
 
+        
+
         class BeatPlayer : IBeatPlayer {
+            readonly int playerIndex;
             readonly Dictionary<int, GamePadButton> pendingCommands = new Dictionary<int, GamePadButton>();
-            int postBeatPeriodIndex = -1;
-            bool hasCommandAfterBeat;
-            public Subject<IBeatPlayer.BeatResult> onBeat = new Subject<IBeatPlayer.BeatResult>();
-            public Subject<IBeatPlayer.BeatResult> onBeatResult = new Subject<IBeatPlayer.BeatResult>();
+            readonly HashSet<int> attemptedCommands = new HashSet<int>();
+            public Subject<IBeatPlayer.BeatResult> onBeatCommandRequested = new Subject<IBeatPlayer.BeatResult>();
+            public Subject<IBeatPlayer.BeatResult> onBeatCommandExecuted = new Subject<IBeatPlayer.BeatResult>();
+            public Subject<IBeatPlayer.BeatResult> onBeatPassed = new Subject<IBeatPlayer.BeatResult>();
 
-            public Observable<IBeatPlayer.BeatResult> OnBeatCommandRequested => onBeat;
-            public Observable<IBeatPlayer.BeatResult> OnBeatCommandExecuted => onBeatResult;
+            public BeatPlayer(int playerIndex) {
+                this.playerIndex = playerIndex;
+            }
 
-            public void SavePendingCommand(int beatIndex, GamePadButton button) {
+            public Observable<IBeatPlayer.BeatResult> OnBeatCommandRequested => onBeatCommandRequested;
+            public Observable<IBeatPlayer.BeatResult> OnBeatCommandExecuted => onBeatCommandExecuted;
+            public Observable<IBeatPlayer.BeatResult> OnBeatPassed => onBeatPassed;
+
+            public bool TrySavePendingCommand(int beatIndex, GamePadButton button) {
+                if (pendingCommands.ContainsKey(beatIndex)) {
+                    
+                    return false;
+                }
+
                 pendingCommands[beatIndex] = button;
+                
+                return true;
+            }
+
+            public void RecordAttempt(int beatIndex) {
+                if (beatIndex < 0) return;
+                attemptedCommands.Add(beatIndex);
+            }
+
+            public bool HasAttempt(int beatIndex) {
+                return attemptedCommands.Contains(beatIndex);
+            }
+
+            public void ClearAttempt(int beatIndex) {
+                attemptedCommands.Remove(beatIndex);
             }
 
             public bool TryConsumePendingCommand(int beatIndex, out GamePadButton button) {
                 if (!pendingCommands.TryGetValue(beatIndex, out button)) {
+                    
                     return false;
                 }
 
                 pendingCommands.Remove(beatIndex);
+                attemptedCommands.Remove(beatIndex);
+                
                 return true;
-            }
-
-            public void EnterPostBeatPeriod(int beatIndex) {
-                postBeatPeriodIndex = beatIndex;
-                hasCommandAfterBeat = false;
-            }
-
-            public bool IsPostBeatCommandLocked() {
-                return postBeatPeriodIndex >= 0 && hasCommandAfterBeat;
-            }
-
-            public void RegisterPostBeatCommandAttempt() {
-                if (postBeatPeriodIndex < 0) {
-                    return;
-                }
-
-                hasCommandAfterBeat = true;
             }
 
             public void ResetForLoop() {
                 pendingCommands.Clear();
-                postBeatPeriodIndex = -1;
-                hasCommandAfterBeat = false;
+                attemptedCommands.Clear();
             }
+
+            
         }
     }
 }

@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [AddComponentMenu(" 🟠Tracker", 0)]
-[RequireComponent(typeof(Rigidbody))]
 public class Tracker : MonoBehaviour {
     [SerializeField] Transform target;
 
@@ -35,9 +34,11 @@ public class Tracker : MonoBehaviour {
     private readonly List<TargetState> targetStates = new();
 
     void Start() {
-        rb = GetComponent<Rigidbody>();
-        rb.isKinematic = true;
-        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        TryGetComponent<Rigidbody>(out rb);
+        if (rb != null) {
+            rb.isKinematic = true;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+        }
 
         if (target != null) {
             CaptureRelativeTransform(target);
@@ -112,7 +113,7 @@ public class Tracker : MonoBehaviour {
         relativeRotation = Quaternion.Inverse(t.rotation) * transform.rotation;
     }
 
-    void FixedUpdate() {
+    void Update() {
         if (target == null) return;
 
         // 保存した相対位置を、現在のターゲットの向きに合わせてワールド座標に変換
@@ -121,8 +122,13 @@ public class Tracker : MonoBehaviour {
         // 保存した相対回転を、現在のターゲットの回転に適用
         Quaternion targetWorldRot = target.rotation * relativeRotation;
 
-        // 物理移動
-        rb.MovePosition(targetWorldPos);
-        rb.MoveRotation(targetWorldRot);
+        if (rb != null) {
+            rb.MovePosition(targetWorldPos);
+            rb.MoveRotation(targetWorldRot);
+            return;
+        }
+        transform.SetPositionAndRotation(targetWorldPos, targetWorldRot);
+
+        
     }
 }
