@@ -1,9 +1,11 @@
 using Alice;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
 namespace Alice.Editor {
+    [InitializeOnLoad]
     [CustomEditor(typeof(AnimationPlayer))]
     public class AnimationPlayerEditor : UnityEditor.Editor {
         private static readonly FieldInfo AnimatorField = typeof(AnimationPlayer).GetField("animator", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -15,9 +17,21 @@ namespace Alice.Editor {
         private static bool isPreviewPlaying;
         private static double lastUpdateTime;
         private static AnimationPlayerEditor activeEditor;
+        }
 
         private AnimationClip localPreviewClip;
         private float localPreviewTime;
+
+        static AnimationPlayerEditor() {
+            AssemblyReloadEvents.beforeAssemblyReload -= ForceCleanup;
+            AssemblyReloadEvents.beforeAssemblyReload += ForceCleanup;
+
+            EditorApplication.quitting -= ForceCleanup;
+            EditorApplication.quitting += ForceCleanup;
+
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
 
         private void OnEnable() {
             activeEditor = this;
@@ -76,6 +90,8 @@ namespace Alice.Editor {
                     }
                 }
 
+                DrawFollowPairsGui();
+
                 var clipForUi = isSessionTarget ? previewClip : localPreviewClip;
                 var timeForUi = isSessionTarget ? previewTime : localPreviewTime;
 
@@ -112,6 +128,10 @@ namespace Alice.Editor {
                         if (GUILayout.Button("Stop")) {
                             StopPreview(resetPose: false, clearSession: false);
                         }
+
+                        if (GUILayout.Button("Dispose")) {
+                            DisposePreviewSession(forceResetPose: true);
+                        }
                     }
                 }
             }
@@ -130,6 +150,7 @@ namespace Alice.Editor {
             lastUpdateTime = EditorApplication.timeSinceStartup;
             EditorApplication.update -= UpdatePreviewStatic;
             EditorApplication.update += UpdatePreviewStatic;
+            RebuildFollowPairRuntimes();
 
             SampleCurrentFrame();
         }
@@ -148,6 +169,7 @@ namespace Alice.Editor {
                 previewOwner = null;
                 previewSampleTarget = null;
                 previewClip = null;
+                followPairRuntimes.Clear();
             }
 
             if (resetPose && AnimationMode.InAnimationMode()) {
@@ -159,6 +181,41 @@ namespace Alice.Editor {
                 activeEditor.Repaint();
             }
             SceneView.RepaintAll();
+        }
+
+        private static void DisposePreviewSession(bool forceResetPose) {
+            if (isDisposingPreview) {
+                return;
+            }
+
+            isDisposingPreview = true;
+            try {
+                isPreviewPlaying = false;
+                EditorApplication.update -= UpdatePreviewStatic;
+                EditorApplication.delayCall -= StopAnimationModeSafelyStatic;
+
+                if (activeEditor != null) {
+                    EditorApplication.delayCall -= activeEditor.StopAnimationModeSafely;
+                }
+
+                if (forceResetPose && AnimationMode.InAnimationMode()) {
+                    AnimationMode.StopAnimationMode();
+                }
+
+                previewTime = 0f;
+                previewOwner = null;
+                previewSampleTarget = null;
+                previewClip = null;
+                followPairRuntimes.Clear();
+
+                SceneView.RepaintAll();
+                if (activeEditor != null) {
+                    activeEditor.Repaint();
+                }
+            }
+            finally {
+                isDisposingPreview = false;
+            }
         }
 
         private void StopAnimationModeSafely() {
@@ -175,9 +232,7 @@ namespace Alice.Editor {
             }
 
             if (previewClip == null || previewOwner == null || Application.isPlaying || !CanPreviewTarget(previewOwner, out _)) {
-                if (activeEditor != null) {
-                    activeEditor.StopPreview(resetPose: true, clearSession: true);
-                }
+                StopPreviewSession(resetPose: true, clearSession: true);
                 return;
             }
 
@@ -225,7 +280,57 @@ namespace Alice.Editor {
             AnimationMode.BeginSampling();
             AnimationMode.SampleAnimationClip(sampleTarget, previewClip, previewTime);
             AnimationMode.EndSampling();
+
+            ApplyFollowPairsInEditMode();
             SceneView.RepaintAll();
+        }
+
+        private static void StopPreviewSession(bool resetPose, bool clearSession) {
+            if (clearSession && resetPose) {
+                DisposePreviewSession(forceResetPose: true);
+                return;
+            }
+
+            if (activeEditor != null) {
+                activeEditor.StopPreview(resetPose, clearSession);
+                return;
+            }
+
+            isPreviewPlaying = false;
+            EditorApplication.update -= UpdatePreviewStatic;
+
+            if (clearSession) {
+                previewTime = 0f;
+                previewOwner = null;
+                previewSampleTarget = null;
+                previewClip = null;
+                followPairRuntimes.Clear();
+            }
+
+            if (resetPose && AnimationMode.InAnimationMode()) {
+                EditorApplication.delayCall -= StopAnimationModeSafelyStatic;
+                EditorApplication.delayCall += StopAnimationModeSafelyStatic;
+            }
+
+            SceneView.RepaintAll();
+        }
+
+        private static void StopAnimationModeSafelyStatic() {
+            EditorApplication.delayCall -= StopAnimationModeSafelyStatic;
+            if (AnimationMode.InAnimationMode()) {
+                AnimationMode.StopAnimationMode();
+            }
+            SceneView.RepaintAll();
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange state) {
+            if (state == PlayModeStateChange.ExitingEditMode || state == PlayModeStateChange.EnteredPlayMode) {
+                DisposePreviewSession(forceResetPose: true);
+            }
+        }
+
+        private static void ForceCleanup() {
+            DisposePreviewSession(forceResetPose: true);
         }
 
         private static bool CanPreviewTarget(AnimationPlayer animationPlayer, out string reason) {
@@ -278,7 +383,89 @@ namespace Alice.Editor {
             AnimationMode.BeginSampling();
             AnimationMode.SampleAnimationClip(sampleTarget, clip, time);
             AnimationMode.EndSampling();
+
+            RebuildFollowPairRuntimes();
+            ApplyFollowPairsInEditMode();
             SceneView.RepaintAll();
+        }
+
+        private static void ApplyFollowPairsInEditMode() {
+            if (Application.isPlaying) {
+                return;
+            }
+
+            for (int i = 0; i < followPairRuntimes.Count; i++) {
+                var runtime = followPairRuntimes[i];
+                if (runtime.follower == null || runtime.target == null) {
+                    continue;
+                }
+
+                Vector3 targetWorldPos = runtime.target.TransformPoint(runtime.relativePosition);
+                Quaternion targetWorldRot = runtime.target.rotation * runtime.relativeRotation;
+                runtime.follower.SetPositionAndRotation(targetWorldPos, targetWorldRot);
+            }
+        }
+
+        private static void RebuildFollowPairRuntimes() {
+            followPairRuntimes.Clear();
+
+            for (int i = 0; i < followPairConfigs.Count; i++) {
+                var config = followPairConfigs[i];
+                if (config == null || config.follower == null || config.target == null) {
+                    continue;
+                }
+
+                var follower = config.follower.transform;
+                var target = config.target.transform;
+
+                Vector3 relativePosition = target.InverseTransformPoint(follower.position);
+                Quaternion relativeRotation = Quaternion.Inverse(target.rotation) * follower.rotation;
+                followPairRuntimes.Add(new FollowPairRuntime(follower, target, relativePosition, relativeRotation));
+            }
+        }
+
+        private void DrawFollowPairsGui() {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Follow Pairs", EditorStyles.boldLabel);
+            bool changed = false;
+
+            for (int i = 0; i < followPairConfigs.Count; i++) {
+                var config = followPairConfigs[i];
+                if (config == null) {
+                    continue;
+                }
+
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox)) {
+                    var newFollower = (GameObject)EditorGUILayout.ObjectField("Follower", config.follower, typeof(GameObject), true);
+                    var newTarget = (GameObject)EditorGUILayout.ObjectField("Target", config.target, typeof(GameObject), true);
+
+                    if (!ReferenceEquals(newFollower, config.follower) || !ReferenceEquals(newTarget, config.target)) {
+                        config.follower = newFollower;
+                        config.target = newTarget;
+                        changed = true;
+                    }
+
+                    if (GUILayout.Button("Remove Pair")) {
+                        followPairConfigs.RemoveAt(i);
+                        changed = true;
+                        i--;
+                    }
+                }
+            }
+
+            if (GUILayout.Button("Add Pair")) {
+                followPairConfigs.Add(new FollowPairConfig());
+                changed = true;
+            }
+
+            if (GUILayout.Button("Rebuild Follow Snapshot")) {
+                RebuildFollowPairRuntimes();
+                changed = false;
+            }
+
+            if (changed) {
+                RebuildFollowPairRuntimes();
+            }
         }
     }
 }
