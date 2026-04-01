@@ -37,6 +37,7 @@ namespace Alice {
             public Quaternion OriginalRotation;
             public IStrikerHub Hub;
             public AiBrain AiBrain;
+            public IDisposable InpactSubscription;
         }
 
         readonly BattleConfig config;
@@ -44,15 +45,17 @@ namespace Alice {
         readonly IStrikerFactory strikerHubFactory;
         readonly IGamePadRegistry gamePadRegistry;
         readonly IBeatjudge beatJudge;
+        readonly IBattlePresenter battlePresenter;
         readonly List<DeployedStriker> deployedStrikers = new();
         readonly List<IDisposable> roundSubscriptions = new();
 
-        public BattleDeployer(BattleConfig config, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IBeatjudge beatJudge) {
+        public BattleDeployer(BattleConfig config, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.config = config;
             this.strikerRegistry = strikerRegistry;
             this.strikerHubFactory = strikerHubFactory;
             this.gamePadRegistry = gamePadRegistry;
             this.beatJudge = beatJudge;
+            this.battlePresenter = battlePresenter;
         }
 
         public void Deploy() {
@@ -73,6 +76,7 @@ namespace Alice {
                 var originalPosition = playerTransform.position;
                 var originalRotation = playerTransform.rotation;
                 var instance = strikerHubFactory.Create(strikerEntry.prefab, playerTransform, playerId);
+                var inpactSubscription = instance.OnInpactGenerated.Subscribe(command => battlePresenter.PlayInpact(command));
 
                 strikerRegistry.RequestRegister(i, instance);
 
@@ -84,6 +88,7 @@ namespace Alice {
                     OriginalRotation = originalRotation,
                     Hub = instance,
                     AiBrain = instance.AiBrain,
+                    InpactSubscription = inpactSubscription,
                 });
 
                 Debug.Log($"Deployed Striker {config.Strikers[i]} for Player {i}".ToCyan());
@@ -104,6 +109,8 @@ namespace Alice {
                 if (deployed.Hub != null && deployed.Hub.Rigidbody != null) {
                     UnityEngine.Object.Destroy(deployed.Hub.Rigidbody.gameObject);
                 }
+
+                deployed.InpactSubscription?.Dispose();
             }
 
             deployedStrikers.Clear();

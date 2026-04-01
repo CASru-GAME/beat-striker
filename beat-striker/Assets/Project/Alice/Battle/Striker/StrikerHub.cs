@@ -106,6 +106,10 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
         context.PlayAnimation(animation, onComplete);
     }
 
+    public void GenerateInpact(StrikerInpact command) {
+        context.GenerateInpact(command);
+    }
+
     public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = null) {
         this.context = context;
         if (defaultState != null) {

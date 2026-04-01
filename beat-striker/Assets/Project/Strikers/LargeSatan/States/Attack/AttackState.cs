@@ -22,6 +22,7 @@ namespace Core.LargeSatan {
 
         [SerializeField] EffectPlayer effectPlayer;
         [SerializeField] AudioClip slashSound;
+        [SerializeField] float impact = 5;
 
         readonly List<Hit> hitsInFrame = new();
         bool hitInState;
@@ -58,6 +59,7 @@ namespace Core.LargeSatan {
                 AudioSource.PlayClipAtPoint(audioClip, closestHit.hitPoint);
                 var nockBackDirection = Mathf.Sign(closestHit.hitPoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
                 closestHit.hurtBox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
+                context.GenerateInpact(new StrikerInpact( impact * Vector3.up));
 
                 hitsInFrame.Clear();
                 hitInState = true;

@@ -25,10 +25,14 @@ namespace Alice {
         [SerializeField] private float zoomSmoothTime = 0.2f;
         [SerializeField] private float centerSmoothTime = 0.15f;
         [SerializeField] private Vector2 centerViewportOffset = Vector2.zero;
+        [SerializeField] private float shakeDamping = 18f;
 
         private Camera stageCamera;
         private float cameraDepthVelocity;
         private Vector3 centerMoveVelocity;
+        Vector3 shakeOffset;
+        Vector3 shakeVelocity;
+        Vector3 previousShakeOffset;
         private Vector2 desiredCenterViewport;
         private bool isBattleZoomActive;
         bool isSkipRequested;
@@ -81,6 +85,10 @@ namespace Alice {
             }
 
             UpdateBattleZoom();
+        }
+
+        void LateUpdate() {
+            ApplyShakeOffset();
         }
 
         public Task PresentIntroAsync() {
@@ -175,6 +183,9 @@ namespace Alice {
             InitializeBattleStartCameraPose();
             cameraDepthVelocity = 0f;
             centerMoveVelocity = Vector3.zero;
+            shakeOffset = Vector3.zero;
+            shakeVelocity = Vector3.zero;
+            previousShakeOffset = Vector3.zero;
         }
 
         public void PresentRoundFinish() {
@@ -198,6 +209,29 @@ namespace Alice {
 
         public void RequestSequenceSkip() {
             isSkipRequested = true;
+        }
+
+        public void RequestShake(StrikerInpact command) {
+            shakeVelocity += command.DirectionAndMagnitude;
+        }
+
+        void ApplyShakeOffset() {
+            transform.position -= previousShakeOffset;
+
+            if (shakeVelocity.sqrMagnitude <= 0.000001f && shakeOffset.sqrMagnitude <= 0.000001f) {
+                shakeVelocity = Vector3.zero;
+                shakeOffset = Vector3.zero;
+                previousShakeOffset = Vector3.zero;
+                return;
+            }
+
+            shakeOffset += shakeVelocity * Time.deltaTime;
+            float damping = 1f - Mathf.Exp(-shakeDamping * Time.deltaTime);
+            shakeVelocity = Vector3.Lerp(shakeVelocity, Vector3.zero, damping);
+            shakeOffset = Vector3.Lerp(shakeOffset, Vector3.zero, damping);
+
+            previousShakeOffset = shakeOffset;
+            transform.position += previousShakeOffset;
         }
 
         bool ConsumeSkipIfRequested(CameraSequencePhase expectedPhase) {

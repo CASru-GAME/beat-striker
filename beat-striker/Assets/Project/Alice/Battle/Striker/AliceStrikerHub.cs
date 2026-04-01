@@ -39,6 +39,7 @@ namespace Alice {
         void GiveHit(HitStatus status);
         void IntroPose();
         void VictoryPose();
+        Observable<StrikerInpact> OnInpactGenerated { get; }
     }
 
     public class AliceStrikerHub : IStrikerContext, IStrikerHub, IDisposable {
@@ -65,6 +66,7 @@ namespace Alice {
         readonly ReactiveProperty<float> maxHitPointSubject = new(0f);
         readonly ReactiveProperty<float> specialPointSubject = new(0f);
         readonly ReactiveProperty<float> maxSpecialPointSubject = new(0f);
+        readonly Subject<StrikerInpact> onInpactGeneratedSubject = new();
         IDisposable stateNameSubscription;
 
         Vector2 inputDirection;
@@ -89,6 +91,7 @@ namespace Alice {
         public ReadOnlyReactiveProperty<float> MaxHitPoint => maxHitPointSubject;
         public ReadOnlyReactiveProperty<float> SpecialPoint => specialPointSubject;
         public ReadOnlyReactiveProperty<float> MaxSpecialPoint => maxSpecialPointSubject;
+        public Observable<StrikerInpact> OnInpactGenerated => onInpactGeneratedSubject;
 
         public IEnumerable<IReadOnlyBattleEntity> GetAllStrikers() {
             return strikerRegistry.GetAllStrikers();
@@ -178,6 +181,7 @@ namespace Alice {
             maxHitPointSubject.Dispose();
             specialPointSubject.Dispose();
             maxSpecialPointSubject.Dispose();
+            onInpactGeneratedSubject.Dispose();
         }
 
         public void ApplyDamage(float damage) {
@@ -255,6 +259,10 @@ namespace Alice {
 
         public void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null) {
             animationPlayer.PlayAnimation(animation, () => onComplete?.Invoke(stateMachine));
+        }
+
+        public void GenerateInpact(StrikerInpact command) {
+            onInpactGeneratedSubject.OnNext(command);
         }
     }
 }

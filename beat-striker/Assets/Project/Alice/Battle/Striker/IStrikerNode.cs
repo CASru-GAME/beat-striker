@@ -4,6 +4,8 @@ using Alice;
 using UnityEngine;
 
 
+public record StrikerInpact(Vector3 DirectionAndMagnitude);
+
 public interface IStrikerContext {
     Rigidbody Rigidbody { get; }
     Vector2 InputDirection { get; }
@@ -12,17 +14,11 @@ public interface IStrikerContext {
     IReadOnlyBattleEntity GetOpponent();
     void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
     void ApplyDamage(float damage);
+    void GenerateInpact(StrikerInpact command);
 }
 
-public interface IStrikerStateContext {
+public interface IStrikerStateContext : IStrikerContext {
     void TryTransition(IStrikerNode node, bool forceSameStateTransition = false);
-    Rigidbody Rigidbody { get; }
-    Vector2 InputDirection { get; }
-    IEnumerable<IReadOnlyBattleEntity> GetAllStrikers();
-    IReadOnlyBattleEntity GetSelf();
-    IReadOnlyBattleEntity GetOpponent();
-    void ApplyDamage(float damage);
-    void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
 }
 
 public interface IStrikerNodeContext : IStrikerStateContext {
