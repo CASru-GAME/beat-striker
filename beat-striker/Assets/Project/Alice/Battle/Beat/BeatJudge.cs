@@ -11,12 +11,14 @@ namespace Alice {
         public Observable<BeatResult> OnBeatCommandRequested { get; }
         public Observable<BeatResult> OnBeatCommandExecuted { get; }
         public Observable<BeatResult> OnBeatPassed { get; }
+        public ReadOnlyReactiveProperty<int> ComboCount { get; }
 
-        public record BeatResult(float Time, bool IsSuccess, GamePadButton Button);
+        public record BeatResult(float Time, bool IsSuccess, GamePadButton Button, int ComboCount);
     }
 
     public interface IBeatjudge {
         IBeatPlayer GetBeatPlayer(int playerId);
+        void ResetRoundState();
     }
 
     public class BeatJudge : IBeatjudge, IDisposable {
@@ -32,10 +34,6 @@ namespace Alice {
             for(int i = 0; i < beatPlayer.Length; i++) {
                 beatPlayer[i] = new BeatPlayer(i);
             }
-
-            subscriptions.Add(musicPlayer.OnBeatTimelinePrepared.Subscribe(_ => {
-                ResetRoundState();
-            }));
 
             for(int i = 0; i < beatPlayer.Length; i++) {
                 var playerIndex = i;
@@ -56,7 +54,7 @@ namespace Alice {
                     var isGood = isTimingGood && player.TrySavePendingCommand(result.BeatIndex, button);
                     if (isTimingGood && !isGood) {
                     }
-                    player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(time, isGood, button));
+                    player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(time, isGood, button, player.ComboCount.CurrentValue));
                     // Record that player attempted this beat so it's not considered a pass later
                     player.RecordAttempt(result.BeatIndex);
                 });
@@ -70,22 +68,24 @@ namespace Alice {
                         // If player attempted this beat (but it wasn't saved as pending), it's a miss rather than a pass
                         if (beatPlayer[playerIndex].HasAttempt(signal.BeatIndex)) {
                             beatPlayer[playerIndex].ClearAttempt(signal.BeatIndex);
-                            beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, false, default));
+                            beatPlayer[playerIndex].ResetCombo();
+                            beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, false, default, beatPlayer[playerIndex].ComboCount.CurrentValue));
                             continue;
                         }
 
                         // No pending command and no attempt -> player passed the beat
-                        beatPlayer[playerIndex].onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, false, default));
+                        beatPlayer[playerIndex].ResetCombo();
+                        beatPlayer[playerIndex].onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, false, default, beatPlayer[playerIndex].ComboCount.CurrentValue));
                         continue;
                     }
 
-
-                    beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, true, button));
+                    beatPlayer[playerIndex].IncrementCombo();
+                    beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, true, button, beatPlayer[playerIndex].ComboCount.CurrentValue));
                 }
             }));
         }
 
-        void ResetRoundState() {
+        public void ResetRoundState() {
             lastCommandPlaybackTime = -1f;
             for (var i = 0; i < beatPlayer.Length; i++) {
                 beatPlayer[i].ResetForLoop();
@@ -113,6 +113,7 @@ namespace Alice {
             readonly int playerIndex;
             readonly Dictionary<int, GamePadButton> pendingCommands = new Dictionary<int, GamePadButton>();
             readonly HashSet<int> attemptedCommands = new HashSet<int>();
+            readonly ReactiveProperty<int> comboCount = new(0);
             public Subject<IBeatPlayer.BeatResult> onBeatCommandRequested = new Subject<IBeatPlayer.BeatResult>();
             public Subject<IBeatPlayer.BeatResult> onBeatCommandExecuted = new Subject<IBeatPlayer.BeatResult>();
             public Subject<IBeatPlayer.BeatResult> onBeatPassed = new Subject<IBeatPlayer.BeatResult>();
@@ -124,6 +125,7 @@ namespace Alice {
             public Observable<IBeatPlayer.BeatResult> OnBeatCommandRequested => onBeatCommandRequested;
             public Observable<IBeatPlayer.BeatResult> OnBeatCommandExecuted => onBeatCommandExecuted;
             public Observable<IBeatPlayer.BeatResult> OnBeatPassed => onBeatPassed;
+            public ReadOnlyReactiveProperty<int> ComboCount => comboCount;
 
             public bool TrySavePendingCommand(int beatIndex, GamePadButton button) {
                 if (pendingCommands.ContainsKey(beatIndex)) {
@@ -164,6 +166,15 @@ namespace Alice {
             public void ResetForLoop() {
                 pendingCommands.Clear();
                 attemptedCommands.Clear();
+                comboCount.OnNext(0);
+            }
+
+            public void IncrementCombo() {
+                comboCount.OnNext(comboCount.CurrentValue + 1);
+            }
+
+            public void ResetCombo() {
+                comboCount.OnNext(0);
             }
 
             

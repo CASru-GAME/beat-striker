@@ -122,6 +122,9 @@ MonoBehaviour:
   - striker: 3
     prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
   roundsToWin: 2
+  combo1SpecialPointGain: 0.01
+  specialPointGainConvergenceRate: 0.1
+  specialPointGainConvergenceValue: 1
 --- !u!114 &1214249696447149568
 MonoBehaviour:
   m_ObjectHideFlags: 0

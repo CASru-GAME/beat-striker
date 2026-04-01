@@ -96,6 +96,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePlayerPresenter
   playerId: 0
   hpBarUI: {fileID: 8326099282782513470}
+  specialBarUI: {fileID: 1486459028039583250}
+  comboView: {fileID: 7367790212824566671}
   beatRingPrefab: {fileID: 7830039137981702666, guid: 12f656638c4bd44e2ab7af71ad162cdb, type: 3}
   beatRingParent: {fileID: 3714890722970678268}
 --- !u!222 &810344020748878237
@@ -462,6 +464,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7588056627542756503}
   - component: {fileID: 3861889385180399285}
+  - component: {fileID: 7367790212824566671}
   m_Layer: 5
   m_Name: Combo
   m_TagString: Untagged
@@ -478,7 +481,7 @@ RectTransform:
   m_GameObject: {fileID: 2947090786131024057}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 7339827259380325921}
@@ -486,7 +489,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -36, y: -130}
+  m_AnchoredPosition: {x: -136, y: -82}
   m_SizeDelta: {x: 114.3011, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3861889385180399285
@@ -497,6 +500,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2947090786131024057}
   m_CullTransparentMesh: 1
+--- !u!114 &7367790212824566671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2947090786131024057}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16c34d8bbe85d4b02a4a85b1169e5c70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AliceComboView
+  comboText: {fileID: 8142425748053658619}
 --- !u!1 &3823232130390378921
 GameObject:
   m_ObjectHideFlags: 0
@@ -1045,7 +1061,7 @@ MonoBehaviour:
   m_colorMode: 2
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 0.9, g: 0.9, b: 0.9, a: 1}
     bottomLeft: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
     bottomRight: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
@@ -1113,6 +1129,7 @@ GameObject:
   - component: {fileID: 2195855501530377348}
   - component: {fileID: 4635714882762419040}
   - component: {fileID: 2617309667914886980}
+  - component: {fileID: 1486459028039583250}
   m_Layer: 5
   m_Name: SPBar
   m_TagString: Untagged
@@ -1220,6 +1237,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1486459028039583250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5846153097079239368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 074e01b3fda8d4660a3d8f8e1fd1939b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AliceSpecialBarView
+  specialBar: {fileID: 3442081317912459365}
 --- !u!1 &6679037887329859830
 GameObject:
   m_ObjectHideFlags: 0
@@ -1320,7 +1350,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6727000258591587472}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1331,7 +1361,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -22, y: 52}
+  m_AnchoredPosition: {x: 41, y: 23.25}
   m_SizeDelta: {x: 114.3011, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1806371577073516974

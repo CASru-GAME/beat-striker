@@ -17,6 +17,7 @@ namespace Alice {
         readonly IBattleDeployer battleDeployer;
         readonly IStrikerRegistry strikerRegistry;
         readonly IBattleJudge battleJudge;
+        readonly IBeatjudge beatJudge;
         readonly IMusicPlayer musicPlayer;
         readonly IBattlePresenter battlePresenter;
         readonly IBattlePlayerPresenter[] battlePlayerPresenters;
@@ -35,10 +36,11 @@ namespace Alice {
         readonly Subject<Unit> battleFinishedSubject = new();
         readonly Subject<CorePlayerId> outroStartedSubject = new();
 
-        public BattleFlow(IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IMusicPlayer musicPlayer, IBattlePresenter battlePresenter, IBattlePlayerPresenter[] battlePlayerPresenters) {
+        public BattleFlow(IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IBattlePresenter battlePresenter, IBattlePlayerPresenter[] battlePlayerPresenters) {
             this.battleDeployer = battleDeployer;
             this.strikerRegistry = strikerRegistry;
             this.battleJudge = battleJudge;
+            this.beatJudge = beatJudge;
             this.musicPlayer = musicPlayer;
             this.battlePresenter = battlePresenter;
             this.battlePlayerPresenters = battlePlayerPresenters;
@@ -112,6 +114,7 @@ namespace Alice {
             roundPlayable = false;
             musicPlayer.Stop();
             battleDeployer.DisconnectRoundInputs();
+            beatJudge.ResetRoundState();
             foreach (var battlePlayerPresenter in battlePlayerPresenters) {
                 battlePlayerPresenter.PresentRoundPlayableFinish();
             }

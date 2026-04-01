@@ -28,15 +28,7 @@ namespace Alice {
         readonly List<TextMeshProUGUI> activeJudgeTexts = new();
 
         public void NotifyBeatPassed() {
-            AudioSource.PlayClipAtPoint(missSound, Vector3.zero);
-
-            var color = centerRing[0].color;
-            color.a = 1f;
-            centerRing[0].color = color;
-
-            LeanTween.alpha(centerRing[0].rectTransform, centerRingFirstAlpha, 0.3f);
-
-            SpawnJudgeText("pass");
+            // Intentionally no-op: passing a beat should not trigger any SFX or visual feedback.
         }
 
         void Awake() {

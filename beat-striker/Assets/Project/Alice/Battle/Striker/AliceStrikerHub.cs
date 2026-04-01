@@ -15,6 +15,8 @@ namespace Alice {
         ReadOnlyReactiveProperty<Vector3> Velocity { get; }
         ReadOnlyReactiveProperty<float> HitPoint { get; }
         ReadOnlyReactiveProperty<float> MaxHitPoint { get; }
+        ReadOnlyReactiveProperty<float> SpecialPoint { get; }
+        ReadOnlyReactiveProperty<float> MaxSpecialPoint { get; }
         Observable<Unit> OnDead { get; }
     }
 
@@ -31,6 +33,7 @@ namespace Alice {
         void Charge();
         void Special();
         void Guard();
+        void AddSpecialPoint(float value);
         void Die();
         void GiveHit(HitStatus status);
     }
@@ -57,10 +60,13 @@ namespace Alice {
         readonly ReactiveProperty<Vector3> velocitySubject = new(Vector3.zero);
         readonly ReactiveProperty<float> hitPointSubject = new(0f);
         readonly ReactiveProperty<float> maxHitPointSubject = new(0f);
+        readonly ReactiveProperty<float> specialPointSubject = new(0f);
+        readonly ReactiveProperty<float> maxSpecialPointSubject = new(0f);
         IDisposable stateNameSubscription;
 
         Vector2 inputDirection;
         float currentHitPoint;
+        float currentSpecialPoint;
         int playerId;
         bool initialized;
         Transform strikerTransform;
@@ -78,6 +84,8 @@ namespace Alice {
         public ReadOnlyReactiveProperty<Vector3> Velocity => velocitySubject;
         public ReadOnlyReactiveProperty<float> HitPoint => hitPointSubject;
         public ReadOnlyReactiveProperty<float> MaxHitPoint => maxHitPointSubject;
+        public ReadOnlyReactiveProperty<float> SpecialPoint => specialPointSubject;
+        public ReadOnlyReactiveProperty<float> MaxSpecialPoint => maxSpecialPointSubject;
 
         public IEnumerable<IReadOnlyBattleEntity> GetAllStrikers() {
             return strikerRegistry.GetAllStrikers();
@@ -131,8 +139,11 @@ namespace Alice {
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
             animationPlayer = legacy.GetAnimationPlayer();
             currentHitPoint = maxHitPoint;
+            currentSpecialPoint = 0f;
             maxHitPointSubject.OnNext(maxHitPoint);
             hitPointSubject.OnNext(currentHitPoint);
+            maxSpecialPointSubject.OnNext(maxSpecialPoint);
+            specialPointSubject.OnNext(currentSpecialPoint);
             previousFramePosition = rb.position;
             frameVelocity = Vector3.zero;
             positionSubject.OnNext(previousFramePosition);
@@ -162,6 +173,8 @@ namespace Alice {
             velocitySubject.Dispose();
             hitPointSubject.Dispose();
             maxHitPointSubject.Dispose();
+            specialPointSubject.Dispose();
+            maxSpecialPointSubject.Dispose();
         }
 
         public void ApplyDamage(float damage) {
@@ -203,6 +216,13 @@ namespace Alice {
         public void Guard() {
             if (stateMachine == null || currentHitPoint <= 0f) return;
             stateMachine.CurrentState.OnGuardRequested(stateMachine);
+        }
+
+        public void AddSpecialPoint(float value) {
+            if (value <= 0f) return;
+
+            currentSpecialPoint = Mathf.Clamp(currentSpecialPoint + value, 0f, maxSpecialPoint);
+            specialPointSubject.OnNext(currentSpecialPoint);
         }
 
         public void Die() {

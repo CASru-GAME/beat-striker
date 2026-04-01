@@ -11,6 +11,8 @@ namespace Alice {
     public class BattlePlayerPresenter : MonoBehaviour, IBattlePlayerPresenter {
         [SerializeField] int playerId;
         [SerializeField] AliceHpBarView hpBarUI;
+        [SerializeField] AliceSpecialBarView specialBarUI;
+        [SerializeField] AliceComboView comboView;
         [SerializeField] AliceRingView beatRingPrefab;
         [SerializeField] Transform beatRingParent;
 
@@ -19,6 +21,7 @@ namespace Alice {
         IMusicPlayer musicPlayer;
         CompositeDisposable disposables = new();
         IDisposable hpSubscription;
+        IDisposable specialPointSubscription;
         IStrikerHub strikerHub;
         AliceRingView ringView;
         bool roundPlayable;
@@ -35,6 +38,8 @@ namespace Alice {
         }
 
         void Start() {
+            comboView.SetComboCount(0);
+
             musicPlayer.OnBeatTimelinePrepared
                 .Subscribe(ringView.SetBeatTimeline)
                 .AddTo(disposables);
@@ -62,6 +67,7 @@ namespace Alice {
 
         void OnDestroy() {
             hpSubscription?.Dispose();
+            specialPointSubscription?.Dispose();
             disposables.Dispose();
             Destroy(ringView.gameObject);
         }
@@ -74,10 +80,17 @@ namespace Alice {
         public void PresentRoundPlayableFinish() {
             roundPlayable = false;
             ringView.DeactivateBattleView();
+            comboView.SetComboCount(0);
         }
 
         void SetupPlayerSubscriptions() {
             var beatPlayer = beatJudge.GetBeatPlayer(playerId);
+
+            beatPlayer.ComboCount
+                .Subscribe(comboCount => {
+                    comboView.SetComboCount(comboCount);
+                })
+                .AddTo(disposables);
 
             beatPlayer.OnBeatCommandRequested
                 .Subscribe(result => {
@@ -87,7 +100,7 @@ namespace Alice {
                 .AddTo(disposables);
 
             beatPlayer.OnBeatPassed
-                .Subscribe(_ => {
+                .Subscribe(result => {
                     if (!roundPlayable) return;
                     ringView.NotifyBeatPassed();
                 })
@@ -102,19 +115,29 @@ namespace Alice {
             if (registration.PlayerId != playerId) return;
 
             hpSubscription?.Dispose();
+            specialPointSubscription?.Dispose();
             hpSubscription = null;
+            specialPointSubscription = null;
             strikerHub = null;
+            comboView.SetComboCount(0);
+            specialBarUI.SetSpecialRatio(0f);
         }
 
         void BindHpSubscriptionIfMatched(int registeredPlayerId, IStrikerHub registeredHub) {
             if (registeredPlayerId != playerId) return;
 
             hpSubscription?.Dispose();
+            specialPointSubscription?.Dispose();
             strikerHub = registeredHub;
             hpBarUI.SetHpRatio(Mathf.Clamp01(registeredHub.HitPoint.CurrentValue / Mathf.Max(1f, registeredHub.MaxHitPoint.CurrentValue)));
+            specialBarUI.SetSpecialRatio(Mathf.Clamp01(registeredHub.SpecialPoint.CurrentValue / Mathf.Max(1f, registeredHub.MaxSpecialPoint.CurrentValue)));
             hpSubscription = registeredHub.HitPoint.Subscribe(currentHp => {
                 var maxHp = Mathf.Max(1f, registeredHub.MaxHitPoint.CurrentValue);
                 hpBarUI.SetHpRatio(Mathf.Clamp01(currentHp / maxHp));
+            });
+            specialPointSubscription = registeredHub.SpecialPoint.Subscribe(currentSpecialPoint => {
+                var maxSpecialPoint = Mathf.Max(1f, registeredHub.MaxSpecialPoint.CurrentValue);
+                specialBarUI.SetSpecialRatio(Mathf.Clamp01(currentSpecialPoint / maxSpecialPoint));
             });
         }
 

@@ -175,6 +175,14 @@ PrefabInstance:
       propertyPath: m_LocalScale.x
       value: -1
       objectReference: {fileID: 0}
+    - target: {fileID: 7716519514509771709, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
+      propertyPath: m_LocalScale.x
+      value: -0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7716519514509771709, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7975344956862536615, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: m_SizeDelta.y
       value: 35.339

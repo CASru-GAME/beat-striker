@@ -175,6 +175,13 @@ namespace Alice {
                 }));
 
                 roundSubscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
+                    if (!beatResult.IsSuccess) {
+                        return;
+                    }
+
+                    var specialPointGain = CalculateSpecialPointGain(beatResult.ComboCount);
+                    instance.AddSpecialPoint(specialPointGain);
+
                     switch (beatResult.Button) {
                         case GamePadButton.North:
                             instance.Special();
@@ -218,6 +225,15 @@ namespace Alice {
 
         public void Dispose() {
             Undeploy();
+        }
+
+        float CalculateSpecialPointGain(int comboCount) {
+            var combo = Mathf.Max(1, comboCount);
+            var combo1Gain = Mathf.Max(0f, config.Combo1SpecialPointGain);
+            var convergenceRate = Mathf.Max(0f, config.SpecialPointGainConvergenceRate);
+            var convergenceValue = Mathf.Max(combo1Gain, config.SpecialPointGainConvergenceValue);
+            var x = combo - 1;
+            return convergenceValue - (convergenceValue - combo1Gain) * Mathf.Exp(-convergenceRate * x);
         }
     }
 
