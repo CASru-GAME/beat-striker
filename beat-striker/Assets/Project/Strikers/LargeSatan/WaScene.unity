@@ -434,7 +434,8 @@ PrefabInstance:
       propertyPath: selectedTrackName
       value: BS18
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 890198809820465324, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 2219892905694972618, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}

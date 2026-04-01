@@ -26,7 +26,6 @@ namespace Alice {
             var battlePlayerPresenters = new IBattlePlayerPresenter[this.battlePlayerPresenters.Length];
             for (var i = 0; i < this.battlePlayerPresenters.Length; i++) {
                 battlePlayerPresenters[i] = this.battlePlayerPresenters[i];
-                builder.RegisterInstance<IBattlePlayerPresenter>(this.battlePlayerPresenters[i]);
             }
             builder.RegisterInstance(battlePlayerPresenters);
             builder.Register<IBattleFlow, BattleFlow>(Lifetime.Singleton);

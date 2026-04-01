@@ -563,6 +563,9 @@ GameObject:
   - component: {fileID: 683290449398477611}
   - component: {fileID: 8839090797668869038}
   - component: {fileID: 7574165048113162648}
+  - component: {fileID: 1122334455667788990}
+  - component: {fileID: 1122334455667788991}
+  - component: {fileID: 1122334455667788992}
   m_Layer: 5
   m_Name: BattleCanvas
   m_TagString: Untagged
@@ -626,6 +629,63 @@ MonoBehaviour:
   fadePanelDuration: 0.5
   fadeHoldDuration: 0.5
   delayBeforeRoundText: 0.5
+--- !u!114 &1122334455667788990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2903801440528258547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3cbd5c50b9ef1413b999bc9e8b588849, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleRoundStartPresenter
+  battleStartText: {fileID: 8912755441438375414}
+  roundNumberText: {fileID: 9010212291060557718}
+  roundNumberCanvasGroup: {fileID: 3610392434908725330}
+  roundSound: {fileID: 0}
+  fightSound: {fileID: 0}
+  soundVolume: 1
+  roundFadeInDuration: 0.5
+  roundDisplayDuration: 0.5
+  roundFadeOutDuration: 0.5
+  delayBeforeFight: 0.2
+  fightScaleDuration: 0.2
+  fightDisplayDuration: 0.7
+  delayBeforeRoundText: 0.5
+--- !u!114 &1122334455667788991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2903801440528258547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f006c3ad65eda471f80bae0249217a1b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleResultTextPresenter
+  battleFinishText: {fileID: 2935741629218995974}
+  finishSound: {fileID: 0}
+  soundVolume: 1
+  finishDisplayDuration: 1.5
+  outroDisplayDuration: 1
+--- !u!114 &1122334455667788992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2903801440528258547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0703fdcb2f6c4036b48cb874bb090f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleFadePresenter
+  fadePanel: {fileID: 4939748495635682351}
+  fadePanelDuration: 0.5
+  fadeHoldDuration: 0.5
 --- !u!223 &683290449398477611
 Canvas:
   m_ObjectHideFlags: 0
@@ -1623,10 +1683,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePresenter
   stageCamera: {fileID: 7409349047662923548}
-  battleCanvas: {fileID: 890198809820465324}
-  playerUIs:
-  - {fileID: 5848338995913625861}
-  - {fileID: 1455099518563438161}
+  roundStartPresenter: {fileID: 1122334455667788990}
+  resultTextPresenter: {fileID: 1122334455667788991}
+  fadePresenter: {fileID: 1122334455667788992}
 --- !u!1 &8358644953175475204
 GameObject:
   m_ObjectHideFlags: 0
@@ -1904,10 +1963,6 @@ PrefabInstance:
       propertyPath: successParticle
       value: 
       objectReference: {fileID: 9186071922091559470}
-    - target: {fileID: 5923370902545218796, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
-      propertyPath: playerPosition
-      value: 
-      objectReference: {fileID: 1150277050076918826}
     - target: {fileID: 8039445252276306852, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
       propertyPath: m_SizeDelta.x
       value: 76.0783
@@ -2033,9 +2088,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9f63707905584c4697e06aa3ebf7b1f, type: 3}
+  m_Script: {fileID: 11500000, guid: f9a382686dbd54390a58fbb3a05be4bf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.PlayerUI
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePlayerPresenter
 --- !u!224 &8820795779970393197 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8751813634135345540, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
@@ -2163,10 +2218,6 @@ PrefabInstance:
       propertyPath: playerId
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 5923370902545218796, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
-      propertyPath: playerPosition
-      value: 
-      objectReference: {fileID: 4324818704522052850}
     - target: {fileID: 6967166367951565003, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -2300,9 +2351,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9f63707905584c4697e06aa3ebf7b1f, type: 3}
+  m_Script: {fileID: 11500000, guid: f9a382686dbd54390a58fbb3a05be4bf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.PlayerUI
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePlayerPresenter
 --- !u!198 &4207364426478310778 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 8963861562273933255, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
@@ -2344,6 +2395,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Alice
       objectReference: {fileID: 0}
+    - target: {fileID: 8571264011029232787, guid: 2ed35149b099642cb891acaea9e66c8d, type: 3}
+      propertyPath: battlePresenter
+      value: 
+      objectReference: {fileID: 4620446103239677168}
+    - target: {fileID: 8571264011029232787, guid: 2ed35149b099642cb891acaea9e66c8d, type: 3}
+      propertyPath: battlePlayerPresenters.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8571264011029232787, guid: 2ed35149b099642cb891acaea9e66c8d, type: 3}
+      propertyPath: battlePlayerPresenters.Array.data[0]
+      value: 
+      objectReference: {fileID: 5848338995913625861}
+    - target: {fileID: 8571264011029232787, guid: 2ed35149b099642cb891acaea9e66c8d, type: 3}
+      propertyPath: battlePlayerPresenters.Array.data[1]
+      value: 
+      objectReference: {fileID: 1455099518563438161}
     - target: {fileID: 4302664015860911726, guid: 2ed35149b099642cb891acaea9e66c8d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.80962

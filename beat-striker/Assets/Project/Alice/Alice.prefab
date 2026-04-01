@@ -9,10 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4302664015860911726}
+  - component: {fileID: 8571264011029232787}
   - component: {fileID: 6993857519055998599}
   - component: {fileID: 4875870784086374656}
   - component: {fileID: 1214249696447149568}
-  - component: {fileID: 8571264011029232787}
   - component: {fileID: 4825547796727762895}
   m_Layer: 0
   m_Name: Alice
@@ -36,6 +36,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8571264011029232787
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308815325081831139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea2a52296f37c46cbabe8019b35fb943, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AliceScope
+  parentReference:
+    TypeName: 
+  autoRun: 1
+  autoInjectGameObjects: []
+  battlePresenter: {fileID: 0}
+  battlePlayerPresenters: []
 --- !u!114 &6993857519055998599
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -103,6 +121,7 @@ MonoBehaviour:
     prefab: {fileID: 1829485864700888609, guid: ecee9c48169c8dc428a6839126804337, type: 3}
   - striker: 3
     prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
+  roundsToWin: 2
 --- !u!114 &1214249696447149568
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -162,22 +181,6 @@ MonoBehaviour:
   commandTimeOffset: 0.2
   viewTimeOffset: 0
   perfectWindow: 1
---- !u!114 &8571264011029232787
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1308815325081831139}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea2a52296f37c46cbabe8019b35fb943, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.AliceScope
-  parentReference:
-    TypeName: 
-  autoRun: 1
-  autoInjectGameObjects: []
 --- !u!82 &4825547796727762895
 AudioSource:
   m_ObjectHideFlags: 0

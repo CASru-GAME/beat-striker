@@ -54,11 +54,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1380997860081013331}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9f63707905584c4697e06aa3ebf7b1f, type: 3}
+  m_Script: {fileID: 11500000, guid: f9a382686dbd54390a58fbb3a05be4bf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.PlayerUI
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePlayerPresenter
   playerId: 0
-  playerPosition: {fileID: 0}
   hpBarUI: {fileID: 8326099282782513470}
   ringUI: {fileID: 5769882744029503014}
 --- !u!222 &810344020748878237
