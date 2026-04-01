@@ -167,29 +167,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2356631244881786875, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
+      propertyPath: 'strikers.Array.data[0]'
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2356631244881786875, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
+      propertyPath: 'strikers.Array.data[1]'
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2627521735593949992, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: m_Name
       value: BattleScene
-      objectReference: {fileID: 0}
-    - target: {fileID: 3590870560391445718, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
-      propertyPath: m_LocalScale.x
-      value: -1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5795198832125031366, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
-      propertyPath: playerId
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7716519514509771709, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
-      propertyPath: m_LocalScale.x
-      value: -1.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7716519514509771709, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: -178
-      objectReference: {fileID: 0}
-    - target: {fileID: 7716519514509771709, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
-      propertyPath: m_ConstrainProportionsScale
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
