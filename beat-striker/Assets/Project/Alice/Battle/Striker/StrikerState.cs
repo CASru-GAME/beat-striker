@@ -18,6 +18,7 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
     public virtual void OnUpdate(IStrikerStateContext hub) { }
     public virtual void OnExit(IStrikerContext hub) { }
     public virtual void OnAttackRequested(IStrikerStateContext hub) { }
+    public virtual void OnSpecialRequested(IStrikerStateContext hub) { }
     public virtual void OnChargeRequested(IStrikerStateContext hub) { }
     public virtual void OnDashRequested(IStrikerStateContext hub) { }
     public virtual void OnGuardRequested(IStrikerStateContext hub) { }
@@ -56,6 +57,13 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
             p.OnAttackRequested(ctx);
         }
         OnAttackRequested(ctx);
+    }
+
+    void IStrikerState.OnSpecialRequested(IStrikerStateContext ctx) {
+        foreach (var p in parents) {
+            p.OnSpecialRequested(ctx);
+        }
+        OnSpecialRequested(ctx);
     }
 
     void IStrikerState.OnChargeRequested(IStrikerStateContext ctx) {

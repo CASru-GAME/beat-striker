@@ -40,6 +40,7 @@ namespace Alice {
         void IntroPose();
         void VictoryPose();
         Observable<StrikerInpact> OnInpactGenerated { get; }
+        Observable<AttentionRequest> OnAtentionRequested { get; }
     }
 
     public class AliceStrikerHub : IStrikerContext, IStrikerHub, IDisposable {
@@ -67,6 +68,7 @@ namespace Alice {
         readonly ReactiveProperty<float> specialPointSubject = new(0f);
         readonly ReactiveProperty<float> maxSpecialPointSubject = new(0f);
         readonly Subject<StrikerInpact> onInpactGeneratedSubject = new();
+        readonly Subject<AttentionRequest> onAttentionRequestedSubject = new();
         IDisposable stateNameSubscription;
 
         Vector2 inputDirection;
@@ -92,6 +94,7 @@ namespace Alice {
         public ReadOnlyReactiveProperty<float> SpecialPoint => specialPointSubject;
         public ReadOnlyReactiveProperty<float> MaxSpecialPoint => maxSpecialPointSubject;
         public Observable<StrikerInpact> OnInpactGenerated => onInpactGeneratedSubject;
+        public Observable<AttentionRequest> OnAtentionRequested => onAttentionRequestedSubject;
 
         public IEnumerable<IReadOnlyBattleEntity> GetAllStrikers() {
             return strikerRegistry.GetAllStrikers();
@@ -182,6 +185,7 @@ namespace Alice {
             specialPointSubject.Dispose();
             maxSpecialPointSubject.Dispose();
             onInpactGeneratedSubject.Dispose();
+            onAttentionRequestedSubject.Dispose();
         }
 
         public void ApplyDamage(float damage) {
@@ -217,7 +221,7 @@ namespace Alice {
 
         public void Special() {
             if (stateMachine == null || currentHitPoint <= 0f) return;
-            stateMachine.CurrentState.OnAttackRequested(stateMachine);
+            stateMachine.CurrentState.OnSpecialRequested(stateMachine);
         }
 
         public void Guard() {
@@ -263,6 +267,10 @@ namespace Alice {
 
         public void GenerateInpact(StrikerInpact command) {
             onInpactGeneratedSubject.OnNext(command);
+        }
+
+        public void RequestAttention(AttentionRequest request) {
+            onAttentionRequestedSubject.OnNext(request);
         }
     }
 }

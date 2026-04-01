@@ -38,6 +38,7 @@ namespace Alice {
             public IStrikerHub Hub;
             public AiBrain AiBrain;
             public IDisposable InpactSubscription;
+            public IDisposable AttentionSubscription;
         }
 
         readonly BattleConfig config;
@@ -77,6 +78,7 @@ namespace Alice {
                 var originalRotation = playerTransform.rotation;
                 var instance = strikerHubFactory.Create(strikerEntry.prefab, playerTransform, playerId);
                 var inpactSubscription = instance.OnInpactGenerated.Subscribe(command => battlePresenter.PlayInpact(command));
+                var attentionSubscription = instance.OnAtentionRequested.Subscribe(request => battlePresenter.RequestAttention(playerId, request));
 
                 strikerRegistry.RequestRegister(i, instance);
 
@@ -89,6 +91,7 @@ namespace Alice {
                     Hub = instance,
                     AiBrain = instance.AiBrain,
                     InpactSubscription = inpactSubscription,
+                    AttentionSubscription = attentionSubscription,
                 });
 
                 Debug.Log($"Deployed Striker {config.Strikers[i]} for Player {i}".ToCyan());
@@ -111,6 +114,7 @@ namespace Alice {
                 }
 
                 deployed.InpactSubscription?.Dispose();
+                deployed.AttentionSubscription?.Dispose();
             }
 
             deployedStrikers.Clear();

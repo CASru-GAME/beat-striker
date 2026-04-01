@@ -5,6 +5,7 @@ using UnityEngine;
 
 
 public record StrikerInpact(Vector3 DirectionAndMagnitude);
+public record AttentionRequest(float DurationSeconds);
 
 public interface IStrikerContext {
     Rigidbody Rigidbody { get; }
@@ -15,6 +16,7 @@ public interface IStrikerContext {
     void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
     void ApplyDamage(float damage);
     void GenerateInpact(StrikerInpact command);
+    void RequestAttention(AttentionRequest request);
 }
 
 public interface IStrikerStateContext : IStrikerContext {
@@ -36,6 +38,7 @@ public interface IStrikerState {
     void OnUpdate(IStrikerStateContext context);
     void OnHit(IStrikerStateContext context, HitStatus status);
     void OnAttackRequested(IStrikerStateContext context);
+    void OnSpecialRequested(IStrikerStateContext context);
     void OnChargeRequested(IStrikerStateContext context);
     void OnGuardRequested(IStrikerStateContext context);
     void OnDashRequested(IStrikerStateContext context);
@@ -48,6 +51,7 @@ public interface IStrikerGroup {
     void OnUpdate(IStrikerStateContext context);
     void OnHit(IStrikerStateContext context, HitStatus status);
     void OnAttackRequested(IStrikerStateContext context);
+    void OnSpecialRequested(IStrikerStateContext context);
     void OnChargeRequested(IStrikerStateContext context);
     void OnGuardRequested(IStrikerStateContext context);
     void OnDashRequested(IStrikerStateContext context);

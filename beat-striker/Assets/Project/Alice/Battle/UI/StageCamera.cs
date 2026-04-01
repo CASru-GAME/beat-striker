@@ -26,6 +26,9 @@ namespace Alice {
         [SerializeField] private float centerSmoothTime = 0.15f;
         [SerializeField] private Vector2 centerViewportOffset = Vector2.zero;
         [SerializeField] private float shakeDamping = 18f;
+        [SerializeField] private float attentionZoomDistance = 2.2f;
+        [SerializeField] private float attentionZoomSmoothTime = 0.08f;
+        [SerializeField] private float attentionReturnSmoothTime = 0.12f;
 
         private Camera stageCamera;
         private float cameraDepthVelocity;
@@ -34,11 +37,7 @@ namespace Alice {
         Vector3 shakeVelocity;
         Vector3 previousShakeOffset;
         private Vector2 desiredCenterViewport;
-        private bool isBattleZoomActive;
-        bool isSkipRequested;
-        CameraSequencePhase currentSequencePhase;
-        TaskCompletionSource<bool> introCompletionSource;
-        TaskCompletionSource<bool> outroCompletionSource;
+        CameraState currentState;
         Func<int, Vector3> playerCenterPositionResolver;
         Action<int> introPoseRequester;
         Action<int> victoryPoseRequester;
@@ -48,6 +47,12 @@ namespace Alice {
         Vector3 firstRoundStartPosition;
         Quaternion firstRoundStartRotation;
         bool hasFirstRoundStartPose;
+        IdleCameraState idleState;
+        BattleCameraState battleState;
+        AttentionCameraState attentionState;
+        AttentionReturnCameraState attentionReturnState;
+        SequenceCameraState sequenceState;
+        readonly AttentionRuntime attentionRuntime = new();
 
         enum CameraSequencePhase {
             None,
@@ -59,8 +64,303 @@ namespace Alice {
             OutroPostWait,
         }
 
+        sealed class AttentionRuntime {
+            public int TargetPlayerId;
+            public float RemainingSeconds;
+            public Quaternion BaseRotation;
+            public Vector3 BasePosition;
+            public Vector3 BaseForward;
+            public Vector3 MoveVelocity;
+            public Vector3 ReturnMoveVelocity;
+
+            public void Reset() {
+                RemainingSeconds = 0f;
+                MoveVelocity = Vector3.zero;
+                ReturnMoveVelocity = Vector3.zero;
+            }
+        }
+
+        abstract class CameraState {
+            protected readonly StageCamera owner;
+
+            protected CameraState(StageCamera owner) {
+                this.owner = owner;
+            }
+
+            public virtual void OnEnter() { }
+            public virtual void OnExit() { }
+            public virtual void OnUpdate() { }
+            public virtual void OnAttentionRequested(int playerId, float durationSeconds) { }
+            public virtual void OnSequenceSkipRequested() { }
+        }
+
+        sealed class IdleCameraState : CameraState {
+            public IdleCameraState(StageCamera owner) : base(owner) { }
+
+            public override void OnEnter() {
+                owner.attentionRuntime.Reset();
+            }
+        }
+
+        sealed class BattleCameraState : CameraState {
+            public BattleCameraState(StageCamera owner) : base(owner) { }
+
+            public override void OnEnter() {
+                owner.attentionRuntime.Reset();
+                owner.cameraDepthVelocity = 0f;
+                owner.centerMoveVelocity = Vector3.zero;
+            }
+
+            public override void OnUpdate() {
+                owner.MoveCameraForwardToFitPlayers();
+                owner.MoveParallelToPlayersCenter();
+            }
+
+            public override void OnAttentionRequested(int playerId, float durationSeconds) {
+                if (durationSeconds <= 0f) {
+                    return;
+                }
+
+                owner.attentionRuntime.BasePosition = owner.transform.position;
+                owner.attentionRuntime.BaseRotation = owner.transform.rotation;
+                owner.attentionRuntime.BaseForward = owner.transform.forward;
+                owner.attentionRuntime.TargetPlayerId = playerId;
+                owner.attentionRuntime.RemainingSeconds = durationSeconds;
+                owner.attentionRuntime.MoveVelocity = Vector3.zero;
+                owner.attentionRuntime.ReturnMoveVelocity = Vector3.zero;
+                owner.SetCameraState(owner.attentionState);
+            }
+        }
+
+        sealed class AttentionCameraState : CameraState {
+            public AttentionCameraState(StageCamera owner) : base(owner) { }
+
+            public override void OnUpdate() {
+                owner.attentionRuntime.RemainingSeconds -= Time.deltaTime;
+                var targetCenter = owner.GetPlayerCenterPosition(owner.attentionRuntime.TargetPlayerId);
+                var targetPosition = targetCenter - owner.attentionRuntime.BaseForward * owner.attentionZoomDistance;
+                owner.transform.position = Vector3.SmoothDamp(
+                    owner.transform.position,
+                    targetPosition,
+                    ref owner.attentionRuntime.MoveVelocity,
+                    owner.attentionZoomSmoothTime);
+                owner.LookAt(targetCenter);
+
+                if (owner.attentionRuntime.RemainingSeconds > 0f) {
+                    return;
+                }
+
+                owner.attentionRuntime.RemainingSeconds = 0f;
+                owner.attentionRuntime.MoveVelocity = Vector3.zero;
+                owner.SetCameraState(owner.attentionReturnState);
+            }
+
+            public override void OnAttentionRequested(int playerId, float durationSeconds) {
+                if (durationSeconds <= 0f) {
+                    return;
+                }
+
+                owner.attentionRuntime.TargetPlayerId = playerId;
+                owner.attentionRuntime.RemainingSeconds = durationSeconds;
+                owner.attentionRuntime.MoveVelocity = Vector3.zero;
+            }
+        }
+
+        sealed class AttentionReturnCameraState : CameraState {
+            public AttentionReturnCameraState(StageCamera owner) : base(owner) { }
+
+            public override void OnUpdate() {
+                owner.transform.position = Vector3.SmoothDamp(
+                    owner.transform.position,
+                    owner.attentionRuntime.BasePosition,
+                    ref owner.attentionRuntime.ReturnMoveVelocity,
+                    owner.attentionReturnSmoothTime);
+                owner.transform.rotation = Quaternion.Slerp(
+                    owner.transform.rotation,
+                    owner.attentionRuntime.BaseRotation,
+                    1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.0001f, owner.attentionReturnSmoothTime)));
+
+                bool reachedPosition = (owner.transform.position - owner.attentionRuntime.BasePosition).sqrMagnitude <= 0.0004f;
+                bool reachedRotation = Quaternion.Angle(owner.transform.rotation, owner.attentionRuntime.BaseRotation) <= 0.2f;
+                if (!reachedPosition || !reachedRotation) {
+                    return;
+                }
+
+                owner.transform.SetPositionAndRotation(owner.attentionRuntime.BasePosition, owner.attentionRuntime.BaseRotation);
+                owner.attentionRuntime.ReturnMoveVelocity = Vector3.zero;
+                owner.SetCameraState(owner.battleState);
+            }
+
+            public override void OnAttentionRequested(int playerId, float durationSeconds) {
+                if (durationSeconds <= 0f) {
+                    return;
+                }
+
+                owner.attentionRuntime.TargetPlayerId = playerId;
+                owner.attentionRuntime.RemainingSeconds = durationSeconds;
+                owner.attentionRuntime.MoveVelocity = Vector3.zero;
+                owner.attentionRuntime.ReturnMoveVelocity = Vector3.zero;
+                owner.SetCameraState(owner.attentionState);
+            }
+        }
+
+        sealed class SequenceCameraState : CameraState {
+            bool isSkipRequested;
+            CameraSequencePhase currentSequencePhase;
+            TaskCompletionSource<bool> introCompletionSource;
+            TaskCompletionSource<bool> outroCompletionSource;
+
+            public SequenceCameraState(StageCamera owner) : base(owner) { }
+
+            public override void OnEnter() {
+                owner.attentionRuntime.Reset();
+                isSkipRequested = false;
+                currentSequencePhase = CameraSequencePhase.None;
+            }
+
+            public Task PlayIntroAsync() {
+                introCompletionSource?.TrySetCanceled();
+                introCompletionSource = new TaskCompletionSource<bool>();
+                owner.StopAllCoroutines();
+                owner.StartCoroutine(StartCameraSequence());
+                return introCompletionSource.Task;
+            }
+
+            public Task PlayOutroAsync(PlayerId winner) {
+                outroCompletionSource?.TrySetCanceled();
+                outroCompletionSource = new TaskCompletionSource<bool>();
+                owner.StopAllCoroutines();
+                owner.StartCoroutine(MoveToWinner(winner.value));
+                return outroCompletionSource.Task;
+            }
+
+            public override void OnSequenceSkipRequested() {
+                isSkipRequested = true;
+            }
+
+            public void SetPhase(CameraSequencePhase phase) {
+                currentSequencePhase = phase;
+            }
+
+            public bool ConsumeSkipIfRequested(CameraSequencePhase expectedPhase) {
+                if (!isSkipRequested || currentSequencePhase != expectedPhase) {
+                    return false;
+                }
+
+                isSkipRequested = false;
+                return true;
+            }
+
+            public IEnumerator WaitForSecondsSkippable(float duration, CameraSequencePhase phase) {
+                currentSequencePhase = phase;
+                float elapsedTime = 0f;
+                while (elapsedTime < duration) {
+                    if (ConsumeSkipIfRequested(phase)) {
+                        yield break;
+                    }
+
+                    elapsedTime += Time.deltaTime;
+                    yield return null;
+                }
+            }
+
+            IEnumerator StartCameraSequence() {
+                Vector3 startPosition = owner.transform.position;
+                Vector3 forwardPosition = startPosition + owner.transform.forward * owner.forwardDistance;
+
+                SetPhase(CameraSequencePhase.IntroForward);
+                float elapsedTime = 0f;
+                while (elapsedTime < owner.forwardDuration) {
+                    if (ConsumeSkipIfRequested(CameraSequencePhase.IntroForward)) {
+                        break;
+                    }
+
+                    elapsedTime += Time.deltaTime;
+                    float t = elapsedTime / owner.forwardDuration;
+                    owner.transform.position = Vector3.Lerp(startPosition, forwardPosition, t);
+                    yield return null;
+                }
+                owner.transform.position = forwardPosition;
+
+                SetPhase(CameraSequencePhase.IntroPlayer0);
+                owner.transform.position = owner.camTransform0.position;
+                owner.introPoseRequester?.Invoke(0);
+                owner.LookAt(owner.GetPlayerCenterPosition(0));
+                yield return OrbitAroundTarget(0, owner.orbitDuration, owner.orbitAngle, CameraSequencePhase.IntroPlayer0);
+
+                SetPhase(CameraSequencePhase.IntroPlayer1);
+                owner.transform.position = owner.GetInferredCamPosition1();
+                owner.introPoseRequester?.Invoke(1);
+                owner.LookAt(owner.GetPlayerCenterPosition(1));
+                yield return OrbitAroundTarget(1, owner.orbitDuration, -owner.orbitAngle, CameraSequencePhase.IntroPlayer1);
+
+                owner.InitializeBattleStartCameraPose();
+                owner.SetCameraState(owner.idleState);
+                SetPhase(CameraSequencePhase.None);
+                introCompletionSource?.TrySetResult(true);
+            }
+
+            IEnumerator OrbitAroundTarget(int playerId, float duration, float angle, CameraSequencePhase phase) {
+                Vector3 pivot = owner.GetPlayerCenterPosition(playerId);
+                Vector3 startOffset = owner.transform.position - pivot;
+                float elapsedTime = 0f;
+
+                while (elapsedTime < duration) {
+                    if (ConsumeSkipIfRequested(phase)) {
+                        break;
+                    }
+
+                    elapsedTime += Time.deltaTime;
+                    float t = elapsedTime / duration;
+                    float currentAngle = Mathf.Lerp(0f, angle, t);
+
+                    pivot = owner.GetPlayerCenterPosition(playerId);
+                    Quaternion rotation = Quaternion.Euler(0, currentAngle, 0);
+                    Vector3 newPos = pivot + rotation * startOffset;
+
+                    owner.transform.position = newPos;
+                    owner.LookAt(pivot);
+
+                    yield return null;
+                }
+            }
+
+            IEnumerator MoveToWinner(int winnerPlayerId) {
+                yield return WaitForSecondsSkippable(owner.outroWaitDuration, CameraSequencePhase.OutroPreWait);
+                owner.victoryPoseRequester?.Invoke(winnerPlayerId);
+
+                Vector3 startPosition = owner.transform.position;
+                Vector3 winnerCenterPosition = owner.GetPlayerCenterPosition(winnerPlayerId);
+                Vector3 direction = (winnerCenterPosition - owner.transform.position).normalized;
+                Vector3 targetPosition = winnerCenterPosition - direction * owner.outroDistance;
+
+                SetPhase(CameraSequencePhase.OutroMove);
+                float elapsedTime = 0f;
+
+                while (elapsedTime < owner.outroDuration) {
+                    if (ConsumeSkipIfRequested(CameraSequencePhase.OutroMove)) {
+                        break;
+                    }
+
+                    elapsedTime += Time.deltaTime;
+                    float t = elapsedTime / owner.outroDuration;
+                    owner.transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+                    owner.LookAt(owner.GetPlayerCenterPosition(winnerPlayerId));
+                    yield return null;
+                }
+
+                owner.transform.position = targetPosition;
+                owner.LookAt(owner.GetPlayerCenterPosition(winnerPlayerId));
+
+                yield return WaitForSecondsSkippable(owner.outroWaitDuration, CameraSequencePhase.OutroPostWait);
+                SetPhase(CameraSequencePhase.None);
+                owner.SetCameraState(owner.idleState);
+                outroCompletionSource?.TrySetResult(true);
+            }
+        }
+
         void Awake() {
-            initialCameraPosition = transform.position;
+            EnsureRuntimeInitialized();
         }
 
         public void SetPlayerCenterPositionResolver(Func<int, Vector3> resolver) {
@@ -76,15 +376,12 @@ namespace Alice {
         }
 
         void Start() {
-            stageCamera = GetComponent<Camera>();
+            EnsureRuntimeInitialized();
         }
 
         void Update() {
-            if (!isBattleZoomActive) {
-                return;
-            }
-
-            UpdateBattleZoom();
+            EnsureRuntimeInitialized();
+            currentState?.OnUpdate();
         }
 
         void LateUpdate() {
@@ -92,79 +389,9 @@ namespace Alice {
         }
 
         public Task PresentIntroAsync() {
-            introCompletionSource?.TrySetCanceled();
-            introCompletionSource = new TaskCompletionSource<bool>();
-            isSkipRequested = false;
-            currentSequencePhase = CameraSequencePhase.None;
-            StopAllCoroutines();
-            StartCoroutine(StartCameraSequence());
-            return introCompletionSource.Task;
-        }
-
-        private IEnumerator StartCameraSequence() {
-            Vector3 startPosition = transform.position;
-            Vector3 forwardPosition = startPosition + transform.forward * forwardDistance;
-
-            // 少し前に進む
-            currentSequencePhase = CameraSequencePhase.IntroForward;
-            float elapsedTime = 0f;
-            while (elapsedTime < forwardDuration) {
-                if (ConsumeSkipIfRequested(CameraSequencePhase.IntroForward)) {
-                    break;
-                }
-
-                elapsedTime += Time.deltaTime;
-                float t = elapsedTime / forwardDuration;
-                transform.position = Vector3.Lerp(startPosition, forwardPosition, t);
-                yield return null;
-            }
-            transform.position = forwardPosition;
-
-            // transform0の位置にワープしてplayerTransform0を見ながら公転
-            currentSequencePhase = CameraSequencePhase.IntroPlayer0;
-            transform.position = camTransform0.position;
-            introPoseRequester?.Invoke(0);
-            LookAt(GetPlayerCenterPosition(0));
-            yield return OrbitAroundTarget(0, orbitDuration, orbitAngle, CameraSequencePhase.IntroPlayer0);
-
-            // transform1の位置にワープしてplayerTransform1を見ながら公転
-            currentSequencePhase = CameraSequencePhase.IntroPlayer1;
-            transform.position = GetInferredCamPosition1();
-            introPoseRequester?.Invoke(1);
-            LookAt(GetPlayerCenterPosition(1));
-            yield return OrbitAroundTarget(1, orbitDuration, -orbitAngle, CameraSequencePhase.IntroPlayer1);
-
-            InitializeBattleStartCameraPose();
-            isBattleZoomActive = false;
-            currentSequencePhase = CameraSequencePhase.None;
-
-            introCompletionSource?.TrySetResult(true);
-        }
-
-        private IEnumerator OrbitAroundTarget(int playerId, float duration, float angle, CameraSequencePhase phase) {
-            Vector3 pivot = GetPlayerCenterPosition(playerId);
-            Vector3 startOffset = transform.position - pivot;
-            float elapsedTime = 0f;
-
-            while (elapsedTime < duration) {
-                if (ConsumeSkipIfRequested(phase)) {
-                    break;
-                }
-
-                elapsedTime += Time.deltaTime;
-                float t = elapsedTime / duration;
-                float currentAngle = Mathf.Lerp(0f, angle, t);
-
-                // 現在のtarget位置を中心に回転した位置を計算
-                pivot = GetPlayerCenterPosition(playerId);
-                Quaternion rotation = Quaternion.Euler(0, currentAngle, 0);
-                Vector3 newPos = pivot + rotation * startOffset;
-
-                transform.position = newPos;
-                LookAt(pivot);
-
-                yield return null;
-            }
+            EnsureRuntimeInitialized();
+            SetCameraState(sequenceState);
+            return sequenceState.PlayIntroAsync();
         }
 
         private void LookAt(Vector3 targetPosition) {
@@ -172,14 +399,14 @@ namespace Alice {
         }
 
         public void PresentRoundPlayableStart() {
-            isBattleZoomActive = true;
-            cameraDepthVelocity = 0f;
-            centerMoveVelocity = Vector3.zero;
+            EnsureRuntimeInitialized();
+            SetCameraState(battleState);
         }
 
         public void ResetRoundCamera() {
+            EnsureRuntimeInitialized();
             StopAllCoroutines();
-            isBattleZoomActive = false;
+            SetCameraState(idleState);
             InitializeBattleStartCameraPose();
             cameraDepthVelocity = 0f;
             centerMoveVelocity = Vector3.zero;
@@ -189,30 +416,51 @@ namespace Alice {
         }
 
         public void PresentRoundFinish() {
-            isBattleZoomActive = false;
+            EnsureRuntimeInitialized();
+            SetCameraState(idleState);
         }
 
         public void PresentBattleFinish() {
-            isBattleZoomActive = false;
+            EnsureRuntimeInitialized();
+            SetCameraState(idleState);
         }
 
         public Task PresentOutroAsync(PlayerId winner) {
-            outroCompletionSource?.TrySetCanceled();
-            outroCompletionSource = new TaskCompletionSource<bool>();
-            isBattleZoomActive = false;
-            isSkipRequested = false;
-            currentSequencePhase = CameraSequencePhase.None;
-            StopAllCoroutines();
-            StartCoroutine(MoveToWinner(winner.value));
-            return outroCompletionSource.Task;
+            EnsureRuntimeInitialized();
+            SetCameraState(sequenceState);
+            return sequenceState.PlayOutroAsync(winner);
         }
 
         public void RequestSequenceSkip() {
-            isSkipRequested = true;
+            EnsureRuntimeInitialized();
+            currentState?.OnSequenceSkipRequested();
         }
 
         public void RequestShake(StrikerInpact command) {
             shakeVelocity += command.DirectionAndMagnitude;
+        }
+
+        public void RequestAttention(int playerId, float durationSeconds) {
+            EnsureRuntimeInitialized();
+            currentState?.OnAttentionRequested(playerId, durationSeconds);
+        }
+
+        void EnsureRuntimeInitialized() {
+            if (stageCamera == null) {
+                stageCamera = GetComponent<Camera>();
+            }
+
+            if (idleState != null) {
+                return;
+            }
+
+            initialCameraPosition = transform.position;
+            idleState = new IdleCameraState(this);
+            battleState = new BattleCameraState(this);
+            attentionState = new AttentionCameraState(this);
+            attentionReturnState = new AttentionReturnCameraState(this);
+            sequenceState = new SequenceCameraState(this);
+            SetCameraState(idleState);
         }
 
         void ApplyShakeOffset() {
@@ -234,31 +482,14 @@ namespace Alice {
             transform.position += previousShakeOffset;
         }
 
-        bool ConsumeSkipIfRequested(CameraSequencePhase expectedPhase) {
-            if (!isSkipRequested || currentSequencePhase != expectedPhase) {
-                return false;
+        void SetCameraState(CameraState nextState) {
+            if (nextState == null || ReferenceEquals(currentState, nextState)) {
+                return;
             }
 
-            isSkipRequested = false;
-            return true;
-        }
-
-        IEnumerator WaitForSecondsSkippable(float duration, CameraSequencePhase phase) {
-            currentSequencePhase = phase;
-            float elapsedTime = 0f;
-            while (elapsedTime < duration) {
-                if (ConsumeSkipIfRequested(phase)) {
-                    yield break;
-                }
-
-                elapsedTime += Time.deltaTime;
-                yield return null;
-            }
-        }
-
-        private void UpdateBattleZoom() {
-            MoveCameraForwardToFitPlayers();
-            MoveParallelToPlayersCenter();
+            currentState?.OnExit();
+            currentState = nextState;
+            currentState.OnEnter();
         }
 
         private Vector3 GetPlayersCenter() {
@@ -426,36 +657,5 @@ namespace Alice {
             return player1Center + mirroredOffset;
         }
 
-        private IEnumerator MoveToWinner(int winnerPlayerId) {
-            yield return WaitForSecondsSkippable(outroWaitDuration, CameraSequencePhase.OutroPreWait);
-            victoryPoseRequester?.Invoke(winnerPlayerId);
-
-            Vector3 startPosition = transform.position;
-            Vector3 winnerCenterPosition = GetPlayerCenterPosition(winnerPlayerId);
-            Vector3 direction = (winnerCenterPosition - transform.position).normalized;
-            Vector3 targetPosition = winnerCenterPosition - direction * outroDistance;
-
-            currentSequencePhase = CameraSequencePhase.OutroMove;
-            float elapsedTime = 0f;
-
-            while (elapsedTime < outroDuration) {
-                if (ConsumeSkipIfRequested(CameraSequencePhase.OutroMove)) {
-                    break;
-                }
-
-                elapsedTime += Time.deltaTime;
-                float t = elapsedTime / outroDuration;
-                transform.position = Vector3.Lerp(startPosition, targetPosition, t);
-                LookAt(GetPlayerCenterPosition(winnerPlayerId));
-                yield return null;
-            }
-
-            transform.position = targetPosition;
-            LookAt(GetPlayerCenterPosition(winnerPlayerId));
-
-            yield return WaitForSecondsSkippable(outroWaitDuration, CameraSequencePhase.OutroPostWait);
-            currentSequencePhase = CameraSequencePhase.None;
-            outroCompletionSource?.TrySetResult(true);
-        }
     }
 }

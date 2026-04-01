@@ -110,6 +110,10 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
         context.GenerateInpact(command);
     }
 
+    public void RequestAttention(AttentionRequest request) {
+        context.RequestAttention(request);
+    }
+
     public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = null) {
         this.context = context;
         if (defaultState != null) {

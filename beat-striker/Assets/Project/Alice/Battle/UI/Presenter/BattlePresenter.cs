@@ -14,6 +14,7 @@ namespace Alice {
         Task PlayRoundResumeTransitionAsync();
         Task PlayBattleEndingAsync(CorePlayerId winner);
         void PlayInpact(StrikerInpact command);
+        void RequestAttention(int playerId, AttentionRequest request);
     }
 
     public class BattlePresenter : MonoBehaviour, IBattlePresenter {
@@ -109,6 +110,10 @@ namespace Alice {
 
         public void PlayInpact(StrikerInpact command) {
             stageCamera.RequestShake(command);
+        }
+
+        public void RequestAttention(int playerId, AttentionRequest request) {
+            stageCamera.RequestAttention(playerId, request.DurationSeconds);
         }
 
         void RequestIntroPose(int playerId) {

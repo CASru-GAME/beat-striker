@@ -712,6 +712,56 @@ MonoBehaviour:
     speed: 1
   nextNode: {fileID: 3444350880286515863}
   shield: {fileID: 2151338942946470407}
+--- !u!1 &2380628934714901793
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8475223232629767289}
+  - component: {fileID: 3559809864546958582}
+  m_Layer: 0
+  m_Name: SpecialState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8475223232629767289
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2380628934714901793}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.02752, y: 0.70272, z: -0.07662988}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7201851954051567416}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3559809864546958582
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2380628934714901793}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d37afaa3a000d4ffa9daf9005b280c7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.SpecialState
+  parents: []
+  animationClip:
+    clip: {fileID: 8733749732401332308, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 6465224874055907323}
 --- !u!1 &2433935694402992007
 GameObject:
   m_ObjectHideFlags: 0
@@ -771,6 +821,7 @@ MonoBehaviour:
   nockbackSpeed: 10
   effectPlayer: {fileID: 839518711300973302}
   slashSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
+  impact: 5
 --- !u!1 &2485643925861171987
 GameObject:
   m_ObjectHideFlags: 0
@@ -1411,6 +1462,7 @@ Transform:
   - {fileID: 225902090445379099}
   - {fileID: 7670338563451008460}
   - {fileID: 8956782202065690917}
+  - {fileID: 8475223232629767289}
   - {fileID: 930349233451120807}
   - {fileID: 8190442096134038885}
   - {fileID: 6834426907013068108}
@@ -1851,6 +1903,7 @@ MonoBehaviour:
   stunState: {fileID: 3199232662557460761}
   guardState: {fileID: 7615511255632755114}
   chargeState: {fileID: 3098814545267038612}
+  specialState: {fileID: 3559809864546958582}
 --- !u!1 &8562694478238975578
 GameObject:
   m_ObjectHideFlags: 0
