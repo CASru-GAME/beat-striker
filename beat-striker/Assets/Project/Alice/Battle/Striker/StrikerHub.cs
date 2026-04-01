@@ -20,6 +20,7 @@ public class StrikerHub : MonoBehaviour {
     [SerializeField] private StrikerState defaultState;
     [SerializeField] private StrikerState deadState, VictoryState, IntroState;
     [SerializeField] private Alice.AiBrain aiBrain;
+    [SerializeField] private Transform centerPositionTransform;
 
     private Rigidbody rb;
 
@@ -32,6 +33,7 @@ public class StrikerHub : MonoBehaviour {
     public StrikerState InspectorVictoryState => VictoryState;
     public StrikerState InspectorIntroState => IntroState;
     public Alice.AiBrain InspectorAiBrain => aiBrain;
+    public Transform InspectorCenterPositionTransform => centerPositionTransform;
     private Alice.IStrikerHub aliceRuntime;
 
 
@@ -57,6 +59,18 @@ public class StrikerHub : MonoBehaviour {
         return animationPlayer;
     }
 
+    public Transform GetCenterPositionTransform() {
+        if (centerPositionTransform != null) {
+            return centerPositionTransform;
+        }
+
+        var fallbackCenter = new GameObject("CenterPosition");
+        fallbackCenter.transform.SetParent(transform, false);
+        fallbackCenter.transform.localPosition = new Vector3(0f, 1f, 0f);
+        centerPositionTransform = fallbackCenter.transform;
+        return centerPositionTransform;
+    }
+
     private void Update() {
         aliceRuntime?.Tick(Time.deltaTime);
     }
@@ -76,8 +90,6 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     bool isChangingState;
     bool forceSameStateTransitionInProgress;
     readonly IStrikerContext context;
-    readonly BehaviorSubject<string> currentStateNameSubject = new(string.Empty);
-    public ReadOnlyReactiveProperty<string> CurrentStateName { get; }
     public IStrikerState CurrentState => currentState;
 
     public Rigidbody Rigidbody => context.Rigidbody;
@@ -96,11 +108,9 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
 
     public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = null) {
         this.context = context;
-        CurrentStateName = currentStateNameSubject.ToReadOnlyReactiveProperty();
         if (defaultState != null) {
             ChangeState(defaultState);
         }
-        PublishCurrentStateName();
     }
 
 
@@ -135,7 +145,6 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
 
             newState.OnEnter(context);
             currentState = newState;
-            PublishCurrentStateName();
         }
         finally {
             isChangingState = false;
@@ -159,18 +168,6 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
 
     public void Reset(IStrikerState defaultState) {
         ChangeState(defaultState);
-        PublishCurrentStateName();
-    }
-
-    void PublishCurrentStateName() {
-        currentStateNameSubject.OnNext(ResolveCurrentStateName());
-    }
-
-    string ResolveCurrentStateName() {
-        if (CurrentState is Component stateComponent) {
-            return stateComponent.gameObject.name;
-        }
-        return CurrentState?.GetType().Name ?? string.Empty;
     }
 
     static string FormatStateName(IStrikerState state) {

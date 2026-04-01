@@ -1,9 +1,9 @@
-using R3;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
 namespace Alice {
-    public class BattleRoundStartPresenter : MonoBehaviour {
+    public class BattleRoundStartView : MonoBehaviour {
         [SerializeField] TextMeshProUGUI battleStartText;
         [SerializeField] TextMeshProUGUI roundNumberText;
         [SerializeField] CanvasGroup roundNumberCanvasGroup;
@@ -20,16 +20,18 @@ namespace Alice {
         [SerializeField] float fightDisplayDuration = 0.7f;
         [SerializeField] float delayBeforeRoundText = 0.5f;
 
-        readonly Subject<Unit> animationFinishedSubject = new();
-        public Observable<Unit> AnimationFinished => animationFinishedSubject;
+        TaskCompletionSource<bool> animationCompletionSource;
 
         void Awake() {
             battleStartText.gameObject.SetActive(false);
             roundNumberText.gameObject.SetActive(false);
         }
 
-        public void PresentRoundStart(int roundNumber) {
+        public Task PresentRoundStartAsync(int roundNumber) {
+            animationCompletionSource?.TrySetCanceled();
+            animationCompletionSource = new TaskCompletionSource<bool>();
             LeanTween.delayedCall(delayBeforeRoundText, () => ShowRoundText(roundNumber));
+            return animationCompletionSource.Task;
         }
 
         void ShowRoundText(int roundNumber) {
@@ -62,7 +64,7 @@ namespace Alice {
 
             LeanTween.delayedCall(fightDisplayDuration, () => {
                 battleStartText.gameObject.SetActive(false);
-                animationFinishedSubject.OnNext(Unit.Default);
+                animationCompletionSource?.TrySetResult(true);
             });
         }
 

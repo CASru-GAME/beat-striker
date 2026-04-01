@@ -33,6 +33,10 @@ namespace Alice {
                 beatPlayer[i] = new BeatPlayer(i);
             }
 
+            subscriptions.Add(musicPlayer.OnBeatTimelinePrepared.Subscribe(_ => {
+                ResetRoundState();
+            }));
+
             for(int i = 0; i < beatPlayer.Length; i++) {
                 var playerIndex = i;
                 var gamePad = gamePadRegistry.Get(playerIndex);
@@ -79,6 +83,13 @@ namespace Alice {
                     beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, true, button));
                 }
             }));
+        }
+
+        void ResetRoundState() {
+            lastCommandPlaybackTime = -1f;
+            for (var i = 0; i < beatPlayer.Length; i++) {
+                beatPlayer[i].ResetForLoop();
+            }
         }
 
         public IBeatPlayer GetBeatPlayer(int playerId) {

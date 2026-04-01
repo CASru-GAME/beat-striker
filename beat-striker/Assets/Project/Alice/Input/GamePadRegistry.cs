@@ -110,7 +110,7 @@ namespace Alice {
 
             public bool HasPrimaryGamePad => isPrimaryInput;
 
-            public ReadOnlyReactiveProperty<bool> HasGamePad => hasGamePadView;
+            public ReadOnlyReactiveProperty<bool> HasGamePad => hasGamePad;
             public Observable<Vector2> OnDirection => onDirection;
             public Observable<Unit> OnDirectionCanceled => onDirectionCanceled;
             public Observable<GamePadButton> OnButtonDown => onButtonDown;
@@ -122,15 +122,13 @@ namespace Alice {
             readonly Subject<Unit> onDirectionCanceled = new();
             readonly Subject<GamePadButton> onButtonDown = new();
             readonly Subject<GamePadButton> onButtonUp = new();
-            readonly BehaviorSubject<bool> hasGamePad = new(false);
-            readonly ReadOnlyReactiveProperty<bool> hasGamePadView;
+            readonly ReactiveProperty<bool> hasGamePad = new(false);
             IDisposable directionSubscription;
             IDisposable directionCanceledSubscription;
             IDisposable buttonDownSubscription;
             IDisposable buttonUpSubscription;
 
             public PlayerGamePad(int playerId, Option<IGamePad> current, bool isPrimaryInput) {
-                hasGamePadView = hasGamePad.ToReadOnlyReactiveProperty();
                 PlayerId = playerId;
                 this.isPrimaryInput = isPrimaryInput;
                 hasGamePad.OnNext(this.isPrimaryInput && current.TryGetValue(out _));

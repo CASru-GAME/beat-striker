@@ -69,12 +69,12 @@ namespace Core.LargeSatan {
 
             var self = context.GetSelf();
             var opponent = context.GetOpponent();
-            Vector3 toOpponent = opponent.Position - self.Position;
+            Vector3 toOpponent = opponent.Position.CurrentValue - self.Position.CurrentValue;
             float sqrDistance = toOpponent.sqrMagnitude;
             float sqrStopDistance = stopDistanceToOpponent * stopDistanceToOpponent;
             float towardOpponent = Vector3.Dot(context.Rigidbody.linearVelocity, toOpponent);
             Vector3 frameMove = context.Rigidbody.linearVelocity * Time.deltaTime;
-            bool willEnterStopDistance = WillEnterStopDistanceThisFrame(self.Position, opponent.Position, frameMove, stopDistanceToOpponent);
+            bool willEnterStopDistance = WillEnterStopDistanceThisFrame(self.Position.CurrentValue, opponent.Position.CurrentValue, frameMove, stopDistanceToOpponent);
 
             if(towardOpponent > 0f && (sqrDistance <= sqrStopDistance || willEnterStopDistance)) {
                 this.stoppedByOpponentDistance = true;

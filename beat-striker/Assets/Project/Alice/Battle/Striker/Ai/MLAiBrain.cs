@@ -60,20 +60,20 @@ namespace Alice {
         internal void WriteObservations(VectorSensor sensor, AiObservation observation) {
             var self = observation.Self;
             var opponent = observation.Opponent;
-            var offset = opponent.Position - self.Position;
+            var offset = opponent.Position.CurrentValue - self.Position.CurrentValue;
             var offset2D = new Vector2(offset.x, offset.y);
 
-            sensor.AddObservation(self.Position.x);
-            sensor.AddObservation(self.Position.y);
-            sensor.AddObservation(self.Velocity.x);
-            sensor.AddObservation(self.Velocity.y);
-            sensor.AddObservation(self.HitPoint / self.MaxHitPoint);
+            sensor.AddObservation(self.Position.CurrentValue.x);
+            sensor.AddObservation(self.Position.CurrentValue.y);
+            sensor.AddObservation(self.Velocity.CurrentValue.x);
+            sensor.AddObservation(self.Velocity.CurrentValue.y);
+            sensor.AddObservation(self.HitPoint.CurrentValue / self.MaxHitPoint.CurrentValue);
 
-            sensor.AddObservation(opponent.Position.x);
-            sensor.AddObservation(opponent.Position.y);
-            sensor.AddObservation(opponent.Velocity.x);
-            sensor.AddObservation(opponent.Velocity.y);
-            sensor.AddObservation(opponent.HitPoint / opponent.MaxHitPoint);
+            sensor.AddObservation(opponent.Position.CurrentValue.x);
+            sensor.AddObservation(opponent.Position.CurrentValue.y);
+            sensor.AddObservation(opponent.Velocity.CurrentValue.x);
+            sensor.AddObservation(opponent.Velocity.CurrentValue.y);
+            sensor.AddObservation(opponent.HitPoint.CurrentValue / opponent.MaxHitPoint.CurrentValue);
 
             sensor.AddObservation(offset2D.x);
             sensor.AddObservation(offset2D.y);
@@ -133,8 +133,8 @@ namespace Alice {
             var self = observation.Self;
             var opponent = observation.Opponent;
             var distance = Vector2.Distance(
-                new Vector2(self.Position.x, self.Position.y),
-                new Vector2(opponent.Position.x, opponent.Position.y)
+                new Vector2(self.Position.CurrentValue.x, self.Position.CurrentValue.y),
+                new Vector2(opponent.Position.CurrentValue.x, opponent.Position.CurrentValue.y)
             );
 
             decisionAgent.AddStepReward(stepPenalty);
@@ -156,8 +156,8 @@ namespace Alice {
             }
 
             if (hasPreviousHp) {
-                var dealtDamage = Mathf.Max(0f, previousOpponentHp - opponent.HitPoint);
-                var receivedDamage = Mathf.Max(0f, previousSelfHp - self.HitPoint);
+                var dealtDamage = Mathf.Max(0f, previousOpponentHp - opponent.HitPoint.CurrentValue);
+                var receivedDamage = Mathf.Max(0f, previousSelfHp - self.HitPoint.CurrentValue);
 
                 if (dealtDamage > 0f) {
                     decisionAgent.AddStepReward(dealtDamage * dealtDamageRewardScale);
@@ -168,24 +168,24 @@ namespace Alice {
                 }
             }
 
-            previousSelfHp = self.HitPoint;
-            previousOpponentHp = opponent.HitPoint;
+            previousSelfHp = self.HitPoint.CurrentValue;
+            previousOpponentHp = opponent.HitPoint.CurrentValue;
             hasPreviousHp = true;
 
-            if (self.HitPoint <= 0f) {
+            if (self.HitPoint.CurrentValue <= 0f) {
                 decisionAgent.EndEpisodeWithReward(losePenalty);
                 hasPreviousHp = false;
                 return;
             }
 
-            if (opponent.HitPoint <= 0f) {
+            if (opponent.HitPoint.CurrentValue <= 0f) {
                 decisionAgent.EndEpisodeWithReward(winReward);
                 hasPreviousHp = false;
             }
         }
 
         Vector2 DecodeMoveDirection(int moveAction, IReadOnlyBattleEntity self, IReadOnlyBattleEntity opponent) {
-            var toOpponent = (opponent.Position - self.Position);
+            var toOpponent = (opponent.Position.CurrentValue - self.Position.CurrentValue);
             var horizontal = Mathf.Sign(toOpponent.x);
             if (horizontal == 0f) {
                 horizontal = 1f;

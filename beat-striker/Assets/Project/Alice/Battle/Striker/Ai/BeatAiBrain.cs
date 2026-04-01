@@ -15,11 +15,11 @@ namespace Alice {
             var self = observation.Self;
             var opponent = observation.Opponent;
 
-            if (lastObservedOpponentPlayerId != opponent.PlayerId) {
-                lastObservedOpponentPlayerId = opponent.PlayerId;
+            if (lastObservedOpponentPlayerId != opponent.PlayerId.CurrentValue) {
+                lastObservedOpponentPlayerId = opponent.PlayerId.CurrentValue;
             }
 
-            var offset = opponent.Position - self.Position;
+            var offset = opponent.Position.CurrentValue - self.Position.CurrentValue;
             var offset2D = new Vector2(offset.x, offset.y);
             var distance = offset2D.magnitude;
             var moveDirection = ComputeSpacingDirection(offset2D, distance);
@@ -75,7 +75,7 @@ namespace Alice {
         }
 
         Vector2 ComputeJumpAwayDirection(IReadOnlyBattleEntity self, IReadOnlyBattleEntity opponent) {
-            var horizontal = Mathf.Sign(self.Position.x - opponent.Position.x);
+            var horizontal = Mathf.Sign(self.Position.CurrentValue.x - opponent.Position.CurrentValue.x);
             if (horizontal == 0f) {
                 horizontal = 1f;
             }

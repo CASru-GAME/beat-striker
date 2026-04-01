@@ -5,12 +5,14 @@ using UnityEngine;
 namespace Alice {
     public interface IBattlePlayerPresenter {
         void PresentRoundPlayableStart();
+        void PresentRoundPlayableFinish();
     }
 
     public class BattlePlayerPresenter : MonoBehaviour, IBattlePlayerPresenter {
         [SerializeField] int playerId;
-        [SerializeField] AliceHpBarUI hpBarUI;
-        [SerializeField] AliceRingUI ringUI;
+        [SerializeField] AliceHpBarView hpBarUI;
+        [SerializeField] AliceRingView beatRingPrefab;
+        [SerializeField] Transform beatRingParent;
 
         IStrikerRegistry strikerRegistry;
         IBeatjudge beatJudge;
@@ -18,6 +20,8 @@ namespace Alice {
         CompositeDisposable disposables = new();
         IDisposable hpSubscription;
         IStrikerHub strikerHub;
+        AliceRingView ringView;
+        bool roundPlayable;
 
         [VContainer.Inject]
         public void Construct(IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer) {
@@ -26,9 +30,13 @@ namespace Alice {
             this.musicPlayer = musicPlayer;
         }
 
+        void Awake() {
+            ringView = Instantiate(beatRingPrefab, beatRingParent);
+        }
+
         void Start() {
             musicPlayer.OnBeatTimelinePrepared
-                .Subscribe(ringUI.SetBeatTimeline)
+                .Subscribe(ringView.SetBeatTimeline)
                 .AddTo(disposables);
 
             musicPlayer.OnViewPlaybackTimeChanged
@@ -44,32 +52,45 @@ namespace Alice {
                 .AddTo(disposables);
 
             SetupPlayerSubscriptions();
-            ringUI.SetBeatTimeline(musicPlayer.CurrentBeatTimeline);
+            ringView.SetBeatTimeline(musicPlayer.CurrentBeatTimeline);
             PresentFrame(musicPlayer.CurrentViewPlaybackTime);
 
             foreach (var striker in strikerRegistry.GetAllStrikers()) {
-                BindHpSubscriptionIfMatched(striker.PlayerId, striker);
+                BindHpSubscriptionIfMatched(striker.PlayerId.CurrentValue, striker);
             }
         }
 
         void OnDestroy() {
             hpSubscription?.Dispose();
             disposables.Dispose();
+            Destroy(ringView.gameObject);
         }
 
         public void PresentRoundPlayableStart() {
-            ringUI.ActivateBattleView();
+            roundPlayable = true;
+            ringView.ActivateBattleView();
+        }
+
+        public void PresentRoundPlayableFinish() {
+            roundPlayable = false;
+            ringView.DeactivateBattleView();
         }
 
         void SetupPlayerSubscriptions() {
             var beatPlayer = beatJudge.GetBeatPlayer(playerId);
 
             beatPlayer.OnBeatCommandRequested
-                .Subscribe(result => ringUI.NotifyBeatRequested(result.IsSuccess))
+                .Subscribe(result => {
+                    if (!roundPlayable) return;
+                    ringView.NotifyBeatRequested(result.IsSuccess);
+                })
                 .AddTo(disposables);
 
             beatPlayer.OnBeatPassed
-                .Subscribe(_ => ringUI.NotifyBeatPassed())
+                .Subscribe(_ => {
+                    if (!roundPlayable) return;
+                    ringView.NotifyBeatPassed();
+                })
                 .AddTo(disposables);
         }
 
@@ -90,13 +111,17 @@ namespace Alice {
 
             hpSubscription?.Dispose();
             strikerHub = registeredHub;
-            hpSubscription = registeredHub.HitPointRatio.Subscribe(hpBarUI.SetHpRatio);
+            hpBarUI.SetHpRatio(Mathf.Clamp01(registeredHub.HitPoint.CurrentValue / Mathf.Max(1f, registeredHub.MaxHitPoint.CurrentValue)));
+            hpSubscription = registeredHub.HitPoint.Subscribe(currentHp => {
+                var maxHp = Mathf.Max(1f, registeredHub.MaxHitPoint.CurrentValue);
+                hpBarUI.SetHpRatio(Mathf.Clamp01(currentHp / maxHp));
+            });
         }
 
         void PresentFrame(float playbackTime) {
-            ringUI.SetViewPlaybackTime(playbackTime);
+            ringView.SetViewPlaybackTime(playbackTime);
             if (strikerHub != null) {
-                ringUI.SetPlayerWorldPosition(strikerHub.Position);
+                ringView.SetPosition(strikerHub.CenterPosition.CurrentValue);
             }
         }
     }

@@ -5,11 +5,10 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Alice {
-    public class AliceRingUI : MonoBehaviour {
+    public class AliceRingView : MonoBehaviour {
         [SerializeField] Image[] centerRing;
         [SerializeField] Image[] rings;
         [SerializeField] TextMeshProUGUI judgeText;
-        [SerializeField] ParticleSystem successParticle;
         [SerializeField] float ringRadiusPerSecond = 1f;
         [SerializeField] float windowScale = 3f;
         [SerializeField] float judgeTextFadeDuration = 0.6f;
@@ -82,6 +81,17 @@ namespace Alice {
             }
         }
 
+        public void DeactivateBattleView() {
+            battleViewActive = false;
+            LeanTween.cancel(judgeText.gameObject);
+            judgeText.rectTransform.anchoredPosition = judgeTextStartAnchoredPosition;
+            judgeText.gameObject.SetActive(false);
+            centerRing[0].gameObject.SetActive(false);
+            foreach (var ring in rings) {
+                ring.gameObject.SetActive(false);
+            }
+        }
+
         public void SetBeatTimeline(float[] beats) {
             beatTimeline = beats ?? Array.Empty<float>();
         }
@@ -90,7 +100,7 @@ namespace Alice {
             currentViewPlaybackTime = playbackTime;
         }
 
-        public void SetPlayerWorldPosition(Vector3 worldPosition) {
+        public void SetPosition(Vector3 worldPosition) {
             currentWorldPosition = worldPosition;
         }
 
@@ -130,9 +140,6 @@ namespace Alice {
                 });
 
             if (!isSuccess) return;
-
-            successParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            successParticle.Play(true);
         }
 
         void Update() {

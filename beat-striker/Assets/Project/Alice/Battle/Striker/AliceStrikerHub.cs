@@ -8,22 +8,18 @@ using VContainer;
 
 namespace Alice {
     public interface IReadOnlyBattleEntity {
-        int PlayerId { get; }
-        Vector3 Position { get; }
-        Vector3 Velocity { get; }
-        float HitPoint { get; }
-        float MaxHitPoint { get; }
-        Observable<Unit> OnHit { get; }
-        ReadOnlyReactiveProperty<string> CurrentStateName { get; }
+        ReadOnlyReactiveProperty<int> PlayerId { get; }
+        ReadOnlyReactiveProperty<Vector3> Position { get; }
+        ReadOnlyReactiveProperty<Vector3> CenterPosition { get; }
+        ReadOnlyReactiveProperty<Vector3> Velocity { get; }
+        ReadOnlyReactiveProperty<float> HitPoint { get; }
+        ReadOnlyReactiveProperty<float> MaxHitPoint { get; }
+        Observable<Unit> OnDead { get; }
     }
 
     public interface IStrikerHub : IReadOnlyBattleEntity, System.IDisposable {
-        float CurrentHitPoint { get; }
-        ReadOnlyReactiveProperty<float> CurrentHitPointReactive { get; }
-        ReadOnlyReactiveProperty<float> HitPointRatio { get; }
         AiBrain AiBrain { get; }
         Rigidbody Rigidbody { get; }
-        Observable<PlayerId> OnDeadEvent { get; }
 
         void SetPlayerId(int playerId);
         void Tick(float deltaTime);
@@ -52,34 +48,33 @@ namespace Alice {
         AnimationPlayer animationPlayer;
         StrikerStateMachine stateMachine;
         AiBrain aiBrain;
-        readonly Subject<Unit> onHit = new();
-        readonly Subject<PlayerId> onDeadSubject = new();
-        readonly BehaviorSubject<string> currentStateNameSubject = new(string.Empty);
-        readonly ReadOnlyReactiveProperty<string> currentStateName;
-        readonly BehaviorSubject<float> currentHitPointSubject = new(0f);
-        readonly ReadOnlyReactiveProperty<float> currentHitPointReactive;
-        readonly BehaviorSubject<float> hitPointRatioSubject = new(1f);
-        readonly ReadOnlyReactiveProperty<float> hitPointRatio;
+        readonly Subject<Unit> onDeadSubject = new();
+        readonly ReactiveProperty<int> playerIdSubject = new(0);
+        readonly ReactiveProperty<Vector3> positionSubject = new(Vector3.zero);
+        readonly ReactiveProperty<Vector3> centerPositionSubject = new(Vector3.zero);
+        readonly ReactiveProperty<Vector3> velocitySubject = new(Vector3.zero);
+        readonly ReactiveProperty<float> hitPointSubject = new(0f);
+        readonly ReactiveProperty<float> maxHitPointSubject = new(0f);
         IDisposable stateNameSubscription;
 
         Vector2 inputDirection;
         float currentHitPoint;
         int playerId;
         bool initialized;
+        Transform centerPositionTransform;
         Vector3 previousFramePosition;
         Vector3 frameVelocity;
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
-        public float CurrentHitPoint => currentHitPoint;
-        public ReadOnlyReactiveProperty<float> CurrentHitPointReactive => currentHitPointReactive;
-        public ReadOnlyReactiveProperty<float> HitPointRatio => hitPointRatio;
         public AiBrain AiBrain => aiBrain;
-        public float MaxHitPoint => maxHitPoint;
-        public Vector3 Position => Rigidbody.position;
-        public Vector3 Velocity => frameVelocity;
-        public float HitPoint => currentHitPoint;
-        public ReadOnlyReactiveProperty<string> CurrentStateName => currentStateName;
+        public ReadOnlyReactiveProperty<int> PlayerId => playerIdSubject;
+        public ReadOnlyReactiveProperty<Vector3> Position => positionSubject;
+        public ReadOnlyReactiveProperty<Vector3> CenterPosition => centerPositionSubject;
+        public ReadOnlyReactiveProperty<Vector3> Velocity => velocitySubject;
+        public ReadOnlyReactiveProperty<float> HitPoint => hitPointSubject;
+        public ReadOnlyReactiveProperty<float> MaxHitPoint => maxHitPointSubject;
+
         public IEnumerable<IReadOnlyBattleEntity> GetAllStrikers() {
             return strikerRegistry.GetAllStrikers();
         }
@@ -88,21 +83,16 @@ namespace Alice {
         }
         public IReadOnlyBattleEntity GetOpponent() {
             foreach (var striker in strikerRegistry.GetAllStrikers()) {
-                if (striker.PlayerId != playerId) {
+                if (striker.PlayerId.CurrentValue != playerId) {
                     return striker;
                 }
             }
             return this;
         }
-        public int PlayerId => playerId;
 
-        public Observable<Unit> OnHit => onHit;
-        public Observable<PlayerId> OnDeadEvent => onDeadSubject;
+        public Observable<Unit> OnDead => onDeadSubject;
 
         public AliceStrikerHub() {
-            currentStateName = currentStateNameSubject.ToReadOnlyReactiveProperty();
-            currentHitPointReactive = currentHitPointSubject.ToReadOnlyReactiveProperty();
-            hitPointRatio = hitPointRatioSubject.ToReadOnlyReactiveProperty();
         }
 
         public void Tick(float deltaTime) {
@@ -110,12 +100,14 @@ namespace Alice {
 
             if (stateMachine == null) {
                 stateMachine = new StrikerStateMachine(this, defaultState);
-                stateNameSubscription = stateMachine.CurrentStateName.Subscribe(currentStateNameSubject.OnNext);
             }
 
             var currentPosition = rb.position;
             frameVelocity = deltaTime > 0f ? (currentPosition - previousFramePosition) / deltaTime : Vector3.zero;
             previousFramePosition = currentPosition;
+            positionSubject.OnNext(currentPosition);
+            centerPositionSubject.OnNext(centerPositionTransform.position);
+            velocitySubject.OnNext(frameVelocity);
 
             stateMachine.CurrentState.OnUpdate(stateMachine);
         }
@@ -129,43 +121,44 @@ namespace Alice {
             introState = legacy.InspectorIntroState;
             aiBrain = legacy.InspectorAiBrain;
             rb = legacy.Rigidbody;
+            centerPositionTransform = legacy.GetCenterPositionTransform();
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
             animationPlayer = legacy.GetAnimationPlayer();
             currentHitPoint = maxHitPoint;
-            currentHitPointSubject.OnNext(currentHitPoint);
-            hitPointRatioSubject.OnNext(1f);
+            maxHitPointSubject.OnNext(maxHitPoint);
+            hitPointSubject.OnNext(currentHitPoint);
             previousFramePosition = rb.position;
             frameVelocity = Vector3.zero;
+            positionSubject.OnNext(previousFramePosition);
+            centerPositionSubject.OnNext(centerPositionTransform.position);
+            velocitySubject.OnNext(frameVelocity);
             initialized = true;
         }
 
         public void SetPlayerId(int playerId) {
             this.playerId = playerId;
+            playerIdSubject.OnNext(playerId);
         }
 
         public void GiveHit(HitStatus status) {
             if (stateMachine == null || currentHitPoint <= 0f) return;
             stateMachine.CurrentState.OnHit(stateMachine, status);
-            onHit.OnNext(Unit.Default);
         }
 
         public void Dispose() {
             stateNameSubscription?.Dispose();
-            onHit.Dispose();
             onDeadSubject.Dispose();
-            currentStateName.Dispose();
-            currentStateNameSubject.Dispose();
-            currentHitPointReactive.Dispose();
-            currentHitPointSubject.Dispose();
-            hitPointRatio.Dispose();
-            hitPointRatioSubject.Dispose();
+            playerIdSubject.Dispose();
+            positionSubject.Dispose();
+            centerPositionSubject.Dispose();
+            velocitySubject.Dispose();
+            hitPointSubject.Dispose();
+            maxHitPointSubject.Dispose();
         }
 
         public void ApplyDamage(float damage) {
             currentHitPoint = Mathf.Max(0f, currentHitPoint - damage);
-            currentHitPointSubject.OnNext(currentHitPoint);
-            var max = Mathf.Max(1f, maxHitPoint);
-            hitPointRatioSubject.OnNext(Mathf.Clamp01(currentHitPoint / max));
+            hitPointSubject.OnNext(currentHitPoint);
             if (currentHitPoint <= 0f) {
                 Die();
             }
@@ -206,7 +199,7 @@ namespace Alice {
 
         public void Die() {
             if (stateMachine == null) return;
-            onDeadSubject.OnNext(new PlayerId(playerId));
+            onDeadSubject.OnNext(Unit.Default);
             stateMachine.ChangeState(deadState);
         }
 

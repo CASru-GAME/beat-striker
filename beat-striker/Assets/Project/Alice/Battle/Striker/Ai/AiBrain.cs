@@ -115,11 +115,11 @@ namespace Alice {
             var nearestSqrDistance = float.MaxValue;
 
             foreach (var striker in strikerRegistry.GetAllStrikers()) {
-                if (striker.PlayerId == self.PlayerId || striker.HitPoint <= 0f) {
+                if (striker.PlayerId.CurrentValue == self.PlayerId.CurrentValue || striker.HitPoint.CurrentValue <= 0f) {
                     continue;
                 }
 
-                var sqrDistance = (striker.Position - self.Position).sqrMagnitude;
+                var sqrDistance = (striker.Position.CurrentValue - self.Position.CurrentValue).sqrMagnitude;
                 if (sqrDistance >= nearestSqrDistance) {
                     continue;
                 }

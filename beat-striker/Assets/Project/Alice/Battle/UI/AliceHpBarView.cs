@@ -1,7 +1,7 @@
 using UnityEngine;
 
 namespace Alice {
-    public class AliceHpBarUI : MonoBehaviour {
+    public class AliceHpBarView : MonoBehaviour {
         [SerializeField] Transform hpBar;
         [SerializeField] Transform damageBar;
         [SerializeField] float damageBarDelay = 0.3f;

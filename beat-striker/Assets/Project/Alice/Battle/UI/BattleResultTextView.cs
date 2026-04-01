@@ -1,26 +1,25 @@
-using R3;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
 namespace Alice {
-    public class BattleResultTextPresenter : MonoBehaviour {
+    public class BattleResultTextView : MonoBehaviour {
         [SerializeField] TextMeshProUGUI battleFinishText;
         [SerializeField] AudioClip finishSound;
         [SerializeField] float soundVolume = 1.0f;
         [SerializeField] float finishDisplayDuration = 1.5f;
         [SerializeField] float outroDisplayDuration = 1f;
 
-        readonly Subject<Unit> finishHiddenSubject = new();
-        readonly Subject<Unit> outroFinishedSubject = new();
-
-        public Observable<Unit> FinishHidden => finishHiddenSubject;
-        public Observable<Unit> OutroFinished => outroFinishedSubject;
+        TaskCompletionSource<bool> battleFinishCompletionSource;
+        TaskCompletionSource<bool> outroCompletionSource;
 
         void Awake() {
             battleFinishText.gameObject.SetActive(false);
         }
 
-        public void PresentBattleFinish() {
+        public Task PresentBattleFinishAsync() {
+            battleFinishCompletionSource?.TrySetCanceled();
+            battleFinishCompletionSource = new TaskCompletionSource<bool>();
             battleFinishText.text = "Finish";
             battleFinishText.gameObject.SetActive(true);
             PlaySound(finishSound);
@@ -31,19 +30,25 @@ namespace Alice {
 
             LeanTween.delayedCall(finishDisplayDuration, () => {
                 battleFinishText.gameObject.SetActive(false);
-                finishHiddenSubject.OnNext(Unit.Default);
+                battleFinishCompletionSource?.TrySetResult(true);
             });
+
+            return battleFinishCompletionSource.Task;
         }
 
-        public void PresentOutro() {
+        public Task PresentOutroAsync() {
+            outroCompletionSource?.TrySetCanceled();
+            outroCompletionSource = new TaskCompletionSource<bool>();
             battleFinishText.text = "Game Set";
             battleFinishText.gameObject.SetActive(true);
             PlaySound(finishSound);
 
             LeanTween.delayedCall(outroDisplayDuration, () => {
                 battleFinishText.gameObject.SetActive(false);
-                outroFinishedSubject.OnNext(Unit.Default);
+                outroCompletionSource?.TrySetResult(true);
             });
+
+            return outroCompletionSource.Task;
         }
 
         void PlaySound(AudioClip clip) {

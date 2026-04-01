@@ -12,6 +12,7 @@ namespace Alice {
 
     public interface IMusicPlayer {
         void Play();
+        void Stop();
         Observable<BeatSignal> OnGoodZoneEntered { get; }
         Observable<BeatSignal> OnBeatTiming { get; }
         Observable<float[]> OnBeatTimelinePrepared { get; }
@@ -88,6 +89,12 @@ namespace Alice {
 
                 lastPlaybackTime = currentTime;
             });
+        }
+
+        public void Stop() {
+            beatSoundSubscription?.Dispose();
+            beatSoundSubscription = null;
+            audioSource.Stop();
         }
 
         public IMusicPlayer.BeatJudgeResult JudgeTiming(float playbackTime) {
