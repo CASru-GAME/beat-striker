@@ -1923,6 +1923,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayerUI (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 5923370902545218796, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
+      propertyPath: playerId
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8751813634135345540, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

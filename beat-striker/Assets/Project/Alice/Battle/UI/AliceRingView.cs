@@ -1,5 +1,5 @@
 using System;
-using R3;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,7 +8,8 @@ namespace Alice {
     public class AliceRingView : MonoBehaviour {
         [SerializeField] Image[] centerRing;
         [SerializeField] Image[] rings;
-        [SerializeField] TextMeshProUGUI judgeText;
+        [SerializeField] TextMeshProUGUI judgeTextPrefab;
+        [SerializeField] RectTransform judgeTextForwardReference;
         [SerializeField] float ringRadiusPerSecond = 1f;
         [SerializeField] float windowScale = 3f;
         [SerializeField] float judgeTextFadeDuration = 0.6f;
@@ -21,7 +22,10 @@ namespace Alice {
         float[] beatTimeline = Array.Empty<float>();
         float currentViewPlaybackTime;
         Vector3 currentWorldPosition;
-        Vector2 judgeTextStartAnchoredPosition;
+        Vector3 currentLookDirection = Vector3.right;
+        Vector2 judgeTextForwardAnchoredPosition;
+        float judgeTextForwardSignedZ;
+        readonly List<TextMeshProUGUI> activeJudgeTexts = new();
 
         public void NotifyBeatPassed() {
             AudioSource.PlayClipAtPoint(missSound, Vector3.zero);
@@ -32,37 +36,14 @@ namespace Alice {
 
             LeanTween.alpha(centerRing[0].rectTransform, centerRingFirstAlpha, 0.3f);
 
-            judgeText.gameObject.SetActive(true);
-            judgeText.text = "pass";
-            var judgeColor = judgeText.color;
-            judgeColor.a = 1f;
-            judgeText.color = judgeColor;
-            judgeText.rectTransform.anchoredPosition = judgeTextStartAnchoredPosition;
-
-            LeanTween.cancel(judgeText.gameObject);
-            var targetAnchoredPosition = judgeTextStartAnchoredPosition + Vector2.down * judgeTextDropDistance;
-            LeanTween.value(judgeText.gameObject, judgeTextStartAnchoredPosition, targetAnchoredPosition, judgeTextFadeDuration)
-                .setEase(LeanTweenType.easeInSine)
-                .setOnUpdate((Vector2 position) => {
-                    judgeText.rectTransform.anchoredPosition = position;
-                });
-
-            LeanTween.value(judgeText.gameObject, 1f, 0f, judgeTextFadeDuration)
-                .setOnUpdate((float alpha) => {
-                    var currentColor = judgeText.color;
-                    currentColor.a = alpha;
-                    judgeText.color = currentColor;
-                })
-                .setOnComplete(() => {
-                    judgeText.rectTransform.anchoredPosition = judgeTextStartAnchoredPosition;
-                    judgeText.gameObject.SetActive(false);
-                });
+            SpawnJudgeText("pass");
         }
 
         void Awake() {
             centerRing[0].gameObject.SetActive(false);
-            judgeTextStartAnchoredPosition = judgeText.rectTransform.anchoredPosition;
-            judgeText.gameObject.SetActive(false);
+            judgeTextForwardAnchoredPosition = judgeTextForwardReference.anchoredPosition;
+            judgeTextForwardSignedZ = Mathf.DeltaAngle(0f, judgeTextForwardReference.localEulerAngles.z);
+            judgeTextPrefab.gameObject.SetActive(false);
             foreach (var ring in rings) {
                 ring.gameObject.SetActive(false);
             }
@@ -83,9 +64,12 @@ namespace Alice {
 
         public void DeactivateBattleView() {
             battleViewActive = false;
-            LeanTween.cancel(judgeText.gameObject);
-            judgeText.rectTransform.anchoredPosition = judgeTextStartAnchoredPosition;
-            judgeText.gameObject.SetActive(false);
+            for (var i = activeJudgeTexts.Count - 1; i >= 0; i--) {
+                var activeText = activeJudgeTexts[i];
+                LeanTween.cancel(activeText.gameObject);
+                Destroy(activeText.gameObject);
+            }
+            activeJudgeTexts.Clear();
             centerRing[0].gameObject.SetActive(false);
             foreach (var ring in rings) {
                 ring.gameObject.SetActive(false);
@@ -104,6 +88,11 @@ namespace Alice {
             currentWorldPosition = worldPosition;
         }
 
+        public void SetLookDirection(Vector3 lookDirection) {
+            if (lookDirection.sqrMagnitude <= 0f) return;
+            currentLookDirection = lookDirection;
+        }
+
         public void NotifyBeatRequested(bool isSuccess) {
             AudioSource.PlayClipAtPoint(isSuccess ? successSound : missSound, Vector3.zero);
 
@@ -113,33 +102,52 @@ namespace Alice {
 
             LeanTween.alpha(centerRing[0].rectTransform, centerRingFirstAlpha, 0.3f);
 
-            judgeText.gameObject.SetActive(true);
-            judgeText.text = isSuccess ? "good" : "miss";
-            var judgeColor = judgeText.color;
-            judgeColor.a = 1f;
-            judgeText.color = judgeColor;
-            judgeText.rectTransform.anchoredPosition = judgeTextStartAnchoredPosition;
-
-            LeanTween.cancel(judgeText.gameObject);
-            var targetAnchoredPosition = judgeTextStartAnchoredPosition + Vector2.down * judgeTextDropDistance;
-            LeanTween.value(judgeText.gameObject, judgeTextStartAnchoredPosition, targetAnchoredPosition, judgeTextFadeDuration)
-                .setEase(LeanTweenType.easeInSine)
-                .setOnUpdate((Vector2 position) => {
-                    judgeText.rectTransform.anchoredPosition = position;
-                });
-
-            LeanTween.value(judgeText.gameObject, 1f, 0f, judgeTextFadeDuration)
-                .setOnUpdate((float alpha) => {
-                    var currentColor = judgeText.color;
-                    currentColor.a = alpha;
-                    judgeText.color = currentColor;
-                })
-                .setOnComplete(() => {
-                    judgeText.rectTransform.anchoredPosition = judgeTextStartAnchoredPosition;
-                    judgeText.gameObject.SetActive(false);
-                });
+            SpawnJudgeText(isSuccess ? "good" : "miss");
 
             if (!isSuccess) return;
+        }
+
+        void SpawnJudgeText(string label) {
+            var instance = Instantiate(judgeTextPrefab, transform, false);
+            activeJudgeTexts.Add(instance);
+
+            instance.gameObject.SetActive(true);
+            instance.text = label;
+
+            var judgeColor = instance.color;
+            judgeColor.a = 1f;
+            instance.color = judgeColor;
+
+            var cam = Camera.main;
+            var mirrored = cam != null
+                ? Vector3.Dot(currentLookDirection, cam.transform.right) < 0f
+                : currentLookDirection.x < 0f;
+            var startAnchoredPosition = mirrored
+                ? new Vector2(-judgeTextForwardAnchoredPosition.x, judgeTextForwardAnchoredPosition.y)
+                : judgeTextForwardAnchoredPosition;
+            instance.rectTransform.anchoredPosition = startAnchoredPosition;
+
+            instance.rectTransform.localScale = Vector3.one;
+            var startZ = mirrored ? -judgeTextForwardSignedZ : judgeTextForwardSignedZ;
+            instance.rectTransform.localRotation = Quaternion.Euler(0f, 0f, startZ);
+
+            var targetAnchoredPosition = startAnchoredPosition + Vector2.down * judgeTextDropDistance;
+            LeanTween.value(instance.gameObject, startAnchoredPosition, targetAnchoredPosition, judgeTextFadeDuration)
+                .setEase(LeanTweenType.easeInSine)
+                .setOnUpdate((Vector2 position) => {
+                    instance.rectTransform.anchoredPosition = position;
+                });
+
+            LeanTween.value(instance.gameObject, 1f, 0f, judgeTextFadeDuration)
+                .setOnUpdate((float alpha) => {
+                    var currentColor = instance.color;
+                    currentColor.a = alpha;
+                    instance.color = currentColor;
+                })
+                .setOnComplete(() => {
+                    activeJudgeTexts.Remove(instance);
+                    Destroy(instance.gameObject);
+                });
         }
 
         void Update() {

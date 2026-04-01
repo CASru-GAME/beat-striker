@@ -11,6 +11,7 @@ namespace Alice {
         ReadOnlyReactiveProperty<int> PlayerId { get; }
         ReadOnlyReactiveProperty<Vector3> Position { get; }
         ReadOnlyReactiveProperty<Vector3> CenterPosition { get; }
+        ReadOnlyReactiveProperty<Vector3> LookDirection { get; }
         ReadOnlyReactiveProperty<Vector3> Velocity { get; }
         ReadOnlyReactiveProperty<float> HitPoint { get; }
         ReadOnlyReactiveProperty<float> MaxHitPoint { get; }
@@ -52,6 +53,7 @@ namespace Alice {
         readonly ReactiveProperty<int> playerIdSubject = new(0);
         readonly ReactiveProperty<Vector3> positionSubject = new(Vector3.zero);
         readonly ReactiveProperty<Vector3> centerPositionSubject = new(Vector3.zero);
+        readonly ReactiveProperty<Vector3> lookDirectionSubject = new(Vector3.forward);
         readonly ReactiveProperty<Vector3> velocitySubject = new(Vector3.zero);
         readonly ReactiveProperty<float> hitPointSubject = new(0f);
         readonly ReactiveProperty<float> maxHitPointSubject = new(0f);
@@ -61,6 +63,7 @@ namespace Alice {
         float currentHitPoint;
         int playerId;
         bool initialized;
+        Transform strikerTransform;
         Transform centerPositionTransform;
         Vector3 previousFramePosition;
         Vector3 frameVelocity;
@@ -71,6 +74,7 @@ namespace Alice {
         public ReadOnlyReactiveProperty<int> PlayerId => playerIdSubject;
         public ReadOnlyReactiveProperty<Vector3> Position => positionSubject;
         public ReadOnlyReactiveProperty<Vector3> CenterPosition => centerPositionSubject;
+        public ReadOnlyReactiveProperty<Vector3> LookDirection => lookDirectionSubject;
         public ReadOnlyReactiveProperty<Vector3> Velocity => velocitySubject;
         public ReadOnlyReactiveProperty<float> HitPoint => hitPointSubject;
         public ReadOnlyReactiveProperty<float> MaxHitPoint => maxHitPointSubject;
@@ -107,6 +111,7 @@ namespace Alice {
             previousFramePosition = currentPosition;
             positionSubject.OnNext(currentPosition);
             centerPositionSubject.OnNext(centerPositionTransform.position);
+            lookDirectionSubject.OnNext(strikerTransform.forward);
             velocitySubject.OnNext(frameVelocity);
 
             stateMachine.CurrentState.OnUpdate(stateMachine);
@@ -121,6 +126,7 @@ namespace Alice {
             introState = legacy.InspectorIntroState;
             aiBrain = legacy.InspectorAiBrain;
             rb = legacy.Rigidbody;
+            strikerTransform = legacy.transform;
             centerPositionTransform = legacy.GetCenterPositionTransform();
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
             animationPlayer = legacy.GetAnimationPlayer();
@@ -131,6 +137,7 @@ namespace Alice {
             frameVelocity = Vector3.zero;
             positionSubject.OnNext(previousFramePosition);
             centerPositionSubject.OnNext(centerPositionTransform.position);
+            lookDirectionSubject.OnNext(strikerTransform.forward);
             velocitySubject.OnNext(frameVelocity);
             initialized = true;
         }
@@ -151,6 +158,7 @@ namespace Alice {
             playerIdSubject.Dispose();
             positionSubject.Dispose();
             centerPositionSubject.Dispose();
+            lookDirectionSubject.Dispose();
             velocitySubject.Dispose();
             hitPointSubject.Dispose();
             maxHitPointSubject.Dispose();

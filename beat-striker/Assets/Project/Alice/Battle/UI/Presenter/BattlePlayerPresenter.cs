@@ -122,6 +122,7 @@ namespace Alice {
             ringView.SetViewPlaybackTime(playbackTime);
             if (strikerHub != null) {
                 ringView.SetPosition(strikerHub.CenterPosition.CurrentValue);
+                ringView.SetLookDirection(strikerHub.LookDirection.CurrentValue);
             }
         }
     }
