@@ -32,7 +32,7 @@ public class StrikerHub : MonoBehaviour {
     public StrikerState InspectorVictoryState => VictoryState;
     public StrikerState InspectorIntroState => IntroState;
     public Alice.AiBrain InspectorAiBrain => aiBrain;
-    private Alice.AliceStrikerHub aliceRuntime;
+    private Alice.IStrikerHub aliceRuntime;
 
 
     private AnimationPlayer animationPlayer;
@@ -44,10 +44,11 @@ public class StrikerHub : MonoBehaviour {
         EnsureAliceRuntimeHub();
     }
 
-    public Alice.AliceStrikerHub EnsureAliceRuntimeHub() {
+    public Alice.IStrikerHub EnsureAliceRuntimeHub() {
         if (aliceRuntime == null) {
-            aliceRuntime = new Alice.AliceStrikerHub();
-            aliceRuntime.InitializeFromLegacy(this);
+            var runtime = new Alice.AliceStrikerHub();
+            runtime.InitializeFromLegacy(this);
+            aliceRuntime = runtime;
         }
         return aliceRuntime;
     }

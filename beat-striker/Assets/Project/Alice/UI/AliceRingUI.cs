@@ -1,3 +1,4 @@
+using System;
 using R3;
 using TMPro;
 using UnityEngine;
@@ -5,11 +6,6 @@ using UnityEngine.UI;
 
 namespace Alice {
     public class AliceRingUI : MonoBehaviour {
-        BeatConfig beatConfig;
-        AudioSource audioSource;
-        int playerId;
-        Transform playerPosition;
-
         [SerializeField] Image[] centerRing;
         [SerializeField] Image[] rings;
         [SerializeField] TextMeshProUGUI judgeText;
@@ -22,31 +18,13 @@ namespace Alice {
 
         float ringFirstAlpha;
         float centerRingFirstAlpha;
-        CompositeDisposable disposables = new();
         bool battleViewActive;
-        Track selectedTrack;
+        float[] beatTimeline = Array.Empty<float>();
+        float currentViewPlaybackTime;
+        Vector3 currentWorldPosition;
         Vector2 judgeTextStartAnchoredPosition;
 
-        public void Construct(
-            int playerId,
-            Transform playerPosition,
-            BeatConfig beatConfig,
-            AudioSource audioSource,
-            IBeatPlayer beatPlayer
-        ) {
-            this.playerId = playerId;
-            this.playerPosition = playerPosition;
-            this.beatConfig = beatConfig;
-            this.audioSource = audioSource;
-            selectedTrack = beatConfig.SelectedTrack;
-
-            disposables.Dispose();
-            disposables = new CompositeDisposable();
-            beatPlayer.OnBeatCommandRequested.Subscribe(result => OnBeat(result)).AddTo(disposables);
-            beatPlayer.OnBeatPassed.Subscribe(result => OnBeatPassed(result)).AddTo(disposables);
-        }
-
-        void OnBeatPassed(IBeatPlayer.BeatResult result) {
+        public void NotifyBeatPassed() {
             AudioSource.PlayClipAtPoint(missSound, Vector3.zero);
 
             var color = centerRing[0].color;
@@ -96,10 +74,6 @@ namespace Alice {
             centerRingFirstAlpha = centerRing[0].color.a;
         }
 
-        void OnDestroy() {
-            disposables.Dispose();
-        }
-
         public void ActivateBattleView() {
             battleViewActive = true;
             centerRing[0].gameObject.SetActive(true);
@@ -108,8 +82,20 @@ namespace Alice {
             }
         }
 
-        void OnBeat(IBeatPlayer.BeatResult result) {
-            AudioSource.PlayClipAtPoint(result.IsSuccess ? successSound : missSound, Vector3.zero);
+        public void SetBeatTimeline(float[] beats) {
+            beatTimeline = beats ?? Array.Empty<float>();
+        }
+
+        public void SetViewPlaybackTime(float playbackTime) {
+            currentViewPlaybackTime = playbackTime;
+        }
+
+        public void SetPlayerWorldPosition(Vector3 worldPosition) {
+            currentWorldPosition = worldPosition;
+        }
+
+        public void NotifyBeatRequested(bool isSuccess) {
+            AudioSource.PlayClipAtPoint(isSuccess ? successSound : missSound, Vector3.zero);
 
             var color = centerRing[0].color;
             color.a = 1f;
@@ -118,7 +104,7 @@ namespace Alice {
             LeanTween.alpha(centerRing[0].rectTransform, centerRingFirstAlpha, 0.3f);
 
             judgeText.gameObject.SetActive(true);
-            judgeText.text = result.IsSuccess ? "good" : "miss";
+            judgeText.text = isSuccess ? "good" : "miss";
             var judgeColor = judgeText.color;
             judgeColor.a = 1f;
             judgeText.color = judgeColor;
@@ -143,7 +129,7 @@ namespace Alice {
                     judgeText.gameObject.SetActive(false);
                 });
 
-            if (!result.IsSuccess) return;
+            if (!isSuccess) return;
 
             successParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             successParticle.Play(true);
@@ -151,14 +137,13 @@ namespace Alice {
 
         void Update() {
             if (!battleViewActive) return;
-            if (selectedTrack == null) return;
+            if (beatTimeline.Length == 0) return;
 
-            var screenPos = Camera.main.WorldToScreenPoint(playerPosition.position);
+            var screenPos = Camera.main.WorldToScreenPoint(currentWorldPosition);
             transform.position = screenPos;
 
-            var beats = selectedTrack.beats;
-            var now = GetCurrentTrackTime();
-            var firstUpcoming = GetFirstUpcomingBeatIndex(beats, now);
+            var now = currentViewPlaybackTime;
+            var firstUpcoming = GetFirstUpcomingBeatIndex(beatTimeline, now);
 
             for (var i = 0; i < rings.Length; i++) {
                 if (firstUpcoming < 0) {
@@ -167,12 +152,12 @@ namespace Alice {
                 }
 
                 var targetIndex = firstUpcoming + i;
-                if (targetIndex < 0 || targetIndex >= beats.Length) {
+                if (targetIndex < 0 || targetIndex >= beatTimeline.Length) {
                     rings[i].gameObject.SetActive(false);
                     continue;
                 }
 
-                var nextBeatTime = beats[targetIndex];
+                var nextBeatTime = beatTimeline[targetIndex];
 
                 if (float.IsNaN(nextBeatTime)) {
                     rings[i].gameObject.SetActive(false);
@@ -191,10 +176,6 @@ namespace Alice {
                 color.a = alpha;
                 rings[i].color = color;
             }
-        }
-
-        float GetCurrentTrackTime() {
-            return audioSource.time + beatConfig.ViewTimeOffset;
         }
 
         int GetFirstUpcomingBeatIndex(float[] beats, float now) {

@@ -3,7 +3,6 @@ using Core.App.Presenters.Scene.Types;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using VContainer;
 
 namespace Alice {
     public class BattleCanvas : MonoBehaviour {
@@ -30,8 +29,13 @@ namespace Alice {
         [SerializeField] float fadeHoldDuration = 0.5f; // 暗転を保持する時間
         [SerializeField] float delayBeforeRoundText = 0.5f; // 明転後、Roundテキスト表示までの待機時間
 
-        private IBattleFlow battleFlow;
-        private CompositeDisposable disposables = new();
+        readonly Subject<Unit> roundStartAnimationFinishedSubject = new();
+        readonly Subject<Unit> roundFinishAnimationFinishedSubject = new();
+        readonly Subject<Unit> outroAnimationFinishedSubject = new();
+
+        public Observable<Unit> RoundStartAnimationFinished => roundStartAnimationFinishedSubject;
+        public Observable<Unit> RoundFinishAnimationFinished => roundFinishAnimationFinishedSubject;
+        public Observable<Unit> OutroAnimationFinished => outroAnimationFinishedSubject;
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Awake() {
@@ -41,33 +45,24 @@ namespace Alice {
             RoundNumberText.gameObject.SetActive(false);
 
             // 暗転パネルを初期状態で透明にする
-            if (fadePanel != null) {
-                fadePanel.alpha = 0f;
-                fadePanel.gameObject.SetActive(false);
-            }
+            fadePanel.alpha = 0f;
+            fadePanel.gameObject.SetActive(false);
         }
 
-        [Inject]
-        public void Construct(IBattleFlow battleFlow) {
-            this.battleFlow = battleFlow;
+        public void PresentRoundStart(int roundNumber) {
+            OnRoundStarted(roundNumber);
         }
 
-        void Start() {
-            battleFlow.RoundStarted
-                .Subscribe(OnRoundStarted)
-                .AddTo(disposables);
-
-            battleFlow.BattleFinished
-                .Subscribe(_ => OnBattleFinished())
-                .AddTo(disposables);
-
-            battleFlow.OutroStarted
-                .Subscribe(_ => OnOutroStarted())
-                .AddTo(disposables);
+        public void PresentRoundFinish() {
+            OnRoundFinished();
         }
 
-        void OnDestroy() {
-            disposables.Dispose();
+        public void PresentBattleFinish() {
+            OnBattleFinished();
+        }
+
+        public void PresentOutro() {
+            OnOutroStarted();
         }
 
         // Update is called once per frame
@@ -143,13 +138,20 @@ namespace Alice {
             // 指定時間後に消える
             LeanTween.delayedCall(fightDisplayDuration, () => {
                 BattleStartText.gameObject.SetActive(false);
-                battleFlow.NotifyRoundStartAnimationFinished();
+                roundStartAnimationFinishedSubject.OnNext(Unit.Default);
             });
         }
 
-            void OnBattleFinished() {
+        void OnRoundFinished() {
+            Debug.Log("Round Finished");
+
+            ShowFadeTransition();
+        }
+
+        void OnBattleFinished() {
             Debug.Log("Battle Finished");
 
+            BattleFinishText.text = "Finish";
             BattleFinishText.gameObject.SetActive(true);
 
             // Finish効果音再生
@@ -170,12 +172,6 @@ namespace Alice {
         }
 
         void ShowFadeTransition() {
-            if (fadePanel == null) {
-                Debug.LogWarning("Fade panel is not assigned!");
-                battleFlow.NotifyRoundFinishAnimationFinished();
-                return;
-            }
-
             fadePanel.gameObject.SetActive(true);
             fadePanel.alpha = 0f;
 
@@ -184,7 +180,7 @@ namespace Alice {
                 .setEase(LeanTweenType.easeInOutQuad)
                 .setOnComplete(() => {
                     // 完全に暗くなったタイミングで次のRound準備を開始
-                        battleFlow.NotifyRoundFinishAnimationFinished();
+                    roundFinishAnimationFinishedSubject.OnNext(Unit.Default);
 
                     // 暗転を保持
                     LeanTween.delayedCall(fadeHoldDuration, () => {
@@ -208,6 +204,7 @@ namespace Alice {
 
             LeanTween.delayedCall(1f, () => {
                 BattleFinishText.gameObject.SetActive(false);
+                outroAnimationFinishedSubject.OnNext(Unit.Default);
             });
         }
 

@@ -5,7 +5,7 @@ using VContainer.Unity;
 
 namespace Alice {
     public interface IStrikerFactory {
-        AliceStrikerHub Create(StrikerHub prefab, Transform playerTransform, int playerId);
+        IStrikerHub Create(StrikerHub prefab, Transform playerTransform, int playerId);
     }
 
     public class StrikerHubFactory : IStrikerFactory {
@@ -15,7 +15,7 @@ namespace Alice {
             this.container = container;
         }
 
-        public AliceStrikerHub Create(StrikerHub prefab, Transform playerTransform, int playerId) {
+        public IStrikerHub Create(StrikerHub prefab, Transform playerTransform, int playerId) {
             var instance = Object.Instantiate(prefab);
             instance.transform.SetPositionAndRotation(playerTransform.position, playerTransform.rotation);
             playerTransform.SetParent(instance.transform);

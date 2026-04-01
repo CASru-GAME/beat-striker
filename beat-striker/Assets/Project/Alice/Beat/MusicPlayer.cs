@@ -14,8 +14,12 @@ namespace Alice {
         void Play();
         Observable<BeatSignal> OnGoodZoneEntered { get; }
         Observable<BeatSignal> OnBeatTiming { get; }
+        Observable<float[]> OnBeatTimelinePrepared { get; }
+        Observable<float> OnViewPlaybackTimeChanged { get; }
         BeatJudgeResult JudgeTiming(float playbackTime);
         float CurrentPlaybackTime { get; }
+        float CurrentViewPlaybackTime { get; }
+        float[] CurrentBeatTimeline { get; }
 
         public record BeatSignal(int BeatIndex, float BeatTime);
         public record BeatJudgeResult(BeatJudgeZone Zone, int BeatIndex, float BeatTime);
@@ -26,16 +30,23 @@ namespace Alice {
         readonly BeatConfig beatConfig;
         readonly Subject<IMusicPlayer.BeatSignal> onGoodZoneEntered = new();
         readonly Subject<IMusicPlayer.BeatSignal> onBeatTiming = new();
+        readonly Subject<float[]> onBeatTimelinePrepared = new();
+        readonly Subject<float> onViewPlaybackTimeChanged = new();
         IDisposable beatSoundSubscription;
         float[] beats = Array.Empty<float>();
         int beatSoundIndex;
         int goodWindowIndex;
         int beatTimingIndex;
         float lastPlaybackTime;
+        float currentViewPlaybackTime;
 
         public Observable<IMusicPlayer.BeatSignal> OnGoodZoneEntered => onGoodZoneEntered;
         public Observable<IMusicPlayer.BeatSignal> OnBeatTiming => onBeatTiming;
+        public Observable<float[]> OnBeatTimelinePrepared => onBeatTimelinePrepared;
+        public Observable<float> OnViewPlaybackTimeChanged => onViewPlaybackTimeChanged;
         public float CurrentPlaybackTime => audioSource.time;
+        public float CurrentViewPlaybackTime => currentViewPlaybackTime;
+        public float[] CurrentBeatTimeline => beats;
 
         public MusicPlayer(AudioSource audioSource, BeatConfig beatConfig) {
             this.audioSource = audioSource;
@@ -50,6 +61,7 @@ namespace Alice {
 
             beatSoundSubscription?.Dispose();
             beats = selectedTrack.beats;
+            onBeatTimelinePrepared.OnNext(beats);
             beatSoundIndex = 0;
             goodWindowIndex = 0;
             beatTimingIndex = 0;
@@ -58,6 +70,8 @@ namespace Alice {
             beatSoundSubscription = Observable.EveryUpdate().Subscribe(_ => {
                 if (!audioSource.isPlaying) return;
                 var currentTime = audioSource.time;
+                currentViewPlaybackTime = currentTime + beatConfig.ViewTimeOffset;
+                onViewPlaybackTimeChanged.OnNext(currentViewPlaybackTime);
                 if (lastPlaybackTime >= 0f && currentTime < lastPlaybackTime) {
                     beatSoundIndex = 0;
                     goodWindowIndex = 0;
@@ -122,6 +136,8 @@ namespace Alice {
             beatSoundSubscription?.Dispose();
             onGoodZoneEntered.Dispose();
             onBeatTiming.Dispose();
+            onBeatTimelinePrepared.Dispose();
+            onViewPlaybackTimeChanged.Dispose();
         }
 
         

@@ -2,7 +2,6 @@ using UnityEngine;
 using System.Collections;
 using R3;
 using Core.App.Types;
-using VContainer;
 
 namespace Alice {
     [RequireComponent(typeof(Camera))]
@@ -29,29 +28,20 @@ namespace Alice {
         [SerializeField] private float zoomSmoothTime = 0.2f;
         [SerializeField] private float centerSmoothTime = 0.15f;
 
-        IBattleFlow battleFlow;
-        private CompositeDisposable disposables = new();
+        readonly Subject<Unit> introFinishedSubject = new();
+        readonly Subject<Unit> outroFinishedSubject = new();
+
+        public Observable<Unit> IntroFinished => introFinishedSubject;
+        public Observable<Unit> OutroFinished => outroFinishedSubject;
+
         private Camera stageCamera;
         private float cameraDepthVelocity;
         private Vector3 centerMoveVelocity;
         private Vector2 desiredCenterViewport;
         private bool isBattleZoomActive;
 
-        [Inject]
-        public void Construct(IBattleFlow battleFlow) {
-            this.battleFlow = battleFlow;
-        }
-
         void Start() {
             stageCamera = GetComponent<Camera>();
-
-            battleFlow.PrepareBattle();
-
-            battleFlow.OutroStarted
-                .Subscribe(_ => OnOutro())
-                .AddTo(disposables);
-
-            StartCoroutine(StartCameraSequence());
         }
 
         void Update() {
@@ -62,8 +52,9 @@ namespace Alice {
             UpdateBattleZoom();
         }
 
-        void OnDestroy() {
-            disposables.Dispose();
+        public void PresentIntro() {
+            StopAllCoroutines();
+            StartCoroutine(StartCameraSequence());
         }
 
         private IEnumerator StartCameraSequence() {
@@ -92,9 +83,9 @@ namespace Alice {
             // transformFinalにワープ
             transform.SetPositionAndRotation(camTransformFinal.position, camTransformFinal.rotation);
             desiredCenterViewport = stageCamera.WorldToViewportPoint(GetPlayersCenter());
-            isBattleZoomActive = true;
+            isBattleZoomActive = false;
 
-            battleFlow?.NotifyIntroAnimationFinished();
+            introFinishedSubject.OnNext(Unit.Default);
         }
 
         private IEnumerator OrbitAroundTarget(Transform target, float duration, float angle) {
@@ -124,10 +115,24 @@ namespace Alice {
             }
         }
 
-        void OnOutro() {
+        public void PresentRoundPlayableStart() {
+            isBattleZoomActive = true;
+            cameraDepthVelocity = 0f;
+            centerMoveVelocity = Vector3.zero;
+        }
+
+        public void PresentRoundFinish() {
             isBattleZoomActive = false;
-            var winner = new PlayerId(0);
+        }
+
+        public void PresentBattleFinish() {
+            isBattleZoomActive = false;
+        }
+
+        public void PresentOutro(PlayerId winner) {
+            isBattleZoomActive = false;
             Transform targetTransform = winner.value == 0 ? playerTransform0 : playerTransform1;
+            StopAllCoroutines();
             StartCoroutine(MoveToWinner(targetTransform, winner));
         }
 
@@ -217,7 +222,7 @@ namespace Alice {
             LookAt(target);
 
             yield return new WaitForSeconds(outroWaitDuration);
-            battleFlow?.NotifyOutroAnimationFinished();
+            outroFinishedSubject.OnNext(Unit.Default);
         }
     }
 }

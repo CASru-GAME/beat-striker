@@ -481,6 +481,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6388601420036259989}
+  - {fileID: 2509741003613290336}
   - {fileID: 177676236764254674}
   - {fileID: 4036803016143434772}
   - {fileID: 918063222413366027}
@@ -1577,6 +1578,55 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!1 &7592483860585894752
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2509741003613290336}
+  - component: {fileID: 4620446103239677168}
+  m_Layer: 0
+  m_Name: BattlePresenter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2509741003613290336
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592483860585894752}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.83702004, y: 3.98791, z: -0.50583}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1331483435114665215}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4620446103239677168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592483860585894752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90e2deda5e62f49e982af56fbbd8d2be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePresenter
+  stageCamera: {fileID: 7409349047662923548}
+  battleCanvas: {fileID: 890198809820465324}
+  playerUIs:
+  - {fileID: 5848338995913625861}
+  - {fileID: 1455099518563438161}
 --- !u!1 &8358644953175475204
 GameObject:
   m_ObjectHideFlags: 0
@@ -1975,6 +2025,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
+--- !u!114 &5848338995913625861 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5923370902545218796, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
+  m_PrefabInstance: {fileID: 224462169631665641}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9f63707905584c4697e06aa3ebf7b1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.PlayerUI
 --- !u!224 &8820795779970393197 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8751813634135345540, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
@@ -2231,6 +2292,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
+--- !u!114 &1455099518563438161 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5923370902545218796, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
+  m_PrefabInstance: {fileID: 5045587660778205885}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9f63707905584c4697e06aa3ebf7b1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.PlayerUI
 --- !u!198 &4207364426478310778 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 8963861562273933255, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
@@ -2324,6 +2396,10 @@ PrefabInstance:
       propertyPath: 'playerTransforms.Array.data[1]'
       value: 
       objectReference: {fileID: 8809737772446121365}
+    - target: {fileID: 8571264011029232787, guid: 2ed35149b099642cb891acaea9e66c8d, type: 3}
+      propertyPath: battlePresenter
+      value: 
+      objectReference: {fileID: 4620446103239677168}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

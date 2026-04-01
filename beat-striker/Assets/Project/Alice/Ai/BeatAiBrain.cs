@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Alice {
@@ -9,7 +10,6 @@ namespace Alice {
         [SerializeField] float jumpDirectionY = 1f;
 
         int lastObservedOpponentPlayerId = -1;
-        int lastHandledEnemyCommandHistoryCount;
 
         protected override AiAction OnGoodWindow(AiObservation observation) {
             var self = observation.Self;
@@ -17,7 +17,6 @@ namespace Alice {
 
             if (lastObservedOpponentPlayerId != opponent.PlayerId) {
                 lastObservedOpponentPlayerId = opponent.PlayerId;
-                lastHandledEnemyCommandHistoryCount = 0;
             }
 
             var offset = opponent.Position - self.Position;
@@ -48,12 +47,10 @@ namespace Alice {
 
         protected override void OnAiEnabled() {
             lastObservedOpponentPlayerId = -1;
-            lastHandledEnemyCommandHistoryCount = 0;
         }
 
         protected override void OnAiDisabled() {
             lastObservedOpponentPlayerId = -1;
-            lastHandledEnemyCommandHistoryCount = 0;
         }
 
         Vector2 ComputeSpacingDirection(Vector2 offset2D, float distance) {
@@ -73,24 +70,8 @@ namespace Alice {
         }
 
         bool ShouldJumpAgainstConsecutiveAttack(IReadOnlyBattleEntity opponent) {
-            var history = opponent.CommandHistory;
-            var count = history.Count;
-            if (count < 2) {
-                return false;
-            }
-
-            if (count == lastHandledEnemyCommandHistoryCount) {
-                return false;
-            }
-
-            var latest = history[count - 1];
-            var previous = history[count - 2];
-            if (latest.Button != GamePadButton.East || previous.Button != GamePadButton.East) {
-                return false;
-            }
-
-            lastHandledEnemyCommandHistoryCount = count;
-            return true;
+            // Command-history based heuristic removed — never jump based on command history.
+            return false;
         }
 
         Vector2 ComputeJumpAwayDirection(IReadOnlyBattleEntity self, IReadOnlyBattleEntity opponent) {

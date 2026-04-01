@@ -7,8 +7,6 @@ using UnityEngine;
 using VContainer;
 
 namespace Alice {
-    public record BattleCommandLog(float Time, GamePadButton Button);
-
     public interface IReadOnlyBattleEntity {
         int PlayerId { get; }
         Vector3 Position { get; }
@@ -17,11 +15,9 @@ namespace Alice {
         float MaxHitPoint { get; }
         Observable<Unit> OnHit { get; }
         ReadOnlyReactiveProperty<string> CurrentStateName { get; }
-        IReadOnlyList<BattleCommandLog> CommandHistory { get; }
     }
 
-    public class AliceStrikerHub : IStrikerContext, IReadOnlyBattleEntity, IDisposable {
-        [Inject] IBattleFlow battleFlow;
+    public class AliceStrikerHub : IStrikerContext, IStrikerHub, IDisposable {
         [Inject] IStrikerRegistry strikerRegistry;
 
         float maxHitPoint;
@@ -36,8 +32,13 @@ namespace Alice {
         StrikerStateMachine stateMachine;
         AiBrain aiBrain;
         readonly Subject<Unit> onHit = new();
+        readonly Subject<PlayerId> onDeadSubject = new();
         readonly BehaviorSubject<string> currentStateNameSubject = new(string.Empty);
         readonly ReadOnlyReactiveProperty<string> currentStateName;
+        readonly BehaviorSubject<float> currentHitPointSubject = new(0f);
+        readonly ReadOnlyReactiveProperty<float> currentHitPointReactive;
+        readonly BehaviorSubject<float> hitPointRatioSubject = new(1f);
+        readonly ReadOnlyReactiveProperty<float> hitPointRatio;
         IDisposable stateNameSubscription;
 
         Vector2 inputDirection;
@@ -46,12 +47,12 @@ namespace Alice {
         bool initialized;
         Vector3 previousFramePosition;
         Vector3 frameVelocity;
-        readonly List<BattleCommandLog> commandHistory = new();
-        const int MAX_COMMAND_HISTORY_COUNT = 32;
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
         public float CurrentHitPoint => currentHitPoint;
+        public ReadOnlyReactiveProperty<float> CurrentHitPointReactive => currentHitPointReactive;
+        public ReadOnlyReactiveProperty<float> HitPointRatio => hitPointRatio;
         public AiBrain AiBrain => aiBrain;
         public float MaxHitPoint => maxHitPoint;
         public Vector3 Position => Rigidbody.position;
@@ -73,12 +74,14 @@ namespace Alice {
             return this;
         }
         public int PlayerId => playerId;
-        public IReadOnlyList<BattleCommandLog> CommandHistory => commandHistory;
 
         public Observable<Unit> OnHit => onHit;
+        public Observable<PlayerId> OnDeadEvent => onDeadSubject;
 
         public AliceStrikerHub() {
             currentStateName = currentStateNameSubject.ToReadOnlyReactiveProperty();
+            currentHitPointReactive = currentHitPointSubject.ToReadOnlyReactiveProperty();
+            hitPointRatio = hitPointRatioSubject.ToReadOnlyReactiveProperty();
         }
 
         public void Tick(float deltaTime) {
@@ -108,6 +111,8 @@ namespace Alice {
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
             animationPlayer = legacy.GetAnimationPlayer();
             currentHitPoint = maxHitPoint;
+            currentHitPointSubject.OnNext(currentHitPoint);
+            hitPointRatioSubject.OnNext(1f);
             previousFramePosition = rb.position;
             frameVelocity = Vector3.zero;
             initialized = true;
@@ -126,24 +131,25 @@ namespace Alice {
         public void Dispose() {
             stateNameSubscription?.Dispose();
             onHit.Dispose();
+            onDeadSubject.Dispose();
             currentStateName.Dispose();
             currentStateNameSubject.Dispose();
+            currentHitPointReactive.Dispose();
+            currentHitPointSubject.Dispose();
+            hitPointRatio.Dispose();
+            hitPointRatioSubject.Dispose();
         }
 
         public void ApplyDamage(float damage) {
             currentHitPoint = Mathf.Max(0f, currentHitPoint - damage);
+            currentHitPointSubject.OnNext(currentHitPoint);
+            var max = Mathf.Max(1f, maxHitPoint);
+            hitPointRatioSubject.OnNext(Mathf.Clamp01(currentHitPoint / max));
             if (currentHitPoint <= 0f) {
-                OnDead();
+                Die();
             }
         }
-
-        public void RecordExecutedCommand(BattleCommandLog commandLog) {
-            commandHistory.Add(commandLog);
-            if (commandHistory.Count > MAX_COMMAND_HISTORY_COUNT) {
-                commandHistory.RemoveAt(0);
-            }
-        }
-
+        
         public void ChangeDirection(Vector2 direction) {
             inputDirection = direction.sqrMagnitude > 0f ? direction.normalized : Vector2.zero;
         }
@@ -169,7 +175,6 @@ namespace Alice {
 
         public void Special() {
             if (stateMachine == null || currentHitPoint <= 0f) return;
-            // Alice runtime keeps special executable path without old model dependency.
             stateMachine.CurrentState.OnAttackRequested(stateMachine);
         }
 
@@ -178,31 +183,20 @@ namespace Alice {
             stateMachine.CurrentState.OnGuardRequested(stateMachine);
         }
 
-        public void OnDead() {
+        public void Die() {
             if (stateMachine == null) return;
-            battleFlow.NotifyPlayerDead(new PlayerId(playerId));
+            onDeadSubject.OnNext(new PlayerId(playerId));
             stateMachine.ChangeState(deadState);
         }
 
-        public void OnIntro() {
+        public void IntroPose() {
             if (stateMachine == null) return;
             stateMachine.ChangeState(introState);
         }
 
-        public void OnVictory() {
+        public void VictoryPose() {
             if (stateMachine == null) return;
             stateMachine.ChangeState(victoryState);
-        }
-
-        public void OnReset() {
-            currentHitPoint = maxHitPoint;
-            inputDirection = Vector2.zero;
-            commandHistory.Clear();
-            previousFramePosition = rb.position;
-            frameVelocity = Vector3.zero;
-            if (stateMachine != null) {
-                stateMachine.Reset(defaultState);
-            }
         }
 
         public void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null) {

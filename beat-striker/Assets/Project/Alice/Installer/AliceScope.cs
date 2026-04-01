@@ -13,15 +13,26 @@ namespace Alice {
     [RequireComponent(typeof(BeatConfig))]
     [RequireComponent(typeof(AudioSource))]
     public class AliceScope : LifetimeScope {
+        [SerializeField] BattlePresenter battlePresenter;
+        [SerializeField] BattlePlayerPresenter[] battlePlayerPresenters;
 
         protected override void Configure(IContainerBuilder builder) {
             builder.Register<IGamePadRegistry, GamePadRegistry>(Lifetime.Singleton);
             builder.Register<IStrikerRegistry, StrikerRegistry>(Lifetime.Singleton);
             builder.Register<IStrikerFactory, StrikerHubFactory>(Lifetime.Singleton);
             builder.Register<IBattleDeployer, BattleDeployer>(Lifetime.Singleton);
+            builder.Register<IBattleJudge, BattleJudge>(Lifetime.Singleton);
+            builder.RegisterInstance<IBattlePresenter>(battlePresenter);
+            var battlePlayerPresenters = new IBattlePlayerPresenter[this.battlePlayerPresenters.Length];
+            for (var i = 0; i < this.battlePlayerPresenters.Length; i++) {
+                battlePlayerPresenters[i] = this.battlePlayerPresenters[i];
+                builder.RegisterInstance<IBattlePlayerPresenter>(this.battlePlayerPresenters[i]);
+            }
+            builder.RegisterInstance(battlePlayerPresenters);
             builder.Register<IBattleFlow, BattleFlow>(Lifetime.Singleton);
             builder.Register<IBeatjudge, BeatJudge>(Lifetime.Singleton);
             builder.Register<IMusicPlayer, MusicPlayer>(Lifetime.Singleton);
+            builder.RegisterEntryPoint<BattleFlowStarter>(Lifetime.Singleton);
 
             builder.RegisterInstance(GetComponent<PlayerInputManager>());
             builder.RegisterInstance(GetComponent<BattleConfig>());
@@ -34,7 +45,9 @@ namespace Alice {
                 _ = container.Resolve<IStrikerRegistry>();
                 _ = container.Resolve<IStrikerFactory>();
                 _ = container.Resolve<IBattleDeployer>();
+                _ = container.Resolve<IBattleJudge>();
                 _ = container.Resolve<IBattleFlow>();
+                _ = container.Resolve<IBattlePlayerPresenter[]>();
                 _ = container.Resolve<IBeatjudge>();
                 _ = container.Resolve<IMusicPlayer>();
                 InjectSceneObjects(container);
@@ -120,6 +133,18 @@ namespace Alice {
                     }
                 }
                 return false;
+            }
+        }
+
+        sealed class BattleFlowStarter : IInitializable {
+            readonly IBattleFlow battleFlow;
+
+            public BattleFlowStarter(IBattleFlow battleFlow) {
+                this.battleFlow = battleFlow;
+            }
+
+            public void Initialize() {
+                battleFlow.StartBattle();
             }
         }
 
