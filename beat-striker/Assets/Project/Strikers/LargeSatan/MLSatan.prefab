@@ -203,6 +203,55 @@ MonoBehaviour:
   beamPrefab: {fileID: 6905198961801543357, guid: 5715e2f14f6ca4ba19e7dc97cb1e868e, type: 3}
   firePosition: {fileID: 7339137099008609543}
   fireTime: 0.3
+--- !u!1 &941579253321292430
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8190442096134038885}
+  - component: {fileID: 659335394042643980}
+  m_Layer: 0
+  m_Name: IntroState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8190442096134038885
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 941579253321292430}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.02752, y: 0.70272, z: -0.07662988}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7201851954051567416}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &659335394042643980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 941579253321292430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18b781877e134d9eb5ad3166b220617, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AnimationState
+  parents: []
+  animationClip:
+    clip: {fileID: 7400000, guid: 50f4d40bd06e44171819f13a0fea89f2, type: 2}
+    fadeTime: 0.3
+    speed: 1
 --- !u!1 &1516419187170184297
 GameObject:
   m_ObjectHideFlags: 0
@@ -401,10 +450,11 @@ MonoBehaviour:
   maxHitPoint: 100
   maxSpecialPoint: 100
   defaultState: {fileID: 7361062579276817940}
-  deadState: {fileID: 0}
-  VictoryState: {fileID: 0}
-  IntroState: {fileID: 0}
+  deadState: {fileID: 614530405571233721}
+  VictoryState: {fileID: 4353469668150655512}
+  IntroState: {fileID: 659335394042643980}
   aiBrain: {fileID: -1724991668604713976}
+  centerPositionTransform: {fileID: 0}
 --- !u!114 &8515823221661986454
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1080,6 +1130,55 @@ MonoBehaviour:
     speed: 1
   walkSpeed: 1
   locomotionNode: {fileID: 3444350880286515863}
+--- !u!1 &3488569882633554495
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6834426907013068108}
+  - component: {fileID: 4353469668150655512}
+  m_Layer: 0
+  m_Name: VictoryState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6834426907013068108
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3488569882633554495}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.02752, y: 0.70272, z: -0.07662988}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7201851954051567416}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4353469668150655512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3488569882633554495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18b781877e134d9eb5ad3166b220617, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AnimationState
+  parents: []
+  animationClip:
+    clip: {fileID: 7400000, guid: c77cf359840404cc0856cbf4601dc1f6, type: 2}
+    fadeTime: 0.3
+    speed: 1
 --- !u!1 &3499957873755132651
 GameObject:
   m_ObjectHideFlags: 0
@@ -1312,6 +1411,9 @@ Transform:
   - {fileID: 225902090445379099}
   - {fileID: 7670338563451008460}
   - {fileID: 8956782202065690917}
+  - {fileID: 930349233451120807}
+  - {fileID: 8190442096134038885}
+  - {fileID: 6834426907013068108}
   m_Father: {fileID: 8056188703651194701}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6408498912602806557
@@ -1749,6 +1851,55 @@ MonoBehaviour:
   stunState: {fileID: 3199232662557460761}
   guardState: {fileID: 7615511255632755114}
   chargeState: {fileID: 3098814545267038612}
+--- !u!1 &8562694478238975578
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 930349233451120807}
+  - component: {fileID: 614530405571233721}
+  m_Layer: 0
+  m_Name: DeadState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &930349233451120807
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8562694478238975578}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.02752, y: 0.70272, z: -0.07662988}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7201851954051567416}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &614530405571233721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8562694478238975578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18b781877e134d9eb5ad3166b220617, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AnimationState
+  parents: []
+  animationClip:
+    clip: {fileID: 7400000, guid: 814b130d40ac549a3a2653d3aa2b3995, type: 2}
+    fadeTime: 0.3
+    speed: 1
 --- !u!1001 &2543840023304968197
 PrefabInstance:
   m_ObjectHideFlags: 0

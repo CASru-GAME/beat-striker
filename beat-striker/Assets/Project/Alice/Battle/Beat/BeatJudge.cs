@@ -39,6 +39,10 @@ namespace Alice {
                 var playerIndex = i;
                 var gamePad = gamePadRegistry.Get(playerIndex);
                 var subscription = gamePad.OnButtonDown.Subscribe(button => {
+                    if (musicPlayer.CurrentBeatTimeline.Length == 0) {
+                        return;
+                    }
+
                     var player = beatPlayer[playerIndex];
                     var time = musicPlayer.CurrentPlaybackTime;
                     if (lastCommandPlaybackTime >= 0f && time < lastCommandPlaybackTime) {

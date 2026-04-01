@@ -1,5 +1,8 @@
+using System;
 using System.Threading.Tasks;
+using R3;
 using UnityEngine;
+using VContainer;
 using CorePlayerId = Core.App.Types.PlayerId;
 
 namespace Alice {
@@ -13,15 +16,55 @@ namespace Alice {
     }
 
     public class BattlePresenter : MonoBehaviour, IBattlePresenter {
+        const int MAX_SKIP_INPUT_PLAYER_SLOTS = 8;
+
+        [Inject] IStrikerRegistry strikerRegistry;
+        [Inject] IGamePadRegistry gamePadRegistry;
+
         [SerializeField] StageCamera stageCamera;
         [SerializeField] BattleRoundStartView roundStartPresenter;
         [SerializeField] BattleResultTextView resultTextPresenter;
         [SerializeField] BattleFadeView fadePresenter;
 
+        CompositeDisposable skipInputSubscriptions = new();
+        bool isCinematicSkipEnabled;
+
+        void Awake() {
+            EnsureStageCameraConfigured();
+            SubscribeSkipInput();
+        }
+
+        void OnDestroy() {
+            skipInputSubscriptions.Dispose();
+        }
+
+        void EnsureStageCameraConfigured() {
+            stageCamera.SetPlayerCenterPositionResolver(GetPlayerCenterPosition);
+            stageCamera.SetIntroPoseRequester(RequestIntroPose);
+            stageCamera.SetVictoryPoseRequester(RequestVictoryPose);
+        }
+
+        Vector3 GetPlayerCenterPosition(int playerId) {
+            foreach (var striker in strikerRegistry.GetAllStrikers()) {
+                if (striker.PlayerId.CurrentValue == playerId) {
+                    return striker.CenterPosition.CurrentValue;
+                }
+            }
+
+            throw new InvalidOperationException($"Striker not found. playerId={playerId}");
+        }
+
         public async Task PlayBattleOpeningAsync() {
-            await Task.WhenAll(
-                stageCamera.PresentIntroAsync(),
-                fadePresenter.PresentFadeOutAsync());
+            EnsureStageCameraConfigured();
+            isCinematicSkipEnabled = true;
+            try {
+                await Task.WhenAll(
+                    stageCamera.PresentIntroAsync(),
+                    fadePresenter.PresentFadeOutAsync());
+            }
+            finally {
+                isCinematicSkipEnabled = false;
+            }
         }
 
         public async Task PlayRoundStartAsync(int roundNumber) {
@@ -29,28 +72,75 @@ namespace Alice {
         }
 
         public void EnterRoundPlayablePhase() {
+            EnsureStageCameraConfigured();
             stageCamera.PresentRoundPlayableStart();
         }
 
         public async Task PlayRoundEndTransitionAsync() {
+            EnsureStageCameraConfigured();
             stageCamera.PresentRoundFinish();
             await fadePresenter.PresentFadeInAsync();
         }
 
         public async Task PlayRoundResumeTransitionAsync() {
+            EnsureStageCameraConfigured();
             stageCamera.ResetRoundCamera();
             await fadePresenter.PresentFadeOutAsync();
         }
 
         public async Task PlayBattleEndingAsync(CorePlayerId winner) {
+            EnsureStageCameraConfigured();
             stageCamera.PresentBattleFinish();
             await resultTextPresenter.PresentBattleFinishAsync();
 
-            await Task.WhenAll(
-                stageCamera.PresentOutroAsync(winner),
-                resultTextPresenter.PresentOutroAsync());
+            isCinematicSkipEnabled = true;
+            try {
+                await Task.WhenAll(
+                    stageCamera.PresentOutroAsync(winner),
+                    resultTextPresenter.PresentOutroAsync());
+            }
+            finally {
+                isCinematicSkipEnabled = false;
+            }
 
             await fadePresenter.PresentFadeInAsync();
+        }
+
+        void RequestIntroPose(int playerId) {
+            var target = strikerRegistry.Get(playerId);
+            if (target.TryGetValue(out var strikerHub)) {
+                strikerHub.IntroPose();
+            }
+        }
+
+        void RequestVictoryPose(int winnerPlayerId) {
+            var winner = strikerRegistry.Get(winnerPlayerId);
+            if (winner.TryGetValue(out var strikerHub)) {
+                strikerHub.VictoryPose();
+            }
+        }
+
+        void SubscribeSkipInput() {
+            skipInputSubscriptions.Dispose();
+            skipInputSubscriptions = new CompositeDisposable();
+
+            for (int playerId = 0; playerId < MAX_SKIP_INPUT_PLAYER_SLOTS; playerId++) {
+                SubscribeSkipForPlayer(playerId, skipInputSubscriptions);
+            }
+        }
+
+        void SubscribeSkipForPlayer(int playerId, CompositeDisposable subscriptions) {
+            var playerGamePad = gamePadRegistry.Get(playerId);
+            playerGamePad.OnButtonDown
+                .Where(button => button == GamePadButton.Left)
+                .Subscribe(_ => {
+                    if (!isCinematicSkipEnabled) {
+                        return;
+                    }
+
+                    stageCamera.RequestSequenceSkip();
+                })
+                .AddTo(subscriptions);
         }
     }
 }

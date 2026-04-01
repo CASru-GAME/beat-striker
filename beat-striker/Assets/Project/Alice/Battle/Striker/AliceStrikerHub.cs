@@ -28,6 +28,7 @@ namespace Alice {
         void Tick(float deltaTime);
         void ChangeDirection(Vector2 direction);
         void CancelDirection();
+        void Default();
         void Dash();
         void Attack();
         void Charge();
@@ -36,6 +37,8 @@ namespace Alice {
         void AddSpecialPoint(float value);
         void Die();
         void GiveHit(HitStatus status);
+        void IntroPose();
+        void VictoryPose();
     }
 
     public class AliceStrikerHub : IStrikerContext, IStrikerHub, IDisposable {
@@ -223,6 +226,15 @@ namespace Alice {
 
             currentSpecialPoint = Mathf.Clamp(currentSpecialPoint + value, 0f, maxSpecialPoint);
             specialPointSubject.OnNext(currentSpecialPoint);
+        }
+
+        public void Default() {
+            if (!initialized || currentHitPoint <= 0f) return;
+            if (stateMachine == null) {
+                stateMachine = new StrikerStateMachine(this, defaultState);
+                return;
+            }
+            stateMachine.ChangeState(defaultState);
         }
 
         public void Die() {

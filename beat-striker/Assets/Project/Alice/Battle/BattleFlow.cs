@@ -73,6 +73,7 @@ namespace Alice {
         async Task StartBattleSequenceAsync() {
             try {
                 await battlePresenter.PlayBattleOpeningAsync();
+                SetAllStrikersDefault();
 
                 await StartRoundPlayableAsync();
             }
@@ -136,6 +137,7 @@ namespace Alice {
                     battleDeployer.Undeploy();
                     battleDeployer.Deploy();
                     SubscribeStrikerDeadEvents();
+                    SetAllStrikersDefault();
                     await battlePresenter.PlayRoundResumeTransitionAsync();
                     await StartRoundPlayableAsync();
                 }
@@ -169,6 +171,12 @@ namespace Alice {
                 subscription.Dispose();
             }
             deadEventDisposables.Clear();
+        }
+
+        void SetAllStrikersDefault() {
+            foreach (var striker in strikerRegistry.GetAllStrikers()) {
+                striker.Default();
+            }
         }
 
         RoundResult BuildRoundResult(int roundNumber, int deadPlayerId) {
