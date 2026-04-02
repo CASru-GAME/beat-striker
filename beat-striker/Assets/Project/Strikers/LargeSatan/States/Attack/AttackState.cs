@@ -37,6 +37,7 @@ namespace Core.LargeSatan {
             AudioSource.PlayClipAtPoint(slashSound, transform.position);
 
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
+                if(collider.gameObject == context.Rigidbody.gameObject) return;
                 if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
                     var hitPoint = collider.ClosestPoint(hitBox.transform.position);
                     hitsInFrame.Add(new(hitPoint, hurtbox));
