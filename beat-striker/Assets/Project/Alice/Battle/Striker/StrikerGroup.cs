@@ -2,6 +2,21 @@ using Alice;
 using UnityEngine;
 
 
+
+public interface IStrikerGroup {
+    void OnEnter(IStrikerContext context);
+    void OnExit(IStrikerContext context);
+    void OnUpdate(IStrikerStateContext context);
+    void OnEnemyBehind(IStrikerStateContext context);
+    void OnHit(IStrikerStateContext context, HitStatus status);
+    void OnAttackRequested(IStrikerStateContext context);
+    void OnSpecialRequested(IStrikerStateContext context);
+    void OnChargeRequested(IStrikerStateContext context);
+    void OnGuardRequested(IStrikerStateContext context);
+    void OnDashRequested(IStrikerStateContext context);
+    void OnMiss(IStrikerStateContext context);
+}
+
 public abstract class StrikerGroup : MonoBehaviour, IStrikerGroup {
     public virtual void OnEnter(IStrikerContext hub) { }
     public virtual void OnUpdate(IStrikerStateContext hub) { }

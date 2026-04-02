@@ -109,10 +109,7 @@ namespace Alice {
                     deployed.PlayerTransform.SetPositionAndRotation(deployed.OriginalPosition, deployed.OriginalRotation);
                 }
 
-                if (deployed.Hub != null && deployed.Hub.Rigidbody != null) {
-                    UnityEngine.Object.Destroy(deployed.Hub.Rigidbody.gameObject);
-                }
-
+                deployed.Hub?.DestroyGameObject();
                 deployed.InpactSubscription?.Dispose();
                 deployed.AttentionSubscription?.Dispose();
             }

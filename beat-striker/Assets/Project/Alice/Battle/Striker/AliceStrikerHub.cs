@@ -6,8 +6,23 @@ using R3;
 using UnityEngine;
 using VContainer;
 
+public record StrikerInpact(Vector3 DirectionAndMagnitude);
+public record AttentionRequest(float DurationSeconds);
+
+public interface IStrikerContext {
+    Rigidbody Rigidbody { get; }
+    Vector2 InputDirection { get; }
+    IEnumerable<IObservableStriker> GetAllStrikers();
+    IObservableStriker GetSelf();
+    IObservableStriker GetOpponent();
+    void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
+    void ApplyDamage(float damage);
+    void GenerateInpact(StrikerInpact command);
+    void RequestAttention(AttentionRequest request);
+}
+
 namespace Alice {
-    public interface IReadOnlyBattleEntity {
+    public interface IObservableStriker {
         ReadOnlyReactiveProperty<int> PlayerId { get; }
         ReadOnlyReactiveProperty<Vector3> Position { get; }
         ReadOnlyReactiveProperty<Vector3> CenterPosition { get; }
@@ -20,10 +35,9 @@ namespace Alice {
         Observable<Unit> OnDead { get; }
     }
 
-    public interface IStrikerHub : IReadOnlyBattleEntity, System.IDisposable {
+    public interface IStrikerHub : IObservableStriker, System.IDisposable {
         AiBrain AiBrain { get; }
-        Rigidbody Rigidbody { get; }
-
+        void DestroyGameObject();
         void SetPlayerId(int playerId);
         void Tick(float deltaTime);
         void ChangeDirection(Vector2 direction);
@@ -100,19 +114,23 @@ namespace Alice {
         public Observable<StrikerInpact> OnInpactGenerated => onInpactGeneratedSubject;
         public Observable<AttentionRequest> OnAtentionRequested => onAttentionRequestedSubject;
 
-        public IEnumerable<IReadOnlyBattleEntity> GetAllStrikers() {
+        public IEnumerable<IObservableStriker> GetAllStrikers() {
             return strikerRegistry.GetAllStrikers();
         }
-        public IReadOnlyBattleEntity GetSelf() {
+        public IObservableStriker GetSelf() {
             return this;
         }
-        public IReadOnlyBattleEntity GetOpponent() {
+        public IObservableStriker GetOpponent() {
             foreach (var striker in strikerRegistry.GetAllStrikers()) {
                 if (striker.PlayerId.CurrentValue != playerId) {
                     return striker;
                 }
             }
             return this;
+        }
+
+        public void DestroyGameObject() {
+            UnityEngine.Object.Destroy(this.Rigidbody.gameObject);
         }
 
         public Observable<Unit> OnDead => onDeadSubject;

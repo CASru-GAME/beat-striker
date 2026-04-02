@@ -5,8 +5,8 @@ using VContainer;
 
 namespace Alice {
     public record AiObservation(
-        IReadOnlyBattleEntity Self,
-        IReadOnlyBattleEntity Opponent,
+        IObservableStriker Self,
+        IObservableStriker Opponent,
         IMusicPlayer.BeatSignal Signal,
         float CurrentPlaybackTime
     );
@@ -25,7 +25,7 @@ namespace Alice {
         IStrikerRegistry strikerRegistry;
         IDisposable goodZoneSubscription;
         bool isAiMode;
-        IReadOnlyBattleEntity selfStriker;
+        IObservableStriker selfStriker;
 
         public Observable<Vector2> OnDirectionAsObservable => onDirection;
         public Observable<Unit> OnDirectionCanceledAsObservable => onDirectionCanceled;
@@ -39,7 +39,7 @@ namespace Alice {
             this.strikerRegistry = strikerRegistry;
         }
 
-        public void EnableAiMode(IReadOnlyBattleEntity self) {
+        public void EnableAiMode(IObservableStriker self) {
             enabled = true;
             if (this.isAiMode) {
                 return;
@@ -110,8 +110,8 @@ namespace Alice {
             EmitDirection(action.Direction.normalized);
         }
 
-        IReadOnlyBattleEntity ResolveOpponent(IReadOnlyBattleEntity self) {
-            IReadOnlyBattleEntity nearestOpponent = null;
+        IObservableStriker ResolveOpponent(IObservableStriker self) {
+            IObservableStriker nearestOpponent = null;
             var nearestSqrDistance = float.MaxValue;
 
             foreach (var striker in strikerRegistry.GetAllStrikers()) {

@@ -184,7 +184,7 @@ namespace Alice {
             }
         }
 
-        Vector2 DecodeMoveDirection(int moveAction, IReadOnlyBattleEntity self, IReadOnlyBattleEntity opponent) {
+        Vector2 DecodeMoveDirection(int moveAction, IObservableStriker self, IObservableStriker opponent) {
             var toOpponent = (opponent.Position.CurrentValue - self.Position.CurrentValue);
             var horizontal = Mathf.Sign(toOpponent.x);
             if (horizontal == 0f) {

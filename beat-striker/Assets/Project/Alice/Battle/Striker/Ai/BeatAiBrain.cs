@@ -69,12 +69,12 @@ namespace Alice {
             return Vector2.zero;
         }
 
-        bool ShouldJumpAgainstConsecutiveAttack(IReadOnlyBattleEntity opponent) {
+        bool ShouldJumpAgainstConsecutiveAttack(IObservableStriker opponent) {
             // Command-history based heuristic removed — never jump based on command history.
             return false;
         }
 
-        Vector2 ComputeJumpAwayDirection(IReadOnlyBattleEntity self, IReadOnlyBattleEntity opponent) {
+        Vector2 ComputeJumpAwayDirection(IObservableStriker self, IObservableStriker opponent) {
             var horizontal = Mathf.Sign(self.Position.CurrentValue.x - opponent.Position.CurrentValue.x);
             if (horizontal == 0f) {
                 horizontal = 1f;

@@ -4,6 +4,28 @@ using Alice;
 using UnityEngine;
 
 
+
+public interface IStrikerStateContext : IStrikerContext {
+    void TryTransition(IStrikerNode node, bool forceSameStateTransition = false);
+}
+
+
+public interface IStrikerState {
+    IEnumerable<IStrikerGroup> Parents { get; }
+    void OnEnter(IStrikerContext context);
+    void OnExit(IStrikerContext context);
+    void OnUpdate(IStrikerStateContext context);
+    void OnEnemyBehind(IStrikerStateContext context);
+    void OnHit(IStrikerStateContext context, HitStatus status);
+    void OnAttackRequested(IStrikerStateContext context);
+    void OnSpecialRequested(IStrikerStateContext context);
+    void OnChargeRequested(IStrikerStateContext context);
+    void OnGuardRequested(IStrikerStateContext context);
+    void OnDashRequested(IStrikerStateContext context);
+    void OnMiss(IStrikerStateContext context);
+}
+
+
 public abstract class StrikerState : StrikerNode, IStrikerState {
     [SerializeField] private List<StrikerGroup> parents = new List<StrikerGroup>();
     public virtual IEnumerable<IStrikerGroup> Parents => parents;

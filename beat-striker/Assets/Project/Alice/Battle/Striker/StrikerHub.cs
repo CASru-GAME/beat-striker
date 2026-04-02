@@ -94,9 +94,9 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
 
     public Rigidbody Rigidbody => context.Rigidbody;
     public Vector2 InputDirection => context.InputDirection;
-    public IEnumerable<Alice.IReadOnlyBattleEntity> GetAllStrikers() => context.GetAllStrikers();
-    public Alice.IReadOnlyBattleEntity GetSelf() => context.GetSelf();
-    public Alice.IReadOnlyBattleEntity GetOpponent() => context.GetOpponent();
+    public IEnumerable<Alice.IObservableStriker> GetAllStrikers() => context.GetAllStrikers();
+    public Alice.IObservableStriker GetSelf() => context.GetSelf();
+    public Alice.IObservableStriker GetOpponent() => context.GetOpponent();
 
     public void ApplyDamage(float damage) {
         context.ApplyDamage(damage);
