@@ -21,6 +21,7 @@ namespace Core.LargeHero {
         [SerializeField] StrikerNode comboNode;   // 次の斬撃ステート（斬撃3なら空）
         [SerializeField] HitBox hitBox;
         IDisposable disposable;
+        [SerializeField] float moveSpeed = 3;
 
         [SerializeField] ParticleSystem particleprefab;
         [SerializeField] AudioClip audioClip;
@@ -60,10 +61,11 @@ namespace Core.LargeHero {
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
+            context.Rigidbody.linearVelocity = moveSpeed * context.InputDirection;
             if (!hitInState && hitsInFrame.Count >= 1) {
                 var closestHit = hitsInFrame.MinBy(e => Vector3.Distance(e.hitpoint, hitBox.transform.position));
 
-                Instantiate(particleprefab, closestHit.hitpoint, Quaternion.identity);
+                Destroy(Instantiate(particleprefab, closestHit.hitpoint, Quaternion.identity), 5f);
                 AudioSource.PlayClipAtPoint(audioClip, closestHit.hitpoint);
 
                 var nockBackDirection = Mathf.Sign(closestHit.hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;

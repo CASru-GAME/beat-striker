@@ -247,8 +247,30 @@ def setup_ik_drivers(obj):
     for b_name in leg_ik: add_driver(b_name, "Auto_IK", "ik_influence_legs")
     for b_name in leg_rot: add_driver(b_name, "Auto_IK_Rot", "ik_influence_legs")
 
+def get_root_motion(self):
+    obj = bpy.context.object
+    if obj and obj.animation_data and obj.animation_data.action:
+        action = obj.animation_data.action
+        for fc in action.fcurves:
+            if fc.data_path == 'pose.bones["Root"].location':
+                return not fc.mute
+    return True
+
+def set_root_motion(self, value):
+    obj = bpy.context.object
+    if obj and obj.animation_data and obj.animation_data.action:
+        action = obj.animation_data.action
+        for fc in action.fcurves:
+            if fc.data_path == 'pose.bones["Root"].location':
+                fc.mute = not value
 
 class AutoBoneSettings(bpy.types.PropertyGroup):
+    root_motion_enabled: bpy.props.BoolProperty(
+        name="Root XYZ (Location)",
+        description="Rootボーンの位置（XYZ）のアニメーションをミュート切替します",
+        get=get_root_motion,
+        set=set_root_motion
+    )
     fbx_export_name: bpy.props.StringProperty(
         name="File Name",
         description="エクスポートするFBXのファイル名（拡張子は自動）",
@@ -490,6 +512,52 @@ class AUTOBONE_OT_bake_limits_anim(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class AUTOBONE_OT_rebuild_nla_from_actions(bpy.types.Operator):
+    bl_idname = "autobone.rebuild_nla_from_actions"
+    bl_label = "Rebuild NLA from Actions"
+    bl_description = "NLAトラックを全削除し、アクションを名前順でストリップ化して並べ直します"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            self.report({'ERROR'}, "アーマチュアを選択してね")
+            return {'CANCELLED'}
+
+        if not obj.animation_data:
+            obj.animation_data_create()
+
+        anim_data = obj.animation_data
+
+        # 既存トラックを全削除
+        for track in list(anim_data.nla_tracks):
+            anim_data.nla_tracks.remove(track)
+
+        actions = sorted(
+            [act for act in bpy.data.actions if is_armature_action(act)],
+            key=lambda a: a.name.lower()
+        )
+
+        if not actions:
+            self.report({'WARNING'}, "ストリップ化できるアクションが見つかりませんでした")
+            return {'CANCELLED'}
+
+        # BlenderのNLA新規トラック追加順に合わせ、
+        # 文字列が早い名前ほど下に来るようこの順で作成する
+        for action in actions:
+            frame_start, frame_end = action.frame_range
+            start = int(frame_start)
+
+            track = anim_data.nla_tracks.new()
+            track.name = f"NLA_{action.name}"
+            strip = track.strips.new(action.name, start, action)
+            strip.action_frame_start = frame_start
+            strip.action_frame_end = frame_end
+
+        self.report({'INFO'}, f"{len(actions)}個のアクションをNLAストリップ化しました")
+        return {'FINISHED'}
+
+
 class AUTOBONE_OT_export_fbx(bpy.types.Operator):
     bl_idname = "autobone.export_fbx"
     bl_label = "FBXをエクスポート"
@@ -542,6 +610,53 @@ class AUTOBONE_OT_export_fbx(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class AUTOBONE_OT_select_bones(bpy.types.Operator):
+    bl_idname = "autobone.select_bones"
+    bl_label = "Select Bones"
+    bl_description = "指定された部位のボーンを選択します"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    target_part: bpy.props.StringProperty(default="SPINE")
+
+    def execute(self, context):
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            return {'CANCELLED'}
+
+        if context.mode != 'POSE':
+            bpy.ops.object.mode_set(mode='POSE')
+            
+        bpy.ops.pose.select_all(action='DESELECT')
+
+        bones_to_select = []
+        if self.target_part == "SPINE":
+            bones_to_select = ["J_Bip_C_Spine", "J_Bip_C_Chest", "J_Bip_C_UpperChest", "J_Bip_C_Neck", "J_Bip_C_Head"]
+        elif self.target_part == "HIP":
+            bones_to_select = ["J_Bip_C_Hips"]
+        elif self.target_part == "R_HAND":
+            bones_to_select = ["J_Bip_R_Hand"]
+        elif self.target_part == "L_HAND":
+            bones_to_select = ["J_Bip_L_Hand"]
+
+        selected_count = 0
+        active_set = False
+        for b_name in bones_to_select:
+            pb = obj.pose.bones.get(b_name)
+            if pb:
+                pb.bone.select = True
+                if not active_set:
+                    obj.data.bones.active = pb.bone
+                    active_set = True
+                selected_count += 1
+                
+        if selected_count > 0:
+            self.report({'INFO'}, f"{selected_count}個のボーンを選択しました！")
+        else:
+            self.report({'WARNING'}, "対象のボーンが見つかりませんでした")
+
+        return {'FINISHED'}
+
+
 class AUTOBONE_PT_panel(bpy.types.Panel):
     bl_label = "Auto Bone Setup"
     bl_idname = "AUTOBONE_PT_panel"
@@ -562,6 +677,8 @@ class AUTOBONE_PT_panel(bpy.types.Panel):
         # 編集中のアニメーション選択プルダウン（Blender標準UIを利用）
         if obj.animation_data:
             layout.template_ID(obj.animation_data, "action", new="action.new")
+            if obj.animation_data.action:
+                layout.prop(settings, "root_motion_enabled", text="Root位置(XYZ)アニメを有効化", icon='HANDLE_ALIGNED')
         else:
             layout.label(text="アニメーションデータがありません", icon='INFO')
             
@@ -604,12 +721,27 @@ class AUTOBONE_PT_panel(bpy.types.Panel):
         layout.separator()
         layout.label(text="Animation Clamp Tool:")
         layout.operator(AUTOBONE_OT_bake_limits_anim.bl_idname, icon='FILE_TICK')
+        layout.operator(AUTOBONE_OT_rebuild_nla_from_actions.bl_idname, icon='NLA')
 
         layout.separator()
         layout.label(text="FBX Export:")
         box_fbx = layout.box()
         box_fbx.prop(settings, "fbx_export_name", text="", icon='FILE_BLANK')
         box_fbx.operator(AUTOBONE_OT_export_fbx.bl_idname, icon='EXPORT')
+
+        layout.separator()
+        layout.label(text="Quick Select:")
+        row_sel1 = layout.row(align=True)
+        op_h = row_sel1.operator(AUTOBONE_OT_select_bones.bl_idname, text="Hip")
+        op_h.target_part = "HIP"
+        op_s = row_sel1.operator(AUTOBONE_OT_select_bones.bl_idname, text="背骨(首・頭)")
+        op_s.target_part = "SPINE"
+        
+        row_sel2 = layout.row(align=True)
+        op_l = row_sel2.operator(AUTOBONE_OT_select_bones.bl_idname, text="左手")
+        op_l.target_part = "L_HAND"
+        op_r = row_sel2.operator(AUTOBONE_OT_select_bones.bl_idname, text="右手")
+        op_r.target_part = "R_HAND"
 
 
 classes = (
@@ -619,7 +751,9 @@ classes = (
     AUTOBONE_OT_bake_fk_to_ik,
     AUTOBONE_OT_key_ik_influence,
     AUTOBONE_OT_bake_limits_anim,
+    AUTOBONE_OT_rebuild_nla_from_actions,
     AUTOBONE_OT_export_fbx,
+    AUTOBONE_OT_select_bones,
     AUTOBONE_PT_panel,
 )
 

@@ -23,49 +23,119 @@ namespace Alice {
 
     public interface IBattleDeployer {
         void Deploy();
+        void Undeploy();
+        void ConnectRoundInputs();
+        void DisconnectRoundInputs();
     }
 
     public class BattleDeployer : IBattleDeployer, IDisposable {
+        class DeployedStriker {
+            public int PlayerId;
+            public Transform PlayerTransform;
+            public Transform OriginalParent;
+            public Vector3 OriginalPosition;
+            public Quaternion OriginalRotation;
+            public IStrikerHub Hub;
+            public AiBrain AiBrain;
+            public IDisposable InpactSubscription;
+            public IDisposable AttentionSubscription;
+        }
+
         readonly BattleConfig config;
         readonly IStrikerRegistry strikerRegistry;
         readonly IStrikerFactory strikerHubFactory;
         readonly IGamePadRegistry gamePadRegistry;
         readonly IBeatjudge beatJudge;
-        readonly List<IDisposable> subscriptions = new();
+        readonly IBattlePresenter battlePresenter;
+        readonly List<DeployedStriker> deployedStrikers = new();
+        readonly List<IDisposable> roundSubscriptions = new();
 
-        public BattleDeployer(BattleConfig config, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IBeatjudge beatJudge) {
+        public BattleDeployer(BattleConfig config, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.config = config;
             this.strikerRegistry = strikerRegistry;
             this.strikerHubFactory = strikerHubFactory;
             this.gamePadRegistry = gamePadRegistry;
             this.beatJudge = beatJudge;
+            this.battlePresenter = battlePresenter;
         }
 
         public void Deploy() {
-            DisposeSubscriptions();
+            if (deployedStrikers.Count > 0) {
+                Undeploy();
+            }
 
             for (int i = 0; i < config.Strikers.Count; i++) {
                 if (i >= config.PlayerTransforms.Count) break;
                 var playerId = i;
-                var transform = config.PlayerTransforms[i];
+                var playerTransform = config.PlayerTransforms[i];
                 var strikerEntry = config.StrikerEntries.Find(entry => entry.striker == config.Strikers[i]);
                 if (strikerEntry.prefab == null) {
                     Debug.LogError($"Striker prefab not found for {config.Strikers[i]}");
                     continue;
                 }
-                var instance = strikerHubFactory.Create(strikerEntry.prefab, transform, playerId);
+                var originalParent = playerTransform.parent;
+                var originalPosition = playerTransform.position;
+                var originalRotation = playerTransform.rotation;
+                var instance = strikerHubFactory.Create(strikerEntry.prefab, playerTransform, playerId);
+                var inpactSubscription = instance.OnInpactGenerated.Subscribe(command => battlePresenter.PlayInpact(command));
+                var attentionSubscription = instance.OnAtentionRequested.Subscribe(request => battlePresenter.RequestAttention(playerId, request));
 
                 strikerRegistry.RequestRegister(i, instance);
+
+                deployedStrikers.Add(new DeployedStriker {
+                    PlayerId = playerId,
+                    PlayerTransform = playerTransform,
+                    OriginalParent = originalParent,
+                    OriginalPosition = originalPosition,
+                    OriginalRotation = originalRotation,
+                    Hub = instance,
+                    AiBrain = instance.AiBrain,
+                    InpactSubscription = inpactSubscription,
+                    AttentionSubscription = attentionSubscription,
+                });
+
+                Debug.Log($"Deployed Striker {config.Strikers[i]} for Player {i}".ToCyan());
+            }
+        }
+
+        public void Undeploy() {
+            DisconnectRoundInputs();
+
+            foreach (var deployed in deployedStrikers) {
+                strikerRegistry.RequestUnregister(deployed.PlayerId);
+
+                if (deployed.PlayerTransform != null) {
+                    deployed.PlayerTransform.SetParent(deployed.OriginalParent);
+                    deployed.PlayerTransform.SetPositionAndRotation(deployed.OriginalPosition, deployed.OriginalRotation);
+                }
+
+                deployed.Hub?.DestroyGameObject();
+                deployed.InpactSubscription?.Dispose();
+                deployed.AttentionSubscription?.Dispose();
+            }
+
+            deployedStrikers.Clear();
+        }
+
+        public void ConnectRoundInputs() {
+            DisconnectRoundInputs();
+
+            foreach (var deployed in deployedStrikers) {
+                var playerId = deployed.PlayerId;
+                var instance = deployed.Hub;
+                var aiBrain = deployed.AiBrain;
+                if (instance == null) {
+                    continue;
+                }
 
                 var gamePad = gamePadRegistry.Get(playerId);
                 var requestedDirection = Vector2.zero;
                 var hasRequestedDirection = false;
-                var aiBrain = instance.AiBrain;
                 if (aiBrain == null) {
-                    Debug.LogError($"AiBrain not found for Player {playerId} / Striker {config.Strikers[i]}");
+                    Debug.LogError($"AiBrain not found for Player {playerId}");
                 }
 
-                subscriptions.Add(gamePad.HasGamePad.Subscribe(hasGamePad => {
+                roundSubscriptions.Add(gamePad.HasGamePad.Subscribe(hasGamePad => {
                     if (aiBrain == null) {
                         return;
                     }
@@ -78,18 +148,18 @@ namespace Alice {
                     }
                 }));
 
-                subscriptions.Add(gamePad.OnDirection.Subscribe(direction => {
+                roundSubscriptions.Add(gamePad.OnDirection.Subscribe(direction => {
                     requestedDirection = direction;
                     hasRequestedDirection = true;
                 }));
 
-                subscriptions.Add(gamePad.OnDirectionCanceled.Subscribe(_ => {
+                roundSubscriptions.Add(gamePad.OnDirectionCanceled.Subscribe(_ => {
                     hasRequestedDirection = false;
                     requestedDirection = Vector2.zero;
                 }));
 
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
-                subscriptions.Add(beatPlayer.OnBeatCommandRequested.Subscribe(beatResult => {
+                roundSubscriptions.Add(beatPlayer.OnBeatCommandRequested.Subscribe(beatResult => {
                     if (!beatResult.IsSuccess) {
                         return;
                     }
@@ -102,7 +172,7 @@ namespace Alice {
                     instance.CancelDirection();
                 }));
 
-                subscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(_ => {
+                roundSubscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(_ => {
                     if (hasRequestedDirection) {
                         instance.ChangeDirection(requestedDirection);
                         return;
@@ -112,11 +182,20 @@ namespace Alice {
                     instance.CancelDirection();
                 }));
 
-                subscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
-                    instance.RecordExecutedCommand(new BattleCommandLog(beatResult.Time, beatResult.Button));
+                roundSubscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
+                    if (!beatResult.IsSuccess) {
+                        return;
+                    }
+
+                    var specialPointGain = CalculateSpecialPointGain(beatResult.ComboCount);
+                    instance.AddSpecialPoint(specialPointGain);
+
                     switch (beatResult.Button) {
                         case GamePadButton.North:
                             instance.Special();
+                            break;
+                        case GamePadButton.Left:
+                            instance.Die();
                             break;
                         case GamePadButton.East:
                             instance.Attack();
@@ -133,26 +212,36 @@ namespace Alice {
                     }
                 }));
 
-                subscriptions.Add(Disposable.Create(() => {
+                roundSubscriptions.Add(Disposable.Create(() => {
+                    if (aiBrain != null) {
+                        gamePadRegistry.RequestUnregister(aiBrain);
+                        aiBrain.DisableAiMode();
+                    }
                     if (instance != null) {
                         instance.CancelDirection();
                     }
                 }));
-
-
-                Debug.Log($"Deployed Striker {config.Strikers[i]} for Player {i}".ToCyan());
             }
+        }
+
+        public void DisconnectRoundInputs() {
+            foreach (var subscription in roundSubscriptions) {
+                subscription.Dispose();
+            }
+            roundSubscriptions.Clear();
         }
 
         public void Dispose() {
-            DisposeSubscriptions();
+            Undeploy();
         }
 
-        void DisposeSubscriptions() {
-            foreach (var subscription in subscriptions) {
-                subscription.Dispose();
-            }
-            subscriptions.Clear();
+        float CalculateSpecialPointGain(int comboCount) {
+            var combo = Mathf.Max(1, comboCount);
+            var combo1Gain = Mathf.Max(0f, config.Combo1SpecialPointGain);
+            var convergenceRate = Mathf.Max(0f, config.SpecialPointGainConvergenceRate);
+            var convergenceValue = Mathf.Max(combo1Gain, config.SpecialPointGainConvergenceValue);
+            var x = combo - 1;
+            return convergenceValue - (convergenceValue - combo1Gain) * Mathf.Exp(-convergenceRate * x);
         }
     }
 

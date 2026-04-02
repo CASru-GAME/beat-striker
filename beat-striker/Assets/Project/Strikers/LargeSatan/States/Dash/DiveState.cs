@@ -30,7 +30,7 @@ namespace Core.LargeSatan {
             this.previousUseGravity = context.Rigidbody.useGravity;
             context.Rigidbody.useGravity = false;
             Vector3 enterVelocity = this.initialVelocity;
-            if (ShouldStopBeforeGround(context.GetSelf().Position, enterVelocity)) {
+            if (ShouldStopBeforeGround(context.GetSelf().Position.CurrentValue, enterVelocity)) {
                 enterVelocity = Vector3.zero;
             }
             context.Rigidbody.linearVelocity = enterVelocity;
@@ -47,7 +47,7 @@ namespace Core.LargeSatan {
             float decayRate = Mathf.Log(1f / ratio) / Mathf.Max(duration, 0.0001f);
             float decay = Mathf.Exp(-decayRate * elapsedTime);
             Vector3 velocity = this.initialVelocity * decay;
-            if (ShouldStopBeforeGround(context.GetSelf().Position, velocity)) {
+            if (ShouldStopBeforeGround(context.GetSelf().Position.CurrentValue, velocity)) {
                 context.Rigidbody.linearVelocity = Vector3.zero;
                 context.TryTransition(fallNode);
                 return;
