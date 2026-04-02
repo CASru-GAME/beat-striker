@@ -16,9 +16,9 @@ namespace Core.LargeHero {
             context.Rigidbody.linearVelocity = context.InputDirection * speed;
             // アニメーションの再生を開始する
                 StrikerAnimationClip animationClip;
-                if (context.InputDirection.y > 0.5f) {
+                if (context.LocalInputDirection.y > 0.5f) {
                     animationClip = UpAnimationClip;
-                } else if (context.InputDirection.y < -0.5f) {
+                } else if (context.LocalInputDirection.y < -0.5f) {
                     animationClip = BackAnimationClip;
                 } else {
                     animationClip = FrontAnimationClip;
