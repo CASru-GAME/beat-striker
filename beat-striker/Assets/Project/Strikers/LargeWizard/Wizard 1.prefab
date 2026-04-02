@@ -97,6 +97,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.FallState
   parents:
   - {fileID: 7199184492773224269}
+  - {fileID: 5017356379004291730}
   animationClip:
     clip: {fileID: -1504929105726005784, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
@@ -369,6 +370,7 @@ MonoBehaviour:
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
   aiBrain: {fileID: 0}
+  centerPositionTransform: {fileID: 0}
 --- !u!95 &8632360735648339568
 Animator:
   serializedVersion: 7
@@ -452,6 +454,8 @@ Transform:
   - {fileID: 7081092529338615846}
   - {fileID: 5881392693029680116}
   - {fileID: 7989888310175932541}
+  - {fileID: 3868088446445470085}
+  - {fileID: 2526227894246218286}
   m_Father: {fileID: 1535010232785782084}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3169582615008757670
@@ -790,6 +794,51 @@ MonoBehaviour:
     speed: 2
   fallNode: {fileID: 3250182338819609899}
   jumpSpeed: 15
+--- !u!1 &5725501378216450077
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2526227894246218286}
+  - component: {fileID: 5017356379004291730}
+  m_Layer: 0
+  m_Name: TurnableGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2526227894246218286
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5725501378216450077}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.00709, y: 0.89472, z: -0.12317}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5017356379004291730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5725501378216450077}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6b95b0ade4564c48a77d113df1a85be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.TurnableGroup
+  turnState: {fileID: 1551908941996413092}
 --- !u!1 &5731792501487714426
 GameObject:
   m_ObjectHideFlags: 0
@@ -836,6 +885,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.WalkState
   parents:
   - {fileID: 7199184492773224269}
+  - {fileID: 5017356379004291730}
   animationClip:
     clip: {fileID: -3419257869308726280, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
@@ -936,6 +986,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.WalkBackwardState
   parents:
   - {fileID: 7199184492773224269}
+  - {fileID: 5017356379004291730}
   animationClip:
     clip: {fileID: 6723761709308234962, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0
@@ -1226,6 +1277,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.IdleState
   parents:
   - {fileID: 7199184492773224269}
+  - {fileID: 5017356379004291730}
   animationClip:
     clip: {fileID: -449244673057268443, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
     fadeTime: 0.3
@@ -1283,6 +1335,57 @@ MonoBehaviour:
   audioClip: {fileID: 8300000, guid: c3a149582d15a2b49aba6e03f668f067, type: 3}
   shield: {fileID: 5717610505761413946}
   shieldScaleSpeed: 1.5
+--- !u!1 &8199587194150212587
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3868088446445470085}
+  - component: {fileID: 1551908941996413092}
+  m_Layer: 0
+  m_Name: TurnState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3868088446445470085
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8199587194150212587}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.00709, y: 0.89472, z: -0.12317}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1551908941996413092
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8199587194150212587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 721646e4e40834541b3c8f0e664d2f38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.TurnState
+  parents: []
+  animationClip:
+    clip: {fileID: -8444228808809566427, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 707581214265331847}
+  duration: 0.2
 --- !u!1 &9025604009735917705
 GameObject:
   m_ObjectHideFlags: 0

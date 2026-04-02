@@ -12,6 +12,7 @@ public record AttentionRequest(float DurationSeconds);
 public interface IStrikerContext {
     Rigidbody Rigidbody { get; }
     Vector2 InputDirection { get; }
+    Vector2 LocalInputDirection { get; }
     IEnumerable<IObservableStriker> GetAllStrikers();
     IObservableStriker GetSelf();
     IObservableStriker GetOpponent();
@@ -113,6 +114,16 @@ namespace Alice {
         public ReadOnlyReactiveProperty<float> MaxSpecialPoint => maxSpecialPointSubject;
         public Observable<StrikerInpact> OnInpactGenerated => onInpactGeneratedSubject;
         public Observable<AttentionRequest> OnAtentionRequested => onAttentionRequestedSubject;
+
+        public Vector2 LocalInputDirection {
+            get {
+                var dir = inputDirection;
+                if (Vector3.Dot(LookDirection.CurrentValue, Camera.main.transform.right) < 0) {
+                    dir.x = -dir.x;
+                }
+                return dir;
+            }
+        }
 
         public IEnumerable<IObservableStriker> GetAllStrikers() {
             return strikerRegistry.GetAllStrikers();
@@ -226,10 +237,10 @@ namespace Alice {
         }
 
         public void ChangeDirection(Vector2 direction) {
-            if (Vector3.Dot(LookDirection.CurrentValue, Camera.main.transform.right) < 0) {
+            /*if (Vector3.Dot(LookDirection.CurrentValue, Camera.main.transform.right) < 0) {
                 Debug.Log("Direction changed by camera");
                 direction.x = -direction.x;
-            }
+            }*/
             inputDirection = direction.sqrMagnitude > 0f ? direction.normalized : Vector2.zero;
         }
 

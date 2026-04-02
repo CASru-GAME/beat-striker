@@ -5,6 +5,7 @@ using R3;
 using System;
 using System.Collections.Generic;
 using Core.Striker.Components;
+using UnityEngine.Serialization;
 
 namespace Core.LargeHero {
     
@@ -16,12 +17,16 @@ namespace Core.LargeHero {
         [SerializeField] HitBox hitBox;
         IDisposable disposable;
 
-        [SerializeField] ParticleSystem particleprefab;
+    [FormerlySerializedAs("particleprefab")]
+    [FormerlySerializedAs("RushHitEffect")]
+    [SerializeField] ParticleSystem hitEffectPrefab;
         [SerializeField] AudioClip audioClip;
 
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 10;
         [SerializeField] float rushSpeed = 10f;
+        
+        
 
         readonly List<Hit> hitsInFrame = new ();
         bool hitInState;
@@ -56,7 +61,8 @@ namespace Core.LargeHero {
             if (!hitInState && hitsInFrame.Count >= 1) {
                 var closestHit = hitsInFrame.MinBy(e => Vector3.Distance(e.hitpoint, hitBox.transform.position));
 
-                Instantiate(particleprefab, closestHit.hitpoint, Quaternion.identity);
+                var hitEffect = Instantiate(hitEffectPrefab, closestHit.hitpoint, Quaternion.identity);
+                hitEffect.Play();
                 AudioSource.PlayClipAtPoint(audioClip, closestHit.hitpoint);
 
                 var nockBackDirection = Mathf.Sign(closestHit.hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;

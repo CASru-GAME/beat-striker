@@ -13,7 +13,7 @@ namespace Core.LargeHero {
         // このノードに遷移した時に呼ばれる
         public override void OnTryTransition(IStrikerNodeContext context) {
             // 横入力 > 0 なら突進
-            if (context.InputDirection.x != 0) {
+            if (context.LocalInputDirection.x != 0) {
                 context.TryTransition(rushState);
                 return;
             }

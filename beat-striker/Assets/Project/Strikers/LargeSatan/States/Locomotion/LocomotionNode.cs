@@ -10,10 +10,10 @@ namespace Core.LargeSatan {
 
         // このノードに遷移した時に呼ばれる
         public override void OnTryTransition(IStrikerNodeContext context) {
-            if(context.InputDirection.x > 0) {
+            if(context.LocalInputDirection.x > 0) {
                 context.TryTransition(walkState);
             }
-            else if(context.InputDirection.x < 0) {
+            else if(context.LocalInputDirection.x < 0) {
                 context.TryTransition(walkBackwardState);
             }
             else {

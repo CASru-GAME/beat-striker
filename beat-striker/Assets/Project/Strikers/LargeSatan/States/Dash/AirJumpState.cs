@@ -18,9 +18,10 @@ namespace Core.LargeSatan {
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
+            var requestedDirection = context.LocalInputDirection == Vector2.zero ? Vector2.up : context.LocalInputDirection;
             // アニメーションの再生を開始する
             StrikerAnimationClip clip;
-            if(direction.x < 0) {
+            if(requestedDirection.x < 0) {
                 clip = backwardClip;
             } else {
                 clip = fowardClip;

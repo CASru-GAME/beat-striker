@@ -39,10 +39,12 @@ namespace Core.LargeHero {
 
         // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {
+
         }
 
         // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
+            context.ApplyDamage(status.Damage);
         }
 
         // ミスした時に呼ばれる

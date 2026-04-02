@@ -23,8 +23,10 @@ namespace Core.LargeSatan {
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
-            int inputX = Math.Sign(context.InputDirection.x);
-            int enterDirectionSign = inputX < 0 ? -1 : 1;
+            int requestedInputX = Math.Sign(context.LocalInputDirection.x);
+            int enterDirectionSign = requestedInputX < 0 ? -1 : 1;
+            int movementInputX = Math.Sign(context.InputDirection.x);
+            int movementDirectionSign = movementInputX < 0 ? -1 : 1;
             float elapsedSinceLastEnter = Time.time - lastEnterTime;
             if(elapsedSinceLastEnter <= reentryWindowSeconds && enterDirectionSign == lastEnterDirectionSign && enterDirectionSign == 1) {
                 consecutiveEnterCount++;
@@ -44,7 +46,7 @@ namespace Core.LargeSatan {
             context.PlayAnimation(clip);
             int speedIndex = Mathf.Min(consecutiveEnterCount, consecutiveDashSpeeds.Length - 1);
             float dashSpeed = consecutiveDashSpeeds[speedIndex];
-            this.initialVelocity = dashSpeed * enterDirectionSign * Vector2.right;
+            this.initialVelocity = dashSpeed * movementDirectionSign * Vector2.right;
             this.elapsedTime = 0f;
             this.stoppedByOpponentDistance = false;
             context.Rigidbody.linearVelocity = this.initialVelocity;

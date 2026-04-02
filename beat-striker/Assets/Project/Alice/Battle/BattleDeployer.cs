@@ -132,7 +132,7 @@ namespace Alice {
                 var requestedDirection = Vector2.zero;
                 var hasRequestedDirection = false;
                 if (aiBrain == null) {
-                    Debug.LogError($"AiBrain not found for Player {playerId}");
+                    Debug.LogWarning($"AiBrain not found for Player {playerId}");
                 }
 
                 roundSubscriptions.Add(gamePad.HasGamePad.Subscribe(hasGamePad => {

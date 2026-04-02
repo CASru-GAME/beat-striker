@@ -10,9 +10,9 @@ namespace Core.LargeHero {
         [SerializeField] StrikerNode walkbackwardstate;
         // このノードに遷移した時に呼ばれる
         public override void OnTryTransition(IStrikerNodeContext context) {
-            if(context.InputDirection.x > 0) {
+            if(context.LocalInputDirection.x > 0) {
                 context.TryTransition(walkstate);
-            } else if(context.InputDirection.x < 0) {
+            } else if(context.LocalInputDirection.x < 0) {
                 context.TryTransition(walkbackwardstate);
             } else {
                 context.TryTransition(idlestate);
