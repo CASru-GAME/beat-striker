@@ -80,6 +80,10 @@ namespace Alice {
         Transform centerPositionTransform;
         Vector3 previousFramePosition;
         Vector3 frameVelocity;
+        bool hasEnemyInFrontState;
+        bool isEnemyInFront;
+        IStrikerState observedState;
+        bool hasObservedState;
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
@@ -131,7 +135,11 @@ namespace Alice {
             lookDirectionSubject.OnNext(strikerTransform.forward);
             velocitySubject.OnNext(frameVelocity);
 
+            UpdateEnemyInFrontState();
+            NotifyEnemyBehindOnStateChanged();
+
             stateMachine.CurrentState.OnUpdate(stateMachine);
+            NotifyEnemyBehindOnStateChanged();
         }
 
         public void InitializeFromLegacy(StrikerHub legacy) {
@@ -159,6 +167,9 @@ namespace Alice {
             centerPositionSubject.OnNext(centerPositionTransform.position);
             lookDirectionSubject.OnNext(strikerTransform.forward);
             velocitySubject.OnNext(frameVelocity);
+            hasEnemyInFrontState = false;
+            isEnemyInFront = true;
+            hasObservedState = false;
             initialized = true;
         }
 
@@ -271,6 +282,47 @@ namespace Alice {
 
         public void RequestAttention(AttentionRequest request) {
             onAttentionRequestedSubject.OnNext(request);
+        }
+
+        void UpdateEnemyInFrontState() {
+            var opponent = GetOpponent();
+            if (opponent.PlayerId.CurrentValue == playerId) {
+                hasEnemyInFrontState = false;
+                return;
+            }
+
+            var toOpponent = opponent.Position.CurrentValue - rb.position;
+            if (toOpponent.sqrMagnitude <= 0.0001f) {
+                return;
+            }
+
+            var nextIsEnemyInFront = Vector3.Dot(strikerTransform.forward, toOpponent.normalized) >= 0f;
+
+            if (!hasEnemyInFrontState) {
+                isEnemyInFront = nextIsEnemyInFront;
+                hasEnemyInFrontState = true;
+                return;
+            }
+
+            if (isEnemyInFront && !nextIsEnemyInFront) {
+                stateMachine.CurrentState.OnEnemyBehind(stateMachine);
+            }
+
+            isEnemyInFront = nextIsEnemyInFront;
+        }
+
+        void NotifyEnemyBehindOnStateChanged() {
+            var currentState = stateMachine.CurrentState;
+            if (hasObservedState && ReferenceEquals(observedState, currentState)) {
+                return;
+            }
+
+            observedState = currentState;
+            hasObservedState = true;
+
+            if (hasEnemyInFrontState && !isEnemyInFront) {
+                currentState.OnEnemyBehind(stateMachine);
+            }
         }
     }
 }

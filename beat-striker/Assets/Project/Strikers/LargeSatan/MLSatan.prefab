@@ -85,6 +85,7 @@ Transform:
   - {fileID: 4270217901075313201}
   - {fileID: 7257027652956354603}
   - {fileID: 8855213060342178685}
+  - {fileID: 667364031276077847}
   m_Father: {fileID: 7201851954051567416}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3444350880286515863
@@ -203,6 +204,51 @@ MonoBehaviour:
   beamPrefab: {fileID: 6905198961801543357, guid: 5715e2f14f6ca4ba19e7dc97cb1e868e, type: 3}
   firePosition: {fileID: 7339137099008609543}
   fireTime: 0.3
+--- !u!1 &935480985197784640
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2586689156375247366}
+  - component: {fileID: 7044323320413908586}
+  m_Layer: 0
+  m_Name: TurnableGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2586689156375247366
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 935480985197784640}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.02752, y: 0.70272, z: -0.07662988}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7201851954051567416}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7044323320413908586
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 935480985197784640}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d66de6d22a954222ac165bde81ee2b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.TurnableGroup
+  turnState: {fileID: 4687454295992426782}
 --- !u!1 &941579253321292430
 GameObject:
   m_ObjectHideFlags: 0
@@ -298,6 +344,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.FallState
   parents:
   - {fileID: 1412494263704707963}
+  - {fileID: 7044323320413908586}
   animationClip:
     clip: {fileID: 30488951364029045, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.3
@@ -982,6 +1029,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LocomotionState
   parents:
   - {fileID: 1412494263704707963}
+  - {fileID: 7044323320413908586}
   animationClip:
     clip: {fileID: 4972606239881407399, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.3
@@ -1034,6 +1082,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.WalkBackwardState
   parents:
   - {fileID: 1412494263704707963}
+  - {fileID: 7044323320413908586}
   animationClip:
     clip: {fileID: 3645794475287612317, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.2
@@ -1175,6 +1224,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.WalkState
   parents:
   - {fileID: 1412494263704707963}
+  - {fileID: 7044323320413908586}
   animationClip:
     clip: {fileID: 3645794475287612317, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.2
@@ -1455,6 +1505,7 @@ Transform:
   m_Children:
   - {fileID: 1755223434685806416}
   - {fileID: 3852503876839218069}
+  - {fileID: 2586689156375247366}
   - {fileID: 1329178121020529794}
   - {fileID: 1107516161165938196}
   - {fileID: 1425690710777153012}
@@ -1795,6 +1846,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.IdleState
   parents:
   - {fileID: 1412494263704707963}
+  - {fileID: 7044323320413908586}
   animationClip:
     clip: {fileID: -8035431668443965213, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.3
@@ -1953,6 +2005,57 @@ MonoBehaviour:
     clip: {fileID: 7400000, guid: 814b130d40ac549a3a2653d3aa2b3995, type: 2}
     fadeTime: 0.3
     speed: 1
+--- !u!1 &8870356801843961656
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 667364031276077847}
+  - component: {fileID: 4687454295992426782}
+  m_Layer: 0
+  m_Name: TurnState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &667364031276077847
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8870356801843961656}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.014659999, y: -0.07407004, z: -0.07662988}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1329178121020529794}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4687454295992426782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8870356801843961656}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b8491a66994b4d09a08e06f3a832e54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.TurnState
+  parents: []
+  animationClip:
+    clip: {fileID: 7400000, guid: 5642b8270a36542db9118c44d1d58eab, type: 2}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 3444350880286515863}
+  duration: 0.2
 --- !u!1001 &2543840023304968197
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -17,6 +17,7 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
     public virtual void OnEnter(IStrikerContext hub) { }
     public virtual void OnUpdate(IStrikerStateContext hub) { }
     public virtual void OnExit(IStrikerContext hub) { }
+    public virtual void OnEnemyBehind(IStrikerStateContext hub) { }
     public virtual void OnAttackRequested(IStrikerStateContext hub) { }
     public virtual void OnSpecialRequested(IStrikerStateContext hub) { }
     public virtual void OnChargeRequested(IStrikerStateContext hub) { }
@@ -50,6 +51,13 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
             p.OnHit(ctx, status);
         }
         OnHit(ctx, status);
+    }
+
+    void IStrikerState.OnEnemyBehind(IStrikerStateContext ctx) {
+        foreach (var p in parents) {
+            p.OnEnemyBehind(ctx);
+        }
+        OnEnemyBehind(ctx);
     }
 
     void IStrikerState.OnAttackRequested(IStrikerStateContext ctx) {

@@ -53,6 +53,5 @@ namespace Core.LargeSatan {
         public override void OnSpecialRequested(IStrikerStateContext context) {
             context.TryTransition(specialState, true);
         }
-
     }
 }
