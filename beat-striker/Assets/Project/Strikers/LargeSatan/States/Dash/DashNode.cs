@@ -22,14 +22,14 @@ namespace Core.LargeSatan {
         // このノードに遷移した時に呼ばれる
         public override void OnTryTransition(IStrikerNodeContext context) {
             if (groundChecker.IsGrounded) {
-                if (context.InputDirection == Vector2.zero || context.InputDirection.y > jumpThreshold) {
+                if (context.LocalInputDirection == Vector2.zero || context.LocalInputDirection.y > jumpThreshold) {
                     context.TryTransition(jumpNode);
                 }
                 else {
                     context.TryTransition(dashNode);
                 }
             }
-            else if (context.InputDirection.y < diveThreshold) {
+            else if (context.LocalInputDirection.y < diveThreshold) {
                 context.TryTransition(diveNode);
             }
             else {

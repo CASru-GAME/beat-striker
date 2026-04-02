@@ -94,6 +94,7 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
 
     public Rigidbody Rigidbody => context.Rigidbody;
     public Vector2 InputDirection => context.InputDirection;
+    public Vector2 LocalInputDirection => context.LocalInputDirection;
     public IEnumerable<Alice.IObservableStriker> GetAllStrikers() => context.GetAllStrikers();
     public Alice.IObservableStriker GetSelf() => context.GetSelf();
     public Alice.IObservableStriker GetOpponent() => context.GetOpponent();

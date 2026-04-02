@@ -1,6 +1,5 @@
 
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using VContainer;
@@ -60,10 +59,9 @@ namespace Alice {
             }
         }
 
-        sealed class PlayerJoinHandler : IInitializable, IDisposable, ITickable {
+        sealed class PlayerJoinHandler : IInitializable, IDisposable {
             readonly PlayerInputManager playerInputManager;
             readonly IObjectResolver container;
-            readonly HashSet<int> joinDebounce = new();
 
             public PlayerJoinHandler(PlayerInputManager playerInputManager, IObjectResolver container) {
                 this.playerInputManager = playerInputManager;
@@ -71,8 +69,6 @@ namespace Alice {
             }
 
             public void Initialize() {
-                playerInputManager.notificationBehavior = PlayerNotifications.InvokeCSharpEvents;
-                playerInputManager.joinBehavior = PlayerJoinBehavior.JoinPlayersManually;
                 playerInputManager.onPlayerJoined += OnPlayerJoined;
             }
 
@@ -82,56 +78,6 @@ namespace Alice {
 
             void OnPlayerJoined(PlayerInput playerInput) {
                 container.InjectGameObject(playerInput.gameObject);
-            }
-
-            public void Tick() {
-                TryJoinKeyboard();
-                TryJoinGamepads();
-            }
-
-            void TryJoinKeyboard() {
-                var keyboard = Keyboard.current;
-                if (keyboard == null) {
-                    return;
-                }
-
-                if ((keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame) && !IsPaired(keyboard)) {
-                    playerInputManager.JoinPlayer(pairWithDevice: keyboard, controlScheme: "Keybord");
-                }
-            }
-
-            void TryJoinGamepads() {
-                foreach (var gamepad in Gamepad.all) {
-                    if (gamepad == null) {
-                        continue;
-                    }
-
-                    var deviceId = gamepad.deviceId;
-                    var pressed = gamepad.startButton.isPressed || gamepad.buttonSouth.isPressed;
-
-                    if (!pressed) {
-                        joinDebounce.Remove(deviceId);
-                        continue;
-                    }
-
-                    if (joinDebounce.Contains(deviceId) || IsPaired(gamepad)) {
-                        continue;
-                    }
-
-                    playerInputManager.JoinPlayer(pairWithDevice: gamepad);
-                    joinDebounce.Add(deviceId);
-                }
-            }
-
-            static bool IsPaired(InputDevice device) {
-                foreach (var player in PlayerInput.all) {
-                    foreach (var pairedDevice in player.devices) {
-                        if (pairedDevice == device) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
             }
         }
 

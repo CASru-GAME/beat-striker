@@ -5371,6 +5371,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.WalkBackwardState
   parents:
   - {fileID: 1972027998712673296}
+  - {fileID: 1804001652326252661}
   animationClip:
     clip: {fileID: 7400000, guid: 426a8e28f4b7f49688fb43c07992a824, type: 2}
     fadeTime: 0.3
@@ -5425,6 +5426,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.WalkState
   parents:
   - {fileID: 1972027998712673296}
+  - {fileID: 1804001652326252661}
   animationClip:
     clip: {fileID: 7400000, guid: 5642b8270a36542db9118c44d1d58eab, type: 2}
     fadeTime: 0.3
@@ -5539,6 +5541,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.IdleState
   parents:
   - {fileID: 1972027998712673296}
+  - {fileID: 1804001652326252661}
   animationClip:
     clip: {fileID: 7400000, guid: 2355edfbfe7044958b42a7fa13e9e9d6, type: 2}
     fadeTime: 0.3
@@ -10530,6 +10533,7 @@ MonoBehaviour:
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
   aiBrain: {fileID: 0}
+  centerPositionTransform: {fileID: 0}
 --- !u!114 &7700695864620580821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20896,6 +20900,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.FallState
   parents:
   - {fileID: 7727835158553190740}
+  - {fileID: 1804001652326252661}
   animationClip:
     clip: {fileID: 7400000, guid: 5ec5ac53d2ae042bf9e7403a5be2a994, type: 2}
     fadeTime: 0.3
@@ -20903,6 +20908,57 @@ MonoBehaviour:
   groundChecker: {fileID: 5540710793521517555}
   landNode: {fileID: 8598810826195224236}
   attackNode: {fileID: 2246691098674093691}
+--- !u!1 &6591166326835628874
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6524319891088751306}
+  - component: {fileID: 4219088817895406957}
+  m_Layer: 0
+  m_Name: TurnState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6524319891088751306
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6591166326835628874}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.20996, y: 0.67974, z: 0.57803}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5478116573998808903}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4219088817895406957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6591166326835628874}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc4a67d7b9c9c4b0080ce3b76a6225b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSHero.TurnState
+  parents: []
+  animationClip:
+    clip: {fileID: 7322141495444865984, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 1934183999574950063}
+  duration: 0.2
 --- !u!1 &7144170272828046003
 GameObject:
   m_ObjectHideFlags: 0
@@ -25970,6 +26026,8 @@ Transform:
   - {fileID: 1774955175412150973}
   - {fileID: 6448845949008167226}
   - {fileID: 8180668532324712503}
+  - {fileID: 6524319891088751306}
+  - {fileID: 4916938104929609004}
   m_Father: {fileID: 5482928646811602349}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9022199141070511572
@@ -31186,6 +31244,51 @@ MonoBehaviour:
   energyStorage: {fileID: 6868730315006414726}
   particleprefab: {fileID: 5276073810439270087}
   audioClip: {fileID: 8300000, guid: ecb996c6dd142da4a86576a56ae574f1, type: 3}
+--- !u!1 &8297182317510090925
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4916938104929609004}
+  - component: {fileID: 1804001652326252661}
+  m_Layer: 0
+  m_Name: TurnableGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4916938104929609004
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8297182317510090925}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.20996, y: 0.67974, z: 0.57803}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5478116573998808903}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1804001652326252661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8297182317510090925}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d26f71d2e805f47cfa14e9485b261388, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.TurnableGroup
+  turnState: {fileID: 4219088817895406957}
 --- !u!1 &8344125434363324983
 GameObject:
   m_ObjectHideFlags: 0

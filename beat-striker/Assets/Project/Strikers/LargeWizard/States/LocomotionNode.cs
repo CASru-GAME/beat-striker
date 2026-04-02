@@ -18,9 +18,9 @@ namespace Core.LargeWizard {
                 return;
             }
             
-            if (context.InputDirection.x > 0) {
+            if (context.LocalInputDirection.x > 0) {
                 context.TryTransition(walkState);
-            } else if (context.InputDirection.x < 0) {
+            } else if (context.LocalInputDirection.x < 0) {
                 context.TryTransition(walkBackwardState);
             } else {
                 context.TryTransition(idleState);

@@ -20,10 +20,11 @@ namespace Core.LargeSatan {
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
             var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
+            var requestedDirection = context.LocalInputDirection == Vector2.zero ? Vector2.up : context.LocalInputDirection;
             StrikerAnimationClip clip;
-            if(direction.y > upwardThreshold) {
+            if(requestedDirection.y > upwardThreshold) {
                 clip = upwardClip;
-            } else if(direction.x < 0) {
+            } else if(requestedDirection.x < 0) {
                 clip = backwardClip;
             } else {
                 clip = fowardClip;
