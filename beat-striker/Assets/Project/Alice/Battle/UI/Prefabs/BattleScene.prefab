@@ -132,6 +132,10 @@ MonoBehaviour:
   zoomSmoothTime: 0.2
   centerSmoothTime: 0.15
   centerViewportOffset: {x: 0, y: -0.1}
+  shakeDamping: 18
+  attentionZoomDistance: 2.2
+  attentionZoomSmoothTime: 0.08
+  attentionReturnSmoothTime: 0.12
 --- !u!81 &7621081388877634510
 AudioListener:
   m_ObjectHideFlags: 0
@@ -2011,7 +2015,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &8355968897254281682
 RectTransform:
   m_ObjectHideFlags: 0

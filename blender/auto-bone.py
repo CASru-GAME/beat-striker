@@ -512,6 +512,52 @@ class AUTOBONE_OT_bake_limits_anim(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class AUTOBONE_OT_rebuild_nla_from_actions(bpy.types.Operator):
+    bl_idname = "autobone.rebuild_nla_from_actions"
+    bl_label = "Rebuild NLA from Actions"
+    bl_description = "NLAトラックを全削除し、アクションを名前順でストリップ化して並べ直します"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            self.report({'ERROR'}, "アーマチュアを選択してね")
+            return {'CANCELLED'}
+
+        if not obj.animation_data:
+            obj.animation_data_create()
+
+        anim_data = obj.animation_data
+
+        # 既存トラックを全削除
+        for track in list(anim_data.nla_tracks):
+            anim_data.nla_tracks.remove(track)
+
+        actions = sorted(
+            [act for act in bpy.data.actions if is_armature_action(act)],
+            key=lambda a: a.name.lower()
+        )
+
+        if not actions:
+            self.report({'WARNING'}, "ストリップ化できるアクションが見つかりませんでした")
+            return {'CANCELLED'}
+
+        # BlenderのNLA新規トラック追加順に合わせ、
+        # 文字列が早い名前ほど下に来るようこの順で作成する
+        for action in actions:
+            frame_start, frame_end = action.frame_range
+            start = int(frame_start)
+
+            track = anim_data.nla_tracks.new()
+            track.name = f"NLA_{action.name}"
+            strip = track.strips.new(action.name, start, action)
+            strip.action_frame_start = frame_start
+            strip.action_frame_end = frame_end
+
+        self.report({'INFO'}, f"{len(actions)}個のアクションをNLAストリップ化しました")
+        return {'FINISHED'}
+
+
 class AUTOBONE_OT_export_fbx(bpy.types.Operator):
     bl_idname = "autobone.export_fbx"
     bl_label = "FBXをエクスポート"
@@ -675,6 +721,7 @@ class AUTOBONE_PT_panel(bpy.types.Panel):
         layout.separator()
         layout.label(text="Animation Clamp Tool:")
         layout.operator(AUTOBONE_OT_bake_limits_anim.bl_idname, icon='FILE_TICK')
+        layout.operator(AUTOBONE_OT_rebuild_nla_from_actions.bl_idname, icon='NLA')
 
         layout.separator()
         layout.label(text="FBX Export:")
@@ -704,6 +751,7 @@ classes = (
     AUTOBONE_OT_bake_fk_to_ik,
     AUTOBONE_OT_key_ik_influence,
     AUTOBONE_OT_bake_limits_anim,
+    AUTOBONE_OT_rebuild_nla_from_actions,
     AUTOBONE_OT_export_fbx,
     AUTOBONE_OT_select_bones,
     AUTOBONE_PT_panel,
