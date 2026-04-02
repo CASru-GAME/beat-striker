@@ -44,7 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9e44dc799b5d40d6bab8ae00f69d2e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.StunState
-  parents: []
+  parents:
+  - {fileID: 1412494263704707963}
   animationClip:
     clip: {fileID: 7400000, guid: 0e9c93f125f444874b8c875cfb5d3bb9, type: 2}
     fadeTime: 0.3
@@ -134,6 +135,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7181211830687872934}
+  - {fileID: 1845957042917164163}
   m_Father: {fileID: 7201851954051567416}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9214202796625303400
@@ -149,61 +151,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AttackNode
   attackState: {fileID: 6465224874055907323}
-  beamState: {fileID: 6507103576790693652}
+  beamState: {fileID: 7790472173367152948}
   energyStorage: {fileID: 1367031812415324009}
---- !u!1 &828572033645621295
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8956782202065690917}
-  - component: {fileID: 6507103576790693652}
-  m_Layer: 0
-  m_Name: BeamState
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8956782202065690917
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 828572033645621295}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.01354, y: 0.76932, z: 0.23645997}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7201851954051567416}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6507103576790693652
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 828572033645621295}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32cc03bff059e43c8bae1916ab98763c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.BeamState
-  parents: []
-  animationClip:
-    clip: {fileID: 7400000, guid: 1d5a9fc15857c449d84350763a38b5e2, type: 2}
-    fadeTime: 0.3
-    speed: 1
-  nextNode: {fileID: 3444350880286515863}
-  beamPrefab: {fileID: 6905198961801543357, guid: 5715e2f14f6ca4ba19e7dc97cb1e868e, type: 3}
-  firePosition: {fileID: 7339137099008609543}
-  fireTime: 0.3
 --- !u!1 &935480985197784640
 GameObject:
   m_ObjectHideFlags: 0
@@ -759,6 +708,66 @@ MonoBehaviour:
     speed: 1
   nextNode: {fileID: 3444350880286515863}
   shield: {fileID: 2151338942946470407}
+--- !u!1 &2098820593761263378
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1845957042917164163}
+  - component: {fileID: 7790472173367152948}
+  m_Layer: 0
+  m_Name: AttackState (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1845957042917164163
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2098820593761263378}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1425690710777153012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7790472173367152948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2098820593761263378}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daa30f507bde245eaa202f0601ba8274, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AttackState
+  parents:
+  - {fileID: 1412494263704707963}
+  - {fileID: 1372486379410882081}
+  animationClip:
+    clip: {fileID: -7985434508042447432, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.2
+    speed: 1.3
+  nextNode: {fileID: 3444350880286515863}
+  hitBox: {fileID: 1959988949070900764}
+  particlePrefab: {fileID: 8810921521921811724, guid: 791869b43f6664df4b8fabe66e83c25f, type: 3}
+  audioClip: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
+  damage: 20
+  nockbackSpeed: 15
+  effectPlayer: {fileID: 839518711300973302}
+  slashSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
+  impact: 10
 --- !u!1 &2380628934714901793
 GameObject:
   m_ObjectHideFlags: 0
@@ -857,8 +866,8 @@ MonoBehaviour:
   - {fileID: 1412494263704707963}
   - {fileID: 1372486379410882081}
   animationClip:
-    clip: {fileID: 4904833986678024225, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
-    fadeTime: 0
+    clip: {fileID: -7985434508042447432, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.2
     speed: 1
   nextNode: {fileID: 3444350880286515863}
   hitBox: {fileID: 1959988949070900764}
@@ -976,7 +985,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e0d90a4174924978bae6b75c17a5716, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LargeSatanState
-  parents: []
+  parents:
+  - {fileID: 1412494263704707963}
   animationClip:
     clip: {fileID: 7400000, guid: 7ff004fe10f934c4bb24d1b14ed56790, type: 2}
     fadeTime: 0.3
@@ -1089,37 +1099,6 @@ MonoBehaviour:
     speed: 1
   walkSpeed: 0.8
   locomotionNode: {fileID: 3444350880286515863}
---- !u!1 &2984966043328174211
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7339137099008609543}
-  m_Layer: 0
-  m_Name: FirePosition
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7339137099008609543
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2984966043328174211}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.638, z: 1.136}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7053704820960463492}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3170311701473266641
 GameObject:
   m_ObjectHideFlags: 0
@@ -1512,7 +1491,6 @@ Transform:
   - {fileID: 4800021711829065458}
   - {fileID: 225902090445379099}
   - {fileID: 7670338563451008460}
-  - {fileID: 8956782202065690917}
   - {fileID: 8475223232629767289}
   - {fileID: 930349233451120807}
   - {fileID: 8190442096134038885}
@@ -1700,10 +1678,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7053704820960463492}
-  - component: {fileID: 42764961049740965}
   - component: {fileID: 7252120132950508261}
   - component: {fileID: 6062627023590161692}
   - component: {fileID: 1959988949070900764}
+  - component: {fileID: 2241637695782172256}
   m_Layer: 0
   m_Name: Sword
   m_TagString: Untagged
@@ -1720,34 +1698,12 @@ Transform:
   m_GameObject: {fileID: 7062815537291613985}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.482, y: 0.881, z: -0.363}
+  m_LocalPosition: {x: 0.961, y: 1.307, z: 0.551}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 7339137099008609543}
+  m_Children: []
   m_Father: {fileID: 2491027056567117565}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &42764961049740965
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7062815537291613985}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.30907142, y: 0.22529697, z: 0.48987007}
-  m_Center: {x: 0.41898602, y: 0.43702942, z: 0.8749316}
 --- !u!54 &7252120132950508261
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1800,6 +1756,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45b061c5884bc4ecc8e700df07079b14, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitBox
+--- !u!135 &2241637695782172256
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7062815537291613985}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.26922143
+  m_Center: {x: 0, y: 0, z: 0.0088762045}
 --- !u!1 &7080818379444526102
 GameObject:
   m_ObjectHideFlags: 0

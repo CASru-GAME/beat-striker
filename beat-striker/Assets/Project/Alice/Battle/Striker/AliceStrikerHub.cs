@@ -226,6 +226,10 @@ namespace Alice {
         }
 
         public void ChangeDirection(Vector2 direction) {
+            if (Vector3.Dot(LookDirection.CurrentValue, Camera.main.transform.right) < 0) {
+                Debug.Log("Direction changed by camera");
+                direction.x = -direction.x;
+            }
             inputDirection = direction.sqrMagnitude > 0f ? direction.normalized : Vector2.zero;
         }
 
