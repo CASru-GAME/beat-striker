@@ -6,6 +6,7 @@ namespace Core.LargeHero {
     
     public class AirDumpGroup : StrikerGroup {
         [SerializeField] float linearDamping;
+        [SerializeField] AirDashState AirDashState;
 
         // このグループに入った時に呼ばれる（前のステートがこのグループに所属していなかった場合）
         public override void OnEnter(IStrikerContext context) {
@@ -29,10 +30,12 @@ namespace Core.LargeHero {
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
+
         }
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
+            context.TryTransition(AirDashState);
         }
 
         // ガードコマンドが押された時に呼ばれる

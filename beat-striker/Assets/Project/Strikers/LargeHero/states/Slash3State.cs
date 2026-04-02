@@ -22,10 +22,11 @@ namespace Core.LargeHero {
 
         [SerializeField] ParticleSystem particleprefab;
         [SerializeField] AudioClip audioClip;
-        [SerializeField] TrailRenderer swordTrail;
+        
 
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 3;
+        [SerializeField] ParticleSystem SlashEffect;
 
         readonly List<Hit> hitsInFrame = new ();
         bool hitInState;
@@ -36,8 +37,7 @@ namespace Core.LargeHero {
             comboRequested = false;
 
             context.PlayAnimation(animationClip, OnAnimationEnd);
-            swordTrail.Clear();
-            swordTrail.enabled = true;
+            SlashEffect.Play();
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
                 if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
                     var hitpoint = collider.ClosestPoint(hitBox.transform.position);
@@ -68,8 +68,7 @@ namespace Core.LargeHero {
         }
 
         public override void OnExit(IStrikerContext context) {
-            swordTrail.enabled = false;
-            swordTrail.Clear();
+            
             disposable.Dispose();
         }
 
