@@ -107,8 +107,8 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
         context.PlayAnimation(animation, onComplete);
     }
 
-    public void GenerateInpact(StrikerInpact command) {
-        context.GenerateInpact(command);
+    public void GenerateImpact(StrikerImpact command) {
+        context.GenerateImpact(command);
     }
 
     public void RequestAttention(AttentionRequest request) {

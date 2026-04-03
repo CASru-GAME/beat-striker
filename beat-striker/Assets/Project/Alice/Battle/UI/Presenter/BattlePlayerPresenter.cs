@@ -74,7 +74,7 @@ namespace Alice {
 
         public void PresentRoundPlayableStart() {
             roundPlayable = true;
-            ringView.ActivateBattleView();
+            ringView.ActivateBattleView(playerId);
         }
 
         public void PresentRoundPlayableFinish() {

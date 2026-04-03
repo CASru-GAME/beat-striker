@@ -16,7 +16,7 @@ namespace Core.LargeSatan {
 
         public override void OnEnter(IStrikerContext context) {
             originalConstraints = context.Rigidbody.constraints;
-            context.Rigidbody.constraints = originalConstraints & ~RigidbodyConstraints.FreezeRotation;
+            context.Rigidbody.constraints = originalConstraints & ~RigidbodyConstraints.FreezeRotationY;
 
             var startRotation = context.Rigidbody.rotation;
             targetRotation = startRotation * Quaternion.Euler(0f, 180f, 0f);

@@ -13,7 +13,7 @@ namespace Alice {
         Task PlayRoundEndTransitionAsync();
         Task PlayRoundResumeTransitionAsync();
         Task PlayBattleEndingAsync(CorePlayerId winner);
-        void PlayInpact(StrikerInpact command);
+        void PlayInpact(StrikerImpact command);
         void RequestAttention(int playerId, AttentionRequest request);
     }
 
@@ -108,7 +108,7 @@ namespace Alice {
             await fadePresenter.PresentFadeInAsync();
         }
 
-        public void PlayInpact(StrikerInpact command) {
+        public void PlayInpact(StrikerImpact command) {
             stageCamera.RequestShake(command);
         }
 

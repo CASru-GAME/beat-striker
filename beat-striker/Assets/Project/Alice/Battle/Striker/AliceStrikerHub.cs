@@ -6,7 +6,7 @@ using R3;
 using UnityEngine;
 using VContainer;
 
-public record StrikerInpact(Vector3 DirectionAndMagnitude);
+public record StrikerImpact(Vector3 DirectionAndMagnitude);
 public record AttentionRequest(float DurationSeconds);
 
 public interface IStrikerContext {
@@ -18,7 +18,7 @@ public interface IStrikerContext {
     IObservableStriker GetOpponent();
     void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
     void ApplyDamage(float damage);
-    void GenerateInpact(StrikerInpact command);
+    void GenerateImpact(StrikerImpact command);
     void RequestAttention(AttentionRequest request);
 }
 
@@ -54,7 +54,7 @@ namespace Alice {
         void GiveHit(HitStatus status);
         void IntroPose();
         void VictoryPose();
-        Observable<StrikerInpact> OnInpactGenerated { get; }
+        Observable<StrikerImpact> OnInpactGenerated { get; }
         Observable<AttentionRequest> OnAtentionRequested { get; }
     }
 
@@ -82,7 +82,7 @@ namespace Alice {
         readonly ReactiveProperty<float> maxHitPointSubject = new(0f);
         readonly ReactiveProperty<float> specialPointSubject = new(0f);
         readonly ReactiveProperty<float> maxSpecialPointSubject = new(0f);
-        readonly Subject<StrikerInpact> onInpactGeneratedSubject = new();
+        readonly Subject<StrikerImpact> onInpactGeneratedSubject = new();
         readonly Subject<AttentionRequest> onAttentionRequestedSubject = new();
         IDisposable stateNameSubscription;
 
@@ -112,7 +112,7 @@ namespace Alice {
         public ReadOnlyReactiveProperty<float> MaxHitPoint => maxHitPointSubject;
         public ReadOnlyReactiveProperty<float> SpecialPoint => specialPointSubject;
         public ReadOnlyReactiveProperty<float> MaxSpecialPoint => maxSpecialPointSubject;
-        public Observable<StrikerInpact> OnInpactGenerated => onInpactGeneratedSubject;
+        public Observable<StrikerImpact> OnInpactGenerated => onInpactGeneratedSubject;
         public Observable<AttentionRequest> OnAtentionRequested => onAttentionRequestedSubject;
 
         public Vector2 LocalInputDirection {
@@ -309,7 +309,7 @@ namespace Alice {
             animationPlayer.PlayAnimation(animation, () => onComplete?.Invoke(stateMachine));
         }
 
-        public void GenerateInpact(StrikerInpact command) {
+        public void GenerateImpact(StrikerImpact command) {
             onInpactGeneratedSubject.OnNext(command);
         }
 

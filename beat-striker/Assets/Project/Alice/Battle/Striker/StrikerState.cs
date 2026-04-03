@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Alice;
+using R3;
 using UnityEngine;
 
 
@@ -29,6 +30,7 @@ public interface IStrikerState {
 public abstract class StrikerState : StrikerNode, IStrikerState {
     [SerializeField] private List<StrikerGroup> parents = new List<StrikerGroup>();
     public virtual IEnumerable<IStrikerGroup> Parents => parents;
+    protected CompositeDisposable disposables = new();
 
     private readonly List<(float delay, float elapsedTime, Action<IStrikerStateContext> action)> timeActions = new();
 
@@ -128,8 +130,16 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
         timeActions.Add((delay, 0f, action));
     }
 
+    void IStrikerState.OnEnter(IStrikerContext ctx) {
+        disposables.Dispose();
+        disposables = new CompositeDisposable();
+        OnEnter(ctx);
+    }
+
     void IStrikerState.OnExit(IStrikerContext ctx) {
         timeActions.Clear();
         OnExit(ctx);
+        disposables.Dispose();
+        disposables = new CompositeDisposable();
     }
 }

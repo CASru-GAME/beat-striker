@@ -2,7 +2,11 @@ using System;
 using System.Collections.Generic;
 
 namespace App {
-    public sealed class FuncSubject<TArg, TResult> {
+    public interface ObservableFunc<TArg, TResult> {
+        IDisposable Subscribe(Func<TArg, TResult> handler);
+    }
+
+    public sealed class FuncSubject<TArg, TResult> : ObservableFunc<TArg, TResult> {
         private readonly List<Func<TArg, TResult>> handlers = new();
 
         public IDisposable Subscribe(Func<TArg, TResult> handler) {

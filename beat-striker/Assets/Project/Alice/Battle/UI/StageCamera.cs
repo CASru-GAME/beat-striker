@@ -436,7 +436,7 @@ namespace Alice {
             currentState?.OnSequenceSkipRequested();
         }
 
-        public void RequestShake(StrikerInpact command) {
+        public void RequestShake(StrikerImpact command) {
             shakeVelocity += command.DirectionAndMagnitude;
         }
 

@@ -129,8 +129,6 @@ namespace Alice {
                 }
 
                 var gamePad = gamePadRegistry.Get(playerId);
-                var requestedDirection = Vector2.zero;
-                var hasRequestedDirection = false;
                 if (aiBrain == null) {
                     Debug.LogWarning($"AiBrain not found for Player {playerId}");
                 }
@@ -148,43 +146,17 @@ namespace Alice {
                     }
                 }));
 
-                roundSubscriptions.Add(gamePad.OnDirection.Subscribe(direction => {
-                    requestedDirection = direction;
-                    hasRequestedDirection = true;
-                }));
-
-                roundSubscriptions.Add(gamePad.OnDirectionCanceled.Subscribe(_ => {
-                    hasRequestedDirection = false;
-                    requestedDirection = Vector2.zero;
-                }));
-
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
-                roundSubscriptions.Add(beatPlayer.OnBeatCommandRequested.Subscribe(beatResult => {
-                    if (!beatResult.IsSuccess) {
-                        return;
-                    }
-
-                    if (hasRequestedDirection) {
-                        instance.ChangeDirection(requestedDirection);
-                        return;
-                    }
-
-                    instance.CancelDirection();
-                }));
-
-                roundSubscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(_ => {
-                    if (hasRequestedDirection) {
-                        instance.ChangeDirection(requestedDirection);
-                        return;
-                    }
-
-                    requestedDirection = Vector2.zero;
-                    instance.CancelDirection();
-                }));
 
                 roundSubscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
                     if (!beatResult.IsSuccess) {
                         return;
+                    }
+
+                    if (beatResult.Direction.sqrMagnitude > 0.0001f) {
+                        instance.ChangeDirection(beatResult.Direction);
+                    } else {
+                        instance.CancelDirection();
                     }
 
                     var specialPointGain = CalculateSpecialPointGain(beatResult.ComboCount);
@@ -210,6 +182,15 @@ namespace Alice {
                             instance.Guard();
                             break;
                     }
+                }));
+
+                roundSubscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(beatResult => {
+                    if (beatResult.Direction.sqrMagnitude > 0.0001f) {
+                        instance.ChangeDirection(beatResult.Direction);
+                        return;
+                    }
+
+                    instance.CancelDirection();
                 }));
 
                 roundSubscriptions.Add(Disposable.Create(() => {

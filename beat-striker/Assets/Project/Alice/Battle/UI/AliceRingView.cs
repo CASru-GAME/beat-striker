@@ -15,7 +15,9 @@ namespace Alice {
         [SerializeField] float judgeTextFadeDuration = 0.6f;
         [SerializeField] float judgeTextDropDistance = 48f;
         [SerializeField] AudioClip successSound, missSound;
+        [SerializeField] Color[] colors;
 
+        int playerId;
         float ringFirstAlpha;
         float centerRingFirstAlpha;
         bool battleViewActive;
@@ -46,7 +48,18 @@ namespace Alice {
             centerRingFirstAlpha = centerRing[0].color.a;
         }
 
-        public void ActivateBattleView() {
+        public void ActivateBattleView(int playerId) {
+            this.playerId = playerId;
+            for (var i = 0; i < centerRing.Length; i++) {
+                var color = colors[playerId % colors.Length];
+                color.a = centerRingFirstAlpha;
+                centerRing[i].color = color;
+            }
+            for (var i = 0; i < rings.Length; i++) {
+                var color = colors[playerId % colors.Length];
+                color.a = ringFirstAlpha;
+                rings[i].color = color;
+            }
             battleViewActive = true;
             centerRing[0].gameObject.SetActive(true);
             foreach (var ring in rings) {
@@ -106,7 +119,7 @@ namespace Alice {
             instance.gameObject.SetActive(true);
             instance.text = label;
 
-            var judgeColor = instance.color;
+            var judgeColor = colors[playerId % colors.Length];
             judgeColor.a = 1f;
             instance.color = judgeColor;
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -46,6 +47,7 @@ public class EffectPlayer : MonoBehaviour {
 
         effect.Play(true);
         playingEffects.Add(effect);
+
         StartCoroutine(ReturnToPoolWhenFinished(effect));
     }
 
