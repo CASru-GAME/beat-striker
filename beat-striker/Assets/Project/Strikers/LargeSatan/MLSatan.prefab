@@ -550,50 +550,6 @@ MonoBehaviour:
   receivedDamagePenaltyScale: 0.04
   winReward: 1
   losePenalty: -1
---- !u!1 &1664855047052708334
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3852503876839218069}
-  - component: {fileID: 1372486379410882081}
-  m_Layer: 0
-  m_Name: UntilGravityGroup
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3852503876839218069
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1664855047052708334}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.78574, z: -0.029299974}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7201851954051567416}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1372486379410882081
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1664855047052708334}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d9bc50e433294e73b52c57f04633ea7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.UntilGravityGroup
 --- !u!1 &1863899945261721977
 GameObject:
   m_ObjectHideFlags: 0
@@ -754,12 +710,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AttackState
   parents:
   - {fileID: 1412494263704707963}
-  - {fileID: 1372486379410882081}
   animationClip:
     clip: {fileID: -7985434508042447432, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.2
     speed: 1.3
   nextNode: {fileID: 3444350880286515863}
+  speed: 20
+  duration: 0.3
+  endSpeedRatio: 0.1
   damage: 20
   nockbackSpeed: 15
   attackPlayer: {fileID: 6365341134110932834}
@@ -860,12 +818,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AttackState
   parents:
   - {fileID: 1412494263704707963}
-  - {fileID: 1372486379410882081}
   animationClip:
     clip: {fileID: -7985434508042447432, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.2
     speed: 1
   nextNode: {fileID: 3444350880286515863}
+  speed: 20
+  duration: 0.3
+  endSpeedRatio: 0.1
   damage: 10
   nockbackSpeed: 10
   attackPlayer: {fileID: 6365341134110932834}
@@ -1563,7 +1523,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1755223434685806416}
-  - {fileID: 3852503876839218069}
   - {fileID: 2586689156375247366}
   - {fileID: 1329178121020529794}
   - {fileID: 1107516161165938196}
