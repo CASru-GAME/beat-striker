@@ -8,13 +8,6 @@ using UnityEngine;
 using UnityEngine.InputSystem.LowLevel;
 
 namespace Alice {
-
-    [System.Serializable]
-    public struct StrikerPrefab {
-        public Striker striker;
-        public StrikerHub prefab;
-    }
-
     public enum Striker {
         Hero,
         Wizard,
@@ -42,7 +35,10 @@ namespace Alice {
             public IDisposable AttentionSubscription;
         }
 
-        readonly BattleConfig config;
+        readonly IBattleSetting battleSetting;
+        readonly IBattleRuleSetting battleRuleSetting;
+        readonly IPlayerSelectSetting playerSelectSetting;
+        readonly IAppStrikerRegistry appStrikerRegistry;
         readonly IStrikerRegistry strikerRegistry;
         readonly IStrikerFactory strikerHubFactory;
         readonly IGamePadRegistry gamePadRegistry;
@@ -51,8 +47,11 @@ namespace Alice {
         readonly List<DeployedStriker> deployedStrikers = new();
         readonly List<IDisposable> roundSubscriptions = new();
 
-        public BattleDeployer(BattleConfig config, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
-            this.config = config;
+        public BattleDeployer(IBattleSetting battleSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
+            this.battleSetting = battleSetting;
+            this.battleRuleSetting = battleRuleSetting;
+            this.playerSelectSetting = playerSelectSetting;
+            this.appStrikerRegistry = appStrikerRegistry;
             this.strikerRegistry = strikerRegistry;
             this.strikerHubFactory = strikerHubFactory;
             this.gamePadRegistry = gamePadRegistry;
@@ -65,19 +64,22 @@ namespace Alice {
                 Undeploy();
             }
 
-            for (int i = 0; i < config.Strikers.Count; i++) {
-                if (i >= config.PlayerTransforms.Count) break;
+            for (int i = 0; i < battleSetting.PlayerTransforms.Count; i++) {
                 var playerId = i;
-                var playerTransform = config.PlayerTransforms[i];
-                var strikerEntry = config.StrikerEntries.Find(entry => entry.striker == config.Strikers[i]);
-                if (strikerEntry.prefab == null) {
-                    Debug.LogError($"Striker prefab not found for {config.Strikers[i]}");
+                var playerTransform = battleSetting.PlayerTransforms[i];
+                var selectedStrikerId = playerSelectSetting.GetStrikerId(i);
+                var selectedStrikerInfo = string.IsNullOrEmpty(selectedStrikerId)
+                    ? appStrikerRegistry.Default
+                    : appStrikerRegistry.GetById(selectedStrikerId);
+                var selectedStriker = selectedStrikerInfo.BattleStriker;
+                if (selectedStrikerInfo.Prefab == null) {
+                    Debug.LogError($"Striker prefab not found for {selectedStriker}");
                     continue;
                 }
                 var originalParent = playerTransform.parent;
                 var originalPosition = playerTransform.position;
                 var originalRotation = playerTransform.rotation;
-                var instance = strikerHubFactory.Create(strikerEntry.prefab, playerTransform, playerId);
+                var instance = strikerHubFactory.Create(selectedStrikerInfo.Prefab, playerTransform, playerId);
                 var inpactSubscription = instance.OnInpactGenerated.Subscribe(command => battlePresenter.PlayInpact(command));
                 var attentionSubscription = instance.OnAtentionRequested.Subscribe(request => battlePresenter.RequestAttention(playerId, request));
 
@@ -95,7 +97,7 @@ namespace Alice {
                     AttentionSubscription = attentionSubscription,
                 });
 
-                Debug.Log($"Deployed Striker {config.Strikers[i]} for Player {i}".ToCyan());
+                Debug.Log($"Deployed Striker {selectedStriker} for Player {i}".ToCyan());
             }
         }
 
@@ -221,9 +223,9 @@ namespace Alice {
 
         float CalculateSpecialPointGain(int comboCount) {
             var combo = Mathf.Max(1, comboCount);
-            var combo1Gain = Mathf.Max(0f, config.Combo1SpecialPointGain);
-            var convergenceRate = Mathf.Max(0f, config.SpecialPointGainConvergenceRate);
-            var convergenceValue = Mathf.Max(combo1Gain, config.SpecialPointGainConvergenceValue);
+            var combo1Gain = Mathf.Max(0f, battleRuleSetting.Combo1SpecialPointGain.CurrentValue);
+            var convergenceRate = Mathf.Max(0f, battleRuleSetting.SpecialPointGainConvergenceRate.CurrentValue);
+            var convergenceValue = Mathf.Max(combo1Gain, battleRuleSetting.SpecialPointGainConvergenceValue.CurrentValue);
             var x = combo - 1;
             return convergenceValue - (convergenceValue - combo1Gain) * Mathf.Exp(-convergenceRate * x);
         }

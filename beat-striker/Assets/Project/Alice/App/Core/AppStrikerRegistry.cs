@@ -7,8 +7,12 @@ namespace Alice {
         public string Id;
         public string DisplayName;
         public Striker BattleStriker;
+        public StrikerHub Prefab;
         public Sprite Portrait;
     }
+
+    public record StrikerInfo(string Id, string DisplayName, Striker BattleStriker, StrikerHub Prefab, Sprite Portrait);
+    public record PlayerStrikerSelection(int PlayerId, StrikerInfo Striker);
 
     public interface IAppStrikerRegistry {
         StrikerInfo Default { get; }
@@ -18,7 +22,6 @@ namespace Alice {
 
     public class AppStrikerRegistry : MonoBehaviour, IAppStrikerRegistry {
         [SerializeField] AppStrikerEntry[] strikerEntries;
-        [SerializeField] string defaultStrikerId;
 
         readonly Dictionary<string, StrikerInfo> strikerById = new Dictionary<string, StrikerInfo>();
         readonly List<StrikerInfo> allStrikers = new List<StrikerInfo>();
@@ -51,12 +54,12 @@ namespace Alice {
             strikerById.Clear();
             allStrikers.Clear();
             foreach (var entry in strikerEntries) {
-                var striker = new StrikerInfo(entry.Id, entry.DisplayName, entry.BattleStriker, entry.Portrait);
+                var striker = new StrikerInfo(entry.Id, entry.DisplayName, entry.BattleStriker, entry.Prefab, entry.Portrait);
                 strikerById[striker.Id] = striker;
                 allStrikers.Add(striker);
             }
 
-            defaultStriker = strikerById[defaultStrikerId];
+            defaultStriker = allStrikers[0];
             isInitialized = true;
         }
     }

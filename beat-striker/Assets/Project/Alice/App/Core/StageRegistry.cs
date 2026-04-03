@@ -9,6 +9,8 @@ namespace Alice {
         public string SceneName;
     }
 
+    public record StageInfo(string Id, string DisplayName, string SceneName);
+
     public interface IStageRegistry {
         StageInfo Default { get; }
         StageInfo GetById(string id);
@@ -17,7 +19,6 @@ namespace Alice {
 
     public class StageRegistry : MonoBehaviour, IStageRegistry {
         [SerializeField] AppStageEntry[] stageEntries;
-        [SerializeField] string defaultStageId;
 
         readonly Dictionary<string, StageInfo> stageById = new Dictionary<string, StageInfo>();
         readonly List<StageInfo> allStages = new List<StageInfo>();
@@ -55,7 +56,7 @@ namespace Alice {
                 allStages.Add(stage);
             }
 
-            defaultStage = stageById[defaultStageId];
+            defaultStage = allStages[0];
             isInitialized = true;
         }
     }

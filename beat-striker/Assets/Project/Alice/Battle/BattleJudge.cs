@@ -20,8 +20,8 @@ namespace Alice {
         readonly Dictionary<PlayerId, int> roundWins = new();
         readonly int roundsToWin;
 
-        public BattleJudge(BattleConfig battleConfig) {
-            roundsToWin = battleConfig.RoundsToWin < 1 ? 1 : battleConfig.RoundsToWin;
+        public BattleJudge(IBattleRuleSetting battleRuleSetting) {
+            roundsToWin = battleRuleSetting.RoundsToWin.CurrentValue < 1 ? 1 : battleRuleSetting.RoundsToWin.CurrentValue;
         }
 
         public BattleJudgeResult Judge(RoundResult roundResult) {

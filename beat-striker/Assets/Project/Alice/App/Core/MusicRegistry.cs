@@ -11,6 +11,8 @@ namespace Alice {
         public float Offset;
     }
 
+    public record MusicInfo(string Id, string DisplayName, AudioClip AudioClip, float Bpm, float Offset);
+
     public interface IMusicRegistry {
         MusicInfo Default { get; }
         MusicInfo GetById(string id);
@@ -19,7 +21,6 @@ namespace Alice {
 
     public class MusicRegistry : MonoBehaviour, IMusicRegistry {
         [SerializeField] AppMusicEntry[] musicEntries;
-        [SerializeField] string defaultMusicId;
 
         readonly Dictionary<string, MusicInfo> musicById = new Dictionary<string, MusicInfo>();
         readonly List<MusicInfo> allMusic = new List<MusicInfo>();
@@ -57,7 +58,7 @@ namespace Alice {
                 allMusic.Add(music);
             }
 
-            defaultMusic = musicById[defaultMusicId];
+            defaultMusic = allMusic[0];
             isInitialized = true;
         }
     }

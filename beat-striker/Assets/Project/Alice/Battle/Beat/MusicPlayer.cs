@@ -28,7 +28,8 @@ namespace Alice {
 
     public class MusicPlayer : IMusicPlayer, IDisposable {
         readonly AudioSource audioSource;
-        readonly BeatConfig beatConfig;
+        readonly IAudioSetting audioSetting;
+        readonly IBattleSelectSetting battleSelectSetting;
         readonly Subject<IMusicPlayer.BeatSignal> onGoodZoneEntered = new();
         readonly Subject<IMusicPlayer.BeatSignal> onBeatTiming = new();
         readonly Subject<float[]> onBeatTimelinePrepared = new();
@@ -49,13 +50,14 @@ namespace Alice {
         public float CurrentViewPlaybackTime => currentViewPlaybackTime;
         public float[] CurrentBeatTimeline => beats;
 
-        public MusicPlayer(AudioSource audioSource, BeatConfig beatConfig) {
+        public MusicPlayer(AudioSource audioSource, IAudioSetting audioSetting, IBattleSelectSetting battleSelectSetting) {
             this.audioSource = audioSource;
-            this.beatConfig = beatConfig;
+            this.audioSetting = audioSetting;
+            this.battleSelectSetting = battleSelectSetting;
         }
 
         public void Play() {
-            var selectedTrack = beatConfig.SelectedTrack;
+            var selectedTrack = audioSetting.GetTrack(battleSelectSetting.SelectedMusicId.CurrentValue);
             var clip = selectedTrack.AudioClip;
             audioSource.clip = clip;
             audioSource.Play();
@@ -71,7 +73,7 @@ namespace Alice {
             beatSoundSubscription = Observable.EveryUpdate().Subscribe(_ => {
                 if (!audioSource.isPlaying) return;
                 var currentTime = audioSource.time;
-                currentViewPlaybackTime = currentTime + beatConfig.ViewTimeOffset;
+                currentViewPlaybackTime = currentTime + audioSetting.ViewTimeOffset.CurrentValue;
                 onViewPlaybackTimeChanged.OnNext(currentViewPlaybackTime);
                 if (lastPlaybackTime >= 0f && currentTime < lastPlaybackTime) {
                     beatSoundIndex = 0;
@@ -98,7 +100,7 @@ namespace Alice {
         }
 
         public IMusicPlayer.BeatJudgeResult JudgeTiming(float playbackTime) {
-            var judgeTime = playbackTime + beatConfig.CommandTimeOffset;
+            var judgeTime = playbackTime + audioSetting.CommandTimeOffset.CurrentValue;
             
 
             for (var i = 0; i < beats.Length; i++) {
@@ -107,7 +109,7 @@ namespace Alice {
                     continue;
                 }
 
-                var windowStart = beatTime - beatConfig.PerfectWindow;
+                var windowStart = beatTime - audioSetting.PerfectWindow.CurrentValue;
                 if (judgeTime >= windowStart) {
                     return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Good, i, beatTime);
                 }
@@ -120,10 +122,10 @@ namespace Alice {
         }
 
         void EmitGoodZoneEvents() {
-            var judgeTime = audioSource.time + beatConfig.CommandTimeOffset;
+            var judgeTime = audioSource.time + audioSetting.CommandTimeOffset.CurrentValue;
             while (goodWindowIndex < beats.Length) {
                 var beatTime = beats[goodWindowIndex];
-                var windowStart = beatTime - beatConfig.PerfectWindow;
+                var windowStart = beatTime - audioSetting.PerfectWindow.CurrentValue;
                 if (judgeTime < windowStart) {
                     return;
                 }
