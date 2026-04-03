@@ -167,29 +167,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2356631244881786875, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
-      propertyPath: roundsToWin
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 2356631244881786875, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
-      propertyPath: 'strikers.Array.data[0]'
-      value: 3
-      objectReference: {fileID: 0}
     - target: {fileID: 2627521735593949992, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: m_Name
       value: BattleScene
-      objectReference: {fileID: 0}
-    - target: {fileID: 8342668372415363323, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
-      propertyPath: commandTimeOffset
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8342668372415363323, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
-      propertyPath: selectedTrackName
-      value: BF
-      objectReference: {fileID: 0}
-    - target: {fileID: 8342668372415363323, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
-      propertyPath: tracks.Array.data[3].offset
-      value: 0.2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

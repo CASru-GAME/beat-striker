@@ -1760,8 +1760,9 @@ MonoBehaviour:
     offset: 0
     beats: []
     beatSound: {fileID: 8300000, guid: 31935c0e1cbbd437093366eeb2649b55, type: 3}
-  commandTimeOffset: 0.2
+  commandTimeOffset: 0
   viewTimeOffset: 0
+  beatTimeOffset: 0.2
   perfectWindow: 1
 --- !u!82 &2443544900303520052
 AudioSource:
