@@ -187,6 +187,7 @@ MonoBehaviour:
   stunState: {fileID: 9011587962571819027}
   guardState: {fileID: 516385516661520776}
   chargeState: {fileID: 7677753745911566938}
+  specialState: {fileID: 7084057613530797037}
 --- !u!1 &1350733093031947850
 GameObject:
   m_ObjectHideFlags: 0
@@ -218,6 +219,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4455563737630397488}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1438116788490924890
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3513985008609795516}
+  - component: {fileID: 7084057613530797037}
+  m_Layer: 0
+  m_Name: SpecialState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3513985008609795516
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1438116788490924890}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.11934, y: 1.087, z: 1.341}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7084057613530797037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1438116788490924890}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3724751ac5d0bff4a8d37cf1c3e66e7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.SpecialState
+  parents:
+  - {fileID: 1012561812567522805}
+  animationClip:
+    clip: {fileID: -1071750961998992225, guid: 83e010e9cb9d1b14a9bb5dd03ba6f213, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 707581214265331847}
+  specialPrefab: {fileID: 1130951119586766898, guid: dbfab5bbecf025f43bc6113e4a250f6d, type: 3}
+  spawnPoint: {fileID: 3513985008609795516}
 --- !u!1 &2145360790748758675
 GameObject:
   m_ObjectHideFlags: 0
@@ -454,6 +508,7 @@ Transform:
   - {fileID: 7081092529338615846}
   - {fileID: 5881392693029680116}
   - {fileID: 7989888310175932541}
+  - {fileID: 3513985008609795516}
   - {fileID: 3868088446445470085}
   - {fileID: 2526227894246218286}
   m_Father: {fileID: 1535010232785782084}
@@ -939,6 +994,7 @@ MonoBehaviour:
   attack1State: {fileID: 4324538208326174747}
   attack2State: {fileID: 7010646026458285884}
   attack3State: {fileID: 6075840688452119110}
+  specialState: {fileID: 0}
   energyStorage: {fileID: 8599359020340622459}
 --- !u!1 &5801689502406555063
 GameObject:
@@ -1381,7 +1437,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.TurnState
   parents: []
   animationClip:
-    clip: {fileID: -8444228808809566427, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: -2420282054849679639, guid: 83e010e9cb9d1b14a9bb5dd03ba6f213, type: 3}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}

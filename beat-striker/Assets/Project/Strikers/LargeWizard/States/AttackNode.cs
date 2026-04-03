@@ -9,6 +9,7 @@ namespace Core.LargeWizard {
         [SerializeField] StrikerState attack1State;
         [SerializeField] StrikerState attack2State;
         [SerializeField] StrikerState attack3State;
+        [SerializeField] StrikerState specialState;
         [SerializeField] EnergyStorage energyStorage;
 
         // このノードに遷移した時に呼ばれる
@@ -27,8 +28,6 @@ namespace Core.LargeWizard {
             else if (energy >= 3) {
                 context.TryTransition(attack3State);
             }
-
-
         }
     }
 }
