@@ -24,15 +24,6 @@ namespace Alice {
         IPlayerGamePad Get(int playerId);
     }
 
-    public enum GamePadButton {
-        North,
-        South,
-        West,
-        East,
-        Right,
-        Left,
-    }
-
     public interface IPlayerGamePad {
         public int PlayerId { get; }
         public ReadOnlyReactiveProperty<bool> HasGamePad { get; }

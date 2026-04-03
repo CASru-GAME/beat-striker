@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using App;
 using Alice;
 using UnityEngine;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace Alice {
 
@@ -163,22 +164,24 @@ namespace Alice {
                     instance.AddSpecialPoint(specialPointGain);
 
                     switch (beatResult.Button) {
-                        case GamePadButton.North:
+                        case GamePadButton.Start:
                             instance.Special();
                             break;
-                        case GamePadButton.Left:
+                        case GamePadButton.Select:
                             instance.Die();
                             break;
                         case GamePadButton.East:
                             instance.Attack();
                             break;
-                        case GamePadButton.West:
+                        case GamePadButton.South:
                             instance.Charge();
                             break;
-                        case GamePadButton.South:
+                        case GamePadButton.West:
                             instance.Dash();
                             break;
+                        case GamePadButton.Left:
                         case GamePadButton.Right:
+                        case GamePadButton.North:
                             instance.Guard();
                             break;
                     }

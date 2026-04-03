@@ -10,6 +10,17 @@ using VContainer;
 
 namespace Alice {
 
+    public enum GamePadButton {
+        North,
+        South,
+        West,
+        East,
+        Right,
+        Left,
+        Start,
+        Select,
+    }
+
     [RequireComponent(typeof(PlayerInput))]
     public class GamePad : MonoBehaviour, GameInput.IPlayerActions, IGamePad {
         IGamePadRegistry registry;
@@ -40,7 +51,7 @@ namespace Alice {
                 RegisterIfNeeded();
             }
         }
-        
+
         void OnEnable() {
             input.asset.devices = playerInput.devices;
             input.Player.AddCallbacks(this);
@@ -114,10 +125,19 @@ namespace Alice {
             EmitButton(c, GamePadButton.Right);
         }
 
+        public void OnStart(InputAction.CallbackContext c) {
+            EmitButton(c, GamePadButton.Start);
+        }
+
+        public void OnSelect(InputAction.CallbackContext c) {
+            EmitButton(c, GamePadButton.Select);
+        }
+
         void EmitButton(InputAction.CallbackContext c, GamePadButton button) {
             if (c.started) {
                 onButtonDown.OnNext(button);
-            } else if (c.canceled) {
+            }
+            else if (c.canceled) {
                 onButtonUp.OnNext(button);
             }
         }
