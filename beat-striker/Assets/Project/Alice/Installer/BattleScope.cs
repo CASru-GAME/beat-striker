@@ -1,26 +1,24 @@
 
 using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using VContainer;
 using VContainer.Unity;
 
 namespace Alice {
     
     [RequireComponent(typeof(BattleConfig))]
-    [RequireComponent(typeof(PlayerInputManager))]
     [RequireComponent(typeof(BeatConfig))]
     [RequireComponent(typeof(AudioSource))]
-    public class AliceScope : LifetimeScope {
+    public class BattleScope : LifetimeScope {
         [SerializeField] BattlePresenter battlePresenter;
         [SerializeField] BattlePlayerPresenter[] battlePlayerPresenters;
 
         protected override void Configure(IContainerBuilder builder) {
-            builder.Register<IGamePadRegistry, GamePadRegistry>(Lifetime.Singleton);
             builder.Register<IStrikerRegistry, StrikerRegistry>(Lifetime.Singleton);
             builder.Register<IStrikerFactory, StrikerHubFactory>(Lifetime.Singleton);
             builder.Register<IBattleDeployer, BattleDeployer>(Lifetime.Singleton);
             builder.Register<IBattleJudge, BattleJudge>(Lifetime.Singleton);
+            builder.Register<IBattleAppSelectionApplier, BattleAppSelectionApplier>(Lifetime.Singleton);
             builder.RegisterInstance<IBattlePresenter>(battlePresenter);
             var battlePlayerPresenters = new IBattlePlayerPresenter[this.battlePlayerPresenters.Length];
             for (var i = 0; i < this.battlePlayerPresenters.Length; i++) {
@@ -32,18 +30,16 @@ namespace Alice {
             builder.Register<IMusicPlayer, MusicPlayer>(Lifetime.Singleton);
             builder.RegisterEntryPoint<BattleFlowStarter>(Lifetime.Singleton);
 
-            builder.RegisterInstance(GetComponent<PlayerInputManager>());
             builder.RegisterInstance(GetComponent<BattleConfig>());
             builder.RegisterInstance(GetComponent<BeatConfig>());
             builder.RegisterInstance(GetComponent<AudioSource>());
-            builder.RegisterEntryPoint<PlayerJoinHandler>(Lifetime.Singleton);
 
             builder.RegisterBuildCallback(container => {
-                _ = container.Resolve<IGamePadRegistry>();
                 _ = container.Resolve<IStrikerRegistry>();
                 _ = container.Resolve<IStrikerFactory>();
                 _ = container.Resolve<IBattleDeployer>();
                 _ = container.Resolve<IBattleJudge>();
+                _ = container.Resolve<IBattleAppSelectionApplier>();
                 _ = container.Resolve<IBattleFlow>();
                 _ = container.Resolve<IBattlePlayerPresenter[]>();
                 _ = container.Resolve<IBeatjudge>();
@@ -59,36 +55,17 @@ namespace Alice {
             }
         }
 
-        sealed class PlayerJoinHandler : IInitializable, IDisposable {
-            readonly PlayerInputManager playerInputManager;
-            readonly IObjectResolver container;
-
-            public PlayerJoinHandler(PlayerInputManager playerInputManager, IObjectResolver container) {
-                this.playerInputManager = playerInputManager;
-                this.container = container;
-            }
-
-            public void Initialize() {
-                playerInputManager.onPlayerJoined += OnPlayerJoined;
-            }
-
-            public void Dispose() {
-                playerInputManager.onPlayerJoined -= OnPlayerJoined;
-            }
-
-            void OnPlayerJoined(PlayerInput playerInput) {
-                container.InjectGameObject(playerInput.gameObject);
-            }
-        }
-
         sealed class BattleFlowStarter : IInitializable {
             readonly IBattleFlow battleFlow;
+            readonly IBattleAppSelectionApplier appSelectionApplier;
 
-            public BattleFlowStarter(IBattleFlow battleFlow) {
+            public BattleFlowStarter(IBattleFlow battleFlow, IBattleAppSelectionApplier appSelectionApplier) {
                 this.battleFlow = battleFlow;
+                this.appSelectionApplier = appSelectionApplier;
             }
 
             public void Initialize() {
+                appSelectionApplier.Apply();
                 battleFlow.StartBattle();
             }
         }

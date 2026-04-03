@@ -18,5 +18,12 @@ namespace Alice {
         public float Combo1SpecialPointGain => combo1SpecialPointGain;
         public float SpecialPointGainConvergenceRate => specialPointGainConvergenceRate;
         public float SpecialPointGainConvergenceValue => specialPointGainConvergenceValue;
+
+        public void ApplyStrikers(IReadOnlyList<Striker> selectedStrikers) {
+            strikers.Clear();
+            for (var i = 0; i < selectedStrikers.Count; i++) {
+                strikers.Add(selectedStrikers[i]);
+            }
+        }
     }
 }

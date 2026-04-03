@@ -39,6 +39,16 @@ namespace Alice {
         public float BeatTimeOffset => beatTimeOffset;
         public float PerfectWindow => perfectWindow;
 
+        public void ApplyTrackSelection(string trackId) {
+            selectedTrackName = trackId;
+        }
+
+        public void ApplyBeatOffsets(BeatOffsetSetting beatOffsetSetting) {
+            commandTimeOffset = beatOffsetSetting.CommandTimeOffset;
+            viewTimeOffset = beatOffsetSetting.ViewTimeOffset;
+            beatTimeOffset = beatOffsetSetting.BeatTimeOffset;
+        }
+
         float[] CalculateBeats(float trackLength, float bpm, float offset) {
             var beatInterval = 60f / bpm;
             var beatCount = Mathf.FloorToInt(trackLength / beatInterval);

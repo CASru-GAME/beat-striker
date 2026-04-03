@@ -11,7 +11,7 @@ nullチェック嫌いだから、nullがそうそう代入されなそうなフ
 # コード生成に関する注意
 - シンプルなデータ表現（例: AI の感知データ等）を表す型は、参照型の `record` を使ってください。`record struct`（レコード構造体）は使用しないでください。言語バージョン互換性や予期せぬ動作の原因になりやすいためです。
 
-- このプロジェクトは、VContainer と R3 を用いている。R3 のリアクティブプロパティの値は、Value ではなく CurrentValue から取得すること。プライベートフィールドは、小文字からはじめ、パブリックプロパティは大文字からはじめること。ReadOnlyReactiveProperty の実装には BehaviorSubject ではなく、ReactiveProperty を使用すること。
+- このプロジェクトは、VContainer と R3 を用いている。R3 のリアクティブプロパティの値は、Value ではなく CurrentValue から取得すること。プライベートフィールドは、小文字からはじめ、パブリックプロパティは大文字からはじめること。ReadOnlyReactiveProperty の実装には BehaviorSubject ではなく、ReactiveProperty を使用すること。Observable を Subscribe する場合は、必ず using R3; を追加すること。
 
 - UIの構造は、3層(UIのフローを制御するフロー制御、UIを統合的に管理するプレゼンター、末端のUIビュー)に分ける。
   - フロー制御: 基本的に誰からも知られない(例外あり)。下位のプレゼンターをインターフェースを介して知り、命令・購読・プロパティの取得が可能。
