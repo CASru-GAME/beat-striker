@@ -105,6 +105,8 @@ MonoBehaviour:
     Scene: 0
   - SceneName: StageselectScene1
     Scene: 2
+  - SceneName: SelectScene
+    Scene: 1
 --- !u!114 &906267494629859191
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -121,6 +123,7 @@ MonoBehaviour:
   - DisplayName: "\u52C7\u8005"
     BattleStriker: 0
     Prefab: {fileID: 8540004002704815348, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
+    PreviewModel: {fileID: -1728013695380148634, guid: 8cc39aaf813b0554da29865827638db3, type: 3}
     Portrait: {fileID: 21300000, guid: 0901c2af62c7c4a069f6c64c82d9839e, type: 3}
 --- !u!114 &7111598241528783917
 MonoBehaviour:

@@ -1,11 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Core;
-using Core.App.Types;
-using Core.App.Installers;
-using System.Linq;
-using Core.Utils;
-using Core.App.Presenters.Scene.Types;
+using R3;
+using System;
 
 public class StartButtonAnimation : MonoBehaviour {
     [Header("Line References")]
@@ -23,7 +20,6 @@ public class StartButtonAnimation : MonoBehaviour {
 
     [Header("Click Feedback")]
     public Characterselectbutton[] characterSelectButton; // Characterselectbutton参照
-    public AudioClip clickSound; // クリック時の効果音
     [Range(0f, 1f)]
     public float clickSoundVolume = 1f; // YuusyaImageクリック時の音量
     public RectTransform clickTarget; // へこませる対象（黒い画像のRectTransform）
@@ -42,6 +38,7 @@ public class StartButtonAnimation : MonoBehaviour {
     private Vector2 underEndPos;
 
     private bool animationPlayed = false;
+    private int animationToken = 0;
     private bool blackImageSoundEnabled = false; // 黒い画像の音が有効かどうか
     private float lastClickTime = -999f; // 最後にクリックした時間
     private float clickDebounceTime = 0.2f; // クリック間隔（秒）
@@ -49,61 +46,45 @@ public class StartButtonAnimation : MonoBehaviour {
     public Botan backgroundBotan; // 背景のBotanコンポーネント
 
     void Awake() {
-        this.GetBus().Subscribe<AppMessages.Changed_AllStrikersSelected>(OnAllStrikersSelected);
         // 初期位置を保存
-        if (whiteLineAbove != null) {
-            aboveEndPos = whiteLineAbove.anchoredPosition;
-            aboveStartPos = aboveEndPos + new Vector2(-lineDistance, 0); // 左側
-            whiteLineAbove.anchoredPosition = aboveStartPos;
-        }
+        aboveEndPos = whiteLineAbove.anchoredPosition;
+        aboveStartPos = aboveEndPos + new Vector2(-lineDistance, 0); // 左側
+        whiteLineAbove.anchoredPosition = aboveStartPos;
 
-        if (whiteLineUnder != null) {
-            underEndPos = whiteLineUnder.anchoredPosition;
-            underStartPos = underEndPos + new Vector2(lineDistance, 0); // 右側
-            whiteLineUnder.anchoredPosition = underStartPos;
-        }
+        underEndPos = whiteLineUnder.anchoredPosition;
+        underStartPos = underEndPos + new Vector2(lineDistance, 0); // 右側
+        whiteLineUnder.anchoredPosition = underStartPos;
 
         // Textを透明に
-        if (textCanvasGroup != null) {
-            textCanvasGroup.alpha = 0f;
-        }
+        textCanvasGroup.alpha = 0f;
 
         // 黒い画像のボタンを無効化（Botanコンポーネントのみ）
+        blackImageButtons = Array.FindAll(blackImageButtons, button => button != null);
         Debug.Log($"Black image buttons array length: {blackImageButtons.Length}");
         for (int i = 0; i < blackImageButtons.Length; i++) {
             var button = blackImageButtons[i];
-            if (button != null) {
-                Debug.Log($"Registering button {i}: {button.gameObject.name}");
-                button.enabled = false;
-                // 効果音イベントを登録（無効中は発火しない）
-                int index = i; // ローカルコピー
-                button.onClick += (data) => OnBlackImageClicked(data, index);
-            }
-            else {
-                Debug.LogWarning($"Black image button {i} is null!");
-            }
+            Debug.Log($"Registering button {i}: {button.gameObject.name}");
+            button.enabled = false;
+            // 効果音イベントを登録（無効中は発火しない）
+            int index = i; // ローカルコピー
+            button.onClick += (data) => OnBlackImageClicked(data, index);
         }
-
-        backgroundBotan.onClick += (data) => {
-            HideLines();
-        };
 
         backgroundBotan.gameObject.SetActive(false); // 最初は無効
     }
 
     void OnDestroy() {
-        this.GetBus().Unsubscribe<AppMessages.Changed_AllStrikersSelected>(OnAllStrikersSelected);
     }
 
-    void OnAllStrikersSelected(AppMessages.Changed_AllStrikersSelected msg) {
-        if (msg.allSelected) {
-            // クリックフィードバック（効果音とへこみ）
-            foreach (var b in characterSelectButton) {
-                b.PlayClickFeedback(clickTarget, scaleDownAmount, scaleDuration);
-            }
-
+    public void SetAllStrikersSelected(bool allSelected) {
+        if (allSelected) {
             // アニメーションがまだ再生されていない場合はアニメーション実行
             if (!animationPlayed) {
+                // クリックフィードバック（効果音とへこみ）
+                foreach (var b in characterSelectButton) {
+                    b.PlayClickFeedback(clickTarget, scaleDownAmount, scaleDuration);
+                }
+
                 animationPlayed = true;
                 AnimateLines();
             }
@@ -118,40 +99,41 @@ public class StartButtonAnimation : MonoBehaviour {
     }
     
     void AnimateLines() {
+        var token = ++animationToken;
+        LeanTween.cancel(whiteLineAbove.gameObject);
+        LeanTween.cancel(whiteLineUnder.gameObject);
+        LeanTween.cancel(textCanvasGroup.gameObject);
+
         // 赤いLine（左から右へ）
-        if (whiteLineAbove != null) {
-            LeanTween.move(whiteLineAbove, aboveEndPos, lineDuration)
-                .setEase(LeanTweenType.easeOutQuad);
-        }
+        LeanTween.move(whiteLineAbove, aboveEndPos, lineDuration)
+            .setEase(LeanTweenType.easeOutQuad);
 
         // 青いLine（右から左へ）
-        if (whiteLineUnder != null) {
-            LeanTween.move(whiteLineUnder, underEndPos, lineDuration)
-                .setEase(LeanTweenType.easeOutQuad)
-                .setOnComplete(ShowText);
-        }
+        LeanTween.move(whiteLineUnder, underEndPos, lineDuration)
+            .setEase(LeanTweenType.easeOutQuad)
+            .setOnComplete(() => ShowText(token));
     }
 
-    void ShowText() {
-        if (textCanvasGroup != null) {
-            if (loopTextFade) {
-                // フェードイン・アウトをループ
-                LeanTween.alphaCanvas(textCanvasGroup, 1f, textFadeDuration)
-                    .setEase(LeanTweenType.easeInOutQuad)
-                    .setLoopPingPong();
-            }
-            else {
-                // 一度だけフェードイン
-                LeanTween.alphaCanvas(textCanvasGroup, 1f, textFadeDuration)
-                    .setEase(LeanTweenType.easeInOutQuad);
-            }
+    void ShowText(int token) {
+        if (token != animationToken || !animationPlayed) {
+            return;
+        }
+
+        if (loopTextFade) {
+            // フェードイン・アウトをループ
+            LeanTween.alphaCanvas(textCanvasGroup, 1f, textFadeDuration)
+                .setEase(LeanTweenType.easeInOutQuad)
+                .setLoopPingPong();
+        }
+        else {
+            // 一度だけフェードイン
+            LeanTween.alphaCanvas(textCanvasGroup, 1f, textFadeDuration)
+                .setEase(LeanTweenType.easeInOutQuad);
         }
 
         // アニメーション完了後、黒い画像のボタンと音を有効化
         foreach (var button in blackImageButtons) {
-            if (button != null) {
-                button.enabled = true;
-            }
+            button.enabled = true;
         }
 
         // 黒い画像の音を有効化
@@ -160,39 +142,36 @@ public class StartButtonAnimation : MonoBehaviour {
     }
 
     void HideLines() {
+        var token = ++animationToken;
+        LeanTween.cancel(whiteLineAbove.gameObject);
+        LeanTween.cancel(whiteLineUnder.gameObject);
+        LeanTween.cancel(textCanvasGroup.gameObject);
+
         // 黒い画像のボタンと音を無効化
         backgroundBotan.gameObject.SetActive(false);
         foreach (var button in blackImageButtons) {
-            if (button != null) {
-                button.enabled = false;
-            }
+            button.enabled = false;
         }
         blackImageSoundEnabled = false;
 
         // テキストを非表示
-        if (textCanvasGroup != null) {
-            LeanTween.cancel(textCanvasGroup.gameObject); // 既存のLeanTweenアニメーションをキャンセル
-            LeanTween.alphaCanvas(textCanvasGroup, 0f, textFadeDuration)
-                .setEase(LeanTweenType.easeInOutQuad)
-                .setOnComplete(ReverseAnimateLines);
-        }
-        else {
-            ReverseAnimateLines();
-        }
+        LeanTween.alphaCanvas(textCanvasGroup, 0f, textFadeDuration)
+            .setEase(LeanTweenType.easeInOutQuad)
+            .setOnComplete(() => ReverseAnimateLines(token));
     }
 
-    void ReverseAnimateLines() {
-        // 赤いLine（右から左へ、元の位置に戻す）
-        if (whiteLineAbove != null) {
-            LeanTween.move(whiteLineAbove, aboveStartPos, lineDuration)
-                .setEase(LeanTweenType.easeOutQuad);
+    void ReverseAnimateLines(int token) {
+        if (token != animationToken || animationPlayed) {
+            return;
         }
 
+        // 赤いLine（右から左へ、元の位置に戻す）
+        LeanTween.move(whiteLineAbove, aboveStartPos, lineDuration)
+            .setEase(LeanTweenType.easeOutQuad);
+
         // 青いLine（左から右へ、元の位置に戻す）
-        if (whiteLineUnder != null) {
-            LeanTween.move(whiteLineUnder, underStartPos, lineDuration)
-                .setEase(LeanTweenType.easeOutQuad);
-        }
+        LeanTween.move(whiteLineUnder, underStartPos, lineDuration)
+            .setEase(LeanTweenType.easeOutQuad);
     }
 
     void OnBlackImageClicked(BotanEventData data, int buttonIndex) {
@@ -207,11 +186,9 @@ public class StartButtonAnimation : MonoBehaviour {
         lastClickTime = Time.time;
 
         // アニメーション完了後のみ効果音を再生
-        if (blackImageSoundEnabled && blackImageClickSound != null) {
+        if (blackImageSoundEnabled) {
             PlaySoundAtVolume(blackImageClickSound, blackImageClickSoundVolume);
         }
-
-        this.GetBus().Publish(new AppMessages.RequireTransition(FAFA.Battle));
     }
 
     void PlaySoundAtVolume(AudioClip clip, float volume) {

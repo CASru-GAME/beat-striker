@@ -1,16 +1,12 @@
 
 using Core;
-using Core.App.Presenters.Scene.Types;
-using Core.App.Types;
-using Core.Utils;
+using Alice;
+using R3;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEngine.TextCore.Text;
-using Core.App.Presenters.Scene.States;
-using System.Collections;
-using System.Linq;
-using Core.App.Installers;
+
+public record StrikerClickRequest(int PlayerId, Striker Striker);
 
 [RequireComponent(typeof(Botan))]
 [RequireComponent(typeof(AudioSource))]
@@ -22,36 +18,33 @@ public class Characterselectbutton : MonoBehaviour
     public TextMeshProUGUI text; // 追加のテキスト
     public AudioClip hoverSound;
     AudioSource audioSource;
-    [SerializeField] string strikerId;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    [SerializeField] Striker striker;
+    public Striker Striker => striker;
+
+    readonly Subject<StrikerClickRequest> strikerClicked = new();
+    public Observable<StrikerClickRequest> OnStrikerClicked => strikerClicked;
     void Awake() {
         botan = GetComponent<Botan>();
         audioSource = GetComponent<AudioSource>();
 
         image.color = Color.gray;
-        if (image2 != null) image2.color = Color.gray;
-        if (text != null) text.color = Color.gray;
+        image2.color = Color.gray;
+        text.color = Color.gray;
 
         botan.onHover += (e) => {
             image.color = Color.white;
-            if (image2 != null) image2.color = Color.white;
-            if (text != null) text.color = Color.white;
-            if (hoverSound != null && audioSource != null) {
-                audioSource.PlayOneShot(hoverSound);
-            }
-            int playerId = e.EventData.pointerId;
-            this.GetBus().Publish(new AppMessages.SelectStriker(new PlayerId(playerId), null));
+            image2.color = Color.white;
+            text.color = Color.white;
+            audioSource.PlayOneShot(hoverSound);
         };
         botan.onClick += (e) => {
-            int playerId = e.EventData.pointerId;
-            this.GetBus().Publish(new AppMessages.SelectStriker(new PlayerId(playerId), new StrikerId(strikerId)));
+            var playerId = e.EventData.pointerId;
+            strikerClicked.OnNext(new StrikerClickRequest(playerId, striker));
         };
         botan.onHoverExit += (e) => {
             image.color = Color.gray;
-            if (image2 != null) image2.color = Color.gray;
-            if (text != null) text.color = Color.gray;
-
-            
+            image2.color = Color.gray;
+            text.color = Color.gray;
         };
     }
 
@@ -68,5 +61,9 @@ public class Characterselectbutton : MonoBehaviour
                         .setEase(LeanTweenType.easeOutQuad);
                 });
         }
+    }
+
+    void OnDestroy() {
+        strikerClicked.Dispose();
     }
 }

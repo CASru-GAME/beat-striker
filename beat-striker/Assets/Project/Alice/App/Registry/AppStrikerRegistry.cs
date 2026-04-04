@@ -7,10 +7,11 @@ namespace Alice {
         public string DisplayName;
         public Striker BattleStriker;
         public StrikerHub Prefab;
+        public GameObject PreviewModel;
         public Sprite Portrait;
     }
 
-    public record StrikerInfo(string DisplayName, Striker BattleStriker, StrikerHub Prefab, Sprite Portrait);
+    public record StrikerInfo(string DisplayName, Striker BattleStriker, StrikerHub Prefab, GameObject PreviewModel, Sprite Portrait);
     public record PlayerStrikerSelection(int PlayerId, StrikerInfo Striker);
 
     public interface IAppStrikerRegistry {
@@ -53,7 +54,7 @@ namespace Alice {
             strikerByType.Clear();
             allStrikers.Clear();
             foreach (var entry in strikerEntries) {
-                var strikerInfo = new StrikerInfo(entry.DisplayName, entry.BattleStriker, entry.Prefab, entry.Portrait);
+                var strikerInfo = new StrikerInfo(entry.DisplayName, entry.BattleStriker, entry.Prefab, entry.PreviewModel, entry.Portrait);
                 strikerByType[strikerInfo.BattleStriker] = strikerInfo;
                 allStrikers.Add(strikerInfo);
             }

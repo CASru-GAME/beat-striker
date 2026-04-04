@@ -18,6 +18,8 @@ namespace Alice {
         bool TryGetStriker(int playerId, out Striker striker);
         IReadOnlyDictionary<int, Striker> GetAllSelections();
         void SelectStriker(int playerId, Striker striker);
+        void DeselectStriker(int playerId);
+        void ResetSelections();
     }
 
     public class PlayerSelectSetting : MonoBehaviour, IPlayerSelectSetting {
@@ -51,6 +53,19 @@ namespace Alice {
             selections[playerId] = striker;
             selectedStrikers.OnNext(new Dictionary<int, Striker>(selections));
             playerStrikerSelected.OnNext(new PlayerStrikerSelectionChanged(playerId, striker));
+        }
+
+        public void DeselectStriker(int playerId) {
+            if (!selections.Remove(playerId)) {
+                return;
+            }
+
+            selectedStrikers.OnNext(new Dictionary<int, Striker>(selections));
+        }
+
+        public void ResetSelections() {
+            selections.Clear();
+            selectedStrikers.OnNext(new Dictionary<int, Striker>(selections));
         }
     }
 }
