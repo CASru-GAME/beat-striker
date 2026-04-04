@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VContainer;
+using VContainer.Unity;
 
 namespace Alice {
     public enum AppScene {
@@ -29,9 +30,17 @@ namespace Alice {
         public async Task LoadAsync(AppScene scene) {
             try {
                 var sceneName = appScreenRegistry.GetByScene(scene).SceneName;
-                var asyncOperation = SceneManager.LoadSceneAsync(sceneName);
-                while (!asyncOperation.isDone) {
-                    await Task.Yield();
+
+                var appScope = LifetimeScope.Find<AppScope>();
+                if (appScope == null) {
+                    throw new InvalidOperationException("AppScope was not found before scene loading.");
+                }
+
+                using (LifetimeScope.EnqueueParent(appScope)) {
+                    var asyncOperation = SceneManager.LoadSceneAsync(sceneName);
+                    while (!asyncOperation.isDone) {
+                        await Task.Yield();
+                    }
                 }
             } catch (Exception e) {
                 Debug.LogError($"Failed to load scene {scene}: {e}");

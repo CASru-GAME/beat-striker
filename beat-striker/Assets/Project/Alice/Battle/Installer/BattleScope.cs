@@ -13,8 +13,8 @@ namespace Alice {
         [SerializeField] BattlePlayerPresenter[] battlePlayerPresenters;
 
         protected override void Awake() {
-            if (parentReference.Object == null && parentReference.Type == null) {
-                parentReference = ParentReference.Create<AppScope>();
+            if (parentReference.Object != null || parentReference.Type != null || !string.IsNullOrEmpty(parentReference.TypeName)) {
+                parentReference = default;
             }
 
             base.Awake();
@@ -28,9 +28,8 @@ namespace Alice {
             var battlePlayerPresenters = new IBattlePlayerPresenter[this.battlePlayerPresenters.Length];
             for (var i = 0; i < this.battlePlayerPresenters.Length; i++) {
                 battlePlayerPresenters[i] = this.battlePlayerPresenters[i];
-                builder.RegisterComponent<IBattlePlayerPresenter>(this.battlePlayerPresenters[i]);
             }
-            builder.RegisterComponent<IBattlePresenter>(battlePresenter);
+            builder.RegisterInstance<IBattlePresenter>(battlePresenter);
             builder.RegisterInstance(battlePlayerPresenters);
             builder.Register<IBattleFlow, BattleFlow>(Lifetime.Singleton);
             builder.Register<IBeatjudge, BeatJudge>(Lifetime.Singleton);
@@ -52,6 +51,11 @@ namespace Alice {
                 _ = container.Resolve<IBattlePlayerPresenter[]>();
                 _ = container.Resolve<IBeatjudge>();
                 _ = container.Resolve<IMusicPlayer>();
+
+                container.Inject(battlePresenter);
+                for (var i = 0; i < this.battlePlayerPresenters.Length; i++) {
+                    container.Inject(this.battlePlayerPresenters[i]);
+                }
 
                 InjectSceneObjects(container);
             });
