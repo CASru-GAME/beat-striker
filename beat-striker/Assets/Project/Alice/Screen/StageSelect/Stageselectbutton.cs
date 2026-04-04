@@ -1,16 +1,16 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
+using R3;
+using Alice;
 using Core;
-using Core.Utils;
-using Core.App.Presenters.Scene.Types;
-using Core.App.Types;
 
 [RequireComponent(typeof(Botan))]
 [RequireComponent(typeof(AudioSource))]
 public class Stageselectbutton : MonoBehaviour
 {
-     Botan botan;
+    Botan botan;
     public RawImage image;
     public AudioClip hoverSound;
     [Range(0f, 1f)]
@@ -24,8 +24,8 @@ public class Stageselectbutton : MonoBehaviour
     private MusicPopup currentPopup; // インスタンス化されたMusicPopup
     private static bool isPopupShown = false;
     
-    // ステージID
-    public string stageId = ""; // インスペクターで設定するステージID
+    [Header("Selection")]
+    public Stage selectedStage = Stage.Live;
     
     // black表示用
     public GameObject blackObject; // blackのImageオブジェクト
@@ -33,6 +33,17 @@ public class Stageselectbutton : MonoBehaviour
     public float blackFadeDuration = 0.5f;
     private bool isHovering = false;
     private bool hasCompletedMove = false;
+    IReadOnlyList<MusicInfo> musics;
+    readonly Subject<Stage> stageSelected = new();
+    readonly Subject<MusicInfo> musicSelected = new();
+    readonly CompositeDisposable popupSubscriptions = new();
+
+    public Observable<Stage> OnStageSelected => stageSelected;
+    public Observable<MusicInfo> OnMusicSelected => musicSelected;
+
+    public void Initialize(IReadOnlyList<MusicInfo> musics) {
+        this.musics = musics;
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
@@ -61,17 +72,14 @@ public class Stageselectbutton : MonoBehaviour
         botan.onHover += (e) => {
             if (isPopupShown) return;
             image.color = Color.white;
-            Debug.Log($"{gameObject.name} hovered - moveType: {moveType}");
             if (hoverSound != null && audioSource != null) {
                 audioSource.PlayOneShot(hoverSound, hoverSoundVolume);
             }
              if(panel != null) {
                 if (moveType == MoveType.Right) {
-                    Debug.Log($"{gameObject.name} moving right");
                     panel.MoveRight();
                 }
                 else if (moveType == MoveType.Left) {
-                    Debug.Log($"{gameObject.name} moving left");
                     panel.MoveLeft();
                 }
                 
@@ -83,22 +91,25 @@ public class Stageselectbutton : MonoBehaviour
             }
         };
         botan.onClick += (e) => {
-            Debug.Log("clicked");
             if (popupPrefab != null) {
                 // Popupをインスタンス化
                 if (currentPopup == null)
                 {
                     currentPopup = Instantiate(popupPrefab, popParent);
+
+                    popupSubscriptions.Clear();
+                    currentPopup.Initialize(selectedStage, musics);
+                    currentPopup.OnMusicSelected.Subscribe(x => musicSelected.OnNext(x)).AddTo(popupSubscriptions);
+                    currentPopup.OnHidden.Subscribe(_ => OnPopupHidden()).AddTo(popupSubscriptions);
                 }
                 currentPopup.Show();
                 isPopupShown = true;
-                this.GetBus().Publish(new AppMessages.SelectStage(new StageId(stageId)));
+                stageSelected.OnNext(selectedStage);
             }
         };
         botan.onHoverExit += (e) => {
             if (isPopupShown) return;
             image.color = Color.gray;
-            Debug.Log("hover exited");
             
             isHovering = false;
             hasCompletedMove = false;
@@ -125,14 +136,18 @@ public class Stageselectbutton : MonoBehaviour
         if (currentPopup != null)
         {
             currentPopup.Hide();
-            isPopupShown = false;
         }
+    }
+
+    void OnPopupHidden()
+    {
+        isPopupShown = false;
+        currentPopup = null;
     }
     
     void OnPanelMoveComplete()
     {
-        Debug.Log($"{gameObject.name} OnPanelMoveComplete - isHovering: {isHovering}, hasCompletedMove: {hasCompletedMove}");
-        
+
         // ホバー中で、まだフェードインしていない場合のみ実行
         if (isHovering && !hasCompletedMove)
         {
@@ -141,7 +156,6 @@ public class Stageselectbutton : MonoBehaviour
             // blackオブジェクトをフェードイン
             if (blackCanvasGroup != null)
             {
-                Debug.Log($"{gameObject.name} fading in black object");
                 LeanTween.cancel(blackObject);
                 LeanTween.alphaCanvas(blackCanvasGroup, 1f, blackFadeDuration).setEase(LeanTweenType.easeOutQuad);
             }
@@ -154,6 +168,8 @@ public class Stageselectbutton : MonoBehaviour
     
     void OnDestroy()
     {
+        popupSubscriptions.Dispose();
+
         // イベント購読解除
         if (panel != null)
         {

@@ -6,12 +6,14 @@ namespace Alice {
     public class AppMusicEntry {
         public string Id;
         public string DisplayName;
+        [TextArea]
+        public string Description;
         public AudioClip AudioClip;
         public float Bpm = 120f;
         public float Offset;
     }
 
-    public record MusicInfo(string Id, string DisplayName, AudioClip AudioClip, float Bpm, float Offset);
+    public record MusicInfo(string Id, string DisplayName, string Description, AudioClip AudioClip, float Bpm, float Offset);
 
     public interface IMusicRegistry {
         MusicInfo Default { get; }
@@ -53,7 +55,7 @@ namespace Alice {
             musicById.Clear();
             allMusic.Clear();
             foreach (var entry in musicEntries) {
-                var music = new MusicInfo(entry.Id, entry.DisplayName, entry.AudioClip, entry.Bpm, entry.Offset);
+                var music = new MusicInfo(entry.Id, entry.DisplayName, entry.Description, entry.AudioClip, entry.Bpm, entry.Offset);
                 musicById[music.Id] = music;
                 allMusic.Add(music);
             }

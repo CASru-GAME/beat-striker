@@ -13,6 +13,6 @@ public class TitleScene : MonoBehaviour {
     }
 
     public void GotoSelectScene() {
-        sceneTransitionService.RequestStartTransition(AppScene.Title);
+        sceneTransitionService.RequestStartTransition(AppScene.StageSelect);
     }
 }

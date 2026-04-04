@@ -20,14 +20,21 @@ public class AudioSpectrum : MonoBehaviour {
     [SerializeField] Image[] bars;           // InspectorでバーImageをセット
     [SerializeField] float heightMultiplier = 300f;
     public Gradient colorGradient; // Inspectorで色グラデーションをセット
+    [SerializeField] float convergenceReferenceValue = 100f;
+    [SerializeField, Range(0f, 1f)] float convergenceRatioAtReference = 0.4f;
 
     [SerializeField] AudioSource source;
 
     private bool wasPlaying = false;
+    private float[] editorBarHeights;
 
     void Awake() {
         data = new float[0];
         spectrumData = new float[(int)fftRes];
+        editorBarHeights = new float[bars.Length];
+        for (int i = 0; i < bars.Length; i++) {
+            editorBarHeights[i] = bars[i].rectTransform.sizeDelta.y;
+        }
         ResetBars();
     }
 
@@ -74,6 +81,12 @@ public class AudioSpectrum : MonoBehaviour {
             float value = spectrumData[i] * heightMultiplier;
             value = Mathf.Clamp(value, 2f, heightMultiplier);
 
+            // 入力値が基準値のときに指定割合で収束値へ近づく
+            float normalized = Mathf.Clamp01(value / convergenceReferenceValue);
+            float convergenceRatio = normalized * convergenceRatioAtReference;
+            float convergenceValue = editorBarHeights[i];
+            value = Mathf.Lerp(value, convergenceValue, convergenceRatio);
+
             // バーの高さ変更
             bars[i].rectTransform.sizeDelta = new Vector2(bars[i].rectTransform.sizeDelta.x, value);
 
@@ -83,9 +96,9 @@ public class AudioSpectrum : MonoBehaviour {
     }
 
     private void ResetBars() {
-        // barの高さを0にする
+        // barの高さをEditorで設定した初期値に戻す
         for (int i = 0; i < bars.Length; i++) {
-            bars[i].rectTransform.sizeDelta = new Vector2(bars[i].rectTransform.sizeDelta.x, 0f);
+            bars[i].rectTransform.sizeDelta = new Vector2(bars[i].rectTransform.sizeDelta.x, 0);
         }
     }
 }

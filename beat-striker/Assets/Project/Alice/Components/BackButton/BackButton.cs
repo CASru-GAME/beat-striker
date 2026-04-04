@@ -1,26 +1,26 @@
+
 using UnityEngine;
-using UnityEngine.EventSystems;
-using System.Collections;
-using Core.Utils;
-using Core.App.Presenters.Scene.Types;
-using Core.App.Types;
 using Core;
 using UnityEngine.UI;
+using R3;
 
 [RequireComponent(typeof(Botan))]
 public class Backbutton : MonoBehaviour {
     private Botan button;
-    public FAFA previousScene;
     public RawImage image;
     public float hoveredAlpha = 0.9f;
     public float hoveredScale = 1.1f;
     public float scaleAnimationDuration = 0.2f;
     private float originalAlpha;
     private Vector3 originalScale;
+    public Observable<Unit> OnBackPressed => onBackPressed;
+    private readonly Subject<Unit> onBackPressed = new();
 
     void Awake() {
         button = GetComponent<Botan>();
-        button.onClick += GoToSceneAfterSound;
+        button.onClick += data => {
+            onBackPressed.OnNext(Unit.Default);
+        };
         originalAlpha = image.color.a;
         originalScale = transform.localScale;
         button.onHover += data => {
@@ -39,9 +39,5 @@ public class Backbutton : MonoBehaviour {
         };
     }
 
-    void GoToSceneAfterSound(BotanEventData data) {
-        this.GetBus().Publish(new AppMessages.RequireTransition(previousScene));
-
-    }
 
 }

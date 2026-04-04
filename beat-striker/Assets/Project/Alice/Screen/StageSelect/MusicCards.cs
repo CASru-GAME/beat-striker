@@ -1,15 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using System;
+using R3;
+using Alice;
 using Core;
-using Core.App.Types;
 
 public class MusicCards : MonoBehaviour
 {
     [Header("Card Prefab")]
     public MusicCard cardPrefab;
-    public List<SelectableMusic> musics = new();
     private List<MusicCard> cards = new();
 
     [Header("Buttons")]
@@ -32,13 +31,20 @@ public class MusicCards : MonoBehaviour
 
     bool isAnimating = false;
     int currentIndex = 0;
+    bool initialized;
+    readonly Subject<MusicInfo> musicSelected = new();
+    readonly CompositeDisposable subscriptions = new();
 
-    void Start()
-    {
+    public Observable<MusicInfo> OnMusicSelected => musicSelected;
+
+    public void Initialize(IReadOnlyList<MusicInfo> musics) {
+        if (initialized) return;
+
         cards.Clear();
         for (int i = 0; i < musics.Count; i++) {
             var card = Instantiate(cardPrefab, transform);
             card.name = "Card_" + i;
+            card.OnMusicSelected.Subscribe(HandleMusicSelected).AddTo(subscriptions);
             card.SetMusic(musics[i]);
             cards.Add(card);
         }
@@ -46,6 +52,11 @@ public class MusicCards : MonoBehaviour
 
         rightButton.onClick += e => OnRightPressed();
         leftButton.onClick += e => OnLeftPressed();
+        initialized = true;
+    }
+
+    void HandleMusicSelected(MusicInfo musicInfo) {
+        musicSelected.OnNext(musicInfo);
     }
 
     public void OnRightPressed()
@@ -118,11 +129,8 @@ public class MusicCards : MonoBehaviour
             Destroy(soundObject, buttonClickSound.length);
         }
     }
-}
 
-[Serializable]
-public struct SelectableMusic {
-    public string description;
-    public AudioClip clip;
-    public TrackId trackId;
+    void OnDestroy() {
+        subscriptions.Dispose();
+    }
 }

@@ -45,9 +45,13 @@ namespace Alice {
 
         public async Task LoadAsync(AppScene scene) {
             EnsureInitialized();
-            var asyncOperation = SceneManager.LoadSceneAsync(sceneNameMap[scene]);
-            while (!asyncOperation.isDone) {
-                await Task.Yield();
+            try {
+                var asyncOperation = SceneManager.LoadSceneAsync(sceneNameMap[scene]);
+                while (!asyncOperation.isDone) {
+                    await Task.Yield();
+                }
+            } catch (Exception e) {
+                Debug.LogError($"Failed to load scene {scene}: {e}");
             }
         }
     }
