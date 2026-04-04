@@ -10,7 +10,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Botan))]
 public class Backbutton : MonoBehaviour {
     private Botan button;
-    public AppScene previousScene;
+    public FAFA previousScene;
     public RawImage image;
     public float hoveredAlpha = 0.9f;
     public float hoveredScale = 1.1f;

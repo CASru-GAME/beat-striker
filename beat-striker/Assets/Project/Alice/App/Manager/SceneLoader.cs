@@ -19,8 +19,8 @@ namespace Alice {
 
     [Serializable]
     public class SceneLoaderEntry {
-        public AppScene Scene;
         public string SceneName;
+        public AppScene Scene;
     }
 
     public class SceneLoader : MonoBehaviour, ISceneLoader {

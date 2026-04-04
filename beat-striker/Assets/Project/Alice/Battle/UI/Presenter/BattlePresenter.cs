@@ -22,22 +22,27 @@ namespace Alice {
 
         [Inject] IStrikerRegistry strikerRegistry;
         [Inject] IGamePadRegistry gamePadRegistry;
+        [Inject] IMusicPlayer musicPlayer;
 
         [SerializeField] StageCamera stageCamera;
         [SerializeField] BattleRoundStartView roundStartPresenter;
         [SerializeField] BattleResultTextView resultTextPresenter;
         [SerializeField] BattleFadeView fadePresenter;
+        [SerializeField] AudioClip beatSound;
 
         CompositeDisposable skipInputSubscriptions = new();
+        CompositeDisposable audioSubscriptions = new();
         bool isCinematicSkipEnabled;
 
         void Awake() {
             EnsureStageCameraConfigured();
             SubscribeSkipInput();
+            SubscribeAudioEvents();
         }
 
         void OnDestroy() {
             skipInputSubscriptions.Dispose();
+            audioSubscriptions.Dispose();
         }
 
         void EnsureStageCameraConfigured() {
@@ -151,6 +156,15 @@ namespace Alice {
                     stageCamera.RequestSequenceSkip();
                 })
                 .AddTo(subscriptions);
+        }
+
+        void SubscribeAudioEvents() {
+            audioSubscriptions.Dispose();
+            audioSubscriptions = new CompositeDisposable();
+
+            musicPlayer.OnBeatTiming
+                .Subscribe(_ => AudioSource.PlayClipAtPoint(beatSound, Vector3.zero))
+                .AddTo(audioSubscriptions);
         }
     }
 }

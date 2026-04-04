@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 357788767079721677}
   - component: {fileID: 3594947227695889073}
-  - component: {fileID: 5848584997601050363}
   m_Layer: 5
   m_Name: Stripes
   m_TagString: Untagged
@@ -52,29 +51,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1227736157225004221}
   m_CullTransparentMesh: 1
---- !u!114 &5848584997601050363
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1227736157225004221}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab807cdf82e0b4e28980da4a3e0a337d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DiagonalStripeVisual
-  transitionDuration: 1
-  stripeDelay: 0.05
-  stripes:
-  - {fileID: 3835339084747108}
-  - {fileID: 9189420765428171859}
-  - {fileID: 1245685695906103866}
-  - {fileID: 1832978992825493187}
-  - {fileID: 5394612983952232209}
-  - {fileID: 3583957402255348362}
-  - {fileID: 4883064970615125333}
-  destroyOnComplete: {fileID: 3046323803838610645}
 --- !u!1 &1559188922154484447
 GameObject:
   m_ObjectHideFlags: 0
@@ -237,9 +213,9 @@ GameObject:
   - component: {fileID: 4578019334606707748}
   - component: {fileID: 5047150455705368129}
   - component: {fileID: 4905158699597496323}
-  - component: {fileID: 6799445102725261375}
+  - component: {fileID: 5542158287853537125}
   m_Layer: 5
-  m_Name: TransitionCanvas
+  m_Name: StripeTransition
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -328,7 +304,7 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &6799445102725261375
+--- !u!114 &5542158287853537125
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -337,9 +313,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 3046323803838610645}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 20524752bb88a43e29843cf23c2dfbb3, type: 3}
+  m_Script: {fileID: 11500000, guid: ab807cdf82e0b4e28980da4a3e0a337d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Core.Extras::Core.PersistentObject
+  m_EditorClassIdentifier: Assembly-CSharp::DiagonalStripeVisual
+  transitionDuration: 1
+  stripeDelay: 0.05
+  targetRectTransform: {fileID: 357788767079721677}
+  stripes:
+  - {fileID: 3835339084747108}
+  - {fileID: 9189420765428171859}
+  - {fileID: 1245685695906103866}
+  - {fileID: 1832978992825493187}
+  - {fileID: 5394612983952232209}
+  - {fileID: 3583957402255348362}
+  - {fileID: 4883064970615125333}
 --- !u!1 &3511403497917320273
 GameObject:
   m_ObjectHideFlags: 0

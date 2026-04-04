@@ -14,22 +14,22 @@ namespace Core.App.Presenters.Scene.States {
 
         private void OnAppFlowMessage(AppMessages.RequireTransition message) {
             Debug.Log("CharacterSelectState received RequireTransition to " + message.scene);
-            if (message.scene == AppScene.StageSelect) {
+            if (message.scene == FAFA.StageSelect) {
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    AppScene.StageSelect
+                    FAFA.StageSelect
                 ));
             }
-            else if (message.scene == AppScene.Menu) {
+            else if (message.scene == FAFA.Menu) {
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    AppScene.Menu
+                    FAFA.Menu
                 ));
             }
-            else if (message.scene == AppScene.Battle) {
+            else if (message.scene == FAFA.Battle) {
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    context.setting.Stage.value == "Street" ? AppScene.Battle_Street : AppScene.Battle_Stage
+                    context.setting.Stage.value == "Street" ? FAFA.Battle_Street : FAFA.Battle_Stage
                 ));
             }
         }

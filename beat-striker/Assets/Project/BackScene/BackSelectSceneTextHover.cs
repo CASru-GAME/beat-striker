@@ -29,7 +29,7 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
     private AudioSource audioSource;
     private bool isHovering = false;
 
-    public AppScene scene = AppScene.Menu;
+    public FAFA scene = FAFA.Menu;
     private Botan botan;
     
     void Start()

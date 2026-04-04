@@ -8,8 +8,8 @@ namespace Core.App.Presenters.Scene.Types {
     public static class AppMessages {
 
         public class RequireTransition {
-            public readonly AppScene scene;
-            public RequireTransition(AppScene scene) {
+            public readonly FAFA scene;
+            public RequireTransition(FAFA scene) {
                 this.scene = scene;
             }
         }
@@ -52,9 +52,9 @@ namespace Core.App.Presenters.Scene.Types {
         }
 
         public class OnTransitionAnimationStarted {
-            public readonly AppScene scene;
+            public readonly FAFA scene;
 
-            public OnTransitionAnimationStarted(AppScene scene) {
+            public OnTransitionAnimationStarted(FAFA scene) {
                 this.scene = scene;
             }
         }

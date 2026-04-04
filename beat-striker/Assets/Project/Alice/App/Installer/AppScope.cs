@@ -1,5 +1,6 @@
 
 using System;
+using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -8,6 +9,9 @@ using VContainer.Unity;
 
 namespace Alice {
 	public class AppScope : LifetimeScope {
+		static AppScope instance;
+		readonly HashSet<int> injectedSceneHandles = new();
+
 		[SerializeField] PlayerInputManager playerInputManager;
 		[SerializeField] SceneLoader sceneLoader;
 		[SerializeField] StageRegistry stageRegistry;
@@ -20,8 +24,22 @@ namespace Alice {
 		[SerializeField] AppTransitionFactory appTransitionFactory;
 
 		protected override void Awake() {
-			base.Awake();
+			if (instance != null && instance != this) {
+				Destroy(gameObject);
+				return;
+			}
+
+			instance = this;
 			DontDestroyOnLoad(gameObject);
+			base.Awake();
+		}
+
+		protected override void OnDestroy() {
+			if (instance == this) {
+				instance = null;
+			}
+
+			base.OnDestroy();
 		}
 
 		protected override void Configure(IContainerBuilder builder) {
@@ -53,11 +71,15 @@ namespace Alice {
 				_ = container.Resolve<IAppTransitionFactory>();
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
-				InjectSceneObjects(container, SceneManager.GetActiveScene());
+				TryInjectSceneObjects(container, SceneManager.GetActiveScene());
 			});
 		}
 
-		static void InjectSceneObjects(IObjectResolver container, Scene scene) {
+		void TryInjectSceneObjects(IObjectResolver container, Scene scene) {
+			if (!injectedSceneHandles.Add(scene.handle)) {
+				return;
+			}
+
 			var rootObjects = scene.GetRootGameObjects();
 			foreach (var root in rootObjects) {
 				container.InjectGameObject(root);
@@ -66,9 +88,11 @@ namespace Alice {
 
 		sealed class SceneInjectionHandler : IInitializable, IDisposable {
 			readonly IObjectResolver container;
+			readonly AppScope appScope;
 
-			public SceneInjectionHandler(IObjectResolver container) {
+			public SceneInjectionHandler(IObjectResolver container, AppScope appScope) {
 				this.container = container;
+				this.appScope = appScope;
 			}
 
 			public void Initialize() {
@@ -80,7 +104,7 @@ namespace Alice {
 			}
 
 			void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
-				InjectSceneObjects(container, scene);
+				appScope.TryInjectSceneObjects(container, scene);
 			}
 		}
 

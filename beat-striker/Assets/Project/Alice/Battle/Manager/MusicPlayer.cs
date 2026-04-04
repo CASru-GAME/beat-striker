@@ -28,6 +28,7 @@ namespace Alice {
 
     public class MusicPlayer : IMusicPlayer, IDisposable {
         readonly AudioSource audioSource;
+        readonly IMusicRegistry musicRegistry;
         readonly IAudioSetting audioSetting;
         readonly IBattleSelectSetting battleSelectSetting;
         readonly Subject<IMusicPlayer.BeatSignal> onGoodZoneEntered = new();
@@ -36,7 +37,6 @@ namespace Alice {
         readonly Subject<float> onViewPlaybackTimeChanged = new();
         IDisposable beatSoundSubscription;
         float[] beats = Array.Empty<float>();
-        int beatSoundIndex;
         int goodWindowIndex;
         int beatTimingIndex;
         float lastPlaybackTime;
@@ -50,22 +50,22 @@ namespace Alice {
         public float CurrentViewPlaybackTime => currentViewPlaybackTime;
         public float[] CurrentBeatTimeline => beats;
 
-        public MusicPlayer(AudioSource audioSource, IAudioSetting audioSetting, IBattleSelectSetting battleSelectSetting) {
+        public MusicPlayer(AudioSource audioSource, IMusicRegistry musicRegistry, IAudioSetting audioSetting, IBattleSelectSetting battleSelectSetting) {
             this.audioSource = audioSource;
+            this.musicRegistry = musicRegistry;
             this.audioSetting = audioSetting;
             this.battleSelectSetting = battleSelectSetting;
         }
 
         public void Play() {
-            var selectedTrack = audioSetting.GetTrack(battleSelectSetting.SelectedMusicId.CurrentValue);
-            var clip = selectedTrack.AudioClip;
+            var selectedMusic = musicRegistry.GetById(battleSelectSetting.SelectedMusicId.CurrentValue);
+            var clip = selectedMusic.AudioClip;
             audioSource.clip = clip;
             audioSource.Play();
 
             beatSoundSubscription?.Dispose();
-            beats = selectedTrack.beats;
+            beats = audioSetting.CalculateBeats(selectedMusic);
             onBeatTimelinePrepared.OnNext(beats);
-            beatSoundIndex = 0;
             goodWindowIndex = 0;
             beatTimingIndex = 0;
             lastPlaybackTime = -1f;
@@ -76,18 +76,12 @@ namespace Alice {
                 currentViewPlaybackTime = currentTime + audioSetting.ViewTimeOffset.CurrentValue;
                 onViewPlaybackTimeChanged.OnNext(currentViewPlaybackTime);
                 if (lastPlaybackTime >= 0f && currentTime < lastPlaybackTime) {
-                    beatSoundIndex = 0;
                     goodWindowIndex = 0;
                     beatTimingIndex = 0;
                 }
 
                 EmitGoodZoneEvents();
                 EmitBeatTimingEvents();
-
-                while (beatSoundIndex < beats.Length && audioSource.time >= beats[beatSoundIndex]) {
-                    AudioSource.PlayClipAtPoint(selectedTrack.beatSound, Vector3.zero);
-                    beatSoundIndex += 1;
-                }
 
                 lastPlaybackTime = currentTime;
             });

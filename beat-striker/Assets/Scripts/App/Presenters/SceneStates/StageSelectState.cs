@@ -15,25 +15,25 @@ namespace Core.App.Presenters.Scene.States {
 
         private void OnAppFlowMessage(AppMessages.RequireTransition message) {
             Debug.Log($"StageSelectState: Received RequireTransition to {message.scene}");
-            if (message.scene == AppScene.Title) {
+            if (message.scene == FAFA.Title) {
                 Debug.Log("StageSelectState: Transitioning to Title");
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    AppScene.Title
+                    FAFA.Title
                 ));
             }
-            else if (message.scene == AppScene.Menu) {
+            else if (message.scene == FAFA.Menu) {
                 Debug.Log("StageSelectState: Transitioning to Menu");
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    AppScene.Menu
+                    FAFA.Menu
                 ));
             }
-            else if (message.scene == AppScene.CharacterSelect) {
+            else if (message.scene == FAFA.CharacterSelect) {
                 Debug.Log("StageSelectState: Transitioning to CharacterSelect");
                 context.controller.ChangeState(new TransitionState(
                     context,
-                    AppScene.CharacterSelect
+                    FAFA.CharacterSelect
                 ));
             }
             else {

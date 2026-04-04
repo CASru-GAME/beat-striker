@@ -34,7 +34,6 @@ namespace Core {
             onClickEvent?.Invoke();
             onClick?.Invoke(new BotanEventData(eventData));
             if (clickSound != null) {
-                Debug.Log("Click sound played");
                 AudioSource.PlayClipAtPoint(clickSound, Camera.main.transform.position);
             }
         }

@@ -10,13 +10,13 @@ using UnityEngine.SceneManagement;
 
 namespace Core.App.Views.Scene {
     public class SceneView : MonoBehaviour, ISceneView {
-        private Dictionary<AppScene, string> sceneNames = new();
+        private Dictionary<FAFA, string> sceneNames = new();
 
-        public void Construct(Dictionary<AppScene, string> sceneNames) {
+        public void Construct(Dictionary<FAFA, string> sceneNames) {
             this.sceneNames = sceneNames;
         }
 
-        public void LoadScene(AppScene scene, Action<AppScene> OnSceneLoadCompleted) {
+        public void LoadScene(FAFA scene, Action<FAFA> OnSceneLoadCompleted) {
             if (!sceneNames.ContainsKey(scene)) {
                 Debug.LogError($"Scene '{scene}' not found in sceneNames dictionary.");
                 return;
@@ -25,7 +25,7 @@ namespace Core.App.Views.Scene {
             StartCoroutine(LoadSceneAsyncCoroutine(scene, OnSceneLoadCompleted));
         }
 
-        private IEnumerator LoadSceneAsyncCoroutine(AppScene scene, Action<AppScene> OnSceneLoadCompleted) {
+        private IEnumerator LoadSceneAsyncCoroutine(FAFA scene, Action<FAFA> OnSceneLoadCompleted) {
             if (!sceneNames.ContainsKey(scene)) {
                 Debug.LogError($"Scene '{scene}' not found in sceneNames dictionary.");
                 yield break;

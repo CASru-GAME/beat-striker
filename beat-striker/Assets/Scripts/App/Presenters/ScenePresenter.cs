@@ -13,7 +13,7 @@ namespace Core.App.Presenters.Scene {
         private ISceneState currentState;
 
         public SceneStatePresenter(
-            AppScene firstScene,
+            FAFA firstScene,
             ISceneView view,
             IBus bus,
             IBattleSettingModel setting,
@@ -39,15 +39,15 @@ namespace Core.App.Presenters.Scene {
             currentState.Enter();
         }
 
-        public ISceneState CreateSceneState(AppScene scene, SceneStateContext context) {
+        public ISceneState CreateSceneState(FAFA scene, SceneStateContext context) {
             return scene switch {
-                AppScene.Title => new TitleState(context),
-                AppScene.Menu => new MenuState(context),
-                AppScene.StageSelect => new StageSelectState(context),
-                AppScene.CharacterSelect => new CharacterSelectState(context),
-                AppScene.Battle => new BattleState(context),
-                AppScene.Battle_Stage => new BattleState(context),
-                AppScene.Battle_Street => new BattleState(context),
+                FAFA.Title => new TitleState(context),
+                FAFA.Menu => new MenuState(context),
+                FAFA.StageSelect => new StageSelectState(context),
+                FAFA.CharacterSelect => new CharacterSelectState(context),
+                FAFA.Battle => new BattleState(context),
+                FAFA.Battle_Stage => new BattleState(context),
+                FAFA.Battle_Street => new BattleState(context),
                 _ => new TitleState(context),
             };
         }

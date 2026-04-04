@@ -6,6 +6,7 @@ using R3;
 using UnityEngine;
 using UnityEngine.Pool;
 
+[AddComponentMenu(" 🟠Effect Player")]
 public class AttackPlayer : MonoBehaviour {
     [SerializeField] EffectPlayer attackEffectPlayer, hitEffectPlayer;
     [SerializeField] AudioClip attackSound, hitSound;

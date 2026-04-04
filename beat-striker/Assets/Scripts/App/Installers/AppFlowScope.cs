@@ -14,7 +14,7 @@ namespace Core.App.Installers {
 
     [System.Serializable]
     public struct SceneNameEntry {
-        public AppScene scene;
+        public FAFA scene;
         public string sceneName;
     }
 
@@ -33,7 +33,7 @@ namespace Core.App.Installers {
         [SerializeField] Canvas canvas;
         [SerializeField] CursorScope cursorPrefab;
         [SerializeField] SceneNameEntry[] sceneNameEntries;
-        [SerializeField] AppScene firstScene;
+        [SerializeField] FAFA firstScene;
         [SerializeField] StrikerId defaultStrikerId;
         [SerializeField] StageId defaultStageId;
         [SerializeField] TrackId defaultTrackId;
@@ -75,7 +75,7 @@ namespace Core.App.Installers {
             sceneView.Construct(CreateSceneNameDictFromEntries());
             
             // 現在のシーンから初期ステートを決定
-            AppScene initialScene = DetermineInitialScene();
+            FAFA initialScene = DetermineInitialScene();
             Debug.Log($"AppFlowScope: Starting with scene {initialScene}");
             
             // Lifeを有効化してからPresenterを作成（これによりBGMManagerのSubscribeが先に実行される）
@@ -88,7 +88,7 @@ namespace Core.App.Installers {
 
         }
         
-        AppScene DetermineInitialScene() {
+        FAFA DetermineInitialScene() {
             // 現在ロードされているシーン名を取得
             string currentSceneName = SceneManager.GetActiveScene().name;
             Debug.Log($"AppFlowScope: Current scene name is '{currentSceneName}'");
@@ -106,8 +106,8 @@ namespace Core.App.Installers {
             return firstScene;
         }
 
-        Dictionary<AppScene, string> CreateSceneNameDictFromEntries() {
-            var dict = new Dictionary<AppScene, string>();
+        Dictionary<FAFA, string> CreateSceneNameDictFromEntries() {
+            var dict = new Dictionary<FAFA, string>();
             foreach (var entry in sceneNameEntries) {
                 dict[entry.scene] = entry.sceneName;
             }

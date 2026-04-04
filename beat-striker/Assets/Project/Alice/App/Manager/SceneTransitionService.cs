@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using App;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,7 +9,7 @@ namespace Alice {
 
     public interface ISceneTransitionService {
         StartResult RequestStartTransition(AppScene nextScene);
-        Task<ExitResult> RequestEndTransition(AppScene currentScene);
+        Task<ExitResult> RequestEndTransitionAsync(AppScene currentScene);
 
         public record StartResult(bool IsSuccess);
         public record ExitResult(bool IsSuccess);
@@ -38,6 +39,7 @@ namespace Alice {
 
         public ISceneTransitionService.StartResult RequestStartTransition(AppScene nextScene) {
             if (currentState != TransitionState.Idle) {
+                Debug.LogWarning($"Cannot start transition to {nextScene} because current state is {currentState}");
                 return new ISceneTransitionService.StartResult(false);
             }
 
@@ -54,8 +56,10 @@ namespace Alice {
             try {
                 await currentTransition.PresentTransitionOut(new TransitionContext());
 
+
                 currentState = TransitionState.Loading;
                 await sceneLoader.LoadAsync(nextScene);
+                Debug.Log($"Scene {nextScene} loaded".ToCyan());
 
                 currentScene = nextScene;
                 
@@ -67,9 +71,23 @@ namespace Alice {
             }
         }
 
-        public async Task<ISceneTransitionService.ExitResult> RequestEndTransition(AppScene scene) {
+        public async Task<ISceneTransitionService.ExitResult> RequestEndTransitionAsync(AppScene scene) {
+            await WaitForReadyOrIdleAsync();
+
+            if (currentState == TransitionState.Idle) {
+                Debug.LogWarning($"Cannot end transition for {scene} because current state is Idle");
+                return new ISceneTransitionService.ExitResult(true);
+            }
+
             if (currentState != TransitionState.Ready) {
+                Debug.LogWarning($"Cannot end transition for {scene} because current state is {currentState}");
                 return new ISceneTransitionService.ExitResult(false);
+            }
+
+            if (currentTransition == null) {
+                Debug.LogWarning($"No transition found for scene {scene}. Skipping transition.");
+                currentState = TransitionState.Idle;
+                return new ISceneTransitionService.ExitResult(true);
             }
             
             try {
@@ -87,6 +105,12 @@ namespace Alice {
                 Debug.LogException(ex);
                 currentState = TransitionState.Idle;
                 return new ISceneTransitionService.ExitResult(false);
+            }
+        }
+
+        async Task WaitForReadyOrIdleAsync() {
+            while (currentState == TransitionState.Exiting || currentState == TransitionState.Loading) {
+                await Task.Yield();
             }
         }
     }

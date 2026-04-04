@@ -46,7 +46,7 @@ public class MusicCard : MonoBehaviour {
             this.GetBus().Publish(new AppMessages.SelectTrack(currentMusic.trackId));
             
             Debug.Log("MusicCard: Publishing RequireTransition to CharacterSelect");
-            this.GetBus().Publish(new AppMessages.RequireTransition(AppScene.CharacterSelect));
+            this.GetBus().Publish(new AppMessages.RequireTransition(FAFA.CharacterSelect));
             
             Debug.Log("MusicCard: Messages published successfully");
         };

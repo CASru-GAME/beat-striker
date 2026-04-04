@@ -10,6 +10,6 @@ namespace Core.App.Presenters.Scene {
         /// <summary>
         /// シーンを読み込む
         /// </summary>
-        void LoadScene(AppScene scene, Action<AppScene> OnSceneLoadCompleted);
+        void LoadScene(FAFA scene, Action<FAFA> OnSceneLoadCompleted);
     }
 }

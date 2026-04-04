@@ -2,25 +2,30 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Alice {
+    public enum Stage {
+        Live,
+        Street,
+    }
+
     [System.Serializable]
     public class AppStageEntry {
-        public string Id;
         public string DisplayName;
+        public Stage Stage;
         public string SceneName;
     }
 
-    public record StageInfo(string Id, string DisplayName, string SceneName);
+    public record StageInfo(Stage Stage, string DisplayName, string SceneName);
 
     public interface IStageRegistry {
         StageInfo Default { get; }
-        StageInfo GetById(string id);
+        StageInfo GetByStage(Stage stage);
         IReadOnlyList<StageInfo> GetAll();
     }
 
     public class StageRegistry : MonoBehaviour, IStageRegistry {
         [SerializeField] AppStageEntry[] stageEntries;
 
-        readonly Dictionary<string, StageInfo> stageById = new Dictionary<string, StageInfo>();
+        readonly Dictionary<Stage, StageInfo> stageByStage = new Dictionary<Stage, StageInfo>();
         readonly List<StageInfo> allStages = new List<StageInfo>();
 
         bool isInitialized;
@@ -33,9 +38,9 @@ namespace Alice {
             }
         }
 
-        public StageInfo GetById(string id) {
+        public StageInfo GetByStage(Stage stage) {
             EnsureInitialized();
-            return stageById[id];
+            return stageByStage[stage];
         }
 
         public IReadOnlyList<StageInfo> GetAll() {
@@ -48,12 +53,12 @@ namespace Alice {
                 return;
             }
 
-            stageById.Clear();
+            stageByStage.Clear();
             allStages.Clear();
             foreach (var entry in stageEntries) {
-                var stage = new StageInfo(entry.Id, entry.DisplayName, entry.SceneName);
-                stageById[stage.Id] = stage;
-                allStages.Add(stage);
+                var stageInfo = new StageInfo(entry.Stage, entry.DisplayName, entry.SceneName);
+                stageByStage[stageInfo.Stage] = stageInfo;
+                allStages.Add(stageInfo);
             }
 
             defaultStage = allStages[0];

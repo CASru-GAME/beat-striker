@@ -2,7 +2,7 @@ using System;
 
 namespace Core.App.Types {
 
-    public enum AppScene {
+    public enum FAFA {
         Title,
         StageSelect,
         CharacterSelect,

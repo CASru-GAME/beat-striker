@@ -7,11 +7,11 @@ using UnityEngine;
 namespace Core.App.Presenters.Scene {
     public class TransitionState : ISceneState {
         private readonly SceneStateContext context;
-        private readonly AppScene nextScene;
+        private readonly FAFA nextScene;
         private readonly ISceneState nextState;
         private bool sceneLoadRequested = false;
 
-        public TransitionState(SceneStateContext context, AppScene nextScene) {
+        public TransitionState(SceneStateContext context, FAFA nextScene) {
             this.context = context;
             this.nextScene = nextScene;
             this.nextState = context.factory.CreateSceneState(nextScene, context);
@@ -36,7 +36,7 @@ namespace Core.App.Presenters.Scene {
             context.view.LoadScene(nextScene, OnSceneLoadCompleted);
         }
 
-        private void OnSceneLoadCompleted(AppScene scene) {
+        private void OnSceneLoadCompleted(FAFA scene) {
             if (scene == nextScene) {
                 context.controller.ChangeState(nextState);
             }

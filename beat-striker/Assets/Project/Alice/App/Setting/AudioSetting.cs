@@ -6,31 +6,19 @@ namespace Alice {
     public record BeatOffsetSetting(float CommandTimeOffset, float ViewTimeOffset, float BeatTimeOffset);
     public record VolumeBalance(float MasterVolume, float BgmVolume, float SeVolume);
 
-    [System.Serializable]
-    public class Track {
-        public string Name;
-        public AudioClip AudioClip;
-        public float bpm = 110;
-        [Tooltip("ビートの時間オフセット（秒）。全ビート時刻に加算されます。値を大きくするとビートが後方（遅れ）に移動し、負にすると前方（早く）に移動します。曲の先頭の空白や音声ファイルのタイミング補正に使用します。")]
-        public float offset = 0;
-        public float[] beats;
-        public AudioClip beatSound;
-    }
-
     public interface IAudioSetting {
-        Track GetTrack(string trackId);
         ReadOnlyReactiveProperty<float> CommandTimeOffset { get; }
         ReadOnlyReactiveProperty<float> ViewTimeOffset { get; }
         ReadOnlyReactiveProperty<float> BeatTimeOffset { get; }
         ReadOnlyReactiveProperty<float> PerfectWindow { get; }
         ReadOnlyReactiveProperty<BeatOffsetSetting> BeatOffset { get; }
         ReadOnlyReactiveProperty<VolumeBalance> VolumeBalance { get; }
+        float[] CalculateBeats(MusicInfo musicInfo);
         void SetBeatOffset(BeatOffsetSetting beatOffsetSetting);
         void SetVolumeBalance(VolumeBalance volumeBalance);
     }
 
     public class AudioSetting : MonoBehaviour, IAudioSetting {
-        [SerializeField] List<Track> tracks;
         [Tooltip("入力判定の時間補正（秒）。評価時に「評価用入力時刻 = 入力時刻 + この値」で比較します。正の値は入力を遅めに、負の値は早めに評価します（過去の入力を書き換えるわけではありません）。例: 入力が約0.05秒遅れて登録される環境では -0.05 を設定して補正できます。")]
         [SerializeField] float commandTimeOffset = 0;
         [Tooltip("ノーツ描画の視覚補正（秒）。正の値を大きくするとノーツがヒット時刻より先に表示され（先行表示）、負にすると遅れて表示されます。画面遅延やノーツ移動時間の調整に使用します。")]
@@ -49,18 +37,16 @@ namespace Alice {
         readonly ReactiveProperty<BeatOffsetSetting> beatOffset = new();
         readonly ReactiveProperty<VolumeBalance> volumeBalance = new();
 
-        public Track GetTrack(string trackId) {
-            var track = tracks.Find(t => t.Name == trackId) ?? tracks[0];
-            track.beats = CalculateBeats(track.AudioClip.length, track.bpm, track.offset + beatTimeOffsetProperty.CurrentValue);
-            return track;
-        }
-
         public ReadOnlyReactiveProperty<float> CommandTimeOffset => commandTimeOffsetProperty;
         public ReadOnlyReactiveProperty<float> ViewTimeOffset => viewTimeOffsetProperty;
         public ReadOnlyReactiveProperty<float> BeatTimeOffset => beatTimeOffsetProperty;
         public ReadOnlyReactiveProperty<float> PerfectWindow => perfectWindowProperty;
         public ReadOnlyReactiveProperty<BeatOffsetSetting> BeatOffset => beatOffset;
         public ReadOnlyReactiveProperty<VolumeBalance> VolumeBalance => volumeBalance;
+
+        public float[] CalculateBeats(MusicInfo musicInfo) {
+            return CalculateBeats(musicInfo.AudioClip.length, musicInfo.Bpm, musicInfo.Offset + beatTimeOffsetProperty.CurrentValue);
+        }
 
         void Awake() {
             commandTimeOffsetProperty.OnNext(commandTimeOffset);

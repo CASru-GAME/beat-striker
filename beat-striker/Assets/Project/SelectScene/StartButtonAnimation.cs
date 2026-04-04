@@ -211,7 +211,7 @@ public class StartButtonAnimation : MonoBehaviour {
             PlaySoundAtVolume(blackImageClickSound, blackImageClickSoundVolume);
         }
 
-        this.GetBus().Publish(new AppMessages.RequireTransition(AppScene.Battle));
+        this.GetBus().Publish(new AppMessages.RequireTransition(FAFA.Battle));
     }
 
     void PlaySoundAtVolume(AudioClip clip, float volume) {

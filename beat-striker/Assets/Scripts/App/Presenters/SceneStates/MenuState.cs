@@ -11,7 +11,7 @@ namespace Core.App.Presenters.Scene.States {
         }
 
         private void OnAppFlowMessage(AppMessages.RequireTransition message) {
-            if (message.scene == AppScene.Title || message.scene == AppScene.Menu || message.scene == AppScene.StageSelect || message.scene == AppScene.CharacterSelect) {
+            if (message.scene == FAFA.Title || message.scene == FAFA.Menu || message.scene == FAFA.StageSelect || message.scene == FAFA.CharacterSelect) {
                 context.controller.ChangeState(new TransitionState(
                     context,
                     message.scene

@@ -67,11 +67,10 @@ namespace Alice {
             for (int i = 0; i < battleSetting.PlayerTransforms.Count; i++) {
                 var playerId = i;
                 var playerTransform = battleSetting.PlayerTransforms[i];
-                var selectedStrikerId = playerSelectSetting.GetStrikerId(i);
-                var selectedStrikerInfo = string.IsNullOrEmpty(selectedStrikerId)
+                var selectedStrikerInfo = !playerSelectSetting.TryGetStriker(i, out var selectedStriker)
                     ? appStrikerRegistry.Default
-                    : appStrikerRegistry.GetById(selectedStrikerId);
-                var selectedStriker = selectedStrikerInfo.BattleStriker;
+                    : appStrikerRegistry.GetByStriker(selectedStriker);
+                selectedStriker = selectedStrikerInfo.BattleStriker;
                 if (selectedStrikerInfo.Prefab == null) {
                     Debug.LogError($"Striker prefab not found for {selectedStriker}");
                     continue;
