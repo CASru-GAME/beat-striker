@@ -19,6 +19,8 @@ namespace Alice {
         readonly IBattleJudge battleJudge;
         readonly IBeatjudge beatJudge;
         readonly IMusicPlayer musicPlayer;
+        readonly IBattleSelectSetting battleSelectSetting;
+        readonly ISceneTransitionService sceneTransitionService;
         readonly IBattlePresenter battlePresenter;
         readonly IBattlePlayerPresenter[] battlePlayerPresenters;
         int currentRound;
@@ -36,12 +38,14 @@ namespace Alice {
         readonly Subject<Unit> battleFinishedSubject = new();
         readonly Subject<CorePlayerId> outroStartedSubject = new();
 
-        public BattleFlow(IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IBattlePresenter battlePresenter, IBattlePlayerPresenter[] battlePlayerPresenters) {
+        public BattleFlow(IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IBattleSelectSetting battleSelectSetting, ISceneTransitionService sceneTransitionService, IBattlePresenter battlePresenter, IBattlePlayerPresenter[] battlePlayerPresenters) {
             this.battleDeployer = battleDeployer;
             this.strikerRegistry = strikerRegistry;
             this.battleJudge = battleJudge;
             this.beatJudge = beatJudge;
             this.musicPlayer = musicPlayer;
+            this.battleSelectSetting = battleSelectSetting;
+            this.sceneTransitionService = sceneTransitionService;
             this.battlePresenter = battlePresenter;
             this.battlePlayerPresenters = battlePlayerPresenters;
             currentRound = 1;
@@ -72,6 +76,7 @@ namespace Alice {
 
         async Task StartBattleSequenceAsync() {
             try {
+                await sceneTransitionService.RequestEndTransitionAsync(ResolveCurrentBattleScene());
                 await battlePresenter.PlayBattleOpeningAsync();
                 SetAllStrikersDefault();
 
@@ -80,6 +85,12 @@ namespace Alice {
             catch (Exception exception) {
                 Debug.LogException(exception);
             }
+        }
+
+        AppScene ResolveCurrentBattleScene() {
+            return battleSelectSetting.SelectedStage.CurrentValue == Stage.Street
+                ? AppScene.Street
+                : AppScene.Live;
         }
 
         async Task StartRoundPlayableAsync() {
@@ -150,6 +161,7 @@ namespace Alice {
                     outroStartedSubject.OnNext(winner);
                     await battlePresenter.PlayBattleEndingAsync(winner);
                     CompleteBattle();
+                    _ = sceneTransitionService.RequestStartTransition(AppScene.ResultMenu);
                 }
             }
             catch (Exception exception) {

@@ -15,6 +15,7 @@ namespace Alice {
 		[SerializeField] PlayerInputManager playerInputManager;
 		[SerializeField] SceneLoader sceneLoader;
 		[SerializeField] StageRegistry stageRegistry;
+		[SerializeField] ScreenRegistry screenRegistry;
 		[SerializeField] MusicRegistry musicRegistry;
 		[SerializeField] AppStrikerRegistry strikerRegistry;
 		[SerializeField] BattleSelectSetting battleSelectSetting;
@@ -23,6 +24,7 @@ namespace Alice {
 		[SerializeField] BattleRuleSetting battleRuleSetting;
 		[SerializeField] AppTransitionFactory appTransitionFactory;
 		[SerializeField] CursorFactory cursorFactory;
+		[SerializeField] AppBGMPlayer appBgmPlayer;
 
 		protected override void Awake() {
 			if (instance != null && instance != this) {
@@ -45,6 +47,7 @@ namespace Alice {
 
 		protected override void Configure(IContainerBuilder builder) {
 			builder.RegisterInstance<IStageRegistry>(stageRegistry);
+			builder.RegisterInstance<IScreenRegistry>(screenRegistry);
 			builder.RegisterInstance<IMusicRegistry>(musicRegistry);
 			builder.RegisterInstance<IAppStrikerRegistry>(strikerRegistry);
 			builder.RegisterInstance<IBattleSelectSetting>(battleSelectSetting);
@@ -54,6 +57,7 @@ namespace Alice {
 			builder.Register<IGamePadRegistry, GamePadRegistry>(Lifetime.Singleton);
 			builder.RegisterInstance<IAppTransitionFactory>(appTransitionFactory);
 			builder.RegisterInstance<ICursorFactory>(cursorFactory);
+			builder.RegisterInstance<IAppBGMPlayer>(appBgmPlayer);
 			builder.RegisterInstance<ISceneLoader>(sceneLoader);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
 
@@ -64,6 +68,7 @@ namespace Alice {
 
 			builder.RegisterBuildCallback(container => {
 				_ = container.Resolve<IStageRegistry>();
+				_ = container.Resolve<IScreenRegistry>();
 				_ = container.Resolve<IMusicRegistry>();
 				_ = container.Resolve<IAppStrikerRegistry>();
 				_ = container.Resolve<IBattleSelectSetting>();
@@ -73,8 +78,10 @@ namespace Alice {
 				_ = container.Resolve<IGamePadRegistry>();
 				_ = container.Resolve<IAppTransitionFactory>();
 				_ = container.Resolve<ICursorFactory>();
+				_ = container.Resolve<IAppBGMPlayer>();
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
+				container.Inject(sceneLoader);
 				TryInjectSceneObjects(container, SceneManager.GetActiveScene());
 			});
 		}
@@ -86,8 +93,20 @@ namespace Alice {
 
 			var rootObjects = scene.GetRootGameObjects();
 			foreach (var root in rootObjects) {
+				if (IsAnotherScopeRoot(root)) {
+					continue;
+				}
+
 				container.InjectGameObject(root);
 			}
+		}
+
+		bool IsAnotherScopeRoot(GameObject root) {
+			if (!root.TryGetComponent<LifetimeScope>(out var rootScope)) {
+				return false;
+			}
+
+			return rootScope != this;
 		}
 
 		sealed class SceneInjectionHandler : IInitializable, IDisposable {

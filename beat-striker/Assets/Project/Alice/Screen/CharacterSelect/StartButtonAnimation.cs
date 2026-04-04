@@ -43,6 +43,8 @@ public class StartButtonAnimation : MonoBehaviour {
     private float lastClickTime = -999f; // 最後にクリックした時間
     private float clickDebounceTime = 0.2f; // クリック間隔（秒）
 
+    public bool IsStartInputReady => blackImageSoundEnabled;
+
     public Botan backgroundBotan; // 背景のBotanコンポーネント
 
     void Awake() {

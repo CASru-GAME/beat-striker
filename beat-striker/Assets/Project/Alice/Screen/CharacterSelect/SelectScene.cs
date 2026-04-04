@@ -9,7 +9,7 @@ public class SelectScene : MonoBehaviour
     enum SceneInputState {
         Selecting,
         ReadyToStart,
-        TransitioningToBattle,
+        TransitioningToScreen,
         TransitioningToStageSelect,
     }
 
@@ -21,6 +21,7 @@ public class SelectScene : MonoBehaviour
 
     ISceneTransitionService transitionService;
     IGamePadRegistry gamePadRegistry;
+    IBattleSelectSetting battleSelectSetting;
     IPlayerSelectSetting playerSelectSetting;
     IAppStrikerRegistry appStrikerRegistry;
     readonly CompositeDisposable subscriptions = new();
@@ -34,10 +35,12 @@ public class SelectScene : MonoBehaviour
     public void Construct(
         ISceneTransitionService transitionService,
         IGamePadRegistry gamePadRegistry,
+        IBattleSelectSetting battleSelectSetting,
         IPlayerSelectSetting playerSelectSetting,
         IAppStrikerRegistry appStrikerRegistry) {
         this.transitionService = transitionService;
         this.gamePadRegistry = gamePadRegistry;
+        this.battleSelectSetting = battleSelectSetting;
         this.playerSelectSetting = playerSelectSetting;
         this.appStrikerRegistry = appStrikerRegistry;
     }
@@ -91,6 +94,7 @@ public class SelectScene : MonoBehaviour
 
         playerSelectSetting.SelectStriker(targetSlot, request.Striker);
         selectionPolicy.RecordSelection(targetSlot);
+
         RefreshState();
     }
 
@@ -106,10 +110,19 @@ public class SelectScene : MonoBehaviour
 
         if (button != GamePadButton.East) return;
         if (inputState != SceneInputState.ReadyToStart) return;
+        if (!startButtonAnimation.IsStartInputReady) {
+            return;
+        }
 
         AudioSource.PlayClipAtPoint(clickSound, Camera.main.transform.position);
-        inputState = SceneInputState.TransitioningToBattle;
-        _ = transitionService.RequestStartTransition(AppScene.Battle);
+        inputState = SceneInputState.TransitioningToScreen;
+        _ = transitionService.RequestStartTransition(ResolvePlayScene());
+    }
+
+    AppScene ResolvePlayScene() {
+        return battleSelectSetting.SelectedStage.CurrentValue == Stage.Street
+            ? AppScene.Street
+            : AppScene.Live;
     }
 
     void RequestStageSelectTransition() {
@@ -144,7 +157,7 @@ public class SelectScene : MonoBehaviour
     }
 
     bool IsTransitioning() {
-        return inputState == SceneInputState.TransitioningToBattle
+        return inputState == SceneInputState.TransitioningToScreen
             || inputState == SceneInputState.TransitioningToStageSelect;
     }
 

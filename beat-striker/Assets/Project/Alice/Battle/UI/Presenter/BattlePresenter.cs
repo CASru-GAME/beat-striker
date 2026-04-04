@@ -33,11 +33,20 @@ namespace Alice {
         CompositeDisposable skipInputSubscriptions = new();
         CompositeDisposable audioSubscriptions = new();
         bool isCinematicSkipEnabled;
+        bool initialized;
 
         void Awake() {
             EnsureStageCameraConfigured();
+        }
+
+        void Start() {
+            if (initialized) {
+                return;
+            }
+
             SubscribeSkipInput();
             SubscribeAudioEvents();
+            initialized = true;
         }
 
         void OnDestroy() {

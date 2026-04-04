@@ -12,16 +12,25 @@ namespace Alice {
         [SerializeField] BattlePresenter battlePresenter;
         [SerializeField] BattlePlayerPresenter[] battlePlayerPresenters;
 
+        protected override void Awake() {
+            if (parentReference.Object == null && parentReference.Type == null) {
+                parentReference = ParentReference.Create<AppScope>();
+            }
+
+            base.Awake();
+        }
+
         protected override void Configure(IContainerBuilder builder) {
             builder.Register<IStrikerRegistry, StrikerRegistry>(Lifetime.Singleton);
             builder.Register<IStrikerFactory, StrikerHubFactory>(Lifetime.Singleton);
             builder.Register<IBattleDeployer, BattleDeployer>(Lifetime.Singleton);
             builder.Register<IBattleJudge, BattleJudge>(Lifetime.Singleton);
-            builder.RegisterInstance<IBattlePresenter>(battlePresenter);
             var battlePlayerPresenters = new IBattlePlayerPresenter[this.battlePlayerPresenters.Length];
             for (var i = 0; i < this.battlePlayerPresenters.Length; i++) {
                 battlePlayerPresenters[i] = this.battlePlayerPresenters[i];
+                builder.RegisterComponent<IBattlePlayerPresenter>(this.battlePlayerPresenters[i]);
             }
+            builder.RegisterComponent<IBattlePresenter>(battlePresenter);
             builder.RegisterInstance(battlePlayerPresenters);
             builder.Register<IBattleFlow, BattleFlow>(Lifetime.Singleton);
             builder.Register<IBeatjudge, BeatJudge>(Lifetime.Singleton);
@@ -43,6 +52,7 @@ namespace Alice {
                 _ = container.Resolve<IBattlePlayerPresenter[]>();
                 _ = container.Resolve<IBeatjudge>();
                 _ = container.Resolve<IMusicPlayer>();
+
                 InjectSceneObjects(container);
             });
         }
@@ -50,8 +60,20 @@ namespace Alice {
         void InjectSceneObjects(IObjectResolver container) {
             var rootObjects = gameObject.scene.GetRootGameObjects();
             foreach (var root in rootObjects) {
+                if (IsAnotherScopeRoot(root)) {
+                    continue;
+                }
+
                 container.InjectGameObject(root);
             }
+        }
+
+        bool IsAnotherScopeRoot(GameObject root) {
+            if (!root.TryGetComponent<LifetimeScope>(out var rootScope)) {
+                return false;
+            }
+
+            return rootScope != this;
         }
 
         sealed class BattleFlowStarter : IInitializable {

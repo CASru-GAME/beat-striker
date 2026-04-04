@@ -1,15 +1,16 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using VContainer;
 
 namespace Alice {
     public enum AppScene {
         Title,
         CharacterSelect,
         StageSelect,
-        Battle,
+        Live,
+        Street,
         ResultMenu,
     }
 
@@ -17,36 +18,18 @@ namespace Alice {
         Task LoadAsync(AppScene scene);
     }
 
-    [Serializable]
-    public class SceneLoaderEntry {
-        public string SceneName;
-        public AppScene Scene;
-    }
-
     public class SceneLoader : MonoBehaviour, ISceneLoader {
-        [SerializeField] SceneLoaderEntry[] sceneEntries;
+        IScreenRegistry appScreenRegistry;
 
-        readonly Dictionary<AppScene, string> sceneNameMap = new();
-        bool initialized;
-
-        void EnsureInitialized() {
-            if (initialized) {
-                return;
-            }
-
-            sceneNameMap.Clear();
-            for (var i = 0; i < sceneEntries.Length; i++) {
-                var entry = sceneEntries[i];
-                sceneNameMap[entry.Scene] = entry.SceneName;
-            }
-
-            initialized = true;
+        [Inject]
+        public void Construct(IScreenRegistry screenRegistry) {
+            appScreenRegistry = screenRegistry;
         }
 
         public async Task LoadAsync(AppScene scene) {
-            EnsureInitialized();
             try {
-                var asyncOperation = SceneManager.LoadSceneAsync(sceneNameMap[scene]);
+                var sceneName = appScreenRegistry.GetByScene(scene).SceneName;
+                var asyncOperation = SceneManager.LoadSceneAsync(sceneName);
                 while (!asyncOperation.isDone) {
                     await Task.Yield();
                 }

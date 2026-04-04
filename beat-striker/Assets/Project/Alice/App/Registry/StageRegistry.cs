@@ -11,10 +11,9 @@ namespace Alice {
     public class AppStageEntry {
         public string DisplayName;
         public Stage Stage;
-        public string SceneName;
     }
 
-    public record StageInfo(Stage Stage, string DisplayName, string SceneName);
+    public record StageInfo(Stage Stage, string DisplayName);
 
     public interface IStageRegistry {
         StageInfo Default { get; }
@@ -56,7 +55,7 @@ namespace Alice {
             stageByStage.Clear();
             allStages.Clear();
             foreach (var entry in stageEntries) {
-                var stageInfo = new StageInfo(entry.Stage, entry.DisplayName, entry.SceneName);
+                var stageInfo = new StageInfo(entry.Stage, entry.DisplayName);
                 stageByStage[stageInfo.Stage] = stageInfo;
                 allStages.Add(stageInfo);
             }

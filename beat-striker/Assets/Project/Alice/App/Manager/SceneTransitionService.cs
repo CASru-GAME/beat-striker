@@ -19,6 +19,8 @@ namespace Alice {
 
         readonly ISceneLoader sceneLoader;
         readonly IAppTransitionFactory transitionFactory;
+        readonly IScreenRegistry screenRegistry;
+        readonly IAppBGMPlayer appBgmPlayer;
 
         TransitionState currentState = TransitionState.Idle;
         AppScene currentScene;
@@ -32,9 +34,19 @@ namespace Alice {
             Loading,
         }
 
-        public SceneTransitionService(ISceneLoader sceneLoader, IAppTransitionFactory transitionFactory) {
+        public SceneTransitionService(
+            ISceneLoader sceneLoader,
+            IAppTransitionFactory transitionFactory,
+            IScreenRegistry screenRegistry,
+            IAppBGMPlayer appBgmPlayer) {
             this.sceneLoader = sceneLoader;
             this.transitionFactory = transitionFactory;
+            this.screenRegistry = screenRegistry;
+            this.appBgmPlayer = appBgmPlayer;
+
+            var currentScreen = screenRegistry.GetBySceneName(SceneManager.GetActiveScene().name);
+            currentScene = currentScreen.Scene;
+            appBgmPlayer.Play(currentScreen.Bgm);
         }
 
         public ISceneTransitionService.StartResult RequestStartTransition(AppScene nextScene) {
@@ -62,6 +74,7 @@ namespace Alice {
                 Debug.Log($"Scene {nextScene} loaded".ToCyan());
 
                 currentScene = nextScene;
+                appBgmPlayer.Play(screenRegistry.GetByScene(nextScene).Bgm);
                 
                 currentState = TransitionState.Ready;
             }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using R3;
 using VContainer.Unity;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Alice {
     public class CursorDeployer : IInitializable, IDisposable {
@@ -10,26 +11,35 @@ namespace Alice {
 
         readonly IGamePadRegistry gamePadRegistry;
         readonly ICursorFactory cursorFactory;
+        readonly IScreenRegistry screenRegistry;
 
         readonly List<IDisposable> playerJoinSubscriptions = new();
         readonly Dictionary<int, DeployedCursor> deployedByPlayerId = new();
+        bool isCursorEnabled;
 
-        public CursorDeployer(IGamePadRegistry gamePadRegistry, ICursorFactory cursorFactory) {
+        public CursorDeployer(
+            IGamePadRegistry gamePadRegistry,
+            ICursorFactory cursorFactory,
+            IScreenRegistry screenRegistry) {
             this.gamePadRegistry = gamePadRegistry;
             this.cursorFactory = cursorFactory;
+            this.screenRegistry = screenRegistry;
         }
 
         public void Initialize() {
+            ApplyCursorRule(SceneManager.GetActiveScene().name);
+            SceneManager.sceneLoaded += OnSceneLoaded;
+
             for (var i = 0; i < MAXPLAYERS; i++) {
                 var playerId = i;
                 var playerGamePad = gamePadRegistry.Get(playerId);
 
-                if (playerGamePad.HasGamePad.CurrentValue) {
+                if (playerGamePad.HasGamePad.CurrentValue && isCursorEnabled) {
                     Deploy(playerId, playerGamePad);
                 }
 
                 var hasGamePadSubscription = playerGamePad.HasGamePad.Subscribe(hasGamePad => {
-                    if (hasGamePad) {
+                    if (hasGamePad && isCursorEnabled) {
                         Deploy(playerId, playerGamePad);
                     }
                     else {
@@ -42,11 +52,45 @@ namespace Alice {
         }
 
         public void Dispose() {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+
             for (var i = 0; i < playerJoinSubscriptions.Count; i++) {
                 playerJoinSubscriptions[i].Dispose();
             }
             playerJoinSubscriptions.Clear();
 
+            var deployed = new List<int>(deployedByPlayerId.Keys);
+            for (var i = 0; i < deployed.Count; i++) {
+                Undeploy(deployed[i]);
+            }
+        }
+
+        void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
+            ApplyCursorRule(scene.name);
+        }
+
+        void ApplyCursorRule(string sceneName) {
+            var screenInfo = screenRegistry.GetBySceneName(sceneName);
+            isCursorEnabled = screenInfo.CreateCursor;
+
+            if (!isCursorEnabled) {
+                UndeployAll();
+                return;
+            }
+
+            DeployConnectedPlayers();
+        }
+
+        void DeployConnectedPlayers() {
+            for (var playerId = 0; playerId < MAXPLAYERS; playerId++) {
+                var playerGamePad = gamePadRegistry.Get(playerId);
+                if (playerGamePad.HasGamePad.CurrentValue) {
+                    Deploy(playerId, playerGamePad);
+                }
+            }
+        }
+
+        void UndeployAll() {
             var deployed = new List<int>(deployedByPlayerId.Keys);
             for (var i = 0; i < deployed.Count; i++) {
                 Undeploy(deployed[i]);

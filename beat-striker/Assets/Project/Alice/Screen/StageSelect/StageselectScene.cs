@@ -12,6 +12,7 @@ public class StageselectScene : MonoBehaviour
     ISceneTransitionService transitionService;
     IBattleSelectSetting selectSetting;
     IMusicRegistry musicRegistry;
+    IAppBGMPlayer appBgmPlayer;
     readonly CompositeDisposable subscriptions = new();
     bool initialized;
 
@@ -19,10 +20,12 @@ public class StageselectScene : MonoBehaviour
     public void Construct(
         ISceneTransitionService transitionService,
         IBattleSelectSetting selectSetting,
-        IMusicRegistry musicRegistry) {
+        IMusicRegistry musicRegistry,
+        IAppBGMPlayer appBgmPlayer) {
         this.transitionService = transitionService;
         this.selectSetting = selectSetting;
         this.musicRegistry = musicRegistry;
+        this.appBgmPlayer = appBgmPlayer;
     }
 
     void Start() {
@@ -33,9 +36,11 @@ public class StageselectScene : MonoBehaviour
             stageSelectButton.Initialize(musics);
             stageSelectButton.OnStageSelected.Subscribe(OnStageSelected).AddTo(subscriptions);
             stageSelectButton.OnMusicSelected.Subscribe(OnMusicSelected).AddTo(subscriptions);
+            stageSelectButton.OnPreviewVisibilityChanged.Subscribe(OnPreviewVisibilityChanged).AddTo(subscriptions);
         }
 
         backButton.OnBackPressed.Subscribe(_ => {
+            appBgmPlayer.Resume();
             transitionService.RequestStartTransition(AppScene.Title);
         }).AddTo(subscriptions);
 
@@ -49,7 +54,17 @@ public class StageselectScene : MonoBehaviour
 
     void OnMusicSelected(MusicInfo musicInfo) {
         selectSetting.SelectMusic(musicInfo.Id);
+        appBgmPlayer.Resume();
         transitionService.RequestStartTransition(AppScene.CharacterSelect);
+    }
+
+    void OnPreviewVisibilityChanged(bool isVisible) {
+        if (isVisible) {
+            appBgmPlayer.Stop();
+            return;
+        }
+
+        appBgmPlayer.Resume();
     }
 
     static IReadOnlyList<MusicInfo> ResolveMusicList(IMusicRegistry musicRegistry) {

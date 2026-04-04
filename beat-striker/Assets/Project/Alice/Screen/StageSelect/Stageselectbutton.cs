@@ -36,10 +36,12 @@ public class Stageselectbutton : MonoBehaviour
     IReadOnlyList<MusicInfo> musics;
     readonly Subject<Stage> stageSelected = new();
     readonly Subject<MusicInfo> musicSelected = new();
+    readonly Subject<bool> previewVisibilityChanged = new();
     readonly CompositeDisposable popupSubscriptions = new();
 
     public Observable<Stage> OnStageSelected => stageSelected;
     public Observable<MusicInfo> OnMusicSelected => musicSelected;
+    public Observable<bool> OnPreviewVisibilityChanged => previewVisibilityChanged;
 
     public void Initialize(IReadOnlyList<MusicInfo> musics) {
         this.musics = musics;
@@ -104,6 +106,7 @@ public class Stageselectbutton : MonoBehaviour
                 }
                 currentPopup.Show();
                 isPopupShown = true;
+                previewVisibilityChanged.OnNext(true);
                 stageSelected.OnNext(selectedStage);
             }
         };
@@ -143,6 +146,7 @@ public class Stageselectbutton : MonoBehaviour
     {
         isPopupShown = false;
         currentPopup = null;
+        previewVisibilityChanged.OnNext(false);
     }
     
     void OnPanelMoveComplete()
