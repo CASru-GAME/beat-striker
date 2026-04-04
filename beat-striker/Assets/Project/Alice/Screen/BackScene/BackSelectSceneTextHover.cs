@@ -2,11 +2,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Core.App.Presenters.Scene.Types;
-using Core.App.Types;
 using Core.Utils;
 using Core;
+using Alice;
+using VContainer;
 
 [RequireComponent(typeof(Botan))]
+[RequireComponent(typeof(AudioSource))]
 public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Image References")]
@@ -29,8 +31,16 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
     private AudioSource audioSource;
     private bool isHovering = false;
 
-    public FAFA scene = FAFA.Menu;
+    public AppScene scene = AppScene.Title;
     private Botan botan;
+
+    ISceneTransitionService transitionService;
+
+
+    [Inject]
+    public void Construct(ISceneTransitionService transitionService) {
+        this.transitionService = transitionService;
+    }
     
     void Start()
     {
@@ -62,6 +72,8 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
         botan.onClick += (e) => {
             OnPointerClick(e.EventData);
         };
+
+        _ = transitionService.RequestEndTransitionAsync(AppScene.ResultMenu);
     }
     
     // Unity Event System用のホバー検知
@@ -70,7 +82,6 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
         if (isHovering) return;
         
         isHovering = true;
-        Debug.Log("BackSelectSceneText hovered");
         
         // 効果音を再生
         if (audioSource != null && hoverSound != null)
@@ -98,7 +109,6 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
     public void OnPointerExit(PointerEventData eventData)
     {
         isHovering = false;
-        Debug.Log("BackSelectSceneText hover exit");
         
         // すべてのImageをフェードアウト
         for (int i = 0; i < imageCanvasGroups.Length; i++)
@@ -114,13 +124,12 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
     
     public void OnPointerClick(PointerEventData eventData)
     {
-        Debug.Log("BackSelectSceneText clicked");
         
         // クリック時の効果音を再生
         if (audioSource != null && clickSound != null)
         {
             audioSource.PlayOneShot(clickSound, clickSoundVolume);
-            this.GetBus().Publish(new AppMessages.RequireTransition(scene));
+            transitionService.RequestStartTransition(scene);
         }
     }
 }

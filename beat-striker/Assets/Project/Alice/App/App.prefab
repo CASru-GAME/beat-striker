@@ -209,6 +209,11 @@ MonoBehaviour:
     CreateCursor: 0
     Bgm: {fileID: 0}
     SceneName: StreetScene
+  - DisplayName: Result Menu
+    Scene: 5
+    CreateCursor: 1
+    Bgm: {fileID: 8300000, guid: 80263a7e069d44c539f6d228aece09c6, type: 3}
+    SceneName: BackScene
 --- !u!114 &3568961321467451832
 MonoBehaviour:
   m_ObjectHideFlags: 0
