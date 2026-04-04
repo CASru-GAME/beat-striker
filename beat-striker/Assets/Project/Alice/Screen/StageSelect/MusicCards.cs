@@ -49,6 +49,7 @@ public class MusicCards : MonoBehaviour
             cards.Add(card);
         }
         cards.Reverse();
+        ApplyPreviewState();
 
         rightButton.onClick += e => OnRightPressed();
         leftButton.onClick += e => OnLeftPressed();
@@ -86,6 +87,7 @@ public class MusicCards : MonoBehaviour
         });
 
         currentIndex = nextIndex;
+        ApplyPreviewState();
     }
 
     public void OnLeftPressed()
@@ -115,6 +117,15 @@ public class MusicCards : MonoBehaviour
         });
 
         currentIndex = prevIndex;
+        ApplyPreviewState();
+    }
+
+    void ApplyPreviewState()
+    {
+        for (int i = 0; i < cards.Count; i++)
+        {
+            cards[i].SetPreviewEnabled(i == currentIndex);
+        }
     }
     
     void PlayClickSound()

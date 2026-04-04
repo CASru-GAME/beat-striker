@@ -152,9 +152,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.MusicRegistry
   musicEntries:
   - Id: cutie-street
-    DisplayName: Cutie Street
-    Description: 
+    DisplayName: Beat Striker on Cutie Street
+    Description: 'Composer: Suno 4.5+
+
+      BPM: 110'
     AudioClip: {fileID: 8300000, guid: c4266cde834724c9585aa2641c14dcf4, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 3f6a662ccaa5346ae86f5ac7bb709c39, type: 3}
+    Bpm: 110
+    Offset: 0
+  - Id: on-street
+    DisplayName: Beat Striker on Street
+    Description: 'Composer: Suno 4.5+
+
+      BPM: 110'
+    AudioClip: {fileID: 8300000, guid: 813c0b1b710a04cea866e61e51daa989, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 3dae220b8b1f4429ea890464629273ed, type: 3}
     Bpm: 110
     Offset: 0
 --- !u!114 &3568961321467451832

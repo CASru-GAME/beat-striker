@@ -137,10 +137,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03fea8d3d876640a7a40ae9444821e02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MusicCard
+  audioSpectrum: {fileID: 17332587053332548}
   botan: {fileID: 3829793731440133724}
   description: {fileID: 1210609324224666477}
   title: {fileID: 3841066256305875914}
   clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
+  previewVolume: 1
+  fadeInSeconds: 0.3
+  fadeOutSeconds: 0.3
 --- !u!82 &-4202474172828400830
 AudioSource:
   m_ObjectHideFlags: 0
@@ -347,7 +351,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 9.7, y: 34.8}
+  m_AnchoredPosition: {x: 4.9, y: 34.8}
   m_SizeDelta: {x: 200, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8705905639978646720
@@ -483,7 +487,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 23.4, y: 10.2}
+  m_AnchoredPosition: {x: 23.4, y: 8.8}
   m_SizeDelta: {x: 200, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4260858395799924384
@@ -549,7 +553,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -579,7 +583,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: -6.866211, y: 0, z: 44.63037, w: -48.063446}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -765,6 +769,7 @@ MonoBehaviour:
   - {fileID: 4540453042236956721}
   - {fileID: 4253350559743641429}
   heightMultiplier: 300
+  spectrumLengthOffset: -1
   colorGradient:
     serializedVersion: 2
     key0: {r: 0.42538425, g: 0.16468628, b: 0.7254902, a: 0.8117647}
@@ -795,9 +800,10 @@ MonoBehaviour:
     m_ColorSpace: -1
     m_NumColorKeys: 2
     m_NumAlphaKeys: 2
-  convergenceReferenceValue: 30
-  convergenceRatioAtReference: 0.651
+  convergenceReferenceValue: 20
+  convergenceRatioAtReference: 0.73
   source: {fileID: -4202474172828400830}
+  bakedSpectrumText: {fileID: 0}
 --- !u!114 &6969025254890037150
 MonoBehaviour:
   m_ObjectHideFlags: 0
