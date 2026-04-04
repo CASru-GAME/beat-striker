@@ -22,6 +22,7 @@ namespace Alice {
 		[SerializeField] AudioSetting audioSetting;
 		[SerializeField] BattleRuleSetting battleRuleSetting;
 		[SerializeField] AppTransitionFactory appTransitionFactory;
+		[SerializeField] CursorFactory cursorFactory;
 
 		protected override void Awake() {
 			if (instance != null && instance != this) {
@@ -52,12 +53,14 @@ namespace Alice {
 			builder.RegisterInstance<IBattleRuleSetting>(battleRuleSetting);
 			builder.Register<IGamePadRegistry, GamePadRegistry>(Lifetime.Singleton);
 			builder.RegisterInstance<IAppTransitionFactory>(appTransitionFactory);
+			builder.RegisterInstance<ICursorFactory>(cursorFactory);
 			builder.RegisterInstance<ISceneLoader>(sceneLoader);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
 
 			builder.RegisterInstance(playerInputManager);
 			builder.RegisterEntryPoint<SceneInjectionHandler>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<PlayerJoinHandler>(Lifetime.Singleton);
+			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
 
 			builder.RegisterBuildCallback(container => {
 				_ = container.Resolve<IStageRegistry>();
@@ -69,6 +72,7 @@ namespace Alice {
 				_ = container.Resolve<IBattleRuleSetting>();
 				_ = container.Resolve<IGamePadRegistry>();
 				_ = container.Resolve<IAppTransitionFactory>();
+				_ = container.Resolve<ICursorFactory>();
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
 				TryInjectSceneObjects(container, SceneManager.GetActiveScene());

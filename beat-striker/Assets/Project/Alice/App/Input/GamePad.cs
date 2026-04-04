@@ -41,6 +41,7 @@ namespace Alice {
         void Awake() {
             input = new GameInput();
             playerInput = GetComponent<PlayerInput>();
+            DontDestroyOnLoad(this.gameObject);
         }
 
         [Inject]
