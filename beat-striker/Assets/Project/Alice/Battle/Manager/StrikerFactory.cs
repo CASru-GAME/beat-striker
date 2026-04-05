@@ -9,19 +9,22 @@ namespace Alice {
     }
 
     public class StrikerHubFactory : IStrikerFactory {
-        readonly IObjectResolver container;
+        readonly IStrikerRegistry strikerRegistry;
+        readonly IMusicPlayer musicPlayer;
 
-        public StrikerHubFactory(IObjectResolver container) {
-            this.container = container;
+        public StrikerHubFactory(IStrikerRegistry strikerRegistry, IMusicPlayer musicPlayer) {
+            this.strikerRegistry = strikerRegistry;
+            this.musicPlayer = musicPlayer;
         }
 
         public IStrikerHub Create(StrikerHub prefab, Transform playerTransform, int playerId) {
             var instance = Object.Instantiate(prefab);
             instance.transform.SetPositionAndRotation(playerTransform.position, playerTransform.rotation);
             playerTransform.SetParent(instance.transform);
-            container.InjectGameObject(instance.gameObject);
             var runtime = instance.EnsureAliceRuntimeHub();
-            container.Inject(runtime);
+            if (runtime is AliceStrikerHub aliceRuntime) {
+                aliceRuntime.InitializeRuntimeDependencies(strikerRegistry, musicPlayer);
+            }
             runtime.SetPlayerId(playerId);
             return runtime;
         }

@@ -2,8 +2,6 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using VContainer;
-using VContainer.Unity;
 
 namespace Alice {
     public enum AppScene {
@@ -19,11 +17,10 @@ namespace Alice {
         Task LoadAsync(AppScene scene);
     }
 
-    public class SceneLoader : MonoBehaviour, ISceneLoader {
-        IScreenRegistry appScreenRegistry;
+    public class SceneLoader : ISceneLoader {
+        readonly IScreenRegistry appScreenRegistry;
 
-        [Inject]
-        public void Construct(IScreenRegistry screenRegistry) {
+        public SceneLoader(IScreenRegistry screenRegistry) {
             appScreenRegistry = screenRegistry;
         }
 

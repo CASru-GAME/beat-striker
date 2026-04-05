@@ -39,7 +39,7 @@ public class CharacterSelectStatusSlotView : MonoBehaviour
 
     public void Render(CharacterSelectSlotState state)
     {
-        var isSelected = state.SelectedModelPrefab != null;
+        var isSelected = state.IsSelected;
 
         playerLabel.text = state.HasGamePad ? $"{state.SlotIndex + 1}P" : "CPU";
         playerLabel.color = state.HasGamePad ? playerLabelColors[state.SlotIndex % playerLabelColors.Length] : cpuLabelColor;
