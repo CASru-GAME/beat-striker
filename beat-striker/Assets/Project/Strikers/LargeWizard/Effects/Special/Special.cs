@@ -31,6 +31,7 @@ namespace Core.LargeWizard {
             rb.linearVelocity = transform.forward * speed;
             Destroy(gameObject, lifeTime);
             StartCoroutine(SpawnBeamAfterDelay());
+            AudioSource.PlayClipAtPoint(audioClip, transform.position);
         }
 
         void Update() {
@@ -58,7 +59,6 @@ namespace Core.LargeWizard {
                 hurtbox.GiveHit(new HitStatus(damage, nockBackDirection * nockbackSpeed));
 
                 var hitPoint = other.ClosestPoint(transform.position);
-                AudioSource.PlayClipAtPoint(audioClip, hitPoint);
                 Destroy(this.gameObject);
             }
         }

@@ -17,7 +17,12 @@ namespace Core.LargeWizard {
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
 
-            Instantiate(specialPrefab, spawnPoint.position, spawnPoint.rotation);
+            var specialInstance = Instantiate(specialPrefab, spawnPoint.position, spawnPoint.rotation);
+            var ownerStrikerHub = context.Rigidbody.GetComponent<StrikerHub>();
+            var beams = specialInstance.GetComponentsInChildren<beam11>(true);
+            for (var i = 0; i < beams.Length; i++) {
+                beams[i].SetOwnerStrikerHub(ownerStrikerHub);
+            }
         }
 
         // このステートにいる間、毎フレーム呼ばれる

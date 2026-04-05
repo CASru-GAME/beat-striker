@@ -9,14 +9,11 @@ namespace Core.LargeWizard {
         [SerializeField] float nockbackSpeed = 10f;
         [SerializeField] float speed = 20f;
         [SerializeField, Min(0f)] float launchDelay = 0f;
+        [SerializeField] Vector3 localMoveDirection = Vector3.forward;
         Rigidbody rb;
         Collider hitCollider;
         Renderer[] renderers;
         bool isLaunched;
-
-        [SerializeField] GameObject impactPrefab;
-        [SerializeField] AudioClip audioClip;
-        [SerializeField] GameObject trail;
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
@@ -45,14 +42,10 @@ namespace Core.LargeWizard {
 
             // 敵に当たった場合の処理
             if (other.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                var nockBackDirection = rb.linearVelocity.normalized;
+                var nockBackDirection = GetWorldMoveDirection();
                 hurtbox.GiveHit(new HitStatus(damage, nockBackDirection * nockbackSpeed));
 
                 var hitPoint = other.ClosestPoint(transform.position);
-                Destroy(Instantiate(impactPrefab, hitPoint, transform.rotation), 5f);
-                AudioSource.PlayClipAtPoint(audioClip, hitPoint);
-                trail.transform.SetParent(null);
-                Destroy(trail, 5f);
                 Destroy(this.gameObject);
             }
         }
@@ -68,7 +61,17 @@ namespace Core.LargeWizard {
                 r.enabled = true;
             }
             hitCollider.enabled = true;
-            rb.linearVelocity = transform.forward * speed;
+            rb.linearVelocity = GetWorldMoveDirection() * speed;
+
+           
+        }
+
+        Vector3 GetWorldMoveDirection() {
+            if (localMoveDirection.sqrMagnitude <= 0.0001f) {
+                return transform.forward;
+            }
+
+            return transform.TransformDirection(localMoveDirection.normalized);
         }
     }
 }
