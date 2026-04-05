@@ -103,6 +103,10 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
         context.ApplyDamage(damage);
     }
 
+    public bool ConsumeSpecialPoint(float value) {
+        return context.ConsumeSpecialPoint(value);
+    }
+
     public void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null) {
         context.PlayAnimation(animation, onComplete);
     }

@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using Core.App.Types;
 using Alice;
 using R3;
 using UnityEngine;
+using VContainer;
 
-public record StrikerImpact(Vector3 DirectionAndMagnitude);
+public record StrikerInpact(Vector3 DirectionAndMagnitude);
 public record AttentionRequest(float DurationSeconds);
 
 public interface IStrikerContext {
@@ -16,7 +18,8 @@ public interface IStrikerContext {
     IObservableStriker GetOpponent();
     void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
     void ApplyDamage(float damage);
-    void GenerateImpact(StrikerImpact command);
+    bool ConsumeSpecialPoint(float value);
+    void GenerateInpact(StrikerInpact command);
     void RequestAttention(AttentionRequest request);
 }
 
@@ -52,13 +55,12 @@ namespace Alice {
         void GiveHit(HitStatus status);
         void IntroPose();
         void VictoryPose();
-        Observable<StrikerImpact> OnInpactGenerated { get; }
+        Observable<StrikerInpact> OnInpactGenerated { get; }
         Observable<AttentionRequest> OnAtentionRequested { get; }
-        Observable<Unit> OnSpecialRequestFailed { get; }
     }
 
     public class AliceStrikerHub : IStrikerContext, IStrikerHub, IDisposable {
-        IStrikerRegistry strikerRegistry;
+        [Inject] IStrikerRegistry strikerRegistry;
 
         float maxHitPoint;
         float maxSpecialPoint;
@@ -81,9 +83,8 @@ namespace Alice {
         readonly ReactiveProperty<float> maxHitPointSubject = new(0f);
         readonly ReactiveProperty<float> specialPointSubject = new(0f);
         readonly ReactiveProperty<float> maxSpecialPointSubject = new(0f);
-        readonly Subject<StrikerImpact> onInpactGeneratedSubject = new();
+        readonly Subject<StrikerInpact> onInpactGeneratedSubject = new();
         readonly Subject<AttentionRequest> onAttentionRequestedSubject = new();
-        readonly Subject<Unit> onSpecialRequestFailedSubject = new();
         IDisposable stateNameSubscription;
 
         Vector2 inputDirection;
@@ -99,6 +100,7 @@ namespace Alice {
         bool isEnemyInFront;
         IStrikerState observedState;
         bool hasObservedState;
+    bool isDestroyed;
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
@@ -112,9 +114,8 @@ namespace Alice {
         public ReadOnlyReactiveProperty<float> MaxHitPoint => maxHitPointSubject;
         public ReadOnlyReactiveProperty<float> SpecialPoint => specialPointSubject;
         public ReadOnlyReactiveProperty<float> MaxSpecialPoint => maxSpecialPointSubject;
-        public Observable<StrikerImpact> OnInpactGenerated => onInpactGeneratedSubject;
+        public Observable<StrikerInpact> OnInpactGenerated => onInpactGeneratedSubject;
         public Observable<AttentionRequest> OnAtentionRequested => onAttentionRequestedSubject;
-        public Observable<Unit> OnSpecialRequestFailed => onSpecialRequestFailedSubject;
 
         public Vector2 LocalInputDirection {
             get {
@@ -142,7 +143,24 @@ namespace Alice {
         }
 
         public void DestroyGameObject() {
-            UnityEngine.Object.Destroy(this.Rigidbody.gameObject);
+            if (isDestroyed) {
+                return;
+            }
+
+            isDestroyed = true;
+
+            if (!rb) {
+                return;
+            }
+
+            var target = rb.gameObject;
+            if (target) {
+                UnityEngine.Object.Destroy(target);
+            }
+
+            rb = null;
+            strikerTransform = null;
+            centerPositionTransform = null;
         }
 
         public Observable<Unit> OnDead => onDeadSubject;
@@ -150,15 +168,8 @@ namespace Alice {
         public AliceStrikerHub() {
         }
 
-        public void InitializeRuntimeDependencies(IStrikerRegistry strikerRegistry, IMusicPlayer musicPlayer) {
-            this.strikerRegistry = strikerRegistry;
-            if (aiBrain != null) {
-                aiBrain.InitializeDependencies(musicPlayer, strikerRegistry);
-            }
-        }
-
         public void Tick(float deltaTime) {
-            if (!initialized) return;
+            if (!initialized || isDestroyed || !rb) return;
 
             if (stateMachine == null) {
                 stateMachine = new StrikerStateMachine(this, defaultState);
@@ -234,7 +245,6 @@ namespace Alice {
             maxSpecialPointSubject.Dispose();
             onInpactGeneratedSubject.Dispose();
             onAttentionRequestedSubject.Dispose();
-            onSpecialRequestFailedSubject.Dispose();
         }
 
         public void ApplyDamage(float damage) {
@@ -243,6 +253,20 @@ namespace Alice {
             if (currentHitPoint <= 0f) {
                 Die();
             }
+        }
+
+        public bool ConsumeSpecialPoint(float value) {
+            if (value <= 0f) {
+                return true;
+            }
+
+            if (currentSpecialPoint < value) {
+                return false;
+            }
+
+            currentSpecialPoint -= value;
+            specialPointSubject.OnNext(currentSpecialPoint);
+            return true;
         }
 
         public void ChangeDirection(Vector2 direction) {
@@ -274,14 +298,6 @@ namespace Alice {
 
         public void Special() {
             if (stateMachine == null || currentHitPoint <= 0f) return;
-
-            if (!CanUseSpecial()) {
-                onSpecialRequestFailedSubject.OnNext(Unit.Default);
-                return;
-            }
-
-            currentSpecialPoint = 0f;
-            specialPointSubject.OnNext(currentSpecialPoint);
             stateMachine.CurrentState.OnSpecialRequested(stateMachine);
         }
 
@@ -326,16 +342,12 @@ namespace Alice {
             animationPlayer.PlayAnimation(animation, () => onComplete?.Invoke(stateMachine));
         }
 
-        public void GenerateImpact(StrikerImpact command) {
+        public void GenerateInpact(StrikerInpact command) {
             onInpactGeneratedSubject.OnNext(command);
         }
 
         public void RequestAttention(AttentionRequest request) {
             onAttentionRequestedSubject.OnNext(request);
-        }
-
-        bool CanUseSpecial() {
-            return currentSpecialPoint + 0.0001f >= maxSpecialPoint;
         }
 
         void UpdateEnemyInFrontState() {

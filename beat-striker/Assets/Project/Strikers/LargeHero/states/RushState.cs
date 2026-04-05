@@ -5,7 +5,6 @@ using R3;
 using System;
 using System.Collections.Generic;
 using Core.Striker.Components;
-using UnityEngine.Serialization;
 
 namespace Core.LargeHero {
     
@@ -17,8 +16,6 @@ namespace Core.LargeHero {
         [SerializeField] HitBox hitBox;
         IDisposable disposable;
 
-    [FormerlySerializedAs("particleprefab")]
-    [FormerlySerializedAs("RushHitEffect")]
     [SerializeField] ParticleSystem hitEffectPrefab;
         [SerializeField] AudioClip audioClip;
 
