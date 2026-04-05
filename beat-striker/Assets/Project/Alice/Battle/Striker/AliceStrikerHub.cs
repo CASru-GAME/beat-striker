@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Alice;
 using R3;
 using UnityEngine;
+using VContainer;
 
 public record StrikerImpact(Vector3 DirectionAndMagnitude);
 public record AttentionRequest(float DurationSeconds);
@@ -57,7 +58,7 @@ namespace Alice {
     }
 
     public class AliceStrikerHub : IStrikerContext, IStrikerHub, IDisposable {
-        IStrikerRegistry strikerRegistry;
+        [Inject] IStrikerRegistry strikerRegistry;
 
         float maxHitPoint;
         float maxSpecialPoint;
@@ -145,13 +146,6 @@ namespace Alice {
         public Observable<Unit> OnDead => onDeadSubject;
 
         public AliceStrikerHub() {
-        }
-
-        public void InitializeRuntimeDependencies(IStrikerRegistry strikerRegistry, IMusicPlayer musicPlayer) {
-            this.strikerRegistry = strikerRegistry;
-            if (aiBrain != null) {
-                aiBrain.InitializeDependencies(musicPlayer, strikerRegistry);
-            }
         }
 
         public void Tick(float deltaTime) {

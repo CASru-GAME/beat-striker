@@ -1,6 +1,7 @@
 using R3;
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public record AiObservation(
@@ -32,17 +33,13 @@ namespace Alice {
         public Observable<GamePadButton> OnButtonUpAsObservable => onButtonUp;
         public string DeviceName => nameof(AiBrain);
 
-        public void InitializeDependencies(IMusicPlayer musicPlayer, IStrikerRegistry strikerRegistry) {
+        [Inject]
+        public void Construct(IMusicPlayer musicPlayer, IStrikerRegistry strikerRegistry) {
             this.musicPlayer = musicPlayer;
             this.strikerRegistry = strikerRegistry;
         }
 
         public void EnableAiMode(IObservableStriker self) {
-            if (musicPlayer == null || strikerRegistry == null) {
-                Debug.LogError("AiBrain dependencies are not initialized.", this);
-                return;
-            }
-
             enabled = true;
             if (this.isAiMode) {
                 return;

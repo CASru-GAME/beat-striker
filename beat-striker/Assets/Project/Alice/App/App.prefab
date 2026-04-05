@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 9133904809460036572}
   - component: {fileID: 8179424678283996581}
   - component: {fileID: 9201860890254514560}
+  - component: {fileID: 900396716029566309}
   - component: {fileID: 906267494629859191}
   - component: {fileID: 7111598241528783917}
   - component: {fileID: 7689006274051584689}
@@ -92,6 +93,18 @@ MonoBehaviour:
   defaultTransitionPresenterPrefab: {fileID: 5542158287853537125, guid: 50b2ebc5686784b6f8d03d0c315a4742, type: 3}
   transitionParent: {fileID: 5619376666138620005}
   transitionAnimationEntries: []
+--- !u!114 &900396716029566309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed1ee43e32f314a1b9c3fd6d85123efd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.SceneLoader
 --- !u!114 &906267494629859191
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -293,6 +306,7 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects: []
   playerInputManager: {fileID: 6291877219211561707}
+  sceneLoader: {fileID: 900396716029566309}
   stageRegistry: {fileID: 7111598241528783917}
   screenRegistry: {fileID: 8416357320802876425}
   musicRegistry: {fileID: 7689006274051584689}

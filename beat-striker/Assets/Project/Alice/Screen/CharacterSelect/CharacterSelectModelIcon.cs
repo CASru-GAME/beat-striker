@@ -22,19 +22,12 @@ public class CharacterSelectModelIcon : MonoBehaviour
 
     void Awake()
     {
-        EnsureInitialized();
-    }
-
-    void EnsureInitialized()
-    {
-        rawImage ??= GetComponent<RawImage>();
+        rawImage = GetComponent<RawImage>();
         rawImage.color = new Color(1f, 1f, 1f, 0f);
     }
 
     public void SetModel(GameObject modelPrefab, float viewAngle = 35f)
     {
-        EnsureInitialized();
-
         if (modelPrefab == currentSource) {
             return;
         }

@@ -53,7 +53,9 @@ namespace Alice {
                 _ = container.Resolve<IBattlePlayerPresenter[]>();
                 _ = container.Resolve<IBeatjudge>();
                 _ = container.Resolve<IMusicPlayer>();
-                Debug.Log($"{LOG_PREFIX} BuildCallback resolve completed.");
+                Debug.Log($"{LOG_PREFIX} BuildCallback resolve completed. InjectSceneObjects start");
+
+                InjectSceneObjects(container);
                 Debug.Log($"{LOG_PREFIX} BuildCallback completed");
             });
 
@@ -99,6 +101,30 @@ namespace Alice {
                 Debug.LogError($"{LOG_PREFIX} {source} failed to start battle flow: {exception.Message}");
                 Debug.LogException(exception);
             }
+        }
+
+        void InjectSceneObjects(IObjectResolver container) {
+            var rootObjects = gameObject.scene.GetRootGameObjects();
+            Debug.Log($"{LOG_PREFIX} InjectSceneObjects rootCount={rootObjects.Length}");
+            foreach (var root in rootObjects) {
+                if (IsAnotherScopeRoot(root)) {
+                    Debug.Log($"{LOG_PREFIX} Skip inject root={root.name} because it is another scope root");
+                    continue;
+                }
+
+                Debug.Log($"{LOG_PREFIX} Inject root={root.name}");
+                container.InjectGameObject(root);
+            }
+
+            Debug.Log($"{LOG_PREFIX} InjectSceneObjects completed");
+        }
+
+        bool IsAnotherScopeRoot(GameObject root) {
+            if (!root.TryGetComponent<LifetimeScope>(out var rootScope)) {
+                return false;
+            }
+
+            return rootScope != this;
         }
 
         sealed class BattleFlowStarter : IInitializable {

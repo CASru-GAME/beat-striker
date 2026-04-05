@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using R3;
 using UnityEngine;
 
@@ -40,11 +39,6 @@ namespace Alice {
             this.playerSelectSetting = playerSelectSetting;
             this.appStrikerRegistry = appStrikerRegistry;
 
-            _ = InitializeAfterFrameAsync();
-        }
-
-        async Awaitable InitializeAfterFrameAsync() {
-            await Task.Yield();
             Initialize();
         }
 
@@ -64,10 +58,6 @@ namespace Alice {
 
             view.Backbutton.OnBackPressed
                 .Subscribe(_ => RequestStageSelectTransition())
-                .AddTo(subscriptions);
-
-            view.StartButtonAnimation.OnStartRequested
-                .Subscribe(_ => RequestPlaySceneTransition())
                 .AddTo(subscriptions);
 
             playerSelectSetting.SelectedStrikers
@@ -122,22 +112,10 @@ namespace Alice {
             }
 
             if (button != GamePadButton.East) return;
-            RequestPlaySceneTransition();
-        }
-
-        void RequestPlaySceneTransition() {
-            if (IsTransitioning()) {
-                return;
-            }
-
-            if (inputState != SceneInputState.ReadyToStart) {
-                return;
-            }
-
+            if (inputState != SceneInputState.ReadyToStart) return;
             if (!startTransitionInputEnabled) {
                 return;
             }
-
             if (!view.StartButtonAnimation.IsStartInputReady) {
                 return;
             }
@@ -163,12 +141,8 @@ namespace Alice {
                 return;
             }
 
-            var result = transitionService.RequestStartTransition(AppScene.StageSelect);
-            if (!result.IsSuccess) {
-                return;
-            }
-
             inputState = SceneInputState.TransitioningToStageSelect;
+            _ = transitionService.RequestStartTransition(AppScene.StageSelect);
         }
 
         void UndoSelection() {
@@ -240,17 +214,12 @@ namespace Alice {
             for (var i = 0; i < requiredSlots; i++) {
                 var hasGamePad = gamePadRegistry.Get(i).HasGamePad.CurrentValue;
                 GameObject selectedModelPrefab = null;
-                var isSelected = false;
 
                 if (playerSelectSetting.TryGetStriker(i, out var striker) && strikerModelMap.TryGetValue(striker, out var modelPrefab)) {
-                    isSelected = true;
                     selectedModelPrefab = modelPrefab;
                 }
-                else if (playerSelectSetting.TryGetStriker(i, out _)) {
-                    isSelected = true;
-                }
 
-                slotStates.Add(new CharacterSelectSlotState(i, hasGamePad, isSelected, selectedModelPrefab));
+                slotStates.Add(new CharacterSelectSlotState(i, hasGamePad, selectedModelPrefab));
             }
 
             view.StatusView.Render(slotStates);

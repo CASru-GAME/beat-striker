@@ -1,5 +1,7 @@
 
 using System;
+using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using VContainer;
@@ -8,8 +10,10 @@ using VContainer.Unity;
 namespace Alice {
 	public class AppScope : LifetimeScope {
 		static AppScope instance;
+		readonly HashSet<int> injectedSceneHandles = new();
 
 		[SerializeField] PlayerInputManager playerInputManager;
+		[SerializeField] SceneLoader sceneLoader;
 		[SerializeField] StageRegistry stageRegistry;
 		[SerializeField] ScreenRegistry screenRegistry;
 		[SerializeField] MusicRegistry musicRegistry;
@@ -54,10 +58,12 @@ namespace Alice {
 			builder.RegisterInstance<IAppTransitionFactory>(appTransitionFactory);
 			builder.RegisterInstance<ICursorFactory>(cursorFactory);
 			builder.RegisterInstance<IAppBGMPlayer>(appBgmPlayer);
-			builder.Register<ISceneLoader, SceneLoader>(Lifetime.Singleton);
+			builder.RegisterInstance<ISceneLoader>(sceneLoader);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
 
 			builder.RegisterInstance(playerInputManager);
+			builder.RegisterEntryPoint<SceneInjectionHandler>(Lifetime.Singleton);
+			builder.RegisterEntryPoint<PlayerJoinHandler>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
 
 			builder.RegisterBuildCallback(container => {
@@ -76,8 +82,92 @@ namespace Alice {
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
 				_ = container.Resolve<ICursorDeployer>();
+				container.Inject(sceneLoader);
+				TryInjectSceneObjects(container, SceneManager.GetActiveScene());
 			});
 		}
 
+		void TryInjectSceneObjects(IObjectResolver container, Scene scene) {
+			if (!injectedSceneHandles.Add(scene.handle)) {
+				return;
+			}
+
+			if (HasBattleScope(scene)) {
+				Debug.Log($"[AppScope] Skip scene injection for battle-owned scene '{scene.name}'.");
+				return;
+			}
+
+			var rootObjects = scene.GetRootGameObjects();
+			foreach (var root in rootObjects) {
+				if (IsAnotherScopeRoot(root)) {
+					continue;
+				}
+
+				container.InjectGameObject(root);
+			}
+		}
+
+		bool HasBattleScope(Scene scene) {
+			var rootObjects = scene.GetRootGameObjects();
+			foreach (var root in rootObjects) {
+				if (root.TryGetComponent<BattleScope>(out _)) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		bool IsAnotherScopeRoot(GameObject root) {
+			if (!root.TryGetComponent<LifetimeScope>(out var rootScope)) {
+				return false;
+			}
+
+			return rootScope != this;
+		}
+
+		sealed class SceneInjectionHandler : IInitializable, IDisposable {
+			readonly IObjectResolver container;
+			readonly AppScope appScope;
+
+			public SceneInjectionHandler(IObjectResolver container, AppScope appScope) {
+				this.container = container;
+				this.appScope = appScope;
+			}
+
+			public void Initialize() {
+				SceneManager.sceneLoaded += OnSceneLoaded;
+			}
+
+			public void Dispose() {
+				SceneManager.sceneLoaded -= OnSceneLoaded;
+			}
+
+			void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
+				appScope.TryInjectSceneObjects(container, scene);
+			}
+		}
+
+		sealed class PlayerJoinHandler : IInitializable, IDisposable {
+			readonly PlayerInputManager playerInputManager;
+			readonly IObjectResolver container;
+
+			public PlayerJoinHandler(PlayerInputManager playerInputManager, IObjectResolver container) {
+				this.playerInputManager = playerInputManager;
+				this.container = container;
+			}
+
+			public void Initialize() {
+				playerInputManager.onPlayerJoined += OnPlayerJoined;
+			}
+
+			public void Dispose() {
+				playerInputManager.onPlayerJoined -= OnPlayerJoined;
+			}
+
+			void OnPlayerJoined(PlayerInput playerInput) {
+				container.InjectGameObject(playerInput.gameObject);
+			}
+		}
 	}
 }

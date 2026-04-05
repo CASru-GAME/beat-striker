@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 46347804}
   - component: {fileID: 46347806}
   - component: {fileID: 46347805}
+  - component: {fileID: 46347808}
   - component: {fileID: 46347807}
   - component: {fileID: 46347809}
   m_Layer: 5
@@ -223,7 +224,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 46347808}
         m_TargetAssemblyTypeName: SceneTransitionButton, Assembly-CSharp
         m_MethodName: OnClick
         m_Mode: 1
@@ -236,6 +237,18 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   clickSound: {fileID: 0}
+--- !u!114 &46347808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46347803}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cadb8d6dc5a782f43a81a0a4e0aca1dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionButton
 --- !u!82 &46347809
 AudioSource:
   m_ObjectHideFlags: 0
@@ -4600,6 +4613,7 @@ GameObject:
   - component: {fileID: 1992377601}
   - component: {fileID: 1992377603}
   - component: {fileID: 1992377602}
+  - component: {fileID: 1992377605}
   - component: {fileID: 1992377606}
   - component: {fileID: 1992377607}
   m_Layer: 5
@@ -4666,6 +4680,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1992377600}
   m_CullTransparentMesh: 1
+--- !u!114 &1992377605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1992377600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cadb8d6dc5a782f43a81a0a4e0aca1dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionButton
 --- !u!114 &1992377606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4693,7 +4719,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 1992377605}
         m_TargetAssemblyTypeName: SceneTransitionButton, Assembly-CSharp
         m_MethodName: OnClick
         m_Mode: 1

@@ -42,10 +42,8 @@ public class StartButtonAnimation : MonoBehaviour {
     private bool blackImageSoundEnabled = false; // 黒い画像の音が有効かどうか
     private float lastClickTime = -999f; // 最後にクリックした時間
     private float clickDebounceTime = 0.2f; // クリック間隔（秒）
-    private readonly Subject<Unit> startRequested = new();
 
     public bool IsStartInputReady => blackImageSoundEnabled;
-    public Observable<Unit> OnStartRequested => startRequested;
 
     public Botan backgroundBotan; // 背景のBotanコンポーネント
 
@@ -78,7 +76,6 @@ public class StartButtonAnimation : MonoBehaviour {
     }
 
     void OnDestroy() {
-        startRequested.Dispose();
     }
 
     public void SetAllStrikersSelected(bool allSelected) {
@@ -193,7 +190,6 @@ public class StartButtonAnimation : MonoBehaviour {
         // アニメーション完了後のみ効果音を再生
         if (blackImageSoundEnabled) {
             PlaySoundAtVolume(blackImageClickSound, blackImageClickSoundVolume);
-            startRequested.OnNext(Unit.Default);
         }
     }
 
