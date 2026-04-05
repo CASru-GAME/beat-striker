@@ -15,23 +15,17 @@ namespace Core.LargeWizard {
         [SerializeField] float beamSpawnDelay = 3f;
         Rigidbody rb;
 
-        [SerializeField] beam11 beamPrefab;
+        [SerializeField] GameObject beamPrefab;
         [SerializeField] AudioClip audioClip;
 
         Vector3 targetScale;
         float elapsedTime;
-
-        StrikerHub self;
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
             targetScale = transform.localScale;
             transform.localScale = Vector3.zero;
         }
-
-        public void SetSelf(StrikerHub hub) {
-            self = hub;
-        } 
 
         void Start() {
             rb.linearVelocity = transform.forward * speed;
@@ -71,7 +65,7 @@ namespace Core.LargeWizard {
 
         System.Collections.IEnumerator SpawnBeamAfterDelay() {
             yield return new WaitForSeconds(beamSpawnDelay);
-            Instantiate(beamPrefab, transform.position, transform.rotation).SetOwnerStrikerHub(self);
+            Instantiate(beamPrefab, transform.position, transform.rotation);
         }
     }
 }

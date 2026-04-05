@@ -9,7 +9,7 @@ namespace Core.LargeWizard {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerNode nextNode;
-        [SerializeField] private Special specialPrefab;
+        [SerializeField] private GameObject specialPrefab;
         [SerializeField] private Transform spawnPoint;
 
         // このステートに遷移した直後に呼ばれる
@@ -18,8 +18,11 @@ namespace Core.LargeWizard {
             context.PlayAnimation(animationClip, OnAnimationEnd);
 
             var specialInstance = Instantiate(specialPrefab, spawnPoint.position, spawnPoint.rotation);
-            var ownerStrikerHub = context.Rigidbody.gameObject.GetComponent<StrikerHub>();
-            specialInstance.SetSelf(ownerStrikerHub);
+            var ownerStrikerHub = context.Rigidbody.GetComponent<StrikerHub>();
+            var beams = specialInstance.GetComponentsInChildren<beam11>(true);
+            for (var i = 0; i < beams.Length; i++) {
+                beams[i].SetOwnerStrikerHub(ownerStrikerHub);
+            }
         }
 
         // このステートにいる間、毎フレーム呼ばれる
