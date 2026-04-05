@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(ParticleSystem))]
 [RequireComponent(typeof(BoxCollider))]
 public class beam11 : MonoBehaviour
 {
@@ -11,9 +10,13 @@ public class beam11 : MonoBehaviour
     [SerializeField, Min(0f)] float knockbackPerSecond = 10f;
     [SerializeField, Min(0f)] float maxLength = 12f;
     [SerializeField, Min(0f)] float extendSpeed = 40f;
+    [SerializeField, Min(0f)] float extendStartDelaySeconds = 0f;
     [SerializeField, Min(0f)] float extendTime = 0.3f;
     [SerializeField] Vector3 localExtendDirection = Vector3.forward;
-    [SerializeField] ParticleSystem beam11ParticleSystem;
+    [SerializeField] ParticleSystem particleRoot;
+
+    [SerializeField] AudioClip chargeAudioClip;
+    [SerializeField, Min(0f)] float chargePlayDelaySeconds = 0f;
 
     BoxCollider hitCollider;
     Vector3 initialColliderSize;
@@ -25,7 +28,6 @@ public class beam11 : MonoBehaviour
 
     void Awake()
     {
-        beam11ParticleSystem = GetComponent<ParticleSystem>();
         hitCollider = GetComponent<BoxCollider>();
         hitCollider.isTrigger = true;
 
@@ -41,15 +43,25 @@ public class beam11 : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        beam11ParticleSystem.Play(true);
+        Destroy(gameObject, extendStartDelaySeconds + extendTime);
+        particleRoot.Play(true);
 
         if (audioPlayDelaySeconds <= 0f)
         {
             AudioSource.PlayClipAtPoint(audioClip, transform.position);
+            AudioSource.PlayClipAtPoint(chargeAudioClip, transform.position);
             return;
         }
 
-        StartCoroutine(PlayAudioAfterDelay());
+        StartCoroutine(PlayAudioAfterDelay());;
+        StartCoroutine(PlayChargeAudioAfterDelay());
+    }
+
+
+    System.Collections.IEnumerator PlayChargeAudioAfterDelay()
+    {
+        yield return new WaitForSeconds(chargePlayDelaySeconds);
+        AudioSource.PlayClipAtPoint(chargeAudioClip, transform.position);
     }
 
     // Update is called once per frame
@@ -58,7 +70,8 @@ public class beam11 : MonoBehaviour
         var localExtendDirectionNormalized = GetLocalExtendDirection();
 
         elapsed += Time.deltaTime;
-        var lengthBySpeed = initialColliderSize.z + extendSpeed * elapsed;
+        var extendElapsed = Mathf.Max(0f, elapsed - extendStartDelaySeconds);
+        var lengthBySpeed = initialColliderSize.z + extendSpeed * extendElapsed;
         var timeLimitedLength = extendTime <= 0f ? maxLength : initialColliderSize.z + extendSpeed * extendTime;
         var length = Mathf.Min(maxLength, Mathf.Min(lengthBySpeed, timeLimitedLength));
 
@@ -76,39 +89,10 @@ public class beam11 : MonoBehaviour
 
     void OnTriggerStay(Collider other)
     {
-        if (other.transform.IsChildOf(transform))
-        {
-            return;
-        }
-
-        if (!other.TryGetComponent<Hurtbox>(out var hurtbox))
-        {
-            hurtbox = other.GetComponentInParent<Hurtbox>();
-            if (hurtbox == null)
-            {
-                return;
-            }
-        }
-
-        if (ownerStrikerHub == null)
-        {
-            return;
-        }
-
-        var otherStrikerHub = other.GetComponentInParent<StrikerHub>();
-        if (otherStrikerHub == null)
-        {
-            otherStrikerHub = hurtbox.GetComponentInParent<StrikerHub>();
-            if (otherStrikerHub == null)
-            {
-                return;
-            }
-        }
-
-        if (otherStrikerHub == ownerStrikerHub)
-        {
-            return;
-        }
+        other.TryGetComponent<Hurtbox>(out var hurtbox);
+        if(hurtbox == null) return;
+        other.TryGetComponent<StrikerHub>(out var strikerHub);
+        if (strikerHub != null && strikerHub == ownerStrikerHub) return;
 
         if (lastDamagedTickByHurtbox.TryGetValue(hurtbox, out var lastTick) && lastTick == fixedTick)
         {

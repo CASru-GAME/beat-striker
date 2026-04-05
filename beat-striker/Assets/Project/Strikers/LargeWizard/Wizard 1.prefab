@@ -270,7 +270,7 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
-  specialPrefab: {fileID: 1130951119586766898, guid: dbfab5bbecf025f43bc6113e4a250f6d, type: 3}
+  specialPrefab: {fileID: 2572839958750799036, guid: dbfab5bbecf025f43bc6113e4a250f6d, type: 3}
   spawnPoint: {fileID: 3513985008609795516}
 --- !u!1 &2145360790748758675
 GameObject:
