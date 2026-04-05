@@ -80,6 +80,8 @@ namespace Alice {
             }
             catch (Exception ex) {
                 Debug.LogException(ex);
+                currentTransition?.DestroyGameObject();
+                currentTransition = null;
                 currentState = TransitionState.Idle;
             }
         }

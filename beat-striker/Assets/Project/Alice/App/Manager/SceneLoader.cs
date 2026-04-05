@@ -28,16 +28,24 @@ namespace Alice {
         }
 
         public async Task LoadAsync(AppScene scene) {
-            try {
-                var sceneName = appScreenRegistry.GetByScene(scene).SceneName;
-
-                var asyncOperation = SceneManager.LoadSceneAsync(sceneName);
-                while (!asyncOperation.isDone) {
-                    await Task.Yield();
-                }
+            var sceneName = appScreenRegistry.GetByScene(scene).SceneName;
+            if (string.IsNullOrWhiteSpace(sceneName)) {
+                throw new InvalidOperationException($"SceneName is empty for AppScene '{scene}'.");
             }
-            catch (Exception e) {
-                Debug.LogError($"Failed to load scene {scene}: {e}");
+
+            if (!Application.CanStreamedLevelBeLoaded(sceneName)) {
+                throw new InvalidOperationException(
+                    $"Scene '{sceneName}' for AppScene '{scene}' is not available in the active Build Profile/shared scene list.");
+            }
+
+            var asyncOperation = SceneManager.LoadSceneAsync(sceneName);
+            if (asyncOperation == null) {
+                throw new InvalidOperationException(
+                    $"SceneManager.LoadSceneAsync returned null for scene '{sceneName}' (AppScene '{scene}').");
+            }
+
+            while (!asyncOperation.isDone) {
+                await Task.Yield();
             }
         }
     }

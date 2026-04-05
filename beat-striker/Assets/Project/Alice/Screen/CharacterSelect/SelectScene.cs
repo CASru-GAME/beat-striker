@@ -29,6 +29,7 @@ public class SelectScene : MonoBehaviour
     readonly List<CharacterSelectSlotState> slotStates = new();
     readonly Dictionary<Striker, GameObject> strikerModelMap = new();
     bool initialized;
+    bool startTransitionInputEnabled;
     SceneInputState inputState = SceneInputState.Selecting;
 
     [Inject]
@@ -78,8 +79,14 @@ public class SelectScene : MonoBehaviour
         }
 
         RefreshState();
-        _ = transitionService.RequestEndTransitionAsync(AppScene.CharacterSelect);
+        _ = EnableStartInputAfterSceneEnterAsync();
         initialized = true;
+    }
+
+    async Awaitable EnableStartInputAfterSceneEnterAsync() {
+        startTransitionInputEnabled = false;
+        await transitionService.RequestEndTransitionAsync(AppScene.CharacterSelect);
+        startTransitionInputEnabled = true;
     }
 
     void OnStrikerClicked(StrikerClickRequest request) {
@@ -110,13 +117,21 @@ public class SelectScene : MonoBehaviour
 
         if (button != GamePadButton.East) return;
         if (inputState != SceneInputState.ReadyToStart) return;
+        if (!startTransitionInputEnabled) {
+            return;
+        }
         if (!startButtonAnimation.IsStartInputReady) {
             return;
         }
 
-        AudioSource.PlayClipAtPoint(clickSound, Camera.main.transform.position);
+        var result = transitionService.RequestStartTransition(ResolvePlayScene());
+        if (!result.IsSuccess) {
+            inputState = SceneInputState.ReadyToStart;
+            return;
+        }
+
         inputState = SceneInputState.TransitioningToScreen;
-        _ = transitionService.RequestStartTransition(ResolvePlayScene());
+        AudioSource.PlayClipAtPoint(clickSound, Camera.main.transform.position);
     }
 
     AppScene ResolvePlayScene() {

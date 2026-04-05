@@ -9691,6 +9691,14 @@ MonoBehaviour:
   resultPanelButton: {fileID: 1869027723627402525}
   player1PortraitImage: {fileID: 2985500498956946179}
   player2PortraitImage: {fileID: 6943222646108898199}
+  player1ScoreText: {fileID: 4594675296055314008}
+  player2ScoreText: {fileID: 6191219042103179853}
+  player1ExcellentText: {fileID: 2087010255507864200}
+  player2ExcellentText: {fileID: 3916068901702699239}
+  player1GoodText: {fileID: 4862061611889230151}
+  player2GoodText: {fileID: 4151558332870325871}
+  player1MissText: {fileID: 6903278395419606456}
+  player2MissText: {fileID: 258138460474053648}
 --- !u!1 &6489105229511689882
 GameObject:
   m_ObjectHideFlags: 0

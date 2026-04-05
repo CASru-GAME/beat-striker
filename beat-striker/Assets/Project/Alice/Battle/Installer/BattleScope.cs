@@ -46,6 +46,7 @@ namespace Alice {
                 _ = container.Resolve<IMusicPlayer>();
 
                 container.Inject(battlePresenter);
+                container.Inject(resultScene);
                 for (var i = 0; i < this.battlePlayerPresenters.Length; i++) {
                     container.Inject(this.battlePlayerPresenters[i]);
                 }

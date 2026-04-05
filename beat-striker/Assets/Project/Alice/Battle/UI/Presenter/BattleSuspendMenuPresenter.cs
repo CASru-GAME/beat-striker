@@ -2,6 +2,7 @@ using Core;
 using R3;
 using UnityEngine;
 using VContainer;
+using VContainer.Unity;
 
 namespace Alice {
     public class BattleSuspendMenuPresenter : MonoBehaviour {
@@ -18,6 +19,10 @@ namespace Alice {
 
         public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
+
+        void Awake() {
+            EnsureDependenciesInjected();
+        }
 
         void Start() {
             suspendButton.onClick += e => {
@@ -74,6 +79,23 @@ namespace Alice {
 
         void RequestResume() {
             resumeRequestedSubject.OnNext(Unit.Default);
+        }
+
+        void EnsureDependenciesInjected() {
+            if (cursorDeployer != null) {
+                return;
+            }
+
+            var battleScope = LifetimeScope.Find<BattleScope>(gameObject.scene);
+            if (battleScope != null && battleScope.Container != null) {
+                battleScope.Container.Inject(this);
+                return;
+            }
+
+            var appScope = LifetimeScope.Find<AppScope>();
+            if (appScope != null && appScope.Container != null) {
+                appScope.Container.Inject(this);
+            }
         }
     }
 }

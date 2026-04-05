@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using VContainer;
+using VContainer.Unity;
 using R3;
 using Alice;
 using App;
@@ -50,6 +51,11 @@ public class ResultScene : MonoBehaviour
         this.gamePadRegistry = gamePadRegistry;
     }
 
+    void Awake()
+    {
+        EnsureDependenciesInjected();
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -64,6 +70,27 @@ public class ResultScene : MonoBehaviour
     void Update()
     {
 
+    }
+
+    void EnsureDependenciesInjected()
+    {
+        if (playerSelectSetting != null && appStrikerRegistry != null && gamePadRegistry != null)
+        {
+            return;
+        }
+
+        var battleScope = LifetimeScope.Find<BattleScope>(gameObject.scene);
+        if (battleScope != null && battleScope.Container != null)
+        {
+            battleScope.Container.Inject(this);
+            return;
+        }
+
+        var appScope = LifetimeScope.Find<AppScope>();
+        if (appScope != null && appScope.Container != null)
+        {
+            appScope.Container.Inject(this);
+        }
     }
 
     public void GotoSelectScene()

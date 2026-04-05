@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using R3;
 using UnityEngine;
 using VContainer;
+using VContainer.Unity;
 using CorePlayerId = App.PlayerId;
 
 namespace Alice {
@@ -51,6 +52,7 @@ namespace Alice {
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
 
         void Awake() {
+            EnsureDependenciesInjected();
             EnsureStageCameraConfigured();
         }
 
@@ -230,6 +232,23 @@ namespace Alice {
             musicPlayer.OnBeatTiming
                 .Subscribe(_ => AudioSource.PlayClipAtPoint(beatSound, Vector3.zero))
                 .AddTo(audioSubscriptions);
+        }
+
+        void EnsureDependenciesInjected() {
+            if (strikerRegistry != null && gamePadRegistry != null && musicPlayer != null) {
+                return;
+            }
+
+            var battleScope = LifetimeScope.Find<BattleScope>(gameObject.scene);
+            if (battleScope != null && battleScope.Container != null) {
+                battleScope.Container.Inject(this);
+                return;
+            }
+
+            var appScope = LifetimeScope.Find<AppScope>();
+            if (appScope != null && appScope.Container != null) {
+                appScope.Container.Inject(this);
+            }
         }
     }
 }

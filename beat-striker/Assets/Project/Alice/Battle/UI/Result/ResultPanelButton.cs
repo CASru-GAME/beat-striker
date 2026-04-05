@@ -389,14 +389,14 @@ public class ResultPanelButton : MonoBehaviour
             float blackSoundTime = delay + blackImageSoundDelay;
             if (blackSoundTime > 0)
             {
-                LeanTween.delayedCall(blackSoundTime, () => PlaySound(blackImageSound, blackImageSoundVolume));
+                LeanTween.delayedCall(blackImage, blackSoundTime, () => PlaySound(blackImageSound, blackImageSoundVolume));
             }
             else
             {
                 PlaySound(blackImageSound, blackImageSoundVolume);
             }
 
-            LeanTween.delayedCall(delay, () =>
+            LeanTween.delayedCall(blackImage, delay, () =>
             {
                 blackImage.SetActive(true);
                 LeanTween.cancel(blackImage);
@@ -415,11 +415,11 @@ public class ResultPanelButton : MonoBehaviour
     {
         if (lineObject != null && lineRect != null)
         {
-            LeanTween.delayedCall(delay, () =>
+            LeanTween.delayedCall(lineObject, delay, () =>
             {
                 if (lineSoundDelay > 0)
                 {
-                    LeanTween.delayedCall(lineSoundDelay, () => PlaySound(lineSound, lineSoundVolume));
+                    LeanTween.delayedCall(lineObject, lineSoundDelay, () => PlaySound(lineSound, lineSoundVolume));
                 }
                 else
                 {
@@ -458,7 +458,7 @@ public class ResultPanelButton : MonoBehaviour
         // ScoreabovePanel: 上から下
         if (scoreAbovePanel != null && scoreAboveRect != null)
         {
-            LeanTween.delayedCall(delay, () =>
+            LeanTween.delayedCall(scoreAbovePanel, delay, () =>
             {
                 Debug.Log("ScoreabovePanel animation start");
                 scoreAbovePanel.SetActive(true);
@@ -470,7 +470,7 @@ public class ResultPanelButton : MonoBehaviour
         // ScoreunderPanel: 下から上
         if (scoreUnderPanel != null && scoreUnderRect != null)
         {
-            LeanTween.delayedCall(delay, () =>
+            LeanTween.delayedCall(scoreUnderPanel, delay, () =>
             {
                 Debug.Log("ScoreunderPanel animation start");
                 scoreUnderPanel.SetActive(true);
@@ -485,7 +485,7 @@ public class ResultPanelButton : MonoBehaviour
         // ComboabovePanel: 左から右
         if (comboAbovePanel != null && comboAboveRect != null)
         {
-            LeanTween.delayedCall(delay, () =>
+            LeanTween.delayedCall(comboAbovePanel, delay, () =>
             {
                 Debug.Log("ComboabovePanel animation start");
                 comboAbovePanel.SetActive(true);
@@ -497,7 +497,7 @@ public class ResultPanelButton : MonoBehaviour
         // CombounderPanel: 右から左
         if (comboUnderPanel != null && comboUnderRect != null)
         {
-            LeanTween.delayedCall(delay, () =>
+            LeanTween.delayedCall(comboUnderPanel, delay, () =>
             {
                 Debug.Log("CombounderPanel animation start");
                 comboUnderPanel.SetActive(true);
@@ -512,7 +512,7 @@ public class ResultPanelButton : MonoBehaviour
         // PlayerWinnerPanel: ポップアップ（Scale 0 → 1.1 → 1）
         if (playerWinnerPanel != null && playerWinnerRect != null)
         {
-            LeanTween.delayedCall(delay, () =>
+            LeanTween.delayedCall(playerWinnerPanel, delay, () =>
             {
                 Debug.Log("PlayerWinnerPanel animation start");
                 playerWinnerPanel.SetActive(true);
@@ -553,7 +553,7 @@ public class ResultPanelButton : MonoBehaviour
         // PlayerLoserPanel: ポップアップ（Scale 0 → 1.1 → 1）
         if (playerLoserPanel != null && playerLoserRect != null)
         {
-            LeanTween.delayedCall(delay, () =>
+            LeanTween.delayedCall(playerLoserPanel, delay, () =>
             {
                 Debug.Log("PlayerLoserPanel animation start");
                 playerLoserPanel.SetActive(true);
@@ -576,7 +576,7 @@ public class ResultPanelButton : MonoBehaviour
     {
         if (goBackSceneImage != null && goBackRect != null)
         {
-            LeanTween.delayedCall(delay, () =>
+            LeanTween.delayedCall(goBackSceneImage, delay, () =>
             {
                 Debug.Log("GoBackSceneImage animation start");
                 goBackSceneImage.SetActive(true);
@@ -605,8 +605,13 @@ public class ResultPanelButton : MonoBehaviour
     {
         if (nextText != null && nextTextCanvasGroup != null)
         {
-            LeanTween.delayedCall(nextTextDelay, () =>
+            LeanTween.delayedCall(nextText, nextTextDelay, () =>
             {
+                if (nextTextCanvasGroup == null)
+                {
+                    return;
+                }
+
                 Debug.Log("NextText fade loop start");
                 
                 // 最小透明度からスタート
@@ -634,6 +639,46 @@ public class ResultPanelButton : MonoBehaviour
         if (button != null)
         {
             button.onClick.RemoveListener(OnButtonClick);
+        }
+
+        if (nextText != null)
+        {
+            LeanTween.cancel(nextText);
+        }
+
+        if (scoreAbovePanel != null)
+        {
+            LeanTween.cancel(scoreAbovePanel);
+        }
+
+        if (scoreUnderPanel != null)
+        {
+            LeanTween.cancel(scoreUnderPanel);
+        }
+
+        if (comboAbovePanel != null)
+        {
+            LeanTween.cancel(comboAbovePanel);
+        }
+
+        if (comboUnderPanel != null)
+        {
+            LeanTween.cancel(comboUnderPanel);
+        }
+
+        if (playerWinnerPanel != null)
+        {
+            LeanTween.cancel(playerWinnerPanel);
+        }
+
+        if (playerLoserPanel != null)
+        {
+            LeanTween.cancel(playerLoserPanel);
+        }
+
+        if (goBackSceneImage != null)
+        {
+            LeanTween.cancel(goBackSceneImage);
         }
     }
     
@@ -672,6 +717,51 @@ public class ResultPanelButton : MonoBehaviour
                 playerWinnerCanvasGroup.alpha = 1f;
             }
             playerWinnerPanel.SetActive(false);
+        }
+
+        if (nextText != null)
+        {
+            LeanTween.cancel(nextText);
+            if (nextTextCanvasGroup != null)
+            {
+                nextTextCanvasGroup.alpha = nextTextMinAlpha;
+            }
+        }
+
+        if (scoreAbovePanel != null)
+        {
+            LeanTween.cancel(scoreAbovePanel);
+            scoreAbovePanel.SetActive(false);
+        }
+
+        if (scoreUnderPanel != null)
+        {
+            LeanTween.cancel(scoreUnderPanel);
+            scoreUnderPanel.SetActive(false);
+        }
+
+        if (comboAbovePanel != null)
+        {
+            LeanTween.cancel(comboAbovePanel);
+            comboAbovePanel.SetActive(false);
+        }
+
+        if (comboUnderPanel != null)
+        {
+            LeanTween.cancel(comboUnderPanel);
+            comboUnderPanel.SetActive(false);
+        }
+
+        if (playerLoserPanel != null)
+        {
+            LeanTween.cancel(playerLoserPanel);
+            playerLoserPanel.SetActive(false);
+        }
+
+        if (goBackSceneImage != null)
+        {
+            LeanTween.cancel(goBackSceneImage);
+            goBackSceneImage.SetActive(false);
         }
     }
 }

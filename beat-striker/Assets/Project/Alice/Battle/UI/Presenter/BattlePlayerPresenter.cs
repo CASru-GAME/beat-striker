@@ -1,6 +1,7 @@
 using System;
 using R3;
 using UnityEngine;
+using VContainer.Unity;
 
 namespace Alice {
     public interface IBattlePlayerPresenter {
@@ -34,6 +35,7 @@ namespace Alice {
         }
 
         void Awake() {
+            EnsureDependenciesInjected();
             ringView = Instantiate(beatRingPrefab, beatRingParent);
         }
 
@@ -146,6 +148,23 @@ namespace Alice {
             if (strikerHub != null) {
                 ringView.SetPosition(strikerHub.CenterPosition.CurrentValue);
                 ringView.SetLookDirection(strikerHub.LookDirection.CurrentValue);
+            }
+        }
+
+        void EnsureDependenciesInjected() {
+            if (strikerRegistry != null && beatJudge != null && musicPlayer != null) {
+                return;
+            }
+
+            var battleScope = LifetimeScope.Find<BattleScope>(gameObject.scene);
+            if (battleScope != null && battleScope.Container != null) {
+                battleScope.Container.Inject(this);
+                return;
+            }
+
+            var appScope = LifetimeScope.Find<AppScope>();
+            if (appScope != null && appScope.Container != null) {
+                appScope.Container.Inject(this);
             }
         }
     }
