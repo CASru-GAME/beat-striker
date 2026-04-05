@@ -9883,9 +9883,10 @@ MonoBehaviour:
   audioPlayDelaySeconds: 2
   damagePerSecond: 10
   knockbackPerSecond: 5
-  maxLength: 25
+  maxLength: 20
   colliderExtendLengthPer0p1Second: 0.008
   extendTime: 10
+  colliderShrinkLengthPerSecond: 15
   beam11ParticleSystem: {fileID: 977248009972251274}
 --- !u!65 &8258816788817316997
 BoxCollider:

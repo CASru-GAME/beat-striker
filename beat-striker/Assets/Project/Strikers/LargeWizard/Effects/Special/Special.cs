@@ -65,7 +65,8 @@ namespace Core.LargeWizard {
 
         System.Collections.IEnumerator SpawnBeamAfterDelay() {
             yield return new WaitForSeconds(beamSpawnDelay);
-            Instantiate(beamPrefab, transform.position, transform.rotation);
+            var beamInstance = Instantiate(beamPrefab, transform.position, transform.rotation);
+            Destroy(beamInstance, 10f);
         }
     }
 }
