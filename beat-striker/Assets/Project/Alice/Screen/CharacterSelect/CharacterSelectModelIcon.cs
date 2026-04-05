@@ -19,6 +19,7 @@ public class CharacterSelectModelIcon : MonoBehaviour
     Vector3 rotCenter;
     float rotSpeed = 50f;
     GameObject currentSource;
+    [SerializeField] bool enableModelPreview = false;
 
     void Awake()
     {
@@ -34,6 +35,14 @@ public class CharacterSelectModelIcon : MonoBehaviour
     public void SetModel(GameObject modelPrefab, float viewAngle = 35f)
     {
         EnsureInitialized();
+
+        if (!enableModelPreview) {
+            currentSource = modelPrefab;
+            Teardown();
+            rawImage.texture = null;
+            rawImage.color = new Color(1f, 1f, 1f, 0f);
+            return;
+        }
 
         if (modelPrefab == currentSource) {
             return;

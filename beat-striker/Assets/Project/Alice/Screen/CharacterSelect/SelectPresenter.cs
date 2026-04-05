@@ -73,7 +73,7 @@ namespace Alice {
                 .AddTo(subscriptions);
 
             view.StartButtonAnimation.OnStartRequested
-                .Subscribe(_ => RequestPlaySceneTransition())
+                .Subscribe(_ => RequestPlaySceneTransition(false))
                 .AddTo(subscriptions);
 
             playerSelectSetting.SelectedStrikers
@@ -133,10 +133,10 @@ namespace Alice {
 
             if (button != GamePadButton.East) return;
             Debug.Log($"{LOG_PREFIX} OnButtonDown East received. play transition requested");
-            RequestPlaySceneTransition();
+            RequestPlaySceneTransition(true);
         }
 
-        void RequestPlaySceneTransition() {
+        void RequestPlaySceneTransition(bool skipStartButtonReadyCheck) {
             if (IsTransitioning()) {
                 Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition ignored because transitioning. inputState={inputState}");
                 return;
@@ -152,7 +152,7 @@ namespace Alice {
                 return;
             }
 
-            if (!view.StartButtonAnimation.IsStartInputReady) {
+            if (!skipStartButtonReadyCheck && !view.StartButtonAnimation.IsStartInputReady) {
                 Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition ignored because StartButtonAnimation is not ready");
                 return;
             }

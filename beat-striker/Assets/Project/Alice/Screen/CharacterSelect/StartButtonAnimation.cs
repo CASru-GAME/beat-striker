@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Core;
 using R3;
 using System;
+using System.Collections.Generic;
 
 public class StartButtonAnimation : MonoBehaviour {
     [Header("Line References")]
@@ -42,6 +43,7 @@ public class StartButtonAnimation : MonoBehaviour {
     private bool blackImageSoundEnabled = false; // 黒い画像の音が有効かどうか
     private float lastClickTime = -999f; // 最後にクリックした時間
     private float clickDebounceTime = 0.2f; // クリック間隔（秒）
+    private readonly List<Botan> runtimeBlackImageButtons = new();
     private readonly Subject<Unit> startRequested = new();
 
     public bool IsStartInputReady => blackImageSoundEnabled;
@@ -50,6 +52,8 @@ public class StartButtonAnimation : MonoBehaviour {
     public Botan backgroundBotan; // 背景のBotanコンポーネント
 
     void Awake() {
+        backgroundBotan.gameObject.SetActive(false); // 最初は無効
+
         // 初期位置を保存
         aboveEndPos = whiteLineAbove.anchoredPosition;
         aboveStartPos = aboveEndPos + new Vector2(-lineDistance, 0); // 左側
@@ -63,18 +67,23 @@ public class StartButtonAnimation : MonoBehaviour {
         textCanvasGroup.alpha = 0f;
 
         // 黒い画像のボタンを無効化（Botanコンポーネントのみ）
-        blackImageButtons = Array.FindAll(blackImageButtons, button => button != null);
-        Debug.Log($"Black image buttons array length: {blackImageButtons.Length}");
-        for (int i = 0; i < blackImageButtons.Length; i++) {
+        runtimeBlackImageButtons.Clear();
+        for (var i = 0; i < blackImageButtons.Length; i++) {
             var button = blackImageButtons[i];
+            if (button != null) {
+                runtimeBlackImageButtons.Add(button);
+            }
+        }
+
+        Debug.Log($"Black image buttons array length: {runtimeBlackImageButtons.Count}");
+        for (int i = 0; i < runtimeBlackImageButtons.Count; i++) {
+            var button = runtimeBlackImageButtons[i];
             Debug.Log($"Registering button {i}: {button.gameObject.name}");
             button.enabled = false;
             // 効果音イベントを登録（無効中は発火しない）
             int index = i; // ローカルコピー
             button.onClick += (data) => OnBlackImageClicked(data, index);
         }
-
-        backgroundBotan.gameObject.SetActive(false); // 最初は無効
     }
 
     void OnDestroy() {
@@ -137,7 +146,7 @@ public class StartButtonAnimation : MonoBehaviour {
         }
 
         // アニメーション完了後、黒い画像のボタンと音を有効化
-        foreach (var button in blackImageButtons) {
+        foreach (var button in runtimeBlackImageButtons) {
             button.enabled = true;
         }
 
@@ -154,7 +163,7 @@ public class StartButtonAnimation : MonoBehaviour {
 
         // 黒い画像のボタンと音を無効化
         backgroundBotan.gameObject.SetActive(false);
-        foreach (var button in blackImageButtons) {
+        foreach (var button in runtimeBlackImageButtons) {
             button.enabled = false;
         }
         blackImageSoundEnabled = false;
