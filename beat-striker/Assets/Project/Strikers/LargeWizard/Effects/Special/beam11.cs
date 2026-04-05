@@ -9,33 +9,44 @@ public class beam11 : MonoBehaviour
     [SerializeField, Min(0f)] float audioPlayDelaySeconds = 0f;
     [SerializeField, Min(0f)] float damagePerSecond = 10f;
     [SerializeField, Min(0f)] float knockbackPerSecond = 10f;
+    [Header("Collider Settings")]
     [SerializeField, Min(0f)] float maxLength = 12f;
-    [SerializeField, Min(0f)] float extendSpeed = 40f;
+    [Tooltip("コライダーが0.1秒あたりに伸びる長さ")]
+    [SerializeField, Min(0f)] float colliderExtendLengthPer0p1Second = 4f;
     [SerializeField, Min(0f)] float extendTime = 0.3f;
-    [SerializeField] Vector3 localExtendDirection = Vector3.forward;
     [SerializeField] ParticleSystem beam11ParticleSystem;
 
     BoxCollider hitCollider;
     Vector3 initialColliderSize;
     Vector3 initialColliderCenter;
+    Hurtbox ownerHurtbox;
     StrikerHub ownerStrikerHub;
     float elapsed;
-    int fixedTick;
-    readonly Dictionary<Hurtbox, int> lastDamagedTickByHurtbox = new();
+    float currentLength;
+    bool isShrinking;
+    float shrinkSpeedPerSecond;
+    float nextAttackJudgeTime;
 
     void Awake()
     {
         beam11ParticleSystem = GetComponent<ParticleSystem>();
         hitCollider = GetComponent<BoxCollider>();
         hitCollider.isTrigger = true;
+        ownerStrikerHub = GetComponentInParent<StrikerHub>();
+        if (ownerStrikerHub != null)
+        {
+            ownerHurtbox = ownerStrikerHub.GetComponentInChildren<Hurtbox>();
+        }
 
         initialColliderSize = hitCollider.size;
         initialColliderCenter = hitCollider.center;
+        currentLength = initialColliderSize.z;
     }
 
     public void SetOwnerStrikerHub(StrikerHub strikerHub)
     {
         ownerStrikerHub = strikerHub;
+        ownerHurtbox = strikerHub.GetComponentInChildren<Hurtbox>();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -55,27 +66,77 @@ public class beam11 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        var localExtendDirectionNormalized = GetLocalExtendDirection();
+        if (beam11ParticleSystem != null && !beam11ParticleSystem.IsAlive(true))
+        {
+            Destroy(gameObject);
+            return;
+        }
 
+        var localExtendDirectionNormalized = GetParticleShootDirectionLocal();
+
+        var previousElapsed = elapsed;
         elapsed += Time.deltaTime;
-        var lengthBySpeed = initialColliderSize.z + extendSpeed * elapsed;
-        var timeLimitedLength = extendTime <= 0f ? maxLength : initialColliderSize.z + extendSpeed * extendTime;
-        var length = Mathf.Min(maxLength, Mathf.Min(lengthBySpeed, timeLimitedLength));
+
+        var growthDeltaTime = Time.deltaTime;
+        if (extendTime > 0f)
+        {
+            var remainingGrowTime = extendTime - previousElapsed;
+            if (remainingGrowTime <= 0f)
+            {
+                growthDeltaTime = 0f;
+            }
+            else if (growthDeltaTime > remainingGrowTime)
+            {
+                growthDeltaTime = remainingGrowTime;
+            }
+        }
+
+        if (growthDeltaTime > 0f)
+        {
+            var colliderExtendSpeedPerSecond = colliderExtendLengthPer0p1Second / 0.1f;
+            var speedMultiplier = Mathf.Pow(2f, Mathf.Floor(previousElapsed / 0.5f));
+            var currentExtendSpeedPerSecond = colliderExtendSpeedPerSecond * speedMultiplier;
+
+            if (!isShrinking)
+            {
+                currentLength = Mathf.Min(maxLength, currentLength + currentExtendSpeedPerSecond * growthDeltaTime);
+                if (currentLength >= maxLength)
+                {
+                    isShrinking = true;
+                    shrinkSpeedPerSecond = currentExtendSpeedPerSecond;
+                }
+            }
+            else
+            {
+                currentLength = Mathf.Max(initialColliderSize.z, currentLength - shrinkSpeedPerSecond * growthDeltaTime);
+            }
+        }
 
         var size = initialColliderSize;
-        size.z = length;
+        size.z = currentLength;
         hitCollider.size = size;
 
-        hitCollider.center = initialColliderCenter + localExtendDirectionNormalized * ((length - initialColliderSize.z) * 0.5f);
-    }
+        float centerOffset;
+        if (!isShrinking)
+        {
+            centerOffset = (currentLength - initialColliderSize.z) * 0.5f;
+        }
+        else
+        {
+            // 先端側を固定して、進行方向と逆側（後端側）から短くする
+            centerOffset = (2f * maxLength - initialColliderSize.z - currentLength) * 0.5f;
+        }
 
-    void FixedUpdate()
-    {
-        fixedTick++;
+        hitCollider.center = initialColliderCenter + localExtendDirectionNormalized * centerOffset;
     }
 
     void OnTriggerStay(Collider other)
     {
+        if (Time.time < nextAttackJudgeTime)
+        {
+            return;
+        }
+
         if (other.transform.IsChildOf(transform))
         {
             return;
@@ -90,35 +151,29 @@ public class beam11 : MonoBehaviour
             }
         }
 
-        if (ownerStrikerHub == null)
+        if (ownerHurtbox != null && hurtbox == ownerHurtbox)
         {
             return;
         }
 
-        var otherStrikerHub = other.GetComponentInParent<StrikerHub>();
-        if (otherStrikerHub == null)
+        if (ownerStrikerHub != null)
         {
-            otherStrikerHub = hurtbox.GetComponentInParent<StrikerHub>();
+            var otherStrikerHub = other.GetComponentInParent<StrikerHub>();
             if (otherStrikerHub == null)
+            {
+                otherStrikerHub = hurtbox.GetComponentInParent<StrikerHub>();
+            }
+
+            if (otherStrikerHub == ownerStrikerHub)
             {
                 return;
             }
         }
 
-        if (otherStrikerHub == ownerStrikerHub)
-        {
-            return;
-        }
-
-        if (lastDamagedTickByHurtbox.TryGetValue(hurtbox, out var lastTick) && lastTick == fixedTick)
-        {
-            return;
-        }
-
-        lastDamagedTickByHurtbox[hurtbox] = fixedTick;
-        var tickDamage = damagePerSecond * Time.fixedDeltaTime;
-        var tickKnockback = GetWorldExtendDirection() * (knockbackPerSecond * Time.fixedDeltaTime);
-        hurtbox.GiveHit(new HitStatus(tickDamage, tickKnockback));
+        var damage = damagePerSecond;
+        var knockback = GetParticleShootDirectionWorld() * knockbackPerSecond;
+        hurtbox.GiveHit(new HitStatus(damage, knockback));
+        nextAttackJudgeTime = Time.time + 0.3f;
     }
 
     System.Collections.IEnumerator PlayAudioAfterDelay()
@@ -127,18 +182,30 @@ public class beam11 : MonoBehaviour
         AudioSource.PlayClipAtPoint(audioClip, transform.position);
     }
 
-    Vector3 GetLocalExtendDirection()
+    Vector3 GetParticleShootDirectionLocal()
     {
-        if (localExtendDirection.sqrMagnitude <= 0.0001f)
+        var worldDirection = GetParticleShootDirectionWorld();
+        if (worldDirection.sqrMagnitude <= 0.0001f)
         {
             return Vector3.forward;
         }
 
-        return localExtendDirection.normalized;
+        return transform.InverseTransformDirection(worldDirection).normalized;
     }
 
-    Vector3 GetWorldExtendDirection()
+    Vector3 GetParticleShootDirectionWorld()
     {
-        return transform.TransformDirection(GetLocalExtendDirection());
+        if (beam11ParticleSystem == null)
+        {
+            return transform.forward;
+        }
+
+        var direction = beam11ParticleSystem.transform.forward;
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            return transform.forward;
+        }
+
+        return direction.normalized;
     }
 }

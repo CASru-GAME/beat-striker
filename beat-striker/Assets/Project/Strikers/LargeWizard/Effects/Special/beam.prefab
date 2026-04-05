@@ -4919,7 +4919,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7795868556216269446}
   - component: {fileID: 6217403568418853633}
-  - component: {fileID: 6225118925571079856}
   m_Layer: 0
   m_Name: beam
   m_TagString: Untagged
@@ -4940,8 +4939,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8826420499809471493}
   - {fileID: 180540512443963400}
+  - {fileID: 8826420499809471493}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &6217403568418853633
@@ -4971,23 +4970,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &6225118925571079856
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2662001439135803105}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d122e2d110e43145abf5eafd75cff5d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.beam
-  damage: 10
-  nockbackSpeed: 20
-  speed: 10
-  launchDelay: 10
-  localMoveDirection: {x: 0, y: 0, z: 1}
 --- !u!1 &7384637311272513953
 GameObject:
   m_ObjectHideFlags: 0
@@ -5016,13 +4998,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7384637311272513953}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1, y: 0, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7795868556216269446}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!198 &977248009972251274
 ParticleSystem:
   m_ObjectHideFlags: 0
@@ -5031,7 +5013,7 @@ ParticleSystem:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7384637311272513953}
   serializedVersion: 8
-  lengthInSec: 3
+  lengthInSec: 1
   simulationSpeed: 1
   stopAction: 0
   cullingMode: 0
@@ -7347,7 +7329,7 @@ ParticleSystem:
     z:
       serializedVersion: 2
       minMaxState: 0
-      scalar: -5
+      scalar: 5
       minScalar: 0
       maxCurve:
         serializedVersion: 2
@@ -9899,11 +9881,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::beam11
   audioClip: {fileID: 8300000, guid: 433da62a8fa4a1d49949f424444d990a, type: 3}
   audioPlayDelaySeconds: 2
-  damagePerSecond: 10
-  maxLength: 12
-  extendSpeed: 40
+  damagePerSecond: 12
+  knockbackPerSecond: 5
+  maxLength: 25
+  colliderExtendLengthPer0p1Second: 0.008
   extendTime: 10
-  localExtendDirection: {x: 0, y: 0, z: -1}
   beam11ParticleSystem: {fileID: 977248009972251274}
 --- !u!65 &8258816788817316997
 BoxCollider:
@@ -9924,5 +9906,5 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.4202645, y: 1.4202645, z: 1.9411879}
-  m_Center: {x: -0, y: 0, z: -1.3164611}
+  m_Size: {x: 1.4202645, y: 1.4202645, z: 0.28491876}
+  m_Center: {x: 0, y: 0, z: 0.19481753}

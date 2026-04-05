@@ -83,8 +83,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 206cd82c569fa444f992cf891415b527, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Special
-  damage: 10
-  nockbackSpeed: 10
+  damage: 3
+  nockbackSpeed: 3
   speed: 0
   lifeTime: 5
   growDuration: 0.25
