@@ -194,7 +194,7 @@ namespace Alice {
                 else {
                     var winner = new CorePlayerId(judgeResult.Winner.Value);
                     Debug.Log($"{LOG_PREFIX} ResolveRoundAsync battle end branch. winner={winner}");
-                    await CompleteBattleWithWinnerAsync(winner);
+                    await CompleteBattleWithWinnerAsync(winner, judgeResult.RoundWins);
                 }
             }
             catch (Exception exception) {
@@ -243,7 +243,7 @@ namespace Alice {
 
                 var winnerPlayerId = ResolveTopHitPointPlayerId();
 
-                await CompleteBattleWithWinnerAsync(new CorePlayerId(winnerPlayerId));
+                await CompleteBattleWithWinnerAsync(new CorePlayerId(winnerPlayerId), battleJudge.GetRoundWins());
             }
             catch (Exception exception) {
                 roundResolving = false;
@@ -251,7 +251,7 @@ namespace Alice {
             }
         }
 
-        async Task CompleteBattleWithWinnerAsync(CorePlayerId winner) {
+        async Task CompleteBattleWithWinnerAsync(CorePlayerId winner, IReadOnlyDictionary<CorePlayerId, int> roundWins) {
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync begin. winner={winner}");
             battleFinished = true;
             roundResolving = false;
@@ -260,7 +260,7 @@ namespace Alice {
             outroStartedSubject.OnNext(winner);
             await battlePresenter.PlayBattleEndingAsync(winner);
             var battleResults = beatJudge.GetBattleResults();
-            resultScene.ShowResult(battleResults);
+            resultScene.ShowResult(battleResults, roundWins);
             await resultScene.WaitForBattleEndInputAsync();
             await battlePresenter.PlayBattleFinishFadeInAsync();
             CompleteBattle();

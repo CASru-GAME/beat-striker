@@ -90,11 +90,11 @@ namespace Alice {
 
             public IBattlePlayerPresenter[] Presenters { get; }
 
-            public BattlePlayerPresenterCollection(BattlePlayerView[] battlePlayerViews, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer) {
+            public BattlePlayerPresenterCollection(BattlePlayerView[] battlePlayerViews, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry) {
                 battlePlayerPresenters = new BattlePlayerPresenter[battlePlayerViews.Length];
                 var presenters = new IBattlePlayerPresenter[battlePlayerViews.Length];
                 for (var i = 0; i < battlePlayerViews.Length; i++) {
-                    var battlePlayerPresenter = new BattlePlayerPresenter(battlePlayerViews[i], strikerRegistry, beatJudge, musicPlayer);
+                    var battlePlayerPresenter = new BattlePlayerPresenter(battlePlayerViews[i], strikerRegistry, beatJudge, musicPlayer, playerSelectSetting, appStrikerRegistry);
                     battlePlayerPresenters[i] = battlePlayerPresenter;
                     presenters[i] = battlePlayerPresenter;
                 }

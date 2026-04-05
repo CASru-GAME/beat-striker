@@ -23,7 +23,7 @@ namespace Alice {
         readonly AliceRingView ringView;
         bool roundPlayable;
 
-        public BattlePlayerPresenter(BattlePlayerView battlePlayerView, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer) {
+        public BattlePlayerPresenter(BattlePlayerView battlePlayerView, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry) {
             playerId = battlePlayerView.PlayerId;
             hpBarUI = battlePlayerView.HpBarUI;
             specialBarUI = battlePlayerView.SpecialBarUI;
@@ -58,6 +58,11 @@ namespace Alice {
             foreach (var striker in strikerRegistry.GetAllStrikers()) {
                 BindHpSubscriptionIfMatched(striker.PlayerId.CurrentValue, striker);
             }
+
+            var strikerInfo = playerSelectSetting.TryGetStriker(playerId, out var selectedStriker)
+                ? appStrikerRegistry.GetByStriker(selectedStriker)
+                : appStrikerRegistry.Default;
+            battlePlayerView.SetStrikerPortrait(strikerInfo.Portrait);
         }
 
         public void Dispose() {

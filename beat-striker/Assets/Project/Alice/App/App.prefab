@@ -114,12 +114,12 @@ MonoBehaviour:
     BattleStriker: 1
     Prefab: {fileID: 1829485864700888609, guid: ecee9c48169c8dc428a6839126804337, type: 3}
     PreviewModel: {fileID: -1728013695380148634, guid: 37d428df5c910584396dd6cdd0df9fbd, type: 3}
-    Portrait: {fileID: 21300000, guid: 0901c2af62c7c4a069f6c64c82d9839e, type: 3}
+    Portrait: {fileID: 21300000, guid: fb33f68e3de0cd946be0f5706f1a7fa7, type: 3}
   - DisplayName: "\u65A7\u6226\u58EB"
     BattleStriker: 3
     Prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
     PreviewModel: {fileID: -1728013695380148634, guid: 70e7be311277e47a3ac2a59c40bb61a6, type: 3}
-    Portrait: {fileID: 21300000, guid: 0901c2af62c7c4a069f6c64c82d9839e, type: 3}
+    Portrait: {fileID: 21300000, guid: 7204eca45b16c014b82285f6dc6fb052, type: 3}
 --- !u!114 &7111598241528783917
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,6 +150,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.MusicRegistry
   musicEntries:
+  - Id: sento
+    DisplayName: "\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA"
+    Description: 'Composer: Azuno
+
+      BPM: 110'
+    AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 5a14db5d051ccf7448ffdc129b4a7476, type: 3}
+    Bpm: 110
+    Offset: 0
   - Id: cutie-street
     DisplayName: Beat Striker on Cutie Street
     Description: 'Composer: Suno 4.5+
@@ -246,9 +255,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleRuleSetting
   roundsToWin: 2
-  combo1SpecialPointGain: 4
+  combo1SpecialPointGain: 0.01
   specialPointGainConvergenceRate: 0.2
-  specialPointGainConvergenceValue: 10
+  specialPointGainConvergenceValue: 1
 --- !u!114 &8684236627904277826
 MonoBehaviour:
   m_ObjectHideFlags: 0

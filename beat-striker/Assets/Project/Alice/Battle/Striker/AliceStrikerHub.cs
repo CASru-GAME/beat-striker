@@ -54,6 +54,7 @@ namespace Alice {
         void VictoryPose();
         Observable<StrikerImpact> OnInpactGenerated { get; }
         Observable<AttentionRequest> OnAtentionRequested { get; }
+        Observable<Unit> OnSpecialRequestFailed { get; }
     }
 
     public class AliceStrikerHub : IStrikerContext, IStrikerHub, IDisposable {
@@ -82,6 +83,7 @@ namespace Alice {
         readonly ReactiveProperty<float> maxSpecialPointSubject = new(0f);
         readonly Subject<StrikerImpact> onInpactGeneratedSubject = new();
         readonly Subject<AttentionRequest> onAttentionRequestedSubject = new();
+        readonly Subject<Unit> onSpecialRequestFailedSubject = new();
         IDisposable stateNameSubscription;
 
         Vector2 inputDirection;
@@ -112,6 +114,7 @@ namespace Alice {
         public ReadOnlyReactiveProperty<float> MaxSpecialPoint => maxSpecialPointSubject;
         public Observable<StrikerImpact> OnInpactGenerated => onInpactGeneratedSubject;
         public Observable<AttentionRequest> OnAtentionRequested => onAttentionRequestedSubject;
+        public Observable<Unit> OnSpecialRequestFailed => onSpecialRequestFailedSubject;
 
         public Vector2 LocalInputDirection {
             get {
@@ -231,6 +234,7 @@ namespace Alice {
             maxSpecialPointSubject.Dispose();
             onInpactGeneratedSubject.Dispose();
             onAttentionRequestedSubject.Dispose();
+            onSpecialRequestFailedSubject.Dispose();
         }
 
         public void ApplyDamage(float damage) {
@@ -270,6 +274,14 @@ namespace Alice {
 
         public void Special() {
             if (stateMachine == null || currentHitPoint <= 0f) return;
+
+            if (!CanUseSpecial()) {
+                onSpecialRequestFailedSubject.OnNext(Unit.Default);
+                return;
+            }
+
+            currentSpecialPoint = 0f;
+            specialPointSubject.OnNext(currentSpecialPoint);
             stateMachine.CurrentState.OnSpecialRequested(stateMachine);
         }
 
@@ -320,6 +332,10 @@ namespace Alice {
 
         public void RequestAttention(AttentionRequest request) {
             onAttentionRequestedSubject.OnNext(request);
+        }
+
+        bool CanUseSpecial() {
+            return currentSpecialPoint + 0.0001f >= maxSpecialPoint;
         }
 
         void UpdateEnemyInFrontState() {

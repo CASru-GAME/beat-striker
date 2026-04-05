@@ -45,10 +45,11 @@ public class ResultScene : System.IDisposable
         SceneManager.LoadScene("SelectScene");
     }
 
-    public void ShowResult(IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> battleResults)
+    public void ShowResult(IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> battleResults, IReadOnlyDictionary<PlayerId, int> roundWins)
     {
         LoadStrikerPortraits();
         ApplyBattleResults(battleResults);
+        ApplyRoundWinColors(roundWins);
         resultSceneView.ShowRoot();
         resultPhase = ResultPhase.Summary;
         lastPhaseAdvanceFrame = -1;
@@ -131,9 +132,19 @@ public class ResultScene : System.IDisposable
     {
         var player1Result = battleResults[new PlayerId(0)];
         var player2Result = battleResults[new PlayerId(1)];
+        var player1ScoreText = player1Result.Score.ToString();
+        var player2ScoreText = player2Result.Score.ToString();
+        var player1ComboText = player1Result.MaxCombo.ToString();
+        var player2ComboText = player2Result.MaxCombo.ToString();
 
-        resultSceneView.Player1ScoreText.text = player1Result.Score.ToString();
-        resultSceneView.Player2ScoreText.text = player2Result.Score.ToString();
+        resultSceneView.Player1ScoreText.text = player1ScoreText;
+        resultSceneView.Player2ScoreText.text = player2ScoreText;
+        resultSceneView.Player1ScoreSubText.text = player1ScoreText;
+        resultSceneView.Player2ScoreSubText.text = player2ScoreText;
+        resultSceneView.Player1ComboText.text = player1ComboText;
+        resultSceneView.Player2ComboText.text = player2ComboText;
+        resultSceneView.Player1ComboSubText.text = player1ComboText;
+        resultSceneView.Player2ComboSubText.text = player2ComboText;
         resultSceneView.Player1ExcellentText.text = player1Result.Excellent.ToString();
         resultSceneView.Player2ExcellentText.text = player2Result.Excellent.ToString();
         resultSceneView.Player1GoodText.text = player1Result.Good.ToString();
@@ -142,24 +153,48 @@ public class ResultScene : System.IDisposable
         resultSceneView.Player2MissText.text = player2Result.Miss.ToString();
     }
 
+    void ApplyRoundWinColors(IReadOnlyDictionary<PlayerId, int> roundWins)
+    {
+        var player1RoundWins = roundWins.TryGetValue(new PlayerId(0), out var player1Wins) ? player1Wins : 0;
+        var player2RoundWins = roundWins.TryGetValue(new PlayerId(1), out var player2Wins) ? player2Wins : 0;
+
+        ApplyPlayerRoundWinColors(resultSceneView.Player1RoundWinImages, player1RoundWins);
+        ApplyPlayerRoundWinColors(resultSceneView.Player2RoundWinImages, player2RoundWins);
+    }
+
+    void ApplyPlayerRoundWinColors(IReadOnlyList<UnityEngine.UI.Image> roundWinImages, int roundWins)
+    {
+        var activeWins = Mathf.Clamp(roundWins, 0, roundWinImages.Count);
+        for (var i = 0; i < roundWinImages.Count; i++)
+        {
+            roundWinImages[i].color = i < activeWins
+                ? resultSceneView.RoundWinColor
+                : resultSceneView.RoundNeutralColor;
+        }
+    }
+
     void LoadStrikerPortraits()
     {
+        Sprite player1Portrait;
         if (playerSelectSetting.TryGetStriker(0, out var player1Striker))
         {
-            resultSceneView.Player1PortraitImage.sprite = appStrikerRegistry.GetByStriker(player1Striker).Portrait;
+            player1Portrait = appStrikerRegistry.GetByStriker(player1Striker).Portrait;
         }
         else
         {
-            resultSceneView.Player1PortraitImage.sprite = appStrikerRegistry.Default.Portrait;
+            player1Portrait = appStrikerRegistry.Default.Portrait;
         }
+        resultSceneView.Player1PortraitImage.sprite = player1Portrait;
 
+        Sprite player2Portrait;
         if (playerSelectSetting.TryGetStriker(1, out var player2Striker))
         {
-            resultSceneView.Player2PortraitImage.sprite = appStrikerRegistry.GetByStriker(player2Striker).Portrait;
+            player2Portrait = appStrikerRegistry.GetByStriker(player2Striker).Portrait;
         }
         else
         {
-            resultSceneView.Player2PortraitImage.sprite = appStrikerRegistry.Default.Portrait;
+            player2Portrait = appStrikerRegistry.Default.Portrait;
         }
+        resultSceneView.Player2PortraitImage.sprite = player2Portrait;
     }
 }

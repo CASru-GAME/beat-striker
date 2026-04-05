@@ -529,23 +529,7 @@ public class ResultPanelButton : MonoBehaviour
                     {
                         // Scale iconOvershoot → 1
                         LeanTween.scale(playerWinnerPanel, Vector3.one, iconPopupDuration * 0.4f)
-                            .setEase(LeanTweenType.easeInQuad)
-                            .setOnComplete(() =>
-                            {
-                                if (playerWinnerCanvasGroup == null)
-                                {
-                                    playerWinnerPanel.SetActive(false);
-                                    return;
-                                }
-
-                                LeanTween.alphaCanvas(playerWinnerCanvasGroup, 0f, winnerHideDuration)
-                                    .setDelay(winnerHideDelay)
-                                    .setEase(LeanTweenType.easeInQuad)
-                                    .setOnComplete(() =>
-                                    {
-                                        playerWinnerPanel.SetActive(false);
-                                    });
-                            });
+                            .setEase(LeanTweenType.easeInQuad);
                     });
             });
         }

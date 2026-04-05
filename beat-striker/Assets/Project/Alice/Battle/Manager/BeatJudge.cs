@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Alice {
 
-    public record BeatPlayerBattleResult(int Score, int Excellent, int Good, int Miss);
+    public record BeatPlayerBattleResult(int Score, int Excellent, int Good, int Miss, int MaxCombo);
 
     public interface IBeatPlayer{
         public Observable<BeatResult> OnBeatCommandRequested { get; }
@@ -136,7 +136,7 @@ namespace Alice {
         public IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> GetBattleResults() {
             var results = new Dictionary<PlayerId, BeatPlayerBattleResult>(beatPlayer.Length);
             for (var playerId = 0; playerId < beatPlayer.Length; playerId++) {
-                results[new PlayerId(playerId)] = new BeatPlayerBattleResult(beatPlayer[playerId].Score, beatPlayer[playerId].Excellent, beatPlayer[playerId].Good, beatPlayer[playerId].Miss);
+                results[new PlayerId(playerId)] = new BeatPlayerBattleResult(beatPlayer[playerId].Score, beatPlayer[playerId].Excellent, beatPlayer[playerId].Good, beatPlayer[playerId].Miss, beatPlayer[playerId].MaxCombo);
             }
 
             return results;
@@ -194,6 +194,7 @@ namespace Alice {
             int excellent;
             int good;
             int miss;
+            int maxCombo;
 
             record PendingCommand(BeatJudgeZone Zone, GamePadButton Button, Vector2 Direction);
 
@@ -210,6 +211,7 @@ namespace Alice {
             public int Excellent => excellent;
             public int Good => good;
             public int Miss => miss;
+            public int MaxCombo => maxCombo;
 
             public bool TrySavePendingCommand(int beatIndex, BeatJudgeZone zone, GamePadButton button, Vector2 direction) {
                 if (pendingCommands.ContainsKey(beatIndex)) {
@@ -272,6 +274,7 @@ namespace Alice {
                 excellent = 0;
                 good = 0;
                 miss = 0;
+                maxCombo = 0;
                 ResetForLoop();
             }
 
@@ -292,7 +295,11 @@ namespace Alice {
             }
 
             public void IncrementCombo() {
-                comboCount.OnNext(comboCount.CurrentValue + 1);
+                var nextCombo = comboCount.CurrentValue + 1;
+                comboCount.OnNext(nextCombo);
+                if (maxCombo < nextCombo) {
+                    maxCombo = nextCombo;
+                }
             }
 
             public void ResetCombo() {

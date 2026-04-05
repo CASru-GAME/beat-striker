@@ -77,21 +77,21 @@ namespace Alice {
         }
 
         void Update() {
-            if (currentDirection == Vector2.zero) {
-                return;
+            if (currentDirection != Vector2.zero) {
+                movingTime += Time.deltaTime;
+                var normalizedRatio = Mathf.Clamp(convergenceRatioAtTime, 0.01f, 0.99f);
+                var normalizedTime = Mathf.Max(convergenceTimeSeconds, 0.0001f);
+                var accelerationFactor = -Mathf.Log(1f - normalizedRatio) / normalizedTime;
+
+                rectTransform.anchoredPosition +=
+                    moveSpeedConvergenceValue * (1 - Mathf.Exp(-accelerationFactor * movingTime)) * Time.deltaTime * currentDirection;
+
+                rectTransform.anchoredPosition = new Vector2(
+                    Mathf.Clamp(rectTransform.anchoredPosition.x, -movableAreaRectTransform.rect.width / 2, movableAreaRectTransform.rect.width / 2),
+                    Mathf.Clamp(rectTransform.anchoredPosition.y, -movableAreaRectTransform.rect.height / 2, movableAreaRectTransform.rect.height / 2));
+            } else {
+                movingTime = 0f;
             }
-
-            movingTime += Time.deltaTime;
-            var normalizedRatio = Mathf.Clamp(convergenceRatioAtTime, 0.01f, 0.99f);
-            var normalizedTime = Mathf.Max(convergenceTimeSeconds, 0.0001f);
-            var accelerationFactor = -Mathf.Log(1f - normalizedRatio) / normalizedTime;
-
-            rectTransform.anchoredPosition +=
-                moveSpeedConvergenceValue * (1 - Mathf.Exp(-accelerationFactor * movingTime)) * Time.deltaTime * currentDirection;
-
-            rectTransform.anchoredPosition = new Vector2(
-                Mathf.Clamp(rectTransform.anchoredPosition.x, -movableAreaRectTransform.rect.width / 2, movableAreaRectTransform.rect.width / 2),
-                Mathf.Clamp(rectTransform.anchoredPosition.y, -movableAreaRectTransform.rect.height / 2, movableAreaRectTransform.rect.height / 2));
 
             if (!TryCreatePointerEventData(out var data)) {
                 return;

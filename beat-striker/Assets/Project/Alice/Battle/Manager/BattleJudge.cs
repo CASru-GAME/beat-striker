@@ -14,6 +14,7 @@ namespace Alice {
 
     public interface IBattleJudge {
         BattleJudgeResult Judge(RoundResult roundResult);
+        IReadOnlyDictionary<PlayerId, int> GetRoundWins();
     }
 
     public class BattleJudge : IBattleJudge {
@@ -39,6 +40,10 @@ namespace Alice {
                 continueBattle,
                 battleWinner,
                 new Dictionary<PlayerId, int>(roundWins));
+        }
+
+        public IReadOnlyDictionary<PlayerId, int> GetRoundWins() {
+            return new Dictionary<PlayerId, int>(roundWins);
         }
     }
 }

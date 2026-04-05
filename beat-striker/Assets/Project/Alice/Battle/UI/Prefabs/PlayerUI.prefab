@@ -99,6 +99,7 @@ MonoBehaviour:
   hpBarUI: {fileID: 8326099282782513470}
   specialBarUI: {fileID: 1486459028039583250}
   comboView: {fileID: 7367790212824566671}
+  strikerPortraitImage: {fileID: 5086058168242805217}
   beatRingPrefab: {fileID: 7830039137981702666, guid: 12f656638c4bd44e2ab7af71ad162cdb, type: 3}
   beatRingParent: {fileID: 3714890722970678268}
 --- !u!222 &810344020748878237
@@ -694,7 +695,7 @@ GameObject:
   - component: {fileID: 350832946422962335}
   - component: {fileID: 1060868089833151718}
   m_Layer: 5
-  m_Name: Image (2)
+  m_Name: charimage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -35,6 +35,7 @@ namespace Alice {
             public AiBrain AiBrain;
             public IDisposable InpactSubscription;
             public IDisposable AttentionSubscription;
+            public IDisposable SpecialRequestFailedSubscription;
         }
 
         readonly IBattleSetting battleSetting;
@@ -86,6 +87,12 @@ namespace Alice {
                 var instance = strikerHubFactory.Create(selectedStrikerInfo.Prefab, playerTransform, playerId);
                 var inpactSubscription = instance.OnInpactGenerated.Subscribe(command => battlePresenter.PlayInpact(command));
                 var attentionSubscription = instance.OnAtentionRequested.Subscribe(request => battlePresenter.RequestAttention(playerId, request));
+                var specialRequestFailedSubscription = instance.OnSpecialRequestFailed.Subscribe(_ => {
+                    AudioSource.PlayClipAtPoint(
+                        battleSetting.SpecialUnavailableSound,
+                        instance.Position.CurrentValue,
+                        battleSetting.SpecialUnavailableSoundVolume);
+                });
 
                 strikerRegistry.RequestRegister(i, instance);
 
@@ -99,6 +106,7 @@ namespace Alice {
                     AiBrain = instance.AiBrain,
                     InpactSubscription = inpactSubscription,
                     AttentionSubscription = attentionSubscription,
+                    SpecialRequestFailedSubscription = specialRequestFailedSubscription,
                 });
 
                 Debug.Log($"Deployed Striker {selectedStriker} for Player {i}".ToCyan());
@@ -120,6 +128,7 @@ namespace Alice {
                 deployed.Hub?.DestroyGameObject();
                 deployed.InpactSubscription?.Dispose();
                 deployed.AttentionSubscription?.Dispose();
+                deployed.SpecialRequestFailedSubscription?.Dispose();
             }
 
             deployedStrikers.Clear();

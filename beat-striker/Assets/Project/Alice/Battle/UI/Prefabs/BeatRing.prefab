@@ -217,7 +217,7 @@ MonoBehaviour:
   judgeTextFadeDuration: 0.3
   judgeTextDropDistance: 5
   successSound: {fileID: 8300000, guid: f9398444eb0b1b34c8a5c0b08e139af8, type: 3}
-  excellentSound: {fileID: 8300000, guid: 8df39eda36918493ea53ba3f32a490f5, type: 3}
+  excellentSound: {fileID: 8300000, guid: f9398444eb0b1b34c8a5c0b08e139af8, type: 3}
   missSound: {fileID: 8300000, guid: 63d68b446e452af4a8a4608dd9771d89, type: 3}
   colors:
   - {r: 0, g: 0.8842337, b: 1, a: 1}

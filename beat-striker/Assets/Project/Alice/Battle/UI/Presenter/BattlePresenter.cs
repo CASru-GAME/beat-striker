@@ -225,7 +225,9 @@ namespace Alice {
             audioSubscriptions = new CompositeDisposable();
 
             musicPlayer.OnBeatTiming
-                .Subscribe(_ => AudioSource.PlayClipAtPoint(battlePresenterView.BeatSound, Vector3.zero))
+                .Subscribe(_ => {
+                    if(battlePresenterView.BeatSound) AudioSource.PlayClipAtPoint(battlePresenterView.BeatSound, Vector3.zero);
+                })
                 .AddTo(audioSubscriptions);
         }
     }
