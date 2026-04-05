@@ -227,9 +227,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AudioSetting
   commandTimeOffset: 0
-  viewTimeOffset: 0
+  viewTimeOffset: -0.1
   beatTimeOffset: 0.1
-  goodWindow: 0.2
+  goodWindow: 0.3
   excellentWindow: 0.1
   goodScoreMultiplier: 1
   excellentScoreMultiplier: 1.5
