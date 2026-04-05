@@ -13,6 +13,7 @@ namespace Alice {
         Task PlayRoundEndTransitionAsync();
         Task PlayRoundResumeTransitionAsync();
         Task PlayBattleEndingAsync(CorePlayerId winner);
+        Task PlayBattleFinishFadeInAsync();
         void PlayInpact(StrikerImpact command);
         void RequestAttention(int playerId, AttentionRequest request);
         Observable<Unit> OnPauseMenuRequested { get; }
@@ -128,14 +129,14 @@ namespace Alice {
 
             isCinematicSkipEnabled = true;
             try {
-                await Task.WhenAll(
-                    stageCamera.PresentOutroAsync(winner),
-                    resultTextPresenter.PresentOutroAsync());
+                await stageCamera.PresentOutroAsync(winner);
             }
             finally {
                 isCinematicSkipEnabled = false;
             }
+        }
 
+        public async Task PlayBattleFinishFadeInAsync() {
             await fadePresenter.PresentFadeInAsync();
         }
 

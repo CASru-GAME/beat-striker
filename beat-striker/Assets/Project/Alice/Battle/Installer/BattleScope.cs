@@ -9,6 +9,7 @@ namespace Alice {
         [SerializeField] BattleSetting battleSetting;
         [SerializeField] AudioSource audioSource;
         [SerializeField] BattlePresenter battlePresenter;
+        [SerializeField] ResultScene resultScene;
         [SerializeField] BattlePlayerPresenter[] battlePlayerPresenters;
 
         protected override void Configure(IContainerBuilder builder) {
@@ -21,6 +22,7 @@ namespace Alice {
                 battlePlayerPresenters[i] = this.battlePlayerPresenters[i];
             }
             builder.RegisterInstance<IBattlePresenter>(battlePresenter);
+            builder.RegisterInstance(resultScene);
             builder.RegisterInstance(battlePlayerPresenters);
             builder.Register<IBattleFlow, BattleFlow>(Lifetime.Singleton);
             builder.Register<IBeatjudge, BeatJudge>(Lifetime.Singleton);

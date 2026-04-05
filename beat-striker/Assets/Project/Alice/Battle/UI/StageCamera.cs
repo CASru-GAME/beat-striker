@@ -18,6 +18,7 @@ namespace Alice {
         [SerializeField] private float outroDistance = 3f;
         [SerializeField] private float outroDuration = 1f;
         [SerializeField] private float outroWaitDuration = 3f;
+        [SerializeField] private float outroPostWaitDuration = 0f;
         [SerializeField] private float maxPlayersDistanceToFitOnScreen = 12f;
         [SerializeField] private AnimationCurve normalizedDistanceToDiagonalRatio = new AnimationCurve(
             new Keyframe(0f, 0.28f),
@@ -326,13 +327,14 @@ namespace Alice {
             }
 
             IEnumerator MoveToWinner(int winnerPlayerId) {
-                yield return WaitForSecondsSkippable(owner.outroWaitDuration, CameraSequencePhase.OutroPreWait);
                 owner.victoryPoseRequester?.Invoke(winnerPlayerId);
 
                 Vector3 startPosition = owner.transform.position;
+                Quaternion startRotation = owner.transform.rotation;
                 Vector3 winnerCenterPosition = owner.GetPlayerCenterPosition(winnerPlayerId);
                 Vector3 direction = (winnerCenterPosition - owner.transform.position).normalized;
                 Vector3 targetPosition = winnerCenterPosition - direction * owner.outroDistance;
+                Quaternion targetRotation = Quaternion.LookRotation(winnerCenterPosition - targetPosition);
 
                 SetPhase(CameraSequencePhase.OutroMove);
                 float elapsedTime = 0f;
@@ -344,15 +346,16 @@ namespace Alice {
 
                     elapsedTime += Time.deltaTime;
                     float t = elapsedTime / owner.outroDuration;
+                    t = t * t * (3f - 2f * t);
                     owner.transform.position = Vector3.Lerp(startPosition, targetPosition, t);
-                    owner.LookAt(owner.GetPlayerCenterPosition(winnerPlayerId));
+                    owner.transform.rotation = Quaternion.Slerp(startRotation, targetRotation, t);
                     yield return null;
                 }
 
                 owner.transform.position = targetPosition;
                 owner.LookAt(owner.GetPlayerCenterPosition(winnerPlayerId));
 
-                yield return WaitForSecondsSkippable(owner.outroWaitDuration, CameraSequencePhase.OutroPostWait);
+                yield return WaitForSecondsSkippable(owner.outroPostWaitDuration, CameraSequencePhase.OutroPostWait);
                 SetPhase(CameraSequencePhase.None);
                 owner.SetCameraState(owner.idleState);
                 outroCompletionSource?.TrySetResult(true);

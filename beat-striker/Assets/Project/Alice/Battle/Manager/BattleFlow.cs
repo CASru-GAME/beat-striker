@@ -22,6 +22,7 @@ namespace Alice {
         readonly IBattleSelectSetting battleSelectSetting;
         readonly ISceneTransitionService sceneTransitionService;
         readonly IBattlePresenter battlePresenter;
+        readonly ResultScene resultScene;
         readonly IBattlePlayerPresenter[] battlePlayerPresenters;
         int currentRound;
         bool battlePrepared;
@@ -40,7 +41,7 @@ namespace Alice {
         readonly Subject<Unit> battleFinishedSubject = new();
         readonly Subject<CorePlayerId> outroStartedSubject = new();
 
-        public BattleFlow(IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IBattleSelectSetting battleSelectSetting, ISceneTransitionService sceneTransitionService, IBattlePresenter battlePresenter, IBattlePlayerPresenter[] battlePlayerPresenters) {
+        public BattleFlow(IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IBattleSelectSetting battleSelectSetting, ISceneTransitionService sceneTransitionService, IBattlePresenter battlePresenter, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters) {
             this.battleDeployer = battleDeployer;
             this.strikerRegistry = strikerRegistry;
             this.battleJudge = battleJudge;
@@ -49,6 +50,7 @@ namespace Alice {
             this.battleSelectSetting = battleSelectSetting;
             this.sceneTransitionService = sceneTransitionService;
             this.battlePresenter = battlePresenter;
+            this.resultScene = resultScene;
             this.battlePlayerPresenters = battlePlayerPresenters;
             currentRound = 1;
             battlePrepared = false;
@@ -223,6 +225,9 @@ namespace Alice {
             battleFinishedSubject.OnNext(Unit.Default);
             outroStartedSubject.OnNext(winner);
             await battlePresenter.PlayBattleEndingAsync(winner);
+            resultScene.ShowResult();
+            await resultScene.WaitForBattleEndInputAsync();
+            await battlePresenter.PlayBattleFinishFadeInAsync();
             CompleteBattle();
             _ = sceneTransitionService.RequestStartTransition(AppScene.ResultMenu);
         }

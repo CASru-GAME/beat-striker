@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Threading.Tasks;
 using Alice;
 
 [RequireComponent(typeof(Button))]
@@ -52,6 +53,8 @@ public class ResultPanelButton : MonoBehaviour
     public float iconDelay = 0.1f; // Icon出現の遅延（COMBO開始からの時間）
     public float iconPopupDuration = 0.6f; // Iconポップアップ時間
     public float iconOvershoot = 1.1f; // Iconオーバーシュート倍率
+    public float winnerHideDelay = 0.6f; // Winner表示を消し始めるまでの遅延
+    public float winnerHideDuration = 0.4f; // Winner表示を消す時間
     
     [Header("GoBack Button Animation")]
     public GameObject goBackSceneImage; // 白いImage（GoBackSceneImage）
@@ -82,6 +85,7 @@ public class ResultPanelButton : MonoBehaviour
     private RectTransform comboUnderRect;
     private RectTransform playerWinnerRect;
     private RectTransform playerLoserRect;
+    private CanvasGroup playerWinnerCanvasGroup;
     
     private Vector3 scoreAboveOriginalPos;
     private Vector3 scoreUnderOriginalPos;
@@ -92,9 +96,23 @@ public class ResultPanelButton : MonoBehaviour
     private RectTransform goBackRect;
     private Button goBackButton;
     private CanvasGroup nextTextCanvasGroup;
+    private TaskCompletionSource<bool> phase1CompletionSource;
+    private bool hasPlayedPhase1;
+    private bool hasPlayedPhase2;
+    private bool isInitialized;
 
     void Start()
     {
+        InitializeIfNeeded();
+    }
+
+    void InitializeIfNeeded()
+    {
+        if (isInitialized)
+        {
+            return;
+        }
+
         button = GetComponent<Button>();
         audioSource = GetComponent<AudioSource>();
         
@@ -224,6 +242,8 @@ public class ResultPanelButton : MonoBehaviour
                 }
             });
         }
+
+        isInitialized = true;
     }
     
     void InitializePanel(GameObject panel, ref RectTransform rect, ref Vector3 originalPos, Vector3 offset)
@@ -244,6 +264,16 @@ public class ResultPanelButton : MonoBehaviour
             rect = panel.GetComponent<RectTransform>();
             rect.localScale = Vector3.zero;
             panel.SetActive(false);
+
+            if (panel == playerWinnerPanel)
+            {
+                playerWinnerCanvasGroup = panel.GetComponent<CanvasGroup>();
+                if (playerWinnerCanvasGroup == null)
+                {
+                    playerWinnerCanvasGroup = panel.AddComponent<CanvasGroup>();
+                }
+                playerWinnerCanvasGroup.alpha = 1f;
+            }
         }
     }
 
@@ -259,11 +289,52 @@ public class ResultPanelButton : MonoBehaviour
         Debug.Log("Button clicked!");
         StartAnimation();
     }
+
+    public void RestartFromFlow()
+    {
+        ResetAnimation();
+        StartPhase1FromFlow();
+        ContinueToPhase2FromFlow();
+    }
+
+    public void StartPhase1FromFlow()
+    {
+        InitializeIfNeeded();
+        phase1CompletionSource?.TrySetCanceled();
+        phase1CompletionSource = new TaskCompletionSource<bool>();
+        hasPlayedPhase1 = false;
+        hasPlayedPhase2 = false;
+        StartPhase1Animation();
+    }
+
+    public Task WaitForPhase1CompletedAsync()
+    {
+        return phase1CompletionSource?.Task ?? Task.CompletedTask;
+    }
+
+    public void ContinueToPhase2FromFlow()
+    {
+        InitializeIfNeeded();
+        if (!hasPlayedPhase1 || hasPlayedPhase2)
+        {
+            return;
+        }
+
+        hasPlayedPhase2 = true;
+        StartPhase2Animation();
+    }
     
     void StartAnimation()
     {
+        InitializeIfNeeded();
+        StartPhase1FromFlow();
+        ContinueToPhase2FromFlow();
+    }
+
+    void StartPhase1Animation()
+    {
         hasPlayed = true;
-        Debug.Log("Starting result animation");
+        Debug.Log("Starting result phase1 animation");
         
         // ボタンクリック効果音（遅延付き）
         if (buttonClickSoundDelay > 0)
@@ -275,13 +346,47 @@ public class ResultPanelButton : MonoBehaviour
             PlaySound(buttonClickSound, buttonClickSoundVolume);
         }
         
-        // BlackImageの拡大アニメーション
+        float phase1EndTime = 0f;
+
+        LeanTween.delayedCall(gameObject, phase1EndTime, () =>
+        {
+            hasPlayedPhase1 = true;
+            phase1CompletionSource?.TrySetResult(true);
+        });
+    }
+
+    void StartPhase2Animation()
+    {
+        Debug.Log("Starting result phase2 animation");
+
+        AnimateBlackImage(blackImageDelay);
+
+        // LineはEast入力後(2段階目)で再生
+        float lineStartTime = blackImageDelay + lineDelay;
+        AnimateLinePanels(lineStartTime);
+
+        // SCOREアニメーション
+        float scoreStartTime = lineStartTime + scoreDelay;
+        AnimateScorePanels(scoreStartTime);
+
+        // COMBOアニメーション
+        float comboStartTime = scoreStartTime + comboDelay;
+        AnimateComboPanels(comboStartTime);
+
+        // Iconアニメーション
+        float iconStartTime = comboStartTime + iconDelay;
+        AnimateIconPanels(iconStartTime);
+
+        // GoBackボタンアニメーション
+        float goBackStartTime = iconStartTime + goBackDelay;
+        AnimateGoBackButton(goBackStartTime);
+    }
+
+    void AnimateBlackImage(float delay)
+    {
         if (blackImage != null && blackImageRect != null)
         {
-            Debug.Log("Starting BlackImage animation");
-            
-            // BlackImage効果音（BlackImageアニメーション開始時からの遅延）
-            float blackSoundTime = blackImageDelay + blackImageSoundDelay;
+            float blackSoundTime = delay + blackImageSoundDelay;
             if (blackSoundTime > 0)
             {
                 LeanTween.delayedCall(blackSoundTime, () => PlaySound(blackImageSound, blackImageSoundVolume));
@@ -290,35 +395,28 @@ public class ResultPanelButton : MonoBehaviour
             {
                 PlaySound(blackImageSound, blackImageSoundVolume);
             }
-            
-            blackImage.SetActive(true);
-            Debug.Log($"BlackImage activated: {blackImage.activeInHierarchy}, Parent: {(blackImage.transform.parent != null ? blackImage.transform.parent.name + " (Active: " + blackImage.transform.parent.gameObject.activeInHierarchy + ")" : "null")}");
-            
-            // フェードイン＆スケールアニメーション
-            LeanTween.cancel(blackImage);
-            
-            // アルファを1にフェードイン
-            LeanTween.alphaCanvas(blackImageCanvasGroup, 1f, blackImageScaleDuration)
-                .setDelay(blackImageDelay)
-                .setEase(LeanTweenType.easeOutQuad);
-            
-            // スケールを0から1に拡大
-            LeanTween.scale(blackImageRect, Vector3.one, blackImageScaleDuration)
-                .setDelay(blackImageDelay)
-                .setEase(LeanTweenType.easeOutBack);
+
+            LeanTween.delayedCall(delay, () =>
+            {
+                blackImage.SetActive(true);
+                LeanTween.cancel(blackImage);
+                LeanTween.alphaCanvas(blackImageCanvasGroup, 1f, blackImageScaleDuration)
+                    .setEase(LeanTweenType.easeOutQuad);
+                LeanTween.scale(blackImageRect, Vector3.one, blackImageScaleDuration)
+                    .setEase(LeanTweenType.easeOutBack);
+            });
+            return;
         }
-        
-        // Lineのスプリット（中央から左右に広がる）アニメーション
+
+        Debug.LogWarning("BlackImage or BlackImageRect is null!");
+    }
+
+    void AnimateLinePanels(float delay)
+    {
         if (lineObject != null && lineRect != null)
         {
-            Debug.Log("Starting Line split animation");
-            
-            // 遅延後に表示してスプリット開始
-            LeanTween.delayedCall(blackImageDelay + lineDelay, () =>
+            LeanTween.delayedCall(delay, () =>
             {
-                Debug.Log("Line animation delayed call executed");
-                
-                // Line効果音（Lineアニメーション開始時からの遅延）
                 if (lineSoundDelay > 0)
                 {
                     LeanTween.delayedCall(lineSoundDelay, () => PlaySound(lineSound, lineSoundVolume));
@@ -327,22 +425,18 @@ public class ResultPanelButton : MonoBehaviour
                 {
                     PlaySound(lineSound, lineSoundVolume);
                 }
-                
+
                 lineObject.SetActive(true);
-                Debug.Log($"LineObject activated: {lineObject.activeInHierarchy}, Parent: {(lineObject.transform.parent != null ? lineObject.transform.parent.name + " (Active: " + lineObject.transform.parent.gameObject.activeInHierarchy + ")" : "null")}");
-                
                 LeanTween.cancel(lineObject);
-                
+
                 if (useScaleAnimation)
                 {
-                    // スケールアニメーション：X軸を0から1に拡大（中央から左右に広がる）
                     lineRect.localScale = new Vector3(0f, 1f, 1f);
                     LeanTween.scaleX(lineObject, 1f, lineExpandDuration)
                         .setEase(LeanTweenType.easeOutQuad);
                 }
                 else if (lineMask != null)
                 {
-                    // マスクアニメーション：幅を0から元の幅に拡大
                     float originalWidth = lineMask.sizeDelta.x;
                     lineMask.sizeDelta = new Vector2(0f, lineMask.sizeDelta.y);
                     LeanTween.value(lineObject, 0f, originalWidth, lineExpandDuration)
@@ -353,27 +447,10 @@ public class ResultPanelButton : MonoBehaviour
                         .setEase(LeanTweenType.easeOutQuad);
                 }
             });
+            return;
         }
-        else
-        {
-            Debug.LogWarning("LineObject or LineRect is null!");
-        }
-        
-        // SCOREアニメーション
-        float scoreStartTime = blackImageDelay + lineDelay + scoreDelay;
-        AnimateScorePanels(scoreStartTime);
-        
-        // COMBOアニメーション
-        float comboStartTime = scoreStartTime + comboDelay;
-        AnimateComboPanels(comboStartTime);
-        
-        // Iconアニメーション
-        float iconStartTime = comboStartTime + iconDelay;
-        AnimateIconPanels(iconStartTime);
-        
-        // GoBackボタンアニメーション
-        float goBackStartTime = iconStartTime + goBackDelay;
-        AnimateGoBackButton(goBackStartTime);
+
+        Debug.LogWarning("LineObject or LineRect is null!");
     }
     
     void AnimateScorePanels(float delay)
@@ -440,6 +517,10 @@ public class ResultPanelButton : MonoBehaviour
                 Debug.Log("PlayerWinnerPanel animation start");
                 playerWinnerPanel.SetActive(true);
                 playerWinnerRect.localScale = Vector3.zero;
+                if (playerWinnerCanvasGroup != null)
+                {
+                    playerWinnerCanvasGroup.alpha = 1f;
+                }
                 
                 // Scale 0 → iconOvershoot (1.1)
                 LeanTween.scale(playerWinnerPanel, Vector3.one * iconOvershoot, iconPopupDuration * 0.6f)
@@ -448,7 +529,23 @@ public class ResultPanelButton : MonoBehaviour
                     {
                         // Scale iconOvershoot → 1
                         LeanTween.scale(playerWinnerPanel, Vector3.one, iconPopupDuration * 0.4f)
-                            .setEase(LeanTweenType.easeInQuad);
+                            .setEase(LeanTweenType.easeInQuad)
+                            .setOnComplete(() =>
+                            {
+                                if (playerWinnerCanvasGroup == null)
+                                {
+                                    playerWinnerPanel.SetActive(false);
+                                    return;
+                                }
+
+                                LeanTween.alphaCanvas(playerWinnerCanvasGroup, 0f, winnerHideDuration)
+                                    .setDelay(winnerHideDelay)
+                                    .setEase(LeanTweenType.easeInQuad)
+                                    .setOnComplete(() =>
+                                    {
+                                        playerWinnerPanel.SetActive(false);
+                                    });
+                            });
                     });
             });
         }
@@ -544,6 +641,9 @@ public class ResultPanelButton : MonoBehaviour
     public void ResetAnimation()
     {
         hasPlayed = false; // フラグをリセット
+        hasPlayedPhase1 = false;
+        hasPlayedPhase2 = false;
+        phase1CompletionSource?.TrySetCanceled();
         
         if (blackImage != null)
         {
@@ -562,6 +662,16 @@ public class ResultPanelButton : MonoBehaviour
                 lineRect.localScale = new Vector3(0f, 1f, 1f);
             }
             lineRect.localPosition = lineOriginalPosition;
+        }
+
+        if (playerWinnerPanel != null)
+        {
+            LeanTween.cancel(playerWinnerPanel);
+            if (playerWinnerCanvasGroup != null)
+            {
+                playerWinnerCanvasGroup.alpha = 1f;
+            }
+            playerWinnerPanel.SetActive(false);
         }
     }
 }

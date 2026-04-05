@@ -7,7 +7,7 @@ namespace Alice {
         [SerializeField] TextMeshProUGUI battleFinishText;
         [SerializeField] AudioClip finishSound;
         [SerializeField] float soundVolume = 1.0f;
-        [SerializeField] float finishDisplayDuration = 1.5f;
+        [SerializeField] float finishDisplayDuration = 0.4f;
         [SerializeField] float outroDisplayDuration = 1f;
 
         TaskCompletionSource<bool> battleFinishCompletionSource;
@@ -43,10 +43,20 @@ namespace Alice {
             battleFinishText.gameObject.SetActive(true);
             PlaySound(finishSound);
 
-            LeanTween.delayedCall(outroDisplayDuration, () => {
-                battleFinishText.gameObject.SetActive(false);
-                outroCompletionSource?.TrySetResult(true);
-            });
+            var color = battleFinishText.color;
+            color.a = 1f;
+            battleFinishText.color = color;
+
+            LeanTween.value(battleFinishText.gameObject, 1f, 0f, outroDisplayDuration)
+                .setOnUpdate((float alpha) => {
+                    var next = battleFinishText.color;
+                    next.a = alpha;
+                    battleFinishText.color = next;
+                })
+                .setOnComplete(() => {
+                    battleFinishText.gameObject.SetActive(false);
+                    outroCompletionSource?.TrySetResult(true);
+                });
 
             return outroCompletionSource.Task;
         }
