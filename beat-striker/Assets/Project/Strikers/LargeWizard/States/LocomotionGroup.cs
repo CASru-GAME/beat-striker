@@ -11,6 +11,7 @@ namespace Core.LargeWizard {
         [SerializeField] StrikerNode stunState;
         [SerializeField] StrikerNode guardState;
         [SerializeField] StrikerNode chargeState;
+        [SerializeField] StrikerNode specialState;
 
         // このグループに入った時に呼ばれる（前のステートがこのグループに所属していなかった場合）
         public override void OnEnter(IStrikerContext context) {
@@ -54,6 +55,10 @@ namespace Core.LargeWizard {
 
         // ミスした時に呼ばれる
         public override void OnMiss(IStrikerStateContext context) {
+        }
+
+        public override void OnSpecialRequested(IStrikerStateContext context) {
+            context.TryTransition(specialState);
         }
 
     }
