@@ -955,6 +955,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1059939344}
   - component: {fileID: 1059939343}
+  - component: {fileID: 1059939345}
   m_Layer: 0
   m_Name: StageselectScene
   m_TagString: Untagged
@@ -978,6 +979,23 @@ MonoBehaviour:
   stageSelectButtons:
   - {fileID: 1703879380}
   - {fileID: 1197106001}
+--- !u!114 &1059939345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1059939342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d50df9d7f8c42f0b2d2a06d56a1d2e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.StageselectScope
+  parentReference:
+    TypeName: Alice.AppScope
+  autoRun: 1
+  autoInjectGameObjects: []
+  stageSelectScene: {fileID: 1059939343}
 --- !u!4 &1059939344
 Transform:
   m_ObjectHideFlags: 0

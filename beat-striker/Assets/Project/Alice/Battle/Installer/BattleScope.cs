@@ -1,5 +1,6 @@
 
 using System;
+using System.Collections;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -7,13 +8,17 @@ using VContainer.Unity;
 namespace Alice {
     
     public class BattleScope : LifetimeScope {
+        const int MAX_CONTAINER_WAIT_FRAMES = 300;
         [SerializeField] BattleSetting battleSetting;
         [SerializeField] AudioSource audioSource;
         [SerializeField] BattlePresenterView battlePresenter;
         [SerializeField] ResultSceneView resultScene;
         [SerializeField] BattlePlayerView[] battlePlayerPresenters;
 
+        const string LOG_PREFIX = "[BattleScope]";
+
         protected override void Configure(IContainerBuilder builder) {
+            Debug.Log($"{LOG_PREFIX} Configure begin. scene={gameObject.scene.name}, playerPresenterCount={battlePlayerPresenters.Length}");
             builder.Register<IStrikerRegistry, StrikerRegistry>(Lifetime.Singleton);
             builder.Register<IStrikerFactory, StrikerHubFactory>(Lifetime.Singleton);
             builder.Register<IBattleDeployer, BattleDeployer>(Lifetime.Singleton);
@@ -36,6 +41,7 @@ namespace Alice {
             builder.RegisterInstance(audioSource);
 
             builder.RegisterBuildCallback(container => {
+                Debug.Log($"{LOG_PREFIX} BuildCallback begin. scene={gameObject.scene.name}");
                 _ = container.Resolve<IStrikerRegistry>();
                 _ = container.Resolve<IStrikerFactory>();
                 _ = container.Resolve<IBattleDeployer>();
@@ -47,28 +53,70 @@ namespace Alice {
                 _ = container.Resolve<IBattlePlayerPresenter[]>();
                 _ = container.Resolve<IBeatjudge>();
                 _ = container.Resolve<IMusicPlayer>();
+                Debug.Log($"{LOG_PREFIX} BuildCallback resolve completed. InjectSceneObjects start");
 
                 InjectSceneObjects(container);
+                Debug.Log($"{LOG_PREFIX} BuildCallback completed");
             });
+
+            Debug.Log($"{LOG_PREFIX} Configure completed. scene={gameObject.scene.name}");
         }
 
         void Start() {
+            Debug.Log($"{LOG_PREFIX} Start called. scene={gameObject.scene.name}, hasContainer={Container != null}");
             if (Container == null) {
+                Debug.LogWarning($"{LOG_PREFIX} Start detected null container. Begin wait-and-retry startup.");
+                StartCoroutine(WaitAndStartBattleFlow());
                 return;
             }
 
-            Container.Resolve<IBattleFlow>().StartBattle();
+            StartBattleFlow("Start");
+        }
+
+        IEnumerator WaitAndStartBattleFlow() {
+            for (var frame = 0; frame < MAX_CONTAINER_WAIT_FRAMES; frame++) {
+                if (Container != null) {
+                    Debug.Log($"{LOG_PREFIX} Container became ready at frame={frame}. Starting battle flow.");
+                    StartBattleFlow("WaitAndStartBattleFlow");
+                    yield break;
+                }
+
+                if (frame % 30 == 0) {
+                    Debug.LogWarning($"{LOG_PREFIX} Waiting container... frame={frame}");
+                }
+
+                yield return null;
+            }
+
+            Debug.LogError($"{LOG_PREFIX} Container did not become ready within {MAX_CONTAINER_WAIT_FRAMES} frames. BattleFlow startup failed.");
+        }
+
+        void StartBattleFlow(string source) {
+            try {
+                Debug.Log($"{LOG_PREFIX} {source} resolving IBattleFlow and invoking StartBattle");
+                Container.Resolve<IBattleFlow>().StartBattle();
+                Debug.Log($"{LOG_PREFIX} {source} invoked StartBattle");
+            }
+            catch (Exception exception) {
+                Debug.LogError($"{LOG_PREFIX} {source} failed to start battle flow: {exception.Message}");
+                Debug.LogException(exception);
+            }
         }
 
         void InjectSceneObjects(IObjectResolver container) {
             var rootObjects = gameObject.scene.GetRootGameObjects();
+            Debug.Log($"{LOG_PREFIX} InjectSceneObjects rootCount={rootObjects.Length}");
             foreach (var root in rootObjects) {
                 if (IsAnotherScopeRoot(root)) {
+                    Debug.Log($"{LOG_PREFIX} Skip inject root={root.name} because it is another scope root");
                     continue;
                 }
 
+                Debug.Log($"{LOG_PREFIX} Inject root={root.name}");
                 container.InjectGameObject(root);
             }
+
+            Debug.Log($"{LOG_PREFIX} InjectSceneObjects completed");
         }
 
         bool IsAnotherScopeRoot(GameObject root) {
@@ -87,7 +135,9 @@ namespace Alice {
             }
 
             public void Initialize() {
+                Debug.Log($"{LOG_PREFIX} BattleFlowStarter.Initialize invoke StartBattle");
                 battleFlow.StartBattle();
+                Debug.Log($"{LOG_PREFIX} BattleFlowStarter.Initialize completed");
             }
         }
 

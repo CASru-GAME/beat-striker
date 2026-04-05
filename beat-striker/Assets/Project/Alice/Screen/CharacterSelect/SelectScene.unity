@@ -2759,7 +2759,7 @@ MonoBehaviour:
   image2: {fileID: 1520165192}
   text: {fileID: 808341881}
   hoverSound: {fileID: 8300000, guid: 0f3941ec304286b43ab29c66d26d690d, type: 3}
-  striker: 0
+  striker: 1
 --- !u!114 &970482124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3060,7 +3060,7 @@ MonoBehaviour:
   image2: {fileID: 1420517965}
   text: {fileID: 193546659}
   hoverSound: {fileID: 8300000, guid: 0f3941ec304286b43ab29c66d26d690d, type: 3}
-  striker: 0
+  striker: 3
 --- !u!114 &1190939521
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3235,6 +3235,7 @@ GameObject:
   - component: {fileID: 1486525827}
   - component: {fileID: 1486525829}
   - component: {fileID: 1486525830}
+  - component: {fileID: 1486525831}
   m_Layer: 0
   m_Name: SelectScene
   m_TagString: Untagged
@@ -3293,6 +3294,23 @@ MonoBehaviour:
   slots:
   - {fileID: 1873484042}
   - {fileID: 206538474}
+--- !u!114 &1486525831
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486525825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2d59cf8c7d44c3da0cece2d2e3d7f4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.SelectScope
+  parentReference:
+    TypeName: Alice.AppScope
+  autoRun: 1
+  autoInjectGameObjects: []
+  selectScene: {fileID: 1486525829}
 --- !u!1 &1520165190
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,18 +1,14 @@
-using Alice;
+using R3;
 using UnityEngine;
-using VContainer;
 
-public class TitleScene : MonoBehaviour {
-    ISceneTransitionService sceneTransitionService;
+namespace Alice {
+    public class TitleScene : MonoBehaviour {
+        readonly Subject<Unit> gotoSelectRequested = new();
 
-    [Inject]
-    public void Construct(ISceneTransitionService sceneTransitionService) {
-        this.sceneTransitionService = sceneTransitionService;
+        public Observable<Unit> GotoSelectRequested => gotoSelectRequested;
 
-        _ = sceneTransitionService.RequestEndTransitionAsync(AppScene.Title);
-    }
-
-    public void GotoSelectScene() {
-        sceneTransitionService.RequestStartTransition(AppScene.StageSelect);
+        public void RequestGotoSelectScene() {
+            gotoSelectRequested.OnNext(Unit.Default);
+        }
     }
 }

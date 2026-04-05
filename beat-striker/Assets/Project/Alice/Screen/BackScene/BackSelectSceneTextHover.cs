@@ -3,51 +3,45 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Core;
 using Alice;
-using VContainer;
+using R3;
 
-[RequireComponent(typeof(Botan))]
-[RequireComponent(typeof(AudioSource))]
-public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
-{
-    [Header("Image References")]
-    public Image[] gradientImages; // グラデーションの四角いImageの配列（左から右の順）
+namespace Alice {
+    [RequireComponent(typeof(Botan))]
+    [RequireComponent(typeof(AudioSource))]
+    public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler {
+        [Header("Image References")]
+        public Image[] gradientImages; // グラデーションの四角いImageの配列（左から右の順）
     
-    [Header("Animation Settings")]
-    public float fadeInDuration = 0.3f; // 各Imageのフェードイン時間
-    public float delayBetweenImages = 0.05f; // 各Image間の遅延（オーディオスペクトラム風）
-    public float maxAlpha = 1f; // 最大透明度
+        [Header("Animation Settings")]
+        public float fadeInDuration = 0.3f; // 各Imageのフェードイン時間
+        public float delayBetweenImages = 0.05f; // 各Image間の遅延（オーディオスペクトラム風）
+        public float maxAlpha = 1f; // 最大透明度
     
-    [Header("Sound Effect")]
-    public AudioClip hoverSound; // ホバー時の効果音
-    [Range(0f, 1f)]
-    public float hoverSoundVolume = 1f; // ホバー音の音量
-    public AudioClip clickSound; // クリック時の効果音
-    [Range(0f, 1f)]
-    public float clickSoundVolume = 1f; // クリック音の音量
+        [Header("Sound Effect")]
+        public AudioClip hoverSound; // ホバー時の効果音
+        [Range(0f, 1f)]
+        public float hoverSoundVolume = 1f; // ホバー音の音量
+        public AudioClip clickSound; // クリック時の効果音
+        [Range(0f, 1f)]
+        public float clickSoundVolume = 1f; // クリック音の音量
     
-    private CanvasGroup[] imageCanvasGroups;
-    private AudioSource audioSource;
-    private bool isHovering = false;
+        readonly Subject<AppScene> clicked = new();
 
-    public AppScene scene = AppScene.Title;
-    private Botan botan;
+        private CanvasGroup[] imageCanvasGroups;
+        private AudioSource audioSource;
+        private bool isHovering = false;
 
-    ISceneTransitionService transitionService;
+        public AppScene scene = AppScene.Title;
+        private Botan botan;
 
-
-    [Inject]
-    public void Construct(ISceneTransitionService transitionService) {
-        this.transitionService = transitionService;
-    }
+        public Observable<AppScene> OnClicked => clicked;
     
-    void Start()
-    {
+        void Start() {
 
         botan = GetComponent<Botan>();
         // AudioSourceを取得または追加
         audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
+        if (audioSource == null) {
             audioSource = gameObject.AddComponent<AudioSource>();
         }
 
@@ -70,28 +64,22 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
         botan.onClick += (e) => {
             OnPointerClick(e.EventData);
         };
-
-        _ = transitionService.RequestEndTransitionAsync(AppScene.ResultMenu);
     }
     
     // Unity Event System用のホバー検知
-    public void OnPointerEnter(PointerEventData eventData)
-    {
+        public void OnPointerEnter(PointerEventData eventData) {
         if (isHovering) return;
         
         isHovering = true;
         
         // 効果音を再生
-        if (audioSource != null && hoverSound != null)
-        {
+        if (audioSource != null && hoverSound != null) {
             audioSource.PlayOneShot(hoverSound, hoverSoundVolume);
         }
         
         // 左から順番にフェードイン
-        for (int i = 0; i < imageCanvasGroups.Length; i++)
-        {
-            if (imageCanvasGroups[i] != null)
-            {
+        for (int i = 0; i < imageCanvasGroups.Length; i++) {
+            if (imageCanvasGroups[i] != null) {
                 int index = i; // ローカルコピー
                 float delay = i * delayBetweenImages;
                 
@@ -104,15 +92,12 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
         }
     }
     
-    public void OnPointerExit(PointerEventData eventData)
-    {
+        public void OnPointerExit(PointerEventData eventData) {
         isHovering = false;
         
         // すべてのImageをフェードアウト
-        for (int i = 0; i < imageCanvasGroups.Length; i++)
-        {
-            if (imageCanvasGroups[i] != null)
-            {
+        for (int i = 0; i < imageCanvasGroups.Length; i++) {
+            if (imageCanvasGroups[i] != null) {
                 LeanTween.cancel(imageCanvasGroups[i].gameObject);
                 LeanTween.alphaCanvas(imageCanvasGroups[i], 0f, fadeInDuration * 0.5f)
                     .setEase(LeanTweenType.easeInQuad);
@@ -120,14 +105,14 @@ public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPo
         }
     }
     
-    public void OnPointerClick(PointerEventData eventData)
-    {
+        public void OnPointerClick(PointerEventData eventData) {
         
         // クリック時の効果音を再生
-        if (audioSource != null && clickSound != null)
-        {
+        if (audioSource != null && clickSound != null) {
             audioSource.PlayOneShot(clickSound, clickSoundVolume);
-            transitionService.RequestStartTransition(scene);
+        }
+
+        clicked.OnNext(scene);
         }
     }
 }

@@ -996,6 +996,7 @@ GameObject:
   - component: {fileID: 253941877}
   - component: {fileID: 253941876}
   - component: {fileID: 253941875}
+  - component: {fileID: 253941880}
   m_Layer: 5
   m_Name: BackStageselectScene1Text
   m_TagString: Untagged
@@ -1257,6 +1258,26 @@ MonoBehaviour:
   clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
   clickSoundVolume: 0.218
   scene: 2
+--- !u!114 &253941880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 253941872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f5f1b7a1f2b4f049f730ad1c6230b43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BackSceneScope
+  parentReference:
+    TypeName: Alice.AppScope
+  autoRun: 1
+  autoInjectGameObjects: []
+  views:
+  - {fileID: 253941878}
+  - {fileID: 1418488864}
+  - {fileID: 1762860059}
 --- !u!222 &253941879
 CanvasRenderer:
   m_ObjectHideFlags: 0

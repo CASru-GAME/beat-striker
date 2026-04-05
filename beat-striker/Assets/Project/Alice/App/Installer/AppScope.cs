@@ -92,6 +92,11 @@ namespace Alice {
 				return;
 			}
 
+			if (HasBattleScope(scene)) {
+				Debug.Log($"[AppScope] Skip scene injection for battle-owned scene '{scene.name}'.");
+				return;
+			}
+
 			var rootObjects = scene.GetRootGameObjects();
 			foreach (var root in rootObjects) {
 				if (IsAnotherScopeRoot(root)) {
@@ -100,6 +105,17 @@ namespace Alice {
 
 				container.InjectGameObject(root);
 			}
+		}
+
+		bool HasBattleScope(Scene scene) {
+			var rootObjects = scene.GetRootGameObjects();
+			foreach (var root in rootObjects) {
+				if (root.TryGetComponent<BattleScope>(out _)) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		bool IsAnotherScopeRoot(GameObject root) {

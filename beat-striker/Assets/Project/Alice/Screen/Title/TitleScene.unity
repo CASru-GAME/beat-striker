@@ -878,7 +878,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1486525826}
         m_TargetAssemblyTypeName: TitleScene, Assembly-CSharp
-        m_MethodName: GotoSelectScene
+        m_MethodName: RequestGotoSelectScene
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1370,6 +1370,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1486525827}
   - component: {fileID: 1486525826}
+  - component: {fileID: 1486525828}
   m_Layer: 0
   m_Name: TitleScene
   m_TagString: Untagged
@@ -1389,6 +1390,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98f396f96b0534f30a50f5ac3cd6de34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleScene
+--- !u!114 &1486525828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486525825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75dc6a3d1b7d4d0a98e7b5d7a4df6f0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.TitleScope
+  parentReference:
+    TypeName: Alice.AppScope
+  autoRun: 1
+  autoInjectGameObjects: []
+  titleScene: {fileID: 1486525826}
 --- !u!4 &1486525827
 Transform:
   m_ObjectHideFlags: 0

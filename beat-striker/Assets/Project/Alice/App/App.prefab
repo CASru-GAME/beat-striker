@@ -123,6 +123,16 @@ MonoBehaviour:
     Prefab: {fileID: 8540004002704815348, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
     PreviewModel: {fileID: -1728013695380148634, guid: 8cc39aaf813b0554da29865827638db3, type: 3}
     Portrait: {fileID: 21300000, guid: 0901c2af62c7c4a069f6c64c82d9839e, type: 3}
+  - DisplayName: "\u9B54\u6CD5\u4F7F\u3044"
+    BattleStriker: 1
+    Prefab: {fileID: 1829485864700888609, guid: ecee9c48169c8dc428a6839126804337, type: 3}
+    PreviewModel: {fileID: -1728013695380148634, guid: 37d428df5c910584396dd6cdd0df9fbd, type: 3}
+    Portrait: {fileID: 21300000, guid: 0901c2af62c7c4a069f6c64c82d9839e, type: 3}
+  - DisplayName: "\u65A7\u6226\u58EB"
+    BattleStriker: 3
+    Prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
+    PreviewModel: {fileID: -1728013695380148634, guid: 70e7be311277e47a3ac2a59c40bb61a6, type: 3}
+    Portrait: {fileID: 21300000, guid: 0901c2af62c7c4a069f6c64c82d9839e, type: 3}
 --- !u!114 &7111598241528783917
 MonoBehaviour:
   m_ObjectHideFlags: 0
