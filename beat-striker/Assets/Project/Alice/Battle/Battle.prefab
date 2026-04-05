@@ -8781,7 +8781,7 @@ MonoBehaviour:
   roundNumberText: {fileID: 6992997161171841534}
   roundNumberCanvasGroup: {fileID: 7591765555252197459}
   roundSound: {fileID: 0}
-  fightSound: {fileID: 0}
+  fightSound: {fileID: 8300000, guid: 08295c655501b33458fcb85e8882ecbd, type: 3}
   soundVolume: 1
   roundFadeInDuration: 0.5
   roundDisplayDuration: 0.5

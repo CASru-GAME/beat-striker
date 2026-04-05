@@ -150,14 +150,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.MusicRegistry
   musicEntries:
-  - Id: sento
-    DisplayName: "\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA"
-    Description: 'Composer: Azuno
+  - Id: Fighter Street
+    DisplayName: Fighter Street
+    Description: 'Composer: Suno 5
 
-      BPM: 110'
-    AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
-    SpectrumData: {fileID: 4900000, guid: 5a14db5d051ccf7448ffdc129b4a7476, type: 3}
-    Bpm: 110
+      BPM: 150'
+    AudioClip: {fileID: 8300000, guid: 62df61faddbdc4059b98c3473fcf6704, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 32210dcf28d47fd4aacb109550ccb125, type: 3}
+    Bpm: 150
+    Offset: 0
+  - Id: Beat Striker on Stage
+    DisplayName: Beat Striker on Stage
+    Description: 'Composer: Suno 4.5+
+
+      BPM: 128'
+    AudioClip: {fileID: 8300000, guid: 7ae048916dd31451c97320d14bc258bb, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 19cb94a5ff1b7f243b41c9d42220e510, type: 3}
+    Bpm: 128
     Offset: 0
   - Id: cutie-street
     DisplayName: Beat Striker on Cutie Street
@@ -175,6 +184,15 @@ MonoBehaviour:
       BPM: 110'
     AudioClip: {fileID: 8300000, guid: 813c0b1b710a04cea866e61e51daa989, type: 3}
     SpectrumData: {fileID: 4900000, guid: 3dae220b8b1f4429ea890464629273ed, type: 3}
+    Bpm: 110
+    Offset: 0
+  - Id: sento
+    DisplayName: "\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA"
+    Description: 'Composer: Azuno
+
+      BPM: 110'
+    AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 5a14db5d051ccf7448ffdc129b4a7476, type: 3}
     Bpm: 110
     Offset: 0
 --- !u!114 &8416357320802876425

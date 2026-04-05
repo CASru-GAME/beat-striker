@@ -91,6 +91,7 @@ namespace Alice {
                     Mathf.Clamp(rectTransform.anchoredPosition.y, -movableAreaRectTransform.rect.height / 2, movableAreaRectTransform.rect.height / 2));
             } else {
                 movingTime = 0f;
+                return;
             }
 
             if (!TryCreatePointerEventData(out var data)) {

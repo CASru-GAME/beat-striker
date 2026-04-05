@@ -30,7 +30,7 @@ namespace Core.LargeHero {
 
             var self = context.GetSelf();
             var isSpecialGaugeFull = self.SpecialPoint.CurrentValue >= self.MaxSpecialPoint.CurrentValue;
-            if (isSpecialGaugeFull && context.ConsumeSpecialPoint(self.MaxSpecialPoint.CurrentValue)) {
+            if (isSpecialGaugeFull) {
                 context.TryTransition(specialLaunchState);
                 return;
             }
