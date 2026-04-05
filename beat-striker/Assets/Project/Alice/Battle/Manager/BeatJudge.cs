@@ -2,10 +2,13 @@
 using System;
 using System.Collections.Generic;
  
+using App;
 using R3;
 using UnityEngine;
 
 namespace Alice {
+
+    public record BeatPlayerBattleResult(int Score, int Excellent, int Good, int Miss);
 
     public interface IBeatPlayer{
         public Observable<BeatResult> OnBeatCommandRequested { get; }
@@ -13,11 +16,13 @@ namespace Alice {
         public Observable<BeatResult> OnBeatPassed { get; }
         public ReadOnlyReactiveProperty<int> ComboCount { get; }
 
-        public record BeatResult(float Time, bool IsSuccess, GamePadButton Button, Vector2 Direction, int ComboCount);
+        public record BeatResult(float Time, bool IsSuccess, BeatJudgeZone Zone, GamePadButton Button, Vector2 Direction, int ComboCount);
     }
 
     public interface IBeatjudge {
         IBeatPlayer GetBeatPlayer(int playerId);
+        IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> GetBattleResults();
+        void ResetBattleState();
         void ResetRoundState();
         void Pause();
         void Resume();
@@ -25,13 +30,15 @@ namespace Alice {
 
     public class BeatJudge : IBeatjudge, IDisposable {
         readonly IMusicPlayer musicPlayer;
+        readonly IAudioSetting audioSetting;
         readonly List<IDisposable> subscriptions = new();
         BeatPlayer[] beatPlayer = new BeatPlayer[2];
         float lastCommandPlaybackTime = -1f;
         bool isPaused;
 
-        public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer) {
+        public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting) {
             this.musicPlayer = musicPlayer;
+            this.audioSetting = audioSetting;
             
 
             for(int i = 0; i < beatPlayer.Length; i++) {
@@ -69,11 +76,12 @@ namespace Alice {
                     lastCommandPlaybackTime = time;
 
                     var result = musicPlayer.JudgeTiming(time);
-                    var isTimingGood = result.Zone == BeatJudgeZone.Good && time < result.BeatTime;
-                    var isGood = isTimingGood && player.TrySavePendingCommand(result.BeatIndex, button, player.CurrentInputDirection);
-                    if (isTimingGood && !isGood) {
+                    var isTimingSuccess = result.Zone != BeatJudgeZone.Miss && time < result.BeatTime;
+                    var isGood = isTimingSuccess && player.TrySavePendingCommand(result.BeatIndex, result.Zone, button, player.CurrentInputDirection);
+                    if (isTimingSuccess && !isGood) {
                     }
-                    player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(time, isGood, button, player.CurrentInputDirection, player.ComboCount.CurrentValue));
+                    var requestZone = isGood ? result.Zone : BeatJudgeZone.Miss;
+                    player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(time, isGood, requestZone, button, player.CurrentInputDirection, player.ComboCount.CurrentValue));
                     // Record that player attempted this beat so it's not considered a pass later
                     player.RecordAttempt(result.BeatIndex);
                 });
@@ -87,25 +95,58 @@ namespace Alice {
 
                 
                 for (var playerIndex = 0; playerIndex < beatPlayer.Length; playerIndex++) {
-                    if (!beatPlayer[playerIndex].TryConsumePendingCommand(signal.BeatIndex, out var button, out var direction)) {
+                    if (!beatPlayer[playerIndex].TryConsumePendingCommand(signal.BeatIndex, out var zone, out var button, out var direction)) {
                         // If player attempted this beat (but it wasn't saved as pending), it's a miss rather than a pass
                         if (beatPlayer[playerIndex].HasAttempt(signal.BeatIndex)) {
                             beatPlayer[playerIndex].ClearAttempt(signal.BeatIndex);
                             beatPlayer[playerIndex].ResetCombo();
-                            beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, false, default, Vector2.zero, beatPlayer[playerIndex].ComboCount.CurrentValue));
+                            beatPlayer[playerIndex].IncrementMiss();
+                            beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, false, BeatJudgeZone.Miss, default, Vector2.zero, beatPlayer[playerIndex].ComboCount.CurrentValue));
                             continue;
                         }
 
                         // No pending command and no attempt -> player passed the beat
                         beatPlayer[playerIndex].ResetCombo();
-                        beatPlayer[playerIndex].onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, false, default, beatPlayer[playerIndex].CurrentInputDirection, beatPlayer[playerIndex].ComboCount.CurrentValue));
+                        beatPlayer[playerIndex].IncrementMiss();
+                        beatPlayer[playerIndex].onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, false, BeatJudgeZone.Miss, default, beatPlayer[playerIndex].CurrentInputDirection, beatPlayer[playerIndex].ComboCount.CurrentValue));
                         continue;
                     }
 
                     beatPlayer[playerIndex].IncrementCombo();
-                    beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, true, button, direction, beatPlayer[playerIndex].ComboCount.CurrentValue));
+                    if (zone == BeatJudgeZone.Excellent) {
+                        beatPlayer[playerIndex].IncrementExcellent();
+                    }
+                    else if (zone == BeatJudgeZone.Good) {
+                        beatPlayer[playerIndex].IncrementGood();
+                    }
+
+                    beatPlayer[playerIndex].AddScore(CalculateScore(zone));
+                    beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatTime, true, zone, button, direction, beatPlayer[playerIndex].ComboCount.CurrentValue));
                 }
             }));
+        }
+
+        int CalculateScore(BeatJudgeZone zone) {
+            var multiplier = zone == BeatJudgeZone.Excellent
+                ? Mathf.Max(0f, audioSetting.ExcellentScoreMultiplier.CurrentValue)
+                : Mathf.Max(0f, audioSetting.GoodScoreMultiplier.CurrentValue);
+            return Mathf.RoundToInt(100f * multiplier);
+        }
+
+        public IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> GetBattleResults() {
+            var results = new Dictionary<PlayerId, BeatPlayerBattleResult>(beatPlayer.Length);
+            for (var playerId = 0; playerId < beatPlayer.Length; playerId++) {
+                results[new PlayerId(playerId)] = new BeatPlayerBattleResult(beatPlayer[playerId].Score, beatPlayer[playerId].Excellent, beatPlayer[playerId].Good, beatPlayer[playerId].Miss);
+            }
+
+            return results;
+        }
+
+        public void ResetBattleState() {
+            lastCommandPlaybackTime = -1f;
+            for (var playerId = 0; playerId < beatPlayer.Length; playerId++) {
+                beatPlayer[playerId].ResetBattleState();
+            }
         }
 
         public void ResetRoundState() {
@@ -149,8 +190,12 @@ namespace Alice {
             public Subject<IBeatPlayer.BeatResult> onBeatCommandExecuted = new Subject<IBeatPlayer.BeatResult>();
             public Subject<IBeatPlayer.BeatResult> onBeatPassed = new Subject<IBeatPlayer.BeatResult>();
             Vector2 currentInputDirection = Vector2.zero;
+            int score;
+            int excellent;
+            int good;
+            int miss;
 
-            record PendingCommand(GamePadButton Button, Vector2 Direction);
+            record PendingCommand(BeatJudgeZone Zone, GamePadButton Button, Vector2 Direction);
 
             public BeatPlayer(int playerIndex) {
                 this.playerIndex = playerIndex;
@@ -161,14 +206,18 @@ namespace Alice {
             public Observable<IBeatPlayer.BeatResult> OnBeatPassed => onBeatPassed;
             public ReadOnlyReactiveProperty<int> ComboCount => comboCount;
             public Vector2 CurrentInputDirection => currentInputDirection;
+            public int Score => score;
+            public int Excellent => excellent;
+            public int Good => good;
+            public int Miss => miss;
 
-            public bool TrySavePendingCommand(int beatIndex, GamePadButton button, Vector2 direction) {
+            public bool TrySavePendingCommand(int beatIndex, BeatJudgeZone zone, GamePadButton button, Vector2 direction) {
                 if (pendingCommands.ContainsKey(beatIndex)) {
                     
                     return false;
                 }
 
-                pendingCommands[beatIndex] = new PendingCommand(button, direction);
+                pendingCommands[beatIndex] = new PendingCommand(zone, button, direction);
                 
                 return true;
             }
@@ -194,8 +243,9 @@ namespace Alice {
                 attemptedCommands.Remove(beatIndex);
             }
 
-            public bool TryConsumePendingCommand(int beatIndex, out GamePadButton button, out Vector2 direction) {
+            public bool TryConsumePendingCommand(int beatIndex, out BeatJudgeZone zone, out GamePadButton button, out Vector2 direction) {
                 if (!pendingCommands.TryGetValue(beatIndex, out var command)) {
+                    zone = BeatJudgeZone.Miss;
                     button = default;
                     direction = Vector2.zero;
                     
@@ -204,6 +254,7 @@ namespace Alice {
 
                 pendingCommands.Remove(beatIndex);
                 attemptedCommands.Remove(beatIndex);
+                zone = command.Zone;
                 button = command.Button;
                 direction = command.Direction;
                 
@@ -214,6 +265,30 @@ namespace Alice {
                 pendingCommands.Clear();
                 attemptedCommands.Clear();
                 comboCount.OnNext(0);
+            }
+
+            public void ResetBattleState() {
+                score = 0;
+                excellent = 0;
+                good = 0;
+                miss = 0;
+                ResetForLoop();
+            }
+
+            public void AddScore(int value) {
+                score += value;
+            }
+
+            public void IncrementExcellent() {
+                excellent += 1;
+            }
+
+            public void IncrementGood() {
+                good += 1;
+            }
+
+            public void IncrementMiss() {
+                miss += 1;
             }
 
             public void IncrementCombo() {

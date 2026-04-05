@@ -73,6 +73,7 @@ namespace Alice {
             if (battleStarted) return;
 
             PrepareBattle();
+            beatJudge.ResetBattleState();
             SubscribeStrikerDeadEvents();
             SubscribeFlowEvents();
             battleStarted = true;
@@ -225,7 +226,8 @@ namespace Alice {
             battleFinishedSubject.OnNext(Unit.Default);
             outroStartedSubject.OnNext(winner);
             await battlePresenter.PlayBattleEndingAsync(winner);
-            resultScene.ShowResult();
+            var battleResults = beatJudge.GetBattleResults();
+            resultScene.ShowResult(battleResults);
             await resultScene.WaitForBattleEndInputAsync();
             await battlePresenter.PlayBattleFinishFadeInAsync();
             CompleteBattle();

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using R3;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Alice {
     public record BeatOffsetSetting(float CommandTimeOffset, float ViewTimeOffset, float BeatTimeOffset);
@@ -10,7 +11,10 @@ namespace Alice {
         ReadOnlyReactiveProperty<float> CommandTimeOffset { get; }
         ReadOnlyReactiveProperty<float> ViewTimeOffset { get; }
         ReadOnlyReactiveProperty<float> BeatTimeOffset { get; }
-        ReadOnlyReactiveProperty<float> PerfectWindow { get; }
+        ReadOnlyReactiveProperty<float> GoodWindow { get; }
+        ReadOnlyReactiveProperty<float> ExcellentWindow { get; }
+        ReadOnlyReactiveProperty<float> GoodScoreMultiplier { get; }
+        ReadOnlyReactiveProperty<float> ExcellentScoreMultiplier { get; }
         ReadOnlyReactiveProperty<BeatOffsetSetting> BeatOffset { get; }
         ReadOnlyReactiveProperty<VolumeBalance> VolumeBalance { get; }
         float[] CalculateBeats(MusicInfo musicInfo);
@@ -25,7 +29,11 @@ namespace Alice {
         [SerializeField] float viewTimeOffset = 0f;
         [Tooltip("ビート時刻を全体的に遅らせるオフセット（秒）。CalculateBeatsで生成される全ビートに加算されます。Track.offset はトラック個別の補正、beatTimeOffset はグローバル補正です。正の値でビートが遅れ、負の値で早まります。")]
         [SerializeField] float beatTimeOffset = 0;
-        [SerializeField] float perfectWindow = 0.1f;
+        [FormerlySerializedAs("perfectWindow")]
+        [SerializeField] float goodWindow = 0.1f;
+        [SerializeField] float excellentWindow = 0.05f;
+        [SerializeField] float goodScoreMultiplier = 1f;
+        [SerializeField] float excellentScoreMultiplier = 1.5f;
         [SerializeField] float masterVolume = 1f;
         [SerializeField] float bgmVolume = 1f;
         [SerializeField] float seVolume = 1f;
@@ -33,14 +41,20 @@ namespace Alice {
         readonly ReactiveProperty<float> commandTimeOffsetProperty = new();
         readonly ReactiveProperty<float> viewTimeOffsetProperty = new();
         readonly ReactiveProperty<float> beatTimeOffsetProperty = new();
-        readonly ReactiveProperty<float> perfectWindowProperty = new();
+        readonly ReactiveProperty<float> goodWindowProperty = new();
+        readonly ReactiveProperty<float> excellentWindowProperty = new();
+        readonly ReactiveProperty<float> goodScoreMultiplierProperty = new();
+        readonly ReactiveProperty<float> excellentScoreMultiplierProperty = new();
         readonly ReactiveProperty<BeatOffsetSetting> beatOffset = new();
         readonly ReactiveProperty<VolumeBalance> volumeBalance = new();
 
         public ReadOnlyReactiveProperty<float> CommandTimeOffset => commandTimeOffsetProperty;
         public ReadOnlyReactiveProperty<float> ViewTimeOffset => viewTimeOffsetProperty;
         public ReadOnlyReactiveProperty<float> BeatTimeOffset => beatTimeOffsetProperty;
-        public ReadOnlyReactiveProperty<float> PerfectWindow => perfectWindowProperty;
+        public ReadOnlyReactiveProperty<float> GoodWindow => goodWindowProperty;
+        public ReadOnlyReactiveProperty<float> ExcellentWindow => excellentWindowProperty;
+        public ReadOnlyReactiveProperty<float> GoodScoreMultiplier => goodScoreMultiplierProperty;
+        public ReadOnlyReactiveProperty<float> ExcellentScoreMultiplier => excellentScoreMultiplierProperty;
         public ReadOnlyReactiveProperty<BeatOffsetSetting> BeatOffset => beatOffset;
         public ReadOnlyReactiveProperty<VolumeBalance> VolumeBalance => volumeBalance;
 
@@ -52,7 +66,10 @@ namespace Alice {
             commandTimeOffsetProperty.OnNext(commandTimeOffset);
             viewTimeOffsetProperty.OnNext(viewTimeOffset);
             beatTimeOffsetProperty.OnNext(beatTimeOffset);
-            perfectWindowProperty.OnNext(perfectWindow);
+            goodWindowProperty.OnNext(goodWindow);
+            excellentWindowProperty.OnNext(excellentWindow);
+            goodScoreMultiplierProperty.OnNext(goodScoreMultiplier);
+            excellentScoreMultiplierProperty.OnNext(excellentScoreMultiplier);
             beatOffset.OnNext(new BeatOffsetSetting(commandTimeOffset, viewTimeOffset, beatTimeOffset));
             volumeBalance.OnNext(new VolumeBalance(masterVolume, bgmVolume, seVolume));
         }

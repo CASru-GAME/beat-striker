@@ -2,9 +2,12 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using VContainer;
 using R3;
 using Alice;
+using App;
+using TMPro;
 
 public class ResultScene : MonoBehaviour
 {
@@ -21,6 +24,14 @@ public class ResultScene : MonoBehaviour
     [SerializeField] ResultPanelButton resultPanelButton; // リザルトUI再生トリガー
     [SerializeField] Image player1PortraitImage; // Player1の顔写真を表示するImage
     [SerializeField] Image player2PortraitImage; // Player2の顔写真を表示するImage
+    [SerializeField] TMP_Text player1ScoreText;
+    [SerializeField] TMP_Text player2ScoreText;
+    [SerializeField] TMP_Text player1ExcellentText;
+    [SerializeField] TMP_Text player2ExcellentText;
+    [SerializeField] TMP_Text player1GoodText;
+    [SerializeField] TMP_Text player2GoodText;
+    [SerializeField] TMP_Text player1MissText;
+    [SerializeField] TMP_Text player2MissText;
 
     IPlayerSelectSetting playerSelectSetting;
     IAppStrikerRegistry appStrikerRegistry;
@@ -60,9 +71,10 @@ public class ResultScene : MonoBehaviour
         SceneManager.LoadScene("SelectScene");
     }
 
-    public void ShowResult()
+    public void ShowResult(IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> battleResults)
     {
         LoadStrikerPortraits();
+        ApplyBattleResults(battleResults);
         GetResultRoot().SetActive(true);
         resultPhase = ResultPhase.Summary;
         lastPhaseAdvanceFrame = -1;
@@ -149,6 +161,21 @@ public class ResultScene : MonoBehaviour
         canAdvancePhase = false;
         resultInputSubscriptions.Clear();
         resultEndCompletionSource.TrySetResult(true);
+    }
+
+    void ApplyBattleResults(IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> battleResults)
+    {
+        var player1Result = battleResults[new PlayerId(0)];
+        var player2Result = battleResults[new PlayerId(1)];
+
+        player1ScoreText.text = player1Result.Score.ToString();
+        player2ScoreText.text = player2Result.Score.ToString();
+        player1ExcellentText.text = player1Result.Excellent.ToString();
+        player2ExcellentText.text = player2Result.Excellent.ToString();
+        player1GoodText.text = player1Result.Good.ToString();
+        player2GoodText.text = player2Result.Good.ToString();
+        player1MissText.text = player1Result.Miss.ToString();
+        player2MissText.text = player2Result.Miss.ToString();
     }
 
     void LoadStrikerPortraits()

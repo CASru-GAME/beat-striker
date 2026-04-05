@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Alice {
     public enum BeatJudgeZone {
+        Excellent,
         Good,
         Miss,
     }
@@ -113,8 +114,15 @@ namespace Alice {
                     continue;
                 }
 
-                var windowStart = beatTime - audioSetting.PerfectWindow.CurrentValue;
-                if (judgeTime >= windowStart) {
+                var goodWindow = Mathf.Max(0f, audioSetting.GoodWindow.CurrentValue);
+                var excellentWindow = Mathf.Clamp(audioSetting.ExcellentWindow.CurrentValue, 0f, goodWindow);
+                var excellentWindowStart = beatTime - excellentWindow;
+                if (judgeTime >= excellentWindowStart) {
+                    return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Excellent, i, beatTime);
+                }
+
+                var goodWindowStart = beatTime - goodWindow;
+                if (judgeTime >= goodWindowStart) {
                     return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Good, i, beatTime);
                 }
                 
@@ -129,7 +137,7 @@ namespace Alice {
             var judgeTime = audioSource.time + audioSetting.CommandTimeOffset.CurrentValue;
             while (goodWindowIndex < beats.Length) {
                 var beatTime = beats[goodWindowIndex];
-                var windowStart = beatTime - audioSetting.PerfectWindow.CurrentValue;
+                var windowStart = beatTime - Mathf.Max(0f, audioSetting.GoodWindow.CurrentValue);
                 if (judgeTime < windowStart) {
                     return;
                 }

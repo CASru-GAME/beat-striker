@@ -95,7 +95,7 @@ namespace Alice {
             beatPlayer.OnBeatCommandRequested
                 .Subscribe(result => {
                     if (!roundPlayable) return;
-                    ringView.NotifyBeatRequested(result.IsSuccess);
+                    ringView.NotifyBeatRequested(result.Zone);
                 })
                 .AddTo(disposables);
 

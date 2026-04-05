@@ -14,7 +14,7 @@ namespace Alice {
         [SerializeField] float windowScale = 3f;
         [SerializeField] float judgeTextFadeDuration = 0.6f;
         [SerializeField] float judgeTextDropDistance = 48f;
-        [SerializeField] AudioClip successSound, missSound;
+        [SerializeField] AudioClip successSound, excellentSound, missSound;
         [SerializeField] Color[] colors;
 
         int playerId;
@@ -98,8 +98,16 @@ namespace Alice {
             currentLookDirection = lookDirection;
         }
 
-        public void NotifyBeatRequested(bool isSuccess) {
-            AudioSource.PlayClipAtPoint(isSuccess ? successSound : missSound, Vector3.zero);
+        public void NotifyBeatRequested(BeatJudgeZone zone) {
+            if (zone == BeatJudgeZone.Excellent) {
+                AudioSource.PlayClipAtPoint(excellentSound != null ? excellentSound : successSound, Vector3.zero);
+            }
+            else if (zone == BeatJudgeZone.Good) {
+                AudioSource.PlayClipAtPoint(successSound, Vector3.zero);
+            }
+            else {
+                AudioSource.PlayClipAtPoint(missSound, Vector3.zero);
+            }
 
             var color = centerRing[0].color;
             color.a = 1f;
@@ -107,9 +115,19 @@ namespace Alice {
 
             LeanTween.alpha(centerRing[0].rectTransform, centerRingFirstAlpha, 0.3f);
 
-            SpawnJudgeText(isSuccess ? "good" : "miss");
+            SpawnJudgeText(ToJudgeLabel(zone));
+        }
 
-            if (!isSuccess) return;
+        string ToJudgeLabel(BeatJudgeZone zone) {
+            if (zone == BeatJudgeZone.Excellent) {
+                return "excellent";
+            }
+
+            if (zone == BeatJudgeZone.Good) {
+                return "good";
+            }
+
+            return "miss";
         }
 
         void SpawnJudgeText(string label) {

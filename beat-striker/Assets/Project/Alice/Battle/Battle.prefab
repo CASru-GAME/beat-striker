@@ -10702,7 +10702,7 @@ MonoBehaviour:
   forwardDuration: 2
   orbitDuration: 2
   orbitAngle: -40
-  outroDistance: 2
+  outroDistance: 2.8
   outroDuration: 1
   outroWaitDuration: 3
   outroPostWaitDuration: 0
