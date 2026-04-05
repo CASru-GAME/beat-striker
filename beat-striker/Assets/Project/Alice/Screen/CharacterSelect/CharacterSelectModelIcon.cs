@@ -19,7 +19,7 @@ public class CharacterSelectModelIcon : MonoBehaviour
     Vector3 rotCenter;
     float rotSpeed = 50f;
     GameObject currentSource;
-    [SerializeField] bool enableModelPreview = false;
+    [SerializeField] bool enableModelPreview = true;
 
     void Awake()
     {
@@ -28,7 +28,11 @@ public class CharacterSelectModelIcon : MonoBehaviour
 
     void EnsureInitialized()
     {
-        rawImage ??= GetComponent<RawImage>();
+        if (rawImage != null) {
+            return;
+        }
+
+        rawImage = GetComponent<RawImage>();
         rawImage.color = new Color(1f, 1f, 1f, 0f);
     }
 

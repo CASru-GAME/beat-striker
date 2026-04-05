@@ -221,6 +221,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5e846d02ecf945dfbad77a71d46aafb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectModelIcon
+  enableModelPreview: 1
 --- !u!1 &6667912155953218647
 GameObject:
   m_ObjectHideFlags: 0
