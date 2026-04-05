@@ -14,6 +14,8 @@ public class beam11 : MonoBehaviour
     [Tooltip("コライダーが0.1秒あたりに伸びる長さ")]
     [SerializeField, Min(0f)] float colliderExtendLengthPer0p1Second = 4f;
     [SerializeField, Min(0f)] float extendTime = 0.3f;
+    [Tooltip("コライダーが1秒あたりに縮む長さ（等速）")]
+    [SerializeField, Min(0f)] float colliderShrinkLengthPerSecond = 4f;
     [SerializeField] ParticleSystem beam11ParticleSystem;
 
     BoxCollider hitCollider;
@@ -24,7 +26,6 @@ public class beam11 : MonoBehaviour
     float elapsed;
     float currentLength;
     bool isShrinking;
-    float shrinkSpeedPerSecond;
     float nextAttackJudgeTime;
 
     void Awake()
@@ -103,12 +104,11 @@ public class beam11 : MonoBehaviour
                 if (currentLength >= maxLength)
                 {
                     isShrinking = true;
-                    shrinkSpeedPerSecond = currentExtendSpeedPerSecond;
                 }
             }
             else
             {
-                currentLength = Mathf.Max(initialColliderSize.z, currentLength - shrinkSpeedPerSecond * growthDeltaTime);
+                currentLength = Mathf.Max(initialColliderSize.z, currentLength - colliderShrinkLengthPerSecond * growthDeltaTime);
             }
         }
 
