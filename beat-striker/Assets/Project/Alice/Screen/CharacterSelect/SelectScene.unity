@@ -2833,7 +2833,7 @@ MonoBehaviour:
   scaleDuration: 0.1
   blackImageButtons:
   - {fileID: 1992377606}
-  - {fileID: 46347803}
+  - {fileID: 46347807}
   blackImageClickSound: {fileID: 8300000, guid: 9a1d28e383d59ed469a73f14fd1f5099, type: 3}
   blackImageClickSoundVolume: 0.307
   backgroundBotan: {fileID: 69024602}

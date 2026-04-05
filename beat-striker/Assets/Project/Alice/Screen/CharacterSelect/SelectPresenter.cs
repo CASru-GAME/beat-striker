@@ -26,6 +26,8 @@ namespace Alice {
         readonly Dictionary<Striker, GameObject> strikerModelMap = new();
         bool initialized;
         bool startTransitionInputEnabled;
+        bool eastStartConfirmationArmed;
+        bool wasReadyToStart;
         SceneInputState inputState = SceneInputState.Selecting;
 
         public SelectPresenter(
@@ -73,7 +75,7 @@ namespace Alice {
                 .AddTo(subscriptions);
 
             view.StartButtonAnimation.OnStartRequested
-                .Subscribe(_ => RequestPlaySceneTransition(false))
+                .Subscribe(_ => RequestPlaySceneTransition(true))
                 .AddTo(subscriptions);
 
             playerSelectSetting.SelectedStrikers
@@ -133,10 +135,21 @@ namespace Alice {
 
             if (button != GamePadButton.East) return;
             Debug.Log($"{LOG_PREFIX} OnButtonDown East received. play transition requested");
-            RequestPlaySceneTransition(true);
+            if (inputState != SceneInputState.ReadyToStart) {
+                Debug.Log($"{LOG_PREFIX} OnButtonDown East ignored because inputState is not ReadyToStart. inputState={inputState}");
+                return;
+            }
+
+            if (eastStartConfirmationArmed) {
+                eastStartConfirmationArmed = false;
+                Debug.Log($"{LOG_PREFIX} OnButtonDown East consumed as first confirm press");
+                return;
+            }
+
+            RequestPlaySceneTransition(false);
         }
 
-        void RequestPlaySceneTransition(bool skipStartButtonReadyCheck) {
+        void RequestPlaySceneTransition(bool requireStartButtonReady) {
             if (IsTransitioning()) {
                 Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition ignored because transitioning. inputState={inputState}");
                 return;
@@ -152,7 +165,7 @@ namespace Alice {
                 return;
             }
 
-            if (!skipStartButtonReadyCheck && !view.StartButtonAnimation.IsStartInputReady) {
+            if (requireStartButtonReady && !view.StartButtonAnimation.IsStartInputReady) {
                 Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition ignored because StartButtonAnimation is not ready");
                 return;
             }
@@ -198,8 +211,28 @@ namespace Alice {
             if (selectionPolicy.TryPopUndoSlot(playerSelectSetting, out var slot)) {
                 playerSelectSetting.DeselectStriker(slot);
             }
+            else if (TryResolveUndoSlotFallback(out var fallbackSlot)) {
+                Debug.LogWarning($"{LOG_PREFIX} UndoSelection fallback used. slot={fallbackSlot}");
+                playerSelectSetting.DeselectStriker(fallbackSlot);
+            }
+            else {
+                Debug.Log($"{LOG_PREFIX} UndoSelection skipped because no selected slot was found");
+            }
 
             RefreshState();
+        }
+
+        bool TryResolveUndoSlotFallback(out int slot) {
+            var requiredSlots = selectionPolicy.GetRequiredSlotCount(GetJoinedPlayerCount());
+            for (var playerId = requiredSlots - 1; playerId >= 0; playerId--) {
+                if (playerSelectSetting.TryGetStriker(playerId, out _)) {
+                    slot = playerId;
+                    return true;
+                }
+            }
+
+            slot = -1;
+            return false;
         }
 
         void RefreshState() {
@@ -210,6 +243,15 @@ namespace Alice {
         void RefreshReadyState() {
             var allSelected = CanStartBattle();
             view.StartButtonAnimation.SetAllStrikersSelected(allSelected);
+
+            if (allSelected && !wasReadyToStart) {
+                eastStartConfirmationArmed = true;
+            }
+            else if (!allSelected) {
+                eastStartConfirmationArmed = false;
+            }
+
+            wasReadyToStart = allSelected;
 
             if (!IsTransitioning()) {
                 inputState = allSelected ? SceneInputState.ReadyToStart : SceneInputState.Selecting;

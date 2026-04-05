@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 
 public class StartButtonAnimation : MonoBehaviour {
+    const string LOG_PREFIX = "[StartButtonAnimation]";
     [Header("Line References")]
     public RectTransform whiteLineAbove; // 赤いImage（上）
     public RectTransform whiteLineUnder; // 青いImage（下）
@@ -28,7 +29,7 @@ public class StartButtonAnimation : MonoBehaviour {
     public float scaleDuration = 0.1f; // へこむアニメーションの時間
 
     [Header("Button Control")]
-    public Botan[] blackImageButtons; // 黒い画像のボタン（Botanコンポーネント）2つ
+    public Botan[] blackImageButtons; // 黒い画像のボタン（Botanコンポーネント）
     public AudioClip blackImageClickSound; // 黒い画像がクリックされた時の効果音
     [Range(0f, 1f)]
     public float blackImageClickSoundVolume = 1f; // 黒い画像クリック時の音量
@@ -52,7 +53,16 @@ public class StartButtonAnimation : MonoBehaviour {
     public Botan backgroundBotan; // 背景のBotanコンポーネント
 
     void Awake() {
-        backgroundBotan.gameObject.SetActive(false); // 最初は無効
+        if (characterSelectButton == null) {
+            characterSelectButton = Array.Empty<Characterselectbutton>();
+        }
+        if (blackImageButtons == null) {
+            blackImageButtons = Array.Empty<Botan>();
+        }
+
+        if (backgroundBotan != null) {
+            backgroundBotan.gameObject.SetActive(false); // 最初は無効
+        }
 
         // 初期位置を保存
         aboveEndPos = whiteLineAbove.anchoredPosition;
@@ -64,15 +74,19 @@ public class StartButtonAnimation : MonoBehaviour {
         whiteLineUnder.anchoredPosition = underStartPos;
 
         // Textを透明に
-        textCanvasGroup.alpha = 0f;
+        if (textCanvasGroup != null) {
+            textCanvasGroup.alpha = 0f;
+        }
 
         // 黒い画像のボタンを無効化（Botanコンポーネントのみ）
         runtimeBlackImageButtons.Clear();
         for (var i = 0; i < blackImageButtons.Length; i++) {
             var button = blackImageButtons[i];
-            if (button != null) {
-                runtimeBlackImageButtons.Add(button);
+            if (button == null) {
+                continue;
             }
+
+            runtimeBlackImageButtons.Add(button);
         }
 
         Debug.Log($"Black image buttons array length: {runtimeBlackImageButtons.Count}");
@@ -96,6 +110,10 @@ public class StartButtonAnimation : MonoBehaviour {
             if (!animationPlayed) {
                 // クリックフィードバック（効果音とへこみ）
                 foreach (var b in characterSelectButton) {
+                    if (b == null) {
+                        continue;
+                    }
+
                     b.PlayClickFeedback(clickTarget, scaleDownAmount, scaleDuration);
                 }
 
@@ -133,6 +151,15 @@ public class StartButtonAnimation : MonoBehaviour {
             return;
         }
 
+        if (textCanvasGroup == null) {
+            Debug.LogWarning($"{LOG_PREFIX} ShowText skipped because textCanvasGroup is null");
+            blackImageSoundEnabled = true;
+            if (backgroundBotan != null) {
+                backgroundBotan.gameObject.SetActive(true);
+            }
+            return;
+        }
+
         if (loopTextFade) {
             // フェードイン・アウトをループ
             LeanTween.alphaCanvas(textCanvasGroup, 1f, textFadeDuration)
@@ -152,23 +179,34 @@ public class StartButtonAnimation : MonoBehaviour {
 
         // 黒い画像の音を有効化
         blackImageSoundEnabled = true;
-        backgroundBotan.gameObject.SetActive(true);
+        if (backgroundBotan != null) {
+            backgroundBotan.gameObject.SetActive(true);
+        }
     }
 
     void HideLines() {
         var token = ++animationToken;
         LeanTween.cancel(whiteLineAbove.gameObject);
         LeanTween.cancel(whiteLineUnder.gameObject);
-        LeanTween.cancel(textCanvasGroup.gameObject);
+        if (textCanvasGroup != null) {
+            LeanTween.cancel(textCanvasGroup.gameObject);
+        }
 
         // 黒い画像のボタンと音を無効化
-        backgroundBotan.gameObject.SetActive(false);
+        if (backgroundBotan != null) {
+            backgroundBotan.gameObject.SetActive(false);
+        }
         foreach (var button in runtimeBlackImageButtons) {
             button.enabled = false;
         }
         blackImageSoundEnabled = false;
 
         // テキストを非表示
+        if (textCanvasGroup == null) {
+            ReverseAnimateLines(token);
+            return;
+        }
+
         LeanTween.alphaCanvas(textCanvasGroup, 0f, textFadeDuration)
             .setEase(LeanTweenType.easeInOutQuad)
             .setOnComplete(() => ReverseAnimateLines(token));
@@ -207,6 +245,10 @@ public class StartButtonAnimation : MonoBehaviour {
     }
 
     void PlaySoundAtVolume(AudioClip clip, float volume) {
+        if (clip == null || Camera.main == null) {
+            return;
+        }
+
         GameObject tempAudio = new GameObject("TempAudio");
         tempAudio.transform.position = Camera.main.transform.position;
         AudioSource audioSource = tempAudio.AddComponent<AudioSource>();

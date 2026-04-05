@@ -21,18 +21,10 @@ namespace Alice {
     }
 
     [RequireComponent(typeof(PlayerInput))]
-    public class GamePad : MonoBehaviour, IGamePad {
+    public class GamePad : MonoBehaviour, GameInput.IPlayerActions, IGamePad {
         IGamePadRegistry registry;
         private PlayerInput playerInput;
-        InputAction directionAction;
-        InputAction northAction;
-        InputAction westAction;
-        InputAction southAction;
-        InputAction eastAction;
-        InputAction leftAction;
-        InputAction rightAction;
-        InputAction startAction;
-        InputAction selectAction;
+        private GameInput input;
         bool isRegistered;
         readonly Subject<Vector2> onDirection = new();
         readonly Subject<Unit> onDirectionCanceled = new();
@@ -46,8 +38,8 @@ namespace Alice {
         public string DeviceName => playerInput.currentControlScheme;
 
         void Awake() {
+            input = new GameInput();
             playerInput = GetComponent<PlayerInput>();
-            CacheActions();
             DontDestroyOnLoad(this.gameObject);
         }
 
@@ -60,14 +52,17 @@ namespace Alice {
         }
 
         void OnEnable() {
-            SubscribeActions();
+            input.asset.devices = playerInput.devices;
+            input.Player.AddCallbacks(this);
+            input.Player.Enable();
             playerInput.onControlsChanged += OnControlsChanged;
 
             RegisterIfNeeded();
         }
 
         void OnDisable() {
-            UnsubscribeActions();
+            input.Player.RemoveCallbacks(this);
+            input.Player.Disable();
             playerInput.onControlsChanged -= OnControlsChanged;
 
             if (isRegistered) {
@@ -88,79 +83,16 @@ namespace Alice {
         }
 
         private void OnControlsChanged(PlayerInput changed) {
-            if (changed != playerInput) {
-                return;
-            }
-
-            UnsubscribeActions();
-            CacheActions();
-            SubscribeActions();
+            if (changed == playerInput)
+                input.asset.devices = playerInput.devices;
         }
 
         void OnDestroy() {
+            input.Dispose();
             onDirection.Dispose();
             onDirectionCanceled.Dispose();
             onButtonDown.Dispose();
             onButtonUp.Dispose();
-        }
-
-        void CacheActions() {
-            var actions = playerInput.actions;
-            directionAction = actions.FindAction("Direction", true);
-            northAction = actions.FindAction("North", true);
-            westAction = actions.FindAction("West", true);
-            southAction = actions.FindAction("South", true);
-            eastAction = actions.FindAction("East", true);
-            leftAction = actions.FindAction("Left", true);
-            rightAction = actions.FindAction("Right", true);
-            startAction = actions.FindAction("Start", true);
-            selectAction = actions.FindAction("Select", true);
-        }
-
-        void SubscribeActions() {
-            directionAction.started += OnDirection;
-            directionAction.performed += OnDirection;
-            directionAction.canceled += OnDirection;
-
-            northAction.started += OnNorth;
-            northAction.canceled += OnNorth;
-            westAction.started += OnWest;
-            westAction.canceled += OnWest;
-            southAction.started += OnSouth;
-            southAction.canceled += OnSouth;
-            eastAction.started += OnEast;
-            eastAction.canceled += OnEast;
-            leftAction.started += OnLeft;
-            leftAction.canceled += OnLeft;
-            rightAction.started += OnRight;
-            rightAction.canceled += OnRight;
-            startAction.started += OnStart;
-            startAction.canceled += OnStart;
-            selectAction.started += OnSelect;
-            selectAction.canceled += OnSelect;
-        }
-
-        void UnsubscribeActions() {
-            directionAction.started -= OnDirection;
-            directionAction.performed -= OnDirection;
-            directionAction.canceled -= OnDirection;
-
-            northAction.started -= OnNorth;
-            northAction.canceled -= OnNorth;
-            westAction.started -= OnWest;
-            westAction.canceled -= OnWest;
-            southAction.started -= OnSouth;
-            southAction.canceled -= OnSouth;
-            eastAction.started -= OnEast;
-            eastAction.canceled -= OnEast;
-            leftAction.started -= OnLeft;
-            leftAction.canceled -= OnLeft;
-            rightAction.started -= OnRight;
-            rightAction.canceled -= OnRight;
-            startAction.started -= OnStart;
-            startAction.canceled -= OnStart;
-            selectAction.started -= OnSelect;
-            selectAction.canceled -= OnSelect;
         }
 
         public void OnDirection(InputAction.CallbackContext c) {
