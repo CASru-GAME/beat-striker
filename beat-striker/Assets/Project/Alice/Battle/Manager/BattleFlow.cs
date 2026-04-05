@@ -99,8 +99,8 @@ namespace Alice {
             try {
                 var scene = ResolveCurrentBattleScene();
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync begin. targetScene={scene}");
-                await sceneTransitionService.RequestEndTransitionAsync(ResolveCurrentBattleScene());
-                Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync transition end completed");
+                var endResult = await sceneTransitionService.RequestEndTransitionAsync(ResolveCurrentBattleScene());
+                Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync transition end completed. isSuccess={endResult.IsSuccess}");
                 await battlePresenter.PlayBattleOpeningAsync();
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync battle opening completed");
                 SetAllStrikersDefault();
@@ -265,7 +265,8 @@ namespace Alice {
             await battlePresenter.PlayBattleFinishFadeInAsync();
             CompleteBattle();
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync completed. requesting start transition to ResultMenu");
-            _ = sceneTransitionService.RequestStartTransition(AppScene.ResultMenu);
+            var startResult = sceneTransitionService.RequestStartTransition(AppScene.ResultMenu);
+            Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync start transition result. nextScene={AppScene.ResultMenu}, isSuccess={startResult.IsSuccess}");
         }
 
         void BeginRoundResolution() {

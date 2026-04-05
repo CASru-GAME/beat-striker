@@ -26,6 +26,9 @@ namespace Alice {
         TransitionState currentState = TransitionState.Idle;
         AppScene currentScene;
         IAppTransitionPresenter currentTransition;
+        int startRequestSequence;
+        int endRequestSequence;
+        int activeTransitionId;
 
         enum TransitionState {
             Ready,
@@ -52,105 +55,136 @@ namespace Alice {
         }
 
         public ISceneTransitionService.StartResult RequestStartTransition(AppScene nextScene) {
-            Debug.Log($"{LOG_PREFIX} RequestStartTransition called. currentState={currentState}, currentScene={currentScene}, nextScene={nextScene}");
+            startRequestSequence += 1;
+            var requestId = startRequestSequence;
+            var callerHint = ResolveCallerHint();
+            Debug.Log($"{LOG_PREFIX} [START#{requestId}] RequestStartTransition called. currentState={currentState}, currentScene={currentScene}, nextScene={nextScene}, caller={callerHint}");
             if (currentState != TransitionState.Idle) {
-                Debug.LogWarning($"Cannot start transition to {nextScene} because current state is {currentState}");
+                Debug.LogWarning($"{LOG_PREFIX} [START#{requestId}] Rejected. nextScene={nextScene}, currentState={currentState}, caller={callerHint}");
                 return new ISceneTransitionService.StartResult(false);
             }
 
             var request = new AppTransitionRequest(currentScene, nextScene);
             currentTransition = transitionFactory.Create(request);
-            Debug.Log($"{LOG_PREFIX} RequestStartTransition created transition presenter={currentTransition != null}");
+            activeTransitionId = requestId;
+            Debug.Log($"{LOG_PREFIX} [START#{requestId}] Transition presenter created. hasPresenter={currentTransition != null}");
 
             currentState = TransitionState.Exiting;
-            Debug.Log($"{LOG_PREFIX} State changed to {currentState}");
-            _ = RunStartTransitionAsync(nextScene);
+            Debug.Log($"{LOG_PREFIX} [START#{requestId}] State changed to {currentState}");
+            _ = RunStartTransitionAsync(nextScene, requestId);
 
             return new ISceneTransitionService.StartResult(true);
         }
 
-        async Task RunStartTransitionAsync(AppScene nextScene) {
+        async Task RunStartTransitionAsync(AppScene nextScene, int requestId) {
             try {
-                Debug.Log($"{LOG_PREFIX} RunStartTransitionAsync begin. nextScene={nextScene}");
+                Debug.Log($"{LOG_PREFIX} [START#{requestId}] RunStartTransitionAsync begin. nextScene={nextScene}");
                 await currentTransition.PresentTransitionOut(new TransitionContext());
-                Debug.Log($"{LOG_PREFIX} TransitionOut completed for nextScene={nextScene}");
+                Debug.Log($"{LOG_PREFIX} [START#{requestId}] TransitionOut completed. nextScene={nextScene}");
 
 
                 currentState = TransitionState.Loading;
-                Debug.Log($"{LOG_PREFIX} State changed to {currentState}");
+                Debug.Log($"{LOG_PREFIX} [START#{requestId}] State changed to {currentState}");
                 await sceneLoader.LoadAsync(nextScene);
-                Debug.Log($"Scene {nextScene} loaded".ToCyan());
+                Debug.Log($"{LOG_PREFIX} [START#{requestId}] Scene loaded. nextScene={nextScene}".ToCyan());
 
                 currentScene = nextScene;
                 appBgmPlayer.Play(screenRegistry.GetByScene(nextScene).Bgm);
                 
                 currentState = TransitionState.Ready;
-                Debug.Log($"{LOG_PREFIX} RunStartTransitionAsync completed. currentScene={currentScene}, state={currentState}");
+                Debug.Log($"{LOG_PREFIX} [START#{requestId}] RunStartTransitionAsync completed. currentScene={currentScene}, state={currentState}");
             }
             catch (Exception ex) {
-                Debug.LogError($"{LOG_PREFIX} RunStartTransitionAsync failed: {ex.Message}");
+                Debug.LogError($"{LOG_PREFIX} [START#{requestId}] RunStartTransitionAsync failed: {ex.Message}");
                 Debug.LogException(ex);
                 currentTransition?.DestroyGameObject();
                 currentTransition = null;
                 currentState = TransitionState.Idle;
-                Debug.Log($"{LOG_PREFIX} RunStartTransitionAsync fallback to state={currentState}");
+                Debug.Log($"{LOG_PREFIX} [START#{requestId}] RunStartTransitionAsync fallback to state={currentState}");
             }
         }
 
         public async Task<ISceneTransitionService.ExitResult> RequestEndTransitionAsync(AppScene scene) {
-            Debug.Log($"{LOG_PREFIX} RequestEndTransitionAsync called. requestedScene={scene}, currentScene={currentScene}, state={currentState}");
-            await WaitForReadyOrIdleAsync();
-            Debug.Log($"{LOG_PREFIX} RequestEndTransitionAsync resumed after wait. state={currentState}");
+            endRequestSequence += 1;
+            var requestId = endRequestSequence;
+            var callerHint = ResolveCallerHint();
+            Debug.Log($"{LOG_PREFIX} [END#{requestId}] RequestEndTransitionAsync called. requestedScene={scene}, currentScene={currentScene}, state={currentState}, activeTransitionId={activeTransitionId}, caller={callerHint}");
+            await WaitForReadyOrIdleAsync(requestId, scene);
+            Debug.Log($"{LOG_PREFIX} [END#{requestId}] RequestEndTransitionAsync resumed after wait. state={currentState}, activeTransitionId={activeTransitionId}");
 
             if (currentState == TransitionState.Idle) {
-                Debug.Log($"{LOG_PREFIX} RequestEndTransitionAsync skipped because state is Idle");
+                Debug.Log($"{LOG_PREFIX} [END#{requestId}] RequestEndTransitionAsync skipped because state is Idle");
                 return new ISceneTransitionService.ExitResult(true);
             }
 
             if (currentState != TransitionState.Ready) {
-                Debug.LogWarning($"Cannot end transition for {scene} because current state is {currentState}");
+                Debug.LogWarning($"{LOG_PREFIX} [END#{requestId}] Rejected. requestedScene={scene}, currentState={currentState}");
                 return new ISceneTransitionService.ExitResult(false);
             }
 
             if (currentTransition == null) {
-                Debug.LogWarning($"No transition found for scene {scene}. Skipping transition.");
+                Debug.LogWarning($"{LOG_PREFIX} [END#{requestId}] No transition presenter. requestedScene={scene}. forcing idle");
                 currentState = TransitionState.Idle;
                 return new ISceneTransitionService.ExitResult(true);
             }
             
             try {
                 currentState = TransitionState.Entering;
-                Debug.Log($"{LOG_PREFIX} State changed to {currentState}. PresentTransitionIn begin");
+                Debug.Log($"{LOG_PREFIX} [END#{requestId}] State changed to {currentState}. PresentTransitionIn begin");
                 await currentTransition.PresentTransitionIn(new TransitionContext());
-                Debug.Log($"{LOG_PREFIX} PresentTransitionIn completed. destroying transition presenter");
+                Debug.Log($"{LOG_PREFIX} [END#{requestId}] PresentTransitionIn completed. destroying transition presenter");
 
                 currentTransition.DestroyGameObject();
                 currentTransition = null;
 
                 currentState = TransitionState.Idle;
-                Debug.Log($"{LOG_PREFIX} RequestEndTransitionAsync completed successfully. state={currentState}");
+                activeTransitionId = 0;
+                Debug.Log($"{LOG_PREFIX} [END#{requestId}] RequestEndTransitionAsync completed successfully. state={currentState}");
 
                 return new ISceneTransitionService.ExitResult(true);
             }
             catch (Exception ex) {
-                Debug.LogError($"{LOG_PREFIX} RequestEndTransitionAsync failed: {ex.Message}");
+                Debug.LogError($"{LOG_PREFIX} [END#{requestId}] RequestEndTransitionAsync failed: {ex.Message}");
                 Debug.LogException(ex);
                 currentState = TransitionState.Idle;
-                Debug.Log($"{LOG_PREFIX} RequestEndTransitionAsync fallback to state={currentState}");
+                Debug.Log($"{LOG_PREFIX} [END#{requestId}] RequestEndTransitionAsync fallback to state={currentState}");
                 return new ISceneTransitionService.ExitResult(false);
             }
         }
 
-        async Task WaitForReadyOrIdleAsync() {
+        async Task WaitForReadyOrIdleAsync(int requestId, AppScene requestedScene) {
             var frameCount = 0;
+            var waitStartTime = Time.realtimeSinceStartup;
             while (currentState == TransitionState.Exiting || currentState == TransitionState.Loading) {
                 if (frameCount % 120 == 0) {
-                    Debug.Log($"{LOG_PREFIX} WaitForReadyOrIdleAsync waiting... frameCount={frameCount}, state={currentState}");
+                    var elapsed = Time.realtimeSinceStartup - waitStartTime;
+                    Debug.Log($"{LOG_PREFIX} [END#{requestId}] WaitForReadyOrIdleAsync waiting... requestedScene={requestedScene}, frameCount={frameCount}, elapsed={elapsed:F2}s, state={currentState}, currentScene={currentScene}, activeTransitionId={activeTransitionId}");
+                }
+                if (frameCount > 0 && frameCount % 600 == 0) {
+                    var elapsed = Time.realtimeSinceStartup - waitStartTime;
+                    Debug.LogWarning($"{LOG_PREFIX} [END#{requestId}] WaitForReadyOrIdleAsync long wait detected. requestedScene={requestedScene}, frameCount={frameCount}, elapsed={elapsed:F2}s, state={currentState}, currentScene={currentScene}, activeTransitionId={activeTransitionId}");
                 }
                 frameCount += 1;
                 await Task.Yield();
             }
-            Debug.Log($"{LOG_PREFIX} WaitForReadyOrIdleAsync exit. waitedFrames={frameCount}, state={currentState}");
+            var totalElapsed = Time.realtimeSinceStartup - waitStartTime;
+            Debug.Log($"{LOG_PREFIX} [END#{requestId}] WaitForReadyOrIdleAsync exit. waitedFrames={frameCount}, elapsed={totalElapsed:F2}s, state={currentState}, currentScene={currentScene}, activeTransitionId={activeTransitionId}");
+        }
+
+        static string ResolveCallerHint() {
+            var stackLines = Environment.StackTrace.Split('\n');
+            for (var i = 0; i < stackLines.Length; i++) {
+                var line = stackLines[i].Trim();
+                if (line.Contains("Presenter") || line.Contains("Flow")) {
+                    return line;
+                }
+            }
+
+            if (stackLines.Length > 3) {
+                return stackLines[3].Trim();
+            }
+
+            return "UnknownCaller";
         }
     }
 }

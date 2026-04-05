@@ -1,6 +1,5 @@
 
 using System;
-using System.Collections;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -8,7 +7,6 @@ using VContainer.Unity;
 namespace Alice {
     
     public class BattleScope : LifetimeScope {
-        const int MAX_CONTAINER_WAIT_FRAMES = 300;
         [SerializeField] BattleSetting battleSetting;
         [SerializeField] AudioSource audioSource;
         [SerializeField] BattlePresenterView battlePresenter;
@@ -60,44 +58,16 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Configure completed. scene={gameObject.scene.name}");
         }
 
+        protected override LifetimeScope FindParent() {
+            var parent = AppScope.Instance;
+            Debug.Log($"{LOG_PREFIX} FindParent called. resolvedParent={parent != null}");
+            return parent;
+        }
+
         void Start() {
             Debug.Log($"{LOG_PREFIX} Start called. scene={gameObject.scene.name}, hasContainer={Container != null}");
             if (Container == null) {
-                Debug.LogWarning($"{LOG_PREFIX} Start detected null container. Begin wait-and-retry startup.");
-                StartCoroutine(WaitAndStartBattleFlow());
-                return;
-            }
-
-            StartBattleFlow("Start");
-        }
-
-        IEnumerator WaitAndStartBattleFlow() {
-            for (var frame = 0; frame < MAX_CONTAINER_WAIT_FRAMES; frame++) {
-                if (Container != null) {
-                    Debug.Log($"{LOG_PREFIX} Container became ready at frame={frame}. Starting battle flow.");
-                    StartBattleFlow("WaitAndStartBattleFlow");
-                    yield break;
-                }
-
-                if (frame % 30 == 0) {
-                    Debug.LogWarning($"{LOG_PREFIX} Waiting container... frame={frame}");
-                }
-
-                yield return null;
-            }
-
-            Debug.LogError($"{LOG_PREFIX} Container did not become ready within {MAX_CONTAINER_WAIT_FRAMES} frames. BattleFlow startup failed.");
-        }
-
-        void StartBattleFlow(string source) {
-            try {
-                Debug.Log($"{LOG_PREFIX} {source} resolving IBattleFlow and invoking StartBattle");
-                Container.Resolve<IBattleFlow>().StartBattle();
-                Debug.Log($"{LOG_PREFIX} {source} invoked StartBattle");
-            }
-            catch (Exception exception) {
-                Debug.LogError($"{LOG_PREFIX} {source} failed to start battle flow: {exception.Message}");
-                Debug.LogException(exception);
+                Debug.LogError($"{LOG_PREFIX} Start detected null container after Awake build. parent resolution may have failed.");
             }
         }
 

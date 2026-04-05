@@ -5,6 +5,8 @@ using Alice;
 using System.Threading.Tasks;
 
 public class DiagonalStripeVisual : AppTransitionPresenter {
+    const string LOG_PREFIX = "[DiagonalStripeVisual]";
+
     [Header("Transition Settings")]
     public float transitionDuration = 1f;
     public float stripeDelay = 0.05f;
@@ -18,9 +20,11 @@ public class DiagonalStripeVisual : AppTransitionPresenter {
         targetRectTransform = ResolveTargetRectTransform();
 
         InitializeStripes();
+        Debug.Log($"{LOG_PREFIX} Awake completed. stripeCount={stripes.Count}, duration={transitionDuration}, delay={stripeDelay}");
     }
 
     protected override Task PresentTransitionOut(TransitionContext context) {
+        Debug.Log($"{LOG_PREFIX} PresentTransitionOut called");
         transitionOutCompletionSource?.TrySetCanceled();
         transitionOutCompletionSource = new TaskCompletionSource<bool>();
 
@@ -29,6 +33,7 @@ public class DiagonalStripeVisual : AppTransitionPresenter {
     }
 
     protected override Task PresentTransitionIn(TransitionContext context) {
+        Debug.Log($"{LOG_PREFIX} PresentTransitionIn called");
         transitionInCompletionSource?.TrySetCanceled();
         transitionInCompletionSource = new TaskCompletionSource<bool>();
 
@@ -37,13 +42,17 @@ public class DiagonalStripeVisual : AppTransitionPresenter {
     }
 
     IEnumerator PlayTransitionOutCoroutine(TaskCompletionSource<bool> completionSource) {
+        Debug.Log($"{LOG_PREFIX} PlayTransitionOutCoroutine started");
         yield return StartCoroutine(PlayTransition(true));
         completionSource.TrySetResult(true);
+        Debug.Log($"{LOG_PREFIX} PlayTransitionOutCoroutine completed and result set");
     }
 
     IEnumerator PlayTransitionInCoroutine(TaskCompletionSource<bool> completionSource) {
+        Debug.Log($"{LOG_PREFIX} PlayTransitionInCoroutine started");
         yield return StartCoroutine(PlayTransition(false));
         completionSource.TrySetResult(true);
+        Debug.Log($"{LOG_PREFIX} PlayTransitionInCoroutine completed and result set");
     }
 
     RectTransform ResolveTargetRectTransform() {
@@ -95,8 +104,11 @@ public class DiagonalStripeVisual : AppTransitionPresenter {
 
     public IEnumerator PlayTransition(bool isFadeIn) {
         if (targetRectTransform == null || stripes.Count == 0) {
+            Debug.LogWarning($"{LOG_PREFIX} PlayTransition skipped. targetRectTransform or stripes missing. isFadeIn={isFadeIn}");
             yield break;
         }
+
+        Debug.Log($"{LOG_PREFIX} PlayTransition started. isFadeIn={isFadeIn}, stripeCount={stripes.Count}, duration={transitionDuration}, delay={stripeDelay}");
 
         Vector2 screenSize = targetRectTransform.rect.size;
         float diagonal = screenSize.magnitude;
@@ -120,6 +132,7 @@ public class DiagonalStripeVisual : AppTransitionPresenter {
         }
 
         yield return new WaitForSeconds(transitionDuration);
+        Debug.Log($"{LOG_PREFIX} PlayTransition completed. isFadeIn={isFadeIn}");
         
     }
 

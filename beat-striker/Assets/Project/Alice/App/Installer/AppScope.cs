@@ -7,7 +7,10 @@ using VContainer.Unity;
 
 namespace Alice {
 	public class AppScope : LifetimeScope {
+		const string LOG_PREFIX = "[AppScope]";
+
 		static AppScope instance;
+		public static AppScope Instance => instance;
 
 		[SerializeField] PlayerInputManager playerInputManager;
 		[SerializeField] StageRegistry stageRegistry;
@@ -23,7 +26,9 @@ namespace Alice {
 		[SerializeField] AppBGMPlayer appBgmPlayer;
 
 		protected override void Awake() {
+			Debug.Log($"{LOG_PREFIX} Awake begin. scene={gameObject.scene.name}");
 			if (instance != null && instance != this) {
+				Debug.LogWarning($"{LOG_PREFIX} Duplicate AppScope detected. existing={instance.name}, current={name}. current instance will be destroyed");
 				Destroy(gameObject);
 				return;
 			}
@@ -31,17 +36,21 @@ namespace Alice {
 			instance = this;
 			DontDestroyOnLoad(gameObject);
 			base.Awake();
+			Debug.Log($"{LOG_PREFIX} Awake completed. scene={gameObject.scene.name}");
 		}
 
 		protected override void OnDestroy() {
+			Debug.Log($"{LOG_PREFIX} OnDestroy called. scene={gameObject.scene.name}");
 			if (instance == this) {
 				instance = null;
 			}
 
 			base.OnDestroy();
+			Debug.Log($"{LOG_PREFIX} OnDestroy completed. scene={gameObject.scene.name}");
 		}
 
 		protected override void Configure(IContainerBuilder builder) {
+			Debug.Log($"{LOG_PREFIX} Configure begin. scene={gameObject.scene.name}");
 			builder.RegisterInstance<IStageRegistry>(stageRegistry);
 			builder.RegisterInstance<IScreenRegistry>(screenRegistry);
 			builder.RegisterInstance<IMusicRegistry>(musicRegistry);
@@ -61,6 +70,7 @@ namespace Alice {
 			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
 
 			builder.RegisterBuildCallback(container => {
+				Debug.Log($"{LOG_PREFIX} BuildCallback begin. scene={gameObject.scene.name}");
 				_ = container.Resolve<IStageRegistry>();
 				_ = container.Resolve<IScreenRegistry>();
 				_ = container.Resolve<IMusicRegistry>();
@@ -76,7 +86,9 @@ namespace Alice {
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
 				_ = container.Resolve<ICursorDeployer>();
+				Debug.Log($"{LOG_PREFIX} BuildCallback resolve completed");
 			});
+			Debug.Log($"{LOG_PREFIX} Configure completed. scene={gameObject.scene.name}");
 		}
 
 	}

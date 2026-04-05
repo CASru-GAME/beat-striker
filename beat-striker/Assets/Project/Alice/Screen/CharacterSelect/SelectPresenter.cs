@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace Alice {
     public class SelectPresenter : System.IDisposable {
+        const string LOG_PREFIX = "[SelectPresenter]";
+
         enum SceneInputState {
             Selecting,
             ReadyToStart,
@@ -45,13 +47,17 @@ namespace Alice {
 
         async Awaitable InitializeAfterFrameAsync() {
             await Task.Yield();
+            Debug.Log($"{LOG_PREFIX} InitializeAfterFrameAsync resumed and will initialize");
             Initialize();
         }
 
         void Initialize() {
             if (initialized) {
+                Debug.Log($"{LOG_PREFIX} Initialize skipped because already initialized");
                 return;
             }
+
+            Debug.Log($"{LOG_PREFIX} Initialize start. buttonCount={view.CharacterSelectButtons.Length}");
 
             selectionPolicy.Reset(playerSelectSetting);
             BuildStrikerModelMap();
@@ -87,12 +93,15 @@ namespace Alice {
             RefreshState();
             _ = EnableStartInputAfterSceneEnterAsync();
             initialized = true;
+            Debug.Log($"{LOG_PREFIX} Initialize completed");
         }
 
         async Awaitable EnableStartInputAfterSceneEnterAsync() {
             startTransitionInputEnabled = false;
-            await transitionService.RequestEndTransitionAsync(AppScene.CharacterSelect);
+            Debug.Log($"{LOG_PREFIX} EnableStartInputAfterSceneEnterAsync requesting end transition. scene={AppScene.CharacterSelect}");
+            var result = await transitionService.RequestEndTransitionAsync(AppScene.CharacterSelect);
             startTransitionInputEnabled = true;
+            Debug.Log($"{LOG_PREFIX} EnableStartInputAfterSceneEnterAsync completed. isSuccess={result.IsSuccess}, startTransitionInputEnabled={startTransitionInputEnabled}");
         }
 
         void OnStrikerClicked(StrikerClickRequest request) {
@@ -117,38 +126,48 @@ namespace Alice {
             }
 
             if (button == GamePadButton.South) {
+                Debug.Log($"{LOG_PREFIX} OnButtonDown South received. undo selection requested");
                 UndoSelection();
                 return;
             }
 
             if (button != GamePadButton.East) return;
+            Debug.Log($"{LOG_PREFIX} OnButtonDown East received. play transition requested");
             RequestPlaySceneTransition();
         }
 
         void RequestPlaySceneTransition() {
             if (IsTransitioning()) {
+                Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition ignored because transitioning. inputState={inputState}");
                 return;
             }
 
             if (inputState != SceneInputState.ReadyToStart) {
+                Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition ignored because inputState is not ReadyToStart. inputState={inputState}");
                 return;
             }
 
             if (!startTransitionInputEnabled) {
+                Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition ignored because startTransitionInputEnabled=false");
                 return;
             }
 
             if (!view.StartButtonAnimation.IsStartInputReady) {
+                Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition ignored because StartButtonAnimation is not ready");
                 return;
             }
 
-            var result = transitionService.RequestStartTransition(ResolvePlayScene());
+            var nextScene = ResolvePlayScene();
+            Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition requesting start transition. nextScene={nextScene}");
+            var result = transitionService.RequestStartTransition(nextScene);
             if (!result.IsSuccess) {
+                Debug.LogWarning($"{LOG_PREFIX} RequestPlaySceneTransition failed. nextScene={nextScene}");
                 inputState = SceneInputState.ReadyToStart;
                 return;
             }
 
             inputState = SceneInputState.TransitioningToScreen;
+            Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition accepted. inputState={inputState}, nextScene={nextScene}");
             AudioSource.PlayClipAtPoint(view.ClickSound, Camera.main.transform.position);
         }
 
@@ -160,15 +179,19 @@ namespace Alice {
 
         void RequestStageSelectTransition() {
             if (IsTransitioning()) {
+                Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition ignored because transitioning. inputState={inputState}");
                 return;
             }
 
+            Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition requesting start transition. nextScene={AppScene.StageSelect}");
             var result = transitionService.RequestStartTransition(AppScene.StageSelect);
             if (!result.IsSuccess) {
+                Debug.LogWarning($"{LOG_PREFIX} RequestStageSelectTransition failed. nextScene={AppScene.StageSelect}");
                 return;
             }
 
             inputState = SceneInputState.TransitioningToStageSelect;
+            Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition accepted. inputState={inputState}");
         }
 
         void UndoSelection() {

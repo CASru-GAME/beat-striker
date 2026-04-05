@@ -52,8 +52,7 @@ namespace Alice {
         }
 
         public void Click() {
-            Debug.Log($"Player {PlayerId + 1} clicked at position {rectTransform.anchoredPosition}");
-            if (!TryCreatePointerEventData(out var data)) {
+                        if (!TryCreatePointerEventData(out var data)) {
                 return;
             }
 
