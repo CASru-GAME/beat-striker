@@ -74,7 +74,9 @@ namespace Alice {
         }
 
         void RegisterIfNeeded() {
-            if (isRegistered || registry == null) {
+            if(isRegistered) return;
+            if (registry == null) {
+                Debug.LogWarning("GamePad registry is not available. GamePad will not be registered.", this);
                 return;
             }
 

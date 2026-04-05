@@ -31,18 +31,12 @@ namespace Alice {
             try {
                 var sceneName = appScreenRegistry.GetByScene(scene).SceneName;
 
-                var appScope = LifetimeScope.Find<AppScope>();
-                if (appScope == null) {
-                    throw new InvalidOperationException("AppScope was not found before scene loading.");
+                var asyncOperation = SceneManager.LoadSceneAsync(sceneName);
+                while (!asyncOperation.isDone) {
+                    await Task.Yield();
                 }
-
-                using (LifetimeScope.EnqueueParent(appScope)) {
-                    var asyncOperation = SceneManager.LoadSceneAsync(sceneName);
-                    while (!asyncOperation.isDone) {
-                        await Task.Yield();
-                    }
-                }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 Debug.LogError($"Failed to load scene {scene}: {e}");
             }
         }

@@ -20,6 +20,8 @@ namespace Alice {
         void Undeploy();
         void ConnectRoundInputs();
         void DisconnectRoundInputs();
+        void PauseRound();
+        void ResumeRound();
     }
 
     public class BattleDeployer : IBattleDeployer, IDisposable {
@@ -46,6 +48,7 @@ namespace Alice {
         readonly IBattlePresenter battlePresenter;
         readonly List<DeployedStriker> deployedStrikers = new();
         readonly List<IDisposable> roundSubscriptions = new();
+        bool isRoundPaused;
 
         public BattleDeployer(IBattleSetting battleSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.battleSetting = battleSetting;
@@ -63,6 +66,8 @@ namespace Alice {
             if (deployedStrikers.Count > 0) {
                 Undeploy();
             }
+
+            isRoundPaused = false;
 
             for (int i = 0; i < battleSetting.PlayerTransforms.Count; i++) {
                 var playerId = i;
@@ -102,6 +107,7 @@ namespace Alice {
 
         public void Undeploy() {
             DisconnectRoundInputs();
+            isRoundPaused = false;
 
             foreach (var deployed in deployedStrikers) {
                 strikerRegistry.RequestUnregister(deployed.PlayerId);
@@ -121,6 +127,7 @@ namespace Alice {
 
         public void ConnectRoundInputs() {
             DisconnectRoundInputs();
+            isRoundPaused = false;
 
             foreach (var deployed in deployedStrikers) {
                 var playerId = deployed.PlayerId;
@@ -168,9 +175,6 @@ namespace Alice {
                         case GamePadButton.Start:
                             instance.Special();
                             break;
-                        case GamePadButton.Select:
-                            instance.Die();
-                            break;
                         case GamePadButton.East:
                             instance.Attack();
                             break;
@@ -214,6 +218,23 @@ namespace Alice {
                 subscription.Dispose();
             }
             roundSubscriptions.Clear();
+        }
+
+        public void PauseRound() {
+            if (isRoundPaused) {
+                return;
+            }
+
+            DisconnectRoundInputs();
+            isRoundPaused = true;
+        }
+
+        public void ResumeRound() {
+            if (!isRoundPaused) {
+                return;
+            }
+
+            ConnectRoundInputs();
         }
 
         public void Dispose() {

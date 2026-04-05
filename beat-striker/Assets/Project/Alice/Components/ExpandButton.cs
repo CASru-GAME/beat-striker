@@ -24,5 +24,9 @@ public class ExpandButton : MonoBehaviour {
         };
     }
 
+    void OnDisable() {
+        this.transform.localScale = originalScale;
+    }
+
 
 }

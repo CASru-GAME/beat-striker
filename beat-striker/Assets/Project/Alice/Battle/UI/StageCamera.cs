@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System;
 using System.Threading.Tasks;
-using Core.App.Types;
+using PlayerId = App.PlayerId;
 
 namespace Alice {
     [RequireComponent(typeof(Camera))]
@@ -230,7 +230,7 @@ namespace Alice {
                 outroCompletionSource?.TrySetCanceled();
                 outroCompletionSource = new TaskCompletionSource<bool>();
                 owner.StopAllCoroutines();
-                owner.StartCoroutine(MoveToWinner(winner.value));
+                owner.StartCoroutine(MoveToWinner(winner.Value));
                 return outroCompletionSource.Task;
             }
 

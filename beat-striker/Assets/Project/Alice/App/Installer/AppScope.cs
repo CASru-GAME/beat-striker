@@ -81,6 +81,7 @@ namespace Alice {
 				_ = container.Resolve<IAppBGMPlayer>();
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
+				_ = container.Resolve<ICursorDeployer>();
 				container.Inject(sceneLoader);
 				TryInjectSceneObjects(container, SceneManager.GetActiveScene());
 			});

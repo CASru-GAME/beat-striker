@@ -1,5 +1,4 @@
 
-using System;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -11,14 +10,6 @@ namespace Alice {
         [SerializeField] AudioSource audioSource;
         [SerializeField] BattlePresenter battlePresenter;
         [SerializeField] BattlePlayerPresenter[] battlePlayerPresenters;
-
-        protected override void Awake() {
-            if (parentReference.Object != null || parentReference.Type != null || !string.IsNullOrEmpty(parentReference.TypeName)) {
-                parentReference = default;
-            }
-
-            base.Awake();
-        }
 
         protected override void Configure(IContainerBuilder builder) {
             builder.Register<IStrikerRegistry, StrikerRegistry>(Lifetime.Singleton);

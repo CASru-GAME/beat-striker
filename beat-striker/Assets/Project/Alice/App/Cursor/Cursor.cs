@@ -53,7 +53,10 @@ namespace Alice {
 
         public void Click() {
             Debug.Log($"Player {PlayerId + 1} clicked at position {rectTransform.anchoredPosition}");
-            var data = CreatePointerEventData();
+            if (!TryCreatePointerEventData(out var data)) {
+                return;
+            }
+
             var currentHovered = GetHoveredInteractable(data);
             if (currentHovered) {
                 ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerDownHandler);
@@ -83,7 +86,10 @@ namespace Alice {
                 Mathf.Clamp(rectTransform.anchoredPosition.x, -movableAreaRectTransform.rect.width / 2, movableAreaRectTransform.rect.width / 2),
                 Mathf.Clamp(rectTransform.anchoredPosition.y, -movableAreaRectTransform.rect.height / 2, movableAreaRectTransform.rect.height / 2));
 
-            var data = CreatePointerEventData();
+            if (!TryCreatePointerEventData(out var data)) {
+                return;
+            }
+
             var currentHovered = GetHoveredInteractable(data);
 
             if (currentHovered != lastHoveredObject) {
@@ -99,16 +105,29 @@ namespace Alice {
             }
         }
 
-        PointerEventData CreatePointerEventData() {
-            return new PointerEventData(EventSystem.current) {
+        bool TryCreatePointerEventData(out PointerEventData data) {
+            var eventSystem = EventSystem.current;
+            if (!eventSystem) {
+                data = null;
+                return false;
+            }
+
+            data = new PointerEventData(eventSystem) {
                 position = transform.position,
                 pointerId = PlayerId,
             };
+
+            return true;
         }
 
         GameObject GetHoveredInteractable(PointerEventData data) {
+            var eventSystem = EventSystem.current;
+            if (!eventSystem) {
+                return null;
+            }
+
             var hoverResults = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(data, hoverResults);
+            eventSystem.RaycastAll(data, hoverResults);
 
             foreach (var result in hoverResults) {
                 var gameObject = result.gameObject;

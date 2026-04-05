@@ -316,7 +316,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab807cdf82e0b4e28980da4a3e0a337d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DiagonalStripeVisual
-  transitionDuration: 1
+  transitionDuration: 0.6
   stripeDelay: 0.05
   targetRectTransform: {fileID: 357788767079721677}
   stripes:

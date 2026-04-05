@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Core.App.Types;
+using App;
 
 namespace Alice {
     public record PlayerRoundRank(PlayerId PlayerId, int Rank);
@@ -9,7 +9,7 @@ namespace Alice {
     public record BattleJudgeResult(
         RoundResult RoundResult,
         bool ContinueBattle,
-        PlayerId? Winner,
+        PlayerId Winner,
         IReadOnlyDictionary<PlayerId, int> RoundWins);
 
     public interface IBattleJudge {
@@ -32,7 +32,7 @@ namespace Alice {
 
             roundWins[winner] += 1;
             var continueBattle = roundWins[winner] < roundsToWin;
-            PlayerId? battleWinner = continueBattle ? (PlayerId?)null : winner;
+            PlayerId battleWinner = continueBattle ? (PlayerId)null : winner;
 
             return new BattleJudgeResult(
                 roundResult,

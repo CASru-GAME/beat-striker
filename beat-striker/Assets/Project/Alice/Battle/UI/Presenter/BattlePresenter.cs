@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using R3;
 using UnityEngine;
 using VContainer;
-using CorePlayerId = Core.App.Types.PlayerId;
+using CorePlayerId = App.PlayerId;
 
 namespace Alice {
     public interface IBattlePresenter {
@@ -15,6 +15,11 @@ namespace Alice {
         Task PlayBattleEndingAsync(CorePlayerId winner);
         void PlayInpact(StrikerImpact command);
         void RequestAttention(int playerId, AttentionRequest request);
+        Observable<Unit> OnPauseMenuRequested { get; }
+        Observable<Unit> OnSuspendRequested { get; }
+        Observable<Unit> OnResumeRequested { get; }
+        void OpenSuspendMenu();
+        void CloseSuspendMenu();
     }
 
     public class BattlePresenter : MonoBehaviour, IBattlePresenter {
@@ -28,11 +33,21 @@ namespace Alice {
         [SerializeField] BattleRoundStartView roundStartPresenter;
         [SerializeField] BattleResultTextView resultTextPresenter;
         [SerializeField] BattleFadeView fadePresenter;
+        [SerializeField] BattleSuspendMenuPresenter suspendMenuPresenter;
         [SerializeField] AudioClip beatSound;
 
         CompositeDisposable skipInputSubscriptions = new();
+        CompositeDisposable pauseMenuInputSubscriptions = new();
+        CompositeDisposable suspendMenuSubscriptions = new();
         CompositeDisposable audioSubscriptions = new();
+        readonly Subject<Unit> pauseMenuRequestedSubject = new();
+        readonly Subject<Unit> suspendRequestedSubject = new();
+        readonly Subject<Unit> resumeRequestedSubject = new();
         bool isCinematicSkipEnabled;
+
+        public Observable<Unit> OnPauseMenuRequested => pauseMenuRequestedSubject;
+        public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
+        public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
 
         void Awake() {
             EnsureStageCameraConfigured();
@@ -40,12 +55,20 @@ namespace Alice {
 
         void Start() {
             SubscribeSkipInput();
+            SubscribePauseMenuInput();
+            SubscribeSuspendMenuEvents();
             SubscribeAudioEvents();
+            CloseSuspendMenu();
         }
 
         void OnDestroy() {
             skipInputSubscriptions.Dispose();
+            pauseMenuInputSubscriptions.Dispose();
+            suspendMenuSubscriptions.Dispose();
             audioSubscriptions.Dispose();
+            pauseMenuRequestedSubject.Dispose();
+            suspendRequestedSubject.Dispose();
+            resumeRequestedSubject.Dispose();
         }
 
         void EnsureStageCameraConfigured() {
@@ -124,6 +147,14 @@ namespace Alice {
             stageCamera.RequestAttention(playerId, request.DurationSeconds);
         }
 
+        public void OpenSuspendMenu() {
+            suspendMenuPresenter.Show();
+        }
+
+        public void CloseSuspendMenu() {
+            suspendMenuPresenter.Hide();
+        }
+
         void RequestIntroPose(int playerId) {
             var target = strikerRegistry.Get(playerId);
             if (target.TryGetValue(out var strikerHub)) {
@@ -159,6 +190,36 @@ namespace Alice {
                     stageCamera.RequestSequenceSkip();
                 })
                 .AddTo(subscriptions);
+        }
+
+        void SubscribePauseMenuInput() {
+            pauseMenuInputSubscriptions.Dispose();
+            pauseMenuInputSubscriptions = new CompositeDisposable();
+
+            for (int playerId = 0; playerId < MAX_SKIP_INPUT_PLAYER_SLOTS; playerId++) {
+                SubscribePauseMenuRequestForPlayer(playerId, pauseMenuInputSubscriptions);
+            }
+        }
+
+        void SubscribePauseMenuRequestForPlayer(int playerId, CompositeDisposable subscriptions) {
+            var playerGamePad = gamePadRegistry.Get(playerId);
+            playerGamePad.OnButtonDown
+                .Where(button => button == GamePadButton.Select)
+                .Subscribe(_ => pauseMenuRequestedSubject.OnNext(Unit.Default))
+                .AddTo(subscriptions);
+        }
+
+        void SubscribeSuspendMenuEvents() {
+            suspendMenuSubscriptions.Dispose();
+            suspendMenuSubscriptions = new CompositeDisposable();
+
+            suspendMenuPresenter.OnSuspendRequested
+                .Subscribe(_ => suspendRequestedSubject.OnNext(Unit.Default))
+                .AddTo(suspendMenuSubscriptions);
+
+            suspendMenuPresenter.OnResumeRequested
+                .Subscribe(_ => resumeRequestedSubject.OnNext(Unit.Default))
+                .AddTo(suspendMenuSubscriptions);
         }
 
         void SubscribeAudioEvents() {

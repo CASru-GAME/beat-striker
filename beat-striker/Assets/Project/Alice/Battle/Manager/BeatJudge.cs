@@ -19,6 +19,8 @@ namespace Alice {
     public interface IBeatjudge {
         IBeatPlayer GetBeatPlayer(int playerId);
         void ResetRoundState();
+        void Pause();
+        void Resume();
     }
 
     public class BeatJudge : IBeatjudge, IDisposable {
@@ -26,6 +28,7 @@ namespace Alice {
         readonly List<IDisposable> subscriptions = new();
         BeatPlayer[] beatPlayer = new BeatPlayer[2];
         float lastCommandPlaybackTime = -1f;
+        bool isPaused;
 
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer) {
             this.musicPlayer = musicPlayer;
@@ -48,6 +51,10 @@ namespace Alice {
                 }));
 
                 var subscription = gamePad.OnButtonDown.Subscribe(button => {
+                    if (isPaused) {
+                        return;
+                    }
+
                     if (musicPlayer.CurrentBeatTimeline.Length == 0) {
                         return;
                     }
@@ -74,6 +81,10 @@ namespace Alice {
             }
 
             subscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
+                if (isPaused) {
+                    return;
+                }
+
                 
                 for (var playerIndex = 0; playerIndex < beatPlayer.Length; playerIndex++) {
                     if (!beatPlayer[playerIndex].TryConsumePendingCommand(signal.BeatIndex, out var button, out var direction)) {
@@ -102,6 +113,14 @@ namespace Alice {
             for (var i = 0; i < beatPlayer.Length; i++) {
                 beatPlayer[i].ResetForLoop();
             }
+        }
+
+        public void Pause() {
+            isPaused = true;
+        }
+
+        public void Resume() {
+            isPaused = false;
         }
 
         public IBeatPlayer GetBeatPlayer(int playerId) {

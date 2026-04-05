@@ -1,8 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using Core.App.Presenters.Scene.Types;
-using Core.Utils;
 using Core;
 using Alice;
 using VContainer;

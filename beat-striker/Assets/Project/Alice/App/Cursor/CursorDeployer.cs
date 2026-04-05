@@ -6,7 +6,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Alice {
-    public class CursorDeployer : IInitializable, IDisposable {
+    public interface ICursorDeployer {
+        void SetForceEnabled(bool enabled);
+    }
+
+    public class CursorDeployer : ICursorDeployer, IInitializable, IDisposable {
         const int MAXPLAYERS = 4;
 
         readonly IGamePadRegistry gamePadRegistry;
@@ -15,7 +19,11 @@ namespace Alice {
 
         readonly List<IDisposable> playerJoinSubscriptions = new();
         readonly Dictionary<int, DeployedCursor> deployedByPlayerId = new();
+
         bool isCursorEnabled;
+        bool forceEnabled;
+
+        bool IsDeploymentEnabled => isCursorEnabled || forceEnabled;
 
         public CursorDeployer(
             IGamePadRegistry gamePadRegistry,
@@ -34,12 +42,12 @@ namespace Alice {
                 var playerId = i;
                 var playerGamePad = gamePadRegistry.Get(playerId);
 
-                if (playerGamePad.HasGamePad.CurrentValue && isCursorEnabled) {
+                if (playerGamePad.HasGamePad.CurrentValue && IsDeploymentEnabled) {
                     Deploy(playerId, playerGamePad);
                 }
 
                 var hasGamePadSubscription = playerGamePad.HasGamePad.Subscribe(hasGamePad => {
-                    if (hasGamePad && isCursorEnabled) {
+                    if (hasGamePad && IsDeploymentEnabled) {
                         Deploy(playerId, playerGamePad);
                     }
                     else {
@@ -65,6 +73,15 @@ namespace Alice {
             }
         }
 
+        public void SetForceEnabled(bool enabled) {
+            if (forceEnabled == enabled) {
+                return;
+            }
+
+            forceEnabled = enabled;
+            ApplyDeploymentState();
+        }
+
         void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
             ApplyCursorRule(scene.name);
         }
@@ -72,8 +89,11 @@ namespace Alice {
         void ApplyCursorRule(string sceneName) {
             var screenInfo = screenRegistry.GetBySceneName(sceneName);
             isCursorEnabled = screenInfo.CreateCursor;
+            ApplyDeploymentState();
+        }
 
-            if (!isCursorEnabled) {
+        void ApplyDeploymentState() {
+            if (!IsDeploymentEnabled) {
                 UndeployAll();
                 return;
             }

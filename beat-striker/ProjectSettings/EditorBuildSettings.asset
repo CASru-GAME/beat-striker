@@ -21,7 +21,7 @@ EditorBuildSettings:
     path: Assets/Project/Alice/Screen/BackScene/BackScene.unity
     guid: c607353831f60e74a9d11d502bc13034
   - enabled: 1
-    path: Assets/Project/ResultScene/ResultScene.unity
+    path: Assets/Project/Alice/Battle/UI/Result/ResultScene.unity
     guid: 3e31f0b1957084d3d9d266414cd6e5e1
   - enabled: 1
     path: Assets/Project/Alice/Screen/Streat/StreetScene.unity

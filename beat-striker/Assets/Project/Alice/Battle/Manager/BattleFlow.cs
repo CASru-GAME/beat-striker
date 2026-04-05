@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using App;
 using UnityEngine;
-using CorePlayerId = Core.App.Types.PlayerId;
+using CorePlayerId = App.PlayerId;
 
 namespace Alice {
     public interface IBattleFlow {
@@ -29,8 +29,10 @@ namespace Alice {
         bool battleFinished;
         bool roundResolving;
         bool roundPlayable;
+        bool roundSuspended;
         bool outroHandled;
         readonly List<IDisposable> deadEventDisposables = new();
+        readonly List<IDisposable> flowEventDisposables = new();
 
         readonly Subject<int> roundStartedSubject = new();
         readonly Subject<Unit> roundPlayableStartedSubject = new();
@@ -54,6 +56,7 @@ namespace Alice {
             battleFinished = false;
             roundResolving = false;
             roundPlayable = false;
+            roundSuspended = false;
             outroHandled = false;
         }
 
@@ -69,6 +72,7 @@ namespace Alice {
 
             PrepareBattle();
             SubscribeStrikerDeadEvents();
+            SubscribeFlowEvents();
             battleStarted = true;
             Debug.Log("Battle Started".ToCyan());
             _ = StartBattleSequenceAsync();
@@ -94,11 +98,14 @@ namespace Alice {
         }
 
         async Task StartRoundPlayableAsync() {
+            battlePresenter.CloseSuspendMenu();
             await battlePresenter.PlayRoundStartAsync(currentRound);
             roundStartedSubject.OnNext(currentRound);
 
             roundResolving = false;
             roundPlayable = true;
+            roundSuspended = false;
+            beatJudge.Resume();
             musicPlayer.Play();
             battleDeployer.ConnectRoundInputs();
             roundPlayableStartedSubject.OnNext(Unit.Default);
@@ -113,23 +120,22 @@ namespace Alice {
 
             outroHandled = true;
             roundPlayable = false;
+            roundSuspended = false;
+            beatJudge.Resume();
+            battlePresenter.CloseSuspendMenu();
             musicPlayer.Stop();
             battleDeployer.DisconnectRoundInputs();
             DisposeDeadEventSubscriptions();
+            DisposeFlowEventSubscriptions();
             battleDeployer.Undeploy();
         }
 
         void OnStrikerDead(int deadPlayerId) {
             if (battleFinished || roundResolving || !roundPlayable) return;
 
-            roundResolving = true;
-            roundPlayable = false;
-            musicPlayer.Stop();
-            battleDeployer.DisconnectRoundInputs();
+            BeginRoundResolution();
             beatJudge.ResetRoundState();
-            foreach (var battlePlayerPresenter in battlePlayerPresenters) {
-                battlePlayerPresenter.PresentRoundPlayableFinish();
-            }
+            PresentRoundPlayableFinishToPlayers();
 
             _ = ResolveRoundAsync(deadPlayerId);
         }
@@ -153,21 +159,120 @@ namespace Alice {
                     await StartRoundPlayableAsync();
                 }
                 else {
-                    battleFinished = true;
-                    roundResolving = false;
-                    battleFinishedSubject.OnNext(Unit.Default);
-
-                    var winner = judgeResult.Winner.Value;
-                    outroStartedSubject.OnNext(winner);
-                    await battlePresenter.PlayBattleEndingAsync(winner);
-                    CompleteBattle();
-                    _ = sceneTransitionService.RequestStartTransition(AppScene.ResultMenu);
+                    var winner = new CorePlayerId(judgeResult.Winner.Value);
+                    await CompleteBattleWithWinnerAsync(winner);
                 }
             }
             catch (Exception exception) {
                 roundResolving = false;
                 Debug.LogException(exception);
             }
+        }
+
+        void SubscribeFlowEvents() {
+            DisposeFlowEventSubscriptions();
+            flowEventDisposables.Add(battlePresenter.OnPauseMenuRequested.Subscribe(_ => OnPauseMenuRequested()));
+            flowEventDisposables.Add(battlePresenter.OnSuspendRequested.Subscribe(_ => OnSuspendRequested()));
+            flowEventDisposables.Add(battlePresenter.OnResumeRequested.Subscribe(_ => OnResumeRequested()));
+        }
+
+        void DisposeFlowEventSubscriptions() {
+            foreach (var subscription in flowEventDisposables) {
+                subscription.Dispose();
+            }
+            flowEventDisposables.Clear();
+        }
+
+        void OnPauseMenuRequested() {
+            if (!roundPlayable || roundResolving || battleFinished || roundSuspended) {
+                return;
+            }
+
+            battlePresenter.OpenSuspendMenu();
+            PauseRoundForSuspendMenu();
+        }
+
+        void OnSuspendRequested() {
+            if (battleFinished || roundResolving || !roundSuspended) {
+                return;
+            }
+
+            _ = CompleteBattleBySuspendMenuAsync();
+        }
+
+        async Task CompleteBattleBySuspendMenuAsync() {
+            try {
+                BeginRoundResolution();
+                beatJudge.ResetRoundState();
+                PresentRoundPlayableFinishToPlayers();
+
+                var winnerPlayerId = ResolveTopHitPointPlayerId();
+
+                await CompleteBattleWithWinnerAsync(new CorePlayerId(winnerPlayerId));
+            }
+            catch (Exception exception) {
+                roundResolving = false;
+                Debug.LogException(exception);
+            }
+        }
+
+        async Task CompleteBattleWithWinnerAsync(CorePlayerId winner) {
+            battleFinished = true;
+            roundResolving = false;
+            roundSuspended = false;
+            battleFinishedSubject.OnNext(Unit.Default);
+            outroStartedSubject.OnNext(winner);
+            await battlePresenter.PlayBattleEndingAsync(winner);
+            CompleteBattle();
+            _ = sceneTransitionService.RequestStartTransition(AppScene.ResultMenu);
+        }
+
+        void BeginRoundResolution() {
+            roundResolving = true;
+            roundPlayable = false;
+            roundSuspended = false;
+            beatJudge.Resume();
+            battlePresenter.CloseSuspendMenu();
+            musicPlayer.Stop();
+            battleDeployer.DisconnectRoundInputs();
+        }
+
+        void PresentRoundPlayableFinishToPlayers() {
+            foreach (var battlePlayerPresenter in battlePlayerPresenters) {
+                battlePlayerPresenter.PresentRoundPlayableFinish();
+            }
+        }
+
+        int ResolveTopHitPointPlayerId() {
+            return strikerRegistry.GetAllStrikers()
+                .OrderByDescending(x => x.HitPoint.CurrentValue)
+                .First()
+                .PlayerId.CurrentValue;
+        }
+
+        void PauseRoundForSuspendMenu() {
+            if (roundSuspended) {
+                return;
+            }
+
+            roundSuspended = true;
+            roundPlayable = false;
+            beatJudge.Pause();
+            musicPlayer.Pause();
+            battleDeployer.PauseRound();
+        }
+
+        void OnResumeRequested() {
+            if (!roundSuspended || roundResolving || battleFinished) {
+                return;
+            }
+
+            roundSuspended = false;
+            roundPlayable = true;
+            battlePresenter.CloseSuspendMenu();
+            beatJudge.Resume();
+            musicPlayer.Resume();
+            battleDeployer.ResumeRound();
         }
 
         void SubscribeStrikerDeadEvents() {

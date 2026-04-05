@@ -647,6 +647,10 @@ PrefabInstance:
       propertyPath: camTransform0
       value: 
       objectReference: {fileID: 2978891558492419286}
+    - target: {fileID: 4922172546845118050, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 42.3
+      objectReference: {fileID: 0}
     - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: 'playerTransforms.Array.data[0]'
       value: 
@@ -655,6 +659,14 @@ PrefabInstance:
       propertyPath: 'playerTransforms.Array.data[1]'
       value: 
       objectReference: {fileID: 4776646690887651182}
+    - target: {fileID: 7592341222624108470, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_Name
+      value: B_resume
+      objectReference: {fileID: 0}
+    - target: {fileID: 8022721485441722357, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -38.4
+      objectReference: {fileID: 0}
     - target: {fileID: 8825914073744022708, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: m_Name
       value: Battle
