@@ -1,7 +1,6 @@
 using System;
 using R3;
 using UnityEngine;
-using VContainer.Unity;
 
 namespace Alice {
     public interface IBattlePlayerPresenter {
@@ -9,37 +8,31 @@ namespace Alice {
         void PresentRoundPlayableFinish();
     }
 
-    public class BattlePlayerPresenter : MonoBehaviour, IBattlePlayerPresenter {
-        [SerializeField] int playerId;
-        [SerializeField] AliceHpBarView hpBarUI;
-        [SerializeField] AliceSpecialBarView specialBarUI;
-        [SerializeField] AliceComboView comboView;
-        [SerializeField] AliceRingView beatRingPrefab;
-        [SerializeField] Transform beatRingParent;
-
-        IStrikerRegistry strikerRegistry;
-        IBeatjudge beatJudge;
-        IMusicPlayer musicPlayer;
-        CompositeDisposable disposables = new();
+    public class BattlePlayerPresenter : IBattlePlayerPresenter, IDisposable {
+        readonly int playerId;
+        readonly AliceHpBarView hpBarUI;
+        readonly AliceSpecialBarView specialBarUI;
+        readonly AliceComboView comboView;
+        readonly IStrikerRegistry strikerRegistry;
+        readonly IBeatjudge beatJudge;
+        readonly IMusicPlayer musicPlayer;
+        readonly CompositeDisposable disposables = new();
         IDisposable hpSubscription;
         IDisposable specialPointSubscription;
         IStrikerHub strikerHub;
-        AliceRingView ringView;
+        readonly AliceRingView ringView;
         bool roundPlayable;
 
-        [VContainer.Inject]
-        public void Construct(IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer) {
+        public BattlePlayerPresenter(BattlePlayerView battlePlayerView, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer) {
+            playerId = battlePlayerView.PlayerId;
+            hpBarUI = battlePlayerView.HpBarUI;
+            specialBarUI = battlePlayerView.SpecialBarUI;
+            comboView = battlePlayerView.ComboView;
             this.strikerRegistry = strikerRegistry;
             this.beatJudge = beatJudge;
             this.musicPlayer = musicPlayer;
-        }
+            ringView = UnityEngine.Object.Instantiate(battlePlayerView.BeatRingPrefab, battlePlayerView.BeatRingParent);
 
-        void Awake() {
-            EnsureDependenciesInjected();
-            ringView = Instantiate(beatRingPrefab, beatRingParent);
-        }
-
-        void Start() {
             comboView.SetComboCount(0);
 
             musicPlayer.OnBeatTimelinePrepared
@@ -67,11 +60,11 @@ namespace Alice {
             }
         }
 
-        void OnDestroy() {
+        public void Dispose() {
             hpSubscription?.Dispose();
             specialPointSubscription?.Dispose();
             disposables.Dispose();
-            Destroy(ringView.gameObject);
+            UnityEngine.Object.Destroy(ringView.gameObject);
         }
 
         public void PresentRoundPlayableStart() {
@@ -145,27 +138,10 @@ namespace Alice {
 
         void PresentFrame(float playbackTime) {
             ringView.SetViewPlaybackTime(playbackTime);
-            if (strikerHub != null) {
-                ringView.SetPosition(strikerHub.CenterPosition.CurrentValue);
-                ringView.SetLookDirection(strikerHub.LookDirection.CurrentValue);
-            }
-        }
+            if (strikerHub == null) return;
 
-        void EnsureDependenciesInjected() {
-            if (strikerRegistry != null && beatJudge != null && musicPlayer != null) {
-                return;
-            }
-
-            var battleScope = LifetimeScope.Find<BattleScope>(gameObject.scene);
-            if (battleScope != null && battleScope.Container != null) {
-                battleScope.Container.Inject(this);
-                return;
-            }
-
-            var appScope = LifetimeScope.Find<AppScope>();
-            if (appScope != null && appScope.Container != null) {
-                appScope.Container.Inject(this);
-            }
+            ringView.SetPosition(strikerHub.CenterPosition.CurrentValue);
+            ringView.SetLookDirection(strikerHub.LookDirection.CurrentValue);
         }
     }
 }

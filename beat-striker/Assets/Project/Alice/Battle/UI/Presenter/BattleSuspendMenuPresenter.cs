@@ -1,18 +1,14 @@
 using Core;
+using System;
 using R3;
 using UnityEngine;
-using VContainer;
-using VContainer.Unity;
 
 namespace Alice {
-    public class BattleSuspendMenuPresenter : MonoBehaviour {
-        [Inject] ICursorDeployer cursorDeployer;
-        [SerializeField] GameObject root;
-        [SerializeField] Botan suspendButton, resumeButton;
-        [SerializeField] float showStartScale = 0.9f;
-        [SerializeField] float showScaleDuration = 0.18f;
-        [SerializeField] float hideEndScale = 0.9f;
-        [SerializeField] float hideScaleDuration = 0.14f;
+    public class BattleSuspendMenuPresenter : IDisposable {
+        readonly ICursorDeployer cursorDeployer;
+        readonly BattleSuspendMenuView suspendMenuView;
+        readonly Action<BotanEventData> onSuspendButtonClicked;
+        readonly Action<BotanEventData> onResumeButtonClicked;
 
         readonly Subject<Unit> suspendRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
@@ -20,56 +16,53 @@ namespace Alice {
         public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
 
-        void Awake() {
-            EnsureDependenciesInjected();
-        }
-
-        void Start() {
-            suspendButton.onClick += e => {
-                RequestSuspend();
-            };
-
-            resumeButton.onClick += e => {
-                RequestResume();
-            };
+        public BattleSuspendMenuPresenter(ICursorDeployer cursorDeployer, BattleSuspendMenuView suspendMenuView) {
+            this.cursorDeployer = cursorDeployer;
+            this.suspendMenuView = suspendMenuView;
+            onSuspendButtonClicked = _ => RequestSuspend();
+            onResumeButtonClicked = _ => RequestResume();
+            suspendMenuView.SuspendButton.onClick += onSuspendButtonClicked;
+            suspendMenuView.ResumeButton.onClick += onResumeButtonClicked;
 
             HideImmediate();
         }
 
-        void OnDestroy() {
+        public void Dispose() {
+            suspendMenuView.SuspendButton.onClick -= onSuspendButtonClicked;
+            suspendMenuView.ResumeButton.onClick -= onResumeButtonClicked;
             cursorDeployer.SetForceEnabled(false);
             suspendRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();
         }
 
         public void Show() {
-            LeanTween.cancel(root);
-            root.transform.localScale = Vector3.one * showStartScale;
-            root.SetActive(true);
-            LeanTween.scale(root, Vector3.one, showScaleDuration)
+            LeanTween.cancel(suspendMenuView.Root);
+            suspendMenuView.Root.transform.localScale = Vector3.one * suspendMenuView.ShowStartScale;
+            suspendMenuView.Root.SetActive(true);
+            LeanTween.scale(suspendMenuView.Root, Vector3.one, suspendMenuView.ShowScaleDuration)
                 .setEaseOutBack();
             cursorDeployer.SetForceEnabled(true);
         }
 
         public void Hide() {
-            if (!root.activeSelf) {
+            if (!suspendMenuView.Root.activeSelf) {
                 return;
             }
 
-            LeanTween.cancel(root);
-            LeanTween.scale(root, Vector3.one * hideEndScale, hideScaleDuration)
+            LeanTween.cancel(suspendMenuView.Root);
+            LeanTween.scale(suspendMenuView.Root, Vector3.one * suspendMenuView.HideEndScale, suspendMenuView.HideScaleDuration)
                 .setEaseInBack()
                 .setOnComplete(() => {
-                    root.SetActive(false);
-                    root.transform.localScale = Vector3.one;
+                    suspendMenuView.Root.SetActive(false);
+                    suspendMenuView.Root.transform.localScale = Vector3.one;
                 });
             cursorDeployer.SetForceEnabled(false);
         }
 
         void HideImmediate() {
-            LeanTween.cancel(root);
-            root.transform.localScale = Vector3.one;
-            root.SetActive(false);
+            LeanTween.cancel(suspendMenuView.Root);
+            suspendMenuView.Root.transform.localScale = Vector3.one;
+            suspendMenuView.Root.SetActive(false);
             cursorDeployer.SetForceEnabled(false);
         }
 
@@ -79,23 +72,6 @@ namespace Alice {
 
         void RequestResume() {
             resumeRequestedSubject.OnNext(Unit.Default);
-        }
-
-        void EnsureDependenciesInjected() {
-            if (cursorDeployer != null) {
-                return;
-            }
-
-            var battleScope = LifetimeScope.Find<BattleScope>(gameObject.scene);
-            if (battleScope != null && battleScope.Container != null) {
-                battleScope.Container.Inject(this);
-                return;
-            }
-
-            var appScope = LifetimeScope.Find<AppScope>();
-            if (appScope != null && appScope.Container != null) {
-                appScope.Container.Inject(this);
-            }
         }
     }
 }

@@ -2,8 +2,6 @@ using System;
 using System.Threading.Tasks;
 using R3;
 using UnityEngine;
-using VContainer;
-using VContainer.Unity;
 using CorePlayerId = App.PlayerId;
 
 namespace Alice {
@@ -24,19 +22,14 @@ namespace Alice {
         void CloseSuspendMenu();
     }
 
-    public class BattlePresenter : MonoBehaviour, IBattlePresenter {
+    public class BattlePresenter : IBattlePresenter, IDisposable {
         const int MAX_SKIP_INPUT_PLAYER_SLOTS = 8;
 
-        [Inject] IStrikerRegistry strikerRegistry;
-        [Inject] IGamePadRegistry gamePadRegistry;
-        [Inject] IMusicPlayer musicPlayer;
-
-        [SerializeField] StageCamera stageCamera;
-        [SerializeField] BattleRoundStartView roundStartPresenter;
-        [SerializeField] BattleResultTextView resultTextPresenter;
-        [SerializeField] BattleFadeView fadePresenter;
-        [SerializeField] BattleSuspendMenuPresenter suspendMenuPresenter;
-        [SerializeField] AudioClip beatSound;
+        readonly IStrikerRegistry strikerRegistry;
+        readonly IGamePadRegistry gamePadRegistry;
+        readonly IMusicPlayer musicPlayer;
+        readonly BattlePresenterView battlePresenterView;
+        readonly BattleSuspendMenuPresenter suspendMenuPresenter;
 
         CompositeDisposable skipInputSubscriptions = new();
         CompositeDisposable pauseMenuInputSubscriptions = new();
@@ -51,12 +44,13 @@ namespace Alice {
         public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
 
-        void Awake() {
-            EnsureDependenciesInjected();
+        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
+            this.strikerRegistry = strikerRegistry;
+            this.gamePadRegistry = gamePadRegistry;
+            this.musicPlayer = musicPlayer;
+            this.battlePresenterView = battlePresenterView;
+            this.suspendMenuPresenter = suspendMenuPresenter;
             EnsureStageCameraConfigured();
-        }
-
-        void Start() {
             SubscribeSkipInput();
             SubscribePauseMenuInput();
             SubscribeSuspendMenuEvents();
@@ -64,7 +58,7 @@ namespace Alice {
             CloseSuspendMenu();
         }
 
-        void OnDestroy() {
+        public void Dispose() {
             skipInputSubscriptions.Dispose();
             pauseMenuInputSubscriptions.Dispose();
             suspendMenuSubscriptions.Dispose();
@@ -72,12 +66,13 @@ namespace Alice {
             pauseMenuRequestedSubject.Dispose();
             suspendRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();
+            suspendMenuPresenter.Dispose();
         }
 
         void EnsureStageCameraConfigured() {
-            stageCamera.SetPlayerCenterPositionResolver(GetPlayerCenterPosition);
-            stageCamera.SetIntroPoseRequester(RequestIntroPose);
-            stageCamera.SetVictoryPoseRequester(RequestVictoryPose);
+            battlePresenterView.StageCamera.SetPlayerCenterPositionResolver(GetPlayerCenterPosition);
+            battlePresenterView.StageCamera.SetIntroPoseRequester(RequestIntroPose);
+            battlePresenterView.StageCamera.SetVictoryPoseRequester(RequestVictoryPose);
         }
 
         Vector3 GetPlayerCenterPosition(int playerId) {
@@ -95,8 +90,8 @@ namespace Alice {
             isCinematicSkipEnabled = true;
             try {
                 await Task.WhenAll(
-                    stageCamera.PresentIntroAsync(),
-                    fadePresenter.PresentFadeOutAsync());
+                    battlePresenterView.StageCamera.PresentIntroAsync(),
+                    battlePresenterView.FadePresenter.PresentFadeOutAsync());
             }
             finally {
                 isCinematicSkipEnabled = false;
@@ -104,34 +99,34 @@ namespace Alice {
         }
 
         public async Task PlayRoundStartAsync(int roundNumber) {
-            await roundStartPresenter.PresentRoundStartAsync(roundNumber);
+            await battlePresenterView.RoundStartPresenter.PresentRoundStartAsync(roundNumber);
         }
 
         public void EnterRoundPlayablePhase() {
             EnsureStageCameraConfigured();
-            stageCamera.PresentRoundPlayableStart();
+            battlePresenterView.StageCamera.PresentRoundPlayableStart();
         }
 
         public async Task PlayRoundEndTransitionAsync() {
             EnsureStageCameraConfigured();
-            stageCamera.PresentRoundFinish();
-            await fadePresenter.PresentFadeInAsync();
+            battlePresenterView.StageCamera.PresentRoundFinish();
+            await battlePresenterView.FadePresenter.PresentFadeInAsync();
         }
 
         public async Task PlayRoundResumeTransitionAsync() {
             EnsureStageCameraConfigured();
-            stageCamera.ResetRoundCamera();
-            await fadePresenter.PresentFadeOutAsync();
+            battlePresenterView.StageCamera.ResetRoundCamera();
+            await battlePresenterView.FadePresenter.PresentFadeOutAsync();
         }
 
         public async Task PlayBattleEndingAsync(CorePlayerId winner) {
             EnsureStageCameraConfigured();
-            stageCamera.PresentBattleFinish();
-            await resultTextPresenter.PresentBattleFinishAsync();
+            battlePresenterView.StageCamera.PresentBattleFinish();
+            await battlePresenterView.ResultTextPresenter.PresentBattleFinishAsync();
 
             isCinematicSkipEnabled = true;
             try {
-                await stageCamera.PresentOutroAsync(winner);
+                await battlePresenterView.StageCamera.PresentOutroAsync(winner);
             }
             finally {
                 isCinematicSkipEnabled = false;
@@ -139,15 +134,15 @@ namespace Alice {
         }
 
         public async Task PlayBattleFinishFadeInAsync() {
-            await fadePresenter.PresentFadeInAsync();
+            await battlePresenterView.FadePresenter.PresentFadeInAsync();
         }
 
         public void PlayInpact(StrikerImpact command) {
-            stageCamera.RequestShake(command);
+            battlePresenterView.StageCamera.RequestShake(command);
         }
 
         public void RequestAttention(int playerId, AttentionRequest request) {
-            stageCamera.RequestAttention(playerId, request.DurationSeconds);
+            battlePresenterView.StageCamera.RequestAttention(playerId, request.DurationSeconds);
         }
 
         public void OpenSuspendMenu() {
@@ -190,7 +185,7 @@ namespace Alice {
                         return;
                     }
 
-                    stageCamera.RequestSequenceSkip();
+                    battlePresenterView.StageCamera.RequestSequenceSkip();
                 })
                 .AddTo(subscriptions);
         }
@@ -230,25 +225,8 @@ namespace Alice {
             audioSubscriptions = new CompositeDisposable();
 
             musicPlayer.OnBeatTiming
-                .Subscribe(_ => AudioSource.PlayClipAtPoint(beatSound, Vector3.zero))
+                .Subscribe(_ => AudioSource.PlayClipAtPoint(battlePresenterView.BeatSound, Vector3.zero))
                 .AddTo(audioSubscriptions);
-        }
-
-        void EnsureDependenciesInjected() {
-            if (strikerRegistry != null && gamePadRegistry != null && musicPlayer != null) {
-                return;
-            }
-
-            var battleScope = LifetimeScope.Find<BattleScope>(gameObject.scene);
-            if (battleScope != null && battleScope.Container != null) {
-                battleScope.Container.Inject(this);
-                return;
-            }
-
-            var appScope = LifetimeScope.Find<AppScope>();
-            if (appScope != null && appScope.Container != null) {
-                appScope.Container.Inject(this);
-            }
         }
     }
 }

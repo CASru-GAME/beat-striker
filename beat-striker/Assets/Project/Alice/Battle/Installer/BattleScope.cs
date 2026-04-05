@@ -1,4 +1,5 @@
 
+using System;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -8,22 +9,24 @@ namespace Alice {
     public class BattleScope : LifetimeScope {
         [SerializeField] BattleSetting battleSetting;
         [SerializeField] AudioSource audioSource;
-        [SerializeField] BattlePresenter battlePresenter;
-        [SerializeField] ResultScene resultScene;
-        [SerializeField] BattlePlayerPresenter[] battlePlayerPresenters;
+        [SerializeField] BattlePresenterView battlePresenter;
+        [SerializeField] ResultSceneView resultScene;
+        [SerializeField] BattlePlayerView[] battlePlayerPresenters;
 
         protected override void Configure(IContainerBuilder builder) {
             builder.Register<IStrikerRegistry, StrikerRegistry>(Lifetime.Singleton);
             builder.Register<IStrikerFactory, StrikerHubFactory>(Lifetime.Singleton);
             builder.Register<IBattleDeployer, BattleDeployer>(Lifetime.Singleton);
             builder.Register<IBattleJudge, BattleJudge>(Lifetime.Singleton);
-            var battlePlayerPresenters = new IBattlePlayerPresenter[this.battlePlayerPresenters.Length];
-            for (var i = 0; i < this.battlePlayerPresenters.Length; i++) {
-                battlePlayerPresenters[i] = this.battlePlayerPresenters[i];
-            }
-            builder.RegisterInstance<IBattlePresenter>(battlePresenter);
-            builder.RegisterInstance(resultScene);
+            builder.RegisterInstance(battlePresenter);
+            builder.RegisterInstance(battlePresenter.SuspendMenuPresenter);
             builder.RegisterInstance(battlePlayerPresenters);
+            builder.Register<BattleSuspendMenuPresenter>(Lifetime.Singleton);
+            builder.Register<IBattlePresenter, BattlePresenter>(Lifetime.Singleton);
+            builder.Register<BattlePlayerPresenterCollection>(Lifetime.Singleton);
+            builder.Register<IBattlePlayerPresenter[]>(resolver => resolver.Resolve<BattlePlayerPresenterCollection>().Presenters, Lifetime.Singleton);
+            builder.RegisterInstance(resultScene);
+            builder.Register<ResultScene>(Lifetime.Singleton);
             builder.Register<IBattleFlow, BattleFlow>(Lifetime.Singleton);
             builder.Register<IBeatjudge, BeatJudge>(Lifetime.Singleton);
             builder.Register<IMusicPlayer, MusicPlayer>(Lifetime.Singleton);
@@ -45,14 +48,16 @@ namespace Alice {
                 _ = container.Resolve<IBeatjudge>();
                 _ = container.Resolve<IMusicPlayer>();
 
-                container.Inject(battlePresenter);
-                container.Inject(resultScene);
-                for (var i = 0; i < this.battlePlayerPresenters.Length; i++) {
-                    container.Inject(this.battlePlayerPresenters[i]);
-                }
-
                 InjectSceneObjects(container);
             });
+        }
+
+        void Start() {
+            if (Container == null) {
+                return;
+            }
+
+            Container.Resolve<IBattleFlow>().StartBattle();
         }
 
         void InjectSceneObjects(IObjectResolver container) {
@@ -83,6 +88,30 @@ namespace Alice {
 
             public void Initialize() {
                 battleFlow.StartBattle();
+            }
+        }
+
+        sealed class BattlePlayerPresenterCollection : IDisposable {
+            readonly BattlePlayerPresenter[] battlePlayerPresenters;
+
+            public IBattlePlayerPresenter[] Presenters { get; }
+
+            public BattlePlayerPresenterCollection(BattlePlayerView[] battlePlayerViews, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer) {
+                battlePlayerPresenters = new BattlePlayerPresenter[battlePlayerViews.Length];
+                var presenters = new IBattlePlayerPresenter[battlePlayerViews.Length];
+                for (var i = 0; i < battlePlayerViews.Length; i++) {
+                    var battlePlayerPresenter = new BattlePlayerPresenter(battlePlayerViews[i], strikerRegistry, beatJudge, musicPlayer);
+                    battlePlayerPresenters[i] = battlePlayerPresenter;
+                    presenters[i] = battlePlayerPresenter;
+                }
+
+                Presenters = presenters;
+            }
+
+            public void Dispose() {
+                for (var i = 0; i < battlePlayerPresenters.Length; i++) {
+                    battlePlayerPresenters[i].Dispose();
+                }
             }
         }
 

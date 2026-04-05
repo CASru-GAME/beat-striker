@@ -92,9 +92,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1380997860081013331}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9a382686dbd54390a58fbb3a05be4bf, type: 3}
+  m_Script: {fileID: 11500000, guid: 3694191ea05294d8794fa613c44b62f3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePlayerPresenter
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePlayerView
   playerId: 0
   hpBarUI: {fileID: 8326099282782513470}
   specialBarUI: {fileID: 1486459028039583250}

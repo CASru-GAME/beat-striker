@@ -1,16 +1,12 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using VContainer;
-using VContainer.Unity;
 using R3;
 using Alice;
 using App;
-using TMPro;
 
-public class ResultScene : MonoBehaviour
+public class ResultScene : System.IDisposable
 {
     const int MAX_RESULT_INPUT_PLAYER_SLOTS = 8;
 
@@ -21,76 +17,27 @@ public class ResultScene : MonoBehaviour
         Detail,
     }
 
-    [SerializeField] GameObject resultRoot; // バトル画面上で表示/非表示を切り替えるリザルトUIルート
-    [SerializeField] ResultPanelButton resultPanelButton; // リザルトUI再生トリガー
-    [SerializeField] Image player1PortraitImage; // Player1の顔写真を表示するImage
-    [SerializeField] Image player2PortraitImage; // Player2の顔写真を表示するImage
-    [SerializeField] TMP_Text player1ScoreText;
-    [SerializeField] TMP_Text player2ScoreText;
-    [SerializeField] TMP_Text player1ExcellentText;
-    [SerializeField] TMP_Text player2ExcellentText;
-    [SerializeField] TMP_Text player1GoodText;
-    [SerializeField] TMP_Text player2GoodText;
-    [SerializeField] TMP_Text player1MissText;
-    [SerializeField] TMP_Text player2MissText;
-
-    IPlayerSelectSetting playerSelectSetting;
-    IAppStrikerRegistry appStrikerRegistry;
-    IGamePadRegistry gamePadRegistry;
+    readonly IPlayerSelectSetting playerSelectSetting;
+    readonly IAppStrikerRegistry appStrikerRegistry;
+    readonly IGamePadRegistry gamePadRegistry;
+    readonly ResultSceneView resultSceneView;
     readonly CompositeDisposable resultInputSubscriptions = new();
     TaskCompletionSource<bool> resultEndCompletionSource;
     ResultPhase resultPhase;
     int lastPhaseAdvanceFrame;
     bool canAdvancePhase;
 
-    [Inject]
-    public void Construct(IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IGamePadRegistry gamePadRegistry)
+    public ResultScene(ResultSceneView resultSceneView, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IGamePadRegistry gamePadRegistry)
     {
+        this.resultSceneView = resultSceneView;
         this.playerSelectSetting = playerSelectSetting;
         this.appStrikerRegistry = appStrikerRegistry;
         this.gamePadRegistry = gamePadRegistry;
-    }
-
-    void Awake()
-    {
-        EnsureDependenciesInjected();
-    }
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
         LoadStrikerPortraits();
-        InitializeInactiveState();
+        resultSceneView.InitializeInactiveState();
         resultPhase = ResultPhase.Hidden;
         lastPhaseAdvanceFrame = -1;
         canAdvancePhase = false;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    void EnsureDependenciesInjected()
-    {
-        if (playerSelectSetting != null && appStrikerRegistry != null && gamePadRegistry != null)
-        {
-            return;
-        }
-
-        var battleScope = LifetimeScope.Find<BattleScope>(gameObject.scene);
-        if (battleScope != null && battleScope.Container != null)
-        {
-            battleScope.Container.Inject(this);
-            return;
-        }
-
-        var appScope = LifetimeScope.Find<AppScope>();
-        if (appScope != null && appScope.Container != null)
-        {
-            appScope.Container.Inject(this);
-        }
     }
 
     public void GotoSelectScene()
@@ -102,7 +49,7 @@ public class ResultScene : MonoBehaviour
     {
         LoadStrikerPortraits();
         ApplyBattleResults(battleResults);
-        GetResultRoot().SetActive(true);
+        resultSceneView.ShowRoot();
         resultPhase = ResultPhase.Summary;
         lastPhaseAdvanceFrame = -1;
         canAdvancePhase = false;
@@ -117,19 +64,9 @@ public class ResultScene : MonoBehaviour
         return resultEndCompletionSource.Task;
     }
 
-    void OnDestroy()
+    public void Dispose()
     {
         resultInputSubscriptions.Dispose();
-    }
-
-    void InitializeInactiveState()
-    {
-        GetResultRoot().SetActive(false);
-    }
-
-    GameObject GetResultRoot()
-    {
-        return resultRoot != null ? resultRoot : gameObject;
     }
 
     void SubscribeResultStartInput()
@@ -148,8 +85,8 @@ public class ResultScene : MonoBehaviour
 
     async void StartSummaryPhase()
     {
-        resultPanelButton.StartPhase1FromFlow();
-        await resultPanelButton.WaitForPhase1CompletedAsync();
+        resultSceneView.ResultPanelButton.StartPhase1FromFlow();
+        await resultSceneView.ResultPanelButton.WaitForPhase1CompletedAsync();
         canAdvancePhase = true;
     }
 
@@ -176,9 +113,9 @@ public class ResultScene : MonoBehaviour
         {
             resultPhase = ResultPhase.Detail;
             canAdvancePhase = false;
-            LeanTween.delayedCall(gameObject, 0f, () =>
+            LeanTween.delayedCall(0f, () =>
             {
-                resultPanelButton.ContinueToPhase2FromFlow();
+                resultSceneView.ResultPanelButton.ContinueToPhase2FromFlow();
                 canAdvancePhase = true;
             });
             return;
@@ -195,34 +132,34 @@ public class ResultScene : MonoBehaviour
         var player1Result = battleResults[new PlayerId(0)];
         var player2Result = battleResults[new PlayerId(1)];
 
-        player1ScoreText.text = player1Result.Score.ToString();
-        player2ScoreText.text = player2Result.Score.ToString();
-        player1ExcellentText.text = player1Result.Excellent.ToString();
-        player2ExcellentText.text = player2Result.Excellent.ToString();
-        player1GoodText.text = player1Result.Good.ToString();
-        player2GoodText.text = player2Result.Good.ToString();
-        player1MissText.text = player1Result.Miss.ToString();
-        player2MissText.text = player2Result.Miss.ToString();
+        resultSceneView.Player1ScoreText.text = player1Result.Score.ToString();
+        resultSceneView.Player2ScoreText.text = player2Result.Score.ToString();
+        resultSceneView.Player1ExcellentText.text = player1Result.Excellent.ToString();
+        resultSceneView.Player2ExcellentText.text = player2Result.Excellent.ToString();
+        resultSceneView.Player1GoodText.text = player1Result.Good.ToString();
+        resultSceneView.Player2GoodText.text = player2Result.Good.ToString();
+        resultSceneView.Player1MissText.text = player1Result.Miss.ToString();
+        resultSceneView.Player2MissText.text = player2Result.Miss.ToString();
     }
 
     void LoadStrikerPortraits()
     {
         if (playerSelectSetting.TryGetStriker(0, out var player1Striker))
         {
-            player1PortraitImage.sprite = appStrikerRegistry.GetByStriker(player1Striker).Portrait;
+            resultSceneView.Player1PortraitImage.sprite = appStrikerRegistry.GetByStriker(player1Striker).Portrait;
         }
         else
         {
-            player1PortraitImage.sprite = appStrikerRegistry.Default.Portrait;
+            resultSceneView.Player1PortraitImage.sprite = appStrikerRegistry.Default.Portrait;
         }
 
         if (playerSelectSetting.TryGetStriker(1, out var player2Striker))
         {
-            player2PortraitImage.sprite = appStrikerRegistry.GetByStriker(player2Striker).Portrait;
+            resultSceneView.Player2PortraitImage.sprite = appStrikerRegistry.GetByStriker(player2Striker).Portrait;
         }
         else
         {
-            player2PortraitImage.sprite = appStrikerRegistry.Default.Portrait;
+            resultSceneView.Player2PortraitImage.sprite = appStrikerRegistry.Default.Portrait;
         }
     }
 }

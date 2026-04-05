@@ -266,9 +266,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 436743785824202860}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 90e2deda5e62f49e982af56fbbd8d2be, type: 3}
+  m_Script: {fileID: 11500000, guid: 973e10064a1704b9e8f38289646692b9, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePresenter
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePresenterView
   stageCamera: {fileID: 201953975555647493}
   roundStartPresenter: {fileID: 3002513440487676816}
   resultTextPresenter: {fileID: 1477628563152843228}
@@ -849,9 +849,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 733101205694131342}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8175b220f2abc465885ec38b374e4e66, type: 3}
+  m_Script: {fileID: 11500000, guid: 9a7666121e3864283abb0f1eb54a2335, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleSuspendMenuPresenter
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleSuspendMenuView
   root: {fileID: 733101205694131342}
   suspendButton: {fileID: 5857763532566247563}
   resumeButton: {fileID: 2578068980468066515}
@@ -9684,9 +9684,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6393540420247382480}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46f30b825dc934c9089314b1b9089b5a, type: 3}
+  m_Script: {fileID: 11500000, guid: d972f21d2019c4df6aafdd2456d53ebe, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ResultScene
+  m_EditorClassIdentifier: Assembly-CSharp::ResultSceneView
   resultRoot: {fileID: 7615116566114903096}
   resultPanelButton: {fileID: 1869027723627402525}
   player1PortraitImage: {fileID: 2985500498956946179}
@@ -10624,7 +10624,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3011604923656970699
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10640,9 +10640,9 @@ RectTransform:
   - {fileID: 1279608369716547145}
   - {fileID: 5808996964554059946}
   - {fileID: 311831293940392393}
-  - {fileID: 6540844688249319635}
   - {fileID: 2712236083279589704}
   - {fileID: 4785580245574419618}
+  - {fileID: 6540844688249319635}
   m_Father: {fileID: 213792383421845463}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -11953,7 +11953,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ea2a52296f37c46cbabe8019b35fb943, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.AliceScope
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleScope
   parentReference:
     TypeName: Alice.AppScope
   autoRun: 1
@@ -13122,9 +13122,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9a382686dbd54390a58fbb3a05be4bf, type: 3}
+  m_Script: {fileID: 11500000, guid: 3694191ea05294d8794fa613c44b62f3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePlayerPresenter
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePlayerView
 --- !u!224 &7507402603160468980 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8751813634135345540, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
@@ -13256,6 +13256,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9a382686dbd54390a58fbb3a05be4bf, type: 3}
+  m_Script: {fileID: 11500000, guid: 3694191ea05294d8794fa613c44b62f3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePlayerPresenter
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePlayerView
