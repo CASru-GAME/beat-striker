@@ -18,6 +18,7 @@ public interface IStrikerContext {
     IObservableStriker GetOpponent();
     void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
     void ApplyDamage(float damage);
+    bool ConsumeSpecialPoint(float value);
     void GenerateInpact(StrikerInpact command);
     void RequestAttention(AttentionRequest request);
 }
@@ -99,6 +100,7 @@ namespace Alice {
         bool isEnemyInFront;
         IStrikerState observedState;
         bool hasObservedState;
+    bool isDestroyed;
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
@@ -141,7 +143,24 @@ namespace Alice {
         }
 
         public void DestroyGameObject() {
-            UnityEngine.Object.Destroy(this.Rigidbody.gameObject);
+            if (isDestroyed) {
+                return;
+            }
+
+            isDestroyed = true;
+
+            if (!rb) {
+                return;
+            }
+
+            var target = rb.gameObject;
+            if (target) {
+                UnityEngine.Object.Destroy(target);
+            }
+
+            rb = null;
+            strikerTransform = null;
+            centerPositionTransform = null;
         }
 
         public Observable<Unit> OnDead => onDeadSubject;
@@ -150,7 +169,7 @@ namespace Alice {
         }
 
         public void Tick(float deltaTime) {
-            if (!initialized) return;
+            if (!initialized || isDestroyed || !rb) return;
 
             if (stateMachine == null) {
                 stateMachine = new StrikerStateMachine(this, defaultState);
@@ -234,6 +253,20 @@ namespace Alice {
             if (currentHitPoint <= 0f) {
                 Die();
             }
+        }
+
+        public bool ConsumeSpecialPoint(float value) {
+            if (value <= 0f) {
+                return true;
+            }
+
+            if (currentSpecialPoint < value) {
+                return false;
+            }
+
+            currentSpecialPoint -= value;
+            specialPointSubject.OnNext(currentSpecialPoint);
+            return true;
         }
 
         public void ChangeDirection(Vector2 direction) {
