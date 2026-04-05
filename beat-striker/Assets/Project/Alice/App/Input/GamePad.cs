@@ -6,7 +6,6 @@ using App;
 using R3;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using VContainer;
 
 namespace Alice {
 
@@ -44,8 +43,7 @@ namespace Alice {
             DontDestroyOnLoad(this.gameObject);
         }
 
-        [Inject]
-        public void Construct(IGamePadRegistry registry) {
+        public void Initialize(IGamePadRegistry registry) {
             this.registry = registry;
 
             if (isActiveAndEnabled) {

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1075723970842190299}
   - component: {fileID: 645802354268570669}
   - component: {fileID: 2172660798725591480}
+  - component: {fileID: 2172660798725591481}
   m_Layer: 0
   m_Name: GamePad
   m_TagString: Untagged
@@ -75,3 +76,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 320aa9e8d38c644e49c3b5596f7fc65f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.GamePad
+--- !u!114 &2172660798725591481
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3652572119978379199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19464137ea19c4abcb797fca27d49647, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.GamePadScope
+  parentReference:
+    TypeName: Alice.AppScope
+  autoRun: 1
+  autoInjectGameObjects: []
+  gamePad: {fileID: 2172660798725591480}

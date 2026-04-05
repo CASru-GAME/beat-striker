@@ -103,7 +103,7 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} RequestEndTransitionAsync resumed after wait. state={currentState}");
 
             if (currentState == TransitionState.Idle) {
-                Debug.LogWarning($"Cannot end transition for {scene} because current state is Idle");
+                Debug.Log($"{LOG_PREFIX} RequestEndTransitionAsync skipped because state is Idle");
                 return new ISceneTransitionService.ExitResult(true);
             }
 
