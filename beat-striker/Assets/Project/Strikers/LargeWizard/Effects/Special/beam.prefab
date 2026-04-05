@@ -9881,7 +9881,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::beam11
   audioClip: {fileID: 8300000, guid: 433da62a8fa4a1d49949f424444d990a, type: 3}
   audioPlayDelaySeconds: 2
-  damagePerSecond: 12
+  damagePerSecond: 10
   knockbackPerSecond: 5
   maxLength: 25
   colliderExtendLengthPer0p1Second: 0.008
