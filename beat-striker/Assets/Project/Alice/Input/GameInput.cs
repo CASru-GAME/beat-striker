@@ -216,17 +216,6 @@ namespace Alice
                 },
                 {
                     ""name"": """",
-                    ""id"": ""f7670bda-1d03-4b3d-bf4c-c71ecf0448a0"",
-                    ""path"": ""<SwitchProControllerHID>/leftStick"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";SwichProController"",
-                    ""action"": ""Direction"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""1897ccff-622a-4acc-ae28-15c9dd3123c9"",
                     ""path"": ""<Gamepad>/leftStick"",
                     ""interactions"": """",
@@ -243,17 +232,6 @@ namespace Alice
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Keybord"",
-                    ""action"": ""North"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""0017fa29-e701-43f6-8662-82fe95b383d4"",
-                    ""path"": ""<SwitchProControllerHID>/buttonNorth"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";SwichProController"",
                     ""action"": ""North"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -282,17 +260,6 @@ namespace Alice
                 },
                 {
                     ""name"": """",
-                    ""id"": ""841ae36e-bd59-47dc-b6d6-5ad875c6f1f6"",
-                    ""path"": ""<SwitchProControllerHID>/buttonWest"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";SwichProController"",
-                    ""action"": ""West"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""9b13d336-aef4-4d8f-abef-4a07a15faff0"",
                     ""path"": ""<Gamepad>/buttonWest"",
                     ""interactions"": """",
@@ -309,17 +276,6 @@ namespace Alice
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Keybord"",
-                    ""action"": ""South"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""aff4aa6a-a156-41eb-a866-8979fccadcf4"",
-                    ""path"": ""<SwitchProControllerHID>/buttonSouth"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";SwichProController"",
                     ""action"": ""South"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -348,17 +304,6 @@ namespace Alice
                 },
                 {
                     ""name"": """",
-                    ""id"": ""842886d1-f208-4d6b-a37c-c51120ff338e"",
-                    ""path"": ""<SwitchProControllerHID>/buttonEast"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";SwichProController"",
-                    ""action"": ""East"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""8cfca201-1456-40c8-921d-70b5ea29512e"",
                     ""path"": ""<Gamepad>/buttonEast"",
                     ""interactions"": """",
@@ -370,22 +315,11 @@ namespace Alice
                 },
                 {
                     ""name"": """",
-                    ""id"": ""4d03706b-89ff-49b2-9c17-ecae16b92f68"",
-                    ""path"": ""<Gamepad>/leftShoulder"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Left"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""e6fdf46e-e3e7-450b-80ed-77badd6253e0"",
                     ""path"": ""<Keyboard>/c"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";Keybord"",
                     ""action"": ""Left"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -407,18 +341,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/n"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Right"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""82cf1e90-eece-4089-9132-436eaf52e9cd"",
-                    ""path"": ""<Gamepad>/rightShoulder"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";Keybord"",
                     ""action"": ""Right"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -455,6 +378,17 @@ namespace Alice
             ""devices"": [
                 {
                     ""devicePath"": ""<SwitchProControllerHID>"",
+                    ""isOptional"": false,
+                    ""isOR"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""Gamepad"",
+            ""bindingGroup"": ""Gamepad"",
+            ""devices"": [
+                {
+                    ""devicePath"": ""<Gamepad>"",
                     ""isOptional"": false,
                     ""isOR"": false
                 }
@@ -733,6 +667,19 @@ namespace Alice
             {
                 if (m_SwichProControllerSchemeIndex == -1) m_SwichProControllerSchemeIndex = asset.FindControlSchemeIndex("SwichProController");
                 return asset.controlSchemes[m_SwichProControllerSchemeIndex];
+            }
+        }
+        private int m_GamepadSchemeIndex = -1;
+        /// <summary>
+        /// Provides access to the input control scheme.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputControlScheme" />
+        public InputControlScheme GamepadScheme
+        {
+            get
+            {
+                if (m_GamepadSchemeIndex == -1) m_GamepadSchemeIndex = asset.FindControlSchemeIndex("Gamepad");
+                return asset.controlSchemes[m_GamepadSchemeIndex];
             }
         }
         /// <summary>
