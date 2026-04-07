@@ -1258,6 +1258,14 @@ MonoBehaviour:
   clickSound: {fileID: 8300000, guid: 595f17df1da96e44e83dd46512c17eec, type: 3}
   clickSoundVolume: 0.218
   scene: 2
+--- !u!222 &253941879
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 253941872}
+  m_CullTransparentMesh: 1
 --- !u!114 &253941880
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1278,14 +1286,6 @@ MonoBehaviour:
   - {fileID: 253941878}
   - {fileID: 1418488864}
   - {fileID: 1762860059}
---- !u!222 &253941879
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 253941872}
-  m_CullTransparentMesh: 1
 --- !u!1 &264372543
 GameObject:
   m_ObjectHideFlags: 0
@@ -4866,6 +4866,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3184663862659006686, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: m_Camera
+      value: 
+      objectReference: {fileID: 1198514269}
     - target: {fileID: 4430401366509071009, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: m_Name
       value: App

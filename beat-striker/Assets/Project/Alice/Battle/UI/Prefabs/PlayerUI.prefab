@@ -102,6 +102,7 @@ MonoBehaviour:
   strikerPortraitImage: {fileID: 5086058168242805217}
   beatRingPrefab: {fileID: 7830039137981702666, guid: 12f656638c4bd44e2ab7af71ad162cdb, type: 3}
   beatRingParent: {fileID: 3714890722970678268}
+  openingHpFillDuration: 0.5
 --- !u!222 &810344020748878237
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -599,6 +600,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AliceHpBarUI
   hpBar: {fileID: 3630703783127270022}
   damageBar: {fileID: 4253653822785031572}
+  openingFillSound: {fileID: 8300000, guid: 095b0d7cfe5e88244820b51f28719fa8, type: 3}
+  openingFillSoundVolume: 1
   damageBarDelay: 0.3
   damageBarDuration: 0.3
 --- !u!222 &462261836898261256
@@ -1155,7 +1158,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 12}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -133.0834, y: 4.4807}
+  m_AnchoredPosition: {x: -133, y: 4.5}
   m_SizeDelta: {x: 233.3161, y: 100}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &2195855501530377348
@@ -1252,6 +1255,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AliceSpecialBarView
   specialBar: {fileID: 3442081317912459365}
+  specialBarGraphic: {fileID: 2617309667914886980}
+  normalMaterial: {fileID: 0}
+  fullMaterial: {fileID: 2100000, guid: b104850a640b11e4f9b56ee8e3affdb4, type: 2}
+  fillSmoothSpeed: 0.1
 --- !u!1 &6307266306655827630
 GameObject:
   m_ObjectHideFlags: 0

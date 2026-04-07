@@ -145,7 +145,9 @@ namespace Alice {
         }
 
         async Task ShowVsAsync() {
+            Debug.Log($"[ShowVsAsync Start] vsTransform.localScale before reset: {vsTransform.localScale}, vsAppearStartScale: {vsAppearStartScale}");
             vsTransform.localScale = Vector3.one * vsAppearStartScale;
+            Debug.Log($"[ShowVsAsync] vsTransform.localScale after reset: {vsTransform.localScale}");
 
             await AnimateScale(vsTransform, Vector3.one * vsAppearStartScale, Vector3.one, vsAppearDuration, LeanTweenType.easeOutBack);
         }

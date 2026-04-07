@@ -35,6 +35,9 @@ namespace Alice {
         bool outroHandled;
         readonly List<IDisposable> deadEventDisposables = new();
         readonly List<IDisposable> flowEventDisposables = new();
+        readonly HashSet<int> roundBaselineObjectInstanceIds = new();
+        readonly List<GameObject> roundSpawnedRootObjects = new();
+        bool hasRoundBaseline;
 
         readonly Subject<int> roundStartedSubject = new();
         readonly Subject<Unit> roundPlayableStartedSubject = new();
@@ -103,8 +106,10 @@ namespace Alice {
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync transition end completed. isSuccess={endResult.IsSuccess}");
                 await battlePresenter.PlayBattleOpeningAsync();
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync battle opening completed");
+                await System.Threading.Tasks.Task.WhenAll(battlePlayerPresenters.Select(battlePlayerPresenter => battlePlayerPresenter.PlayOpeningHpFillAsync()));
+                Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync battle player HP opening animation completed");
                 SetAllStrikersDefault();
-                Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync set all strikers default completed");
+                Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync set all strikers default completed after battle opening");
 
                 await StartRoundPlayableAsync();
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync completed first round playable start");
@@ -132,6 +137,7 @@ namespace Alice {
             roundResolving = false;
             roundPlayable = true;
             roundSuspended = false;
+            beatJudge.ResetRoundState();
             beatJudge.Resume();
             musicPlayer.Play();
             battleDeployer.ConnectRoundInputs();
@@ -141,6 +147,7 @@ namespace Alice {
             foreach (var battlePlayerPresenter in battlePlayerPresenters) {
                 battlePlayerPresenter.PresentRoundPlayableStart();
             }
+            CaptureRoundBaselineObjects();
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync presenters notified. roundPlayable={roundPlayable}");
         }
 
@@ -182,6 +189,7 @@ namespace Alice {
                 if (judgeResult.ContinueBattle) {
                     roundFinishedSubject.OnNext(Unit.Default);
                     await battlePresenter.PlayRoundEndTransitionAsync();
+                    DestroyRoundSpawnedObjects();
 
                     battleDeployer.Undeploy();
                     battleDeployer.Deploy();
@@ -273,7 +281,7 @@ namespace Alice {
             roundResolving = true;
             roundPlayable = false;
             roundSuspended = false;
-            beatJudge.Resume();
+            beatJudge.Pause();
             battlePresenter.CloseSuspendMenu();
             musicPlayer.Stop();
             battleDeployer.DisconnectRoundInputs();
@@ -342,6 +350,71 @@ namespace Alice {
                 count += 1;
             }
             Debug.Log($"{LOG_PREFIX} SetAllStrikersDefault completed. strikerCount={count}");
+        }
+
+        void CaptureRoundBaselineObjects() {
+            roundBaselineObjectInstanceIds.Clear();
+            var sceneObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+            for (var i = 0; i < sceneObjects.Length; i++) {
+                var gameObject = sceneObjects[i];
+                if (!gameObject.scene.IsValid() || !gameObject.scene.isLoaded) {
+                    continue;
+                }
+
+                if ((gameObject.hideFlags & HideFlags.DontSave) != 0) {
+                    continue;
+                }
+
+                roundBaselineObjectInstanceIds.Add(gameObject.GetInstanceID());
+            }
+
+            hasRoundBaseline = true;
+            Debug.Log($"{LOG_PREFIX} CaptureRoundBaselineObjects completed. objectCount={roundBaselineObjectInstanceIds.Count}");
+        }
+
+        void DestroyRoundSpawnedObjects() {
+            if (!hasRoundBaseline) {
+                return;
+            }
+
+            roundSpawnedRootObjects.Clear();
+            var roundSpawnedRootIds = new HashSet<int>();
+            var sceneObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+            for (var i = 0; i < sceneObjects.Length; i++) {
+                var gameObject = sceneObjects[i];
+                if (!gameObject.scene.IsValid() || !gameObject.scene.isLoaded) {
+                    continue;
+                }
+
+                if ((gameObject.hideFlags & HideFlags.DontSave) != 0) {
+                    continue;
+                }
+
+                if (roundBaselineObjectInstanceIds.Contains(gameObject.GetInstanceID())) {
+                    continue;
+                }
+
+                var root = gameObject.transform.root.gameObject;
+                var rootId = root.GetInstanceID();
+                if (roundBaselineObjectInstanceIds.Contains(rootId)) {
+                    continue;
+                }
+
+                if (!roundSpawnedRootIds.Add(rootId)) {
+                    continue;
+                }
+
+                roundSpawnedRootObjects.Add(root);
+            }
+
+            for (var i = 0; i < roundSpawnedRootObjects.Count; i++) {
+                UnityEngine.Object.Destroy(roundSpawnedRootObjects[i]);
+            }
+
+            Debug.Log($"{LOG_PREFIX} DestroyRoundSpawnedObjects completed. destroyedCount={roundSpawnedRootObjects.Count}");
+            roundSpawnedRootObjects.Clear();
+            hasRoundBaseline = false;
+            roundBaselineObjectInstanceIds.Clear();
         }
 
         RoundResult BuildRoundResult(int roundNumber, int deadPlayerId) {

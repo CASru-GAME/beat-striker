@@ -275,6 +275,12 @@ MonoBehaviour:
   fadePresenter: {fileID: 105999830312541164}
   suspendMenuPresenter: {fileID: 6026150257795842806}
   beatSound: {fileID: 0}
+  battleUiSlideTargets:
+  - {fileID: 6461915154581045318}
+  - {fileID: 7507402603160468980}
+  - {fileID: 717197469960045678}
+  battleUiSlideDuration: 0.2
+  battleUiHiddenTopMargin: 80
 --- !u!1 &465288274287985864
 GameObject:
   m_ObjectHideFlags: 0

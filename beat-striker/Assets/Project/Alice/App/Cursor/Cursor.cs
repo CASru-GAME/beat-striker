@@ -26,6 +26,7 @@ namespace Alice {
         [SerializeField, Range(0.01f, 0.99f)] float convergenceRatioAtTime = 0.8f;
         [SerializeField] float convergenceTimeSeconds = 1.0f;
         [SerializeField] bool enableBuildDebugLog = true;
+        [SerializeField] ParticleSystem clickEffect;
 
         RectTransform rectTransform;
         RectTransform movableAreaRectTransform;
@@ -65,6 +66,8 @@ namespace Alice {
             if (!TryCreatePointerEventData(out var data)) {
                 return;
             }
+
+            clickEffect.Play();
 
             var currentHovered = GetHoveredInteractable(data);
             if (currentHovered) {

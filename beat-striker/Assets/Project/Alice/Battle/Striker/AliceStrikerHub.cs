@@ -68,6 +68,7 @@ namespace Alice {
         StrikerState introState;
 
         Rigidbody rb;
+        GameObject strikerGameObject;
         AnimationPlayer animationPlayer;
         StrikerStateMachine stateMachine;
         AiBrain aiBrain;
@@ -142,7 +143,7 @@ namespace Alice {
         }
 
         public void DestroyGameObject() {
-            UnityEngine.Object.Destroy(this.Rigidbody.gameObject);
+            UnityEngine.Object.Destroy(strikerGameObject);
         }
 
         public Observable<Unit> OnDead => onDeadSubject;
@@ -188,6 +189,7 @@ namespace Alice {
             introState = legacy.InspectorIntroState;
             aiBrain = legacy.InspectorAiBrain;
             rb = legacy.Rigidbody;
+            strikerGameObject = legacy.gameObject;
             strikerTransform = legacy.transform;
             centerPositionTransform = legacy.GetCenterPositionTransform();
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;

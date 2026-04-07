@@ -58,10 +58,18 @@ public class EffectPlayer : MonoBehaviour {
     }
 
     private void OnGet(ParticleSystem effect) {
+        if (!effect) {
+            return;
+        }
+
         effect.gameObject.SetActive(true);
     }
 
     private void OnRelease(ParticleSystem effect) {
+        if (!effect) {
+            return;
+        }
+
         effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         effect.gameObject.SetActive(false);
         playingEffects.Remove(effect);
@@ -72,11 +80,11 @@ public class EffectPlayer : MonoBehaviour {
     }
 
     private IEnumerator ReturnToPoolWhenFinished(ParticleSystem effect) {
-        while (effect.IsAlive(true)) {
+        while (effect && effect.IsAlive(true)) {
             yield return null;
         }
 
-        if (playingEffects.Contains(effect)) {
+        if (effect && playingEffects.Contains(effect)) {
             pool.Release(effect);
         }
     }
@@ -88,6 +96,9 @@ public class EffectPlayer : MonoBehaviour {
 
         var snapshot = new List<ParticleSystem>(playingEffects);
         for (var i = 0; i < snapshot.Count; i++) {
+            if (!snapshot[i]) {
+                continue;
+            }
             pool.Release(snapshot[i]);
         }
     }

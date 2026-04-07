@@ -55,6 +55,7 @@ namespace Alice {
             SubscribePauseMenuInput();
             SubscribeSuspendMenuEvents();
             SubscribeAudioEvents();
+            battlePresenterView.SetBattleUiHiddenAboveImmediately();
             CloseSuspendMenu();
         }
 
@@ -96,6 +97,9 @@ namespace Alice {
             finally {
                 isCinematicSkipEnabled = false;
             }
+
+            await battlePresenterView.SlideBattleUiInAsync();
+            await battlePresenterView.WaitAfterSlideBattleUiInAsync();
         }
 
         public async Task PlayRoundStartAsync(int roundNumber) {
@@ -123,6 +127,7 @@ namespace Alice {
             EnsureStageCameraConfigured();
             battlePresenterView.StageCamera.PresentBattleFinish();
             await battlePresenterView.ResultTextPresenter.PresentBattleFinishAsync();
+            await battlePresenterView.SlideBattleUiOutAsync();
 
             isCinematicSkipEnabled = true;
             try {

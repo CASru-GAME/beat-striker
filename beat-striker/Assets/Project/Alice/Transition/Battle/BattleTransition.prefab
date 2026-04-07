@@ -102,17 +102,17 @@ MonoBehaviour:
   transitionStartClip: {fileID: 8300000, guid: 095b0d7cfe5e88244820b51f28719fa8, type: 3}
   mergeClip: {fileID: 8300000, guid: de573541b312443f4975dade14bf5d83, type: 3}
   transitionEndClip: {fileID: 8300000, guid: 095b0d7cfe5e88244820b51f28719fa8, type: 3}
-  convergeDuration: 0.35
+  convergeDuration: 0.5
   vsAppearDuration: 0.2
   vsDisappearExpandDuration: 0.1
   vsDisappearShrinkDuration: 0.2
   holdDuration: 1
   separateDuration: 0.3
-  vsAppearStartScale: 0.5
+  vsAppearStartScale: 1
   vsDisappearOvershootScale: 1.5
-  mergeShakeDuration: 0.08
-  mergeShakeAmplitude: 50
-  mergeShakeFrequency: 24
+  mergeShakeDuration: 0.25
+  mergeShakeAmplitude: 40
+  mergeShakeFrequency: 10
 --- !u!114 &3868458572524983639
 MonoBehaviour:
   m_ObjectHideFlags: 0

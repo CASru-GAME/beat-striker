@@ -280,8 +280,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleRuleSetting
   roundsToWin: 2
   combo1SpecialPointGain: 0.01
-  specialPointGainConvergenceRate: 0.2
-  specialPointGainConvergenceValue: 1
+  specialPointGainConvergenceRate: 0.1
+  specialPointGainConvergenceValue: 2
 --- !u!114 &8684236627904277826
 MonoBehaviour:
   m_ObjectHideFlags: 0

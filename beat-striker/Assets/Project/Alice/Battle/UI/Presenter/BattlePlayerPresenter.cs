@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using R3;
 using UnityEngine;
 
@@ -6,9 +7,11 @@ namespace Alice {
     public interface IBattlePlayerPresenter {
         void PresentRoundPlayableStart();
         void PresentRoundPlayableFinish();
+        Task PlayOpeningHpFillAsync();
     }
 
     public class BattlePlayerPresenter : IBattlePlayerPresenter, IDisposable {
+        readonly BattlePlayerView battlePlayerView;
         readonly int playerId;
         readonly AliceHpBarView hpBarUI;
         readonly AliceSpecialBarView specialBarUI;
@@ -24,6 +27,7 @@ namespace Alice {
         bool roundPlayable;
 
         public BattlePlayerPresenter(BattlePlayerView battlePlayerView, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry) {
+            this.battlePlayerView = battlePlayerView;
             playerId = battlePlayerView.PlayerId;
             hpBarUI = battlePlayerView.HpBarUI;
             specialBarUI = battlePlayerView.SpecialBarUI;
@@ -34,6 +38,7 @@ namespace Alice {
             ringView = UnityEngine.Object.Instantiate(battlePlayerView.BeatRingPrefab, battlePlayerView.BeatRingParent);
 
             comboView.SetComboCount(0);
+            hpBarUI.ResetToZeroImmediately();
 
             musicPlayer.OnBeatTimelinePrepared
                 .Subscribe(ringView.SetBeatTimeline)
@@ -81,6 +86,10 @@ namespace Alice {
             roundPlayable = false;
             ringView.DeactivateBattleView();
             comboView.SetComboCount(0);
+        }
+
+        public Task PlayOpeningHpFillAsync() {
+            return battlePlayerView.PlayOpeningHpFillAsync();
         }
 
         void SetupPlayerSubscriptions() {
