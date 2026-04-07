@@ -412,6 +412,7 @@ MonoBehaviour:
   ignoreBeatCount: 5
   sampleBeatCount: 20
   startDelaySeconds: 1
+  beatViewOffsetSeconds: 0
   closeDelaySeconds: 1
   tapPulseTarget: {fileID: 1824597641315820130}
   tapPulseScale: 1.2

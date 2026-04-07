@@ -13,6 +13,7 @@ namespace Alice {
         [SerializeField] int ignoreBeatCount = 5;
         [SerializeField] int sampleBeatCount = 20;
         [SerializeField] float startDelaySeconds = 0.5f;
+        [SerializeField] float beatViewOffsetSeconds = 0.03f;
         [SerializeField] float closeDelaySeconds = 0.5f;
         [SerializeField] RectTransform tapPulseTarget;
         [SerializeField] float tapPulseScale = 1.2f;
@@ -40,7 +41,7 @@ namespace Alice {
             StopSession();
             gameObject.SetActive(true);
             SetCurrentTapBpm(0f);
-            currentSessionFirstBeatDspTime = AudioSettings.dspTime + startDelaySeconds;
+            currentSessionFirstBeatDspTime = AudioSettings.dspTime + startDelaySeconds - beatViewOffsetSeconds;
             sessionCoroutine = StartCoroutine(SessionRoutine());
         }
 

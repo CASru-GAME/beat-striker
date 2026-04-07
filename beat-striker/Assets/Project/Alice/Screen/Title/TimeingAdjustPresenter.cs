@@ -184,7 +184,7 @@ namespace Alice {
             }
 
             var current = audioSetting.BeatOffset.CurrentValue;
-            audioSetting.SetBeatOffset(new BeatOffsetSetting(current.CommandTimeOffset, -slowestLag, slowestLag));
+            audioSetting.SetBeatOffset(new BeatOffsetSetting(current.CommandTimeOffset, slowestLag, slowestLag));
         }
     }
 }
