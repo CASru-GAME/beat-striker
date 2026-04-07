@@ -1,6 +1,9 @@
 using System.Threading.Tasks;
 using R3;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Alice {
     public class TitlePresenter : System.IDisposable {
@@ -9,6 +12,7 @@ namespace Alice {
         readonly TitleScene view;
         readonly ISceneTransitionService sceneTransitionService;
         readonly CompositeDisposable subscriptions = new();
+        bool quitRequested;
 
         public TitlePresenter(TitleScene view, ISceneTransitionService sceneTransitionService) {
             this.view = view;
@@ -27,6 +31,12 @@ namespace Alice {
                     view.OpenSettingsDialog();
                 })
                 .AddTo(subscriptions);
+            this.view.QuitRequested
+                .Subscribe(_ => {
+                    Debug.Log($"{LOG_PREFIX} QuitRequested received");
+                    QuitGame();
+                })
+                .AddTo(subscriptions);
             _ = EnterTitleAsync();
         }
 
@@ -40,6 +50,22 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} GoToSelectScene requesting start transition. nextScene={AppScene.StageSelect}");
             var result = sceneTransitionService.RequestStartTransition(AppScene.StageSelect);
             Debug.Log($"{LOG_PREFIX} GoToSelectScene start transition result. isSuccess={result.IsSuccess}");
+        }
+
+        void QuitGame() {
+            if (quitRequested) {
+                Debug.LogWarning($"{LOG_PREFIX} QuitGame ignored because quit is already requested");
+                return;
+            }
+
+            quitRequested = true;
+            Debug.Log($"{LOG_PREFIX} QuitGame executing");
+
+#if UNITY_EDITOR
+            EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         public void Dispose() {
