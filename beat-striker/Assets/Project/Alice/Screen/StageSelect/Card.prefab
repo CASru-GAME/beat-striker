@@ -650,7 +650,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: f19bb0e40152d164aa3c01317f9d47f9, type: 3}
 --- !u!114 &1384011344464043875
 MonoBehaviour:
   m_ObjectHideFlags: 0

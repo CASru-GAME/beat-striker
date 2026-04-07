@@ -179,7 +179,7 @@ namespace Alice {
         void SubscribeSkipForPlayer(int playerId, CompositeDisposable subscriptions) {
             var playerGamePad = gamePadRegistry.Get(playerId);
             playerGamePad.OnButtonDown
-                .Where(button => button == GamePadButton.Left)
+                .Where(button => button == GamePadButton.East)
                 .Subscribe(_ => {
                     if (!isCinematicSkipEnabled) {
                         return;
