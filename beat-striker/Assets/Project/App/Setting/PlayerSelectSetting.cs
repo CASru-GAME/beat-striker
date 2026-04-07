@@ -28,17 +28,27 @@ namespace Alice {
         readonly Dictionary<int, Striker> selections = new();
         readonly Subject<PlayerStrikerSelectionChanged> playerStrikerSelected = new();
         readonly ReactiveProperty<IReadOnlyDictionary<int, Striker>> selectedStrikers = new();
+        bool initialized;
 
         public ReadOnlyReactiveProperty<IReadOnlyDictionary<int, Striker>> SelectedStrikers => selectedStrikers;
         public Observable<PlayerStrikerSelectionChanged> OnPlayerStrikerSelected => playerStrikerSelected;
 
         void Awake() {
+            InitializeDefaults();
+        }
+
+        public void InitializeDefaults() {
+            if (initialized) {
+                return;
+            }
+
             selections.Clear();
             for (var i = 0; i < defaultSelections.Count; i++) {
                 var entry = defaultSelections[i];
                 selections[entry.PlayerId] = entry.Striker;
             }
             selectedStrikers.OnNext(new Dictionary<int, Striker>(selections));
+            initialized = true;
         }
 
         public bool TryGetStriker(int playerId, out Striker striker) {

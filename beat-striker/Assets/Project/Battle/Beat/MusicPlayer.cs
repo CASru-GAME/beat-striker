@@ -61,7 +61,6 @@ namespace Alice {
             this.battleSelectSetting = battleSelectSetting;
 
             volumeSubscription = this.audioSetting.VolumeBalance.Subscribe(ApplyVolume);
-            ApplyVolume(this.audioSetting.VolumeBalance.CurrentValue);
         }
 
         public void Play() {

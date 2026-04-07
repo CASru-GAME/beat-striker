@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System;
 using System.Threading.Tasks;
+using R3;
 using PlayerId = App.PlayerId;
 
 namespace Alice {
@@ -30,6 +31,8 @@ namespace Alice {
         [SerializeField] private float attentionZoomDistance = 2.2f;
         [SerializeField] private float attentionZoomSmoothTime = 0.08f;
         [SerializeField] private float attentionReturnSmoothTime = 0.12f;
+        [SerializeField] private float attentionFocusPositionThreshold = 0.03f;
+        [SerializeField] private float attentionFocusRotationThresholdDeg = 1.2f;
 
         private Camera stageCamera;
         private float cameraDepthVelocity;
@@ -54,6 +57,11 @@ namespace Alice {
         AttentionReturnCameraState attentionReturnState;
         SequenceCameraState sequenceState;
         readonly AttentionRuntime attentionRuntime = new();
+        readonly Subject<bool> attentionFocusStateChangedSubject = new();
+        readonly Subject<bool> attentionActiveStateChangedSubject = new();
+
+        public Observable<bool> OnAttentionFocusStateChanged => attentionFocusStateChangedSubject;
+        public Observable<bool> OnAttentionActiveStateChanged => attentionActiveStateChangedSubject;
 
         enum CameraSequencePhase {
             None,
@@ -73,11 +81,15 @@ namespace Alice {
             public Vector3 BaseForward;
             public Vector3 MoveVelocity;
             public Vector3 ReturnMoveVelocity;
+            public bool IsFocused;
+            public bool IsActive;
 
             public void Reset() {
                 RemainingSeconds = 0f;
                 MoveVelocity = Vector3.zero;
                 ReturnMoveVelocity = Vector3.zero;
+                IsFocused = false;
+                IsActive = false;
             }
         }
 
@@ -108,6 +120,7 @@ namespace Alice {
 
             public override void OnEnter() {
                 owner.attentionRuntime.Reset();
+                owner.SetAttentionActiveState(false);
                 owner.cameraDepthVelocity = 0f;
                 owner.centerMoveVelocity = Vector3.zero;
             }
@@ -136,6 +149,15 @@ namespace Alice {
         sealed class AttentionCameraState : CameraState {
             public AttentionCameraState(StageCamera owner) : base(owner) { }
 
+            public override void OnEnter() {
+                owner.SetAttentionActiveState(true);
+                owner.SetAttentionFocusState(false);
+            }
+
+            public override void OnExit() {
+                owner.SetAttentionFocusState(false);
+            }
+
             public override void OnUpdate() {
                 owner.attentionRuntime.RemainingSeconds -= Time.deltaTime;
                 var targetCenter = owner.GetPlayerCenterPosition(owner.attentionRuntime.TargetPlayerId);
@@ -146,6 +168,13 @@ namespace Alice {
                     ref owner.attentionRuntime.MoveVelocity,
                     owner.attentionZoomSmoothTime);
                 owner.LookAt(targetCenter);
+
+                if (!owner.attentionRuntime.IsFocused) {
+                    var settled = owner.IsAttentionFocusSettled(targetCenter, targetPosition);
+                    if (settled) {
+                        owner.SetAttentionFocusState(true);
+                    }
+                }
 
                 if (owner.attentionRuntime.RemainingSeconds > 0f) {
                     return;
@@ -164,11 +193,20 @@ namespace Alice {
                 owner.attentionRuntime.TargetPlayerId = playerId;
                 owner.attentionRuntime.RemainingSeconds = durationSeconds;
                 owner.attentionRuntime.MoveVelocity = Vector3.zero;
+                owner.SetAttentionFocusState(false);
             }
         }
 
         sealed class AttentionReturnCameraState : CameraState {
             public AttentionReturnCameraState(StageCamera owner) : base(owner) { }
+
+            public override void OnEnter() {
+                owner.SetAttentionActiveState(true);
+            }
+
+            public override void OnExit() {
+                owner.SetAttentionActiveState(false);
+            }
 
             public override void OnUpdate() {
                 owner.transform.position = Vector3.SmoothDamp(
@@ -215,6 +253,7 @@ namespace Alice {
 
             public override void OnEnter() {
                 owner.attentionRuntime.Reset();
+                owner.SetAttentionActiveState(false);
                 isSkipRequested = false;
                 currentSequencePhase = CameraSequencePhase.None;
             }
@@ -387,6 +426,11 @@ namespace Alice {
             currentState?.OnUpdate();
         }
 
+        void OnDestroy() {
+            attentionFocusStateChangedSubject.Dispose();
+            attentionActiveStateChangedSubject.Dispose();
+        }
+
         void LateUpdate() {
             ApplyShakeOffset();
         }
@@ -446,6 +490,39 @@ namespace Alice {
         public void RequestAttention(int playerId, float durationSeconds) {
             EnsureRuntimeInitialized();
             currentState?.OnAttentionRequested(playerId, durationSeconds);
+        }
+
+        void SetAttentionFocusState(bool isFocused) {
+            if (attentionRuntime.IsFocused == isFocused) {
+                return;
+            }
+
+            attentionRuntime.IsFocused = isFocused;
+            attentionFocusStateChangedSubject.OnNext(isFocused);
+        }
+
+        void SetAttentionActiveState(bool isActive) {
+            if (attentionRuntime.IsActive == isActive) {
+                return;
+            }
+
+            attentionRuntime.IsActive = isActive;
+            attentionActiveStateChangedSubject.OnNext(isActive);
+        }
+
+        bool IsAttentionFocusSettled(Vector3 targetCenter, Vector3 targetPosition) {
+            var positionDelta = (transform.position - targetPosition).sqrMagnitude;
+            if (positionDelta > attentionFocusPositionThreshold * attentionFocusPositionThreshold) {
+                return false;
+            }
+
+            var lookDirection = targetCenter - transform.position;
+            if (lookDirection.sqrMagnitude <= 0.000001f) {
+                return true;
+            }
+
+            var targetRotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
+            return Quaternion.Angle(transform.rotation, targetRotation) <= attentionFocusRotationThresholdDeg;
         }
 
         void EnsureRuntimeInitialized() {

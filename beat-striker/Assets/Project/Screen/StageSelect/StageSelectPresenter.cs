@@ -15,6 +15,7 @@ namespace Alice {
         readonly IAppBGMPlayer appBgmPlayer;
         readonly CompositeDisposable subscriptions = new();
         bool initialized;
+        bool isPopupVisible;
 
         public StageselectPresenter(
             StageselectScene view,
@@ -80,12 +81,25 @@ namespace Alice {
         }
 
         void OnPreviewVisibilityChanged(bool isVisible) {
+            if (isPopupVisible == isVisible) {
+                return;
+            }
+
+            isPopupVisible = isVisible;
+            SyncPopupVisibility(isVisible);
+
             if (isVisible) {
                 appBgmPlayer.Stop();
                 return;
             }
 
             appBgmPlayer.Resume();
+        }
+
+        void SyncPopupVisibility(bool isVisible) {
+            foreach (var stageSelectButton in view.StageSelectButtons) {
+                stageSelectButton.SetPopupShown(isVisible);
+            }
         }
 
         static IReadOnlyList<MusicInfo> ResolveMusicList(IMusicRegistry musicRegistry) {

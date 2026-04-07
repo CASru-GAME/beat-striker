@@ -48,7 +48,12 @@ namespace Alice {
             this.screenRegistry = screenRegistry;
             this.appBgmPlayer = appBgmPlayer;
 
-            var currentScreen = screenRegistry.GetBySceneName(SceneManager.GetActiveScene().name);
+            var activeSceneName = SceneManager.GetActiveScene().name;
+            if (!screenRegistry.TryGetBySceneName(activeSceneName, out var currentScreen)) {
+                currentScreen = screenRegistry.Default;
+                Debug.LogWarning($"{LOG_PREFIX} Active scene is not registered. sceneName={activeSceneName}, fallbackScene={currentScreen.SceneName}");
+            }
+
             currentScene = currentScreen.Scene;
             appBgmPlayer.Play(currentScreen.Bgm);
             Debug.Log($"{LOG_PREFIX} Constructed. activeSceneName={SceneManager.GetActiveScene().name}, currentScene={currentScene}, initialState={currentState}");

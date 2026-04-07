@@ -8,6 +8,7 @@ namespace Alice {
         [SerializeField] StageCamera stageCamera;
         [SerializeField] BattleRoundStartView roundStartPresenter;
         [SerializeField] BattleResultTextView resultTextPresenter;
+        [SerializeField] AttentionTextView attentionTextView;
         [SerializeField] BattleFadeView fadePresenter;
         [SerializeField] BattleSuspendMenuView suspendMenuPresenter;
         [SerializeField] AudioClip beatSound;
@@ -23,6 +24,7 @@ namespace Alice {
         public StageCamera StageCamera => stageCamera;
         public BattleRoundStartView RoundStartPresenter => roundStartPresenter;
         public BattleResultTextView ResultTextPresenter => resultTextPresenter;
+        public AttentionTextView AttentionTextView => attentionTextView;
         public BattleFadeView FadePresenter => fadePresenter;
         public BattleSuspendMenuView SuspendMenuPresenter => suspendMenuPresenter;
         public AudioClip BeatSound => beatSound;

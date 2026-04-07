@@ -10,11 +10,15 @@ namespace Core.LargeSatan {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerNode nextNode;
+        [SerializeField] private string attentionTechniqueText = "SPECIAL";
 
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
-            context.RequestAttention(new AttentionRequest(3));
+            var techniqueText = string.IsNullOrWhiteSpace(attentionTechniqueText)
+                ? "SPECIAL"
+                : attentionTechniqueText;
+            context.RequestAttention(new AttentionRequest(3f, techniqueText));
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, context => {
                 context.TryTransition(nextNode);

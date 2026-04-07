@@ -90,7 +90,11 @@ namespace Alice {
         }
 
         void ApplyCursorRule(string sceneName) {
-            var screenInfo = screenRegistry.GetBySceneName(sceneName);
+            if (!screenRegistry.TryGetBySceneName(sceneName, out var screenInfo)) {
+                screenInfo = screenRegistry.Default;
+                Debug.LogWarning($"[CursorDeployer] Unknown scene in ScreenRegistry. sceneName={sceneName}, fallbackScene={screenInfo.SceneName}");
+            }
+
             isCursorEnabled = screenInfo.CreateCursor;
             ApplyDeploymentState();
         }

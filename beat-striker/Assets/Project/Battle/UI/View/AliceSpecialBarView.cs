@@ -8,11 +8,14 @@ namespace Alice {
         [SerializeField] Material normalMaterial;
         [SerializeField] Material fullMaterial;
         [SerializeField] float fillSmoothSpeed = 4f;
+        [SerializeField] AudioClip fullFillSound;
+        [SerializeField] ButtonGuideStartOffsetMotion buttonGuideMotion;
 
         float currentRatio;
         float targetRatio;
         bool isFull;
         bool materialInitialized;
+        float lastSetRatio;
 
         void Awake() {
             currentRatio = 0f;
@@ -38,6 +41,7 @@ namespace Alice {
             }
 
             ApplyFullMaterial(clampedRatio >= 1f);
+            lastSetRatio = clampedRatio;
         }
 
         void ApplyScale(float ratio) {
@@ -54,6 +58,11 @@ namespace Alice {
             isFull = full;
             materialInitialized = true;
             specialBarGraphic.material = isFull ? fullMaterial : normalMaterial;
+
+            if(fullFillSound && lastSetRatio > 0.5f && lastSetRatio < 1f) {
+                AudioSource.PlayClipAtPoint(fullFillSound, Camera.main.transform.position);
+                buttonGuideMotion.Play();
+            }
         }
     }
 }

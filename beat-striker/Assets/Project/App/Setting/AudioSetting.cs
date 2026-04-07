@@ -45,8 +45,8 @@ namespace Alice {
         readonly ReactiveProperty<float> excellentWindowProperty = new();
         readonly ReactiveProperty<float> goodScoreMultiplierProperty = new();
         readonly ReactiveProperty<float> excellentScoreMultiplierProperty = new();
-        readonly ReactiveProperty<BeatOffsetSetting> beatOffset = new();
-        readonly ReactiveProperty<VolumeBalance> volumeBalance = new();
+        readonly ReactiveProperty<BeatOffsetSetting> beatOffset = new(new BeatOffsetSetting(0f, 0f, 0f));
+        readonly ReactiveProperty<VolumeBalance> volumeBalance = new(new VolumeBalance(1f, 1f, 1f));
 
         public ReadOnlyReactiveProperty<float> CommandTimeOffset => commandTimeOffsetProperty;
         public ReadOnlyReactiveProperty<float> ViewTimeOffset => viewTimeOffsetProperty;

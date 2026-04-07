@@ -18,6 +18,7 @@ namespace Alice {
         Observable<Unit> OnPauseMenuRequested { get; }
         Observable<Unit> OnSuspendRequested { get; }
         Observable<Unit> OnResumeRequested { get; }
+        Observable<bool> OnAttentionActiveStateChanged { get; }
         void OpenSuspendMenu();
         void CloseSuspendMenu();
     }
@@ -35,14 +36,20 @@ namespace Alice {
         CompositeDisposable pauseMenuInputSubscriptions = new();
         CompositeDisposable suspendMenuSubscriptions = new();
         CompositeDisposable audioSubscriptions = new();
+        CompositeDisposable attentionTextSubscriptions = new();
         readonly Subject<Unit> pauseMenuRequestedSubject = new();
         readonly Subject<Unit> suspendRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
         bool isCinematicSkipEnabled;
+        string pendingAttentionTechniqueText = string.Empty;
+        int attentionRequestSequence;
+        bool suppressAttentionTextForCurrentRequest;
+        bool isDisposed;
 
         public Observable<Unit> OnPauseMenuRequested => pauseMenuRequestedSubject;
         public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
+        public Observable<bool> OnAttentionActiveStateChanged => battlePresenterView.StageCamera.OnAttentionActiveStateChanged;
 
         public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
             this.strikerRegistry = strikerRegistry;
@@ -55,15 +62,19 @@ namespace Alice {
             SubscribePauseMenuInput();
             SubscribeSuspendMenuEvents();
             SubscribeAudioEvents();
+            SubscribeAttentionTextEvents();
             battlePresenterView.SetBattleUiHiddenAboveImmediately();
             CloseSuspendMenu();
+            battlePresenterView.AttentionTextView.HideImmediately();
         }
 
         public void Dispose() {
+            isDisposed = true;
             skipInputSubscriptions.Dispose();
             pauseMenuInputSubscriptions.Dispose();
             suspendMenuSubscriptions.Dispose();
             audioSubscriptions.Dispose();
+            attentionTextSubscriptions.Dispose();
             pauseMenuRequestedSubject.Dispose();
             suspendRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();
@@ -97,6 +108,8 @@ namespace Alice {
             finally {
                 isCinematicSkipEnabled = false;
             }
+
+            SetAllStrikersDefault();
 
             await battlePresenterView.SlideBattleUiInAsync();
             await battlePresenterView.WaitAfterSlideBattleUiInAsync();
@@ -147,7 +160,13 @@ namespace Alice {
         }
 
         public void RequestAttention(int playerId, AttentionRequest request) {
+            pendingAttentionTechniqueText = request.TechniqueText;
+            suppressAttentionTextForCurrentRequest = false;
+            attentionRequestSequence += 1;
+            var sequence = attentionRequestSequence;
+            battlePresenterView.AttentionTextView.Hide();
             battlePresenterView.StageCamera.RequestAttention(playerId, request.DurationSeconds);
+            _ = HideAttentionTextBeforeLooseAsync(sequence, request.DurationSeconds);
         }
 
         public void OpenSuspendMenu() {
@@ -169,6 +188,12 @@ namespace Alice {
             var winner = strikerRegistry.Get(winnerPlayerId);
             if (winner.TryGetValue(out var strikerHub)) {
                 strikerHub.VictoryPose();
+            }
+        }
+
+        void SetAllStrikersDefault() {
+            foreach (var striker in strikerRegistry.GetAllStrikers()) {
+                striker.Default();
             }
         }
 
@@ -234,6 +259,57 @@ namespace Alice {
                     if(battlePresenterView.BeatSound) AudioSource.PlayClipAtPoint(battlePresenterView.BeatSound, Vector3.zero);
                 })
                 .AddTo(audioSubscriptions);
+        }
+
+        void SubscribeAttentionTextEvents() {
+            attentionTextSubscriptions.Dispose();
+            attentionTextSubscriptions = new CompositeDisposable();
+
+            battlePresenterView.StageCamera.OnAttentionActiveStateChanged
+                .Subscribe(isActive => {
+                    if (!isActive) {
+                        battlePresenterView.AttentionTextView.Hide();
+                    }
+                })
+                .AddTo(attentionTextSubscriptions);
+
+            battlePresenterView.StageCamera.OnAttentionFocusStateChanged
+                .Subscribe(isFocused => {
+                    if (!isFocused) {
+                        battlePresenterView.AttentionTextView.Hide();
+                        return;
+                    }
+
+                    if (suppressAttentionTextForCurrentRequest) {
+                        return;
+                    }
+
+                    battlePresenterView.AttentionTextView.Show(pendingAttentionTechniqueText);
+                })
+                .AddTo(attentionTextSubscriptions);
+        }
+
+        async Task HideAttentionTextBeforeLooseAsync(int sequence, float requestDurationSeconds) {
+            var hideLeadSeconds = Mathf.Max(0f, battlePresenterView.AttentionTextView.HideDelay);
+            var hideDelaySeconds = Mathf.Max(0f, requestDurationSeconds - hideLeadSeconds);
+
+            if (hideDelaySeconds <= 0f) {
+                if (isDisposed || sequence != attentionRequestSequence) {
+                    return;
+                }
+
+                suppressAttentionTextForCurrentRequest = true;
+                battlePresenterView.AttentionTextView.Hide();
+                return;
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(hideDelaySeconds));
+            if (isDisposed || sequence != attentionRequestSequence) {
+                return;
+            }
+
+            suppressAttentionTextForCurrentRequest = true;
+            battlePresenterView.AttentionTextView.Hide();
         }
     }
 }

@@ -22,6 +22,7 @@ namespace Alice {
         ScreenInfo Default { get; }
         ScreenInfo GetByScene(AppScene scene);
         ScreenInfo GetBySceneName(string sceneName);
+        bool TryGetBySceneName(string sceneName, out ScreenInfo screenInfo);
         IReadOnlyList<ScreenInfo> GetAll();
     }
 
@@ -50,6 +51,11 @@ namespace Alice {
         public ScreenInfo GetBySceneName(string sceneName) {
             EnsureInitialized();
             return screenBySceneName[sceneName];
+        }
+
+        public bool TryGetBySceneName(string sceneName, out ScreenInfo screenInfo) {
+            EnsureInitialized();
+            return screenBySceneName.TryGetValue(sceneName, out screenInfo);
         }
 
         public IReadOnlyList<ScreenInfo> GetAll() {

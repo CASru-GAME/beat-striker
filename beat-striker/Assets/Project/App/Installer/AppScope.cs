@@ -6,6 +6,7 @@ using VContainer;
 using VContainer.Unity;
 
 namespace Alice {
+	[DefaultExecutionOrder(-10000)]
 	public class AppScope : LifetimeScope {
 		const string LOG_PREFIX = "[AppScope]";
 
@@ -35,6 +36,7 @@ namespace Alice {
 
 			instance = this;
 			DontDestroyOnLoad(gameObject);
+			playerSelectSetting.InitializeDefaults();
 			base.Awake();
 			Debug.Log($"{LOG_PREFIX} Awake completed. scene={gameObject.scene.name}");
 		}

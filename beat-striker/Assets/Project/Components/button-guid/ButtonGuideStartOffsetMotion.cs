@@ -4,6 +4,7 @@ using System.Collections;
 [RequireComponent(typeof(RectTransform), typeof(CanvasGroup))]
 public class ButtonGuideStartOffsetMotion : MonoBehaviour {
     [SerializeField] private Vector2 startOffset = new(0f, -40f);
+    [SerializeField] private bool showOnEnable = true;
     [SerializeField][Min(0f)] private float startDelay = 0f;
     [SerializeField][Min(0f)] private float duration = 0.25f;
     [SerializeField] private bool shouldExit = true;
@@ -32,6 +33,19 @@ public class ButtonGuideStartOffsetMotion : MonoBehaviour {
 
 
     void OnEnable() {
+        if (showOnEnable) {
+            Play();
+        }
+    }
+
+    public void Play() {
+        if (sequenceCoroutine != null) {
+            StopCoroutine(sequenceCoroutine);
+            sequenceCoroutine = null;
+        }
+
+        LeanTween.cancel(gameObject);
+        Reset();
         sequenceCoroutine = StartCoroutine(PlaySequence());
     }
 

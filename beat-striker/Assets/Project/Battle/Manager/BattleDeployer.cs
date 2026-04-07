@@ -164,6 +164,14 @@ namespace Alice {
                     }
                 }));
 
+                roundSubscriptions.Add(gamePad.OnButtonDown.Subscribe(button => {
+                    if (button != GamePadButton.Start) {
+                        return;
+                    }
+
+                    RequestSpecial(instance);
+                }));
+
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
 
                 roundSubscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
@@ -181,9 +189,6 @@ namespace Alice {
                     instance.AddSpecialPoint(specialPointGain);
 
                     switch (beatResult.Button) {
-                        case GamePadButton.Start:
-                            instance.Special();
-                            break;
                         case GamePadButton.East:
                             instance.Attack();
                             break;
@@ -248,6 +253,14 @@ namespace Alice {
 
         public void Dispose() {
             Undeploy();
+        }
+
+        void RequestSpecial(IStrikerHub instance) {
+            if (battleSetting.IsTestMode) {
+                instance.AddSpecialPoint(float.MaxValue);
+            }
+
+            instance.Special();
         }
 
         float CalculateSpecialPointGain(int comboCount) {

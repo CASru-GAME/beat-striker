@@ -22,7 +22,7 @@ public class Stageselectbutton : MonoBehaviour
     public MoveType moveType = MoveType.None;
     public MusicPopup popupPrefab; // MusicPopupのPrefab
     private MusicPopup currentPopup; // インスタンス化されたMusicPopup
-    private static bool isPopupShown = false;
+    private bool isPopupShown = false;
     
     [Header("Selection")]
     public Stage selectedStage = Stage.Live;
@@ -45,6 +45,11 @@ public class Stageselectbutton : MonoBehaviour
 
     public void Initialize(IReadOnlyList<MusicInfo> musics) {
         this.musics = musics;
+    }
+
+    public void SetPopupShown(bool isShown)
+    {
+        isPopupShown = isShown;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -72,6 +77,7 @@ public class Stageselectbutton : MonoBehaviour
         }
 
         botan.OnHoverEvent.Subscribe((e) => {
+            Debug.Log($"{gameObject.name}: Hovered. isPopupShown={isPopupShown}");
             if (isPopupShown) return;
             image.color = Color.white;
             if (hoverSound != null && audioSource != null) {
@@ -93,6 +99,8 @@ public class Stageselectbutton : MonoBehaviour
             }
         });
         botan.OnClickEvent.Subscribe((e) => {
+            if (isPopupShown) return;
+
             if (popupPrefab != null) {
                 // Popupをインスタンス化
                 if (currentPopup == null)
@@ -111,6 +119,7 @@ public class Stageselectbutton : MonoBehaviour
             }
         });
         botan.OnHoverExitEvent.Subscribe((e) => {
+            Debug.Log($"{gameObject.name}: Hover exited. isPopupShown={isPopupShown}");
             if (isPopupShown) return;
             image.color = Color.gray;
             

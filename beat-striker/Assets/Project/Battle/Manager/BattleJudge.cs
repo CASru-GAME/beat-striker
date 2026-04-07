@@ -19,13 +19,14 @@ namespace Alice {
 
     public class BattleJudge : IBattleJudge {
         readonly Dictionary<PlayerId, int> roundWins = new();
-        readonly int roundsToWin;
+        readonly IBattleRuleSetting battleRuleSetting;
 
         public BattleJudge(IBattleRuleSetting battleRuleSetting) {
-            roundsToWin = battleRuleSetting.RoundsToWin.CurrentValue < 1 ? 1 : battleRuleSetting.RoundsToWin.CurrentValue;
+            this.battleRuleSetting = battleRuleSetting;
         }
 
         public BattleJudgeResult Judge(RoundResult roundResult) {
+            var roundsToWin = battleRuleSetting.RoundsToWin.CurrentValue < 1 ? 1 : battleRuleSetting.RoundsToWin.CurrentValue;
             var winner = roundResult.Rankings[0].PlayerId;
             if (!roundWins.ContainsKey(winner)) {
                 roundWins[winner] = 0;

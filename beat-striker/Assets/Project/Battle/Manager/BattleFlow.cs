@@ -32,6 +32,7 @@ namespace Alice {
         bool roundResolving;
         bool roundPlayable;
         bool roundSuspended;
+        bool roundAttentionSuspended;
         bool outroHandled;
         readonly List<IDisposable> deadEventDisposables = new();
         readonly List<IDisposable> flowEventDisposables = new();
@@ -63,6 +64,7 @@ namespace Alice {
             roundResolving = false;
             roundPlayable = false;
             roundSuspended = false;
+            roundAttentionSuspended = false;
             outroHandled = false;
             Debug.Log($"{LOG_PREFIX} Constructed. initialRound={currentRound}, playerPresenterCount={battlePlayerPresenters.Length}");
         }
@@ -108,8 +110,6 @@ namespace Alice {
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync battle opening completed");
                 await System.Threading.Tasks.Task.WhenAll(battlePlayerPresenters.Select(battlePlayerPresenter => battlePlayerPresenter.PlayOpeningHpFillAsync()));
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync battle player HP opening animation completed");
-                SetAllStrikersDefault();
-                Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync set all strikers default completed after battle opening");
 
                 await StartRoundPlayableAsync();
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync completed first round playable start");
@@ -137,8 +137,9 @@ namespace Alice {
             roundResolving = false;
             roundPlayable = true;
             roundSuspended = false;
+            roundAttentionSuspended = false;
             beatJudge.ResetRoundState();
-            beatJudge.Resume();
+            ResumeRoundRuntimeSystems(controlsMusic: false);
             musicPlayer.Play();
             battleDeployer.ConnectRoundInputs();
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync resumed systems and connected inputs");
@@ -157,7 +158,8 @@ namespace Alice {
             outroHandled = true;
             roundPlayable = false;
             roundSuspended = false;
-            beatJudge.Resume();
+            roundAttentionSuspended = false;
+            ResumeRoundRuntimeSystems(controlsMusic: false);
             battlePresenter.CloseSuspendMenu();
             musicPlayer.Stop();
             battleDeployer.DisconnectRoundInputs();
@@ -217,6 +219,7 @@ namespace Alice {
             flowEventDisposables.Add(battlePresenter.OnPauseMenuRequested.Subscribe(_ => OnPauseMenuRequested()));
             flowEventDisposables.Add(battlePresenter.OnSuspendRequested.Subscribe(_ => OnSuspendRequested()));
             flowEventDisposables.Add(battlePresenter.OnResumeRequested.Subscribe(_ => OnResumeRequested()));
+            flowEventDisposables.Add(battlePresenter.OnAttentionActiveStateChanged.Subscribe(isActive => OnAttentionActiveStateChanged(isActive)));
         }
 
         void DisposeFlowEventSubscriptions() {
@@ -227,7 +230,7 @@ namespace Alice {
         }
 
         void OnPauseMenuRequested() {
-            if (!roundPlayable || roundResolving || battleFinished || roundSuspended) {
+            if (!roundPlayable || roundResolving || battleFinished || roundSuspended || roundAttentionSuspended) {
                 return;
             }
 
@@ -281,7 +284,8 @@ namespace Alice {
             roundResolving = true;
             roundPlayable = false;
             roundSuspended = false;
-            beatJudge.Pause();
+            roundAttentionSuspended = false;
+            PauseRoundRuntimeSystems(controlsMusic: false);
             battlePresenter.CloseSuspendMenu();
             musicPlayer.Stop();
             battleDeployer.DisconnectRoundInputs();
@@ -307,9 +311,7 @@ namespace Alice {
 
             roundSuspended = true;
             roundPlayable = false;
-            beatJudge.Pause();
-            musicPlayer.Pause();
-            battleDeployer.PauseRound();
+            PauseRoundRuntimeSystems(controlsMusic: true);
         }
 
         void OnResumeRequested() {
@@ -320,8 +322,45 @@ namespace Alice {
             roundSuspended = false;
             roundPlayable = true;
             battlePresenter.CloseSuspendMenu();
+            ResumeRoundRuntimeSystems(controlsMusic: true);
+        }
+
+        void OnAttentionActiveStateChanged(bool isActive) {
+            if (battleFinished || roundResolving || !roundPlayable || roundSuspended) {
+                return;
+            }
+
+            if (isActive) {
+                if (roundAttentionSuspended) {
+                    return;
+                }
+
+                roundAttentionSuspended = true;
+                PauseRoundRuntimeSystems(controlsMusic: false);
+                return;
+            }
+
+            if (!roundAttentionSuspended) {
+                return;
+            }
+
+            roundAttentionSuspended = false;
+            ResumeRoundRuntimeSystems(controlsMusic: false);
+        }
+
+        void PauseRoundRuntimeSystems(bool controlsMusic) {
+            beatJudge.Pause();
+            if (controlsMusic) {
+                musicPlayer.Pause();
+            }
+            battleDeployer.PauseRound();
+        }
+
+        void ResumeRoundRuntimeSystems(bool controlsMusic) {
             beatJudge.Resume();
-            musicPlayer.Resume();
+            if (controlsMusic) {
+                musicPlayer.Resume();
+            }
             battleDeployer.ResumeRound();
         }
 

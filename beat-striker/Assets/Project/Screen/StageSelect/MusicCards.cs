@@ -28,6 +28,7 @@ public class MusicCards : MonoBehaviour
     public float upMoveDistance = 100f;
     public float depthMove = 60f;
     public float depthAnimDuration = 0.3f;
+    [SerializeField] RectTransform cardContainer;
 
     bool isAnimating = false;
     int currentIndex = 0;
@@ -41,14 +42,15 @@ public class MusicCards : MonoBehaviour
         if (initialized) return;
 
         cards.Clear();
-        for (int i = 0; i < musics.Count; i++) {
-            var card = Instantiate(cardPrefab, transform);
+        cardContainer.gameObject.SetActive(false);
+        for (int i = musics.Count - 1; i >= 0; i--) {
+            var card = Instantiate(cardPrefab, cardContainer);
             card.name = "Card_" + i;
             card.OnMusicSelected.Subscribe(HandleMusicSelected).AddTo(subscriptions);
             card.SetMusic(musics[i]);
             cards.Add(card);
         }
-        cards.Reverse();
+        cardContainer.gameObject.SetActive(true);
         ApplyPreviewState();
 
         rightButton.OnClickEvent.Subscribe(e => OnRightPressed()).AddTo(subscriptions);
@@ -68,8 +70,9 @@ public class MusicCards : MonoBehaviour
         // クリック効果音を再生
         PlayClickSound();
 
-        MusicCard currentCard = cards[currentIndex];
-        int nextIndex = (currentIndex + 1) % cards.Count;
+        int previousIndex = currentIndex;
+        MusicCard currentCard = cards[previousIndex];
+        int nextIndex = (previousIndex + 1) % cards.Count;
 
         Vector3 currentPos = currentCard.transform.localPosition;
         
@@ -83,11 +86,12 @@ public class MusicCards : MonoBehaviour
             {
                 currentCard.transform.localPosition = new Vector3(0f, currentPos.y, 0f);
                 isAnimating = false;
+                ApplyPreviewState();
             });
         });
 
         currentIndex = nextIndex;
-        ApplyPreviewState();
+        ApplyPreviewState(previousIndex);
     }
 
     public void OnLeftPressed()
@@ -98,7 +102,8 @@ public class MusicCards : MonoBehaviour
         // クリック効果音を再生
         PlayClickSound();
 
-        int prevIndex = (currentIndex - 1 + cards.Count) % cards.Count;
+        int previousIndex = currentIndex;
+        int prevIndex = (previousIndex - 1 + cards.Count) % cards.Count;
         MusicCard prevCard = cards[prevIndex];
 
         Vector3 currentPos = prevCard.transform.localPosition;
@@ -113,17 +118,21 @@ public class MusicCards : MonoBehaviour
             {
                 prevCard.transform.localPosition = new Vector3(0f, currentPos.y, 0f);
                 isAnimating = false;
+                ApplyPreviewState();
             });
         });
 
         currentIndex = prevIndex;
-        ApplyPreviewState();
+        ApplyPreviewState(previousIndex);
     }
 
-    void ApplyPreviewState()
+    void ApplyPreviewState(int transitionIndex = -1)
     {
         for (int i = 0; i < cards.Count; i++)
         {
+            bool isCurrent = i == currentIndex;
+            bool isTransitionCard = i == transitionIndex;
+            cards[i].gameObject.SetActive(isCurrent || isTransitionCard);
             cards[i].SetPreviewEnabled(i == currentIndex);
         }
     }

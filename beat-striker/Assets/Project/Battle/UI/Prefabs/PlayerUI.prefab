@@ -1259,6 +1259,7 @@ MonoBehaviour:
   normalMaterial: {fileID: 0}
   fullMaterial: {fileID: 2100000, guid: b104850a640b11e4f9b56ee8e3affdb4, type: 2}
   fillSmoothSpeed: 0.1
+  fullFillSound: {fileID: 8300000, guid: 37b9db8a9af2a47beb548805f300dae0, type: 3}
 --- !u!1 &6307266306655827630
 GameObject:
   m_ObjectHideFlags: 0

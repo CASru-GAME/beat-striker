@@ -19,14 +19,17 @@ namespace Alice {
         readonly IStrikerRegistry strikerRegistry;
         readonly IBeatjudge beatJudge;
         readonly IMusicPlayer musicPlayer;
+        readonly Observable<bool> attentionActiveState;
         readonly CompositeDisposable disposables = new();
+        readonly CompositeDisposable attentionSubscriptions = new();
         IDisposable hpSubscription;
         IDisposable specialPointSubscription;
         IStrikerHub strikerHub;
         readonly AliceRingView ringView;
         bool roundPlayable;
+        bool isAttentionActive;
 
-        public BattlePlayerPresenter(BattlePlayerView battlePlayerView, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry) {
+        public BattlePlayerPresenter(BattlePlayerView battlePlayerView, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer, Observable<bool> attentionActiveState, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry) {
             this.battlePlayerView = battlePlayerView;
             playerId = battlePlayerView.PlayerId;
             hpBarUI = battlePlayerView.HpBarUI;
@@ -35,6 +38,7 @@ namespace Alice {
             this.strikerRegistry = strikerRegistry;
             this.beatJudge = beatJudge;
             this.musicPlayer = musicPlayer;
+            this.attentionActiveState = attentionActiveState;
             ringView = UnityEngine.Object.Instantiate(battlePlayerView.BeatRingPrefab, battlePlayerView.BeatRingParent);
 
             comboView.SetComboCount(0);
@@ -56,6 +60,10 @@ namespace Alice {
                 .Subscribe(OnStrikerUnregistered)
                 .AddTo(disposables);
 
+            this.attentionActiveState
+                .Subscribe(OnAttentionActiveStateChanged)
+                .AddTo(attentionSubscriptions);
+
             SetupPlayerSubscriptions();
             ringView.SetBeatTimeline(musicPlayer.CurrentBeatTimeline);
             PresentFrame(musicPlayer.CurrentViewPlaybackTime);
@@ -74,12 +82,15 @@ namespace Alice {
             hpSubscription?.Dispose();
             specialPointSubscription?.Dispose();
             disposables.Dispose();
+            attentionSubscriptions.Dispose();
             UnityEngine.Object.Destroy(ringView.gameObject);
         }
 
         public void PresentRoundPlayableStart() {
             roundPlayable = true;
-            ringView.ActivateBattleView(playerId);
+            if (!isAttentionActive) {
+                ringView.ActivateBattleView(playerId);
+            }
         }
 
         public void PresentRoundPlayableFinish() {
@@ -156,6 +167,19 @@ namespace Alice {
 
             ringView.SetPosition(strikerHub.CenterPosition.CurrentValue);
             ringView.SetLookDirection(strikerHub.LookDirection.CurrentValue);
+        }
+
+        void OnAttentionActiveStateChanged(bool isActive) {
+            isAttentionActive = isActive;
+
+            if (isAttentionActive) {
+                ringView.DeactivateBattleView();
+                return;
+            }
+
+            if (roundPlayable) {
+                ringView.ActivateBattleView(playerId);
+            }
         }
     }
 }

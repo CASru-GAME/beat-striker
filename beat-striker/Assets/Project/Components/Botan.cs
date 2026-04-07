@@ -22,7 +22,7 @@ namespace Core {
         public override Observable<BotanEventData> OnHoverEvent => hoverSubject;
         public override Observable<BotanEventData> OnHoverExitEvent => hoverExitSubject;
 
-        public void OnEnable() {
+        public void OnDisable() {
             hoverCount = 0;
         }
 
