@@ -71,7 +71,7 @@ public class Stageselectbutton : MonoBehaviour
             panel.OnRightMoveComplete += OnPanelMoveComplete;
         }
 
-        botan.onHover += (e) => {
+        botan.OnHoverEvent.Subscribe((e) => {
             if (isPopupShown) return;
             image.color = Color.white;
             if (hoverSound != null && audioSource != null) {
@@ -91,8 +91,8 @@ public class Stageselectbutton : MonoBehaviour
             else {
                 Debug.LogWarning($"{gameObject.name}: Panel is null!");
             }
-        };
-        botan.onClick += (e) => {
+        });
+        botan.OnClickEvent.Subscribe((e) => {
             if (popupPrefab != null) {
                 // Popupをインスタンス化
                 if (currentPopup == null)
@@ -109,8 +109,8 @@ public class Stageselectbutton : MonoBehaviour
                 previewVisibilityChanged.OnNext(true);
                 stageSelected.OnNext(selectedStage);
             }
-        };
-        botan.onHoverExit += (e) => {
+        });
+        botan.OnHoverExitEvent.Subscribe((e) => {
             if (isPopupShown) return;
             image.color = Color.gray;
             
@@ -128,7 +128,7 @@ public class Stageselectbutton : MonoBehaviour
                 LeanTween.cancel(blackObject);
                 LeanTween.alphaCanvas(blackCanvasGroup, 0f, blackFadeDuration).setEase(LeanTweenType.easeInQuad);
             }
-        };
+        });
     }
     
     public void HidePopup()

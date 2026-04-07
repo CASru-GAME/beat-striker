@@ -8,12 +8,15 @@ using System;
 using UnityEngine;
 
 namespace Alice {
+    public record PlayerGamePadButtonEvent(int PlayerId, GamePadButton Button);
+
     public interface IGamePad {
         Observable<Vector2> OnDirectionAsObservable { get; }
         Observable<Unit> OnDirectionCanceledAsObservable { get; }
         Observable<GamePadButton> OnButtonDownAsObservable { get; }
         Observable<GamePadButton> OnButtonUpAsObservable { get; }
         string DeviceName { get; }
+        void DestroyGamePad();
     }
 
     public interface IGamePadRegistry {
@@ -22,6 +25,8 @@ namespace Alice {
         void RequestUnregister(int playerId);
         void RequestUnregister(IGamePad gamePad);
         IPlayerGamePad Get(int playerId);
+        void HandlePlayerSlotClick(int sourcePlayerId, int targetPlayerId);
+        Observable<PlayerGamePadButtonEvent> OnAnyButtonDown { get; }
     }
 
     public interface IPlayerGamePad {
@@ -35,6 +40,9 @@ namespace Alice {
 
     public class GamePadRegistry : IGamePadRegistry {
         readonly List<PlayerGamePad> registry = new();
+        readonly Subject<PlayerGamePadButtonEvent> onAnyButtonDown = new();
+
+        public Observable<PlayerGamePadButtonEvent> OnAnyButtonDown => onAnyButtonDown;
 
         public IPlayerGamePad RequestRegister(IGamePad gamePad) {
             for (int i = 0; i < registry.Count; i++) {
@@ -46,7 +54,7 @@ namespace Alice {
                 }
             }
 
-            var playerGamePad = new PlayerGamePad(registry.Count, gamePad.ToOption(), true);
+            var playerGamePad = new PlayerGamePad(registry.Count, gamePad.ToOption(), true, HandleButtonDown, HandleButtonUp);
             registry.Add(playerGamePad);
 
             Debug.Log($"Registered GamePad {gamePad.DeviceName} to Player {playerGamePad.PlayerId}".ToGreen());
@@ -67,6 +75,7 @@ namespace Alice {
             if(playerGamePad != null && playerGamePad.Current.TryGetValue(out var gamePad) && playerGamePad.HasPrimaryGamePad) {
                 Debug.Log($"Unregistered GamePad {gamePad.DeviceName} from Player {playerId}".ToOrange());
                 playerGamePad.ClearPrimary();
+                gamePad.DestroyGamePad();
             }
         }
 
@@ -75,6 +84,7 @@ namespace Alice {
             foreach (var playerGamePad in playerGamePads) {
                 Debug.Log($"Unregistered GamePad {gamePad.DeviceName} from Player {playerGamePad.PlayerId}".ToOrange());
                 playerGamePad.ClearPrimary();
+                gamePad.DestroyGamePad();
             }
         }
 
@@ -82,11 +92,48 @@ namespace Alice {
             return EnsurePlayerSlot(playerId);
         }
 
+        public void HandlePlayerSlotClick(int sourcePlayerId, int targetPlayerId) {
+            var sourceSlot = EnsurePlayerSlot(sourcePlayerId);
+            var targetSlot = EnsurePlayerSlot(targetPlayerId);
+
+            if (!sourceSlot.HasPrimaryGamePad) {
+                return;
+            }
+
+            if (sourcePlayerId == targetPlayerId) {
+                RequestUnregister(sourcePlayerId);
+                return;
+            }
+
+            var sourceCurrent = sourceSlot.Current;
+
+            if (targetSlot.HasPrimaryGamePad) {
+                var targetCurrent = targetSlot.Current;
+                sourceSlot.SetPrimary(targetCurrent);
+                targetSlot.SetPrimary(sourceCurrent);
+                return;
+            }
+
+            targetSlot.SetPrimary(sourceCurrent);
+            sourceSlot.ClearPrimary();
+        }
+
         PlayerGamePad EnsurePlayerSlot(int playerId) {
             while (registry.Count <= playerId) {
-                registry.Add(new PlayerGamePad(registry.Count, null, false));
+                registry.Add(new PlayerGamePad(registry.Count, null, false, HandleButtonDown, HandleButtonUp));
             }
             return registry[playerId];
+        }
+
+        void HandleButtonDown(int playerId, GamePadButton button) {
+            var player = EnsurePlayerSlot(playerId);
+            onAnyButtonDown.OnNext(new PlayerGamePadButtonEvent(playerId, button));
+            player.EmitButtonDown(button);
+        }
+
+        void HandleButtonUp(int playerId, GamePadButton button) {
+            var player = EnsurePlayerSlot(playerId);
+            player.EmitButtonUp(button);
         }
 
         class PlayerGamePad : IPlayerGamePad {
@@ -118,10 +165,19 @@ namespace Alice {
             IDisposable directionCanceledSubscription;
             IDisposable buttonDownSubscription;
             IDisposable buttonUpSubscription;
+            readonly Action<int, GamePadButton> buttonDownHandler;
+            readonly Action<int, GamePadButton> buttonUpHandler;
 
-            public PlayerGamePad(int playerId, Option<IGamePad> current, bool isPrimaryInput) {
+            public PlayerGamePad(
+                int playerId,
+                Option<IGamePad> current,
+                bool isPrimaryInput,
+                Action<int, GamePadButton> buttonDownHandler,
+                Action<int, GamePadButton> buttonUpHandler) {
                 PlayerId = playerId;
                 this.isPrimaryInput = isPrimaryInput;
+                this.buttonDownHandler = buttonDownHandler;
+                this.buttonUpHandler = buttonUpHandler;
                 hasGamePad.OnNext(this.isPrimaryInput && current.TryGetValue(out _));
                 Current = current;
             }
@@ -148,6 +204,14 @@ namespace Alice {
                 Current = null;
             }
 
+            public void EmitButtonDown(GamePadButton button) {
+                onButtonDown.OnNext(button);
+            }
+
+            public void EmitButtonUp(GamePadButton button) {
+                onButtonUp.OnNext(button);
+            }
+
             void SwitchCurrent() {
                 directionSubscription?.Dispose();
                 directionCanceledSubscription?.Dispose();
@@ -157,8 +221,8 @@ namespace Alice {
                 if (current.TryGetValue(out var activeGamePad)) {
                     directionSubscription = activeGamePad.OnDirectionAsObservable.Subscribe(onDirection.OnNext);
                     directionCanceledSubscription = activeGamePad.OnDirectionCanceledAsObservable.Subscribe(onDirectionCanceled.OnNext);
-                    buttonDownSubscription = activeGamePad.OnButtonDownAsObservable.Subscribe(onButtonDown.OnNext);
-                    buttonUpSubscription = activeGamePad.OnButtonUpAsObservable.Subscribe(onButtonUp.OnNext);
+                    buttonDownSubscription = activeGamePad.OnButtonDownAsObservable.Subscribe(button => buttonDownHandler(PlayerId, button));
+                    buttonUpSubscription = activeGamePad.OnButtonUpAsObservable.Subscribe(button => buttonUpHandler(PlayerId, button));
                 }
             }
         }

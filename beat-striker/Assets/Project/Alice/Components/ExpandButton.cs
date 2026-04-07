@@ -14,14 +14,14 @@ public class ExpandButton : MonoBehaviour {
     void Awake() {
         button = GetComponent<Botan>();
         originalScale = transform.localScale;
-        button.onHover += data => {
+        button.OnHoverEvent.Subscribe(data => {
             LeanTween.cancel(gameObject);
             LeanTween.scale(gameObject, originalScale * hoveredScale, scaleAnimationDuration).setEaseOutBack();
-        };
-        button.onHoverExit += data => {
+        });
+        button.OnHoverExitEvent.Subscribe(data => {
             LeanTween.cancel(gameObject);
             LeanTween.scale(gameObject, originalScale, scaleAnimationDuration).setEaseOutBack();
-        };
+        });
     }
 
     void OnDisable() {

@@ -16,6 +16,7 @@ namespace Alice {
         readonly IGamePadRegistry gamePadRegistry;
         readonly ICursorFactory cursorFactory;
         readonly IScreenRegistry screenRegistry;
+        readonly ICursorMoveSetting cursorMoveSetting;
 
         readonly List<IDisposable> playerJoinSubscriptions = new();
         readonly Dictionary<int, DeployedCursor> deployedByPlayerId = new();
@@ -28,10 +29,12 @@ namespace Alice {
         public CursorDeployer(
             IGamePadRegistry gamePadRegistry,
             ICursorFactory cursorFactory,
-            IScreenRegistry screenRegistry) {
+            IScreenRegistry screenRegistry,
+            ICursorMoveSetting cursorMoveSetting) {
             this.gamePadRegistry = gamePadRegistry;
             this.cursorFactory = cursorFactory;
             this.screenRegistry = screenRegistry;
+            this.cursorMoveSetting = cursorMoveSetting;
         }
 
         public void Initialize() {
@@ -123,6 +126,8 @@ namespace Alice {
             }
 
             var cursor = cursorFactory.Create(playerId);
+            cursor.SetSpeedScale(cursorMoveSetting.CursorSpeed.CurrentValue);
+
             var directionSubscription = playerGamePad.OnDirection.Subscribe(direction => {
                 if (direction == Vector2.zero) {
                     cursor.StopMove();
@@ -142,11 +147,14 @@ namespace Alice {
                 }
             });
 
+            var speedSubscription = cursorMoveSetting.CursorSpeed.Subscribe(cursor.SetSpeedScale);
+
             deployedByPlayerId[playerId] = new DeployedCursor(
                 cursor,
                 directionSubscription,
                 directionCanceledSubscription,
-                buttonDownSubscription);
+                buttonDownSubscription,
+                speedSubscription);
         }
 
         void Undeploy(int playerId) {
@@ -163,22 +171,26 @@ namespace Alice {
             readonly IDisposable directionSubscription;
             readonly IDisposable directionCanceledSubscription;
             readonly IDisposable buttonDownSubscription;
+            readonly IDisposable speedSubscription;
 
             public DeployedCursor(
                 ICursor cursor,
                 IDisposable directionSubscription,
                 IDisposable directionCanceledSubscription,
-                IDisposable buttonDownSubscription) {
+                IDisposable buttonDownSubscription,
+                IDisposable speedSubscription) {
                 this.cursor = cursor;
                 this.directionSubscription = directionSubscription;
                 this.directionCanceledSubscription = directionCanceledSubscription;
                 this.buttonDownSubscription = buttonDownSubscription;
+                this.speedSubscription = speedSubscription;
             }
 
             public void Dispose() {
                 directionSubscription.Dispose();
                 directionCanceledSubscription.Dispose();
                 buttonDownSubscription.Dispose();
+                speedSubscription.Dispose();
                 cursor.DestroyCursor();
             }
         }

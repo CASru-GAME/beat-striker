@@ -9,6 +9,7 @@ namespace Alice {
     public interface ICursor {
         int PlayerId { get; }
         void SetDirection(Vector2 direction);
+        void SetSpeedScale(float speedScale);
         void StopMove();
         void Click();
         void DestroyCursor();
@@ -29,6 +30,7 @@ namespace Alice {
         RectTransform rectTransform;
         RectTransform movableAreaRectTransform;
         Vector2 currentDirection = Vector2.zero;
+        float speedScale = 1f;
         float movingTime;
         GameObject lastHoveredObject;
 
@@ -48,6 +50,10 @@ namespace Alice {
 
         public void SetDirection(Vector2 direction) {
             currentDirection = direction;
+        }
+
+        public void SetSpeedScale(float speedScale) {
+            this.speedScale = speedScale;
         }
 
         public void StopMove() {
@@ -84,7 +90,7 @@ namespace Alice {
                 var accelerationFactor = -Mathf.Log(1f - normalizedRatio) / normalizedTime;
 
                 rectTransform.anchoredPosition +=
-                    moveSpeedConvergenceValue * (1 - Mathf.Exp(-accelerationFactor * movingTime)) * Time.deltaTime * currentDirection;
+                    moveSpeedConvergenceValue * speedScale * (1 - Mathf.Exp(-accelerationFactor * movingTime)) * Time.deltaTime * currentDirection;
 
                 rectTransform.anchoredPosition = new Vector2(
                     Mathf.Clamp(rectTransform.anchoredPosition.x, -movableAreaRectTransform.rect.width / 2, movableAreaRectTransform.rect.width / 2),

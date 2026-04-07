@@ -61,9 +61,9 @@ namespace Alice {
                 }
             }
         }
-        botan.onClick += (e) => {
+        botan.OnClickEvent.Subscribe((e) => {
             OnPointerClick(e.EventData);
-        };
+        });
     }
     
     // Unity Event System用のホバー検知

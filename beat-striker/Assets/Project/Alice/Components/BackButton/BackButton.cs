@@ -18,25 +18,23 @@ public class Backbutton : MonoBehaviour {
 
     void Awake() {
         button = GetComponent<Botan>();
-        button.onClick += data => {
-            onBackPressed.OnNext(Unit.Default);
-        };
+        button.OnClickEvent.Subscribe(data => { onBackPressed.OnNext(Unit.Default); });
         originalAlpha = image.color.a;
         originalScale = transform.localScale;
-        button.onHover += data => {
+        button.OnHoverEvent.Subscribe(data => {
             var col = image.color;
             col.a = hoveredAlpha;
             image.color = col;
             LeanTween.cancel(gameObject);
             LeanTween.scale(gameObject, originalScale * hoveredScale, scaleAnimationDuration).setEaseOutBack();
-        };
-        button.onHoverExit += data => {
+        });
+        button.OnHoverExitEvent.Subscribe(data => {
             var col = image.color;
             col.a = originalAlpha;
             image.color = col;
             LeanTween.cancel(gameObject);
             LeanTween.scale(gameObject, originalScale, scaleAnimationDuration).setEaseOutBack();
-        };
+        });
     }
 
 

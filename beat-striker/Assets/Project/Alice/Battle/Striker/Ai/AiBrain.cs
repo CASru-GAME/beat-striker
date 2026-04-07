@@ -32,6 +32,10 @@ namespace Alice {
         public Observable<GamePadButton> OnButtonUpAsObservable => onButtonUp;
         public string DeviceName => nameof(AiBrain);
 
+        public void DestroyGamePad() {
+            DisableAiMode();
+        }
+
         public void InitializeDependencies(IMusicPlayer musicPlayer, IStrikerRegistry strikerRegistry) {
             this.musicPlayer = musicPlayer;
             this.strikerRegistry = strikerRegistry;

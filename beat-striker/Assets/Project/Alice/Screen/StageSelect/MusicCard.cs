@@ -35,14 +35,14 @@ public class MusicCard : MonoBehaviour {
         audioSource.loop = false;
         audioSource.volume = 0f;
         
-        botan.onHover += (e) => {
+        botan.OnHoverEvent.Subscribe((e) => {
             transform.localScale = originalScale * 1.1f;
 
-        };
-        botan.onHoverExit += (e) => {
+        });
+        botan.OnHoverExitEvent.Subscribe((e) => {
             transform.localScale = originalScale;
-        };
-        botan.onClick += (e) => {
+        });
+        botan.OnClickEvent.Subscribe((e) => {
 
             // クリック効果音を再生（プレビュー音楽を一旦止めて効果音を再生）
             if (clickSound != null) {
@@ -51,7 +51,7 @@ public class MusicCard : MonoBehaviour {
             }
 
             musicSelected.OnNext(currentMusic);
-        };
+        });
     } 
 
     void Update() {

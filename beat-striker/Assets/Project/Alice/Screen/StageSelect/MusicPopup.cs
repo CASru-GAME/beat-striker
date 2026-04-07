@@ -53,9 +53,9 @@ public class MusicPopup : MonoBehaviour
 
         gameObject.SetActive(false);
         
-        hideButton.onClick += (data) => {
+        hideButton.OnClickEvent.Subscribe((data) => {
             Hide();
-        };
+        });
     }
     
     public void Show()

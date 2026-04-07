@@ -58,6 +58,7 @@ namespace Alice {
 			builder.RegisterInstance<IBattleSelectSetting>(battleSelectSetting);
 			builder.RegisterInstance<IPlayerSelectSetting>(playerSelectSetting);
 			builder.RegisterInstance<IAudioSetting>(audioSetting);
+			builder.Register<ICursorMoveSetting, CursorMoveSetting>(Lifetime.Singleton);
 			builder.RegisterInstance<IBattleRuleSetting>(battleRuleSetting);
 			builder.Register<IGamePadRegistry, GamePadRegistry>(Lifetime.Singleton);
 			builder.RegisterInstance<IAppTransitionFactory>(appTransitionFactory);
@@ -78,6 +79,7 @@ namespace Alice {
 				_ = container.Resolve<IBattleSelectSetting>();
 				_ = container.Resolve<IPlayerSelectSetting>();
 				_ = container.Resolve<IAudioSetting>();
+				_ = container.Resolve<ICursorMoveSetting>();
 				_ = container.Resolve<IBattleRuleSetting>();
 				_ = container.Resolve<IGamePadRegistry>();
 				_ = container.Resolve<IAppTransitionFactory>();

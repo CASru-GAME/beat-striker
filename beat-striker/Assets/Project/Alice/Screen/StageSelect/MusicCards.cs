@@ -51,8 +51,8 @@ public class MusicCards : MonoBehaviour
         cards.Reverse();
         ApplyPreviewState();
 
-        rightButton.onClick += e => OnRightPressed();
-        leftButton.onClick += e => OnLeftPressed();
+        rightButton.OnClickEvent.Subscribe(e => OnRightPressed()).AddTo(subscriptions);
+        leftButton.OnClickEvent.Subscribe(e => OnLeftPressed()).AddTo(subscriptions);
         initialized = true;
     }
 

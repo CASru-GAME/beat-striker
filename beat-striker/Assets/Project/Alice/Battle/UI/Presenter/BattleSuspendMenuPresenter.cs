@@ -7,8 +7,8 @@ namespace Alice {
     public class BattleSuspendMenuPresenter : IDisposable {
         readonly ICursorDeployer cursorDeployer;
         readonly BattleSuspendMenuView suspendMenuView;
-        readonly Action<BotanEventData> onSuspendButtonClicked;
-        readonly Action<BotanEventData> onResumeButtonClicked;
+        readonly IDisposable suspendSubscription;
+        readonly IDisposable resumeSubscription;
 
         readonly Subject<Unit> suspendRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
@@ -19,17 +19,15 @@ namespace Alice {
         public BattleSuspendMenuPresenter(ICursorDeployer cursorDeployer, BattleSuspendMenuView suspendMenuView) {
             this.cursorDeployer = cursorDeployer;
             this.suspendMenuView = suspendMenuView;
-            onSuspendButtonClicked = _ => RequestSuspend();
-            onResumeButtonClicked = _ => RequestResume();
-            suspendMenuView.SuspendButton.onClick += onSuspendButtonClicked;
-            suspendMenuView.ResumeButton.onClick += onResumeButtonClicked;
+            suspendSubscription = suspendMenuView.SuspendButton.OnClickEvent.Subscribe(_ => RequestSuspend());
+            resumeSubscription = suspendMenuView.ResumeButton.OnClickEvent.Subscribe(_ => RequestResume());
 
             HideImmediate();
         }
 
         public void Dispose() {
-            suspendMenuView.SuspendButton.onClick -= onSuspendButtonClicked;
-            suspendMenuView.ResumeButton.onClick -= onResumeButtonClicked;
+            suspendSubscription.Dispose();
+            resumeSubscription.Dispose();
             cursorDeployer.SetForceEnabled(false);
             suspendRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();

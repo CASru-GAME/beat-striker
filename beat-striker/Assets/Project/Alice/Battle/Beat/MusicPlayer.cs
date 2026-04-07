@@ -39,6 +39,7 @@ namespace Alice {
         readonly Subject<float[]> onBeatTimelinePrepared = new();
         readonly Subject<float> onViewPlaybackTimeChanged = new();
         IDisposable beatSoundSubscription;
+        IDisposable volumeSubscription;
         float[] beats = Array.Empty<float>();
         int goodWindowIndex;
         int beatTimingIndex;
@@ -58,6 +59,9 @@ namespace Alice {
             this.musicRegistry = musicRegistry;
             this.audioSetting = audioSetting;
             this.battleSelectSetting = battleSelectSetting;
+
+            volumeSubscription = this.audioSetting.VolumeBalance.Subscribe(ApplyVolume);
+            ApplyVolume(this.audioSetting.VolumeBalance.CurrentValue);
         }
 
         public void Play() {
@@ -155,10 +159,15 @@ namespace Alice {
 
         public void Dispose() {
             beatSoundSubscription?.Dispose();
+            volumeSubscription?.Dispose();
             onGoodZoneEntered.Dispose();
             onBeatTiming.Dispose();
             onBeatTimelinePrepared.Dispose();
             onViewPlaybackTimeChanged.Dispose();
+        }
+
+        void ApplyVolume(VolumeBalance volumeBalance) {
+            audioSource.volume = Mathf.Clamp01(volumeBalance.MasterVolume * volumeBalance.BgmVolume);
         }
 
         

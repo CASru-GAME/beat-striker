@@ -37,6 +37,10 @@ namespace Alice {
         public Observable<GamePadButton> OnButtonUpAsObservable => onButtonUp;
         public string DeviceName => playerInput.currentControlScheme;
 
+        public void DestroyGamePad() {
+            Destroy(gameObject);
+        }
+
         void Awake() {
             input = new GameInput();
             playerInput = GetComponent<PlayerInput>();

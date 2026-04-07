@@ -21,6 +21,12 @@ namespace Alice {
                     GoToSelectScene();
                 })
                 .AddTo(subscriptions);
+            this.view.GotoSettingsRequested
+                .Subscribe(_ => {
+                    Debug.Log($"{LOG_PREFIX} GotoSettingsRequested received");
+                    view.OpenSettingsDialog();
+                })
+                .AddTo(subscriptions);
             _ = EnterTitleAsync();
         }
 

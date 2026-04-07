@@ -96,7 +96,7 @@ public class StartButtonAnimation : MonoBehaviour {
             button.enabled = false;
             // 効果音イベントを登録（無効中は発火しない）
             int index = i; // ローカルコピー
-            button.onClick += (data) => OnBlackImageClicked(data, index);
+            button.OnClickEvent.Subscribe((data) => OnBlackImageClicked(data, index));
         }
     }
 

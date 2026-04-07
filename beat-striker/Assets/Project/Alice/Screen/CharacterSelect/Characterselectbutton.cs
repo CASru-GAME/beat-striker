@@ -31,21 +31,21 @@ public class Characterselectbutton : MonoBehaviour
         image2.color = Color.gray;
         text.color = Color.gray;
 
-        botan.onHover += (e) => {
+        botan.OnHoverEvent.Subscribe((e) => {
             image.color = Color.white;
             image2.color = Color.white;
             text.color = Color.white;
             audioSource.PlayOneShot(hoverSound);
-        };
-        botan.onClick += (e) => {
+        });
+        botan.OnClickEvent.Subscribe((e) => {
             var playerId = e.EventData.pointerId;
             strikerClicked.OnNext(new StrikerClickRequest(playerId, striker));
-        };
-        botan.onHoverExit += (e) => {
+        });
+        botan.OnHoverExitEvent.Subscribe((e) => {
             image.color = Color.gray;
             image2.color = Color.gray;
             text.color = Color.gray;
-        };
+        });
     }
 
     public void PlayClickFeedback(Transform clickTarget, float scaleDownAmount = 0.9f, float scaleDuration = 0.1f) {
