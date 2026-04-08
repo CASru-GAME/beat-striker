@@ -9,7 +9,8 @@ namespace Alice {
         [SerializeField] CanvasGroup roundNumberCanvasGroup;
         [SerializeField] AudioClip roundSound;
         [SerializeField] AudioClip fightSound;
-        [SerializeField] float soundVolume = 1.0f;
+        [SerializeField] AudioClip[] roundVoiceSounds;
+        [SerializeField] AudioClip fightVoiceSound;
 
         [Header("Animation Timing")]
         [SerializeField] float roundFadeInDuration = 0.5f;
@@ -38,6 +39,7 @@ namespace Alice {
             roundNumberText.text = $"Round {roundNumber}";
             roundNumberText.gameObject.SetActive(true);
             PlaySound(roundSound);
+            PlayRoundVoice(roundNumber);
 
             roundNumberCanvasGroup.alpha = 0f;
             LeanTween.alphaCanvas(roundNumberCanvasGroup, 1f, roundFadeInDuration)
@@ -57,6 +59,7 @@ namespace Alice {
             battleStartText.text = "Fight!";
             battleStartText.gameObject.SetActive(true);
             PlaySound(fightSound);
+            PlaySound(fightVoiceSound);
             battleStartText.transform.localScale = Vector3.one * 10f;
 
             LeanTween.scale(battleStartText.gameObject, Vector3.one, fightScaleDuration)
@@ -70,7 +73,20 @@ namespace Alice {
 
         void PlaySound(AudioClip clip) {
             if (clip == null) return;
-            AudioSource.PlayClipAtPoint(clip, Vector3.zero, soundVolume);
+            AudioSource.PlayClipAtPoint(clip, Vector3.zero);
+        }
+
+        void PlayRoundVoice(int roundNumber) {
+            if (roundVoiceSounds == null || roundVoiceSounds.Length == 0) {
+                return;
+            }
+
+            var roundIndex = roundNumber - 1;
+            if (roundIndex < 0 || roundIndex >= roundVoiceSounds.Length) {
+                return;
+            }
+
+            PlaySound(roundVoiceSounds[roundIndex]);
         }
     }
 }

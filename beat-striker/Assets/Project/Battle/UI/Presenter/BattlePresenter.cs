@@ -29,6 +29,7 @@ namespace Alice {
         readonly IStrikerRegistry strikerRegistry;
         readonly IGamePadRegistry gamePadRegistry;
         readonly IMusicPlayer musicPlayer;
+        readonly IBattleOpeningBgmPlayer battleOpeningBgmPlayer;
         readonly BattlePresenterView battlePresenterView;
         readonly BattleSuspendMenuPresenter suspendMenuPresenter;
 
@@ -51,10 +52,11 @@ namespace Alice {
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<bool> OnAttentionActiveStateChanged => battlePresenterView.StageCamera.OnAttentionActiveStateChanged;
 
-        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
+        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
             this.strikerRegistry = strikerRegistry;
             this.gamePadRegistry = gamePadRegistry;
             this.musicPlayer = musicPlayer;
+            this.battleOpeningBgmPlayer = battleOpeningBgmPlayer;
             this.battlePresenterView = battlePresenterView;
             this.suspendMenuPresenter = suspendMenuPresenter;
             EnsureStageCameraConfigured();
@@ -100,12 +102,16 @@ namespace Alice {
         public async Task PlayBattleOpeningAsync() {
             EnsureStageCameraConfigured();
             isCinematicSkipEnabled = true;
+            battleOpeningBgmPlayer.Play();
+            var introTask = battlePresenterView.StageCamera.PresentIntroAsync();
+            var fadeTask = battlePresenterView.FadePresenter.PresentFadeOutAsync();
             try {
                 await Task.WhenAll(
-                    battlePresenterView.StageCamera.PresentIntroAsync(),
-                    battlePresenterView.FadePresenter.PresentFadeOutAsync());
+                    StopOpeningBgmAfterIntroAsync(introTask),
+                    fadeTask);
             }
             finally {
+                battleOpeningBgmPlayer.Stop();
                 isCinematicSkipEnabled = false;
             }
 
@@ -113,6 +119,15 @@ namespace Alice {
 
             await battlePresenterView.SlideBattleUiInAsync();
             await battlePresenterView.WaitAfterSlideBattleUiInAsync();
+        }
+
+        async Task StopOpeningBgmAfterIntroAsync(Task introTask) {
+            try {
+                await introTask;
+            }
+            finally {
+                battleOpeningBgmPlayer.Stop();
+            }
         }
 
         public async Task PlayRoundStartAsync(int roundNumber) {

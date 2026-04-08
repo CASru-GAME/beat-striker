@@ -235,6 +235,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8727693288958670458}
   - component: {fileID: 8035787521497820640}
+  - component: {fileID: 1456590923008834014}
   m_Layer: 0
   m_Name: BattlePresenter
   m_TagString: Untagged
@@ -283,6 +284,24 @@ MonoBehaviour:
   battleUiSlideDuration: 0.2
   battleUiHiddenTopMargin: 80
   openingAfterSlideDelaySeconds: 0.3
+--- !u!114 &1456590923008834014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 436743785824202860}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75601c07b0b534b4183a8f51709d620a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleOpeningBgmPlayer
+  openingBgmPrimary: {fileID: 8300000, guid: cb3b0d3fff8884f2eafa530cdba69532, type: 3}
+  openingBgmSecondary: {fileID: 8300000, guid: 57c9c9d96d0224b848976c87b5436708, type: 3}
+  volume: 1
+  startDelaySeconds: 0.2
+  fadeInDuration: 0.5
+  fadeOutDuration: 1
 --- !u!1 &465288274287985864
 GameObject:
   m_ObjectHideFlags: 0
@@ -13873,7 +13892,11 @@ MonoBehaviour:
   roundNumberCanvasGroup: {fileID: 7591765555252197459}
   roundSound: {fileID: 0}
   fightSound: {fileID: 8300000, guid: 08295c655501b33458fcb85e8882ecbd, type: 3}
-  soundVolume: 1
+  roundVoiceSounds:
+  - {fileID: 8300000, guid: e5bcffb4a231f49ea8a93aa7f2a11c06, type: 3}
+  - {fileID: 8300000, guid: b38615dca8d544558a71ced669323c47, type: 3}
+  - {fileID: 8300000, guid: 67c1678f1c64941aabcd83915a58b2fb, type: 3}
+  fightVoiceSound: {fileID: 8300000, guid: 02c4146e3ecab4e1ba11b90a8adeb7dc, type: 3}
   roundFadeInDuration: 0.5
   roundDisplayDuration: 0.5
   roundFadeOutDuration: 0.5
@@ -13895,7 +13918,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleResultTextPresenter
   battleFinishText: {fileID: 7428699745620189525}
   finishSound: {fileID: 0}
-  soundVolume: 1
+  finishVoiceSound: {fileID: 8300000, guid: a058378fa44e64b6ea497b4547056a73, type: 3}
   finishDisplayDuration: 1.5
   outroDisplayDuration: 1
 --- !u!114 &105999830312541164
@@ -20759,8 +20782,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.StageCamera
   camTransform0: {fileID: 0}
   forwardDistance: 4
-  forwardDuration: 2
-  orbitDuration: 2
+  forwardDuration: 3
+  orbitDuration: 3
   orbitAngle: -40
   outroDistance: 2.8
   outroDuration: 1
@@ -22096,6 +22119,7 @@ MonoBehaviour:
   autoInjectGameObjects: []
   battleSetting: {fileID: 6366252685130307861}
   audioSource: {fileID: 547111780668462546}
+  battleOpeningBgmPlayer: {fileID: 1456590923008834014}
   battlePresenter: {fileID: 8035787521497820640}
   resultScene: {fileID: 7775828756132326064}
   battlePlayerPresenters:

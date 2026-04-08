@@ -9,6 +9,7 @@ namespace Alice {
     public class BattleScope : LifetimeScope {
         [SerializeField] BattleSetting battleSetting;
         [SerializeField] AudioSource audioSource;
+        [SerializeField] BattleOpeningBgmPlayer battleOpeningBgmPlayer;
         [SerializeField] BattlePresenterView battlePresenter;
         [SerializeField] ResultSceneView resultScene;
         [SerializeField] BattlePlayerView[] battlePlayerPresenters;
@@ -23,6 +24,7 @@ namespace Alice {
             builder.Register<IBattleJudge, BattleJudge>(Lifetime.Singleton);
             builder.RegisterInstance(battlePresenter);
             builder.RegisterInstance(battlePresenter.SuspendMenuPresenter);
+            builder.RegisterInstance<IBattleOpeningBgmPlayer>(battleOpeningBgmPlayer);
             builder.RegisterInstance(battlePlayerPresenters);
             builder.Register<BattleSuspendMenuPresenter>(Lifetime.Singleton);
             builder.Register<IBattlePresenter, BattlePresenter>(Lifetime.Singleton);
@@ -47,6 +49,7 @@ namespace Alice {
                 _ = container.Resolve<IBattleSetting>();
                 _ = container.Resolve<IAudioSetting>();
                 _ = container.Resolve<IBattleSelectSetting>();
+                _ = container.Resolve<IBattleOpeningBgmPlayer>();
                 _ = container.Resolve<IBattleFlow>();
                 _ = container.Resolve<IBattlePlayerPresenter[]>();
                 _ = container.Resolve<IBeatjudge>();

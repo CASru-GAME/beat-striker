@@ -6,7 +6,7 @@ namespace Alice {
     public class BattleResultTextView : MonoBehaviour {
         [SerializeField] TextMeshProUGUI battleFinishText;
         [SerializeField] AudioClip finishSound;
-        [SerializeField] float soundVolume = 1.0f;
+        [SerializeField] AudioClip finishVoiceSound;
         [SerializeField] float finishDisplayDuration = 0.4f;
         [SerializeField] float outroDisplayDuration = 1f;
 
@@ -23,6 +23,7 @@ namespace Alice {
             battleFinishText.text = "Finish";
             battleFinishText.gameObject.SetActive(true);
             PlaySound(finishSound);
+            PlaySound(finishVoiceSound);
             battleFinishText.transform.localScale = Vector3.one * 10f;
 
             LeanTween.scale(battleFinishText.gameObject, Vector3.one, 0.8f)
@@ -42,6 +43,7 @@ namespace Alice {
             battleFinishText.text = "Game Set";
             battleFinishText.gameObject.SetActive(true);
             PlaySound(finishSound);
+            PlaySound(finishVoiceSound);
 
             var color = battleFinishText.color;
             color.a = 1f;
@@ -63,7 +65,7 @@ namespace Alice {
 
         void PlaySound(AudioClip clip) {
             if (clip == null) return;
-            AudioSource.PlayClipAtPoint(clip, Vector3.zero, soundVolume);
+            AudioSource.PlayClipAtPoint(clip, Vector3.zero);
         }
     }
 }
