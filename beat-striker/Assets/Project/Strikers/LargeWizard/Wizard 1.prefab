@@ -47,7 +47,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1012561812567522805}
   animationClip:
-    clip: {fileID: 9197060619526105886, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: 9197060619526105886, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 1
   locomotionNode: {fileID: 707581214265331847}
@@ -99,7 +99,7 @@ MonoBehaviour:
   - {fileID: 7199184492773224269}
   - {fileID: 5017356379004291730}
   animationClip:
-    clip: {fileID: -1504929105726005784, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: -1504929105726005784, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 0.2
   groundChecker: {fileID: 1223836351378418454}
@@ -137,6 +137,55 @@ Transform:
   - {fileID: 3798117519385128585}
   m_Father: {fileID: 1535010232785782084}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &796313512855886724
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1947370002435126143}
+  - component: {fileID: 8835043162424825438}
+  m_Layer: 0
+  m_Name: VictoryState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1947370002435126143
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 796313512855886724}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -2.24667, y: 0, z: 1.59978}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8835043162424825438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 796313512855886724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35d6a141ef866fd4fa1e75f08d1a19df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.VictoryState
+  parents: []
+  animationClip:
+    clip: {fileID: 5029710099000895372, guid: a3edf62efc9932141b31d90fbfaaadd3, type: 3}
+    fadeTime: 0.3
+    speed: 0.5
 --- !u!1 &1203691853417041816
 GameObject:
   m_ObjectHideFlags: 0
@@ -266,7 +315,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1012561812567522805}
   animationClip:
-    clip: {fileID: -1071750961998992225, guid: 83e010e9cb9d1b14a9bb5dd03ba6f213, type: 3}
+    clip: {fileID: -1071750961998992225, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
@@ -420,9 +469,9 @@ MonoBehaviour:
   maxHitPoint: 100
   maxSpecialPoint: 100
   defaultState: {fileID: 1734285505626645502}
-  deadState: {fileID: 0}
-  VictoryState: {fileID: 0}
-  IntroState: {fileID: 0}
+  deadState: {fileID: 277970530805844271}
+  VictoryState: {fileID: 8835043162424825438}
+  IntroState: {fileID: 1109024110008071340}
   aiBrain: {fileID: 0}
   centerPositionTransform: {fileID: 0}
 --- !u!95 &8632360735648339568
@@ -511,6 +560,9 @@ Transform:
   - {fileID: 3513985008609795516}
   - {fileID: 3868088446445470085}
   - {fileID: 2526227894246218286}
+  - {fileID: 1947370002435126143}
+  - {fileID: 2791010163471014829}
+  - {fileID: 1958829038533621058}
   m_Father: {fileID: 1535010232785782084}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3169582615008757670
@@ -560,7 +612,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1012561812567522805}
   animationClip:
-    clip: {fileID: 2499177954120741571, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: 2499177954120741571, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 1
   nextNode: {fileID: 707581214265331847}
@@ -613,7 +665,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1012561812567522805}
   animationClip:
-    clip: {fileID: 7791916682545647297, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: 7791916682545647297, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 1
   nextNode: {fileID: 707581214265331847}
@@ -715,12 +767,120 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3948ea463fd16c74c9a4987521133fad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.StunState
+  parents:
+  - {fileID: 7199184492773224269}
+  animationClip:
+    clip: {fileID: -8691261365967096569, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
+    fadeTime: 0
+    speed: 3
+  nextNode: {fileID: 707581214265331847}
+--- !u!1 &4120216879851527883
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1958829038533621058}
+  - component: {fileID: 1109024110008071340}
+  m_Layer: 0
+  m_Name: IntroState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1958829038533621058
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4120216879851527883}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -2.24667, y: 0, z: 1.59978}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1109024110008071340
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4120216879851527883}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a639da8615fbe14dbb5d3d9123727df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.IntroState
   parents: []
   animationClip:
-    clip: {fileID: -3551865654841311323, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: 9197060619526105886, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
-    speed: 1.5
-  nextNode: {fileID: 707581214265331847}
+    speed: 0.5
+  animationPlayDelaySeconds: 1
+  magicCirclePrefab: {fileID: 3734630160438736017, guid: 16c0fd91b411dd34e9aec07652316225, type: 3}
+  magicCircleSpawnPoint: {fileID: 2482882149848866868}
+  magicCircleRotationEuler: {x: 0, y: 0, z: 90}
+  tuePrefab: {fileID: 3935731765756432010}
+  wizardPrefab: {fileID: 1002225208263082530}
+  magicCircleGrowDurationSeconds: 0.4
+  magicCircleDestroyDelaySeconds: 3
+  tueAndWizardSpawnDelaySeconds: 1
+--- !u!1 &4336457620704664207
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2791010163471014829}
+  - component: {fileID: 277970530805844271}
+  m_Layer: 0
+  m_Name: DeadState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2791010163471014829
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4336457620704664207}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -2.24667, y: 0, z: 1.59978}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &277970530805844271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4336457620704664207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c049e4d87abbf9447ab6449347d532d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.DeadState
+  parents: []
+  animationClip:
+    clip: {fileID: 8076360251129776816, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
+    fadeTime: 0
+    speed: 0.2
 --- !u!1 &4404737297509214527
 GameObject:
   m_ObjectHideFlags: 0
@@ -844,7 +1004,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1012561812567522805}
   animationClip:
-    clip: {fileID: -2993534804863918692, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: -2993534804863918692, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 2
   fallNode: {fileID: 3250182338819609899}
@@ -942,7 +1102,7 @@ MonoBehaviour:
   - {fileID: 7199184492773224269}
   - {fileID: 5017356379004291730}
   animationClip:
-    clip: {fileID: -3419257869308726280, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: -3419257869308726280, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 0.45
   walkSpeed: 2
@@ -994,7 +1154,7 @@ MonoBehaviour:
   attack1State: {fileID: 4324538208326174747}
   attack2State: {fileID: 7010646026458285884}
   attack3State: {fileID: 6075840688452119110}
-  specialState: {fileID: 0}
+  specialState: {fileID: 7084057613530797037}
   energyStorage: {fileID: 8599359020340622459}
 --- !u!1 &5801689502406555063
 GameObject:
@@ -1044,7 +1204,7 @@ MonoBehaviour:
   - {fileID: 7199184492773224269}
   - {fileID: 5017356379004291730}
   animationClip:
-    clip: {fileID: 6723761709308234962, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: 6723761709308234962, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 0.45
   walkSpeed: 2
@@ -1095,7 +1255,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1012561812567522805}
   animationClip:
-    clip: {fileID: 5332256259459953303, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: -2248711181809642502, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 1
   nextNode: {fileID: 707581214265331847}
@@ -1150,7 +1310,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1012561812567522805}
   animationClip:
-    clip: {fileID: -5612658629409835226, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: -5612658629409835226, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 1
   nextNode: {fileID: 707581214265331847}
@@ -1279,7 +1439,7 @@ MonoBehaviour:
   parents:
   - {fileID: 1012561812567522805}
   animationClip:
-    clip: {fileID: 7791916682545647297, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: 7791916682545647297, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 0.5
   nextNode: {fileID: 707581214265331847}
@@ -1335,7 +1495,7 @@ MonoBehaviour:
   - {fileID: 7199184492773224269}
   - {fileID: 5017356379004291730}
   animationClip:
-    clip: {fileID: -449244673057268443, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: -449244673057268443, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0.3
     speed: 0.45
 --- !u!1 &7760132438464499455
@@ -1384,7 +1544,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.GuardState
   parents: []
   animationClip:
-    clip: {fileID: 3299788110970749302, guid: de055a59ac12c504fba16b78fe739e89, type: 3}
+    clip: {fileID: 3299788110970749302, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 1
   nextNode: {fileID: 707581214265331847}
@@ -1437,7 +1597,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.TurnState
   parents: []
   animationClip:
-    clip: {fileID: -2420282054849679639, guid: 83e010e9cb9d1b14a9bb5dd03ba6f213, type: 3}
+    clip: {fileID: -2420282054849679639, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
@@ -1564,6 +1724,10 @@ PrefabInstance:
     - target: {fileID: 8496572917567628545, guid: 8691060563ea1f54996ecbcc8899e6f2, type: 3}
       propertyPath: m_Name
       value: tue
+      objectReference: {fileID: 0}
+    - target: {fileID: 8496572917567628545, guid: 8691060563ea1f54996ecbcc8899e6f2, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9124913663875153851, guid: 8691060563ea1f54996ecbcc8899e6f2, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2792,6 +2956,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Magic.bone
       objectReference: {fileID: 0}
+    - target: {fileID: -1728013695380148634, guid: 37d428df5c910584396dd6cdd0df9fbd, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1144061141385143964, guid: 37d428df5c910584396dd6cdd0df9fbd, type: 3}
       propertyPath: m_DirtyAABB
       value: 0
@@ -3194,6 +3362,11 @@ MonoBehaviour:
   m_limitSpaceOffset: {x: 0, y: 0, z: 0, w: 1}
   m_pitch: 3.1415927
   m_yaw: 0
+--- !u!1 &1002225208263082530 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -1728013695380148634, guid: 37d428df5c910584396dd6cdd0df9fbd, type: 3}
+  m_PrefabInstance: {fileID: 7344317897879956548}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1017782367746831212 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -1444633361575764184, guid: 37d428df5c910584396dd6cdd0df9fbd, type: 3}
