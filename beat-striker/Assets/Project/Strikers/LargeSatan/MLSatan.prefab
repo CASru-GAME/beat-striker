@@ -316,9 +316,6 @@ GameObject:
   - component: {fileID: 8716767000433258826}
   - component: {fileID: 8515823221661986454}
   - component: {fileID: 4310568605961233167}
-  - component: {fileID: -207777551241997971}
-  - component: {fileID: 318818496366205831}
-  - component: {fileID: -1724991668604713976}
   m_Layer: 3
   m_Name: MLSatan
   m_TagString: Untagged
@@ -436,7 +433,7 @@ MonoBehaviour:
   deadState: {fileID: 614530405571233721}
   VictoryState: {fileID: 4353469668150655512}
   IntroState: {fileID: 659335394042643980}
-  aiBrain: {fileID: -1724991668604713976}
+  aiBrain: {fileID: 0}
   centerPositionTransform: {fileID: 0}
 --- !u!114 &8515823221661986454
 MonoBehaviour:
@@ -465,78 +462,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hurtbox
   isGuarding: 1
   strikerHub: {fileID: 8716767000433258826}
---- !u!114 &-207777551241997971
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1517210810096820132}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Policies.BehaviorParameters
-  m_BrainParameters:
-    VectorObservationSize: 13
-    NumStackedVectorObservations: 1
-    m_ActionSpec:
-      m_NumContinuousActions: 0
-      BranchSizes: 0500000005000000
-    VectorActionSize: 0500000005000000
-    VectorActionDescriptions: []
-    VectorActionSpaceType: 0
-    hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: c9f3ed84671cf6d4fa74ca5cdee88c9e, type: 3}
-  m_InferenceDevice: 0
-  m_BehaviorType: 2
-  m_BehaviorName: Satan
-  TeamId: 0
-  m_UseChildSensors: 1
-  m_UseChildActuators: 1
-  m_DeterministicInference: 0
-  m_ObservableAttributeHandling: 0
---- !u!114 &318818496366205831
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1517210810096820132}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 777aaf249b65748dba7f6a759c86970c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.MLAiDecisionAgent
-  agentParameters:
-    maxStep: 0
-  hasUpgradedFromAgentParameters: 1
-  MaxStep: 3000
---- !u!114 &-1724991668604713976
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1517210810096820132}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c7498323f35e14c0a9416eb4d7b33956, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.MLAiBrain
-  keepDistance: 1.2
-  keepDistanceTolerance: 0.4
-  attackDistance: 1.5
-  jumpDirectionY: 1
-  stepPenalty: -0.001
-  spacingReward: 0.01
-  badSpacingPenalty: -0.005
-  validAttackIntentReward: 0.05
-  invalidAttackIntentPenalty: -0.02
-  dealtDamageRewardScale: 0.03
-  receivedDamagePenaltyScale: 0.04
-  winReward: 1
-  losePenalty: -1
 --- !u!1 &1863899945261721977
 GameObject:
   m_ObjectHideFlags: 0

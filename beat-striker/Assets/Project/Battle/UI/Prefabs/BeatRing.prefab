@@ -212,10 +212,13 @@ MonoBehaviour:
   - {fileID: 7215876698700795337}
   judgeTextPrefab: {fileID: 4174774771344561441, guid: 2639b9d90de6446b29685f14fc350308, type: 3}
   judgeTextForwardReference: {fileID: 6081943596321371067}
-  ringRadiusPerSecond: 2
-  windowScale: 3
+  ringRadiusPerSecond: 3
+  windowScale: 3.5
   judgeTextFadeDuration: 0.3
   judgeTextDropDistance: 5
+  beatPulseScale: 1
+  beatPulseExpandDuration: 0.06
+  beatPulseShrinkDuration: 0.1
   successSound: {fileID: 8300000, guid: f9398444eb0b1b34c8a5c0b08e139af8, type: 3}
   excellentSound: {fileID: 8300000, guid: f9398444eb0b1b34c8a5c0b08e139af8, type: 3}
   missSound: {fileID: 8300000, guid: 63d68b446e452af4a8a4608dd9771d89, type: 3}

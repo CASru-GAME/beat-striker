@@ -39,6 +39,10 @@ public class ButtonGuideStartOffsetMotion : MonoBehaviour {
     }
 
     public void Play() {
+        if (!gameObject.activeInHierarchy) {
+            return;
+        }
+
         if (sequenceCoroutine != null) {
             StopCoroutine(sequenceCoroutine);
             sequenceCoroutine = null;

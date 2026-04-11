@@ -28,11 +28,16 @@ namespace Alice {
         [SerializeField] private float centerSmoothTime = 0.15f;
         [SerializeField] private Vector2 centerViewportOffset = Vector2.zero;
         [SerializeField] private float shakeDamping = 18f;
+        [SerializeField] private float viewBeatPulseZoomDistance = 0.16f;
+        [SerializeField] private float viewBeatPulseExpandDuration = 0.05f;
+        [SerializeField] private float viewBeatPulseReturnDuration = 0.12f;
         [SerializeField] private float attentionZoomDistance = 2.2f;
         [SerializeField] private float attentionZoomSmoothTime = 0.08f;
         [SerializeField] private float attentionReturnSmoothTime = 0.12f;
         [SerializeField] private float attentionFocusPositionThreshold = 0.03f;
         [SerializeField] private float attentionFocusRotationThresholdDeg = 1.2f;
+        [SerializeField] private UnityEngine.Rendering.Volume volume;
+        [SerializeField] private bool enableVolumeOnViewBeatPulse = true;
 
         private Camera stageCamera;
         private float cameraDepthVelocity;
@@ -40,6 +45,9 @@ namespace Alice {
         Vector3 shakeOffset;
         Vector3 shakeVelocity;
         Vector3 previousShakeOffset;
+        Vector3 viewBeatPulseOffset;
+        Vector3 previousViewBeatPulseOffset;
+        float viewBeatPulseElapsedSeconds = -1f;
         private Vector2 desiredCenterViewport;
         CameraState currentState;
         Func<int, Vector3> playerCenterPositionResolver;
@@ -105,6 +113,7 @@ namespace Alice {
             public virtual void OnUpdate() { }
             public virtual void OnAttentionRequested(int playerId, float durationSeconds) { }
             public virtual void OnSequenceSkipRequested() { }
+            public virtual bool AllowsViewBeatPulse => false;
         }
 
         sealed class IdleCameraState : CameraState {
@@ -117,6 +126,8 @@ namespace Alice {
 
         sealed class BattleCameraState : CameraState {
             public BattleCameraState(StageCamera owner) : base(owner) { }
+
+            public override bool AllowsViewBeatPulse => true;
 
             public override void OnEnter() {
                 owner.attentionRuntime.Reset();
@@ -148,6 +159,8 @@ namespace Alice {
 
         sealed class AttentionCameraState : CameraState {
             public AttentionCameraState(StageCamera owner) : base(owner) { }
+
+            public override bool AllowsViewBeatPulse => true;
 
             public override void OnEnter() {
                 owner.SetAttentionActiveState(true);
@@ -199,6 +212,8 @@ namespace Alice {
 
         sealed class AttentionReturnCameraState : CameraState {
             public AttentionReturnCameraState(StageCamera owner) : base(owner) { }
+
+            public override bool AllowsViewBeatPulse => true;
 
             public override void OnEnter() {
                 owner.SetAttentionActiveState(true);
@@ -432,6 +447,7 @@ namespace Alice {
         }
 
         void LateUpdate() {
+            ApplyViewBeatPulseOffset();
             ApplyShakeOffset();
         }
 
@@ -485,6 +501,16 @@ namespace Alice {
 
         public void RequestShake(StrikerImpact command) {
             shakeVelocity += command.DirectionAndMagnitude;
+        }
+
+        public void RequestViewBeatPulse() {
+            EnsureRuntimeInitialized();
+
+            if (currentState == null || !currentState.AllowsViewBeatPulse) {
+                return;
+            }
+
+            viewBeatPulseElapsedSeconds = 0f;
         }
 
         public void RequestAttention(int playerId, float durationSeconds) {
@@ -543,6 +569,56 @@ namespace Alice {
             SetCameraState(idleState);
         }
 
+        void ResetViewBeatPulse() {
+            transform.position -= previousViewBeatPulseOffset;
+            viewBeatPulseElapsedSeconds = -1f;
+            viewBeatPulseOffset = Vector3.zero;
+            previousViewBeatPulseOffset = Vector3.zero;
+        }
+
+        void ApplyViewBeatPulseOffset() {
+            transform.position -= previousViewBeatPulseOffset;
+
+            if (viewBeatPulseElapsedSeconds < 0f) {
+                previousViewBeatPulseOffset = Vector3.zero;
+                viewBeatPulseOffset = Vector3.zero;
+                return;
+            }
+
+            viewBeatPulseElapsedSeconds += Time.deltaTime;
+
+            var expandDuration = Mathf.Max(0.0001f, viewBeatPulseExpandDuration);
+            var returnDuration = Mathf.Max(0.0001f, viewBeatPulseReturnDuration);
+            var totalDuration = expandDuration + returnDuration;
+
+            if (viewBeatPulseElapsedSeconds >= totalDuration) {
+                viewBeatPulseElapsedSeconds = -1f;
+                viewBeatPulseOffset = Vector3.zero;
+                previousViewBeatPulseOffset = Vector3.zero;
+                return;
+            }
+
+            float pulseScale;
+            if (viewBeatPulseElapsedSeconds <= expandDuration) {
+                var t = viewBeatPulseElapsedSeconds / expandDuration;
+                pulseScale = Mathf.Lerp(1f, 1f + viewBeatPulseZoomDistance, t);
+                if (enableVolumeOnViewBeatPulse) {
+                    volume.weight = Mathf.Lerp(0f, 1f, t);
+                }
+            }
+            else {
+                var t = (viewBeatPulseElapsedSeconds - expandDuration) / returnDuration;
+                pulseScale = Mathf.Lerp(1f + viewBeatPulseZoomDistance, 1f, t);
+                if (enableVolumeOnViewBeatPulse) {
+                    volume.weight = Mathf.Lerp(1f, 0f, t);
+                }
+            }
+
+            viewBeatPulseOffset = transform.forward * (pulseScale - 1f);
+            previousViewBeatPulseOffset = viewBeatPulseOffset;
+            transform.position += previousViewBeatPulseOffset;
+        }
+
         void ApplyShakeOffset() {
             transform.position -= previousShakeOffset;
 
@@ -570,6 +646,10 @@ namespace Alice {
             currentState?.OnExit();
             currentState = nextState;
             currentState.OnEnter();
+
+            if (!currentState.AllowsViewBeatPulse) {
+                ResetViewBeatPulse();
+            }
         }
 
         private Vector3 GetPlayersCenter() {

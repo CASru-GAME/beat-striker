@@ -18,6 +18,7 @@ namespace Alice {
         void Resume();
         Observable<BeatSignal> OnGoodZoneEntered { get; }
         Observable<BeatSignal> OnBeatTiming { get; }
+        Observable<BeatSignal> OnViewBeatTiming { get; }
         Observable<float[]> OnBeatTimelinePrepared { get; }
         Observable<float> OnViewPlaybackTimeChanged { get; }
         BeatJudgeResult JudgeTiming(float playbackTime);
@@ -36,6 +37,7 @@ namespace Alice {
         readonly IBattleSelectSetting battleSelectSetting;
         readonly Subject<IMusicPlayer.BeatSignal> onGoodZoneEntered = new();
         readonly Subject<IMusicPlayer.BeatSignal> onBeatTiming = new();
+        readonly Subject<IMusicPlayer.BeatSignal> onViewBeatTiming = new();
         readonly Subject<float[]> onBeatTimelinePrepared = new();
         readonly Subject<float> onViewPlaybackTimeChanged = new();
         IDisposable beatSoundSubscription;
@@ -43,11 +45,13 @@ namespace Alice {
         float[] beats = Array.Empty<float>();
         int goodWindowIndex;
         int beatTimingIndex;
+        int viewBeatTimingIndex;
         float lastPlaybackTime;
         float currentViewPlaybackTime;
 
         public Observable<IMusicPlayer.BeatSignal> OnGoodZoneEntered => onGoodZoneEntered;
         public Observable<IMusicPlayer.BeatSignal> OnBeatTiming => onBeatTiming;
+        public Observable<IMusicPlayer.BeatSignal> OnViewBeatTiming => onViewBeatTiming;
         public Observable<float[]> OnBeatTimelinePrepared => onBeatTimelinePrepared;
         public Observable<float> OnViewPlaybackTimeChanged => onViewPlaybackTimeChanged;
         public float CurrentPlaybackTime => audioSource.time;
@@ -74,6 +78,7 @@ namespace Alice {
             onBeatTimelinePrepared.OnNext(beats);
             goodWindowIndex = 0;
             beatTimingIndex = 0;
+            viewBeatTimingIndex = 0;
             lastPlaybackTime = -1f;
             
             beatSoundSubscription = Observable.EveryUpdate().Subscribe(_ => {
@@ -84,10 +89,12 @@ namespace Alice {
                 if (lastPlaybackTime >= 0f && currentTime < lastPlaybackTime) {
                     goodWindowIndex = 0;
                     beatTimingIndex = 0;
+                    viewBeatTimingIndex = 0;
                 }
 
                 EmitGoodZoneEvents();
                 EmitBeatTimingEvents();
+                EmitViewBeatTimingEvents();
 
                 lastPlaybackTime = currentTime;
             });
@@ -156,11 +163,19 @@ namespace Alice {
             }
         }
 
+        void EmitViewBeatTimingEvents() {
+            while (viewBeatTimingIndex < beats.Length && currentViewPlaybackTime >= beats[viewBeatTimingIndex]) {
+                onViewBeatTiming.OnNext(new IMusicPlayer.BeatSignal(viewBeatTimingIndex, beats[viewBeatTimingIndex]));
+                viewBeatTimingIndex += 1;
+            }
+        }
+
         public void Dispose() {
             beatSoundSubscription?.Dispose();
             volumeSubscription?.Dispose();
             onGoodZoneEntered.Dispose();
             onBeatTiming.Dispose();
+            onViewBeatTiming.Dispose();
             onBeatTimelinePrepared.Dispose();
             onViewPlaybackTimeChanged.Dispose();
         }

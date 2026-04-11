@@ -14,6 +14,9 @@ namespace Alice {
         [SerializeField] float windowScale = 3f;
         [SerializeField] float judgeTextFadeDuration = 0.6f;
         [SerializeField] float judgeTextDropDistance = 48f;
+        [SerializeField] float beatPulseScale = 1.1f;
+        [SerializeField] float beatPulseExpandDuration = 0.06f;
+        [SerializeField] float beatPulseShrinkDuration = 0.1f;
         [SerializeField] AudioClip successSound, excellentSound, missSound;
         [SerializeField] Color[] colors;
 
@@ -27,13 +30,28 @@ namespace Alice {
         Vector3 currentLookDirection = Vector3.right;
         Vector2 judgeTextForwardAnchoredPosition;
         float judgeTextForwardSignedZ;
+        Vector3 initialLocalScale;
+        Vector3[] centerRingInitialLocalScales = Array.Empty<Vector3>();
+        Vector3[] ringInitialLocalScales = Array.Empty<Vector3>();
+        float currentPulseScale = 1f;
         readonly List<TextMeshProUGUI> activeJudgeTexts = new();
 
         public void NotifyBeatPassed() {
-            // Intentionally no-op: passing a beat should not trigger any SFX or visual feedback.
+            PlayBeatPulse();
         }
 
         void Awake() {
+            initialLocalScale = transform.localScale;
+            centerRingInitialLocalScales = new Vector3[centerRing.Length];
+            for (var i = 0; i < centerRing.Length; i++) {
+                centerRingInitialLocalScales[i] = centerRing[i].transform.localScale;
+            }
+
+            ringInitialLocalScales = new Vector3[rings.Length];
+            for (var i = 0; i < rings.Length; i++) {
+                ringInitialLocalScales[i] = rings[i].transform.localScale;
+            }
+
             centerRing[0].gameObject.SetActive(false);
             judgeTextForwardAnchoredPosition = judgeTextForwardReference.anchoredPosition;
             judgeTextForwardSignedZ = Mathf.DeltaAngle(0f, judgeTextForwardReference.localEulerAngles.z);
@@ -69,6 +87,9 @@ namespace Alice {
 
         public void DeactivateBattleView() {
             battleViewActive = false;
+            LeanTween.cancel(gameObject);
+            transform.localScale = initialLocalScale;
+            currentPulseScale = 1f;
             for (var i = activeJudgeTexts.Count - 1; i >= 0; i--) {
                 var activeText = activeJudgeTexts[i];
                 LeanTween.cancel(activeText.gameObject);
@@ -183,6 +204,10 @@ namespace Alice {
             var now = currentViewPlaybackTime;
             var firstUpcoming = GetFirstUpcomingBeatIndex(beatTimeline, now);
 
+            for (var i = 0; i < centerRing.Length; i++) {
+                centerRing[i].transform.localScale = centerRingInitialLocalScales[i] * currentPulseScale;
+            }
+
             for (var i = 0; i < rings.Length; i++) {
                 if (firstUpcoming < 0) {
                     rings[i].gameObject.SetActive(false);
@@ -207,7 +232,7 @@ namespace Alice {
                 if (timeSpan < 0f) timeSpan = 0f;
 
                 var scale = ringRadiusPerSecond * timeSpan + 1f;
-                rings[i].transform.localScale = scale * Vector3.one;
+                rings[i].transform.localScale = ringInitialLocalScales[i] * (scale * currentPulseScale);
 
                 var alpha = ringFirstAlpha * Mathf.Clamp01(windowScale - scale);
                 var color = rings[i].color;
@@ -224,6 +249,26 @@ namespace Alice {
             }
 
             return -1;
+        }
+
+        void PlayBeatPulse() {
+            if (!battleViewActive) return;
+
+            LeanTween.cancel(gameObject);
+            currentPulseScale = 1f;
+
+            LeanTween.value(gameObject, 1f, beatPulseScale, beatPulseExpandDuration)
+                .setEase(LeanTweenType.easeOutQuad)
+                .setOnUpdate((float scale) => {
+                    currentPulseScale = scale;
+                })
+                .setOnComplete(() => {
+                    LeanTween.value(gameObject, currentPulseScale, 1f, beatPulseShrinkDuration)
+                        .setEase(LeanTweenType.easeInQuad)
+                        .setOnUpdate((float scale) => {
+                            currentPulseScale = scale;
+                        });
+                });
         }
     }
 }

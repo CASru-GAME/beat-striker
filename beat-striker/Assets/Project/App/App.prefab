@@ -74,7 +74,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.PlayerSelectSetting
   defaultSelections:
   - PlayerId: 0
-    Striker: 0
+    Striker: 1
   - PlayerId: 1
     Striker: 0
 --- !u!114 &9201860890254514560
@@ -192,6 +192,15 @@ MonoBehaviour:
     SpectrumData: {fileID: 4900000, guid: 3dae220b8b1f4429ea890464629273ed, type: 3}
     Bpm: 110
     Offset: 0
+  - Id: fire
+    DisplayName: Beat Striker on Fire
+    Description: 'Composer: Suno 4.5+
+
+      BPM: 109'
+    AudioClip: {fileID: 8300000, guid: 908af2efd514d47f29e3778b8b3c4212, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 5398030452e0a4c618af21947097729e, type: 3}
+    Bpm: 109
+    Offset: 0
   - Id: sento
     DisplayName: "\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA"
     Description: 'Composer: Azuno
@@ -200,6 +209,15 @@ MonoBehaviour:
     AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
     SpectrumData: {fileID: 4900000, guid: 5a14db5d051ccf7448ffdc129b4a7476, type: 3}
     Bpm: 110
+    Offset: 0
+  - Id: kl
+    DisplayName: I Need
+    Description: 'Composer: D''elf
+
+      BPM: 128'
+    AudioClip: {fileID: 8300000, guid: 59ef98e38d52746fbaf823b45004f899, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 42a46a87f82914f9ea898c44c6a9ee10, type: 3}
+    Bpm: 128
     Offset: 0
 --- !u!114 &8416357320802876425
 MonoBehaviour:
@@ -257,8 +275,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AudioSetting
   commandTimeOffset: 0
-  viewTimeOffset: 0.1
-  beatTimeOffset: 0.1
+  viewTimeOffset: 0.15
+  beatTimeOffset: 0.15
   goodWindow: 0.3
   excellentWindow: 0.15
   goodScoreMultiplier: 1

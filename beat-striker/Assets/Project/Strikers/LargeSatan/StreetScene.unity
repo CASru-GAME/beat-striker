@@ -254,6 +254,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3568961321467451832, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: beatTimeOffset
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3568961321467451832, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: viewTimeOffset
+      value: 0.2
+      objectReference: {fileID: 0}
     - target: {fileID: 4430401366509071009, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: m_Name
       value: App
@@ -304,32 +312,17 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8179424678283996581, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: defaultSelections.Array.data[1].Striker
-      value: 3
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133904809460036572, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: selectedMusicId
+      value: kl
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
---- !u!1 &1391399641 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8825914073744022708, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
-  m_PrefabInstance: {fileID: 5099365940845838016}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1391399646
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1391399641}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75601c07b0b534b4183a8f51709d620a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleOpeningBgmPlayer
-  openingBgm: {fileID: 0}
-  volume: 1
 --- !u!1 &96793034939118959
 GameObject:
   m_ObjectHideFlags: 0
@@ -757,10 +750,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8825914073744022708, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1391399646}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
 --- !u!4 &5364280690241190197
 Transform:

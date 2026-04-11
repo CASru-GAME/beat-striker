@@ -10519,6 +10519,55 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &3491674965059989581
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 634274511227533805}
+  - component: {fileID: 9149224681393274023}
+  m_Layer: 0
+  m_Name: Volume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &634274511227533805
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3491674965059989581}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1000, y: 1.42504, z: 0.012380004}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 9022574726519181296}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9149224681393274023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3491674965059989581}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 0
+  sharedProfile: {fileID: 11400000, guid: b91237a9a77924521a31fe8398b5a8b9, type: 2}
 --- !u!1 &3574667402875483379
 GameObject:
   m_ObjectHideFlags: 0
@@ -20836,11 +20885,16 @@ MonoBehaviour:
   centerSmoothTime: 0.15
   centerViewportOffset: {x: 0, y: -0.1}
   shakeDamping: 18
+  viewBeatPulseZoomDistance: 0
+  viewBeatPulseExpandDuration: 0.03
+  viewBeatPulseReturnDuration: 0.08
   attentionZoomDistance: 2.2
   attentionZoomSmoothTime: 0.08
   attentionReturnSmoothTime: 0.12
   attentionFocusPositionThreshold: 0.03
   attentionFocusRotationThresholdDeg: 1.2
+  volume: {fileID: 9149224681393274023}
+  enableVolumeOnViewBeatPulse: 0
 --- !u!81 &3239618792123523464
 AudioListener:
   m_ObjectHideFlags: 0
@@ -22079,6 +22133,7 @@ Transform:
   m_Children:
   - {fileID: 8727693288958670458}
   - {fileID: 4594181507648077384}
+  - {fileID: 634274511227533805}
   - {fileID: 1391624084580501542}
   - {fileID: 82969115449958417}
   m_Father: {fileID: 0}

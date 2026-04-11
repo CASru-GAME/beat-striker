@@ -274,6 +274,10 @@ namespace Alice {
                     if(battlePresenterView.BeatSound) AudioSource.PlayClipAtPoint(battlePresenterView.BeatSound, Vector3.zero);
                 })
                 .AddTo(audioSubscriptions);
+
+            musicPlayer.OnViewBeatTiming
+                .Subscribe(_ => battlePresenterView.StageCamera.RequestViewBeatPulse())
+                .AddTo(audioSubscriptions);
         }
 
         void SubscribeAttentionTextEvents() {

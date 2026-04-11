@@ -119,12 +119,13 @@ namespace Alice {
                 })
                 .AddTo(disposables);
 
-            beatPlayer.OnBeatPassed
-                .Subscribe(result => {
+            musicPlayer.OnViewBeatTiming
+                .Subscribe(_ => {
                     if (!roundPlayable) return;
                     ringView.NotifyBeatPassed();
                 })
                 .AddTo(disposables);
+
         }
 
         void OnStrikerRegistered(StrikerRegistration registration) {

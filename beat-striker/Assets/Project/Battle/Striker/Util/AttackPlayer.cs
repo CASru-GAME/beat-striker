@@ -6,11 +6,12 @@ using R3;
 using UnityEngine;
 using UnityEngine.Pool;
 
-[AddComponentMenu(" 🟠Effect Player")]
+[AddComponentMenu(" 🟠Attack Player")]
 public class AttackPlayer : MonoBehaviour {
     [SerializeField] EffectPlayer attackEffectPlayer, hitEffectPlayer;
     [SerializeField] AudioClip attackSound, hitSound;
     [SerializeField] bool multipleHit = false;
+    [SerializeField] float hitDetectionStartTime = 0f;
     [SerializeField] float hitDetectionDuration = 0.5f;
     readonly List<Hit> hitsInFrame = new();
     public record Hit(Vector3 hitPoint, Collider collider);
@@ -52,6 +53,7 @@ public class AttackPlayer : MonoBehaviour {
     }
 
     void OnTriggerEnter(Collider other) {
+        if (episodeTime < hitDetectionStartTime) return;
         if (!onFilterHitSubject.InvokeAllAnd(other)) return;
         isVirgin = false;
 
@@ -68,7 +70,7 @@ public class AttackPlayer : MonoBehaviour {
 
     void Update() {
         episodeTime += Time.deltaTime;
-        if(episodeTime > hitDetectionDuration) {
+        if(episodeTime > hitDetectionStartTime + hitDetectionDuration) {
             enabled = false;
             return;
         }
