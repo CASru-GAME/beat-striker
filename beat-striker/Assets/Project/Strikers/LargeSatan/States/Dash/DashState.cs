@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Alice;
 using System;
 
@@ -8,7 +8,7 @@ namespace Core.LargeSatan {
     public class DashState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Dash;
 
-        // 縺薙・繧ｹ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ繧ｯ繝ｪ繝・・
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧「繝九Γ繝シ繧キ繝ァ繝ウ繧ッ繝ェ繝・・
         [SerializeField] private StrikerAnimationClip fowardClip, backwardClip;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] float[] consecutiveDashSpeeds = { 20f, 24f, 28f };
@@ -23,7 +23,7 @@ namespace Core.LargeSatan {
         int lastEnterDirectionSign;
         int consecutiveEnterCount;
 
-        // 縺薙・繧ｹ繝・・繝医↓驕ｷ遘ｻ縺励◆逶ｴ蠕後↓蜻ｼ縺ｰ繧後ｋ
+        // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
         public override void OnEnter(IStrikerContext context) {
             int requestedInputX = Math.Sign(context.LocalInputDirection.x);
             int enterDirectionSign = requestedInputX < 0 ? -1 : 1;
@@ -38,7 +38,7 @@ namespace Core.LargeSatan {
             lastEnterTime = Time.time;
             lastEnterDirectionSign = enterDirectionSign;
 
-            // 繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ縺ｮ蜀咲函繧帝幕蟋九☆繧・
+            // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
             StrikerAnimationClip clip;
             if(enterDirectionSign < 0) {
                 clip = backwardClip;
@@ -58,7 +58,7 @@ namespace Core.LargeSatan {
             });
         }
 
-        // 縺薙・繧ｹ繝・・繝医↓縺・ｋ髢薙∵ｯ弱ヵ繝ｬ繝ｼ繝蜻ｼ縺ｰ繧後ｋ
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∵ッ弱ヵ繝ャ繝シ繝蜻シ縺ー繧後ｋ
         public override void OnUpdate(IStrikerStateContext context) {
             if(stoppedByOpponentDistance) {
                 context.Rigidbody.linearVelocity = Vector3.zero;
@@ -108,7 +108,7 @@ namespace Core.LargeSatan {
             return (0f <= t1 && t1 <= 1f) || (0f <= t2 && t2 <= 1f);
         }
 
-        // 莉悶・繧ｹ繝・・繝医↓驕ｷ遘ｻ縺吶ｋ逶ｴ蜑阪↓蜻ｼ縺ｰ繧後ｋ
+        // 莉悶・繧ケ繝・・繝医↓驕キ遘サ縺吶ｋ逶エ蜑阪↓蜻シ縺ー繧後ｋ
         public override void OnExit(IStrikerContext context) {
         }
 
