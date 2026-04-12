@@ -1,12 +1,14 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Alice;
 using System;
 
 namespace Core.LargeSatan {
+
 
     public class DiveState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Dash;
 
-        // このステートにいる間、再生されるアニメーションクリップ
+        // 縺薙・繧ｹ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ繧ｯ繝ｪ繝・・
         [SerializeField] private StrikerAnimationClip clip;
         [SerializeField] StrikerNode fallNode;
         [SerializeField] float speed = 30f;
@@ -19,11 +21,11 @@ namespace Core.LargeSatan {
         float elapsedTime;
         bool previousUseGravity;
 
-        // このステートに遷移した直後に呼ばれる
+        // 縺薙・繧ｹ繝・・繝医↓驕ｷ遘ｻ縺励◆逶ｴ蠕後↓蜻ｼ縺ｰ繧後ｋ
         public override void OnEnter(IStrikerContext context) {
             groundRayDistance = stopDistanceToGround * 2f;
             var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
-            // アニメーションの再生を開始する
+            // 繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ縺ｮ蜀咲函繧帝幕蟋九☆繧・
             context.PlayAnimation(clip);
             this.initialVelocity = speed * direction;
             this.elapsedTime = 0f;
@@ -40,7 +42,7 @@ namespace Core.LargeSatan {
             });
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
+        // 縺薙・繧ｹ繝・・繝医↓縺・ｋ髢薙∵ｯ弱ヵ繝ｬ繝ｼ繝蜻ｼ縺ｰ繧後ｋ
         public override void OnUpdate(IStrikerStateContext context) {
             elapsedTime += Time.deltaTime;
             float ratio = Mathf.Max(endSpeedRatio, 0.0001f);
@@ -56,7 +58,7 @@ namespace Core.LargeSatan {
             context.Rigidbody.linearVelocity = velocity;
         }
 
-        // 他のステートに遷移する直前に呼ばれる
+        // 莉悶・繧ｹ繝・・繝医↓驕ｷ遘ｻ縺吶ｋ逶ｴ蜑阪↓蜻ｼ縺ｰ繧後ｋ
         public override void OnExit(IStrikerContext context) {
             context.Rigidbody.useGravity = this.previousUseGravity;
         }
@@ -76,3 +78,5 @@ namespace Core.LargeSatan {
         }
     }
 }
+
+

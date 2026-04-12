@@ -1,12 +1,14 @@
-using Core.Battle;
+﻿using Core.Battle;
 using UnityEngine;
 using Core.Striker;
 using Core.Striker.Components;
 using UnityEngine.Serialization;
 
 namespace Core.LargeHero {
+
 
     public class SpecialLaunchState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Special;
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerNode nextNode;
         [SerializeField] private StrikerNode noHitFallbackNode;
@@ -135,3 +137,5 @@ namespace Core.LargeHero {
         }
     }
 }
+
+

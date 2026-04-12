@@ -1,10 +1,12 @@
-using Core.Battle;
+﻿using Core.Battle;
 using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeHero {
+
 
     public class SpecialFallState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Special;
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private GroundChecker groundChecker;
         [SerializeField] private StrikerNode landNode;
@@ -26,3 +28,5 @@ namespace Core.LargeHero {
         }
     }
 }
+
+

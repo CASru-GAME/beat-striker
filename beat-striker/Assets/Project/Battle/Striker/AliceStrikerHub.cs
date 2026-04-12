@@ -21,6 +21,16 @@ public interface IStrikerContext {
 }
 
 namespace Alice {
+    public enum StrikerStateCategory {
+        Idle,
+        Dash,
+        Attack,
+        Charge,
+        Special,
+        Guard,
+        Unknown
+    }
+
     public interface IObservableStriker {
         ReadOnlyReactiveProperty<int> PlayerId { get; }
         ReadOnlyReactiveProperty<Vector3> Position { get; }
@@ -32,6 +42,7 @@ namespace Alice {
         ReadOnlyReactiveProperty<float> SpecialPoint { get; }
         ReadOnlyReactiveProperty<float> MaxSpecialPoint { get; }
         Observable<Unit> OnDead { get; }
+        ReadOnlyReactiveProperty<StrikerStateCategory> CurrentStateCategory { get; }
     }
 
     public interface IStrikerHub : IObservableStriker, System.IDisposable {
@@ -82,6 +93,7 @@ namespace Alice {
         readonly ReactiveProperty<float> maxHitPointSubject = new(0f);
         readonly ReactiveProperty<float> specialPointSubject = new(0f);
         readonly ReactiveProperty<float> maxSpecialPointSubject = new(0f);
+        readonly ReactiveProperty<StrikerStateCategory> currentStateCategorySubject = new(StrikerStateCategory.Unknown);
         readonly Subject<StrikerImpact> onInpactGeneratedSubject = new();
         readonly Subject<AttentionRequest> onAttentionRequestedSubject = new();
         readonly Subject<Unit> onSpecialRequestFailedSubject = new();
@@ -113,6 +125,7 @@ namespace Alice {
         public ReadOnlyReactiveProperty<float> MaxHitPoint => maxHitPointSubject;
         public ReadOnlyReactiveProperty<float> SpecialPoint => specialPointSubject;
         public ReadOnlyReactiveProperty<float> MaxSpecialPoint => maxSpecialPointSubject;
+        public ReadOnlyReactiveProperty<StrikerStateCategory> CurrentStateCategory => currentStateCategorySubject;
         public Observable<StrikerImpact> OnInpactGenerated => onInpactGeneratedSubject;
         public Observable<AttentionRequest> OnAtentionRequested => onAttentionRequestedSubject;
         public Observable<Unit> OnSpecialRequestFailed => onSpecialRequestFailedSubject;
@@ -175,9 +188,11 @@ namespace Alice {
 
             UpdateEnemyInFrontState();
             NotifyEnemyBehindOnStateChanged();
+            currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
 
             stateMachine.CurrentState.OnUpdate(stateMachine);
             NotifyEnemyBehindOnStateChanged();
+            currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
         }
 
         public void InitializeFromLegacy(StrikerHub legacy) {
@@ -209,6 +224,7 @@ namespace Alice {
             hasEnemyInFrontState = false;
             isEnemyInFront = true;
             hasObservedState = false;
+            currentStateCategorySubject.OnNext(StrikerStateCategory.Unknown);
             initialized = true;
         }
 
@@ -234,6 +250,7 @@ namespace Alice {
             maxHitPointSubject.Dispose();
             specialPointSubject.Dispose();
             maxSpecialPointSubject.Dispose();
+            currentStateCategorySubject.Dispose();
             onInpactGeneratedSubject.Dispose();
             onAttentionRequestedSubject.Dispose();
             onSpecialRequestFailedSubject.Dispose();

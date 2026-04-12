@@ -1,6 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class DeathState : StrikerState {
+    public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Unknown;
+
     [SerializeField] StrikerAnimationClip animationClip;
     [SerializeField] bool resetVelocityOnEnter = true;
 
@@ -13,3 +15,5 @@ public class DeathState : StrikerState {
         context.PlayAnimation(animationClip);
     }
 }
+
+

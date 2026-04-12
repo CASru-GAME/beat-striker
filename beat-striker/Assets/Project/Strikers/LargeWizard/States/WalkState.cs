@@ -1,28 +1,32 @@
-using Core.Battle;
+﻿using Core.Battle;
 using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeWizard {
-    
-    public class WalkState : StrikerState {
+
 
-        // このステートにいる間、再生されるアニメーションクリップ
+    public class WalkState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Idle;
+
+        // 縺薙・繧ｹ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ繧ｯ繝ｪ繝・・
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] float walkSpeed;
    
 
-        // このステートに遷移した直後に呼ばれる
+        // 縺薙・繧ｹ繝・・繝医↓驕ｷ遘ｻ縺励◆逶ｴ蠕後↓蜻ｼ縺ｰ繧後ｋ
         public override void OnEnter(IStrikerContext context) {
-            // アニメーションの再生を開始する
+            // 繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ縺ｮ蜀咲函繧帝幕蟋九☆繧・
             context.PlayAnimation(animationClip);
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
+        // 縺薙・繧ｹ繝・・繝医↓縺・ｋ髢薙∵ｯ弱ヵ繝ｬ繝ｼ繝蜻ｼ縺ｰ繧後ｋ
         public override void OnUpdate(IStrikerStateContext context) {
             var v = context.Rigidbody.linearVelocity;
             v.x = context.InputDirection.x * walkSpeed;
             context.Rigidbody.linearVelocity = v;
-            // 入力に応じて待機ステートに遷移する例
+            // 蜈･蜉帙↓蠢懊§縺ｦ蠕・ｩ溘せ繝・・繝医↓驕ｷ遘ｻ縺吶ｋ萓・
         }
     }
 }
+
+
