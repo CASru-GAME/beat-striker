@@ -21,11 +21,11 @@ public class beam11 : MonoBehaviour
     [Tooltip("コライダーが1秒あたりに縮む長さ（等速）")]
     [SerializeField, Min(0f)] float colliderShrinkLengthPerSecond = 4f;
     [SerializeField] ParticleSystem beam11ParticleSystem;
+    [SerializeField] public Hurtbox Hurtbox;
 
     BoxCollider hitCollider;
     Vector3 initialColliderSize;
     Vector3 initialColliderCenter;
-    Hurtbox ownerHurtbox;
     StrikerHub ownerStrikerHub;
     float elapsed;
     float currentLength;
@@ -41,8 +41,9 @@ public class beam11 : MonoBehaviour
         ownerStrikerHub = GetComponentInParent<StrikerHub>();
         if (ownerStrikerHub != null)
         {
-            ownerHurtbox = ownerStrikerHub.GetComponentInChildren<Hurtbox>();
+            Hurtbox = ownerStrikerHub.GetComponentInChildren<Hurtbox>();
         }
+        ApplyOwnerStrikerhubCollisionIgnore();
 
         initialColliderSize = hitCollider.size;
         initialColliderCenter = hitCollider.center;
@@ -52,7 +53,28 @@ public class beam11 : MonoBehaviour
     public void SetOwnerStrikerHub(StrikerHub strikerHub)
     {
         ownerStrikerHub = strikerHub;
-        ownerHurtbox = strikerHub.GetComponentInChildren<Hurtbox>();
+        Hurtbox = strikerHub.GetComponentInChildren<Hurtbox>();
+        ApplyOwnerStrikerhubCollisionIgnore();
+    }
+
+    void ApplyOwnerStrikerhubCollisionIgnore()
+    {
+        if (ownerStrikerHub == null)
+        {
+            return;
+        }
+
+        var ownerColliders = Hurtbox.GetComponentsInChildren<Collider>(true);
+        for (var i = 0; i < ownerColliders.Length; i++)
+        {
+            var ownerCollider = ownerColliders[i];
+            if (ownerCollider == null || ownerCollider == hitCollider)
+            {
+                continue;
+            }
+
+            Physics.IgnoreCollision(hitCollider, ownerCollider, true);
+        }
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -156,7 +178,12 @@ public class beam11 : MonoBehaviour
             }
         }
 
-        if (ownerHurtbox != null && hurtbox == ownerHurtbox)
+        if (hurtbox == Hurtbox)
+        {
+            return;
+        }
+
+        if (ownerStrikerHub != null && hurtbox == ownerStrikerHub.GetComponentInChildren<Hurtbox>())
         {
             return;
         }

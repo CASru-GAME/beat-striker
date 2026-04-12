@@ -167,6 +167,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2356631244881786875, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
+      propertyPath: 'strikers.Array.data[0]'
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2443544900303520052, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
+      propertyPath: m_Volume
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2627521735593949992, guid: 2695a3256facd407c9b3bf71792a45c1, type: 3}
       propertyPath: m_Name
       value: BattleScene

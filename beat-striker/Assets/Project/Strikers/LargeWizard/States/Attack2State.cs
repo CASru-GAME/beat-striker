@@ -31,13 +31,7 @@ namespace Core.LargeWizard {
 
                 var opponentPos = opponent.transform.position;
                 var spawnPos = opponentPos;
-                var rayStartPos = opponentPos + Vector3.up * groundRayStartHeight;
-                var rayDistance = groundRayDistance + Mathf.Max(0f, opponentPos.y);
-                if (Physics.Raycast(rayStartPos,
-                                    Vector3.down, out var rhit, rayDistance, groundMask,
-                                    QueryTriggerInteraction.Ignore)) {
-                    spawnPos = rhit.point;
-                }
+                spawnPos.y = 315f;
 
                 var ice = Instantiate(icePrefab, spawnPos, Quaternion.identity);
                 var iceBehavior = ice.GetComponent<Ice>();

@@ -232,11 +232,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.DashState
   parents:
   - {fileID: 1012561812567522805}
+  - {fileID: 5017356379004291730}
   animationClip:
     clip: {fileID: -8444228808809566427, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 1
-  dashSpeed: 10
+  dashSpeed: 15
+  nextNode: {fileID: 707581214265331847}
 --- !u!1 &1203691853417041816
 GameObject:
   m_ObjectHideFlags: 0
@@ -370,8 +372,9 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 707581214265331847}
-  specialPrefab: {fileID: 1130951119586766898, guid: dbfab5bbecf025f43bc6113e4a250f6d, type: 3}
+  specialPrefab: {fileID: 2572839958750799036, guid: dbfab5bbecf025f43bc6113e4a250f6d, type: 3}
   spawnPoint: {fileID: 3513985008609795516}
+  hurtbox: {fileID: 8402618834828561335}
 --- !u!1 &2145360790748758675
 GameObject:
   m_ObjectHideFlags: 0
@@ -820,7 +823,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.StunState
   parents:
-  - {fileID: 7199184492773224269}
+  - {fileID: 1012561812567522805}
   animationClip:
     clip: {fileID: -8691261365967096569, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
@@ -1499,6 +1502,7 @@ MonoBehaviour:
   firePrefab: {fileID: 3295605662574902340, guid: f75a7422d1cf6944b88b9eccbf28a3db, type: 3}
   firePosition: {fileID: 1825252972272839792}
   fireTime: 0.3
+  firePrefabDestroyDelaySeconds: 5
 --- !u!1 &7550960389641837493
 GameObject:
   m_ObjectHideFlags: 0

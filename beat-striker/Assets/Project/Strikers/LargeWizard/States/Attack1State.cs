@@ -14,6 +14,8 @@ namespace Core.LargeWizard {
         [SerializeField] GameObject firePrefab;
         [SerializeField] Transform firePosition;
         [SerializeField] float fireTime = 0.3f;
+        [Tooltip("firePrefab を削除するまでの秒数")]
+        [SerializeField, Min(0f)] float firePrefabDestroyDelaySeconds = 5f;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -26,6 +28,8 @@ namespace Core.LargeWizard {
 
             ScheduleStateEvent(fireTime,context => {
                 var particleInstance = Instantiate(firePrefab, firePosition.position, context.Rigidbody.rotation);
+                particleInstance.GetComponent<Fire>().Hurtbox = context.Rigidbody.GetComponentInChildren<Hurtbox>();
+                Destroy(particleInstance, firePrefabDestroyDelaySeconds);
             });
         }
 

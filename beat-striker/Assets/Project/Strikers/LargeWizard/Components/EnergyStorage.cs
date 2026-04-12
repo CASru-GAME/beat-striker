@@ -27,6 +27,8 @@ namespace Core.LargeWizard{
             if (chargeInstance) {
                 Destroy(chargeInstance);
             }
+
+            
             chargeInstance = Instantiate(prefab, transform);
             chargeInstance.transform.localPosition = chargeOffset;
         }
@@ -38,6 +40,13 @@ namespace Core.LargeWizard{
                 Destroy(chargeInstance);
             }
             return lastChargeCount;
+        }
+
+        public void ClearChargeEffect() {
+            if (chargeInstance) {
+                Destroy(chargeInstance);
+                chargeInstance = null;
+            }
         }
     
   

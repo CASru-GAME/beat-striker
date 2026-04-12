@@ -11,6 +11,8 @@ namespace Core.LargeWizard {
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            context.Rigidbody.GetComponentInParent<EnergyStorage>()?.ClearChargeEffect();
+
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip);
         }

@@ -9,14 +9,19 @@ namespace Core.LargeWizard {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] float dashSpeed;
+        [SerializeField] StrikerNode nextNode;
 
          // このステートに遷移した直後に呼ばれる
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip);
+            context.PlayAnimation(animationClip, OnAnimationEnd);
             context.Rigidbody.linearVelocity = dashSpeed * context.InputDirection;
+        }
+
+        private void OnAnimationEnd(IStrikerStateContext context) {
+            context.TryTransition(nextNode);
         }
 
         // このステートにいる間、毎フレーム呼ばれる
