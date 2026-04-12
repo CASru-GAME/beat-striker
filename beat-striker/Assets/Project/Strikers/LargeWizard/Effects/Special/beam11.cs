@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(ParticleSystem))]
 [RequireComponent(typeof(BoxCollider))]
@@ -11,8 +12,11 @@ public class beam11 : MonoBehaviour
     [SerializeField, Min(0f)] float knockbackPerSecond = 10f;
     [Header("Collider Settings")]
     [SerializeField, Min(0f)] float maxLength = 12f;
-    [Tooltip("コライダーが0.1秒あたりに伸びる長さ")]
-    [SerializeField, Min(0f)] float colliderExtendLengthPer0p1Second = 4f;
+    [Tooltip("コライダーが1秒あたりに伸びる長さ")]
+    [FormerlySerializedAs("colliderExtendLengthPer0p1Second")]
+    [SerializeField, Min(0f)] float colliderExtendLengthPerSecond = 40f;
+    [Tooltip("コライダーを無効にしておく秒数")]
+    [SerializeField, Min(0f)] float colliderEnableDelaySeconds = 1f;
     [SerializeField, Min(0f)] float extendTime = 0.3f;
     [Tooltip("コライダーが1秒あたりに縮む長さ（等速）")]
     [SerializeField, Min(0f)] float colliderShrinkLengthPerSecond = 4f;
@@ -33,6 +37,7 @@ public class beam11 : MonoBehaviour
         beam11ParticleSystem = GetComponent<ParticleSystem>();
         hitCollider = GetComponent<BoxCollider>();
         hitCollider.isTrigger = true;
+        hitCollider.enabled = false;
         ownerStrikerHub = GetComponentInParent<StrikerHub>();
         if (ownerStrikerHub != null)
         {
@@ -54,6 +59,7 @@ public class beam11 : MonoBehaviour
     void Start()
     {
         beam11ParticleSystem.Play(true);
+        StartCoroutine(EnableColliderAfterDelay());
 
         if (audioPlayDelaySeconds <= 0f)
         {
@@ -94,9 +100,8 @@ public class beam11 : MonoBehaviour
 
         if (growthDeltaTime > 0f)
         {
-            var colliderExtendSpeedPerSecond = colliderExtendLengthPer0p1Second / 0.1f;
             var speedMultiplier = Mathf.Pow(2f, Mathf.Floor(previousElapsed / 0.5f));
-            var currentExtendSpeedPerSecond = colliderExtendSpeedPerSecond * speedMultiplier;
+            var currentExtendSpeedPerSecond = colliderExtendLengthPerSecond * speedMultiplier;
 
             if (!isShrinking)
             {
@@ -180,6 +185,16 @@ public class beam11 : MonoBehaviour
     {
         yield return new WaitForSeconds(audioPlayDelaySeconds);
         AudioSource.PlayClipAtPoint(audioClip, transform.position);
+    }
+
+    System.Collections.IEnumerator EnableColliderAfterDelay()
+    {
+        if (colliderEnableDelaySeconds > 0f)
+        {
+            yield return new WaitForSeconds(colliderEnableDelaySeconds);
+        }
+
+        hitCollider.enabled = true;
     }
 
     Vector3 GetParticleShootDirectionLocal()

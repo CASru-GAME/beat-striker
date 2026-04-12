@@ -31,8 +31,10 @@ namespace Core.LargeWizard {
 
                 var opponentPos = opponent.transform.position;
                 var spawnPos = opponentPos;
-                if (Physics.Raycast(opponentPos + Vector3.up * groundRayStartHeight,
-                                    Vector3.down, out var rhit, groundRayDistance, groundMask,
+                var rayStartPos = opponentPos + Vector3.up * groundRayStartHeight;
+                var rayDistance = groundRayDistance + Mathf.Max(0f, opponentPos.y);
+                if (Physics.Raycast(rayStartPos,
+                                    Vector3.down, out var rhit, rayDistance, groundMask,
                                     QueryTriggerInteraction.Ignore)) {
                     spawnPos = rhit.point;
                 }
@@ -42,8 +44,8 @@ namespace Core.LargeWizard {
                 iceBehavior.SetAttackerPosition(ctx.Rigidbody.transform.position);
                 iceBehavior.SetAttackerRoot(ctx.Rigidbody.transform.root);
 
-                AudioSource.PlayClipAtPoint(audioClip1, icePrefab.transform.position);
-                AudioSource.PlayClipAtPoint(audioClip2, icePrefab.transform.position);
+                AudioSource.PlayClipAtPoint(audioClip1, spawnPos);
+                AudioSource.PlayClipAtPoint(audioClip2, spawnPos);
             });
         }
 

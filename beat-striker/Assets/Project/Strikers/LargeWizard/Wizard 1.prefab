@@ -186,6 +186,57 @@ MonoBehaviour:
     clip: {fileID: 5029710099000895372, guid: a3edf62efc9932141b31d90fbfaaadd3, type: 3}
     fadeTime: 0.3
     speed: 0.5
+--- !u!1 &1072693715093511580
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8685039016306268700}
+  - component: {fileID: 5360974398772848802}
+  m_Layer: 0
+  m_Name: DashState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8685039016306268700
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1072693715093511580}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.20956, y: 0, z: 1.09575}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5360974398772848802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1072693715093511580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e44647b25cfe3c145a2607f2c1958dc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.DashState
+  parents:
+  - {fileID: 1012561812567522805}
+  animationClip:
+    clip: {fileID: -8444228808809566427, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
+    fadeTime: 0
+    speed: 1
+  dashSpeed: 10
 --- !u!1 &1203691853417041816
 GameObject:
   m_ObjectHideFlags: 0
@@ -543,6 +594,7 @@ Transform:
   - {fileID: 571276501691909030}
   - {fileID: 2480134395438258361}
   - {fileID: 7254378594394366133}
+  - {fileID: 8685039016306268700}
   - {fileID: 9049127504638474801}
   - {fileID: 278115847553760270}
   - {fileID: 1632554441093209187}
@@ -1320,7 +1372,7 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 0
-  fireTime: 0.3
+  fireTime: 0
   groundRayStartHeight: 20
   groundRayDistance: 50
 --- !u!1 &6329409985884674557
@@ -1646,7 +1698,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3f03db3418a5d24580f38db3f5b52ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.DashNode
-  jumpUpwardNode: {fileID: 1841557291681574819}
+  jumpUpwardState: {fileID: 1841557291681574819}
+  dashState: {fileID: 5360974398772848802}
 --- !u!1001 &3810901218754066174
 PrefabInstance:
   m_ObjectHideFlags: 0

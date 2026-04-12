@@ -4,19 +4,19 @@ using Core.Striker;
 
 namespace Core.LargeWizard {
     
-    public class StunState : StrikerState {
+    public class DashState : StrikerState {
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] StrikerNode nextNode;
+        [SerializeField] float dashSpeed;
+
+         // このステートに遷移した直後に呼ばれる
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip,OnAnimationEnd);
-        }
-
-        public void OnAnimationEnd(IStrikerStateContext context) {
+            context.PlayAnimation(animationClip);
+            context.Rigidbody.linearVelocity = dashSpeed * context.InputDirection;
         }
 
         // このステートにいる間、毎フレーム呼ばれる
@@ -29,22 +29,18 @@ namespace Core.LargeWizard {
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
-            context.TryTransition(nextNode);
         }
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
-            context.TryTransition(nextNode);
         }
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
-            context.TryTransition(nextNode);
         }
 
         // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {
-            context.TryTransition(nextNode);
         }
 
         // 攻撃を受けた時に呼ばれる
