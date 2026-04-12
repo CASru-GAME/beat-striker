@@ -124706,6 +124706,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.AirDumpGroup
   linearDamping: 20
   AirDashState: {fileID: 8635167001145049619}
+  attackNode: {fileID: 2246691098674093691}
+  chargeState: {fileID: 2697159971508307948}
 --- !u!1 &7266046510034771650
 GameObject:
   m_ObjectHideFlags: 0
@@ -144971,6 +144973,7 @@ MonoBehaviour:
   airAttackState: {fileID: 9219655918576398466}
   energyStorage: {fileID: 6868730315006414726}
   beamState: {fileID: 1001626645920160719}
+  rushState: {fileID: 4157371287227188172}
 --- !u!1 &9188750135687806929
 GameObject:
   m_ObjectHideFlags: 0

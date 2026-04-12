@@ -27,9 +27,22 @@ namespace Core.LargeHero {
             ScheduleStateEvent(fireTime, context => {
                 var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
                 var particleInstance =
-                Instantiate(beamPrefab, firePosition.position, context. Rigidbody.transform.rotation);
+                Instantiate(beamPrefab, firePosition.position, GetBeamRotation(context));
                 AudioSource.PlayClipAtPoint(swingAudioClip, firePosition.position);
             });
+        }
+
+        Quaternion GetBeamRotation(IStrikerStateContext context) {
+            var opponentPosition = context.GetOpponent().CenterPosition.CurrentValue;
+            var firePositionWorld = firePosition.position;
+            var directionToOpponent = opponentPosition - firePositionWorld;
+            directionToOpponent.y = 0f;
+
+            if (directionToOpponent.sqrMagnitude <= 0.0001f) {
+                return firePosition.rotation;
+            }
+
+            return Quaternion.LookRotation(directionToOpponent.normalized, Vector3.up);
         }
 
         // このステートにいる間、毎フレーム呼ばれる

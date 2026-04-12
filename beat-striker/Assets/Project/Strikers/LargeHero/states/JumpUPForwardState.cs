@@ -42,6 +42,7 @@ namespace Core.LargeHero {
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
+            context.TryTransition(attackNode);
         }
 
         // ダッシュコマンドが押された時に呼ばれる

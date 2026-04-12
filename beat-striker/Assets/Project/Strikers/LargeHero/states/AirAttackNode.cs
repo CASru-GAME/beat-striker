@@ -8,9 +8,15 @@ namespace Core.LargeHero {
         [SerializeField] StrikerState airAttackState;
         [SerializeField] EnergyStorage energyStorage;
         [SerializeField] StrikerState beamState;
+        [SerializeField] StrikerState rushState;
 
         // このノードに遷移した時に呼ばれる
         public override void OnTryTransition(IStrikerNodeContext context) {
+            if (context.LocalInputDirection.x != 0) {
+                context.TryTransition(rushState);
+                return;
+            }
+
             var energy = energyStorage.RetrieveEnergy();
             if (energy == 0) {
                 context.TryTransition(airAttackState);
