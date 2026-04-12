@@ -55,9 +55,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Distortion: 0.05
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ScrollSpeed: 1
-    m_Colors: []
+    - _SlashWidth: 0.5
+    m_Colors:
+    - _EmissionColor: {r: 4.3870635, g: 1.1120402, b: 4.6225986, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -22,6 +22,7 @@ namespace Core.LargeHero {
 
         [SerializeField] ParticleSystem particleprefab;
         [SerializeField] AudioClip audioClip;
+        [SerializeField] AudioClip missAudioClip;
         
 
         [SerializeField] float damage = 10;
@@ -38,6 +39,8 @@ namespace Core.LargeHero {
 
             context.PlayAnimation(animationClip, OnAnimationEnd);
             SlashEffect.Play();
+            var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
+            AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
                 if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
                     var hitpoint = collider.ClosestPoint(hitBox.transform.position);

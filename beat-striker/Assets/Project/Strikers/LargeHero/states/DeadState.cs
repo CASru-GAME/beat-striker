@@ -14,26 +14,55 @@ namespace Core.LargeHero {
         [SerializeField] private Animator secondaryAnimator;
         [SerializeField] private AnimationClip secondaryAnimationClip;
         [SerializeField] private float secondaryAnimationSpeed = 1f;
+        [SerializeField] private bool lockSecondaryWorldPosition = true;
+        [SerializeField] private bool lockSecondaryWorldScale = true;
 
         private PlayableGraph secondaryPlayableGraph;
+        private Transform secondaryOriginalParent;
+        private Vector3 secondaryOriginalLocalPosition;
+        private Quaternion secondaryOriginalLocalRotation;
+        private Vector3 secondaryOriginalLocalScale;
+        private Vector3 secondaryLockedWorldPosition;
+        private Vector3 secondaryLockedWorldScale;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             context.PlayAnimation(animationClip);
 
             if (playSecondarySimultaneously) {
+                secondaryOriginalParent = secondaryAnimator.transform.parent;
+                secondaryOriginalLocalPosition = secondaryAnimator.transform.localPosition;
+                secondaryOriginalLocalRotation = secondaryAnimator.transform.localRotation;
+                secondaryOriginalLocalScale = secondaryAnimator.transform.localScale;
+                secondaryAnimator.transform.SetParent(null, true);
+                secondaryLockedWorldPosition = secondaryAnimator.transform.position;
+                secondaryLockedWorldScale = secondaryAnimator.transform.localScale;
                 PlaySecondaryAnimation();
             }
         }
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
+            if (playSecondarySimultaneously && lockSecondaryWorldPosition) {
+                secondaryAnimator.transform.position = secondaryLockedWorldPosition;
+            }
+
+            if (playSecondarySimultaneously && lockSecondaryWorldScale) {
+                secondaryAnimator.transform.localScale = secondaryLockedWorldScale;
+            }
         }
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
             if (secondaryPlayableGraph.IsValid()) {
                 secondaryPlayableGraph.Destroy();
+            }
+
+            if (playSecondarySimultaneously) {
+                secondaryAnimator.transform.SetParent(secondaryOriginalParent, false);
+                secondaryAnimator.transform.localPosition = secondaryOriginalLocalPosition;
+                secondaryAnimator.transform.localRotation = secondaryOriginalLocalRotation;
+                secondaryAnimator.transform.localScale = secondaryOriginalLocalScale;
             }
         }
 

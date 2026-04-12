@@ -49,6 +49,9 @@ namespace Core.LargeHero {
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
             context.Rigidbody.linearVelocity = status.KnockbackVelocity;
             context.ApplyDamage(status.Damage);
+            if (context.GetSelf().HitPoint.CurrentValue <= 0f) {
+                return;
+            }
             context.TryTransition(stunState);
         }
 

@@ -18,12 +18,21 @@ namespace Core.LargeHero {
         [SerializeField] private AnimationPlayer animationPlayer;
         [SerializeField] Hurtbox shield;
         [SerializeField] GameObject sword;
+        [SerializeField] bool lockHorizontalMovement = true;
+        [SerializeField] float guardHitKnockbackScale = 0f;
         IDisposable disposable;
         private Tracker.TargetHandle targetHandle;
+        float lockedPositionX;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             Debug.Log("GuardStateに遷移");
+            if (lockHorizontalMovement) {
+                lockedPositionX = context.Rigidbody.position.x;
+                var velocity = context.Rigidbody.linearVelocity;
+                velocity.x = 0f;
+                context.Rigidbody.linearVelocity = velocity;
+            }
             // キャラクターの剣を隠す
             sword.SetActive(false);
             // アニメーションの再生を開始する
@@ -33,8 +42,11 @@ namespace Core.LargeHero {
             animationPlayer.PlayAnimation(secondaryAnimationClip);
             targetHandle = tracker.AddTarget(trackerTarget);
             disposable = shield.OnHit.Subscribe(hit => {
-
-                context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
+                var knockbackVelocity = guardHitKnockbackScale * hit.KnockbackVelocity;
+                if (lockHorizontalMovement) {
+                    knockbackVelocity.x = 0f;
+                }
+                context.Rigidbody.linearVelocity = knockbackVelocity;
             });
             shield.gameObject.SetActive(true);
         
@@ -42,6 +54,17 @@ namespace Core.LargeHero {
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
+            if (!lockHorizontalMovement) {
+                return;
+            }
+
+            var position = context.Rigidbody.position;
+            position.x = lockedPositionX;
+            context.Rigidbody.MovePosition(position);
+
+            var velocity = context.Rigidbody.linearVelocity;
+            velocity.x = 0f;
+            context.Rigidbody.linearVelocity = velocity;
         }
 
         // 他のステートに遷移する直前に呼ばれる

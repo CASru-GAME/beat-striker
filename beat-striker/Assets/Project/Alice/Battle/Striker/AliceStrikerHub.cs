@@ -65,6 +65,7 @@ namespace Alice {
         float maxHitPoint;
         float maxSpecialPoint;
         StrikerState defaultState;
+        StrikerState stunState;
         StrikerState deadState;
         StrikerState victoryState;
         StrikerState introState;
@@ -194,6 +195,7 @@ namespace Alice {
             maxHitPoint = legacy.InspectorMaxHitPoint;
             maxSpecialPoint = legacy.InspectorMaxSpecialPoint;
             defaultState = legacy.InspectorDefaultState;
+            stunState = legacy.InspectorStunState;
             deadState = legacy.InspectorDeadState;
             victoryState = legacy.InspectorVictoryState;
             introState = legacy.InspectorIntroState;
@@ -218,6 +220,11 @@ namespace Alice {
             hasEnemyInFrontState = false;
             isEnemyInFront = true;
             hasObservedState = false;
+
+            if (!stunState) {
+                stunState = FindStunState(strikerTransform);
+            }
+
             initialized = true;
         }
 
@@ -228,7 +235,27 @@ namespace Alice {
 
         public void GiveHit(HitStatus status) {
             if (stateMachine == null || currentHitPoint <= 0f) return;
-            stateMachine.CurrentState.OnHit(stateMachine, status);
+
+            var stateBeforeHit = stateMachine.CurrentState;
+            stateBeforeHit.OnHit(stateMachine, status);
+
+            if (currentHitPoint <= 0f) {
+                return;
+            }
+
+            if (IsGuardState(stateBeforeHit)) {
+                return;
+            }
+
+            if (!stunState) {
+                return;
+            }
+
+            if (ReferenceEquals(stateMachine.CurrentState, stunState)) {
+                return;
+            }
+
+            stateMachine.ChangeState(stunState);
         }
 
         public void Dispose() {
@@ -323,7 +350,11 @@ namespace Alice {
         }
 
         public void Die() {
-            if (stateMachine == null) return;
+            if (stateMachine == null) {
+                stateMachine = new StrikerStateMachine(this, deadState);
+                onDeadSubject.OnNext(Unit.Default);
+                return;
+            }
             onDeadSubject.OnNext(Unit.Default);
             stateMachine.ChangeState(deadState);
         }
@@ -389,6 +420,37 @@ namespace Alice {
             if (hasEnemyInFrontState && !isEnemyInFront) {
                 currentState.OnEnemyBehind(stateMachine);
             }
+        }
+
+        static bool IsGuardState(IStrikerState state) {
+            if (state is Component component) {
+                if (component.gameObject.name == "GuardState") {
+                    return true;
+                }
+
+                if (component.GetType().Name.Contains("GuardState", StringComparison.Ordinal)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        static StrikerState FindStunState(Transform root) {
+            var states = root.GetComponentsInChildren<StrikerState>(true);
+            foreach (var state in states) {
+                if (state.gameObject.name == "StunState") {
+                    return state;
+                }
+            }
+
+            foreach (var state in states) {
+                if (state.GetType().Name.Contains("StunState", StringComparison.Ordinal)) {
+                    return state;
+                }
+            }
+
+            return null;
         }
     }
 }
