@@ -16,7 +16,8 @@ namespace Core.LargeHero {
         
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
-            context.Rigidbody.linearVelocity = jumpSpeed * context.InputDirection;
+            var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
+            context.Rigidbody.linearVelocity = jumpSpeed * direction;
             
         }
     
@@ -41,6 +42,7 @@ namespace Core.LargeHero {
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
+            context.TryTransition(attackNode);
         }
 
         // ダッシュコマンドが押された時に呼ばれる

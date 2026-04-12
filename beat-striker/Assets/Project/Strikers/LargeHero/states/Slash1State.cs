@@ -5,9 +5,6 @@ using R3;
 using System;
 using System.Collections.Generic;
 using Core.Striker.Components;
-using UnityEngine.UIElements;
-
-
 namespace Core.LargeHero {
     
     /// <summary>
@@ -23,6 +20,7 @@ namespace Core.LargeHero {
 
         [SerializeField] ParticleSystem particleprefab;
         [SerializeField] AudioClip audioClip;
+        [SerializeField] AudioClip missAudioClip;
         [SerializeField] AudioClip guradhitsound;
         
 
@@ -38,14 +36,25 @@ namespace Core.LargeHero {
         public override void OnEnter(IStrikerContext context) {
             comboRequested = false;
             SlashEffect.Play();
+            var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
+            AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
 
             context.PlayAnimation(animationClip, OnAnimationEnd);
             
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
-                if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                    var hitpoint = collider.ClosestPoint(hitBox.transform.position);
-                    hitsInFrame.Add(new (hitpoint, hurtbox));
+                if (!collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                    hurtbox = collider.GetComponentInParent<Hurtbox>();
+                    if (!hurtbox) {
+                        return;
+                    }
                 }
+
+                if (hurtbox.transform.root == context.Rigidbody.transform.root) {
+                    return;
+                }
+
+                var hitpoint = collider.ClosestPoint(hitBox.transform.position);
+                hitsInFrame.Add(new (hitpoint, hurtbox));
             });
             hitsInFrame.Clear();
             hitInState = false;
@@ -83,7 +92,9 @@ namespace Core.LargeHero {
         }
 
         public override void OnAttackRequested(IStrikerStateContext context) {
+            if (hitInState && comboNode) {
                 context.TryTransition(comboNode);
+            }
         }
 
     }

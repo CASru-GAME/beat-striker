@@ -2,6 +2,7 @@ using Core.Battle;
 using UnityEngine;
 using Core.Striker;
 using Core.Striker.Components;
+using UnityEngine.Serialization;
 
 namespace Core.LargeHero {
 
@@ -10,9 +11,12 @@ namespace Core.LargeHero {
         [SerializeField] private StrikerNode nextNode;
         [SerializeField] private StrikerNode noHitFallbackNode;
         [SerializeField] private SpecialSequenceContext specialSequenceContext;
+        [SerializeField] private ParticleSystem slashEffect;
 
-        [SerializeField] private ParticleSystem hitEffectPrefab;
+        [FormerlySerializedAs("hitEffectPrefab")]
+        [SerializeField] private ParticleSystem slashEffectPrefab;
         [SerializeField] private AudioClip hitAudioClip;
+        [SerializeField] private AudioClip missAudioClip;
 
         [SerializeField] private float damage = 20f;
         [SerializeField] private Vector3 launchHitBoxOffset = new(1.35f, 1.0f, 0f);
@@ -27,6 +31,9 @@ namespace Core.LargeHero {
 
         public override void OnEnter(IStrikerContext context) {
             specialSequenceContext.ForceReleaseVictim();
+            slashEffect.Play();
+            var swingAudioClip = missAudioClip ? missAudioClip : hitAudioClip;
+            AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
             context.PlayAnimation(animationClip, OnAnimationEnd);
             hitInState = false;
         }
@@ -36,8 +43,8 @@ namespace Core.LargeHero {
                 if (TryGetLaunchHit(context, out var hit)) {
                     specialSequenceContext.LockVictim(hit.hurtbox, context.Rigidbody);
                     specialSequenceContext.ApplyHitToLockedVictim(damage, Vector3.zero);
-                    if (hitEffectPrefab) {
-                        Instantiate(hitEffectPrefab, hit.hitPoint, Quaternion.identity);
+                    if (slashEffectPrefab) {
+                        Instantiate(slashEffectPrefab, hit.hitPoint, Quaternion.identity);
                     }
                     if (hitAudioClip) {
                         AudioSource.PlayClipAtPoint(hitAudioClip, hit.hitPoint);

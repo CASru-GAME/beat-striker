@@ -14,6 +14,7 @@ namespace Core.LargeHero {
         [SerializeField] Transform firePosition;
         [SerializeField] float fireTime = 0.3f;
         [SerializeField] AudioClip audioClip;
+        [SerializeField] AudioClip missAudioClip;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -24,10 +25,24 @@ namespace Core.LargeHero {
             });
 
             ScheduleStateEvent(fireTime, context => {
+                var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
                 var particleInstance =
-                Instantiate(beamPrefab, firePosition.position, context. Rigidbody.transform.rotation);
-                AudioSource.PlayClipAtPoint(audioClip, firePosition.position);
+                Instantiate(beamPrefab, firePosition.position, GetBeamRotation(context));
+                AudioSource.PlayClipAtPoint(swingAudioClip, firePosition.position);
             });
+        }
+
+        Quaternion GetBeamRotation(IStrikerStateContext context) {
+            var opponentPosition = context.GetOpponent().CenterPosition.CurrentValue;
+            var firePositionWorld = firePosition.position;
+            var directionToOpponent = opponentPosition - firePositionWorld;
+            directionToOpponent.y = 0f;
+
+            if (directionToOpponent.sqrMagnitude <= 0.0001f) {
+                return firePosition.rotation;
+            }
+
+            return Quaternion.LookRotation(directionToOpponent.normalized, Vector3.up);
         }
 
         // このステートにいる間、毎フレーム呼ばれる

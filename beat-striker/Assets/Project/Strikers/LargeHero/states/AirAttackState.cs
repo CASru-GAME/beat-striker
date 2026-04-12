@@ -19,7 +19,9 @@ namespace Core.LargeHero {
 
         [SerializeField] ParticleSystem particleprefab;
         [SerializeField] AudioClip audioClip;
+        [SerializeField] AudioClip missAudioClip;
         [SerializeField] TrailRenderer swordTrail;
+        [SerializeField] ParticleSystem SlashEffect;
 
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 10;
@@ -31,6 +33,9 @@ namespace Core.LargeHero {
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             context.PlayAnimation(animationClip, OnAnimationEnd);
+            SlashEffect.Play();
+            var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
+            AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
             swordTrail.Clear();
             swordTrail.enabled = true;
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {

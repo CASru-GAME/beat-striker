@@ -16,7 +16,7 @@ namespace Core.LargeHero {
             context.PlayAnimation(animationClip, OnAnimationEnd);
         }
         void OnAnimationEnd(IStrikerStateContext context)
-        {context. TryTransition(nextNode);}
+        {}
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
         }
@@ -27,18 +27,23 @@ namespace Core.LargeHero {
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
+            context. TryTransition(nextNode);
         }
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
+            context. TryTransition(nextNode);
+
         }
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
+            context. TryTransition(nextNode);
         }
 
         // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {
+            context. TryTransition(nextNode);
 
         }
 

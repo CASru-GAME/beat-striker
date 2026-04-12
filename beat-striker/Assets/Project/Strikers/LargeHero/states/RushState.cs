@@ -16,8 +16,13 @@ namespace Core.LargeHero {
         [SerializeField] HitBox hitBox;
         IDisposable disposable;
 
-    [SerializeField] ParticleSystem hitEffectPrefab;
+        [SerializeField] ParticleSystem hitEffectPrefab;
         [SerializeField] AudioClip audioClip;
+        [SerializeField] AudioClip missAudioClip;
+        [SerializeField] GameObject beamPrefab;
+        [SerializeField] Transform firePosition;
+        [SerializeField] float beamFireTime = 0.3f;
+        [SerializeField] AudioClip beamAudioClip;
 
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 10;
@@ -27,17 +32,35 @@ namespace Core.LargeHero {
 
         readonly List<Hit> hitsInFrame = new ();
         bool hitInState;
+        bool beamSpawnedInState;
+        GameObject activeBeamEffect;
         public record Hit(Vector3 hitpoint, Hurtbox hurtbox);
+
+        void OnValidate() {
+            if (!beamAudioClip) {
+                beamAudioClip = audioClip;
+            }
+        }
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
+            var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
+            AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
+
+            if (activeBeamEffect) {
+                Destroy(activeBeamEffect);
+                activeBeamEffect = null;
+            }
 
             var direction = Mathf.Sign(context.InputDirection.x);
             var v = context.Rigidbody.linearVelocity;
             v.x = direction * rushSpeed;
             context.Rigidbody.linearVelocity = v;
+
+            beamSpawnedInState = false;
+            ScheduleStateEvent(beamFireTime, SpawnVisualOnlyBeam);
 
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
                 if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
@@ -50,6 +73,9 @@ namespace Core.LargeHero {
         }
 
         void OnAnimationEnd(IStrikerStateContext context) {
+            if (!beamSpawnedInState) {
+                SpawnVisualOnlyBeam(context);
+            }
             context.TryTransition(nextNode);
         }
 
@@ -70,9 +96,50 @@ namespace Core.LargeHero {
             }
         }
 
+        void SpawnVisualOnlyBeam(IStrikerStateContext context) {
+            if (beamSpawnedInState) {
+                return;
+            }
+
+            if (activeBeamEffect) {
+                Destroy(activeBeamEffect);
+            }
+
+            var beamInstance = Instantiate(beamPrefab, firePosition.position, context.Rigidbody.transform.rotation);
+            var beamClip = beamAudioClip ? beamAudioClip : audioClip;
+            if (beamClip) {
+                AudioSource.PlayClipAtPoint(beamClip, firePosition.position);
+            }
+
+            var colliders = beamInstance.GetComponentsInChildren<Collider>(true);
+            foreach (var collider in colliders) {
+                collider.enabled = false;
+            }
+
+            var rigidbodies = beamInstance.GetComponentsInChildren<Rigidbody>(true);
+            foreach (var rb in rigidbodies) {
+                rb.isKinematic = true;
+                rb.detectCollisions = false;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+
+            var bullets = beamInstance.GetComponentsInChildren<Bullet>(true);
+            foreach (var bullet in bullets) {
+                bullet.enabled = false;
+            }
+
+            activeBeamEffect = beamInstance;
+            beamSpawnedInState = true;
+        }
+
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
             disposable.Dispose();
+            if (activeBeamEffect) {
+                Destroy(activeBeamEffect);
+                activeBeamEffect = null;
+            }
         }
 
         // 攻撃コマンドが押された時に呼ばれる
