@@ -91,8 +91,9 @@ MonoBehaviour:
   shrinkDelay: 3
   shrinkDuration: 0.25
   beamSpawnDelay: 0
-  beamPrefab: {fileID: 2662001439135803105, guid: 265c815582df9a8438e166fbb791ff17, type: 3}
+  beamPrefab: {fileID: 6585322995886126661, guid: abd70fbae35cd8c44afe65c637fdef27, type: 3}
   audioClip: {fileID: 8300000, guid: e21d48dec509f804cbb421199331a893, type: 3}
+  Hurtbox: {fileID: 0}
 --- !u!1001 &368536390973030197
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -17,7 +17,6 @@ namespace Core.LargeWizard {
         }
 
         public void OnAnimationEnd(IStrikerStateContext context) {
-            context.TryTransition(nextNode);
         }
 
         // このステートにいる間、毎フレーム呼ばれる
@@ -30,18 +29,22 @@ namespace Core.LargeWizard {
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
+            context.TryTransition(nextNode);
         }
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
+            context.TryTransition(nextNode);
         }
 
         // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
+            context.TryTransition(nextNode);
         }
 
         // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {
+            context.TryTransition(nextNode);
         }
 
         // 攻撃を受けた時に呼ばれる

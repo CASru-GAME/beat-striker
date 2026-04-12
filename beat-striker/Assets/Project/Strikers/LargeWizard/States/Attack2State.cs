@@ -31,19 +31,15 @@ namespace Core.LargeWizard {
 
                 var opponentPos = opponent.transform.position;
                 var spawnPos = opponentPos;
-                if (Physics.Raycast(opponentPos + Vector3.up * groundRayStartHeight,
-                                    Vector3.down, out var rhit, groundRayDistance, groundMask,
-                                    QueryTriggerInteraction.Ignore)) {
-                    spawnPos = rhit.point;
-                }
+                spawnPos.y = 315f;
 
                 var ice = Instantiate(icePrefab, spawnPos, Quaternion.identity);
                 var iceBehavior = ice.GetComponent<Ice>();
                 iceBehavior.SetAttackerPosition(ctx.Rigidbody.transform.position);
                 iceBehavior.SetAttackerRoot(ctx.Rigidbody.transform.root);
 
-                AudioSource.PlayClipAtPoint(audioClip1, icePrefab.transform.position);
-                AudioSource.PlayClipAtPoint(audioClip2, icePrefab.transform.position);
+                AudioSource.PlayClipAtPoint(audioClip1, spawnPos);
+                AudioSource.PlayClipAtPoint(audioClip2, spawnPos);
             });
         }
 

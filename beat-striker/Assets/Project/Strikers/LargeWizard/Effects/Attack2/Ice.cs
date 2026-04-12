@@ -10,7 +10,7 @@ namespace Core.LargeWizard {
 
         [Header("Growth Animation")]
         [SerializeField] float growDuration = 0.3f;    // 生え切るまでの時間
-        [SerializeField] float lifetime = 2f;          // 生成後に自動破棄されるまでの時間
+        [SerializeField] float lifetime = 1.5f;          // 生成後に自動破棄されるまでの時間
         [SerializeField] float colliderEnableRatio = 0.3f; // コライダーを有効にする成長割合 (0~1)
 
         [SerializeField] GameObject impactPrefab;
@@ -22,6 +22,7 @@ namespace Core.LargeWizard {
         Vector3 targetScale;
         float elapsed;
         bool grown;
+        bool hasHit;
         Collider iceCollider;
         Vector3 attackerPosition;
         Transform attackerRoot;
@@ -79,8 +80,13 @@ namespace Core.LargeWizard {
         }
 
         void OnTriggerEnter(Collider other) {
+            if (hasHit) return;
+
             if (other.TryGetComponent<Hurtbox>(out var hurtbox)) {
                 if (other.transform.root == attackerRoot) return;
+
+                hasHit = true;
+                iceCollider.enabled = false;
 
                 // 攻撃者から相手への水平方向にノックバック
                 var dir = other.transform.position - attackerPosition;

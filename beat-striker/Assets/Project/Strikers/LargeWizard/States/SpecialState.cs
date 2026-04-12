@@ -9,8 +9,9 @@ namespace Core.LargeWizard {
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerNode nextNode;
-        [SerializeField] private GameObject specialPrefab;
+        [SerializeField] private Special specialPrefab;
         [SerializeField] private Transform spawnPoint;
+        [SerializeField] Hurtbox hurtbox;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -18,6 +19,7 @@ namespace Core.LargeWizard {
             context.PlayAnimation(animationClip, OnAnimationEnd);
 
             var specialInstance = Instantiate(specialPrefab, spawnPoint.position, spawnPoint.rotation);
+            specialInstance.Hurtbox = hurtbox;
             var ownerStrikerHub = context.Rigidbody.GetComponent<StrikerHub>();
             var beams = specialInstance.GetComponentsInChildren<beam11>(true);
             for (var i = 0; i < beams.Length; i++) {

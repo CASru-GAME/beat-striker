@@ -13,6 +13,7 @@ namespace Core.LargeWizard {
         [SerializeField] GameObject impactPrefab;
         [SerializeField] AudioClip audioClip;
         [SerializeField] GameObject trail;
+        [SerializeField] public Hurtbox Hurtbox;
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
@@ -28,6 +29,10 @@ namespace Core.LargeWizard {
         void OnTriggerEnter(Collider other) {
             // 敵に当たった場合の処理
             if (other.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                if (hurtbox == Hurtbox) {
+                    return;
+                }
+
                 var nockBackDirection = rb.linearVelocity.normalized;
                 hurtbox.GiveHit(new HitStatus(damage, nockBackDirection * nockbackSpeed));
 

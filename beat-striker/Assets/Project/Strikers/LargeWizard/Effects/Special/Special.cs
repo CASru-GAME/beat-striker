@@ -15,8 +15,9 @@ namespace Core.LargeWizard {
         [SerializeField] float beamSpawnDelay = 3f;
         Rigidbody rb;
 
-        [SerializeField] GameObject beamPrefab;
+        [SerializeField] beam11 beamPrefab;
         [SerializeField] AudioClip audioClip;
+        [SerializeField] public Hurtbox Hurtbox;
 
         Vector3 targetScale;
         float elapsedTime;
@@ -66,8 +67,8 @@ namespace Core.LargeWizard {
         System.Collections.IEnumerator SpawnBeamAfterDelay() {
             yield return new WaitForSeconds(beamSpawnDelay);
             var beamInstance = Instantiate(beamPrefab, transform.position, transform.rotation);
+            beamInstance.Hurtbox = Hurtbox;
             Destroy(beamInstance, 10f);
         }
     }
 }
-
