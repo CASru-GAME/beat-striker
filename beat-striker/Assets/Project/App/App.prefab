@@ -124,8 +124,8 @@ MonoBehaviour:
   - DisplayName: "\u65A7\u6226\u58EB"
     BattleStriker: 3
     Prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
-    PreviewModel: {fileID: -1728013695380148634, guid: 70e7be311277e47a3ac2a59c40bb61a6, type: 3}
-    Portrait: {fileID: 21300000, guid: 7204eca45b16c014b82285f6dc6fb052, type: 3}
+    PreviewModel: {fileID: -1728013695380148634, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
+    Portrait: {fileID: 21300000, guid: e6d22d2bea7504d17be7a0aeded116ab, type: 3}
 --- !u!114 &7111598241528783917
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -209,15 +209,6 @@ MonoBehaviour:
     AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
     SpectrumData: {fileID: 4900000, guid: 5a14db5d051ccf7448ffdc129b4a7476, type: 3}
     Bpm: 110
-    Offset: 0
-  - Id: kl
-    DisplayName: I Need
-    Description: 'Composer: D''elf
-
-      BPM: 128'
-    AudioClip: {fileID: 8300000, guid: 59ef98e38d52746fbaf823b45004f899, type: 3}
-    SpectrumData: {fileID: 4900000, guid: 42a46a87f82914f9ea898c44c6a9ee10, type: 3}
-    Bpm: 128
     Offset: 0
 --- !u!114 &8416357320802876425
 MonoBehaviour:
