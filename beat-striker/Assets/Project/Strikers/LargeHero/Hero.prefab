@@ -40091,9 +40091,9 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 0.8
   chaseState2:
-    clip: {fileID: -8123868386355476214, guid: 6b863d2dac59a2b44ac12a3cba38ae1c, type: 3}
+    clip: {fileID: -5727971140821882885, guid: d206456b16452e143886d2d6121e57e4, type: 3}
     fadeTime: 0.3
-    speed: 0.8
+    speed: 1.75
   nextNode: {fileID: 1496803389961549349}
   specialSequenceContext: {fileID: 6533960672805731556}
   chaseState1SlashEffect: {fileID: 6248614669915775071}
