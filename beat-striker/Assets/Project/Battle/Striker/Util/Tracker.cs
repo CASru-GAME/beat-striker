@@ -4,6 +4,7 @@ using UnityEngine;
 [AddComponentMenu(" 🟠Tracker", 0)]
 public class Tracker : MonoBehaviour {
     [SerializeField] Transform target;
+    [SerializeField] bool enableRigidMove = true;
 
     private Rigidbody rb;
     private Vector3 relativePosition;
@@ -18,12 +19,16 @@ public class Tracker : MonoBehaviour {
         public readonly Transform Target;
         public readonly Vector3 RelativePosition;
         public readonly Quaternion RelativeRotation;
+        public readonly bool FollowPosition;
+        public readonly bool FollowRotation;
 
-        public TargetState(TargetHandle handle, Transform target, Vector3 relativePosition, Quaternion relativeRotation) {
+        public TargetState(TargetHandle handle, Transform target, Vector3 relativePosition, Quaternion relativeRotation, bool followPosition, bool followRotation) {
             Handle = handle;
             Target = target;
             RelativePosition = relativePosition;
             RelativeRotation = relativeRotation;
+            FollowPosition = followPosition;
+            FollowRotation = followRotation;
         }
     }
 
@@ -46,7 +51,7 @@ public class Tracker : MonoBehaviour {
 
 
         // 元の状態を保存
-        originalState = new TargetState(null, target, relativePosition, relativeRotation);
+        originalState = new TargetState(null, target, relativePosition, relativeRotation, true, true);
     }
 
     /// <summary>
@@ -54,7 +59,7 @@ public class Tracker : MonoBehaviour {
     /// 最後に追加されたターゲットが優先される。
     /// </summary>
     /// <returns>削除用のハンドル</returns>
-    public TargetHandle AddTarget(Transform newTarget = null) {
+    public TargetHandle AddTarget(Transform newTarget = null, bool followPosition = true, bool followRotation = true) {
         var handle = new TargetHandle();
 
         Vector3 pos = default;
@@ -65,7 +70,7 @@ public class Tracker : MonoBehaviour {
             rot = Quaternion.Inverse(newTarget.rotation) * transform.rotation;
         }
 
-        var state = new TargetState(handle, newTarget, pos, rot);
+        var state = new TargetState(handle, newTarget, pos, rot, followPosition, followRotation);
         targetStates.Add(state);
 
         // 最新のターゲットをアクティブにする
@@ -116,19 +121,34 @@ public class Tracker : MonoBehaviour {
     void Update() {
         if (target == null) return;
 
+        var activeState = targetStates.Count > 0 ? targetStates[^1] : originalState;
+
+        if (!activeState.FollowPosition && !activeState.FollowRotation) {
+            return;
+        }
+
         // 保存した相対位置を、現在のターゲットの向きに合わせてワールド座標に変換
-        Vector3 targetWorldPos = target.TransformPoint(relativePosition);
+        Vector3 targetWorldPos = transform.position;
+        if (activeState.FollowPosition) {
+            targetWorldPos = target.TransformPoint(relativePosition);
+        }
 
         // 保存した相対回転を、現在のターゲットの回転に適用
-        Quaternion targetWorldRot = target.rotation * relativeRotation;
+        Quaternion targetWorldRot = transform.rotation;
+        if (activeState.FollowRotation) {
+            targetWorldRot = target.rotation * relativeRotation;
+        }
 
-        if (rb != null) {
-            rb.MovePosition(targetWorldPos);
-            rb.MoveRotation(targetWorldRot);
+        if (rb != null && enableRigidMove) {
+            if (activeState.FollowPosition) {
+                rb.MovePosition(targetWorldPos);
+            }
+
+            if (activeState.FollowRotation) {
+                rb.MoveRotation(targetWorldRot);
+            }
             return;
         }
         transform.SetPositionAndRotation(targetWorldPos, targetWorldRot);
-
-        
     }
 }

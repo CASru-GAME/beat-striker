@@ -3,12 +3,12 @@ using Alice;
 using System;
 
 namespace Core.LargeSatan {
-
+
+
 
     public class DashState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Dash;
 
-        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧「繝九Γ繝シ繧キ繝ァ繝ウ繧ッ繝ェ繝・・
         [SerializeField] private StrikerAnimationClip fowardClip, backwardClip;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] float[] consecutiveDashSpeeds = { 20f, 24f, 28f };
@@ -16,14 +16,15 @@ namespace Core.LargeSatan {
         [SerializeField] float duration = 0.5f;
         [SerializeField] float endSpeedRatio = 0.01f;
         [SerializeField] float stopDistanceToOpponent = 1.0f;
+        [SerializeField] EffectPlayer effectPlayer;
         Vector3 initialVelocity;
         float elapsedTime;
         bool stoppedByOpponentDistance;
+        bool stopBehindOpponent;
         float lastEnterTime = float.NegativeInfinity;
         int lastEnterDirectionSign;
         int consecutiveEnterCount;
 
-        // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
         public override void OnEnter(IStrikerContext context) {
             int requestedInputX = Math.Sign(context.LocalInputDirection.x);
             int enterDirectionSign = requestedInputX < 0 ? -1 : 1;
@@ -38,7 +39,6 @@ namespace Core.LargeSatan {
             lastEnterTime = Time.time;
             lastEnterDirectionSign = enterDirectionSign;
 
-            // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
             StrikerAnimationClip clip;
             if(enterDirectionSign < 0) {
                 clip = backwardClip;
@@ -51,14 +51,21 @@ namespace Core.LargeSatan {
             this.initialVelocity = dashSpeed * movementDirectionSign * Vector2.right;
             this.elapsedTime = 0f;
             this.stoppedByOpponentDistance = false;
+            this.stopBehindOpponent = enterDirectionSign > 0;
             context.Rigidbody.linearVelocity = this.initialVelocity;
 
             this.ScheduleStateEvent(duration, context => {
                 context.TryTransition(nextNode);
             });
+
+            Quaternion effectRotation = transform.rotation;
+            if(enterDirectionSign > 0) {
+                effectRotation *= Quaternion.Euler(0f, 180f, 0f);
+            }
+
+            effectPlayer.Emit(this.transform.position, effectRotation);
         }
 
-        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∵ッ弱ヵ繝ャ繝シ繝蜻シ縺ー繧後ｋ
         public override void OnUpdate(IStrikerStateContext context) {
             if(stoppedByOpponentDistance) {
                 context.Rigidbody.linearVelocity = Vector3.zero;
@@ -74,16 +81,39 @@ namespace Core.LargeSatan {
             var self = context.GetSelf();
             var opponent = context.GetOpponent();
             Vector3 toOpponent = opponent.Position.CurrentValue - self.Position.CurrentValue;
-            float sqrDistance = toOpponent.sqrMagnitude;
-            float sqrStopDistance = stopDistanceToOpponent * stopDistanceToOpponent;
-            float towardOpponent = Vector3.Dot(context.Rigidbody.linearVelocity, toOpponent);
-            Vector3 frameMove = context.Rigidbody.linearVelocity * Time.deltaTime;
-            bool willEnterStopDistance = WillEnterStopDistanceThisFrame(self.Position.CurrentValue, opponent.Position.CurrentValue, frameMove, stopDistanceToOpponent);
 
-            if(towardOpponent > 0f && (sqrDistance <= sqrStopDistance || willEnterStopDistance)) {
-                this.stoppedByOpponentDistance = true;
-                context.Rigidbody.linearVelocity = Vector3.zero;
+            if(this.stopBehindOpponent) {
+                Vector3 frameMove = context.Rigidbody.linearVelocity * Time.deltaTime;
+                Vector3 dashDirection = this.initialVelocity.x < 0f ? Vector3.left : Vector3.right;
+                float projectedDistanceToOpponent = Vector3.Dot(toOpponent, dashDirection);
+                float projectedFrameMove = Vector3.Dot(frameMove, dashDirection);
+                float stopThreshold = -stopDistanceToOpponent;
+                bool willEnterStopDistance = WillEnterStopDistanceThisFrame(projectedDistanceToOpponent, projectedFrameMove, stopThreshold);
+
+                if(projectedDistanceToOpponent <= stopThreshold || willEnterStopDistance) {
+                    this.stoppedByOpponentDistance = true;
+                    context.Rigidbody.linearVelocity = Vector3.zero;
+                }
+            } else {
+                float sqrDistance = toOpponent.sqrMagnitude;
+                float sqrStopDistance = stopDistanceToOpponent * stopDistanceToOpponent;
+                float towardOpponent = Vector3.Dot(context.Rigidbody.linearVelocity, toOpponent);
+                Vector3 frameMove = context.Rigidbody.linearVelocity * Time.deltaTime;
+                bool willEnterStopDistance = WillEnterStopDistanceThisFrame(self.Position.CurrentValue, opponent.Position.CurrentValue, frameMove, stopDistanceToOpponent);
+
+                if(towardOpponent > 0f && (sqrDistance <= sqrStopDistance || willEnterStopDistance)) {
+                    this.stoppedByOpponentDistance = true;
+                    context.Rigidbody.linearVelocity = Vector3.zero;
+                }
             }
+        }
+
+        bool WillEnterStopDistanceThisFrame(float projectedDistanceToOpponent, float projectedFrameMove, float stopThreshold) {
+            if(projectedFrameMove <= Mathf.Epsilon) {
+                return false;
+            }
+
+            return projectedDistanceToOpponent - projectedFrameMove <= stopThreshold;
         }
 
         bool WillEnterStopDistanceThisFrame(Vector3 selfPosition, Vector3 opponentPosition, Vector3 frameMove, float stopDistance) {
@@ -108,7 +138,6 @@ namespace Core.LargeSatan {
             return (0f <= t1 && t1 <= 1f) || (0f <= t2 && t2 <= 1f);
         }
 
-        // 莉悶・繧ケ繝・・繝医↓驕キ遘サ縺吶ｋ逶エ蜑阪↓蜻シ縺ー繧後ｋ
         public override void OnExit(IStrikerContext context) {
         }
 

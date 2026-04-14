@@ -2,25 +2,25 @@ using UnityEngine;
 using Alice;
 
 namespace Core.LargeSatan {
-
+
+
 
     public class JumpState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Dash;
 
-        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧「繝九Γ繝シ繧キ繝ァ繝ウ繧ッ繝ェ繝・・
         [SerializeField] private StrikerAnimationClip fowardClip, backwardClip, upwardClip;
         [SerializeField] StrikerNode fallNode;
         [SerializeField] float jumpSpeed;
         [SerializeField] float upwardThreshold = 0.96f;
         [SerializeField] float duration = 0.5f;
         [SerializeField] float endSpeedRatio = 0.01f;
+        [SerializeField] EffectPlayer effectPlayer;
         Vector3 initialVelocity;
         float elapsedTime;
         bool previousUseGravity;
 
-        // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
         public override void OnEnter(IStrikerContext context) {
-            // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
+
             var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
             var requestedDirection = context.LocalInputDirection == Vector2.zero ? Vector2.up : context.LocalInputDirection;
             StrikerAnimationClip clip;
@@ -41,9 +41,15 @@ namespace Core.LargeSatan {
             this.ScheduleStateEvent(duration, context => {
                 context.TryTransition(fallNode);
             });
+
+            Quaternion effectRotation = transform.rotation;
+            if(context.LocalInputDirection.x >= 0) {
+                effectRotation *= Quaternion.Euler(0f, 180f, 0f);
+            }
+
+            effectPlayer.Emit(effectPlayer.transform.position, effectRotation);
         }
 
-        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∵ッ弱ヵ繝ャ繝シ繝蜻シ縺ー繧後ｋ
         public override void OnUpdate(IStrikerStateContext context) {
             elapsedTime += Time.deltaTime;
             float ratio = Mathf.Max(endSpeedRatio, 0.0001f);
@@ -52,7 +58,6 @@ namespace Core.LargeSatan {
             context.Rigidbody.linearVelocity = this.initialVelocity * decay;
         }
 
-        // 莉悶・繧ケ繝・・繝医↓驕キ遘サ縺吶ｋ逶エ蜑阪↓蜻シ縺ー繧後ｋ
         public override void OnExit(IStrikerContext context) {
             context.Rigidbody.useGravity = this.previousUseGravity;
         }

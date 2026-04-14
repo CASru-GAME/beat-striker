@@ -8,6 +8,11 @@ using UnityEngine.Pool;
 public class EffectPlayer : MonoBehaviour {
     [Header("References")]
     [SerializeField] private GameObject effectPrefab;
+    [SerializeField] private AudioClip sound;
+
+    [Header("Follow")]
+    [Tooltip("有効にすると、発生したエフェクトを EffectPlayer の子オブジェクトとして追従させる")]
+    [SerializeField] private bool followEffectPlayerTransform = false;
 
     [Header("Lifetime")]
     [Tooltip("ParticleSystem がないプレハブを、何秒後にプールへ返却するか")]
@@ -21,10 +26,16 @@ public class EffectPlayer : MonoBehaviour {
     [SerializeField] private int maxPoolSize = 32;
 
     private IObjectPool<GameObject> pool;
+    private Transform poolRoot;
     private readonly HashSet<GameObject> playingEffects = new();
     private readonly Dictionary<GameObject, ParticleSystem> particleSystemByInstance = new();
+    private bool suppressParentChanges;
 
     private void Awake() {
+        var poolRootObject = new GameObject($"{name} Effect Pool Root");
+        poolRootObject.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+        poolRoot = poolRootObject.transform;
+
         pool = new ObjectPool<GameObject>(
             CreateEffect,
             OnGet,
@@ -45,6 +56,10 @@ public class EffectPlayer : MonoBehaviour {
         Emit(effectTransform.position, effectTransform.rotation, effectTransform.lossyScale);
     }
 
+    public void Emit(Vector3 position, Quaternion rotation) {
+        Emit(position, rotation, Vector3.one);
+    }
+
     public void Emit(Vector3 position, Quaternion rotation, Vector3 scale) {
         var effect = pool.Get();
         if (!effect) {
@@ -54,6 +69,7 @@ public class EffectPlayer : MonoBehaviour {
         var effectInstanceTransform = effect.transform;
         effectInstanceTransform.SetPositionAndRotation(position, rotation);
         effectInstanceTransform.localScale = scale;
+        effectInstanceTransform.SetParent(followEffectPlayerTransform ? transform : poolRoot, true);
 
         effect.SetActive(true);
 
@@ -64,6 +80,10 @@ public class EffectPlayer : MonoBehaviour {
 
         playingEffects.Add(effect);
 
+        if(sound) {
+            AudioSource.PlayClipAtPoint(sound, position);
+        }
+
         if (particleSystem) {
             StartCoroutine(ReturnToPoolWhenFinished(effect, particleSystem));
             return;
@@ -73,7 +93,7 @@ public class EffectPlayer : MonoBehaviour {
     }
 
     private GameObject CreateEffect() {
-        var effect = Instantiate(effectPrefab, transform);
+        var effect = Instantiate(effectPrefab, poolRoot);
         effect.TryGetComponent<ParticleSystem>(out var particleSystem);
         particleSystemByInstance[effect] = particleSystem;
         effect.SetActive(false);
@@ -87,6 +107,10 @@ public class EffectPlayer : MonoBehaviour {
         if (!effect) {
             CleanupEffect(effect);
             return;
+        }
+
+        if (!suppressParentChanges && poolRoot != null && gameObject.activeInHierarchy) {
+            effect.transform.SetParent(poolRoot, true);
         }
 
         if (particleSystemByInstance.TryGetValue(effect, out var particleSystem) && particleSystem) {
@@ -131,15 +155,27 @@ public class EffectPlayer : MonoBehaviour {
             return;
         }
 
-        var snapshot = new List<GameObject>(playingEffects);
-        for (var i = 0; i < snapshot.Count; i++) {
-            var effect = snapshot[i];
-            if (effect) {
-                pool.Release(effect);
-                continue;
-            }
+        suppressParentChanges = true;
+        try {
+            var snapshot = new List<GameObject>(playingEffects);
+            for (var i = 0; i < snapshot.Count; i++) {
+                var effect = snapshot[i];
+                if (effect) {
+                    pool.Release(effect);
+                    continue;
+                }
 
-            CleanupEffect(effect);
+                CleanupEffect(effect);
+            }
+        }
+        finally {
+            suppressParentChanges = false;
+        }
+    }
+
+    private void OnDestroy() {
+        if (poolRoot != null) {
+            Destroy(poolRoot.gameObject);
         }
     }
 

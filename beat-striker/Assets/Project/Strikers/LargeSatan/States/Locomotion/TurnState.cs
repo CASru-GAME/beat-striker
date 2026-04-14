@@ -2,7 +2,8 @@ using UnityEngine;
 using Alice;
 
 namespace Core.LargeSatan {
-
+
+
 
     public class TurnState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Idle;
@@ -45,6 +46,7 @@ namespace Core.LargeSatan {
         }
 
         public override void OnExit(IStrikerContext context) {
+            context.Rigidbody.rotation = targetRotation;
             context.Rigidbody.constraints = originalConstraints;
         }
     }
