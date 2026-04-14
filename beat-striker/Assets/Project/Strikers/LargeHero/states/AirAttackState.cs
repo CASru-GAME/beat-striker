@@ -40,14 +40,14 @@ namespace Core.LargeHero {
 
             attackPlayer.OnHit
                 .Subscribe(hit => {
-                    if (!hit.collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                        hurtbox = hit.collider.GetComponentInParent<Hurtbox>();
+                    if (!hit.Collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                        hurtbox = hit.Collider.GetComponentInParent<Hurtbox>();
                         if (!hurtbox) {
                             return AttackPlayer.HitType.Cancel;
                         }
                     }
 
-                    var hitpoint = hit.collider.ClosestPoint(attackPlayer.transform.position);
+                    var hitpoint = hit.Collider.ClosestPoint(attackPlayer.transform.position);
                     var nockBackDirection = Mathf.Sign(hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
                     var hitResult = hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
 

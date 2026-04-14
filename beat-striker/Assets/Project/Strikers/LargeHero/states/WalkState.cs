@@ -3,7 +3,8 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeHero {
-
+
+
 
     public class WalkState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Idle;
@@ -21,6 +22,8 @@ namespace Core.LargeHero {
             var v = context.Rigidbody.linearVelocity;
             v.x = context.InputDirection.x * walkSpeed;
             context.Rigidbody.linearVelocity = v;
+
+            context.TryTransition(locomotionNode);
         }
 
   }

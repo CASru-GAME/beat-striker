@@ -26,7 +26,6 @@ namespace Core.LargeHero {
             attackPlayer.OnFilterHit
                 .Subscribe(collider => {
                     if (!collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                        hurtbox = collider.GetComponentInParent<Hurtbox>();
                         if (!hurtbox) {
                             return false;
                         }
@@ -38,14 +37,13 @@ namespace Core.LargeHero {
 
             attackPlayer.OnHit
                 .Subscribe(hit => {
-                    if (!hit.collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                        hurtbox = hit.collider.GetComponentInParent<Hurtbox>();
+                    if (!hit.Collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
                         if (!hurtbox) {
                             return AttackPlayer.HitType.Cancel;
                         }
                     }
 
-                    var hitpoint = hit.collider.ClosestPoint(attackPlayer.transform.position);
+                    var hitpoint = hit.Collider.ClosestPoint(attackPlayer.transform.position);
                     var nockBackDirection = Mathf.Sign(hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
                     var hitResult = hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
 
@@ -68,6 +66,7 @@ namespace Core.LargeHero {
         }
 
         public override void OnAttackRequested(IStrikerStateContext context) {
+            context.PreventGroup();
             context.TryTransition(comboNode);
         }
 

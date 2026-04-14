@@ -51,14 +51,14 @@ namespace Core.LargeSatan {
 
             attackPlayer.OnHit
                 .Subscribe(hit => {
-                    if (!hit.collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                        hurtbox = hit.collider.GetComponentInParent<Hurtbox>();
+                    if (!hit.Collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                        hurtbox = hit.Collider.GetComponentInParent<Hurtbox>();
                         if (!hurtbox) {
                             return AttackPlayer.HitType.Cancel;
                         }
                     }
 
-                    var hitStatus = new HitStatus(damage, nockbackSpeed * (hit.hitPoint - context.Rigidbody.position).normalized);
+                    var hitStatus = new HitStatus(damage, nockbackSpeed * (hit.Position - context.Rigidbody.position).normalized);
                     var hitResult = hurtbox.GiveHit(hitStatus);
                     context.GenerateImpact(new StrikerImpact(impact * Vector3.down));
 

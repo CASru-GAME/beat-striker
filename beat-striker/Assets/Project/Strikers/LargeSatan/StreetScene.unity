@@ -254,6 +254,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 906267494629859191, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: strikerEntries.Array.data[0].Prefab
+      value: 
+      objectReference: {fileID: 8540004002704815348, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
     - target: {fileID: 3568961321467451832, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: beatTimeOffset
       value: 0.2
@@ -686,6 +690,10 @@ PrefabInstance:
     - target: {fileID: 5975064987565033899, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: m_LocalScale.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: isTestMode
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: isTrainingInfiniteRound

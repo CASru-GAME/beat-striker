@@ -8,6 +8,9 @@ using UnityEngine;
 
 public interface IStrikerStateContext : IStrikerContext {
     void TryTransition(IStrikerNode node, bool forceSameStateTransition = false);
+    void PreventGroup();
+    void ClearPreventGroup();
+    bool IsGroupProcessingPrevented { get; }
 }
 
 
@@ -53,79 +56,187 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
     public virtual void OnMiss(IStrikerStateContext hub) { }
 
     void IStrikerState.OnUpdate(IStrikerStateContext ctx) {
+        ctx.ClearPreventGroup();
         // タイムアクション処理
-        for (int i = timeActions.Count - 1; i >= 0; i--) {
-            var (delay, elapsedTime, action) = timeActions[i];
-            elapsedTime += Time.deltaTime;
-            if (elapsedTime >= delay) {
-                timeActions.RemoveAt(i);
-                action?.Invoke(ctx);
+        try {
+            for (int i = timeActions.Count - 1; i >= 0; i--) {
+                var (delay, elapsedTime, action) = timeActions[i];
+                elapsedTime += Time.deltaTime;
+                if (elapsedTime >= delay) {
+                    timeActions.RemoveAt(i);
+                    action?.Invoke(ctx);
+                }
+                else {
+                    timeActions[i] = (delay, elapsedTime, action);
+                }
             }
-            else {
-                timeActions[i] = (delay, elapsedTime, action);
-            }
-        }
 
-        foreach (var p in parents) {
-            p.OnUpdate(ctx);
+            OnUpdate(ctx);
+
+            if (!ctx.IsGroupProcessingPrevented) {
+                foreach (var p in parents) {
+                    if (ctx.IsGroupProcessingPrevented) {
+                        break;
+                    }
+                    p.OnUpdate(ctx);
+                }
+            }
         }
-        OnUpdate(ctx);
+        finally {
+            ctx.ClearPreventGroup();
+        }
     }
 
     void IStrikerState.OnHit(IStrikerStateContext ctx, HitStatus status) {
-        foreach (var p in parents) {
-            p.OnHit(ctx, status);
+        ctx.ClearPreventGroup();
+        try {
+            OnHit(ctx, status);
+
+            if (!ctx.IsGroupProcessingPrevented) {
+                foreach (var p in parents) {
+                    if (ctx.IsGroupProcessingPrevented) {
+                        break;
+                    }
+                    p.OnHit(ctx, status);
+                }
+            }
         }
-        OnHit(ctx, status);
+        finally {
+            ctx.ClearPreventGroup();
+        }
     }
 
     void IStrikerState.OnEnemyBehind(IStrikerStateContext ctx) {
-        foreach (var p in parents) {
-            p.OnEnemyBehind(ctx);
+        ctx.ClearPreventGroup();
+        try {
+            OnEnemyBehind(ctx);
+
+            if (!ctx.IsGroupProcessingPrevented) {
+                foreach (var p in parents) {
+                    if (ctx.IsGroupProcessingPrevented) {
+                        break;
+                    }
+                    p.OnEnemyBehind(ctx);
+                }
+            }
         }
-        OnEnemyBehind(ctx);
+        finally {
+            ctx.ClearPreventGroup();
+        }
     }
 
     void IStrikerState.OnAttackRequested(IStrikerStateContext ctx) {
-        foreach (var p in parents) {
-            p.OnAttackRequested(ctx);
+        ctx.ClearPreventGroup();
+        try {
+            OnAttackRequested(ctx);
+
+            if (!ctx.IsGroupProcessingPrevented) {
+                foreach (var p in parents) {
+                    if (ctx.IsGroupProcessingPrevented) {
+                        break;
+                    }
+                    p.OnAttackRequested(ctx);
+                }
+            }
         }
-        OnAttackRequested(ctx);
+        finally {
+            ctx.ClearPreventGroup();
+        }
     }
 
     void IStrikerState.OnSpecialRequested(IStrikerStateContext ctx) {
-        foreach (var p in parents) {
-            p.OnSpecialRequested(ctx);
+        ctx.ClearPreventGroup();
+        try {
+            OnSpecialRequested(ctx);
+
+            if (!ctx.IsGroupProcessingPrevented) {
+                foreach (var p in parents) {
+                    if (ctx.IsGroupProcessingPrevented) {
+                        break;
+                    }
+                    p.OnSpecialRequested(ctx);
+                }
+            }
         }
-        OnSpecialRequested(ctx);
+        finally {
+            ctx.ClearPreventGroup();
+        }
     }
 
     void IStrikerState.OnChargeRequested(IStrikerStateContext ctx) {
-        foreach (var p in parents) {
-            p.OnChargeRequested(ctx);
+        ctx.ClearPreventGroup();
+        try {
+            OnChargeRequested(ctx);
+
+            if (!ctx.IsGroupProcessingPrevented) {
+                foreach (var p in parents) {
+                    if (ctx.IsGroupProcessingPrevented) {
+                        break;
+                    }
+                    p.OnChargeRequested(ctx);
+                }
+            }
         }
-        OnChargeRequested(ctx);
+        finally {
+            ctx.ClearPreventGroup();
+        }
     }
 
     void IStrikerState.OnDashRequested(IStrikerStateContext ctx) {
-        foreach (var p in parents) {
-            p.OnDashRequested(ctx);
+        ctx.ClearPreventGroup();
+        try {
+            OnDashRequested(ctx);
+
+            if (!ctx.IsGroupProcessingPrevented) {
+                foreach (var p in parents) {
+                    if (ctx.IsGroupProcessingPrevented) {
+                        break;
+                    }
+                    p.OnDashRequested(ctx);
+                }
+            }
         }
-        OnDashRequested(ctx);
+        finally {
+            ctx.ClearPreventGroup();
+        }
     }
 
     void IStrikerState.OnGuardRequested(IStrikerStateContext ctx) {
-        foreach (var p in parents) {
-            p.OnGuardRequested(ctx);
+        ctx.ClearPreventGroup();
+        try {
+            OnGuardRequested(ctx);
+
+            if (!ctx.IsGroupProcessingPrevented) {
+                foreach (var p in parents) {
+                    if (ctx.IsGroupProcessingPrevented) {
+                        break;
+                    }
+                    p.OnGuardRequested(ctx);
+                }
+            }
         }
-        OnGuardRequested(ctx);
+        finally {
+            ctx.ClearPreventGroup();
+        }
     }
 
     void IStrikerState.OnMiss(IStrikerStateContext ctx) {
-        foreach (var p in parents) {
-            p.OnMiss(ctx);
+        ctx.ClearPreventGroup();
+        try {
+            OnMiss(ctx);
+
+            if (!ctx.IsGroupProcessingPrevented) {
+                foreach (var p in parents) {
+                    if (ctx.IsGroupProcessingPrevented) {
+                        break;
+                    }
+                    p.OnMiss(ctx);
+                }
+            }
         }
-        OnMiss(ctx);
+        finally {
+            ctx.ClearPreventGroup();
+        }
     }
 
     protected void ScheduleStateEvent(float delay, Action<IStrikerStateContext> action) {

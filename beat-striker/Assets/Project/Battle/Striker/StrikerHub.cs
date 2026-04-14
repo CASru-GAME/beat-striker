@@ -93,6 +93,7 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     IStrikerState currentState;
     bool isChangingState;
     bool forceSameStateTransitionInProgress;
+    bool isGroupProcessingPrevented;
     readonly IStrikerContext context;
     public IStrikerState CurrentState => currentState;
 
@@ -118,6 +119,16 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     public void RequestAttention(AttentionRequest request) {
         context.RequestAttention(request);
     }
+
+    public void PreventGroup() {
+        isGroupProcessingPrevented = true;
+    }
+
+    public void ClearPreventGroup() {
+        isGroupProcessingPrevented = false;
+    }
+
+    public bool IsGroupProcessingPrevented => isGroupProcessingPrevented;
 
     public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = null) {
         this.context = context;

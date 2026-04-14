@@ -15,7 +15,7 @@ public class AttackPlayer : MonoBehaviour {
     [SerializeField] float hitDetectionStartTime = 0f;
     [SerializeField] float hitDetectionDuration = 0.5f;
     readonly List<Hit> hitsInFrame = new();
-    public record Hit(Vector3 hitPoint, Collider collider);
+    public record Hit(Vector3 Position, Collider Collider);
     public enum HitType {
         Normal,
         Blocked,
@@ -47,10 +47,16 @@ public class AttackPlayer : MonoBehaviour {
         episodeTime = 0f;
         hitsInFrame.Clear();
         isVirgin = true;
+        if(TryGetComponent<Collider>(out var collider)) {
+            collider.enabled = true;
+        }
     }
 
     void OnDisable() {
         hitsInFrame.Clear();
+        if(TryGetComponent<Collider>(out var collider)) {
+            collider.enabled = false;
+        }
     }
 
     void OnTriggerStay(Collider other) {
@@ -81,10 +87,10 @@ public class AttackPlayer : MonoBehaviour {
             return;
         }
 
-        hitsInFrame.RemoveAll(e => e.collider == null);
+        hitsInFrame.RemoveAll(e => e.Collider == null);
         if (hitsInFrame.Count == 0) return;
 
-        var closestHit = hitsInFrame.MinBy(e => Vector3.Distance(e.hitPoint, transform.position));
+        var closestHit = hitsInFrame.MinBy(e => Vector3.Distance(e.Position, transform.position));
         ExecuteHit(closestHit);
     }
 
@@ -93,10 +99,10 @@ public class AttackPlayer : MonoBehaviour {
 
         if(onHitSubject.InvokeAllAndTryGetFirst(hit, out var hitType) && hitType != HitType.Cancel) {
             var clip = hitType == HitType.Blocked ? blockedHitSound : hitSound;
-            if(clip != null) AudioSource.PlayClipAtPoint(clip, hit.hitPoint);
+            if(clip != null) AudioSource.PlayClipAtPoint(clip, hit.Position);
 
             var effectPlayer = hitType == HitType.Blocked ? blockedHitEffectPlayer : hitEffectPlayer;
-            effectPlayer.Emit(hit.hitPoint, Quaternion.identity, Vector3.one);
+            effectPlayer.Emit(hit.Position, Quaternion.identity, Vector3.one);
         }
         
         // In multi-hit mode, keep listening until hitDetectionDuration expires.

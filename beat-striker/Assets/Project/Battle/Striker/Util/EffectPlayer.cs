@@ -145,6 +145,5 @@ public class EffectPlayer : MonoBehaviour {
 
     private void CleanupEffect(GameObject effect) {
         playingEffects.Remove(effect);
-        particleSystemByInstance.Remove(effect);
     }
 }

@@ -3,7 +3,8 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeHero {
-
+
+
 
     public class ChargeState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Charge;
@@ -44,23 +45,6 @@ namespace Core.LargeHero {
             particleprefab.Clear();
         }
 
-        public override void OnAttackRequested(IStrikerStateContext context) {
-        }
-
-        public override void OnChargeRequested(IStrikerStateContext context) {
-        }
-
-        public override void OnDashRequested(IStrikerStateContext context) {
-        }
-
-        public override void OnGuardRequested(IStrikerStateContext context) {
-        }
-
-        public override void OnHit(IStrikerStateContext context, HitStatus status) {
-        }
-
-        public override void OnMiss(IStrikerStateContext context) {
-        }
 
     }
 }
