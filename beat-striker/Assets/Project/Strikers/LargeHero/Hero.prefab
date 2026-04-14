@@ -70,6 +70,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1774955175412150973}
   - component: {fileID: 3240035449858794285}
+  - component: {fileID: 4492672547922250092}
+  - component: {fileID: 7358051529129111365}
+  - component: {fileID: 3370139273090962669}
   m_Layer: 0
   m_Name: Slash3State
   m_TagString: Untagged
@@ -86,7 +89,7 @@ Transform:
   m_GameObject: {fileID: 183400440760170086}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.91837, y: 0, z: 1.30953}
+  m_LocalPosition: {x: -0.012329999, y: 1.13007, z: 1.13309}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -111,13 +114,69 @@ MonoBehaviour:
     speed: 0.8
   nextNode: {fileID: 6059471881157454106}
   comboNode: {fileID: 6646820647200852723}
-  hitBox: {fileID: 6121226824295966727}
+  attackPlayer: {fileID: 7358051529129111365}
   particleprefab: {fileID: 4215394953479131121}
   audioClip: {fileID: 8300000, guid: 0c15e77961d458f4c9249d7640cec25e, type: 3}
-  missAudioClip: {fileID: 0}
+  missAudioClip: {fileID: 8300000, guid: def41b1ba949de64196942b40603f722, type: 3}
   damage: 50
   nockbackSpeed: 10
   SlashEffect: {fileID: 3772986478866910905}
+--- !u!135 &4492672547922250092
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 183400440760170086}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.2177602
+  m_Center: {x: 0, y: 0, z: 0.7177602}
+--- !u!114 &7358051529129111365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 183400440760170086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb7bd230ebe14d1ca172f9c8769d36e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
+  attackEffectPlayer: {fileID: 3370139273090962669}
+  hitEffectPlayer: {fileID: 8271426721761632923}
+  attackSound: {fileID: 8300000, guid: def41b1ba949de64196942b40603f722, type: 3}
+  hitSound: {fileID: 8300000, guid: 0c15e77961d458f4c9249d7640cec25e, type: 3}
+  multipleHit: 0
+  hitDetectionStartTime: 0
+  hitDetectionDuration: 0.5
+--- !u!114 &3370139273090962669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 183400440760170086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 7637536588179000986}
+  fallbackLifetimeSeconds: 1
+  initialPoolSize: 4
+  maxPoolSize: 32
 --- !u!1 &233892664843692045
 GameObject:
   m_ObjectHideFlags: 0
@@ -14968,37 +15027,6 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
---- !u!1 &1270130733404556814
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 739786938170160904}
-  m_Layer: 0
-  m_Name: rush
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &739786938170160904
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1270130733404556814}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.0001, z: -0.0062}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4908610122466299657}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1387753564171686268
 GameObject:
   m_ObjectHideFlags: 0
@@ -19887,7 +19915,7 @@ MonoBehaviour:
     fadeTime: 0.05
     speed: 1.2
   nextNode: {fileID: 4019688610311916205}
-  hitBox: {fileID: 6121226824295966727}
+  attackPlayer: {fileID: 0}
   particleprefab: {fileID: 4215394953479131121}
   audioClip: {fileID: 8300000, guid: 0c15e77961d458f4c9249d7640cec25e, type: 3}
   missAudioClip: {fileID: 8300000, guid: def41b1ba949de64196942b40603f722, type: 3}
@@ -29999,6 +30027,9 @@ GameObject:
   m_Component:
   - component: {fileID: 4463389769037209585}
   - component: {fileID: 4157371287227188172}
+  - component: {fileID: 4494497825714075655}
+  - component: {fileID: 3206192162507756701}
+  - component: {fileID: 1709355794466653195}
   m_Layer: 0
   m_Name: RushState
   m_TagString: Untagged
@@ -30015,7 +30046,7 @@ Transform:
   m_GameObject: {fileID: 2398909557663202526}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 10.35208, y: 0, z: 6.29646}
+  m_LocalPosition: {x: 0.57, y: 0.88, z: 1.29}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -30039,17 +30070,73 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 2
   nextNode: {fileID: 6059471881157454106}
-  hitBox: {fileID: 6121226824295966727}
+  attackPlayer: {fileID: 4494497825714075655}
   hitEffectPrefab: {fileID: 4527742461848400171}
   audioClip: {fileID: 8300000, guid: 0c15e77961d458f4c9249d7640cec25e, type: 3}
   missAudioClip: {fileID: 0}
   beamPrefab: {fileID: 6721807718034898878, guid: 867bdfb31d7a68142b135536b8629304, type: 3}
-  firePosition: {fileID: 739786938170160904}
+  firePosition: {fileID: 0}
   beamFireTime: 0.2
   beamAudioClip: {fileID: 8300000, guid: def41b1ba949de64196942b40603f722, type: 3}
   damage: 10
   nockbackSpeed: 5
   rushSpeed: 10
+--- !u!114 &4494497825714075655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2398909557663202526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb7bd230ebe14d1ca172f9c8769d36e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
+  attackEffectPlayer: {fileID: 3206192162507756701}
+  hitEffectPlayer: {fileID: 8271426721761632923}
+  attackSound: {fileID: 0}
+  hitSound: {fileID: 0}
+  multipleHit: 0
+  hitDetectionStartTime: 0
+  hitDetectionDuration: 0.5
+--- !u!114 &3206192162507756701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2398909557663202526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 6721807718034898878, guid: 867bdfb31d7a68142b135536b8629304, type: 3}
+  fallbackLifetimeSeconds: 1
+  initialPoolSize: 4
+  maxPoolSize: 32
+--- !u!135 &1709355794466653195
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2398909557663202526}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.1227818
+  m_Center: {x: -0.62278175, y: 0, z: 0}
 --- !u!1 &2601297080847087183
 GameObject:
   m_ObjectHideFlags: 0
@@ -40222,6 +40309,54 @@ MonoBehaviour:
   sword: {fileID: 7706980074344695126}
   lockHorizontalMovement: 1
   guardHitKnockbackScale: 0
+--- !u!1 &3755130618850866827
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1214539206053645378}
+  - component: {fileID: 8271426721761632923}
+  m_Layer: 0
+  m_Name: hiteffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1214539206053645378
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3755130618850866827}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3893052300175056291}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8271426721761632923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3755130618850866827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 4459779041845846587}
+  fallbackLifetimeSeconds: 1.11
+  initialPoolSize: 4
+  maxPoolSize: 32
 --- !u!1 &3769293245103731280
 GameObject:
   m_ObjectHideFlags: 0
@@ -50168,10 +50303,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54baaaa8ee1084a0fa1270acba05a20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.StrikerHub
+  striker: 2
   maxHitPoint: 100
   maxSpecialPoint: 100
+  deathHeightY: -10
   defaultState: {fileID: 393165507195732606}
-  stunState: {fileID: 0}
   deadState: {fileID: 9164936248884598044}
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
@@ -65124,6 +65260,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3893052300175056291}
   - component: {fileID: 6646820647200852723}
+  - component: {fileID: 3710182776436218068}
+  - component: {fileID: 9021503987230675884}
+  - component: {fileID: 2502542493725719348}
   m_Layer: 0
   m_Name: Slash1State
   m_TagString: Untagged
@@ -65140,10 +65279,11 @@ Transform:
   m_GameObject: {fileID: 5127644430179349079}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 10.35208, y: 0, z: 6.29646}
+  m_LocalPosition: {x: 0.03, y: 1.25, z: 0.77}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1214539206053645378}
   m_Father: {fileID: 5478116573998808903}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6646820647200852723
@@ -65165,7 +65305,7 @@ MonoBehaviour:
     speed: 0.8
   nextNode: {fileID: 6059471881157454106}
   comboNode: {fileID: 836980988452117581}
-  hitBox: {fileID: 6121226824295966727}
+  attackPlayer: {fileID: 3710182776436218068}
   particleprefab: {fileID: 4215394953479131121}
   audioClip: {fileID: 8300000, guid: 0c15e77961d458f4c9249d7640cec25e, type: 3}
   missAudioClip: {fileID: 8300000, guid: def41b1ba949de64196942b40603f722, type: 3}
@@ -65173,6 +65313,62 @@ MonoBehaviour:
   damage: 20
   nockbackSpeed: 1
   SlashEffect: {fileID: 3873967421245724376}
+--- !u!114 &3710182776436218068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5127644430179349079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb7bd230ebe14d1ca172f9c8769d36e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
+  attackEffectPlayer: {fileID: 9021503987230675884}
+  hitEffectPlayer: {fileID: 8271426721761632923}
+  attackSound: {fileID: 8300000, guid: def41b1ba949de64196942b40603f722, type: 3}
+  hitSound: {fileID: 8300000, guid: 0c15e77961d458f4c9249d7640cec25e, type: 3}
+  multipleHit: 0
+  hitDetectionStartTime: 0
+  hitDetectionDuration: 0.5
+--- !u!114 &9021503987230675884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5127644430179349079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 3768718165588593143}
+  fallbackLifetimeSeconds: 1
+  initialPoolSize: 4
+  maxPoolSize: 32
+--- !u!135 &2502542493725719348
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5127644430179349079}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.0521446
+  m_Center: {x: 0, y: 0, z: 0.55214465}
 --- !u!1 &5237949061056505812
 GameObject:
   m_ObjectHideFlags: 0
@@ -129632,6 +129828,9 @@ GameObject:
   m_Component:
   - component: {fileID: 8207382499244160811}
   - component: {fileID: 836980988452117581}
+  - component: {fileID: 5578416019684285856}
+  - component: {fileID: 3564681765668081975}
+  - component: {fileID: 7531614842148427790}
   m_Layer: 0
   m_Name: Slash2State
   m_TagString: Untagged
@@ -129648,7 +129847,7 @@ Transform:
   m_GameObject: {fileID: 7277143616231701467}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 10.35208, y: 0, z: 6.29646}
+  m_LocalPosition: {x: 0.07, y: 1.32, z: 2.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -129673,13 +129872,69 @@ MonoBehaviour:
     speed: 0.8
   nextNode: {fileID: 6059471881157454106}
   comboNode: {fileID: 3240035449858794285}
-  hitBox: {fileID: 6121226824295966727}
+  attackPlayer: {fileID: 3564681765668081975}
   particleprefab: {fileID: 4215394953479131121}
   audioClip: {fileID: 8300000, guid: 0c15e77961d458f4c9249d7640cec25e, type: 3}
-  missAudioClip: {fileID: 0}
+  missAudioClip: {fileID: 8300000, guid: def41b1ba949de64196942b40603f722, type: 3}
   damage: 20
   nockbackSpeed: 1
   SlashEffect: {fileID: 8956271638419502077}
+--- !u!135 &5578416019684285856
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7277143616231701467}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.2864645
+  m_Center: {x: 0, y: -0.24075437, z: -1.0272188}
+--- !u!114 &3564681765668081975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7277143616231701467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb7bd230ebe14d1ca172f9c8769d36e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
+  attackEffectPlayer: {fileID: 7531614842148427790}
+  hitEffectPlayer: {fileID: 8271426721761632923}
+  attackSound: {fileID: 8300000, guid: def41b1ba949de64196942b40603f722, type: 3}
+  hitSound: {fileID: 8300000, guid: 0c15e77961d458f4c9249d7640cec25e, type: 3}
+  multipleHit: 0
+  hitDetectionStartTime: 0
+  hitDetectionDuration: 0.5
+--- !u!114 &7531614842148427790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7277143616231701467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 6460413247295196045}
+  fallbackLifetimeSeconds: 1
+  initialPoolSize: 4
+  maxPoolSize: 32
 --- !u!1 &7622280510356823727
 GameObject:
   m_ObjectHideFlags: 0
@@ -134711,7 +134966,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 359175583785690188}
-  - {fileID: 739786938170160904}
   - {fileID: 1697375891684838104}
   - {fileID: 43422163523284217}
   m_Father: {fileID: 4360661525086052150}
@@ -150654,6 +150908,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3052262555496870308, guid: b6cde686fbf892c479ddaf28429ac37c, type: 3}
   m_PrefabInstance: {fileID: 4306483016917164761}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3768718165588593143 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1121007391633173294, guid: b6cde686fbf892c479ddaf28429ac37c, type: 3}
+  m_PrefabInstance: {fileID: 4306483016917164761}
+  m_PrefabAsset: {fileID: 0}
 --- !u!198 &4527742461848400171 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 366610965316539378, guid: b6cde686fbf892c479ddaf28429ac37c, type: 3}
@@ -150728,6 +150987,11 @@ Transform:
 --- !u!198 &4215394953479131121 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 366610965316539378, guid: b6cde686fbf892c479ddaf28429ac37c, type: 3}
+  m_PrefabInstance: {fileID: 4581957265202715651}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4459779041845846587 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 176256883422248504, guid: b6cde686fbf892c479ddaf28429ac37c, type: 3}
   m_PrefabInstance: {fileID: 4581957265202715651}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5806862554940284231
