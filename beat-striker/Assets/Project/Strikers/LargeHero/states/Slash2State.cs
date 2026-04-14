@@ -42,10 +42,19 @@ namespace Core.LargeHero {
             var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
             AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
-                if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                    var hitpoint = collider.ClosestPoint(hitBox.transform.position);
-                    hitsInFrame.Add(new (hitpoint, hurtbox));
+                if (!collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                    hurtbox = collider.GetComponentInParent<Hurtbox>();
+                    if (!hurtbox) {
+                        return;
+                    }
                 }
+
+                if (hurtbox.transform.root == context.Rigidbody.transform.root) {
+                    return;
+                }
+
+                var hitpoint = collider.ClosestPoint(hitBox.transform.position);
+                hitsInFrame.Add(new (hitpoint, hurtbox));
             });
             hitsInFrame.Clear();
             hitInState = false;

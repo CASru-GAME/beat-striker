@@ -12,6 +12,7 @@ namespace Core.LargeHero {
         [SerializeField] private StrikerNode noHitFallbackNode;
         [SerializeField] private SpecialSequenceContext specialSequenceContext;
         [SerializeField] private ParticleSystem slashEffect;
+        [SerializeField] private ParticleSystem slashEffect2;
 
         [FormerlySerializedAs("hitEffectPrefab")]
         [SerializeField] private ParticleSystem slashEffectPrefab;
@@ -32,6 +33,7 @@ namespace Core.LargeHero {
         public override void OnEnter(IStrikerContext context) {
             specialSequenceContext.ForceReleaseVictim();
             slashEffect.Play();
+            slashEffect2.Play();
             var swingAudioClip = missAudioClip ? missAudioClip : hitAudioClip;
             AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
             context.PlayAnimation(animationClip, OnAnimationEnd);

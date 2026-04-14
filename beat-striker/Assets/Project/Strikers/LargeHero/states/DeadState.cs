@@ -27,8 +27,6 @@ namespace Core.LargeHero {
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
-            context.PlayAnimation(animationClip);
-
             if (playSecondarySimultaneously) {
                 secondaryOriginalParent = secondaryAnimator.transform.parent;
                 secondaryOriginalLocalPosition = secondaryAnimator.transform.localPosition;
@@ -39,6 +37,8 @@ namespace Core.LargeHero {
                 secondaryLockedWorldScale = secondaryAnimator.transform.localScale;
                 PlaySecondaryAnimation();
             }
+
+            context.PlayAnimation(animationClip);
         }
 
         // このステートにいる間、毎フレーム呼ばれる
