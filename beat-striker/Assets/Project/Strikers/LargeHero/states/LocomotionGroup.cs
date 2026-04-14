@@ -12,16 +12,13 @@ namespace Core.LargeHero {
         [SerializeField] StrikerNode guardState;
         [SerializeField] StrikerNode chargeState;
 
-        // このグループに入った時に呼ばれる（前のステートがこのグループに所属していなかった場合）
         public override void OnEnter(IStrikerContext context) {
         }
 
-        // このグループに所属するステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
             context.TryTransition(locomotionNode);
         }
 
-        // このグループから出る時に呼ばれる（次のステートがこのグループに所属していない場合）
         public override void OnExit(IStrikerContext context) {
         }
 
@@ -30,7 +27,6 @@ namespace Core.LargeHero {
             context.TryTransition(attackNode);
         }
 
-        // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
             context.TryTransition(chargeState);
         }
@@ -55,7 +51,6 @@ namespace Core.LargeHero {
             context.TryTransition(stunState);
         }
 
-        // ミスした時に呼ばれる
         public override void OnMiss(IStrikerStateContext context) {
         }
 

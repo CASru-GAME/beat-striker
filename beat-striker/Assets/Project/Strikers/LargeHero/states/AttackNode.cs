@@ -14,9 +14,7 @@ namespace Core.LargeHero {
         [SerializeField] bool useChargeForSpecialInTest;
         [SerializeField] int requiredChargeForSpecial = 2;
 
-        // このノードに遷移した時に呼ばれる
         public override void OnTryTransition(IStrikerNodeContext context) {
-            // 横入力 > 0 なら突進
             if (context.LocalInputDirection.x != 0) {
                 context.TryTransition(rushState);
                 return;
@@ -36,13 +34,10 @@ namespace Core.LargeHero {
             }
 
             if (energy == 0) {
-                // チャージ0 → 斬撃
                 context.TryTransition(attackState);
             } else if (energy == 1) {
-                // チャージ1 → ビーム
                 context.TryTransition(beamState);
             } else {
-                // チャージ2以上 → 斬撃（必殺はゲージ満タン発動に変更）
                 context.TryTransition(attackState);
             }
         }

@@ -4,10 +4,10 @@ using Core.Striker;
 using UnityEngine.Serialization;
 
 namespace Core.LargeHero {
-
 
     public class SpecialChaseState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Special;
+
         [SerializeField] private StrikerAnimationClip chaseState1;
         [SerializeField] private StrikerAnimationClip chaseState2;
         [SerializeField] private StrikerNode nextNode;
@@ -99,5 +99,3 @@ namespace Core.LargeHero {
         }
     }
 }
-
-

@@ -10,7 +10,6 @@ namespace Core.LargeHero {
         [SerializeField] StrikerState beamState;
         [SerializeField] StrikerState rushState;
 
-        // このノードに遷移した時に呼ばれる
         public override void OnTryTransition(IStrikerNodeContext context) {
             if (context.LocalInputDirection.x != 0) {
                 context.TryTransition(rushState);

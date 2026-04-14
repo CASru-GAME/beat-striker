@@ -121,8 +121,7 @@ namespace Alice {
                 strikerRegistry.RequestUnregister(deployed.PlayerId);
 
                 if (deployed.PlayerTransform != null) {
-                    deployed.PlayerTransform.SetParent(deployed.OriginalParent);
-                    deployed.PlayerTransform.SetPositionAndRotation(deployed.OriginalPosition, deployed.OriginalRotation);
+                    RestorePlayerTransform(deployed);
                 }
 
                 deployed.Hub?.DestroyGameObject();
@@ -132,6 +131,29 @@ namespace Alice {
             }
 
             deployedStrikers.Clear();
+        }
+
+        void RestorePlayerTransform(DeployedStriker deployed) {
+            // Skip restoration if the target parent is already being destroyed.
+            if (!CanReparentTo(deployed.OriginalParent)) {
+                return;
+            }
+
+            try {
+                deployed.PlayerTransform.SetParent(deployed.OriginalParent);
+                deployed.PlayerTransform.SetPositionAndRotation(deployed.OriginalPosition, deployed.OriginalRotation);
+            } catch (UnityException ex) {
+                Debug.LogWarning($"Skip restore for player {deployed.PlayerId}: {ex.Message}");
+            }
+        }
+
+        static bool CanReparentTo(Transform parent) {
+            if (parent == null) {
+                return false;
+            }
+
+            var scene = parent.gameObject.scene;
+            return scene.IsValid() && scene.isLoaded;
         }
 
         public void ConnectRoundInputs() {

@@ -20,6 +20,7 @@ public class StrikerHub : MonoBehaviour {
 
     [Header("References")]
     [SerializeField] private StrikerState defaultState;
+    [SerializeField] private StrikerState stunState;
     [SerializeField] private StrikerState deadState, VictoryState, IntroState;
     [SerializeField] private Alice.AiBrain aiBrain;
     [SerializeField] private Transform centerPositionTransform;
@@ -33,6 +34,7 @@ public class StrikerHub : MonoBehaviour {
     public float InspectorMaxSpecialPoint => maxSpecialPoint;
     public float InspectorDeathHeightY => deathHeightY;
     public StrikerState InspectorDefaultState => defaultState;
+    public StrikerState InspectorStunState => stunState;
     public StrikerState InspectorDeadState => deadState;
     public StrikerState InspectorVictoryState => VictoryState;
     public StrikerState InspectorIntroState => IntroState;

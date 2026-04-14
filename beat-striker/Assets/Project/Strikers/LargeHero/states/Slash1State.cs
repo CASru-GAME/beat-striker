@@ -6,18 +6,16 @@ using System;
 using System.Collections.Generic;
 using Core.Striker.Components;
 namespace Core.LargeHero {
-    
-
-    public class Slash1State : StrikerState {
+    
     /// <summary>
-    /// 譁ャ謦・繧ケ繝・・繝医ゅヲ繝・ヨ謌仙粥蠕後↓繧ウ繝槭Φ繝峨〒譁ャ謦・縺ク繝√ぉ繧、繝ウ縺吶ｋ縲・
     /// </summary>
-
+    public class Slash1State : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
+
 
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
-        [SerializeField] StrikerNode comboNode;   // 竊・譁ャ謦・
+        [SerializeField] StrikerNode comboNode;   // → 斬撃2
         [SerializeField] HitBox hitBox;
         IDisposable disposable;
 
@@ -102,5 +100,3 @@ namespace Core.LargeHero {
 
     }
 }
-
-

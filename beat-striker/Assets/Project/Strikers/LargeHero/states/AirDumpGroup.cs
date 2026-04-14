@@ -10,17 +10,14 @@ namespace Core.LargeHero {
         [SerializeField] StrikerNode attackNode;
         [SerializeField] StrikerNode chargeState;
 
-        // このグループに入った時に呼ばれる（前のステートがこのグループに所属していなかった場合）
         public override void OnEnter(IStrikerContext context) {
             Debug.Log("AirDumpGroup: OnEnter");
             context.Rigidbody.linearDamping = linearDamping;
         }
 
-        // このグループに所属するステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
         }
 
-        // このグループから出る時に呼ばれる（次のステートがこのグループに所属していない場合）
         public override void OnExit(IStrikerContext context) {
             Debug.Log("AirDumpGroup: OnExit");
             context.Rigidbody.linearDamping = 0f;
@@ -31,7 +28,6 @@ namespace Core.LargeHero {
             context.TryTransition(attackNode);
         }
 
-        // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
             context.TryTransition(chargeState);
         }
@@ -49,7 +45,6 @@ namespace Core.LargeHero {
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
         }
 
-        // ミスした時に呼ばれる
         public override void OnMiss(IStrikerStateContext context) {
         }
 

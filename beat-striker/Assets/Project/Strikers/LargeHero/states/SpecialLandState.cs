@@ -3,10 +3,10 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeHero {
-
 
     public class SpecialLandState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Special;
+
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerNode nextNode;
         [SerializeField] private SpecialSequenceContext specialSequenceContext;
@@ -31,5 +31,3 @@ namespace Core.LargeHero {
         }
     }
 }
-
-

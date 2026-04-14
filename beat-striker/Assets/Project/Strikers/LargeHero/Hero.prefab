@@ -5133,6 +5133,7 @@ MonoBehaviour:
   noHitFallbackNode: {fileID: 393165507195732606}
   specialSequenceContext: {fileID: 6533960672805731556}
   slashEffect: {fileID: 3814646397149858281}
+  slashEffect2: {fileID: 6262695081971807426, guid: 204c2b90677d42c46990b6987872d715, type: 3}
   slashEffectPrefab: {fileID: 4215394953479131121}
   hitAudioClip: {fileID: 8300000, guid: d34decce042c32e41bcc47e0024aeaa6, type: 3}
   missAudioClip: {fileID: 8300000, guid: d34decce042c32e41bcc47e0024aeaa6, type: 3}
@@ -30034,7 +30035,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.RushState
   parents: []
   animationClip:
-    clip: {fileID: -8325179844162785765, guid: 6017ea9ec13f91e41b69963b9722b58e, type: 3}
+    clip: {fileID: 6153200182611025756, guid: ee47c464ecd06294a967ce095b6e4831, type: 3}
     fadeTime: 0.3
     speed: 2
   nextNode: {fileID: 6059471881157454106}
@@ -40091,9 +40092,9 @@ MonoBehaviour:
     fadeTime: 0.3
     speed: 0.8
   chaseState2:
-    clip: {fileID: -8123868386355476214, guid: 6b863d2dac59a2b44ac12a3cba38ae1c, type: 3}
+    clip: {fileID: -5727971140821882885, guid: d206456b16452e143886d2d6121e57e4, type: 3}
     fadeTime: 0.3
-    speed: 0.8
+    speed: 1.75
   nextNode: {fileID: 1496803389961549349}
   specialSequenceContext: {fileID: 6533960672805731556}
   chaseState1SlashEffect: {fileID: 6248614669915775071}
@@ -50037,9 +50038,6 @@ GameObject:
   - component: {fileID: 2891035515850460830}
   - component: {fileID: 8540004002704815348}
   - component: {fileID: 7700695864620580821}
-  - component: {fileID: 4859671156462090044}
-  - component: {fileID: 8187829839197529436}
-  - component: {fileID: 6747926045495879139}
   m_Layer: 0
   m_Name: Hero
   m_TagString: Untagged
@@ -50067,6 +50065,7 @@ Transform:
   - {fileID: 9141565695030124015}
   - {fileID: 1571106751274577319}
   - {fileID: 3987031556024687597}
+  - {fileID: 7841372731947798471}
   - {fileID: 1267873125253796733}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -50169,15 +50168,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54baaaa8ee1084a0fa1270acba05a20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.StrikerHub
-  striker: 0
   maxHitPoint: 100
   maxSpecialPoint: 100
-  deathHeightY: -10
   defaultState: {fileID: 393165507195732606}
+  stunState: {fileID: 0}
   deadState: {fileID: 9164936248884598044}
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
-  aiBrain: {fileID: 6747926045495879139}
+  aiBrain: {fileID: 0}
   centerPositionTransform: {fileID: 0}
 --- !u!114 &7700695864620580821
 MonoBehaviour:
@@ -50193,88 +50191,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hurtbox
   isGuarding: 0
   strikerHub: {fileID: 8540004002704815348}
---- !u!114 &4859671156462090044
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4619036879945846839}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Policies.BehaviorParameters
-  m_BrainParameters:
-    VectorObservationSize: 135
-    NumStackedVectorObservations: 1
-    m_ActionSpec:
-      m_NumContinuousActions: 2
-      BranchSizes: 04000000
-    VectorActionSize: 
-    VectorActionDescriptions: []
-    VectorActionSpaceType: 0
-    hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 0d9049f6c8847aa41965cc1d61d0a299, type: 3}
-  m_InferenceDevice: 0
-  m_BehaviorType: 2
-  m_BehaviorName: Satan
-  TeamId: 0
-  m_UseChildSensors: 1
-  m_UseChildActuators: 1
-  m_DeterministicInference: 0
-  m_ObservableAttributeHandling: 0
---- !u!114 &8187829839197529436
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4619036879945846839}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 777aaf249b65748dba7f6a759c86970c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.MLAiDecisionAgent
-  agentParameters:
-    maxStep: 0
-  hasUpgradedFromAgentParameters: 1
-  MaxStep: 0
---- !u!114 &6747926045495879139
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4619036879945846839}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c7498323f35e14c0a9416eb4d7b33956, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.MLAiBrain
-  behaviorName: Satan
-  autoConfigureOnAwake: 1
-  autoConfigureInEditor: 1
-  inferenceOnnx: {fileID: 5022602860645237092, guid: 0d9049f6c8847aa41965cc1d61d0a299, type: 3}
-  attackDistance: 1.1
-  stepPenalty: -0.001
-  guardSuccessReward: 0.02
-  guardFailedPenalty: -0.05
-  guardUnnecessaryPenalty: -0.015
-  attackWhiffPenalty: -0.02
-  dealtDamageRewardScale: 0.03
-  receivedDamagePenaltyScale: 0.04
-  winReward: 1
-  losePenalty: -1
-  noDamageStreakThresholdSteps: 6
-  noDamageStreakPenalty: -0.01
-  noDamageStreakExtraPenaltyPerStep: -0.002
-  movementWindowSteps: 6
-  minMovementDistanceInWindow: 1.2
-  movementRewardCapDistance: 3
-  movementShortPenalty: -0.01
-  movementLongReward: 0.008
-  actionOutcomeHorizonSteps: 2
 --- !u!1 &4696972944085960425
 GameObject:
   m_ObjectHideFlags: 0
@@ -151036,7 +150952,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7476774353592665770, guid: f1e404603d9d6a44d87a462f406eb406, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.42
+      value: 1.04
       objectReference: {fileID: 0}
     - target: {fileID: 7476774353592665770, guid: f1e404603d9d6a44d87a462f406eb406, type: 3}
       propertyPath: m_LocalPosition.z
@@ -151084,4 +151000,78 @@ Transform:
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 1426232446489214174, guid: f1e404603d9d6a44d87a462f406eb406, type: 3}
   m_PrefabInstance: {fileID: 5806862554940284231}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7631425758429408099
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5482928646811602349}
+    m_Modifications:
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.099
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.347
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.012
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.70498836
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.6935699
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.10561887
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.103908256
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -72.934
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 86.951
+      objectReference: {fileID: 0}
+    - target: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -86.811
+      objectReference: {fileID: 0}
+    - target: {fileID: 5662512845263420758, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+      propertyPath: m_Name
+      value: Impact
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+--- !u!4 &7841372731947798471 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 376723191296271524, guid: 204c2b90677d42c46990b6987872d715, type: 3}
+  m_PrefabInstance: {fileID: 7631425758429408099}
   m_PrefabAsset: {fileID: 0}

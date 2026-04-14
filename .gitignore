@@ -13,6 +13,7 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+Beat-striker/Assets/_Recovery/
 *.log
 *.sln
 *.slnx
