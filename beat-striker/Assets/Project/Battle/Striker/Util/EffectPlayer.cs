@@ -7,7 +7,12 @@ using UnityEngine.Pool;
 [AddComponentMenu(" 🟠Effect Player", 0)]
 public class EffectPlayer : MonoBehaviour {
     [Header("References")]
-    [SerializeField] private ParticleSystem effectPrefab;
+    [SerializeField] private GameObject effectPrefab;
+
+    [Header("Lifetime")]
+    [Tooltip("ParticleSystem がないプレハブを、何秒後にプールへ返却するか")]
+    [Min(0.01f)]
+    [SerializeField] private float fallbackLifetimeSeconds = 1f;
 
     [Header("Pool")]
     [Min(1)]
@@ -15,11 +20,12 @@ public class EffectPlayer : MonoBehaviour {
     [Min(1)]
     [SerializeField] private int maxPoolSize = 32;
 
-    private IObjectPool<ParticleSystem> pool;
-    private readonly HashSet<ParticleSystem> playingEffects = new();
+    private IObjectPool<GameObject> pool;
+    private readonly HashSet<GameObject> playingEffects = new();
+    private readonly Dictionary<GameObject, ParticleSystem> particleSystemByInstance = new();
 
     private void Awake() {
-        pool = new ObjectPool<ParticleSystem>(
+        pool = new ObjectPool<GameObject>(
             CreateEffect,
             OnGet,
             OnRelease,
@@ -45,46 +51,62 @@ public class EffectPlayer : MonoBehaviour {
         effectInstanceTransform.SetPositionAndRotation(position, rotation);
         effectInstanceTransform.localScale = scale;
 
-        effect.Play(true);
+        var particleSystem = particleSystemByInstance[effect];
+        if (particleSystem) {
+            particleSystem.Play(true);
+        }
+
         playingEffects.Add(effect);
 
-        StartCoroutine(ReturnToPoolWhenFinished(effect));
+        if (particleSystem) {
+            StartCoroutine(ReturnToPoolWhenFinished(effect, particleSystem));
+            return;
+        }
+
+        StartCoroutine(ReturnToPoolAfterDelay(effect));
     }
 
-    private ParticleSystem CreateEffect() {
+    private GameObject CreateEffect() {
         var effect = Instantiate(effectPrefab, transform);
-        effect.gameObject.SetActive(false);
+        effect.TryGetComponent<ParticleSystem>(out var particleSystem);
+        particleSystemByInstance[effect] = particleSystem;
+        effect.SetActive(false);
         return effect;
     }
 
-    private void OnGet(ParticleSystem effect) {
-        if (!effect) {
-            return;
-        }
-
-        effect.gameObject.SetActive(true);
+    private void OnGet(GameObject effect) {
+        effect.SetActive(true);
     }
 
-    private void OnRelease(ParticleSystem effect) {
-        if (!effect) {
-            return;
+    private void OnRelease(GameObject effect) {
+        var particleSystem = particleSystemByInstance[effect];
+        if (particleSystem) {
+            particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
-        effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-        effect.gameObject.SetActive(false);
+        effect.SetActive(false);
         playingEffects.Remove(effect);
     }
 
-    private void OnDestroyEffect(ParticleSystem effect) {
-        Destroy(effect.gameObject);
+    private void OnDestroyEffect(GameObject effect) {
+        particleSystemByInstance.Remove(effect);
+        Destroy(effect);
     }
 
-    private IEnumerator ReturnToPoolWhenFinished(ParticleSystem effect) {
-        while (effect && effect.IsAlive(true)) {
+    private IEnumerator ReturnToPoolWhenFinished(GameObject effect, ParticleSystem particleSystem) {
+        while (particleSystem.IsAlive(true)) {
             yield return null;
         }
 
-        if (effect && playingEffects.Contains(effect)) {
+        if (playingEffects.Contains(effect)) {
+            pool.Release(effect);
+        }
+    }
+
+    private IEnumerator ReturnToPoolAfterDelay(GameObject effect) {
+        yield return new WaitForSeconds(fallbackLifetimeSeconds);
+
+        if (playingEffects.Contains(effect)) {
             pool.Release(effect);
         }
     }
@@ -94,11 +116,8 @@ public class EffectPlayer : MonoBehaviour {
             return;
         }
 
-        var snapshot = new List<ParticleSystem>(playingEffects);
+        var snapshot = new List<GameObject>(playingEffects);
         for (var i = 0; i < snapshot.Count; i++) {
-            if (!snapshot[i]) {
-                continue;
-            }
             pool.Release(snapshot[i]);
         }
     }
