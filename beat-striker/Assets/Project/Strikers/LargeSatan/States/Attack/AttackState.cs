@@ -5,7 +5,8 @@ using System.Collections.Generic;
 using Alice;
 
 namespace Core.LargeSatan {
-
+
+
 
     public class AttackState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;

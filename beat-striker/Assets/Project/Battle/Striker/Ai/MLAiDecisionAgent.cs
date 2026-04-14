@@ -7,9 +7,12 @@ using UnityEngine;
 namespace Alice {
     [RequireComponent(typeof(BehaviorParameters))]
     public class MLAiDecisionAgent : Agent {
+        const int OBSERVATION_STACK_COUNT = 3;
+
         MLAiBrain brain;
         AiObservation latestObservation;
-        bool hasObservation;
+        readonly AiObservation[] observationHistory = new AiObservation[OBSERVATION_STACK_COUNT];
+        int observationHistoryCount;
 
         public AiAction CurrentAction { get; private set; } = AiAction.None;
 
@@ -19,11 +22,17 @@ namespace Alice {
 
         public void SetObservation(AiObservation observation) {
             latestObservation = observation;
-            hasObservation = true;
+
+            for (var i = OBSERVATION_STACK_COUNT - 1; i > 0; i--) {
+                observationHistory[i] = observationHistory[i - 1];
+            }
+
+            observationHistory[0] = observation;
+            observationHistoryCount = Mathf.Min(observationHistoryCount + 1, OBSERVATION_STACK_COUNT);
         }
 
         public void RequestDecisionNow() {
-            if (hasObservation) {
+            if (observationHistoryCount > 0) {
                 RequestDecision();
             }
         }
@@ -40,34 +49,39 @@ namespace Alice {
 
         public void ResetDecisionState() {
             CurrentAction = AiAction.None;
-            hasObservation = false;
+            observationHistoryCount = 0;
         }
 
         public override void OnEpisodeBegin() {
             CurrentAction = AiAction.None;
-            hasObservation = false;
+            observationHistoryCount = 0;
         }
 
         public override void CollectObservations(VectorSensor sensor) {
             if (brain == null) {
-                for (var i = 0; i < MLAiBrain.OBSERVATION_COUNT; i++) {
+                for (var i = 0; i < MLAiBrain.STACKED_OBSERVATION_COUNT; i++) {
                     sensor.AddObservation(0f);
                 }
                 return;
             }
 
-            if (!hasObservation) {
-                for (var i = 0; i < MLAiBrain.OBSERVATION_COUNT; i++) {
-                    sensor.AddObservation(0f);
-                }
+            if (observationHistoryCount == 0) {
+                brain.WriteZeroObservations(sensor, MLAiBrain.STACKED_OBSERVATION_COUNT);
                 return;
             }
 
-            brain.WriteObservations(sensor, latestObservation);
+            for (var i = 0; i < OBSERVATION_STACK_COUNT; i++) {
+                if (i < observationHistoryCount) {
+                    brain.WriteObservations(sensor, observationHistory[i]);
+                }
+                else {
+                    brain.WriteZeroObservations(sensor, MLAiBrain.OBSERVATION_COUNT);
+                }
+            }
         }
 
         public override void OnActionReceived(ActionBuffers actions) {
-            if (!hasObservation) {
+            if (observationHistoryCount == 0) {
                 CurrentAction = AiAction.None;
                 return;
             }
@@ -77,9 +91,11 @@ namespace Alice {
 
         public override void Heuristic(in ActionBuffers actionsOut) {
             if (brain == null) {
+                var continuousActions = actionsOut.ContinuousActions;
                 var discreteActions = actionsOut.DiscreteActions;
+                continuousActions[0] = 1f;
+                continuousActions[1] = 0f;
                 discreteActions[0] = 0;
-                discreteActions[1] = 0;
                 return;
             }
 

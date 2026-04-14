@@ -13,8 +13,10 @@ using R3;
 public class StrikerHub : MonoBehaviour {
 
     [Header("Striker Settings")]
+    [SerializeField] private Striker striker = Striker.Fighter;
     [SerializeField] private float maxHitPoint = 100f;
     [SerializeField] private float maxSpecialPoint = 100f;
+    [SerializeField] private float deathHeightY = -10f;
 
     [Header("References")]
     [SerializeField] private StrikerState defaultState;
@@ -25,9 +27,11 @@ public class StrikerHub : MonoBehaviour {
     private Rigidbody rb;
 
     public Rigidbody Rigidbody => rb;
+    public Striker InspectorStriker => striker;
     public float MaxHitPoint => maxHitPoint;
     public float InspectorMaxHitPoint => maxHitPoint;
     public float InspectorMaxSpecialPoint => maxSpecialPoint;
+    public float InspectorDeathHeightY => deathHeightY;
     public StrikerState InspectorDefaultState => defaultState;
     public StrikerState InspectorDeadState => deadState;
     public StrikerState InspectorVictoryState => VictoryState;
