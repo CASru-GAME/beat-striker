@@ -48,5 +48,15 @@ namespace App {
             }
             return true;
         }
+
+        public static bool InvokeAllAndTryGetFirst<TArg, TResult>(this FuncSubject<TArg, TResult> subject, TArg arg, out TResult res) {
+            var results = subject.InvokeAll(arg);
+            if (results.Length > 0) {
+                res = results[0];
+                return true;
+            }
+            res = default;
+            return false;
+        }
     }
 }

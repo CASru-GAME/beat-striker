@@ -13,6 +13,10 @@ namespace Alice.Editor
 
         private void OnEnable()
         {
+            // ターゲットが無効な場合は処理をスキップ
+            if (target == null)
+                return;
+
             parentsProp = serializedObject.FindProperty("parents");
             if (parentsProp != null)
             {
@@ -38,7 +42,16 @@ namespace Alice.Editor
 
         public override void OnInspectorGUI()
         {
+            // ターゲットが無効な場合は処理をスキップ
+            if (target == null)
+                return;
+
             serializedObject.Update();
+
+            using (new EditorGUI.DisabledScope(true))
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Script"));
+            }
 
             var iterator = serializedObject.GetIterator();
             bool enterChildren = true;

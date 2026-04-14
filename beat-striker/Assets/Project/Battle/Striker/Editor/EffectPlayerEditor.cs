@@ -114,8 +114,8 @@ namespace Alice.Editor {
                 return;
             }
 
-            var prefab = GetEffectPrefab(owner);
-            if (prefab == null) {
+            var prefabGameObject = GetEffectPrefabGameObject(owner);
+            if (prefabGameObject == null) {
                 return;
             }
 
@@ -125,8 +125,16 @@ namespace Alice.Editor {
             previewAnchor = anchor;
             previewIntervalSeconds = Mathf.Max(0f, intervalSeconds);
             intervalElapsed = 0f;
-            previewInstance = Object.Instantiate(prefab, owner.transform);
-            previewInstance.gameObject.hideFlags = HideFlags.DontSaveInEditor;
+            
+            var instantiatedGameObject = Object.Instantiate(prefabGameObject, owner.transform);
+            instantiatedGameObject.hideFlags = HideFlags.DontSaveInEditor;
+            previewInstance = instantiatedGameObject.GetComponent<ParticleSystem>();
+            
+            if (previewInstance == null) {
+                Object.DestroyImmediate(instantiatedGameObject);
+                return;
+            }
+            
             ApplyPreviewTransform();
 
             previewInstance.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -218,17 +226,7 @@ namespace Alice.Editor {
                 return false;
             }
 
-            if (EditorUtility.IsPersistent(player.gameObject)) {
-                reason = "Project view prefab assets cannot be previewed directly. Open Prefab Mode or place it in a scene.";
-                return false;
-            }
-
-            if (!player.gameObject.scene.IsValid() || !player.gameObject.scene.isLoaded) {
-                reason = "Target is not in a loaded scene.";
-                return false;
-            }
-
-            if (GetEffectPrefab(player) == null) {
+            if (GetEffectPrefabGameObject(player) == null) {
                 reason = "Effect Prefab is not assigned.";
                 return false;
             }
@@ -236,8 +234,16 @@ namespace Alice.Editor {
             return true;
         }
 
+        private static GameObject GetEffectPrefabGameObject(EffectPlayer player) {
+            return EffectPrefabField != null ? EffectPrefabField.GetValue(player) as GameObject : null;
+        }
+
         private static ParticleSystem GetEffectPrefab(EffectPlayer player) {
-            return EffectPrefabField != null ? EffectPrefabField.GetValue(player) as ParticleSystem : null;
+            var effectPrefab = GetEffectPrefabGameObject(player);
+            if (effectPrefab == null) {
+                return null;
+            }
+            return effectPrefab.GetComponent<ParticleSystem>();
         }
 
         private static void OnPlayModeStateChanged(PlayModeStateChange state) {

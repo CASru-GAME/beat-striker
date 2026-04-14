@@ -19,18 +19,11 @@ namespace Core.LargeHero {
         [SerializeField] AttackPlayer attackPlayer;
         [SerializeField] float moveSpeed = 3;
 
-        [SerializeField] ParticleSystem particleprefab;
-        [SerializeField] AudioClip audioClip;
-        [SerializeField] AudioClip missAudioClip;
-
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 3;
 
         public override void OnEnter(IStrikerContext context) {
-            Debug.Log("AttackState: OnEnter");
             context.PlayAnimation(animationClip, OnAnimationEnd);
-            var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
-            AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
 
             attackPlayer.OnFilterHit
                 .Subscribe(collider => {
@@ -46,20 +39,21 @@ namespace Core.LargeHero {
                 .AddTo(disposables);
 
             attackPlayer.OnHit
-                .Subscribe(collider => {
-                    if (!collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                        hurtbox = collider.GetComponentInParent<Hurtbox>();
+                .Subscribe(hit => {
+                    if (!hit.collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                        hurtbox = hit.collider.GetComponentInParent<Hurtbox>();
                         if (!hurtbox) {
-                            return;
+                            return AttackPlayer.HitType.Cancel;
                         }
                     }
 
-                    var hitpoint = collider.ClosestPoint(attackPlayer.transform.position);
-                    Destroy(Instantiate(particleprefab, hitpoint, Quaternion.identity), 5f);
-                    AudioSource.PlayClipAtPoint(audioClip, hitpoint);
-
+                    var hitpoint = hit.collider.ClosestPoint(attackPlayer.transform.position);
                     var nockBackDirection = Mathf.Sign(hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
-                    hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
+                    var hitResult = hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
+
+                    return hitResult.status == HitResult.Status.Guarded
+                        ? AttackPlayer.HitType.Blocked
+                        : AttackPlayer.HitType.Normal;
                 })
                 .AddTo(disposables);
 

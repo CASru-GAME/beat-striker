@@ -1,7 +1,5 @@
 using UnityEngine;
 using R3;
-using System;
-using System.Collections.Generic;
 using Alice;
 
 namespace Core.LargeSatan {
@@ -34,21 +32,39 @@ namespace Core.LargeSatan {
             context.PlayAnimation(animationClip, OnAnimationEnd);
 
             var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
-            this.initialVelocity = speed * direction;
-            this.elapsedTime = 0f;
-            context.Rigidbody.linearVelocity = this.initialVelocity;
+            initialVelocity = speed * direction;
+            elapsedTime = 0f;
+            context.Rigidbody.linearVelocity = initialVelocity;
 
             attackPlayer.OnFilterHit
-                .Subscribe(other => other.TryGetComponent<Hurtbox>(out var hurtbox))
+                .Subscribe(collider => {
+                    if (!collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                        hurtbox = collider.GetComponentInParent<Hurtbox>();
+                        if (!hurtbox) {
+                            return false;
+                        }
+                    }
+
+                    return hurtbox.transform.root != context.Rigidbody.transform.root;
+                })
                 .AddTo(disposables);
 
             attackPlayer.OnHit
-                .Subscribe(other => {
-                    if (other.TryGetComponent<Hurtbox>(out var hitbox)) {
-                        var hitStatus = new HitStatus(damage, nockbackSpeed * (other.transform.position - context.Rigidbody.position).normalized);
-                        hitbox.GiveHit(hitStatus);
-                        context.GenerateImpact(new StrikerImpact(impact * Vector3.down));
+                .Subscribe(hit => {
+                    if (!hit.collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                        hurtbox = hit.collider.GetComponentInParent<Hurtbox>();
+                        if (!hurtbox) {
+                            return AttackPlayer.HitType.Cancel;
+                        }
                     }
+
+                    var hitStatus = new HitStatus(damage, nockbackSpeed * (hit.hitPoint - context.Rigidbody.position).normalized);
+                    var hitResult = hurtbox.GiveHit(hitStatus);
+                    context.GenerateImpact(new StrikerImpact(impact * Vector3.down));
+
+                    return hitResult.status == HitResult.Status.Guarded
+                        ? AttackPlayer.HitType.Blocked
+                        : AttackPlayer.HitType.Normal;
                 })
                 .AddTo(disposables);
 
@@ -60,7 +76,7 @@ namespace Core.LargeSatan {
             float ratio = Mathf.Max(endSpeedRatio, 0.0001f);
             float decayRate = Mathf.Log(1f / ratio) / Mathf.Max(duration, 0.0001f);
             float decay = Mathf.Exp(-decayRate * elapsedTime);
-            context.Rigidbody.linearVelocity = this.initialVelocity * decay;
+            context.Rigidbody.linearVelocity = initialVelocity * decay;
         }
 
         public void OnAnimationEnd(IStrikerStateContext context) {

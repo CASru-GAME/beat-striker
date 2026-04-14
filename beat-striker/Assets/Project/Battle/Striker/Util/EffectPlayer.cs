@@ -47,11 +47,17 @@ public class EffectPlayer : MonoBehaviour {
 
     public void Emit(Vector3 position, Quaternion rotation, Vector3 scale) {
         var effect = pool.Get();
+        if (!effect) {
+            effect = CreateEffect();
+        }
+
         var effectInstanceTransform = effect.transform;
         effectInstanceTransform.SetPositionAndRotation(position, rotation);
         effectInstanceTransform.localScale = scale;
 
-        var particleSystem = particleSystemByInstance[effect];
+        effect.SetActive(true);
+
+        var particleSystem = particleSystemByInstance.TryGetValue(effect, out var registeredParticleSystem) ? registeredParticleSystem : null;
         if (particleSystem) {
             particleSystem.Play(true);
         }
@@ -75,17 +81,20 @@ public class EffectPlayer : MonoBehaviour {
     }
 
     private void OnGet(GameObject effect) {
-        effect.SetActive(true);
     }
 
     private void OnRelease(GameObject effect) {
-        var particleSystem = particleSystemByInstance[effect];
-        if (particleSystem) {
+        if (!effect) {
+            CleanupEffect(effect);
+            return;
+        }
+
+        if (particleSystemByInstance.TryGetValue(effect, out var particleSystem) && particleSystem) {
             particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
         effect.SetActive(false);
-        playingEffects.Remove(effect);
+        CleanupEffect(effect);
     }
 
     private void OnDestroyEffect(GameObject effect) {
@@ -94,21 +103,27 @@ public class EffectPlayer : MonoBehaviour {
     }
 
     private IEnumerator ReturnToPoolWhenFinished(GameObject effect, ParticleSystem particleSystem) {
-        while (particleSystem.IsAlive(true)) {
+        while (particleSystem && particleSystem.IsAlive(true)) {
             yield return null;
         }
 
-        if (playingEffects.Contains(effect)) {
+        if (effect && playingEffects.Contains(effect)) {
             pool.Release(effect);
+            yield break;
         }
+
+        CleanupEffect(effect);
     }
 
     private IEnumerator ReturnToPoolAfterDelay(GameObject effect) {
         yield return new WaitForSeconds(fallbackLifetimeSeconds);
 
-        if (playingEffects.Contains(effect)) {
+        if (effect && playingEffects.Contains(effect)) {
             pool.Release(effect);
+            yield break;
         }
+
+        CleanupEffect(effect);
     }
 
     private void OnDisable() {
@@ -118,7 +133,18 @@ public class EffectPlayer : MonoBehaviour {
 
         var snapshot = new List<GameObject>(playingEffects);
         for (var i = 0; i < snapshot.Count; i++) {
-            pool.Release(snapshot[i]);
+            var effect = snapshot[i];
+            if (effect) {
+                pool.Release(effect);
+                continue;
+            }
+
+            CleanupEffect(effect);
         }
+    }
+
+    private void CleanupEffect(GameObject effect) {
+        playingEffects.Remove(effect);
+        particleSystemByInstance.Remove(effect);
     }
 }

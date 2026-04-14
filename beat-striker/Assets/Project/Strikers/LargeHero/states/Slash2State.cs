@@ -17,21 +17,13 @@ namespace Core.LargeHero {
         [SerializeField] StrikerNode nextNode;
         [SerializeField] StrikerNode comboNode;   // → 斬撃2
         [SerializeField] AttackPlayer attackPlayer;
-
-        [SerializeField] ParticleSystem particleprefab;
-        [SerializeField] AudioClip audioClip;
-        [SerializeField] AudioClip missAudioClip;
         
 
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 3;
-        [SerializeField] ParticleSystem SlashEffect;
 
         public override void OnEnter(IStrikerContext context) {
             context.PlayAnimation(animationClip, OnAnimationEnd);
-            SlashEffect.Play();
-            var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
-            AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
 
             attackPlayer.OnFilterHit
                 .Subscribe(collider => {
@@ -47,20 +39,21 @@ namespace Core.LargeHero {
                 .AddTo(disposables);
 
             attackPlayer.OnHit
-                .Subscribe(collider => {
-                    if (!collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                        hurtbox = collider.GetComponentInParent<Hurtbox>();
+                .Subscribe(hit => {
+                    if (!hit.collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                        hurtbox = hit.collider.GetComponentInParent<Hurtbox>();
                         if (!hurtbox) {
-                            return;
+                            return AttackPlayer.HitType.Cancel;
                         }
                     }
 
-                    var hitpoint = collider.ClosestPoint(attackPlayer.transform.position);
-                    Instantiate(particleprefab, hitpoint, Quaternion.identity);
-                    AudioSource.PlayClipAtPoint(audioClip, hitpoint);
-
+                    var hitpoint = hit.collider.ClosestPoint(attackPlayer.transform.position);
                     var nockBackDirection = Mathf.Sign(hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
-                    hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
+                    var hitResult = hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
+
+                    return hitResult.status == HitResult.Status.Guarded
+                        ? AttackPlayer.HitType.Blocked
+                        : AttackPlayer.HitType.Normal;
                 })
                 .AddTo(disposables);
 
