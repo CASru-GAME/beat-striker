@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class DeathState : StrikerState {
     public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Unknown;

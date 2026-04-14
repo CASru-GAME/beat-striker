@@ -1,4 +1,4 @@
-﻿using Core.Battle;
+using Core.Battle;
 using UnityEngine;
 using Core.Striker;
 using Core.Striker.Components;

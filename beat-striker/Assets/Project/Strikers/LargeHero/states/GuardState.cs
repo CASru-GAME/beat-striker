@@ -1,4 +1,4 @@
-﻿using Core.Battle;
+using Core.Battle;
 using UnityEngine;
 using Core.Striker;
 using System;
@@ -10,7 +10,7 @@ namespace Core.LargeHero {
     public class GuardState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Guard;
 
-        // 縺薙・繧ｹ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ繧ｯ繝ｪ繝・・
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧「繝九Γ繝シ繧キ繝ァ繝ウ繧ッ繝ェ繝・・
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerAnimationClip secondaryAnimationClip;
         [SerializeField] private bool useSecondaryAnimation;
@@ -26,18 +26,18 @@ namespace Core.LargeHero {
         private Tracker.TargetHandle targetHandle;
         float lockedPositionX;
 
-        // 縺薙・繧ｹ繝・・繝医↓驕ｷ遘ｻ縺励◆逶ｴ蠕後↓蜻ｼ縺ｰ繧後ｋ
+        // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
         public override void OnEnter(IStrikerContext context) {
-            Debug.Log("GuardState縺ｫ驕ｷ遘ｻ");
+            Debug.Log("GuardState縺ォ驕キ遘サ");
             if (lockHorizontalMovement) {
                 lockedPositionX = context.Rigidbody.position.x;
                 var velocity = context.Rigidbody.linearVelocity;
                 velocity.x = 0f;
                 context.Rigidbody.linearVelocity = velocity;
             }
-            // 繧ｭ繝｣繝ｩ繧ｯ繧ｿ繝ｼ縺ｮ蜑｣繧帝國縺・
+            // 繧ュ繝」繝ゥ繧ッ繧ソ繝シ縺ョ蜑」繧帝國縺・
             sword.SetActive(false);
-            // 繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ縺ｮ蜀咲函繧帝幕蟋九☆繧・
+            // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
             var clip = useSecondaryAnimation ? secondaryAnimationClip : animationClip;
             context.PlayAnimation(clip, context => {context.TryTransition(nextNode);
             });
@@ -54,7 +54,7 @@ namespace Core.LargeHero {
         
         }
 
-        // 縺薙・繧ｹ繝・・繝医↓縺・ｋ髢薙∵ｯ弱ヵ繝ｬ繝ｼ繝蜻ｼ縺ｰ繧後ｋ
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∵ッ弱ヵ繝ャ繝シ繝蜻シ縺ー繧後ｋ
         public override void OnUpdate(IStrikerStateContext context) {
             if (!lockHorizontalMovement) {
                 return;
@@ -69,38 +69,38 @@ namespace Core.LargeHero {
             context.Rigidbody.linearVelocity = velocity;
         }
 
-        // 莉悶・繧ｹ繝・・繝医↓驕ｷ遘ｻ縺吶ｋ逶ｴ蜑阪↓蜻ｼ縺ｰ繧後ｋ
+        // 莉悶・繧ケ繝・・繝医↓驕キ遘サ縺吶ｋ逶エ蜑阪↓蜻シ縺ー繧後ｋ
         public override void OnExit(IStrikerContext context) {
             disposable.Dispose();
             shield.gameObject.SetActive(false);
-            // 蜑｣繧貞・蠎ｦ陦ｨ遉ｺ縺吶ｋ
+            // 蜑」繧貞・蠎ヲ陦ィ遉コ縺吶ｋ
             sword.SetActive(true);
             tracker.RemoveTarget(targetHandle); 
         }
 
-        // 謾ｻ謦・さ繝槭Φ繝峨′謚ｼ縺輔ｌ縺滓凾縺ｫ蜻ｼ縺ｰ繧後ｋ
+        // 謾サ謦・さ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnAttackRequested(IStrikerStateContext context) {
         }
 
-        // 繝√Ε繝ｼ繧ｸ繧ｳ繝槭Φ繝峨′謚ｼ縺輔ｌ縺滓凾縺ｫ蜻ｼ縺ｰ繧後ｋ
+        // 繝√Ε繝シ繧ク繧ウ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnChargeRequested(IStrikerStateContext context) {
         }
 
-        // 繝繝・す繝･繧ｳ繝槭Φ繝峨′謚ｼ縺輔ｌ縺滓凾縺ｫ蜻ｼ縺ｰ繧後ｋ
+        // 繝繝・す繝・繧ウ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnDashRequested(IStrikerStateContext context) {
         }
 
-        // 繧ｬ繝ｼ繝峨さ繝槭Φ繝峨′謚ｼ縺輔ｌ縺滓凾縺ｫ蜻ｼ縺ｰ繧後ｋ
+        // 繧ャ繝シ繝峨さ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnGuardRequested(IStrikerStateContext context) {
         }
 
-        // 謾ｻ謦・ｒ蜿励￠縺滓凾縺ｫ蜻ｼ縺ｰ繧後ｋ
+        // 謾サ謦・ｒ蜿励¢縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
             context.Rigidbody.linearVelocity = status.KnockbackVelocity;
             context.ApplyDamage(status.Damage);
         }
 
-        // 繝溘せ縺励◆譎ゅ↓蜻ｼ縺ｰ繧後ｋ
+        // 繝溘せ縺励◆譎ゅ↓蜻シ縺ー繧後ｋ
         public override void OnMiss(IStrikerStateContext context) {
         }
 
