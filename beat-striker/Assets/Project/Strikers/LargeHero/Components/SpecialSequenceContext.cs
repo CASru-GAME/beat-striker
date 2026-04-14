@@ -2,18 +2,31 @@ using UnityEngine;
 
 namespace Core.LargeHero {
     public class SpecialSequenceContext : MonoBehaviour {
+        [Tooltip("空中編成の中心点。手動で割り当てるか、AutoSetupが生成・解決したTransformがここに設定されます。")]
         [SerializeField] Transform aerialCenterPoint;
+        [Tooltip("空中アンカーの自動セットアップ参照。未設定時は同一GameObject上のSpecialAerialAnchorAutoSetupを検索して使用します。")]
         [SerializeField] SpecialAerialAnchorAutoSetup aerialAnchorAutoSetup;
+        [Tooltip("自分（攻撃主体）が中心からどれだけ左にずれるかのオフセット。被害者との相対配置を調整します。")]
         [SerializeField] float selfOffsetX = 0.6f;
+        [Tooltip("被害者が中心からどれだけ右にずれるかのオフセット。編成時の左右位置バランスを決めます。")]
         [SerializeField] float victimOffsetX = 0.6f;
+        [Tooltip("空中編成の中心からの高さオフセット。アンカー高さに更に加算して実際の隊形の高さを調節します。")]
         [SerializeField] float aerialHeightOffset = 0f;
+        [Tooltip("ロック開始地点から許容して持ち上がれる最大量。大き過ぎると不自然に上昇するため制限する値です。")]
         [SerializeField] float maxLockRiseFromStart = 2.0f;
+        [Tooltip("編成の中心が取り得るY座標の上限。シーン固定上限やステージ高さに合わせて制御します。")]
         [SerializeField] float maxCenterWorldY = 4.0f;
+        [Tooltip("中心点ギズモの色。シーンビューで中心を目立たせるための色設定です。")]
         [SerializeField] Color centerGizmoColor = new(0.2f, 0.9f, 1f, 0.95f);
+        [Tooltip("自分の位置を示すギズモ色。シーン上で主体の位置を視覚的に区別するための設定です。")]
         [SerializeField] Color selfGizmoColor = new(0.25f, 1f, 0.35f, 0.95f);
+        [Tooltip("被害者の位置を示すギズモ色。シーンビューで被害者位置を明示するための色設定です。")]
         [SerializeField] Color victimGizmoColor = new(1f, 0.35f, 0.35f, 0.95f);
+        [Tooltip("中心点ギズモの半径。視認性や重なり具合を制御するための描画サイズです。")]
         [SerializeField] float centerGizmoRadius = 0.12f;
+        [Tooltip("アクター（自分/被害者）表示用ギズモの半径。編成時の位置目安として使われます。")]
         [SerializeField] float actorGizmoRadius = 0.1f;
+        [Tooltip("ギズモで描画する中心から垂直線の長さ。編成の高さ関係を視覚的に把握しやすくします。")]
         [SerializeField] float gizmoVerticalLineLength = 0.8f;
 
         Hurtbox lockedVictimHurtbox;
