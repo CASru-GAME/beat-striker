@@ -21,7 +21,18 @@ public interface IStrikerContext {
 }
 
 namespace Alice {
+    public enum StrikerStateCategory {
+        Idle,
+        Dash,
+        Attack,
+        Charge,
+        Special,
+        Guard,
+        Unknown
+    }
+
     public interface IObservableStriker {
+        ReadOnlyReactiveProperty<Striker> Striker { get; }
         ReadOnlyReactiveProperty<int> PlayerId { get; }
         ReadOnlyReactiveProperty<Vector3> Position { get; }
         ReadOnlyReactiveProperty<Vector3> CenterPosition { get; }
@@ -32,6 +43,7 @@ namespace Alice {
         ReadOnlyReactiveProperty<float> SpecialPoint { get; }
         ReadOnlyReactiveProperty<float> MaxSpecialPoint { get; }
         Observable<Unit> OnDead { get; }
+        ReadOnlyReactiveProperty<StrikerStateCategory> CurrentStateCategory { get; }
     }
 
     public interface IStrikerHub : IObservableStriker, System.IDisposable {
@@ -62,6 +74,7 @@ namespace Alice {
 
         float maxHitPoint;
         float maxSpecialPoint;
+        float deathHeightY;
         StrikerState defaultState;
         StrikerState deadState;
         StrikerState victoryState;
@@ -74,6 +87,7 @@ namespace Alice {
         AiBrain aiBrain;
         readonly Subject<Unit> onDeadSubject = new();
         readonly ReactiveProperty<int> playerIdSubject = new(0);
+        readonly ReactiveProperty<Alice.Striker> strikerSubject = new(Alice.Striker.Fighter);
         readonly ReactiveProperty<Vector3> positionSubject = new(Vector3.zero);
         readonly ReactiveProperty<Vector3> centerPositionSubject = new(Vector3.zero);
         readonly ReactiveProperty<Vector3> lookDirectionSubject = new(Vector3.forward);
@@ -82,6 +96,7 @@ namespace Alice {
         readonly ReactiveProperty<float> maxHitPointSubject = new(0f);
         readonly ReactiveProperty<float> specialPointSubject = new(0f);
         readonly ReactiveProperty<float> maxSpecialPointSubject = new(0f);
+        readonly ReactiveProperty<StrikerStateCategory> currentStateCategorySubject = new(StrikerStateCategory.Unknown);
         readonly Subject<StrikerImpact> onInpactGeneratedSubject = new();
         readonly Subject<AttentionRequest> onAttentionRequestedSubject = new();
         readonly Subject<Unit> onSpecialRequestFailedSubject = new();
@@ -100,10 +115,12 @@ namespace Alice {
         bool isEnemyInFront;
         IStrikerState observedState;
         bool hasObservedState;
+        bool isDead;
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
         public AiBrain AiBrain => aiBrain;
+        public ReadOnlyReactiveProperty<Alice.Striker> Striker => strikerSubject;
         public ReadOnlyReactiveProperty<int> PlayerId => playerIdSubject;
         public ReadOnlyReactiveProperty<Vector3> Position => positionSubject;
         public ReadOnlyReactiveProperty<Vector3> CenterPosition => centerPositionSubject;
@@ -113,6 +130,7 @@ namespace Alice {
         public ReadOnlyReactiveProperty<float> MaxHitPoint => maxHitPointSubject;
         public ReadOnlyReactiveProperty<float> SpecialPoint => specialPointSubject;
         public ReadOnlyReactiveProperty<float> MaxSpecialPoint => maxSpecialPointSubject;
+        public ReadOnlyReactiveProperty<StrikerStateCategory> CurrentStateCategory => currentStateCategorySubject;
         public Observable<StrikerImpact> OnInpactGenerated => onInpactGeneratedSubject;
         public Observable<AttentionRequest> OnAtentionRequested => onAttentionRequestedSubject;
         public Observable<Unit> OnSpecialRequestFailed => onSpecialRequestFailedSubject;
@@ -173,22 +191,32 @@ namespace Alice {
             lookDirectionSubject.OnNext(strikerTransform.forward);
             velocitySubject.OnNext(frameVelocity);
 
+            if (!isDead && currentPosition.y <= deathHeightY) {
+                currentHitPoint = 0f;
+                hitPointSubject.OnNext(currentHitPoint);
+                Die();
+            }
+
             UpdateEnemyInFrontState();
             NotifyEnemyBehindOnStateChanged();
+            currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
 
             stateMachine.CurrentState.OnUpdate(stateMachine);
             NotifyEnemyBehindOnStateChanged();
+            currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
         }
 
         public void InitializeFromLegacy(StrikerHub legacy) {
             maxHitPoint = legacy.InspectorMaxHitPoint;
             maxSpecialPoint = legacy.InspectorMaxSpecialPoint;
+            deathHeightY = legacy.InspectorDeathHeightY;
             defaultState = legacy.InspectorDefaultState;
             deadState = legacy.InspectorDeadState;
             victoryState = legacy.InspectorVictoryState;
             introState = legacy.InspectorIntroState;
             aiBrain = legacy.InspectorAiBrain;
             rb = legacy.Rigidbody;
+            strikerSubject.OnNext(legacy.InspectorStriker);
             strikerGameObject = legacy.gameObject;
             strikerTransform = legacy.transform;
             centerPositionTransform = legacy.GetCenterPositionTransform();
@@ -209,6 +237,8 @@ namespace Alice {
             hasEnemyInFrontState = false;
             isEnemyInFront = true;
             hasObservedState = false;
+            isDead = false;
+            currentStateCategorySubject.OnNext(StrikerStateCategory.Unknown);
             initialized = true;
         }
 
@@ -226,6 +256,7 @@ namespace Alice {
             stateNameSubscription?.Dispose();
             onDeadSubject.Dispose();
             playerIdSubject.Dispose();
+            strikerSubject.Dispose();
             positionSubject.Dispose();
             centerPositionSubject.Dispose();
             lookDirectionSubject.Dispose();
@@ -234,12 +265,17 @@ namespace Alice {
             maxHitPointSubject.Dispose();
             specialPointSubject.Dispose();
             maxSpecialPointSubject.Dispose();
+            currentStateCategorySubject.Dispose();
             onInpactGeneratedSubject.Dispose();
             onAttentionRequestedSubject.Dispose();
             onSpecialRequestFailedSubject.Dispose();
         }
 
         public void ApplyDamage(float damage) {
+            if (isDead) {
+                return;
+            }
+
             currentHitPoint = Mathf.Max(0f, currentHitPoint - damage);
             hitPointSubject.OnNext(currentHitPoint);
             if (currentHitPoint <= 0f) {
@@ -309,7 +345,11 @@ namespace Alice {
         }
 
         public void Die() {
-            if (stateMachine == null) return;
+            if (stateMachine == null || isDead) return;
+
+            isDead = true;
+            currentHitPoint = 0f;
+            hitPointSubject.OnNext(currentHitPoint);
             onDeadSubject.OnNext(Unit.Default);
             stateMachine.ChangeState(deadState);
         }

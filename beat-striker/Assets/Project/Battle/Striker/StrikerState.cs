@@ -12,6 +12,7 @@ public interface IStrikerStateContext : IStrikerContext {
 
 
 public interface IStrikerState {
+    StrikerStateCategory Category { get; }
     IEnumerable<IStrikerGroup> Parents { get; }
     void OnEnter(IStrikerContext context);
     void OnExit(IStrikerContext context);
@@ -29,6 +30,7 @@ public interface IStrikerState {
 
 public abstract class StrikerState : StrikerNode, IStrikerState {
     [SerializeField] private List<StrikerGroup> parents = new List<StrikerGroup>();
+    public abstract StrikerStateCategory Category { get; }
     public virtual IEnumerable<IStrikerGroup> Parents => parents;
     protected CompositeDisposable disposables = new();
 

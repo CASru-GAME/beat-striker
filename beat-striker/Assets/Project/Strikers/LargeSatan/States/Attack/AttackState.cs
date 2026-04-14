@@ -6,8 +6,11 @@ using Alice;
 
 namespace Core.LargeSatan {
 
+
+
     public class AttackState : StrikerState {
-        // このステートにいる間、再生されるアニメーションクリップ
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧「繝九Γ繝シ繧キ繝ァ繝ウ繧ッ繝ェ繝・・
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
 
@@ -25,9 +28,9 @@ namespace Core.LargeSatan {
         float elapsedTime;
 
 
-        // このステートに遷移した直後に呼ばれる
+        // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
         public override void OnEnter(IStrikerContext context) {
-            // アニメーションの再生を開始する
+            // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
             context.PlayAnimation(animationClip, OnAnimationEnd);
 
             var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
@@ -67,3 +70,5 @@ namespace Core.LargeSatan {
 
     }
 }
+
+

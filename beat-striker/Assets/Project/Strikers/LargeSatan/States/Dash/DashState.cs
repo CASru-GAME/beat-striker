@@ -3,10 +3,12 @@ using Alice;
 using System;
 
 namespace Core.LargeSatan {
-    
-    public class DashState : StrikerState {
+
 
-        // このステートにいる間、再生されるアニメーションクリップ
+    public class DashState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Dash;
+
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧「繝九Γ繝シ繧キ繝ァ繝ウ繧ッ繝ェ繝・・
         [SerializeField] private StrikerAnimationClip fowardClip, backwardClip;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] float[] consecutiveDashSpeeds = { 20f, 24f, 28f };
@@ -21,7 +23,7 @@ namespace Core.LargeSatan {
         int lastEnterDirectionSign;
         int consecutiveEnterCount;
 
-        // このステートに遷移した直後に呼ばれる
+        // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
         public override void OnEnter(IStrikerContext context) {
             int requestedInputX = Math.Sign(context.LocalInputDirection.x);
             int enterDirectionSign = requestedInputX < 0 ? -1 : 1;
@@ -36,7 +38,7 @@ namespace Core.LargeSatan {
             lastEnterTime = Time.time;
             lastEnterDirectionSign = enterDirectionSign;
 
-            // アニメーションの再生を開始する
+            // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
             StrikerAnimationClip clip;
             if(enterDirectionSign < 0) {
                 clip = backwardClip;
@@ -56,7 +58,7 @@ namespace Core.LargeSatan {
             });
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∵ッ弱ヵ繝ャ繝シ繝蜻シ縺ー繧後ｋ
         public override void OnUpdate(IStrikerStateContext context) {
             if(stoppedByOpponentDistance) {
                 context.Rigidbody.linearVelocity = Vector3.zero;
@@ -106,9 +108,11 @@ namespace Core.LargeSatan {
             return (0f <= t1 && t1 <= 1f) || (0f <= t2 && t2 <= 1f);
         }
 
-        // 他のステートに遷移する直前に呼ばれる
+        // 莉悶・繧ケ繝・・繝医↓驕キ遘サ縺吶ｋ逶エ蜑阪↓蜻シ縺ー繧後ｋ
         public override void OnExit(IStrikerContext context) {
         }
 
     }
 }
+
+

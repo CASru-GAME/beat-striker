@@ -5,10 +5,12 @@ using System;
 using R3;  
 
 namespace Core.LargeHero {
-    
-    public class GuardState : StrikerState {
+
 
-        // このステートにいる間、再生されるアニメーションクリップ
+    public class GuardState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Guard;
+
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧「繝九Γ繝シ繧キ繝ァ繝ウ繧ッ繝ェ繝・・
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerAnimationClip secondaryAnimationClip;
         [SerializeField] private bool useSecondaryAnimation;
@@ -24,18 +26,18 @@ namespace Core.LargeHero {
         private Tracker.TargetHandle targetHandle;
         float lockedPositionX;
 
-        // このステートに遷移した直後に呼ばれる
+        // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
         public override void OnEnter(IStrikerContext context) {
-            Debug.Log("GuardStateに遷移");
+            Debug.Log("GuardState縺ォ驕キ遘サ");
             if (lockHorizontalMovement) {
                 lockedPositionX = context.Rigidbody.position.x;
                 var velocity = context.Rigidbody.linearVelocity;
                 velocity.x = 0f;
                 context.Rigidbody.linearVelocity = velocity;
             }
-            // キャラクターの剣を隠す
+            // 繧ュ繝」繝ゥ繧ッ繧ソ繝シ縺ョ蜑」繧帝國縺・
             sword.SetActive(false);
-            // アニメーションの再生を開始する
+            // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
             var clip = useSecondaryAnimation ? secondaryAnimationClip : animationClip;
             context.PlayAnimation(clip, context => {context.TryTransition(nextNode);
             });
@@ -52,7 +54,7 @@ namespace Core.LargeHero {
         
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∵ッ弱ヵ繝ャ繝シ繝蜻シ縺ー繧後ｋ
         public override void OnUpdate(IStrikerStateContext context) {
             if (!lockHorizontalMovement) {
                 return;
@@ -67,40 +69,42 @@ namespace Core.LargeHero {
             context.Rigidbody.linearVelocity = velocity;
         }
 
-        // 他のステートに遷移する直前に呼ばれる
+        // 莉悶・繧ケ繝・・繝医↓驕キ遘サ縺吶ｋ逶エ蜑阪↓蜻シ縺ー繧後ｋ
         public override void OnExit(IStrikerContext context) {
             disposable.Dispose();
             shield.gameObject.SetActive(false);
-            // 剣を再度表示する
+            // 蜑」繧貞・蠎ヲ陦ィ遉コ縺吶ｋ
             sword.SetActive(true);
             tracker.RemoveTarget(targetHandle); 
         }
 
-        // 攻撃コマンドが押された時に呼ばれる
+        // 謾サ謦・さ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnAttackRequested(IStrikerStateContext context) {
         }
 
-        // チャージコマンドが押された時に呼ばれる
+        // 繝√Ε繝シ繧ク繧ウ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnChargeRequested(IStrikerStateContext context) {
         }
 
-        // ダッシュコマンドが押された時に呼ばれる
+        // 繝繝・す繝・繧ウ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnDashRequested(IStrikerStateContext context) {
         }
 
-        // ガードコマンドが押された時に呼ばれる
+        // 繧ャ繝シ繝峨さ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnGuardRequested(IStrikerStateContext context) {
         }
 
-        // 攻撃を受けた時に呼ばれる
+        // 謾サ謦・ｒ蜿励¢縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
             context.Rigidbody.linearVelocity = status.KnockbackVelocity;
             context.ApplyDamage(status.Damage);
         }
 
-        // ミスした時に呼ばれる
+        // 繝溘せ縺励◆譎ゅ↓蜻シ縺ー繧後ｋ
         public override void OnMiss(IStrikerStateContext context) {
         }
 
     }
 }
+
+

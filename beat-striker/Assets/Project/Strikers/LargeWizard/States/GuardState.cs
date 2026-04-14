@@ -5,13 +5,15 @@ using R3;
 using System;
 
 namespace Core.LargeWizard {
-    
-    public class GuardState : StrikerState {
+
 
-        // このステートにいる間、再生されるアニメーションクリップ
+    public class GuardState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Guard;
+
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧「繝九Γ繝シ繧キ繝ァ繝ウ繧ッ繝ェ繝・・
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerNode nextNode;
-        [SerializeField] AudioClip audioClip;          // ガードが発動したときの音
+        [SerializeField] AudioClip audioClip;          // 繧ャ繝シ繝峨′逋コ蜍輔＠縺溘→縺阪・髻ウ
 
         [SerializeField] Hurtbox shield;
         [SerializeField, Min(0f)] float shieldScaleSpeed = 6f;
@@ -21,10 +23,10 @@ namespace Core.LargeWizard {
         bool hasDefaultShieldScale;
         bool isShieldScaling;
 
-        // このステートに遷移した直後に呼ばれる
+        // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
         public override void OnEnter(IStrikerContext 
         context) {
-            // アニメーションの再生を開始する
+            // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
             context.PlayAnimation(animationClip,context => {
                 context.TryTransition(nextNode);
             });
@@ -52,7 +54,7 @@ namespace Core.LargeWizard {
             AudioSource.PlayClipAtPoint(audioClip, shield.transform.position);
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∵ッ弱ヵ繝ャ繝シ繝蜻シ縺ー繧後ｋ
         public override void OnUpdate(IStrikerStateContext context) {
             if (!isShieldScaling) return;
 
@@ -67,7 +69,7 @@ namespace Core.LargeWizard {
             }
         }
 
-        // 他のステートに遷移する直前に呼ばれる
+        // 莉悶・繧ケ繝・・繝医↓驕キ遘サ縺吶ｋ逶エ蜑阪↓蜻シ縺ー繧後ｋ
         public override void OnExit(IStrikerContext context) {
             disposable.Dispose();
             shield.transform.localScale = defaultShieldScale;
@@ -75,30 +77,32 @@ namespace Core.LargeWizard {
             shield.gameObject.SetActive(false);
         }
 
-        // 攻撃コマンドが押された時に呼ばれる
+        // 謾サ謦・さ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnAttackRequested(IStrikerStateContext context) {
         }
 
-        // チャージコマンドが押された時に呼ばれる
+        // 繝√Ε繝シ繧ク繧ウ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnChargeRequested(IStrikerStateContext context) {
         }
 
-        // ダッシュコマンドが押された時に呼ばれる
+        // 繝繝・す繝・繧ウ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnDashRequested(IStrikerStateContext context) {
         }
 
-        // ガードコマンドが押された時に呼ばれる
+        // 繧ャ繝シ繝峨さ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnGuardRequested(IStrikerStateContext context) {
         }
 
-        // 攻撃を受けた時に呼ばれる
+        // 謾サ謦・ｒ蜿励¢縺滓凾縺ォ蜻シ縺ー繧後ｋ
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
             context.Rigidbody.linearVelocity = 0.5f * status.KnockbackVelocity;
         }
 
-        // ミスした時に呼ばれる
+        // 繝溘せ縺励◆譎ゅ↓蜻シ縺ー繧後ｋ
         public override void OnMiss(IStrikerStateContext context) {
         }
 
     }
 }
+
+

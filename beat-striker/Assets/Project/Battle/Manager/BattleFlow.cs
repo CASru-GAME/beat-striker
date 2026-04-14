@@ -15,6 +15,8 @@ namespace Alice {
 
     public class BattleFlow : IBattleFlow {
         const string LOG_PREFIX = "[BattleFlow]";
+        const int TRAINING_ROUND_TIMEOUT_SECONDS = 180;
+        readonly IBattleSetting battleSetting;
         readonly IBattleDeployer battleDeployer;
         readonly IStrikerRegistry strikerRegistry;
         readonly IBattleJudge battleJudge;
@@ -39,6 +41,7 @@ namespace Alice {
         readonly HashSet<int> roundBaselineObjectInstanceIds = new();
         readonly List<GameObject> roundSpawnedRootObjects = new();
         bool hasRoundBaseline;
+        int activeRoundToken;
 
         readonly Subject<int> roundStartedSubject = new();
         readonly Subject<Unit> roundPlayableStartedSubject = new();
@@ -46,7 +49,8 @@ namespace Alice {
         readonly Subject<Unit> battleFinishedSubject = new();
         readonly Subject<CorePlayerId> outroStartedSubject = new();
 
-        public BattleFlow(IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IBattleSelectSetting battleSelectSetting, ISceneTransitionService sceneTransitionService, IBattlePresenter battlePresenter, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters) {
+        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IBattleSelectSetting battleSelectSetting, ISceneTransitionService sceneTransitionService, IBattlePresenter battlePresenter, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters) {
+            this.battleSetting = battleSetting;
             this.battleDeployer = battleDeployer;
             this.strikerRegistry = strikerRegistry;
             this.battleJudge = battleJudge;
@@ -66,6 +70,7 @@ namespace Alice {
             roundSuspended = false;
             roundAttentionSuspended = false;
             outroHandled = false;
+            activeRoundToken = 0;
             Debug.Log($"{LOG_PREFIX} Constructed. initialRound={currentRound}, playerPresenterCount={battlePlayerPresenters.Length}");
         }
 
@@ -149,6 +154,7 @@ namespace Alice {
                 battlePlayerPresenter.PresentRoundPlayableStart();
             }
             CaptureRoundBaselineObjects();
+            StartTrainingRoundTimeoutIfNeeded();
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync presenters notified. roundPlayable={roundPlayable}");
         }
 
@@ -186,9 +192,10 @@ namespace Alice {
                 currentRound += 1;
                 var roundResult = BuildRoundResult(finishedRound, deadPlayerId);
                 var judgeResult = battleJudge.Judge(roundResult);
-                Debug.Log($"{LOG_PREFIX} ResolveRoundAsync judged. continueBattle={judgeResult.ContinueBattle}, winner={judgeResult.Winner}");
+                var continueBattle = battleSetting.IsTrainingInfiniteRound || judgeResult.ContinueBattle;
+                Debug.Log($"{LOG_PREFIX} ResolveRoundAsync judged. continueBattle={continueBattle}, winner={judgeResult.Winner}, isTrainingInfiniteRound={battleSetting.IsTrainingInfiniteRound}");
 
-                if (judgeResult.ContinueBattle) {
+                if (continueBattle) {
                     roundFinishedSubject.OnNext(Unit.Default);
                     await battlePresenter.PlayRoundEndTransitionAsync();
                     DestroyRoundSpawnedObjects();
@@ -281,6 +288,7 @@ namespace Alice {
         }
 
         void BeginRoundResolution() {
+            activeRoundToken += 1;
             roundResolving = true;
             roundPlayable = false;
             roundSuspended = false;
@@ -474,6 +482,40 @@ namespace Alice {
             }
 
             return new RoundResult(roundNumber, rankings);
+        }
+
+        void StartTrainingRoundTimeoutIfNeeded() {
+            activeRoundToken += 1;
+            if (!battleSetting.IsTrainingInfiniteRound) {
+                return;
+            }
+
+            var roundToken = activeRoundToken;
+            _ = WatchTrainingRoundTimeoutAsync(roundToken, currentRound);
+        }
+
+        async Task WatchTrainingRoundTimeoutAsync(int roundToken, int roundNumberAtStart) {
+            await Task.Delay(TimeSpan.FromSeconds(TRAINING_ROUND_TIMEOUT_SECONDS));
+
+            if (roundToken != activeRoundToken) {
+                return;
+            }
+
+            if (!battleSetting.IsTrainingInfiniteRound || battleFinished || roundResolving || !roundPlayable) {
+                return;
+            }
+
+            var timeoutLoserPlayerId = ResolveLowestHitPointPlayerId();
+            Debug.Log($"{LOG_PREFIX} Round timeout reached. round={roundNumberAtStart}, timeoutSeconds={TRAINING_ROUND_TIMEOUT_SECONDS}, loserPlayerId={timeoutLoserPlayerId}");
+            OnStrikerDead(timeoutLoserPlayerId);
+        }
+
+        int ResolveLowestHitPointPlayerId() {
+            return strikerRegistry.GetAllStrikers()
+                .OrderBy(x => x.HitPoint.CurrentValue)
+                .ThenByDescending(x => x.PlayerId.CurrentValue)
+                .First()
+                .PlayerId.CurrentValue;
         }
     }
 }
