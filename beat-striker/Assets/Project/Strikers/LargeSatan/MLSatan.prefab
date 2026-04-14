@@ -1442,7 +1442,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
-  effectPrefab: {fileID: 1727185941713628496, guid: 89a1b52b837324b5fbd8a78fa693257e, type: 3}
+  effectPrefab: {fileID: 7388025691144611164, guid: 89a1b52b837324b5fbd8a78fa693257e, type: 3}
+  fallbackLifetimeSeconds: 1
   initialPoolSize: 2
   maxPoolSize: 32
 --- !u!1 &5451931231840996846
@@ -1523,7 +1524,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
-  effectPrefab: {fileID: 8810921521921811724, guid: 791869b43f6664df4b8fabe66e83c25f, type: 3}
+  effectPrefab: {fileID: 2096984256431161180, guid: 791869b43f6664df4b8fabe66e83c25f, type: 3}
+  fallbackLifetimeSeconds: 1
   initialPoolSize: 2
   maxPoolSize: 32
 --- !u!1 &6311704563101806016

@@ -6,6 +6,7 @@ using R3;
 using UnityEngine;
 using UnityEngine.Pool;
 
+[RequireComponent(typeof(Collider))]
 [AddComponentMenu(" 🟠Attack Player")]
 public class AttackPlayer : MonoBehaviour {
     [SerializeField] EffectPlayer attackEffectPlayer, hitEffectPlayer;
