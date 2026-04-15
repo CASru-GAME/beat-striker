@@ -11,6 +11,7 @@ public interface IStrikerStateContext : IStrikerContext {
     void PreventGroup();
     void ClearPreventGroup();
     bool IsGroupProcessingPrevented { get; }
+    new void PlayAnimation(StrikerAnimationClip animation, Vector3 positionOffset, Vector3 rotationOffset, Action<IStrikerStateContext> onComplete = null);
 }
 
 

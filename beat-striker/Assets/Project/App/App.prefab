@@ -268,8 +268,8 @@ MonoBehaviour:
   commandTimeOffset: 0
   viewTimeOffset: 0.15
   beatTimeOffset: 0.15
-  goodWindow: 0.3
-  excellentWindow: 0.15
+  goodWindow: 0.4
+  excellentWindow: 0.25
   goodScoreMultiplier: 1
   excellentScoreMultiplier: 1.5
   masterVolume: 1

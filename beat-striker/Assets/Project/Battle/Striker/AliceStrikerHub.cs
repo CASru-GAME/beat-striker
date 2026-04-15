@@ -15,6 +15,7 @@ public interface IStrikerContext {
     IObservableStriker GetSelf();
     IObservableStriker GetOpponent();
     void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
+    void PlayAnimation(StrikerAnimationClip animation, Vector3 positionOffset, Vector3 rotationOffset, Action<IStrikerStateContext> onComplete = null);
     void ApplyDamage(float damage);
     void GenerateImpact(StrikerImpact command);
     void RequestAttention(AttentionRequest request);
@@ -372,6 +373,10 @@ namespace Alice {
 
         public void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null) {
             animationPlayer.PlayAnimation(animation, () => onComplete?.Invoke(stateMachine));
+        }
+
+        public void PlayAnimation(StrikerAnimationClip animation, Vector3 positionOffset, Vector3 rotationOffset, Action<IStrikerStateContext> onComplete = null) {
+            animationPlayer.PlayAnimation(animation, positionOffset, rotationOffset, () => onComplete?.Invoke(stateMachine));
         }
 
         public void GenerateImpact(StrikerImpact command) {

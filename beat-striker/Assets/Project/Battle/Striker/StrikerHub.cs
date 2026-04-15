@@ -112,6 +112,10 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
         context.PlayAnimation(animation, onComplete);
     }
 
+    public void PlayAnimation(StrikerAnimationClip animation, Vector3 positionOffset, Vector3 rotationOffset, Action<IStrikerStateContext> onComplete = null) {
+        context.PlayAnimation(animation, positionOffset, rotationOffset, onComplete);
+    }
+
     public void GenerateImpact(StrikerImpact command) {
         context.GenerateImpact(command);
     }

@@ -492,6 +492,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.AnimationPlayer
   animator: {fileID: 0}
+  rotationPivot: {fileID: 5330020994325101532}
 --- !u!114 &4310568605961233167
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -884,7 +885,11 @@ MonoBehaviour:
   animationClip:
     clip: {fileID: 8023123543846057831, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.1
-    speed: 1.5
+    speed: 1
+  warpedAnimationClip:
+    clip: {fileID: 30488951364029045, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0
+    speed: 1
   nextNode: {fileID: 3444350880286515863}
   poleArm: {fileID: 2337027737897239750}
   emitHoldDuration: 0
@@ -934,7 +939,9 @@ MonoBehaviour:
   duration: 0.8
   damage: 10
   fallbackClearanceRadius: 0.5
+  minWarpDistanceFromOpponent: 1
   postAimHoldAdjustmentEulerAngles: {x: 0, y: 0, z: 0}
+  aimDirectionReuseThreshold: 15
 --- !u!1 &2485643925861171987
 GameObject:
   m_ObjectHideFlags: 0
@@ -1079,6 +1086,7 @@ MonoBehaviour:
   aimRotationSmooth: 16
   aimSpinSpearLocalGripOffsetZ: 0.2
   aimHandRotationAdjustmentEulerAngles: {x: 0, y: 180, z: 0}
+  aimOpponentOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &2504965006604635356
 GameObject:
   m_ObjectHideFlags: 0
@@ -1551,13 +1559,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PoleArm
   hand: {fileID: 3399488055547213054}
   characterCenter: {fileID: 8056188703651194701}
-  hitRadius: 0.5
+  hitRadius: 0.2
   hitMask:
     serializedVersion: 2
     m_Bits: 4294967295
   wallMask:
     serializedVersion: 2
     m_Bits: 64
+  wallStickDepth: 0.1
 --- !u!1 &4649621161327191430
 GameObject:
   m_ObjectHideFlags: 0

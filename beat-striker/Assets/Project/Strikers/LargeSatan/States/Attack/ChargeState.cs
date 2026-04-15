@@ -19,25 +19,46 @@ namespace Core.LargeSatan {
         [SerializeField, Min(0f)] float aimRotationSmooth = 16f;
         [SerializeField] float aimSpinSpearLocalGripOffsetZ = -1f;
         [SerializeField] Vector3 aimHandRotationAdjustmentEulerAngles = new Vector3(0f, 180f, 0f);
+        [SerializeField] Vector3 aimOpponentOffset = new Vector3(0f, 1f, 0f);
         Vector3 initialSpeed;
         bool isTransitioningToEmitState;
 
         public override void OnEnter(IStrikerContext context) {
             initialSpeed = speed * context.InputDirection.x * Vector3.right;
             isTransitioningToEmitState = false;
-            poleArm.BeginAim(
-                aimSpinDuration,
-                aimSpinCount,
-                aimSpinAxisStart,
-                aimSpinAxisEnd,
-                context.InputDirection.x,
-                aimRotationSmooth,
-                aimSpinSpearLocalGripOffsetZ,
-                aimHandRotationAdjustmentEulerAngles);
 
-            context.PlayAnimation(animationClip, context => {
-                context.TryTransition(nextNode);
+            ScheduleStateEvent(0.1f, ctx => {
+                var animationRotationOffset = CalcAnimationRotationOffset(ctx);
+
+                poleArm.BeginAim(
+                    aimSpinDuration,
+                    aimSpinCount,
+                    aimSpinAxisStart,
+                    aimSpinAxisEnd,
+                    ctx.InputDirection.x,
+                    aimRotationSmooth,
+                    aimSpinSpearLocalGripOffsetZ,
+                    animationRotationOffset.x,
+                    ctx.InputDirection,
+                    aimHandRotationAdjustmentEulerAngles);
+
+                ctx.PlayAnimation(animationClip, Vector3.zero, animationRotationOffset, OnAnimationEnd);
             });
+        }
+
+        void OnAnimationEnd(IStrikerStateContext context) {
+            context.TryTransition(nextNode);
+        }
+
+        Vector3 CalcAnimationRotationOffset(IStrikerContext context) {
+            var opponentDirection = (context.GetOpponent().Position.CurrentValue + aimOpponentOffset - context.Rigidbody.position).normalized;
+            var lookDirection = context.GetSelf().LookDirection.CurrentValue;
+            var cos = Vector3.Dot(lookDirection, opponentDirection);
+            var sin = Vector3.Cross(opponentDirection, lookDirection).z * Mathf.Sign(lookDirection.x);
+
+            return opponentDirection != Vector3.zero && cos > 0
+                ? new Vector3(Mathf.Atan2(sin, cos) * Mathf.Rad2Deg, 0f, 0f)
+                : Vector3.zero;
         }
 
         public override void OnUpdate(IStrikerStateContext context) {

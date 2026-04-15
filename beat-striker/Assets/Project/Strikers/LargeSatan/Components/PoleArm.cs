@@ -9,6 +9,7 @@ public class PoleArm : MonoBehaviour {
     [SerializeField] public float hitRadius = 0.5f;
     [SerializeField] public LayerMask hitMask = Physics.DefaultRaycastLayers;
     [SerializeField] public LayerMask wallMask;
+    [SerializeField, Min(0f)] float wallStickDepth = 0.08f;
     readonly Subject<Hurtbox> onHitHurtbox = new();
     public Observable<Hurtbox> OnHitHurtbox => onHitHurtbox;
     
@@ -22,6 +23,11 @@ public class PoleArm : MonoBehaviour {
     Vector3 neutralRelativePosition;
     Quaternion neutralRelativeRotation;
     bool hasNeutralPose;
+    float plannedEmitAngle;
+    Vector3 chargeInputDirection;
+
+    public float PlannedEmitAngle => plannedEmitAngle;
+    public Vector3 ChargeInputDirection => chargeInputDirection;
 
     public void Awake() {
         TryGetComponent(out tracker);
@@ -37,8 +43,10 @@ public class PoleArm : MonoBehaviour {
         currentState?.OnUpdate(Time.deltaTime);
     }
 
-    public void BeginAim(float spinDuration, float spinCount, Transform spinAxisStart, Transform spinAxisEnd, float spinDirection, float rotationSmooth, float spearLocalGripOffsetZ, Vector3 aimHandRotationAdjustmentEulerAngles) {
+    public void BeginAim(float spinDuration, float spinCount, Transform spinAxisStart, Transform spinAxisEnd, float spinDirection, float rotationSmooth, float spearLocalGripOffsetZ, float plannedEmitAngle, Vector3 chargeInputDirection, Vector3 aimHandRotationAdjustmentEulerAngles) {
         EnsureBaseTarget();
+        this.plannedEmitAngle = plannedEmitAngle;
+        this.chargeInputDirection = chargeInputDirection;
         ChangeState(new AimState(this, spinDuration, spinCount, spinAxisStart, spinAxisEnd, spinDirection, rotationSmooth, spearLocalGripOffsetZ, aimHandRotationAdjustmentEulerAngles));
     }
 
@@ -384,9 +392,8 @@ public class PoleArm : MonoBehaviour {
 
                     if (isWall) {
                         Debug.Log($"[PoleArm OnEnter] Ray hit WALL: {hit.collider.name}");
-                        poleArm.transform.position = centerPos + dir.normalized * hit.distance;
-                        poleArm.onHitWall.OnNext((poleArm.transform.position, hit.normal));
-                        isStopped = true;
+                        var impactPos = centerPos + dir.normalized * hit.distance;
+                        StickToWall(impactPos, hit.normal);
                         hitWall = true;
                         break;
                     }
@@ -409,9 +416,7 @@ public class PoleArm : MonoBehaviour {
 
                         if (isWall) {
                             Debug.Log($"[PoleArm OnEnter] Capsule hit WALL: {col.name}");
-                            poleArm.transform.position = centerPos;
-                            poleArm.onHitWall.OnNext((centerPos, emitDirection * -1f));
-                            isStopped = true;
+                            StickToWall(poleArm.transform.position, emitDirection * -1f);
                             return;
                         }
                     }
@@ -437,8 +442,7 @@ public class PoleArm : MonoBehaviour {
 
                 if (isWall) {
                     Debug.Log($"[PoleArm OnEnter] Sphere hit WALL: {col.name}");
-                    poleArm.onHitWall.OnNext((poleArm.transform.position, emitDirection * -1f));
-                    isStopped = true;
+                    StickToWall(poleArm.transform.position, emitDirection * -1f);
                     return;
                 }
             }
@@ -474,10 +478,9 @@ public class PoleArm : MonoBehaviour {
                 }
                 
                 if (isWall) {
-                    poleArm.transform.position += emitDirection * hit.distance;
-                    poleArm.onHitWall.OnNext((poleArm.transform.position, hit.normal));
+                    var impactPos = poleArm.transform.position + emitDirection * hit.distance;
+                    StickToWall(impactPos, hit.normal);
                     wallHit = true;
-                    isStopped = true;
                     break;
                 }
             }
@@ -492,6 +495,13 @@ public class PoleArm : MonoBehaviour {
 
         public void EndEmit() {
             poleArm.ChangeState(new DefaultState(poleArm));
+        }
+
+        void StickToWall(Vector3 impactPos, Vector3 wallNormal) {
+            var stickDirection = emitDirection.sqrMagnitude > 0.000001f ? emitDirection.normalized : (-wallNormal).normalized;
+            poleArm.transform.position = impactPos + stickDirection * poleArm.wallStickDepth;
+            poleArm.onHitWall.OnNext((poleArm.transform.position, wallNormal));
+            isStopped = true;
         }
     }
 
