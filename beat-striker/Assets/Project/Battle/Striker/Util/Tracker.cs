@@ -5,6 +5,7 @@ using UnityEngine;
 public class Tracker : MonoBehaviour {
     [SerializeField] Transform target;
     [SerializeField] bool enableRigidMove = true;
+    [SerializeField, Min(0f)] float targetTransitionDuration = 0.1f;
 
     private Rigidbody rb;
     private Vector3 relativePosition;
@@ -35,10 +36,31 @@ public class Tracker : MonoBehaviour {
     // 元のターゲット状態を保存
     private TargetState originalState;
 
+    private TargetState activeState;
+    private bool hasActiveState;
+    private bool isTransitioning;
+    private float transitionElapsedTime;
+    private Vector3 transitionStartPosition;
+    private Quaternion transitionStartRotation;
+    private Vector3 transitionEndPosition;
+    private Quaternion transitionEndRotation;
+
     // 追加順序を管理（後に追加されたものが優先）
     private readonly List<TargetState> targetStates = new();
 
+    void Awake() {
+        Initialize();
+    }
+
     void Start() {
+        Initialize();
+    }
+
+    void Initialize() {
+        if (hasActiveState) {
+            return;
+        }
+
         TryGetComponent<Rigidbody>(out rb);
         if (rb != null) {
             rb.isKinematic = true;
@@ -52,6 +74,8 @@ public class Tracker : MonoBehaviour {
 
         // 元の状態を保存
         originalState = new TargetState(null, target, relativePosition, relativeRotation, true, true);
+        activeState = originalState;
+        hasActiveState = true;
     }
 
     /// <summary>
@@ -60,6 +84,8 @@ public class Tracker : MonoBehaviour {
     /// </summary>
     /// <returns>削除用のハンドル</returns>
     public TargetHandle AddTarget(Transform newTarget = null, bool followPosition = true, bool followRotation = true) {
+        Initialize();
+
         var handle = new TargetHandle();
 
         Vector3 pos = default;
@@ -74,8 +100,21 @@ public class Tracker : MonoBehaviour {
         targetStates.Add(state);
 
         // 最新のターゲットをアクティブにする
-        ApplyTargetState(state);
+        SetActiveState(state);
 
+        return handle;
+    }
+
+    /// <summary>
+    /// 相対位置・相対回転を明示指定してターゲットを追加する。
+    /// </summary>
+    public TargetHandle AddTarget(Transform newTarget, Vector3 customRelativePosition, Quaternion customRelativeRotation, bool followPosition = true, bool followRotation = true) {
+        Initialize();
+
+        var handle = new TargetHandle();
+        var state = new TargetState(handle, newTarget, customRelativePosition, customRelativeRotation, followPosition, followRotation);
+        targetStates.Add(state);
+        SetActiveState(state);
         return handle;
     }
 
@@ -84,24 +123,46 @@ public class Tracker : MonoBehaviour {
     /// 削除後は次に新しいターゲット、なければ元のターゲットに戻る。
     /// </summary>
     public void RemoveTarget(TargetHandle handle) {
+        Initialize();
+
         int index = targetStates.FindIndex(s => s.Handle == handle);
         if (index < 0) return;
 
         targetStates.RemoveAt(index);
 
         // 残っているターゲットがあれば最新のものを適用、なければ元に戻る
-        if (targetStates.Count > 0) {
-            ApplyTargetState(targetStates[^1]);
-        }
-        else {
-            ApplyTargetState(originalState);
-        }
+        var nextState = targetStates.Count > 0 ? targetStates[^1] : originalState;
+        SetActiveState(nextState);
     }
 
-    private void ApplyTargetState(TargetState state) {
+    private void SetActiveState(TargetState state) {
+        if (hasActiveState && ReferenceEquals(activeState.Handle, state.Handle)) {
+            return;
+        }
+
         target = state.Target;
         relativePosition = state.RelativePosition;
         relativeRotation = state.RelativeRotation;
+
+        var startPosition = transform.position;
+        var startRotation = transform.rotation;
+        var endPosition = CalculateTargetPosition(state, startPosition);
+        var endRotation = CalculateTargetRotation(state, startRotation);
+
+        activeState = state;
+        hasActiveState = true;
+
+        transitionStartPosition = startPosition;
+        transitionStartRotation = startRotation;
+        transitionEndPosition = endPosition;
+        transitionEndRotation = endRotation;
+        transitionElapsedTime = 0f;
+
+        isTransitioning = targetTransitionDuration > 0f && (state.FollowPosition || state.FollowRotation) && state.Target != null;
+
+        if (!isTransitioning) {
+            ApplyPose(endPosition, endRotation);
+        }
     }
 
     /// <summary>
@@ -119,36 +180,66 @@ public class Tracker : MonoBehaviour {
     }
 
     void Update() {
-        if (target == null) return;
+        Initialize();
 
-        var activeState = targetStates.Count > 0 ? targetStates[^1] : originalState;
+        if (isTransitioning) {
+            transitionElapsedTime += Time.deltaTime;
+            var duration = Mathf.Max(targetTransitionDuration, 0.0001f);
+            var t = Mathf.Clamp01(transitionElapsedTime / duration);
+            var eased = t * t * (3f - 2f * t);
+
+            // Transition end should track latest target pose to avoid snapping when target moves during blend.
+            transitionEndPosition = CalculateTargetPosition(activeState, transitionEndPosition);
+            transitionEndRotation = CalculateTargetRotation(activeState, transitionEndRotation);
+
+            ApplyPose(
+                Vector3.Lerp(transitionStartPosition, transitionEndPosition, eased),
+                Quaternion.Slerp(transitionStartRotation, transitionEndRotation, eased));
+
+            if (t >= 1f) {
+                isTransitioning = false;
+            }
+
+            return;
+        }
+
+        if (activeState.Target == null) {
+            return;
+        }
 
         if (!activeState.FollowPosition && !activeState.FollowRotation) {
             return;
         }
 
-        // 保存した相対位置を、現在のターゲットの向きに合わせてワールド座標に変換
-        Vector3 targetWorldPos = transform.position;
-        if (activeState.FollowPosition) {
-            targetWorldPos = target.TransformPoint(relativePosition);
+        var targetWorldPos = CalculateTargetPosition(activeState, transform.position);
+        var targetWorldRot = CalculateTargetRotation(activeState, transform.rotation);
+
+        ApplyPose(targetWorldPos, targetWorldRot);
+    }
+
+    private Vector3 CalculateTargetPosition(TargetState state, Vector3 fallbackPosition) {
+        if (!state.FollowPosition || state.Target == null) {
+            return fallbackPosition;
         }
 
-        // 保存した相対回転を、現在のターゲットの回転に適用
-        Quaternion targetWorldRot = transform.rotation;
-        if (activeState.FollowRotation) {
-            targetWorldRot = target.rotation * relativeRotation;
+        return state.Target.TransformPoint(state.RelativePosition);
+    }
+
+    private Quaternion CalculateTargetRotation(TargetState state, Quaternion fallbackRotation) {
+        if (!state.FollowRotation || state.Target == null) {
+            return fallbackRotation;
         }
 
+        return state.Target.rotation * state.RelativeRotation;
+    }
+
+    private void ApplyPose(Vector3 targetWorldPos, Quaternion targetWorldRot) {
         if (rb != null && enableRigidMove) {
-            if (activeState.FollowPosition) {
-                rb.MovePosition(targetWorldPos);
-            }
-
-            if (activeState.FollowRotation) {
-                rb.MoveRotation(targetWorldRot);
-            }
+            rb.MovePosition(targetWorldPos);
+            rb.MoveRotation(targetWorldRot);
             return;
         }
+
         transform.SetPositionAndRotation(targetWorldPos, targetWorldRot);
     }
 }

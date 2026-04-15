@@ -7,7 +7,6 @@ namespace Core.LargeSatan {
 
     public class TurnState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Idle;
-        [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] float duration = 0.2f;
 
@@ -24,7 +23,6 @@ namespace Core.LargeSatan {
             var startRotation = context.Rigidbody.rotation;
             targetRotation = startRotation * Quaternion.Euler(0f, 180f, 0f);
             turnCompleted = false;
-            context.PlayAnimation(animationClip);
         }
 
         public override void OnUpdate(IStrikerStateContext context) {

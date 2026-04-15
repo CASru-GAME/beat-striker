@@ -136,6 +136,8 @@ Transform:
   m_Children:
   - {fileID: 7181211830687872934}
   - {fileID: 1845957042917164163}
+  - {fileID: 7670338563451008460}
+  - {fileID: 8060493130283152232}
   - {fileID: 3200128266190494492}
   m_Father: {fileID: 7201851954051567416}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -833,6 +835,62 @@ MonoBehaviour:
   nockbackSpeed: 10
   attackPlayer: {fileID: 6365341134110932834}
   impact: 5
+--- !u!1 &2474257301770036979
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8060493130283152232}
+  - component: {fileID: 2439050714861537669}
+  m_Layer: 0
+  m_Name: EmitState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8060493130283152232
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2474257301770036979}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.51514, y: 0.39920998, z: -0.032000065}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1425690710777153012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2439050714861537669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2474257301770036979}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbf4b194259a64f158dbb374f673541d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.EmitState
+  parents:
+  - {fileID: 1412494263704707963}
+  animationClip:
+    clip: {fileID: 8023123543846057831, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.1
+    speed: 1.5
+  nextNode: {fileID: 3444350880286515863}
+  poleArm: {fileID: 2337027737897239750}
+  emitHoldDuration: 0.12
+  emitSpeed: 12
+  emitRotationOffsetEulerAngles: {x: 0, y: 0, z: 0}
+  speed: 1
 --- !u!1 &2485643925861171987
 GameObject:
   m_ObjectHideFlags: 0
@@ -942,11 +1000,11 @@ Transform:
   m_GameObject: {fileID: 2488664861138987599}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.01354, y: 0.76932, z: 0.23645997}
+  m_LocalPosition: {x: -0.0264, y: -0.0074700117, z: 0.23645997}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7201851954051567416}
+  m_Father: {fileID: 1425690710777153012}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3098814545267038612
 MonoBehaviour:
@@ -967,7 +1025,15 @@ MonoBehaviour:
     fadeTime: 0.2
     speed: 1
   nextNode: {fileID: 3444350880286515863}
+  emitNode: {fileID: 2439050714861537669}
   speed: 2
+  poleArm: {fileID: 2337027737897239750}
+  aimSpinDuration: 0.2
+  aimSpinCount: 2
+  aimSpinAxisStart: {fileID: 8109899241856120760}
+  aimSpinAxisEnd: {fileID: 5330020994325101532}
+  aimRotationSmooth: 16
+  aimSpinSpearLocalGripOffsetZ: 0.2
 --- !u!1 &2504965006604635356
 GameObject:
   m_ObjectHideFlags: 0
@@ -1387,6 +1453,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2987343460505658572}
   - component: {fileID: 5014833522558699021}
+  - component: {fileID: 2337027737897239750}
   m_Layer: 0
   m_Name: Polearm
   m_TagString: Untagged
@@ -1424,6 +1491,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Tracker
   target: {fileID: 3399488055547213054}
   enableRigidMove: 0
+  targetTransitionDuration: 0.1
+--- !u!114 &2337027737897239750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4261508237597064991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f440b33a08ba423bbad38db9b435e57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PoleArm
+  hand: {fileID: 3399488055547213054}
+  baseHandRelativeRotationOffsetEulerAngles: {x: 0, y: 180, z: 0}
+  postAimHoldAdjustmentEulerAngles: {x: 0, y: 0, z: 0}
 --- !u!1 &4649621161327191430
 GameObject:
   m_ObjectHideFlags: 0
@@ -1636,7 +1719,6 @@ Transform:
   - {fileID: 1329178121020529794}
   - {fileID: 1107516161165938196}
   - {fileID: 1425690710777153012}
-  - {fileID: 7670338563451008460}
   - {fileID: 4800021711829065458}
   - {fileID: 225902090445379099}
   - {fileID: 8475223232629767289}
@@ -2022,10 +2104,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.TurnState
   parents:
   - {fileID: 1412494263704707963}
-  animationClip:
-    clip: {fileID: 7400000, guid: 5642b8270a36542db9118c44d1d58eab, type: 2}
-    fadeTime: 0
-    speed: 1
   nextNode: {fileID: 3444350880286515863}
   duration: 0.2
 --- !u!1001 &3172677619479974983
@@ -2194,9 +2272,19 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 228264232531828921, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
   m_PrefabInstance: {fileID: 3172677619479974983}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &5330020994325101532 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -1873615475184717925, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
+  m_PrefabInstance: {fileID: 3172677619479974983}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7754960387155712055 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5159078012444724336, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
+  m_PrefabInstance: {fileID: 3172677619479974983}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8109899241856120760 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6668629386295813119, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
   m_PrefabInstance: {fileID: 3172677619479974983}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8085498297990797931
