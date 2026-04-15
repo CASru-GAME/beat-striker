@@ -125,6 +125,8 @@ namespace Alice {
                     deployed.PlayerTransform.SetPositionAndRotation(deployed.OriginalPosition, deployed.OriginalRotation);
                 }
 
+                deployed.Hub?.ExitState();
+                deployed.Hub?.Dispose(); // Hub自体もIDisposableなので呼んでおく
                 deployed.Hub?.DestroyGameObject();
                 deployed.InpactSubscription?.Dispose();
                 deployed.AttentionSubscription?.Dispose();

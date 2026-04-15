@@ -190,8 +190,26 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
         }
     }
 
-    public void Reset(IStrikerState defaultState) {
+    public void Restart(IStrikerState defaultState) {
+        ExitCurrentState();
         ChangeState(defaultState);
+    }
+
+    public void ExitCurrentState() {
+        if (currentState == null) return;
+        
+        isChangingState = true;
+        try {
+            currentState.OnExit(context);
+            var parents = new HashSet<IStrikerGroup>(currentState.Parents ?? Array.Empty<IStrikerGroup>());
+            foreach (var parent in parents) {
+                parent.OnExit(context);
+            }
+            currentState = null;
+        }
+        finally {
+            isChangingState = false;
+        }
     }
 
     static string FormatStateName(IStrikerState state) {

@@ -1,9 +1,22 @@
 using UnityEngine;
+using R3;
 
 [RequireComponent(typeof(Tracker))]
 public class PoleArm : MonoBehaviour {
     Tracker tracker;
     [SerializeField] Transform hand;
+    [SerializeField] Transform characterCenter;
+    [SerializeField] public float hitRadius = 0.5f;
+    [SerializeField] public LayerMask hitMask = Physics.DefaultRaycastLayers;
+    [SerializeField] public LayerMask wallMask;
+    readonly Subject<Hurtbox> onHitHurtbox = new();
+    public Observable<Hurtbox> OnHitHurtbox => onHitHurtbox;
+    
+    readonly Subject<(Vector3 pos, Vector3 normal)> onHitWall = new();
+    public Observable<(Vector3 pos, Vector3 normal)> OnHitWall => onHitWall;
+    
+    Transform originalParent;
+    Transform ownerRoot;
     IState currentState;
     Tracker.TargetHandle baseTargetHandle;
     Vector3 neutralRelativePosition;
@@ -12,6 +25,8 @@ public class PoleArm : MonoBehaviour {
 
     public void Awake() {
         TryGetComponent(out tracker);
+        originalParent = transform.parent;
+        ownerRoot = transform.root;
     }
 
     public void Start() {
@@ -27,9 +42,9 @@ public class PoleArm : MonoBehaviour {
         ChangeState(new AimState(this, spinDuration, spinCount, spinAxisStart, spinAxisEnd, spinDirection, rotationSmooth, spearLocalGripOffsetZ, aimHandRotationAdjustmentEulerAngles));
     }
 
-    public void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, Vector3 postAimHoldAdjustmentEulerAngles) {
+    public void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, float speedDuration, AnimationCurve speedCurve, Vector3 postAimHoldAdjustmentEulerAngles) {
         EnsureBaseTarget();
-        currentState?.BeginEmit(finalRotation, holdDuration, speed, postAimHoldAdjustmentEulerAngles);
+        currentState?.BeginEmit(finalRotation, holdDuration, speed, speedDuration, speedCurve, postAimHoldAdjustmentEulerAngles);
     }
 
     public void RequestEndEmit() {
@@ -72,9 +87,7 @@ public class PoleArm : MonoBehaviour {
     }
 
     Quaternion ApplyPostAimHoldFlip(Quaternion rotation, Vector3 postAimHoldAdjustmentEulerAngles) {
-        // Always invert throw-facing so spear orientation matches throw direction.
-        var inversion = Quaternion.AngleAxis(180f, Vector3.up);
-        return rotation * inversion * Quaternion.Euler(postAimHoldAdjustmentEulerAngles);
+        return rotation * Quaternion.Euler(postAimHoldAdjustmentEulerAngles);
     }
 
     class DefaultState : IState {
@@ -85,6 +98,7 @@ public class PoleArm : MonoBehaviour {
         }
 
         public void OnEnter() {
+            poleArm.transform.SetParent(poleArm.originalParent);
             poleArm.RebindBaseTargetToNeutral();
         }
 
@@ -94,8 +108,8 @@ public class PoleArm : MonoBehaviour {
         public void OnUpdate(float deltaTime) {
         }
 
-        public void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, Vector3 postAimHoldAdjustmentEulerAngles) {
-            poleArm.ChangeState(new EmitPrepareState(poleArm, finalRotation, holdDuration, speed, postAimHoldAdjustmentEulerAngles));
+        public void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, float speedDuration, AnimationCurve speedCurve, Vector3 postAimHoldAdjustmentEulerAngles) {
+            poleArm.ChangeState(new EmitPrepareState(poleArm, finalRotation, holdDuration, speed, speedDuration, speedCurve, postAimHoldAdjustmentEulerAngles));
         }
 
         public void EndEmit() {
@@ -121,6 +135,8 @@ public class PoleArm : MonoBehaviour {
         Quaternion pendingFinalRotation;
         float pendingHoldDuration;
         float pendingSpeed;
+        float pendingSpeedDuration;
+        AnimationCurve pendingSpeedCurve;
         Vector3 pendingPostAimHoldAdjustmentEulerAngles;
         Tracker.TargetHandle pauseTargetHandle;
         Tracker.TargetHandle holdTargetHandle;
@@ -199,15 +215,17 @@ public class PoleArm : MonoBehaviour {
             }
         }
 
-        public void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, Vector3 postAimHoldAdjustmentEulerAngles) {
+        public void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, float speedDuration, AnimationCurve speedCurve, Vector3 postAimHoldAdjustmentEulerAngles) {
             hasPendingEmit = true;
             pendingFinalRotation = finalRotation;
             pendingHoldDuration = holdDuration;
             pendingSpeed = speed;
+            pendingSpeedDuration = speedDuration;
+            pendingSpeedCurve = speedCurve;
             pendingPostAimHoldAdjustmentEulerAngles = postAimHoldAdjustmentEulerAngles;
 
             if (isTrackingHand) {
-                poleArm.ChangeState(new EmitPrepareState(poleArm, pendingFinalRotation, pendingHoldDuration, pendingSpeed, postAimHoldAdjustmentEulerAngles));
+                poleArm.ChangeState(new EmitPrepareState(poleArm, pendingFinalRotation, pendingHoldDuration, pendingSpeed, pendingSpeedDuration, pendingSpeedCurve, postAimHoldAdjustmentEulerAngles));
             }
         }
 
@@ -228,7 +246,7 @@ public class PoleArm : MonoBehaviour {
             }
 
             if (hasPendingEmit) {
-                poleArm.ChangeState(new EmitPrepareState(poleArm, pendingFinalRotation, pendingHoldDuration, pendingSpeed, pendingPostAimHoldAdjustmentEulerAngles));
+                poleArm.ChangeState(new EmitPrepareState(poleArm, pendingFinalRotation, pendingHoldDuration, pendingSpeed, pendingSpeedDuration, pendingSpeedCurve, pendingPostAimHoldAdjustmentEulerAngles));
                 return;
             }
 
@@ -261,16 +279,20 @@ public class PoleArm : MonoBehaviour {
         readonly Quaternion finalRotation;
         readonly float holdDuration;
         readonly float speed;
+        readonly float speedDuration;
+        readonly AnimationCurve speedCurve;
         readonly Vector3 postAimHoldAdjustmentEulerAngles;
         Quaternion holdRotation;
         float elapsedTime;
         Tracker.TargetHandle currentTargetHandle;
 
-        public EmitPrepareState(PoleArm poleArm, Quaternion finalRotation, float holdDuration, float speed, Vector3 postAimHoldAdjustmentEulerAngles) {
+        public EmitPrepareState(PoleArm poleArm, Quaternion finalRotation, float holdDuration, float speed, float speedDuration, AnimationCurve speedCurve, Vector3 postAimHoldAdjustmentEulerAngles) {
             this.poleArm = poleArm;
             this.finalRotation = finalRotation;
             this.holdDuration = holdDuration;
             this.speed = speed;
+            this.speedDuration = speedDuration;
+            this.speedCurve = speedCurve;
             this.postAimHoldAdjustmentEulerAngles = postAimHoldAdjustmentEulerAngles;
         }
 
@@ -281,7 +303,7 @@ public class PoleArm : MonoBehaviour {
             currentTargetHandle = poleArm.tracker.AddTarget(poleArm.hand, followPosition: true, followRotation: false);
 
             if (holdDuration <= 0f) {
-                poleArm.ChangeState(new EmittionState(poleArm, holdRotation, speed));
+                poleArm.ChangeState(new EmittionState(poleArm, holdRotation, speed, speedDuration, speedCurve));
             }
         }
 
@@ -293,11 +315,11 @@ public class PoleArm : MonoBehaviour {
         public void OnUpdate(float deltaTime) {
             elapsedTime += deltaTime;
             if (elapsedTime >= holdDuration) {
-                poleArm.ChangeState(new EmittionState(poleArm, holdRotation, speed));
+                poleArm.ChangeState(new EmittionState(poleArm, holdRotation, speed, speedDuration, speedCurve));
             }
         }
 
-        public void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, Vector3 postAimHoldAdjustmentEulerAngles) {
+        public void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, float speedDuration, AnimationCurve speedCurve, Vector3 postAimHoldAdjustmentEulerAngles) {
         }
 
         public void EndEmit() {
@@ -309,31 +331,163 @@ public class PoleArm : MonoBehaviour {
         readonly PoleArm poleArm;
         readonly Quaternion finalRotation;
         readonly float speed;
+        readonly float speedDuration;
+        readonly AnimationCurve speedCurve;
+        float elapsedTime;
         Vector3 emitDirection;
         Tracker.TargetHandle pauseTargetHandle;
+        bool hasHitHurtbox;
+        bool isStopped;
 
-        public EmittionState(PoleArm poleArm, Quaternion finalRotation, float speed) {
+        public EmittionState(PoleArm poleArm, Quaternion finalRotation, float speed, float speedDuration, AnimationCurve speedCurve) {
             this.poleArm = poleArm;
             this.finalRotation = finalRotation;
             this.speed = speed;
+            this.speedDuration = Mathf.Max(speedDuration, 0.0001f);
+            this.speedCurve = speedCurve;
         }
 
         public void OnEnter() {
+            elapsedTime = 0f;
+            hasHitHurtbox = false;
+            isStopped = false;
             pauseTargetHandle = poleArm.tracker.AddTarget();
             poleArm.transform.rotation = finalRotation;
-            emitDirection = poleArm.transform.right;
+            poleArm.transform.SetParent(null);
+            emitDirection = poleArm.transform.forward;
+
+            Vector3 centerPos = poleArm.characterCenter != null ? poleArm.characterCenter.position : poleArm.ownerRoot.position + Vector3.up * 1f;
+            Vector3 weaponPos = poleArm.transform.position;
+            Vector3 dir = weaponPos - centerPos;
+            float dist = dir.magnitude;
+
+            Debug.Log($"[PoleArm OnEnter] center={centerPos}, weapon={weaponPos}, dist={dist}");
+
+            if (dist > 0.001f) {
+                // 1. まず通常のRaycastで壁を検知
+                var hits = Physics.RaycastAll(centerPos, dir.normalized, dist, poleArm.hitMask, QueryTriggerInteraction.Ignore);
+                System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+                bool hitWall = false;
+                Debug.Log($"[PoleArm OnEnter] RaycastAll hits={hits.Length}");
+
+                foreach (var hit in hits) {
+                    Debug.Log($"[PoleArm OnEnter] Ray hit: {hit.collider.name}, root: {hit.collider.transform.root.name}");
+                    if (hit.collider.transform.root == poleArm.ownerRoot || hit.collider.transform.root == poleArm.transform.root) continue;
+
+                    var hurtbox = hit.collider.GetComponentInParent<Hurtbox>();
+                    bool isWall = hurtbox == null || ((poleArm.wallMask & (1 << hit.collider.gameObject.layer)) != 0);
+
+                    if (hurtbox != null && !hasHitHurtbox) {
+                        hasHitHurtbox = true;
+                        poleArm.onHitHurtbox.OnNext(hurtbox);
+                    }
+
+                    if (isWall) {
+                        Debug.Log($"[PoleArm OnEnter] Ray hit WALL: {hit.collider.name}");
+                        poleArm.transform.position = centerPos + dir.normalized * hit.distance;
+                        poleArm.onHitWall.OnNext((poleArm.transform.position, hit.normal));
+                        isStopped = true;
+                        hitWall = true;
+                        break;
+                    }
+                }
+
+                // 2. 超近距離でのめり込み対策
+                if (!hitWall && !isStopped) {
+                    var overlapsLine = Physics.OverlapCapsule(centerPos, weaponPos, 0.05f, poleArm.hitMask, QueryTriggerInteraction.Ignore);
+                    Debug.Log($"[PoleArm OnEnter] OverlapCapsule hits={overlapsLine.Length}");
+                    foreach (var col in overlapsLine) {
+                        Debug.Log($"[PoleArm OnEnter] Capsule hit: {col.name}, root: {col.transform.root.name}");
+                        if (col.transform.root == poleArm.ownerRoot || col.transform.root == poleArm.transform.root) continue;
+                        var hurtbox = col.GetComponentInParent<Hurtbox>();
+                        bool isWall = hurtbox == null || ((poleArm.wallMask & (1 << col.gameObject.layer)) != 0);
+
+                        if (hurtbox != null && !hasHitHurtbox) {
+                            hasHitHurtbox = true;
+                            poleArm.onHitHurtbox.OnNext(hurtbox);
+                        }
+
+                        if (isWall) {
+                            Debug.Log($"[PoleArm OnEnter] Capsule hit WALL: {col.name}");
+                            poleArm.transform.position = centerPos;
+                            poleArm.onHitWall.OnNext((centerPos, emitDirection * -1f));
+                            isStopped = true;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            if (isStopped) return;
+
+            // 3. 武器の出現位置自体が壁の中に埋まっていないかチェック
+            var overlaps = Physics.OverlapSphere(poleArm.transform.position, poleArm.hitRadius, poleArm.hitMask, QueryTriggerInteraction.Ignore);
+            Debug.Log($"[PoleArm OnEnter] OverlapSphere hits={overlaps.Length}");
+            foreach (var col in overlaps) {
+                Debug.Log($"[PoleArm OnEnter] Sphere hit: {col.name}, root: {col.transform.root.name}");
+                if (col.transform.root == poleArm.ownerRoot || col.transform.root == poleArm.transform.root) continue;
+                
+                var hurtbox = col.GetComponentInParent<Hurtbox>();
+                bool isWall = hurtbox == null || ((poleArm.wallMask & (1 << col.gameObject.layer)) != 0);
+
+                if (hurtbox != null && !hasHitHurtbox) {
+                    hasHitHurtbox = true;
+                    poleArm.onHitHurtbox.OnNext(hurtbox);
+                }
+
+                if (isWall) {
+                    Debug.Log($"[PoleArm OnEnter] Sphere hit WALL: {col.name}");
+                    poleArm.onHitWall.OnNext((poleArm.transform.position, emitDirection * -1f));
+                    isStopped = true;
+                    return;
+                }
+            }
         }
 
         public void OnExit() {
-            poleArm.tracker.RemoveTarget(pauseTargetHandle);
-            pauseTargetHandle = null;
+            if (pauseTargetHandle != null) {
+                poleArm.tracker.RemoveTarget(pauseTargetHandle);
+                pauseTargetHandle = null;
+            }
         }
 
         public void OnUpdate(float deltaTime) {
-            poleArm.transform.position += emitDirection * speed * deltaTime;
+            if (isStopped) return;
+
+            elapsedTime += deltaTime;
+            float normalizedTime = Mathf.Clamp01(elapsedTime / speedDuration);
+            float moveSpeed = speed * speedCurve.Evaluate(normalizedTime);
+            float distanceToMove = moveSpeed * deltaTime;
+            var hits = Physics.SphereCastAll(poleArm.transform.position, poleArm.hitRadius, emitDirection, distanceToMove, poleArm.hitMask, QueryTriggerInteraction.Ignore);
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            bool wallHit = false;
+            foreach (var hit in hits) {
+                if (hit.collider.transform.root == poleArm.ownerRoot || hit.collider.transform.root == poleArm.transform.root) continue;
+
+                var hurtbox = hit.collider.GetComponentInParent<Hurtbox>();
+                bool isWall = hurtbox == null || ((poleArm.wallMask & (1 << hit.collider.gameObject.layer)) != 0);
+
+                if (hurtbox != null && !hasHitHurtbox) {
+                    hasHitHurtbox = true;
+                    poleArm.onHitHurtbox.OnNext(hurtbox);
+                }
+                
+                if (isWall) {
+                    poleArm.transform.position += emitDirection * hit.distance;
+                    poleArm.onHitWall.OnNext((poleArm.transform.position, hit.normal));
+                    wallHit = true;
+                    isStopped = true;
+                    break;
+                }
+            }
+
+            if (!wallHit) {
+                poleArm.transform.position += emitDirection * distanceToMove;
+            }
         }
 
-        public void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, Vector3 postAimHoldAdjustmentEulerAngles) {
+        public void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, float speedDuration, AnimationCurve speedCurve, Vector3 postAimHoldAdjustmentEulerAngles) {
         }
 
         public void EndEmit() {
@@ -345,7 +499,7 @@ public class PoleArm : MonoBehaviour {
         void OnEnter();
         void OnExit();
         void OnUpdate(float deltaTime);
-        void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, Vector3 postAimHoldAdjustmentEulerAngles);
+        void BeginEmit(Quaternion finalRotation, float holdDuration, float speed, float speedDuration, AnimationCurve speedCurve, Vector3 postAimHoldAdjustmentEulerAngles);
         void EndEmit();
     }
 }

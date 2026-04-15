@@ -887,10 +887,54 @@ MonoBehaviour:
     speed: 1.5
   nextNode: {fileID: 3444350880286515863}
   poleArm: {fileID: 2337027737897239750}
-  emitHoldDuration: 0.12
-  emitSpeed: 12
-  emitRotationOffsetEulerAngles: {x: 0, y: 0, z: 0}
-  speed: 1
+  emitHoldDuration: 0
+  emitSpeed: 35
+  emitSpeedCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.17953426
+      value: 0.9767213
+      inSlope: -0.4885049
+      outSlope: -0.4885049
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.7419139
+    - serializedVersion: 3
+      time: 0.403683
+      value: 0.2026791
+      inSlope: -0.8805748
+      outSlope: -0.8805748
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.18248177
+    - serializedVersion: 3
+      time: 1
+      value: 0.002341047
+      inSlope: -0.07001074
+      outSlope: -0.07001074
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.39827812
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  duration: 0.8
+  damage: 10
+  fallbackClearanceRadius: 0.5
+  postAimHoldAdjustmentEulerAngles: {x: 0, y: 0, z: 0}
 --- !u!1 &2485643925861171987
 GameObject:
   m_ObjectHideFlags: 0
@@ -1034,6 +1078,7 @@ MonoBehaviour:
   aimSpinAxisEnd: {fileID: 5330020994325101532}
   aimRotationSmooth: 16
   aimSpinSpearLocalGripOffsetZ: 0.2
+  aimHandRotationAdjustmentEulerAngles: {x: 0, y: 180, z: 0}
 --- !u!1 &2504965006604635356
 GameObject:
   m_ObjectHideFlags: 0
@@ -1505,8 +1550,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoleArm
   hand: {fileID: 3399488055547213054}
-  baseHandRelativeRotationOffsetEulerAngles: {x: 0, y: 180, z: 0}
-  postAimHoldAdjustmentEulerAngles: {x: 0, y: 0, z: 0}
+  characterCenter: {fileID: 8056188703651194701}
+  hitRadius: 0.5
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  wallMask:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!1 &4649621161327191430
 GameObject:
   m_ObjectHideFlags: 0

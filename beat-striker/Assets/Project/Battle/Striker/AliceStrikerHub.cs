@@ -62,6 +62,7 @@ namespace Alice {
         void AddSpecialPoint(float value);
         void Die();
         void GiveHit(HitStatus status);
+        void ExitState();
         void IntroPose();
         void VictoryPose();
         Observable<StrikerImpact> OnInpactGenerated { get; }
@@ -352,6 +353,11 @@ namespace Alice {
             hitPointSubject.OnNext(currentHitPoint);
             onDeadSubject.OnNext(Unit.Default);
             stateMachine.ChangeState(deadState);
+        }
+
+        public void ExitState() {
+            if (stateMachine == null) return;
+            stateMachine.ExitCurrentState();
         }
 
         public void IntroPose() {
