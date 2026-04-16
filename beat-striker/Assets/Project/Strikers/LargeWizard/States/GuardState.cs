@@ -12,67 +12,68 @@ namespace Core.LargeWizard {
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerNode nextNode;
         [SerializeField] AudioClip audioClip;          // ガードが発動したときの音
+        [SerializeField] AudioClip audioClip2;         // 既存シールドを射出したときの音
+        [SerializeField] float launchedShieldSpeed = 14f;
+        [SerializeField] float launchedShieldDamage = 3f;
+        [SerializeField] float launchedShieldKnockbackSpeed = 20f;
+        [SerializeField] float launchedShieldLifetime = 3f;
+        [SerializeField] Transform shieldSpawnTransform;
 
-        [SerializeField] Hurtbox shield;
-        [SerializeField, Min(0f)] float shieldScaleSpeed = 6f;
+        [SerializeField] Hurtbox shieldPrefab;
 
         IDisposable disposable;
-        Vector3 defaultShieldScale;
-        bool hasDefaultShieldScale;
-        bool isShieldScaling;
+        Hurtbox shieldInstance;
+        bool hasShieldBeenHit;
 
         // このステートに遷移した直後に呼ばれる
-        public override void OnEnter(IStrikerContext 
-        context) {
+        public override void OnEnter(IStrikerContext context) {
+
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip,context => {
-                context.TryTransition(nextNode);
-            });
+            context.PlayAnimation(animationClip, OnAnimationEnd);
 
-            disposable = shield.OnHit.Subscribe(hit => {
-                context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
-            });
+            hasShieldBeenHit = false;
+            var ownerStrikerHub = context.Rigidbody.GetComponent<StrikerHub>();
 
-            if (!hasDefaultShieldScale) {
-                defaultShieldScale = shield.transform.localScale;
-                hasDefaultShieldScale = true;
-            }
+            var existingGuards = context.Rigidbody.GetComponentsInChildren<Guard>(true);
+            if (existingGuards.Length > 0) {
+                disposable = Disposable.Create(() => { });
+                for (var i = 0; i < existingGuards.Length; i++) {
+                    var existingGuard = existingGuards[i];
+                    existingGuard.SetOwnerStrikerHub(ownerStrikerHub);
+                    existingGuard.LaunchForward(context.Rigidbody.transform.forward, launchedShieldSpeed, launchedShieldDamage, launchedShieldKnockbackSpeed, launchedShieldLifetime);
+                }
 
-            shield.gameObject.SetActive(true);
-            shield.transform.localScale = Vector3.zero;
-
-            if (shieldScaleSpeed <= 0f) {
-                shield.transform.localScale = defaultShieldScale;
-                isShieldScaling = false;
+                AudioSource.PlayClipAtPoint(audioClip2, context.Rigidbody.transform.position);
                 return;
             }
 
-            isShieldScaling = true;
+            shieldInstance = Instantiate(shieldPrefab, context.Rigidbody.transform);
+            var guard = shieldInstance.GetComponent<Guard>();
+            guard.SetOwnerStrikerHub(ownerStrikerHub);
+            guard.SpawnAtPositionThenReturn(shieldSpawnTransform.position, 0.3f);
 
-            AudioSource.PlayClipAtPoint(audioClip, shield.transform.position);
+            disposable = shieldInstance.OnHit.Subscribe(hit => {
+                if (hasShieldBeenHit) return;
+
+                hasShieldBeenHit = true;
+                context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
+   
+            });
+
+            AudioSource.PlayClipAtPoint(audioClip, shieldInstance.transform.position);
+        }
+
+        public void OnAnimationEnd(IStrikerStateContext context) {
+            context.TryTransition(nextNode);
         }
 
         // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
-            if (!isShieldScaling) return;
-
-            shield.transform.localScale = Vector3.MoveTowards(
-                shield.transform.localScale,
-                defaultShieldScale,
-                shieldScaleSpeed * Time.deltaTime
-            );
-
-            if (shield.transform.localScale == defaultShieldScale) {
-                isShieldScaling = false;
-            }
         }
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
             disposable.Dispose();
-            shield.transform.localScale = defaultShieldScale;
-            isShieldScaling = false;
-            shield.gameObject.SetActive(false);
         }
 
         // 攻撃コマンドが押された時に呼ばれる

@@ -37,6 +37,7 @@ namespace Core.LargeWizard {
                 var iceBehavior = ice.GetComponent<Ice>();
                 iceBehavior.SetAttackerPosition(ctx.Rigidbody.transform.position);
                 iceBehavior.SetAttackerRoot(ctx.Rigidbody.transform.root);
+                iceBehavior.SetOwnerStrikerHub(ctx.Rigidbody.GetComponent<StrikerHub>());
 
                 AudioSource.PlayClipAtPoint(audioClip1, spawnPos);
                 AudioSource.PlayClipAtPoint(audioClip2, spawnPos);

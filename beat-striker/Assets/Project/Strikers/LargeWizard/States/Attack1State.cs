@@ -28,7 +28,9 @@ namespace Core.LargeWizard {
 
             ScheduleStateEvent(fireTime,context => {
                 var particleInstance = Instantiate(firePrefab, firePosition.position, context.Rigidbody.rotation);
-                particleInstance.GetComponent<Fire>().Hurtbox = context.Rigidbody.GetComponentInChildren<Hurtbox>();
+                var fire = particleInstance.GetComponent<Fire>();
+                fire.Hurtbox = context.Rigidbody.GetComponentInChildren<Hurtbox>();
+                fire.SetOwnerStrikerHub(context.Rigidbody.GetComponent<StrikerHub>());
                 Destroy(particleInstance, firePrefabDestroyDelaySeconds);
             });
         }

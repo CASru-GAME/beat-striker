@@ -1,5 +1,6 @@
 using Core.Battle;
 using UnityEngine;
+using Core.Striker;
 
 namespace Core.LargeWizard {
     
@@ -10,10 +11,16 @@ namespace Core.LargeWizard {
         [SerializeField] float speed = 20f;
         [SerializeField, Min(0f)] float launchDelay = 0f;
         [SerializeField] Vector3 localMoveDirection = Vector3.forward;
+        [SerializeField] public Hurtbox Hurtbox;
+        StrikerHub ownerStrikerHub;
         Rigidbody rb;
         Collider hitCollider;
         Renderer[] renderers;
         bool isLaunched;
+
+        public void SetOwnerStrikerHub(StrikerHub strikerHub) {
+            ownerStrikerHub = strikerHub;
+        }
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
@@ -41,13 +48,29 @@ namespace Core.LargeWizard {
             if (!isLaunched) return;
 
             // 敵に当たった場合の処理
-            if (other.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                var nockBackDirection = GetWorldMoveDirection();
-                hurtbox.GiveHit(new HitStatus(damage, nockBackDirection * nockbackSpeed));
-
-                var hitPoint = other.ClosestPoint(transform.position);
-                Destroy(this.gameObject);
+            if (!other.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                hurtbox = other.GetComponentInParent<Hurtbox>();
+                if (hurtbox == null) {
+                    return;
+                }
             }
+
+            if (hurtbox == Hurtbox) {
+                return;
+            }
+
+            if (ownerStrikerHub != null) {
+                var otherStrikerHub = hurtbox.GetComponentInParent<StrikerHub>();
+                if (otherStrikerHub == ownerStrikerHub) {
+                    return;
+                }
+            }
+
+            var nockBackDirection = GetWorldMoveDirection();
+            hurtbox.GiveHit(new HitStatus(damage, nockBackDirection * nockbackSpeed));
+
+            var hitPoint = other.ClosestPoint(transform.position);
+            Destroy(this.gameObject);
         }
 
         System.Collections.IEnumerator LaunchAfterDelay() {

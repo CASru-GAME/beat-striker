@@ -17,6 +17,7 @@ namespace Core.LargeWizard {
         [SerializeField, Min(0f)] float magicCircleGrowDurationSeconds = 0.4f;
         [SerializeField, Min(0f)] float magicCircleDestroyDelaySeconds = 3f;
         [SerializeField, Min(0f)] float tueAndWizardSpawnDelaySeconds = 1f;
+        [SerializeField] AudioClip audioClip;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -26,6 +27,8 @@ namespace Core.LargeWizard {
 
             tuePrefab.SetActive(false);
             wizardPrefab.SetActive(false);
+
+                AudioSource.PlayClipAtPoint(audioClip, magicCircleSpawnPoint.position);
 
             var magicCircleInstance = Instantiate(magicCirclePrefab, magicCircleSpawnPoint.position, Quaternion.Euler(magicCircleRotationEuler));
             var growEffect = magicCircleInstance.AddComponent<GrowFromZeroScaleEffect>();

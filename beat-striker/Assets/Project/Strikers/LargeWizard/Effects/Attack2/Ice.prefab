@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf3f65e5de6613e418c0384891e71a5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Ice
-  damage: 15
+  damage: 20
   knockbackSpeed: 10
   growDuration: 0.3
   lifetime: 2

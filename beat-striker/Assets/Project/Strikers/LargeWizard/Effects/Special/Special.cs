@@ -1,5 +1,6 @@
 using Core.Battle;
 using UnityEngine;
+using Core.Striker;
 
 namespace Core.LargeWizard {
     
@@ -18,6 +19,7 @@ namespace Core.LargeWizard {
         [SerializeField] beam11 beamPrefab;
         [SerializeField] AudioClip audioClip;
         [SerializeField] public Hurtbox Hurtbox;
+        StrikerHub ownerStrikerHub;
 
         Vector3 targetScale;
         float elapsedTime;
@@ -55,19 +57,40 @@ namespace Core.LargeWizard {
 
         void OnTriggerEnter(Collider other) {
             // 敵に当たった場合の処理
-            if (other.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                var nockBackDirection = rb.linearVelocity.normalized;
-                hurtbox.GiveHit(new HitStatus(damage, nockBackDirection * nockbackSpeed));
-
-                var hitPoint = other.ClosestPoint(transform.position);
-                Destroy(this.gameObject);
+            if (!other.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                hurtbox = other.GetComponentInParent<Hurtbox>();
+                if (hurtbox == null) {
+                    return;
+                }
             }
+
+            if (hurtbox == Hurtbox) {
+                return;
+            }
+
+            if (ownerStrikerHub != null) {
+                var otherStrikerHub = hurtbox.GetComponentInParent<StrikerHub>();
+                if (otherStrikerHub == ownerStrikerHub) {
+                    return;
+                }
+            }
+
+            var nockBackDirection = rb.linearVelocity.normalized;
+            hurtbox.GiveHit(new HitStatus(damage, nockBackDirection * nockbackSpeed));
+
+            var hitPoint = other.ClosestPoint(transform.position);
+            Destroy(this.gameObject);
+        }
+
+        public void SetOwnerStrikerHub(StrikerHub strikerHub) {
+            ownerStrikerHub = strikerHub;
         }
 
         System.Collections.IEnumerator SpawnBeamAfterDelay() {
             yield return new WaitForSeconds(beamSpawnDelay);
             var beamInstance = Instantiate(beamPrefab, transform.position, transform.rotation);
             beamInstance.Hurtbox = Hurtbox;
+            beamInstance.SetOwnerStrikerHub(ownerStrikerHub);
             Destroy(beamInstance, 10f);
         }
     }

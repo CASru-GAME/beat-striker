@@ -32,6 +32,7 @@ namespace Core.LargeWizard {
                 var rockBehavior = rock.GetComponent<Rock>();
                 rockBehavior.SetAttackerPosition(ctx.Rigidbody.transform.position);
                 rockBehavior.SetAttackerRoot(ctx.Rigidbody.transform.root);
+                rockBehavior.SetOwnerStrikerHub(ctx.Rigidbody.GetComponent<StrikerHub>());
                 AudioSource.PlayClipAtPoint(audioClip, rockPrefab.transform.position);
             });
         }

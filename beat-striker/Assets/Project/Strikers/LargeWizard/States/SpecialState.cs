@@ -21,6 +21,7 @@ namespace Core.LargeWizard {
             var specialInstance = Instantiate(specialPrefab, spawnPoint.position, spawnPoint.rotation);
             specialInstance.Hurtbox = hurtbox;
             var ownerStrikerHub = context.Rigidbody.GetComponent<StrikerHub>();
+            specialInstance.SetOwnerStrikerHub(ownerStrikerHub);
             var beams = specialInstance.GetComponentsInChildren<beam11>(true);
             for (var i = 0; i < beams.Length; i++) {
                 beams[i].SetOwnerStrikerHub(ownerStrikerHub);
