@@ -15,20 +15,27 @@ namespace Core.LargeSatan {
         [SerializeField] private PoleArm poleArm;
         [SerializeField] float emitHoldDuration = 0.12f;
         [SerializeField] float emitSpeed = 12f;
+        [SerializeField] float recoilSpeed = 12f;
         [SerializeField] AnimationCurve emitSpeedCurve = AnimationCurve.Linear(0f, 1f, 1f, 0.25f);
         [SerializeField] float duration = 1f;
+        [SerializeField, Min(0f)] float recoilStartDelay = 0.1f;
+        [SerializeField, Min(0f)] float recoilEndSpeedRatio = 0.01f;
         [SerializeField] float damage = 10f;
         [SerializeField] float fallbackClearanceRadius = 0.5f;
         [SerializeField, Min(0f)] float minWarpDistanceFromOpponent = 0.5f;
         [SerializeField] Vector3 postAimHoldAdjustmentEulerAngles;
         [SerializeField, Min(0f)] float aimDirectionReuseThreshold = 15f;
+        [SerializeField] EffectPlayer warpEffectPlayer, warpOutEffectPlayer;
         Quaternion finalRotation;
+        Vector3 recoilDirection;
         float elapsedTime;
         bool isFinished;
         bool emitStoppedByWall;
         Vector3 emitStopPosition;
 
         public override void OnEnter(IStrikerContext context) {
+            context.Rigidbody.useGravity = false;
+
             elapsedTime = 0f;
             isFinished = false;
             emitStoppedByWall = false;
@@ -68,6 +75,7 @@ namespace Core.LargeSatan {
 
             var throwDirection = ToWorldDirection(emitAngle, lookDirection);
             finalRotation = Quaternion.LookRotation(throwDirection);
+            recoilDirection = -throwDirection.normalized;
 
             poleArm.BeginEmit(finalRotation, emitHoldDuration, emitSpeed, duration, emitSpeedCurve, postAimHoldAdjustmentEulerAngles);
 
@@ -81,6 +89,7 @@ namespace Core.LargeSatan {
             }
 
             elapsedTime += Time.deltaTime;
+            ApplyRecoilMovement(context);
 
             if (elapsedTime >= duration) {
                 isFinished = true;
@@ -95,6 +104,36 @@ namespace Core.LargeSatan {
             context.Rigidbody.position = warpPosition;
             context.Rigidbody.rotation = ComputeFacingRotationTowardsOpponent(context, warpPosition);
             poleArm.RequestEndEmit();
+            context.Rigidbody.useGravity = true;
+
+            warpEffectPlayer.Emit(warpEffectPlayer.transform);
+            warpOutEffectPlayer.Emit(warpOutEffectPlayer.transform);
+        }
+
+        void ApplyRecoilMovement(IStrikerStateContext context) {
+            if (elapsedTime <= recoilStartDelay) {
+                return;
+            }
+
+            var recoilDuration = Mathf.Max(duration - recoilStartDelay, 0f);
+            if (recoilDuration <= 0f) {
+                return;
+            }
+
+            var moveElapsedTime = Mathf.Min(elapsedTime - recoilStartDelay, recoilDuration);
+            if (moveElapsedTime <= 0f) {
+                return;
+            }
+
+            var decayRate = Mathf.Log(1f / Mathf.Max(recoilEndSpeedRatio, 0.0001f)) / Mathf.Max(recoilDuration, 0.0001f);
+            var currentSpeed = recoilSpeed * Mathf.Exp(-decayRate * moveElapsedTime);
+            var moveDistance = currentSpeed * Time.deltaTime;
+
+            if (moveDistance <= 0f) {
+                return;
+            }
+
+            context.Rigidbody.position += recoilDirection * moveDistance;
         }
 
         Vector3 ComputeSafeWarpPosition(IStrikerContext context) {

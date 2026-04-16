@@ -24,6 +24,8 @@ namespace Core.LargeSatan {
         bool isTransitioningToEmitState;
 
         public override void OnEnter(IStrikerContext context) {
+            context.Rigidbody.useGravity = false;
+
             initialSpeed = speed * context.InputDirection.x * Vector3.right;
             isTransitioningToEmitState = false;
 
@@ -70,6 +72,8 @@ namespace Core.LargeSatan {
             if (!isTransitioningToEmitState) {
                 poleArm.RequestEndEmit();
             }
+
+            context.Rigidbody.useGravity = true;
         }
 
         public override void OnAttackRequested(IStrikerStateContext context) {

@@ -15,12 +15,20 @@ namespace Core.LargeSatan {
         [SerializeField] float reentryWindowSeconds = 0.7f;
         [SerializeField] float duration = 0.5f;
         [SerializeField] float endSpeedRatio = 0.01f;
-        [SerializeField] float stopDistanceToOpponent = 1.0f;
+        [SerializeField] float turnDurationSeconds = 0.2f;
+        [SerializeField] float turnPredictionLeadSeconds = 0.2f;
+        [SerializeField] float turnTriggerAheadDistance = 0.5f;
         [SerializeField] EffectPlayer effectPlayer;
         Vector3 initialVelocity;
         float elapsedTime;
-        bool stoppedByOpponentDistance;
-        bool stopBehindOpponent;
+        bool hasTurnedDuringDash;
+        bool isTurning;
+        bool canTurnDuringDash;
+        bool hasRequestedTurnDuringDash;
+        float turnElapsedTime;
+        Quaternion turnStartRotation;
+        Quaternion turnTargetRotation;
+        Transform turnTransform;
         float lastEnterTime = float.NegativeInfinity;
         int lastEnterDirectionSign;
         int consecutiveEnterCount;
@@ -50,15 +58,21 @@ namespace Core.LargeSatan {
             float dashSpeed = consecutiveDashSpeeds[speedIndex];
             this.initialVelocity = dashSpeed * movementDirectionSign * Vector2.right;
             this.elapsedTime = 0f;
-            this.stoppedByOpponentDistance = false;
-            this.stopBehindOpponent = enterDirectionSign > 0;
+            this.hasTurnedDuringDash = false;
+            this.isTurning = false;
+            this.canTurnDuringDash = enterDirectionSign > 0;
+            this.hasRequestedTurnDuringDash = false;
+            this.turnElapsedTime = 0f;
+            this.turnTransform = context.Rigidbody.transform;
+            this.turnStartRotation = turnTransform.rotation;
+            this.turnTargetRotation = turnTransform.rotation;
             context.Rigidbody.linearVelocity = this.initialVelocity;
 
             this.ScheduleStateEvent(duration, context => {
                 context.TryTransition(nextNode);
             });
 
-            Quaternion effectRotation = transform.rotation;
+            Quaternion effectRotation = turnTransform.rotation;
             if(enterDirectionSign > 0) {
                 effectRotation *= Quaternion.Euler(0f, 180f, 0f);
             }
@@ -67,11 +81,6 @@ namespace Core.LargeSatan {
         }
 
         public override void OnUpdate(IStrikerStateContext context) {
-            if(stoppedByOpponentDistance) {
-                context.Rigidbody.linearVelocity = Vector3.zero;
-                return;
-            }
-
             elapsedTime += Time.deltaTime;
             float ratio = Mathf.Max(endSpeedRatio, 0.0001f);
             float decayRate = Mathf.Log(1f / ratio) / Mathf.Max(duration, 0.0001f);
@@ -81,64 +90,55 @@ namespace Core.LargeSatan {
             var self = context.GetSelf();
             var opponent = context.GetOpponent();
             Vector3 toOpponent = opponent.Position.CurrentValue - self.Position.CurrentValue;
+            float predictionSeconds = Mathf.Max(turnPredictionLeadSeconds, 0.0001f);
+            Vector3 selfVelocity = context.Rigidbody.linearVelocity;
+            Vector3 predictedSelfMove = PredictDashMoveWithDecay(selfVelocity, decayRate, predictionSeconds);
+            Vector3 predictedToOpponent = toOpponent - predictedSelfMove;
+            float dashAxisSign = Mathf.Abs(initialVelocity.x) > Mathf.Epsilon ? Mathf.Sign(initialVelocity.x) : 1f;
+            float predictedOpponentOnDashAxis = predictedToOpponent.x * dashAxisSign;
 
-            if(this.stopBehindOpponent) {
-                Vector3 frameMove = context.Rigidbody.linearVelocity * Time.deltaTime;
-                Vector3 dashDirection = this.initialVelocity.x < 0f ? Vector3.left : Vector3.right;
-                float projectedDistanceToOpponent = Vector3.Dot(toOpponent, dashDirection);
-                float projectedFrameMove = Vector3.Dot(frameMove, dashDirection);
-                float stopThreshold = -stopDistanceToOpponent;
-                bool willEnterStopDistance = WillEnterStopDistanceThisFrame(projectedDistanceToOpponent, projectedFrameMove, stopThreshold);
+            if(canTurnDuringDash && !hasRequestedTurnDuringDash && predictedOpponentOnDashAxis < -turnTriggerAheadDistance) {
+                this.hasRequestedTurnDuringDash = true;
+                this.isTurning = true;
+                this.turnElapsedTime = 0f;
+                this.turnStartRotation = turnTransform.rotation;
+                this.turnTargetRotation = GetTurnTargetRotation(dashAxisSign);
+                context.PlayAnimation(backwardClip);
+            }
 
-                if(projectedDistanceToOpponent <= stopThreshold || willEnterStopDistance) {
-                    this.stoppedByOpponentDistance = true;
-                    context.Rigidbody.linearVelocity = Vector3.zero;
+            if(isTurning) {
+                float normalizedTurnTime = turnElapsedTime / Mathf.Max(turnDurationSeconds, 0.0001f);
+                turnTransform.rotation = Quaternion.Slerp(turnStartRotation, turnTargetRotation, normalizedTurnTime);
+                turnElapsedTime += Time.deltaTime;
+
+                if(turnElapsedTime >= turnDurationSeconds) {
+                    turnTransform.rotation = turnTargetRotation;
+                    this.isTurning = false;
+                    this.hasTurnedDuringDash = true;
                 }
-            } else {
-                float sqrDistance = toOpponent.sqrMagnitude;
-                float sqrStopDistance = stopDistanceToOpponent * stopDistanceToOpponent;
-                float towardOpponent = Vector3.Dot(context.Rigidbody.linearVelocity, toOpponent);
-                Vector3 frameMove = context.Rigidbody.linearVelocity * Time.deltaTime;
-                bool willEnterStopDistance = WillEnterStopDistanceThisFrame(self.Position.CurrentValue, opponent.Position.CurrentValue, frameMove, stopDistanceToOpponent);
-
-                if(towardOpponent > 0f && (sqrDistance <= sqrStopDistance || willEnterStopDistance)) {
-                    this.stoppedByOpponentDistance = true;
-                    context.Rigidbody.linearVelocity = Vector3.zero;
-                }
             }
-        }
-
-        bool WillEnterStopDistanceThisFrame(float projectedDistanceToOpponent, float projectedFrameMove, float stopThreshold) {
-            if(projectedFrameMove <= Mathf.Epsilon) {
-                return false;
-            }
-
-            return projectedDistanceToOpponent - projectedFrameMove <= stopThreshold;
-        }
-
-        bool WillEnterStopDistanceThisFrame(Vector3 selfPosition, Vector3 opponentPosition, Vector3 frameMove, float stopDistance) {
-            float moveSqrMagnitude = frameMove.sqrMagnitude;
-            if(moveSqrMagnitude <= Mathf.Epsilon) {
-                return false;
-            }
-
-            Vector3 offset = selfPosition - opponentPosition;
-            float a = moveSqrMagnitude;
-            float b = 2f * Vector3.Dot(offset, frameMove);
-            float c = offset.sqrMagnitude - stopDistance * stopDistance;
-            float discriminant = b * b - 4f * a * c;
-            if(discriminant < 0f) {
-                return false;
-            }
-
-            float sqrtDiscriminant = Mathf.Sqrt(discriminant);
-            float inverse2A = 1f / (2f * a);
-            float t1 = (-b - sqrtDiscriminant) * inverse2A;
-            float t2 = (-b + sqrtDiscriminant) * inverse2A;
-            return (0f <= t1 && t1 <= 1f) || (0f <= t2 && t2 <= 1f);
         }
 
         public override void OnExit(IStrikerContext context) {
+            if(isTurning) {
+                turnTransform.rotation = turnTargetRotation;
+                this.isTurning = false;
+                this.hasTurnedDuringDash = true;
+            }
+        }
+
+        Vector3 PredictDashMoveWithDecay(Vector3 currentVelocity, float decayRate, float predictionSeconds) {
+            if(decayRate <= Mathf.Epsilon) {
+                return currentVelocity * predictionSeconds;
+            }
+
+            float moveScale = (1f - Mathf.Exp(-decayRate * predictionSeconds)) / decayRate;
+            return currentVelocity * moveScale;
+        }
+
+        Quaternion GetTurnTargetRotation(float dashAxisSign) {
+            Vector3 targetForward = -dashAxisSign * Vector3.right;
+            return Quaternion.LookRotation(targetForward, Vector3.up);
         }
 
     }

@@ -10,6 +10,8 @@ public class PoleArm : MonoBehaviour {
     [SerializeField] public LayerMask hitMask = Physics.DefaultRaycastLayers;
     [SerializeField] public LayerMask wallMask;
     [SerializeField, Min(0f)] float wallStickDepth = 0.08f;
+    [SerializeField] ParticleSystem chargeEffect, emitEffect;
+    [SerializeField] EffectPlayer hitEffectPlayer;
     readonly Subject<Hurtbox> onHitHurtbox = new();
     public Observable<Hurtbox> OnHitHurtbox => onHitHurtbox;
     
@@ -96,6 +98,11 @@ public class PoleArm : MonoBehaviour {
 
     Quaternion ApplyPostAimHoldFlip(Quaternion rotation, Vector3 postAimHoldAdjustmentEulerAngles) {
         return rotation * Quaternion.Euler(postAimHoldAdjustmentEulerAngles);
+    }
+
+    void PlayHitEffect(Vector3 position, Vector3 forwardDirection) {
+        var forward = forwardDirection.sqrMagnitude > 0.000001f ? forwardDirection.normalized : Vector3.forward;
+        hitEffectPlayer.Emit(position, Quaternion.LookRotation(forward), Vector3.one);
     }
 
     class DefaultState : IState {
@@ -266,6 +273,9 @@ public class PoleArm : MonoBehaviour {
                 holdRelativeRotation,
                 followPosition: true,
                 followRotation: true);
+
+
+            poleArm.chargeEffect.Play();
         }
 
         Vector3 ResolveAxisWorld() {
@@ -388,6 +398,7 @@ public class PoleArm : MonoBehaviour {
                     if (hurtbox != null && !hasHitHurtbox) {
                         hasHitHurtbox = true;
                         poleArm.onHitHurtbox.OnNext(hurtbox);
+                        poleArm.PlayHitEffect(hit.point, dir);
                     }
 
                     if (isWall) {
@@ -412,6 +423,7 @@ public class PoleArm : MonoBehaviour {
                         if (hurtbox != null && !hasHitHurtbox) {
                             hasHitHurtbox = true;
                             poleArm.onHitHurtbox.OnNext(hurtbox);
+                            poleArm.PlayHitEffect(col.ClosestPoint(poleArm.transform.position), emitDirection);
                         }
 
                         if (isWall) {
@@ -438,6 +450,7 @@ public class PoleArm : MonoBehaviour {
                 if (hurtbox != null && !hasHitHurtbox) {
                     hasHitHurtbox = true;
                     poleArm.onHitHurtbox.OnNext(hurtbox);
+                    poleArm.PlayHitEffect(col.ClosestPoint(poleArm.transform.position), emitDirection);
                 }
 
                 if (isWall) {
@@ -446,6 +459,8 @@ public class PoleArm : MonoBehaviour {
                     return;
                 }
             }
+
+            poleArm.emitEffect.Play();
         }
 
         public void OnExit() {
@@ -475,6 +490,7 @@ public class PoleArm : MonoBehaviour {
                 if (hurtbox != null && !hasHitHurtbox) {
                     hasHitHurtbox = true;
                     poleArm.onHitHurtbox.OnNext(hurtbox);
+                    poleArm.PlayHitEffect(hit.point, emitDirection);
                 }
                 
                 if (isWall) {

@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>動画スプライトシート生成ツール</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg-color: #0a0a0f;
+        --surface-color: #14141f;
+        --surface-hover: #1a1a2e;
+        --primary-color: #7c6aef;
+        --primary-glow: rgba(124, 106, 239, 0.3);
+        --secondary-color: #03dac6;
+        --secondary-glow: rgba(3, 218, 198, 0.2);
+        --accent-color: #f7931a;
+        --danger-color: #cf6679;
+        --text-color: #e8e8f0;
+        --text-muted: #8888a0;
+        --border-color: rgba(255, 255, 255, 0.06);
+        --border-radius: 14px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        width: 100vw;
+        height: 100dvh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Header */
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background: linear-gradient(180deg, rgba(124, 106, 239, 0.05) 0%, transparent 100%);
+        flex-shrink: 0;
+      }
+
+      .header h1 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .header-icon {
+        font-size: 1.3rem;
+      }
+
+      /* Main Layout */
+      .main-layout {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      /* Left Panel - Controls */
+      .controls-panel {
+        width: 320px;
+        flex-shrink: 0;
+        background: var(--surface-color);
+        border-right: 1px solid var(--border-color);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .panel-section {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .panel-section:last-child {
+        border-bottom: none;
+      }
+
+      .section-title {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+      }
+
+      .drop-zone {
+        border: 2px dashed rgba(124, 106, 239, 0.3);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+        background: rgba(124, 106, 239, 0.03);
+        position: relative;
+      }
+
+      .drop-zone:hover,
+      .drop-zone.drag-over {
+        border-color: var(--primary-color);
+        background: rgba(124, 106, 239, 0.08);
+        transform: translateY(-1px);
+      }
+
+      .drop-zone.has-file {
+        border-color: var(--secondary-color);
+        background: rgba(3, 218, 198, 0.05);
+      }
+
+      .drop-zone-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .drop-zone-text {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .drop-zone-filename {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--secondary-color);
+        margin-top: 0.25rem;
+        word-break: break-all;
+      }
+
+      /* Form Controls */
+      .form-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .form-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .form-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        min-width: 80px;
+        flex-shrink: 0;
+      }
+
+      .form-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem;
+        transition: var(--transition);
+        outline: none;
+      }
+
+      .form-input:hover {
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .form-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px var(--primary-glow);
+      }
+
+      .form-input-small {
+        width: 70px;
+        flex: none;
+        text-align: center;
+      }
+
+      .form-hint {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+        opacity: 0.7;
+      }
+
+      .form-row .unit {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        flex-shrink: 0;
+      }
+
+      /* Slider */
+      input[type='range'] {
+        -webkit-appearance: none;
+        flex: 1;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        outline: none;
+      }
+
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        cursor: pointer;
+        box-shadow: 0 0 6px var(--primary-glow);
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.7rem 1.5rem;
+        border: none;
+        border-radius: 10px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        width: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), #9580ff);
+        color: #fff;
+        box-shadow: 0 4px 16px var(--primary-glow);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px var(--primary-glow);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .btn-secondary {
+        background: rgba(3, 218, 198, 0.12);
+        color: var(--secondary-color);
+        border: 1px solid rgba(3, 218, 198, 0.2);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: rgba(3, 218, 198, 0.2);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* Progress */
+      .progress-container {
+        display: none;
+        margin-top: 0.75rem;
+      }
+
+      .progress-container.visible {
+        display: block;
+      }
+
+      .progress-bar-track {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        border-radius: 3px;
+        width: 0%;
+        transition: width 0.15s ease;
+      }
+
+      .progress-text {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.4rem;
+        text-align: center;
+      }
+
+      /* Stats */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.6rem 0.75rem;
+      }
+
+      .stat-label {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .stat-value {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-top: 0.15rem;
+        color: var(--text-color);
+      }
+
+      /* Right Panel - Preview */
+      .preview-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        background: var(--bg-color);
+      }
+
+      .preview-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.6rem 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+        background: var(--surface-color);
+      }
+
+      .preview-title {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-muted);
+      }
+
+      .preview-info {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .preview-viewport {
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        /* Checkerboard background */
+        background-image:
+          linear-gradient(45deg, #111118 25%, transparent 25%),
+          linear-gradient(-45deg, #111118 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #111118 75%),
+          linear-gradient(-45deg, transparent 75%, #111118 75%);
+        background-size: 24px 24px;
+        background-position: 0 0, 0 12px, 12px -12px, -12px 0px;
+      }
+
+      .preview-viewport canvas {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 4px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      }
+
+      .preview-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        opacity: 0.4;
+      }
+
+      .preview-placeholder-icon {
+        font-size: 3rem;
+      }
+
+      .preview-placeholder-text {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      /* Hidden video element */
+      #hiddenVideo {
+        display: none;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .main-layout {
+          flex-direction: column;
+        }
+        .controls-panel {
+          width: 100%;
+          max-height: 50vh;
+          border-right: none;
+          border-bottom: 1px solid var(--border-color);
+        }
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      /* Animation */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.4s ease-out;
+      }
+
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 8px var(--primary-glow); }
+        50% { box-shadow: 0 0 20px var(--primary-glow), 0 0 40px rgba(124, 106, 239, 0.1); }
+      }
+
+      .processing .btn-primary {
+        animation: pulse-glow 2s ease-in-out infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <span class="header-icon">🎬</span>
+      <h1>Video Spritesheet Generator</h1>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+      <!-- Left: Controls -->
+      <div class="controls-panel">
+        <!-- File Input -->
+        <div class="panel-section">
+          <div class="section-title">📂 動画ファイル</div>
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon" id="dropIcon">🎥</div>
+            <div class="drop-zone-text" id="dropText">動画をドラッグ＆ドロップ<br />またはクリックして選択</div>
+            <div class="drop-zone-filename" id="dropFilename" style="display: none"></div>
+          </div>
+          <input type="file" id="videoInput" accept="video/*,.mov" style="display: none" />
+        </div>
+
+        <!-- Frame Settings -->
+        <div class="panel-section">
+          <div class="section-title">⏱ フレーム設定</div>
+          <div class="form-row">
+            <span class="form-label">抽出FPS</span>
+            <input type="number" id="fpsInput" class="form-input form-input-small" value="10" min="1" max="120" />
+            <span class="unit">fps</span>
+          </div>
+          <div class="form-hint">元動画から1秒あたり何フレーム抽出するか</div>
+        </div>
+
+        <!-- Trim Settings -->
+        <div class="panel-section">
+          <div class="section-title">✂️ トリミング設定</div>
+          <div class="form-row">
+            <span class="form-label">開始スキップ</span>
+            <input type="number" id="trimStart" class="form-input form-input-small" value="0" min="0" />
+            <span class="unit">フレーム</span>
+          </div>
+          <div class="form-row">
+            <span class="form-label">終了スキップ</span>
+            <input type="number" id="trimEnd" class="form-input form-input-small" value="0" min="0" />
+            <span class="unit">フレーム</span>
+          </div>
+          <div class="form-hint">サンプリング後のフレームを前後から除外</div>
+        </div>
+
+        <!-- Size Settings -->
+        <div class="panel-section">
+          <div class="section-title">📐 フレームサイズ</div>
+          <div class="form-row">
+            <span class="form-label">幅</span>
+            <input type="number" id="frameWidth" class="form-input form-input-small" value="128" min="1" />
+            <span class="unit">px</span>
+          </div>
+          <div class="form-row">
+            <span class="form-label">高さ</span>
+            <input type="number" id="frameHeight" class="form-input form-input-small" value="128" min="1" />
+            <span class="unit">px</span>
+          </div>
+        </div>
+
+        <!-- Layout Settings -->
+        <div class="panel-section">
+          <div class="section-title">🧩 レイアウト</div>
+          <div class="form-row">
+            <span class="form-label">列数</span>
+            <input type="number" id="columnsInput" class="form-input form-input-small" value="8" min="1" max="100" />
+            <span class="unit">列</span>
+          </div>
+        </div>
+
+        <!-- White Transparency -->
+        <div class="panel-section">
+          <div class="section-title">🔮 白透過設定</div>
+          <div class="form-row">
+            <span class="form-label">背景レベル</span>
+            <input type="range" id="thresholdRange" min="-50" max="50" value="0" />
+            <span class="unit" id="thresholdVal">0</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="panel-section" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+          <button class="btn btn-primary" id="processBtn" disabled>
+            <span>▶</span> スプライトシート生成
+          </button>
+
+          <div class="progress-container" id="progressContainer">
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">準備中...</div>
+          </div>
+
+          <button class="btn btn-secondary" id="downloadBtn" disabled style="margin-top: 0.5rem;">
+            <span>⬇</span> PNGダウンロード
+          </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="panel-section" id="statsSection" style="display: none;">
+          <div class="section-title">📊 統計</div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">フレーム数</div>
+              <div class="stat-value" id="statFrames">-</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">シートサイズ</div>
+              <div class="stat-value" id="statSize">-</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">行数</div>
+              <div class="stat-value" id="statRows">-</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">動画長さ</div>
+              <div class="stat-value" id="statDuration">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Preview -->
+      <div class="preview-panel">
+        <div class="preview-header">
+          <span class="preview-title">プレビュー</span>
+          <span class="preview-info" id="previewInfo"></span>
+        </div>
+        <div class="preview-viewport" id="previewViewport">
+          <div class="preview-placeholder" id="previewPlaceholder">
+            <div class="preview-placeholder-icon">🖼️</div>
+            <div class="preview-placeholder-text">動画を読み込んで生成してください</div>
+          </div>
+          <canvas id="spritesheetCanvas" style="display: none;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden elements -->
+    <video id="hiddenVideo" muted playsinline></video>
+    <canvas id="frameCanvas" style="display: none;"></canvas>
+
+    <!-- White Transparency Logic (Embedded to avoid file:// CORS issues) -->
+    <script>
+      /**
+       * 白透過変換 共通モジュール
+       */
+      function applyWhiteTransparency(imageData, thresholdAdjustment = 0) {
+        const data = imageData.data;
+        const width = imageData.width;
+        const height = imageData.height;
+
+        let borderLumaSum = 0;
+        let borderPixelCount = 0;
+        let globalMaxLuma = 0;
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const i = (y * width + x) * 4;
+            const a = data[i + 3];
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const luma = (0.299 * r + 0.587 * g + 0.114 * b) * (a / 255);
+
+            if (luma > globalMaxLuma) globalMaxLuma = luma;
+            if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+              borderLumaSum += luma;
+              borderPixelCount++;
+            }
+          }
+        }
+
+        const borderAvgLuma = borderPixelCount > 0 ? borderLumaSum / borderPixelCount : 0;
+        const effectiveThreshold = Math.max(0, borderAvgLuma + thresholdAdjustment);
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+          const luma = (0.299 * r + 0.587 * g + 0.114 * b) * (a / 255);
+          let newAlpha = 0;
+
+          if (luma <= effectiveThreshold) {
+            newAlpha = 0;
+          } else {
+            if (globalMaxLuma > effectiveThreshold) {
+              newAlpha = (globalMaxLuma * (luma - effectiveThreshold)) / (globalMaxLuma - effectiveThreshold);
+            } else {
+              newAlpha = 0;
+            }
+          }
+
+          data[i] = 255;
+          data[i + 1] = 255;
+          data[i + 2] = 255;
+          data[i + 3] = newAlpha;
+        }
+      }
+    </script>
+    <script>
+      // Elements
+      const dropZone = document.getElementById('dropZone');
+      const dropIcon = document.getElementById('dropIcon');
+      const dropText = document.getElementById('dropText');
+      const dropFilename = document.getElementById('dropFilename');
+      const videoInput = document.getElementById('videoInput');
+      const fpsInput = document.getElementById('fpsInput');
+      const frameWidthInput = document.getElementById('frameWidth');
+      const frameHeightInput = document.getElementById('frameHeight');
+      const columnsInput = document.getElementById('columnsInput');
+      const trimStartInput = document.getElementById('trimStart');
+      const trimEndInput = document.getElementById('trimEnd');
+      const thresholdRange = document.getElementById('thresholdRange');
+      const thresholdVal = document.getElementById('thresholdVal');
+      const processBtn = document.getElementById('processBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const progressContainer = document.getElementById('progressContainer');
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+      const statsSection = document.getElementById('statsSection');
+      const previewPlaceholder = document.getElementById('previewPlaceholder');
+      const spritesheetCanvas = document.getElementById('spritesheetCanvas');
+      const spritesheetCtx = spritesheetCanvas.getContext('2d');
+      const previewInfo = document.getElementById('previewInfo');
+
+      const hiddenVideo = document.getElementById('hiddenVideo');
+      const videoSource = document.createElement('source');
+      hiddenVideo.appendChild(videoSource);
+      
+      const frameCanvas = document.getElementById('frameCanvas');
+      const frameCtx = frameCanvas.getContext('2d');
+
+      let videoFile = null;
+      let isProcessing = false;
+
+      // --- Drop Zone ---
+      dropZone.addEventListener('click', () => videoInput.click());
+
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); });
+      });
+
+      ['dragenter', 'dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, () => dropZone.classList.add('drag-over'));
+      });
+
+      ['dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, () => dropZone.classList.remove('drag-over'));
+      });
+
+      dropZone.addEventListener('drop', e => {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) setVideoFile(files[0]);
+      });
+
+      videoInput.addEventListener('change', e => {
+        if (e.target.files.length > 0) setVideoFile(e.target.files[0]);
+      });
+
+      function setVideoFile(file) {
+        const isVideo = file.type.startsWith('video/');
+        const isMov = file.name.toLowerCase().endsWith('.mov');
+        
+        if (!isVideo && !isMov) {
+          alert('動画ファイルを選択してください (.mp4, .mov, .webm 等)');
+          return;
+        }
+        videoFile = file;
+        dropZone.classList.add('has-file');
+        dropIcon.textContent = '✅';
+        dropText.textContent = '動画ファイル選択済み';
+        dropFilename.textContent = file.name;
+        dropFilename.style.display = 'block';
+        processBtn.disabled = false;
+      }
+
+      // --- Threshold slider ---
+      thresholdRange.addEventListener('input', e => {
+        thresholdVal.textContent = e.target.value;
+      });
+
+      // --- Process ---
+      processBtn.addEventListener('click', () => {
+        if (!videoFile || isProcessing) return;
+        startProcessing();
+      });
+
+      async function startProcessing() {
+        isProcessing = true;
+        processBtn.disabled = true;
+        downloadBtn.disabled = true;
+        document.body.classList.add('processing');
+
+        progressContainer.classList.add('visible');
+        progressFill.style.width = '0%';
+        progressText.textContent = '動画を読み込み中...';
+
+        const targetFps = parseInt(fpsInput.value) || 10;
+        const fw = parseInt(frameWidthInput.value) || 128;
+        const fh = parseInt(frameHeightInput.value) || 128;
+        const cols = parseInt(columnsInput.value) || 8;
+        const trimStart = parseInt(trimStartInput.value) || 0;
+        const trimEnd = parseInt(trimEndInput.value) || 0;
+        const thresholdAdj = parseInt(thresholdRange.value) || 0;
+
+        try {
+          // 1. Load video
+          const videoUrl = URL.createObjectURL(videoFile);
+          
+          // Clear previous sources
+          while (hiddenVideo.firstChild) hiddenVideo.removeChild(hiddenVideo.firstChild);
+          
+          const source = document.createElement('source');
+          source.src = videoUrl;
+          // MOVファイルなどでMIMEタイプが空の場合のフォールバック
+          source.type = videoFile.type || (videoFile.name.toLowerCase().endsWith('.mov') ? 'video/quicktime' : 'video/mp4');
+          hiddenVideo.appendChild(source);
+          hiddenVideo.load();
+
+          await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('動画の読み込みがタイムアウトしました。ファイルが壊れているか、ブラウザが対応していない可能性があります。'));
+            }, 10000);
+
+            hiddenVideo.onloadedmetadata = () => {
+              clearTimeout(timeout);
+              resolve();
+            };
+            hiddenVideo.onerror = (e) => {
+              clearTimeout(timeout);
+              console.error('Video Error:', hiddenVideo.error);
+              let errorDetail = '';
+              if (hiddenVideo.error) {
+                errorDetail = ` (Code: ${hiddenVideo.error.code}, Message: ${hiddenVideo.error.message})`;
+              }
+              
+              const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+              let advice = '\n\n【アドバイス】\nブラウザがこの動画のコーデック（ProResやHEVC等）をサポートしていない可能性があります。';
+              if (isMac) {
+                advice += '\n- Chromeではなく **Safari** でこのツールを開くと解決する場合があります。';
+              }
+              advice += '\n- または、動画を H.264 形式の MP4 に変換してから再度お試しください。';
+              
+              reject(new Error('動画の読み込みに失敗しました' + errorDetail + advice));
+            };
+          });
+
+          const duration = hiddenVideo.duration;
+          const samplingFrames = Math.floor(duration * targetFps);
+          const totalFrames = Math.max(0, samplingFrames - trimStart - trimEnd);
+
+          if (totalFrames <= 0) {
+            throw new Error('トリミング後のフレームが0以下です。設定を確認してください。');
+          }
+
+          // Stats
+          document.getElementById('statDuration').textContent = duration.toFixed(1) + 's';
+          document.getElementById('statFrames').textContent = totalFrames;
+
+          progressText.textContent = `${totalFrames}フレームを抽出中...`;
+
+          // 2. Extract frames
+          frameCanvas.width = fw;
+          frameCanvas.height = fh;
+          frameCtx.imageSmoothingEnabled = true;
+          frameCtx.imageSmoothingQuality = 'high';
+
+          const frames = [];
+          for (let i = 0; i < totalFrames; i++) {
+            const samplingIdx = i + trimStart;
+            const time = samplingIdx / targetFps;
+            await seekToTime(hiddenVideo, time);
+
+            // Draw frame at target size
+            frameCtx.clearRect(0, 0, fw, fh);
+            frameCtx.drawImage(hiddenVideo, 0, 0, fw, fh);
+
+            // Get ImageData and apply white transparency
+            const imageData = frameCtx.getImageData(0, 0, fw, fh);
+            applyWhiteTransparency(imageData, thresholdAdj);
+
+            // Store processed frame as ImageBitmap via temp canvas
+            frameCtx.putImageData(imageData, 0, 0);
+            const blob = await new Promise(resolve => frameCanvas.toBlob(resolve, 'image/png'));
+            const bitmap = await createImageBitmap(blob);
+            frames.push(bitmap);
+
+            // Update progress
+            const pct = ((i + 1) / totalFrames * 100).toFixed(0);
+            progressFill.style.width = pct + '%';
+            progressText.textContent = `フレーム抽出中... ${i + 1}/${totalFrames}`;
+
+            // Yield to UI thread
+            if (i % 5 === 0) await yieldToUI();
+          }
+
+          URL.revokeObjectURL(videoUrl);
+
+          // 3. Compose spritesheet
+          progressText.textContent = 'スプライトシートを合成中...';
+          await yieldToUI();
+
+          const rows = Math.ceil(frames.length / cols);
+          const sheetW = cols * fw;
+          const sheetH = rows * fh;
+
+          spritesheetCanvas.width = sheetW;
+          spritesheetCanvas.height = sheetH;
+          spritesheetCtx.imageSmoothingEnabled = true;
+          spritesheetCtx.imageSmoothingQuality = 'high';
+          spritesheetCtx.clearRect(0, 0, sheetW, sheetH);
+
+          for (let idx = 0; idx < frames.length; idx++) {
+            const col = idx % cols;
+            const row = Math.floor(idx / cols);
+            spritesheetCtx.drawImage(frames[idx], col * fw, row * fh, fw, fh);
+          }
+
+          // Update stats
+          document.getElementById('statRows').textContent = rows;
+          document.getElementById('statSize').textContent = `${sheetW}×${sheetH}`;
+          statsSection.style.display = 'block';
+          statsSection.classList.add('fade-in');
+
+          // Show preview
+          previewPlaceholder.style.display = 'none';
+          spritesheetCanvas.style.display = 'block';
+          previewInfo.textContent = `${sheetW} × ${sheetH}px | ${frames.length}フレーム | ${cols}列 × ${rows}行`;
+
+          // Enable download
+          downloadBtn.disabled = false;
+
+          progressFill.style.width = '100%';
+          progressText.textContent = '✅ 完了！';
+
+          // Clean up bitmaps
+          frames.forEach(b => b.close());
+
+        } catch (err) {
+          alert('エラー: ' + err.message);
+          console.error(err);
+          progressText.textContent = '❌ エラーが発生しました';
+        } finally {
+          isProcessing = false;
+          processBtn.disabled = !videoFile;
+          document.body.classList.remove('processing');
+        }
+      }
+
+      function seekToTime(video, time) {
+        return new Promise((resolve, reject) => {
+          video.currentTime = time;
+          const onSeeked = () => {
+            video.removeEventListener('seeked', onSeeked);
+            video.removeEventListener('error', onError);
+            resolve();
+          };
+          const onError = () => {
+            video.removeEventListener('seeked', onSeeked);
+            video.removeEventListener('error', onError);
+            reject(new Error('シーク失敗'));
+          };
+          video.addEventListener('seeked', onSeeked);
+          video.addEventListener('error', onError);
+        });
+      }
+
+      function yieldToUI() {
+        return new Promise(resolve => setTimeout(resolve, 0));
+      }
+
+      // --- Download ---
+      downloadBtn.addEventListener('click', () => {
+        if (spritesheetCanvas.width === 0) return;
+
+        const link = document.createElement('a');
+        link.download = `spritesheet_${Date.now()}.png`;
+        link.href = spritesheetCanvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    </script>
+  </body>
+</html>
