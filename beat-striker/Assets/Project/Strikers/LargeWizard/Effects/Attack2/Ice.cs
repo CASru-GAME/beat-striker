@@ -1,5 +1,6 @@
 using Core.Battle;
 using UnityEngine;
+using Core.Striker;
 
 namespace Core.LargeWizard {
 
@@ -26,6 +27,7 @@ namespace Core.LargeWizard {
         Collider iceCollider;
         Vector3 attackerPosition;
         Transform attackerRoot;
+        StrikerHub ownerStrikerHub;
 
         void Awake() {
             // インスペクタで指定したオフセットを適用
@@ -50,6 +52,10 @@ namespace Core.LargeWizard {
 
         public void SetAttackerRoot(Transform root) {
             attackerRoot = root;
+        }
+
+        public void SetOwnerStrikerHub(StrikerHub strikerHub) {
+            ownerStrikerHub = strikerHub;
         }
 
         void Start() {
@@ -82,21 +88,33 @@ namespace Core.LargeWizard {
         void OnTriggerEnter(Collider other) {
             if (hasHit) return;
 
-            if (other.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                if (other.transform.root == attackerRoot) return;
-
-                hasHit = true;
-                iceCollider.enabled = false;
-
-                // 攻撃者から相手への水平方向にノックバック
-                var dir = other.transform.position - attackerPosition;
-                dir.y = 0f;
-                var knockbackDir = dir.sqrMagnitude > 0.001f ? dir.normalized : Vector3.forward;
-                hurtbox.GiveHit(new HitStatus(damage, knockbackDir * knockbackSpeed));
-
-                var hitPoint = other.ClosestPoint(transform.position);
-                Destroy(Instantiate(impactPrefab, hitPoint, transform.rotation), 5f);
+            if (!other.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                hurtbox = other.GetComponentInParent<Hurtbox>();
+                if (hurtbox == null) {
+                    return;
+                }
             }
+
+            if (other.transform.root == attackerRoot) return;
+
+            if (ownerStrikerHub != null) {
+                var otherStrikerHub = hurtbox.GetComponentInParent<StrikerHub>();
+                if (otherStrikerHub == ownerStrikerHub) {
+                    return;
+                }
+            }
+
+            hasHit = true;
+            iceCollider.enabled = false;
+
+            // 攻撃者から相手への水平方向にノックバック
+            var dir = other.transform.position - attackerPosition;
+            dir.y = 0f;
+            var knockbackDir = dir.sqrMagnitude > 0.001f ? dir.normalized : Vector3.forward;
+            hurtbox.GiveHit(new HitStatus(damage, knockbackDir * knockbackSpeed));
+
+            var hitPoint = other.ClosestPoint(transform.position);
+            Destroy(Instantiate(impactPrefab, hitPoint, transform.rotation), 5f);
         }
     }
 }

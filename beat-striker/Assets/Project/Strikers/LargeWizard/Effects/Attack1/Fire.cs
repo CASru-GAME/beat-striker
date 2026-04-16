@@ -1,5 +1,6 @@
 using Core.Battle;
 using UnityEngine;
+using Core.Striker;
 
 namespace Core.LargeWizard {
     
@@ -14,6 +15,11 @@ namespace Core.LargeWizard {
         [SerializeField] AudioClip audioClip;
         [SerializeField] GameObject trail;
         [SerializeField] public Hurtbox Hurtbox;
+        StrikerHub ownerStrikerHub;
+
+        public void SetOwnerStrikerHub(StrikerHub strikerHub) {
+            ownerStrikerHub = strikerHub;
+        }
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
@@ -28,21 +34,33 @@ namespace Core.LargeWizard {
 
         void OnTriggerEnter(Collider other) {
             // 敵に当たった場合の処理
-            if (other.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                if (hurtbox == Hurtbox) {
+            if (!other.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                hurtbox = other.GetComponentInParent<Hurtbox>();
+                if (hurtbox == null) {
                     return;
                 }
-
-                var nockBackDirection = rb.linearVelocity.normalized;
-                hurtbox.GiveHit(new HitStatus(damage, nockBackDirection * nockbackSpeed));
-
-                var hitPoint = other.ClosestPoint(transform.position);
-                Destroy(Instantiate(impactPrefab, hitPoint, transform.rotation), 5f);
-                AudioSource.PlayClipAtPoint(audioClip, hitPoint);
-                trail.transform.SetParent(null);
-                Destroy(trail, 5f);
-                Destroy(this.gameObject);
             }
+
+            if (hurtbox == Hurtbox) {
+                return;
+            }
+
+            if (ownerStrikerHub != null) {
+                var otherStrikerHub = hurtbox.GetComponentInParent<StrikerHub>();
+                if (otherStrikerHub == ownerStrikerHub) {
+                    return;
+                }
+            }
+
+            var nockBackDirection = rb.linearVelocity.normalized;
+            hurtbox.GiveHit(new HitStatus(damage, nockBackDirection * nockbackSpeed));
+
+            var hitPoint = other.ClosestPoint(transform.position);
+            Destroy(Instantiate(impactPrefab, hitPoint, transform.rotation), 5f);
+            AudioSource.PlayClipAtPoint(audioClip, hitPoint);
+            trail.transform.SetParent(null);
+            Destroy(trail, 5f);
+            Destroy(this.gameObject);
         }
     }
 }

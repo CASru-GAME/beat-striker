@@ -5,104 +5,100 @@ using R3;
 using System;
 
 namespace Core.LargeWizard {
-
 
     public class GuardState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Guard;
 
-        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧「繝九Γ繝シ繧キ繝ァ繝ウ繧ッ繝ェ繝・・
+        // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] private StrikerNode nextNode;
-        [SerializeField] AudioClip audioClip;          // 繧ャ繝シ繝峨′逋コ蜍輔＠縺溘→縺阪・髻ウ
+        [SerializeField] AudioClip audioClip;          // ガードが発動したときの音
+        [SerializeField] AudioClip audioClip2;         // 既存シールドを射出したときの音
+        [SerializeField] float launchedShieldSpeed = 14f;
+        [SerializeField] float launchedShieldDamage = 3f;
+        [SerializeField] float launchedShieldKnockbackSpeed = 20f;
+        [SerializeField] float launchedShieldLifetime = 3f;
+        [SerializeField] Transform shieldSpawnTransform;
 
-        [SerializeField] Hurtbox shield;
-        [SerializeField, Min(0f)] float shieldScaleSpeed = 6f;
+        [SerializeField] Hurtbox shieldPrefab;
 
         IDisposable disposable;
-        Vector3 defaultShieldScale;
-        bool hasDefaultShieldScale;
-        bool isShieldScaling;
+        Hurtbox shieldInstance;
+        bool hasShieldBeenHit;
 
-        // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
-        public override void OnEnter(IStrikerContext 
-        context) {
-            // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
-            context.PlayAnimation(animationClip,context => {
-                context.TryTransition(nextNode);
-            });
+        // このステートに遷移した直後に呼ばれる
+        public override void OnEnter(IStrikerContext context) {
+            // アニメーションの再生を開始する
+            context.PlayAnimation(animationClip, OnAnimationEnd);
 
-            disposable = shield.OnHit.Subscribe(hit => {
-                context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
-            });
+            hasShieldBeenHit = false;
+            var ownerStrikerHub = context.Rigidbody.GetComponent<StrikerHub>();
 
-            if (!hasDefaultShieldScale) {
-                defaultShieldScale = shield.transform.localScale;
-                hasDefaultShieldScale = true;
-            }
+            var existingGuards = context.Rigidbody.GetComponentsInChildren<Core.LargeWizard.Guard>(true);
+            if (existingGuards.Length > 0) {
+                disposable = Disposable.Create(() => { });
+                for (var i = 0; i < existingGuards.Length; i++) {
+                    var existingGuard = existingGuards[i];
+                    existingGuard.SetOwnerStrikerHub(ownerStrikerHub);
+                    existingGuard.LaunchForward(context.Rigidbody.transform.forward, launchedShieldSpeed, launchedShieldDamage, launchedShieldKnockbackSpeed, launchedShieldLifetime);
+                }
 
-            shield.gameObject.SetActive(true);
-            shield.transform.localScale = Vector3.zero;
-
-            if (shieldScaleSpeed <= 0f) {
-                shield.transform.localScale = defaultShieldScale;
-                isShieldScaling = false;
+                AudioSource.PlayClipAtPoint(audioClip2, context.Rigidbody.transform.position);
                 return;
             }
 
-            isShieldScaling = true;
+            shieldInstance = Instantiate(shieldPrefab, context.Rigidbody.transform);
+            var guard = shieldInstance.GetComponent<Core.LargeWizard.Guard>();
+            guard.SetOwnerStrikerHub(ownerStrikerHub);
+            guard.SpawnAtPositionThenReturn(shieldSpawnTransform.position, 0.3f);
 
-            AudioSource.PlayClipAtPoint(audioClip, shield.transform.position);
+            disposable = shieldInstance.OnHit.Subscribe(hit => {
+                if (hasShieldBeenHit) return;
+
+                hasShieldBeenHit = true;
+                context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
+            });
+
+            AudioSource.PlayClipAtPoint(audioClip, shieldInstance.transform.position);
         }
 
-        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∵ッ弱ヵ繝ャ繝シ繝蜻シ縺ー繧後ｋ
+        public void OnAnimationEnd(IStrikerStateContext context) {
+            context.TryTransition(nextNode);
+        }
+
+        // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
-            if (!isShieldScaling) return;
-
-            shield.transform.localScale = Vector3.MoveTowards(
-                shield.transform.localScale,
-                defaultShieldScale,
-                shieldScaleSpeed * Time.deltaTime
-            );
-
-            if (shield.transform.localScale == defaultShieldScale) {
-                isShieldScaling = false;
-            }
         }
 
-        // 莉悶・繧ケ繝・・繝医↓驕キ遘サ縺吶ｋ逶エ蜑阪↓蜻シ縺ー繧後ｋ
+        // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
             disposable.Dispose();
-            shield.transform.localScale = defaultShieldScale;
-            isShieldScaling = false;
-            shield.gameObject.SetActive(false);
         }
 
-        // 謾サ謦・さ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
+        // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
         }
 
-        // 繝√Ε繝シ繧ク繧ウ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
+        // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
         }
 
-        // 繝繝・す繝・繧ウ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
+        // ダッシュコマンドが押された時に呼ばれる
         public override void OnDashRequested(IStrikerStateContext context) {
         }
 
-        // 繧ャ繝シ繝峨さ繝槭Φ繝峨′謚シ縺輔ｌ縺滓凾縺ォ蜻シ縺ー繧後ｋ
+        // ガードコマンドが押された時に呼ばれる
         public override void OnGuardRequested(IStrikerStateContext context) {
         }
 
-        // 謾サ謦・ｒ蜿励¢縺滓凾縺ォ蜻シ縺ー繧後ｋ
+        // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
             context.Rigidbody.linearVelocity = 0.5f * status.KnockbackVelocity;
         }
 
-        // 繝溘せ縺励◆譎ゅ↓蜻シ縺ー繧後ｋ
+        // ミスした時に呼ばれる
         public override void OnMiss(IStrikerStateContext context) {
         }
 
     }
 }
-
-
