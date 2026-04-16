@@ -20881,8 +20881,9 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  zoomSmoothTime: 0.2
-  centerSmoothTime: 0.15
+  zoomInSmoothTime: 0.25
+  zoomOutSmoothTime: 0.2
+  centerSmoothTime: 0.2
   centerViewportOffset: {x: 0, y: -0.1}
   shakeDamping: 18
   viewBeatPulseZoomDistance: 0
@@ -22155,6 +22156,7 @@ MonoBehaviour:
   - {fileID: 0}
   specialUnavailableSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
   specialUnavailableSoundVolume: 1
+  isTrainingInfiniteRound: 0
   isTestMode: 0
 --- !u!114 &2202688824872153533
 MonoBehaviour:

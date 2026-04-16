@@ -1008,7 +1008,7 @@ GameObject:
   m_Component:
   - component: {fileID: 443645456}
   - component: {fileID: 443645457}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Wall1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2409,7 +2409,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1077987161}
   - component: {fileID: 1077987162}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Wall0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3584,7 +3584,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1497729752}
   - component: {fileID: 1497729751}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5989,7 +5989,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2042296367}
   - component: {fileID: 2042296368}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Wall1 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6138,6 +6138,18 @@ PrefabInstance:
       propertyPath: camTransform0
       value: 
       objectReference: {fileID: 1458915842}
+    - target: {fileID: 1619890639852673609, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619890639852673609, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619890639852673609, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4594181507648077384, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.37
@@ -6149,6 +6161,18 @@ PrefabInstance:
     - target: {fileID: 4594181507648077384, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: m_LocalPosition.z
       value: -18.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 5975064987565033899, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5975064987565033899, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5975064987565033899, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: 'playerTransforms.Array.data[0]'

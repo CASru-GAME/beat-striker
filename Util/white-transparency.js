@@ -43,6 +43,8 @@ function applyWhiteTransparency(imageData, thresholdAdjustment = 0) {
   const effectiveThreshold = Math.max(0, borderAvgLuma + thresholdAdjustment);
 
   // Pass 2: リマッピング適用
+  const isForceWhite = arguments[2] !== undefined ? arguments[2] : true;
+  
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i];
     const g = data[i + 1];
@@ -63,10 +65,12 @@ function applyWhiteTransparency(imageData, thresholdAdjustment = 0) {
       }
     }
 
-    // 白一色 + 計算されたアルファ
-    data[i] = 255;
-    data[i + 1] = 255;
-    data[i + 2] = 255;
+    // 白一色にするか、元の色を維持してアルファだけ適用するか
+    if (isForceWhite) {
+      data[i] = 255;
+      data[i + 1] = 255;
+      data[i + 2] = 255;
+    }
     data[i + 3] = newAlpha;
   }
 }

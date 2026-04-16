@@ -24,7 +24,8 @@ namespace Alice {
         [SerializeField] private AnimationCurve normalizedDistanceToDiagonalRatio = new AnimationCurve(
             new Keyframe(0f, 0.28f),
             new Keyframe(1f, 0.4f));
-        [SerializeField] private float zoomSmoothTime = 0.2f;
+        [SerializeField] private float zoomInSmoothTime = 0.4f;
+        [SerializeField] private float zoomOutSmoothTime = 0.2f;
         [SerializeField] private float centerSmoothTime = 0.15f;
         [SerializeField] private Vector2 centerViewportOffset = Vector2.zero;
         [SerializeField] private float shakeDamping = 18f;
@@ -694,12 +695,13 @@ namespace Alice {
             float diagonalScale = Mathf.Sqrt(stageCamera.aspect * stageCamera.aspect + 1f);
             float tanHalfVertical = Mathf.Max(0.0001f, Mathf.Tan(stageCamera.fieldOfView * 0.5f * Mathf.Deg2Rad));
             float targetDepth = playersDistance / (2f * tanHalfVertical * diagonalDistanceRatio * diagonalScale);
+            float zoomSmoothTime = targetDepth < currentDepth ? zoomInSmoothTime : zoomOutSmoothTime;
 
             float smoothedDepth = Mathf.SmoothDamp(
                 currentDepth,
                 targetDepth,
                 ref cameraDepthVelocity,
-                zoomSmoothTime);
+                Mathf.Max(0.0001f, zoomSmoothTime));
             float depthDelta = currentDepth - smoothedDepth;
 
             transform.position += transform.forward * depthDelta;

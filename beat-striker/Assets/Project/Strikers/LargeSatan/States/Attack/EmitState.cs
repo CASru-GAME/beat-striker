@@ -10,7 +10,7 @@ namespace Core.LargeSatan {
     public class EmitState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
 
-        [SerializeField] private StrikerAnimationClip animationClip, warpedAnimationClip;
+        [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] private PoleArm poleArm;
         [SerializeField] float emitHoldDuration = 0.12f;
@@ -20,7 +20,7 @@ namespace Core.LargeSatan {
         [SerializeField] float duration = 1f;
         [SerializeField, Min(0f)] float recoilStartDelay = 0.1f;
         [SerializeField, Min(0f)] float recoilEndSpeedRatio = 0.01f;
-        [SerializeField] float damage = 10f;
+        [SerializeField] float damage = 10f, knockbackSpeed = 5f, impact = 5f;
         [SerializeField] float fallbackClearanceRadius = 0.5f;
         [SerializeField, Min(0f)] float minWarpDistanceFromOpponent = 0.5f;
         [SerializeField] Vector3 postAimHoldAdjustmentEulerAngles;
@@ -42,7 +42,8 @@ namespace Core.LargeSatan {
             emitStopPosition = context.Rigidbody.position;
 
             poleArm.OnHitHurtbox.Subscribe(hurtbox => {
-                hurtbox.GiveHit(new HitStatus(damage));
+                hurtbox.GiveHit(new HitStatus(damage, knockbackSpeed * poleArm.transform.forward));
+                context.GenerateImpact(new StrikerImpact(impact * Vector3.up));
             }).AddTo(disposables);
 
             poleArm.OnHitWall.Subscribe(hit => {
@@ -98,7 +99,6 @@ namespace Core.LargeSatan {
         }
 
         public override void OnExit(IStrikerContext context) {
-            context.PlayAnimation(warpedAnimationClip);
             context.Rigidbody.linearVelocity = Vector3.zero;
             var warpPosition = ComputeSafeWarpPosition(context);
             context.Rigidbody.position = warpPosition;
