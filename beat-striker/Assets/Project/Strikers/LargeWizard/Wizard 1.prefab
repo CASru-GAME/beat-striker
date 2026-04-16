@@ -391,9 +391,6 @@ GameObject:
   - component: {fileID: 1829485864700888609}
   - component: {fileID: 8632360735648339568}
   - component: {fileID: 8402618834828561335}
-  - component: {fileID: 8413105772860942293}
-  - component: {fileID: 1676935637604224165}
-  - component: {fileID: 2337812462051330904}
   m_Layer: 0
   m_Name: Wizard 1
   m_TagString: Untagged
@@ -522,19 +519,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54baaaa8ee1084a0fa1270acba05a20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.StrikerHub
-  striker: 1
   maxHitPoint: 100
   maxSpecialPoint: 100
-  deathHeightY: -10
   defaultState: {fileID: 1734285505626645502}
   deadState: {fileID: 277970530805844271}
   VictoryState: {fileID: 8835043162424825438}
   IntroState: {fileID: 1109024110008071340}
-<<<<<<< HEAD
-  aiBrain: {fileID: 2337812462051330904}
-=======
   aiBrain: {fileID: 0}
->>>>>>> rei
   centerPositionTransform: {fileID: 0}
 --- !u!95 &8632360735648339568
 Animator:
@@ -572,88 +563,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hurtbox
   isGuarding: 1
   strikerHub: {fileID: 1829485864700888609}
---- !u!114 &8413105772860942293
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2145360790748758675}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Policies.BehaviorParameters
-  m_BrainParameters:
-    VectorObservationSize: 135
-    NumStackedVectorObservations: 1
-    m_ActionSpec:
-      m_NumContinuousActions: 2
-      BranchSizes: 04000000
-    VectorActionSize: 
-    VectorActionDescriptions: []
-    VectorActionSpaceType: 0
-    hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 0d9049f6c8847aa41965cc1d61d0a299, type: 3}
-  m_InferenceDevice: 0
-  m_BehaviorType: 2
-  m_BehaviorName: Satan
-  TeamId: 0
-  m_UseChildSensors: 1
-  m_UseChildActuators: 1
-  m_DeterministicInference: 0
-  m_ObservableAttributeHandling: 0
---- !u!114 &1676935637604224165
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2145360790748758675}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 777aaf249b65748dba7f6a759c86970c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.MLAiDecisionAgent
-  agentParameters:
-    maxStep: 0
-  hasUpgradedFromAgentParameters: 1
-  MaxStep: 0
---- !u!114 &2337812462051330904
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2145360790748758675}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c7498323f35e14c0a9416eb4d7b33956, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.MLAiBrain
-  behaviorName: Satan
-  autoConfigureOnAwake: 1
-  autoConfigureInEditor: 1
-  inferenceOnnx: {fileID: 5022602860645237092, guid: 0d9049f6c8847aa41965cc1d61d0a299, type: 3}
-  attackDistance: 1.1
-  stepPenalty: -0.001
-  guardSuccessReward: 0.02
-  guardFailedPenalty: -0.05
-  guardUnnecessaryPenalty: -0.015
-  attackWhiffPenalty: -0.02
-  dealtDamageRewardScale: 0.03
-  receivedDamagePenaltyScale: 0.04
-  winReward: 1
-  losePenalty: -1
-  noDamageStreakThresholdSteps: 6
-  noDamageStreakPenalty: -0.01
-  noDamageStreakExtraPenaltyPerStep: -0.002
-  movementWindowSteps: 6
-  minMovementDistanceInWindow: 1.2
-  movementRewardCapDistance: 3
-  movementShortPenalty: -0.01
-  movementLongReward: 0.008
-  actionOutcomeHorizonSteps: 2
 --- !u!1 &2997061844858452564
 GameObject:
   m_ObjectHideFlags: 0
@@ -977,10 +886,7 @@ MonoBehaviour:
   magicCircleGrowDurationSeconds: 0.4
   magicCircleDestroyDelaySeconds: 3
   tueAndWizardSpawnDelaySeconds: 1
-<<<<<<< HEAD
-=======
   audioClip: {fileID: 8300000, guid: e21d48dec509f804cbb421199331a893, type: 3}
->>>>>>> rei
 --- !u!1 &4336457620704664207
 GameObject:
   m_ObjectHideFlags: 0
@@ -1734,71 +1640,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.DashNode
   jumpUpwardState: {fileID: 1841557291681574819}
   dashState: {fileID: 5360974398772848802}
-<<<<<<< HEAD
---- !u!1001 &3810901218754066174
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 3798117519385128585}
-    m_Modifications:
-    - target: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9147896874435016146, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-      propertyPath: m_Name
-      value: shield
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
---- !u!4 &4709359374720227734 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8482542069018701672, guid: a0d9fa33410a69f44abf7fdbcedad6b5, type: 3}
-  m_PrefabInstance: {fileID: 3810901218754066174}
-  m_PrefabAsset: {fileID: 0}
-=======
->>>>>>> rei
 --- !u!1001 &4861463438476487563
 PrefabInstance:
   m_ObjectHideFlags: 0
