@@ -124,6 +124,7 @@
     <Compile Include="Assets/Project/Strikers/LargeWizard/States/AttackState.cs" />
     <Compile Include="Assets/Project/Screen/StageSelect/StageSelectPresenter.cs" />
     <Compile Include="Assets/LeanTween/Testing/TestingRotate.cs" />
+    <Compile Include="Assets/Project/Strikers/LargeSatan/States/Attack/AirDownAttackState.cs" />
     <Compile Include="Assets/Project/Battle/Manager/StrikerFactory.cs" />
     <Compile Include="Assets/Project/Strikers/LargeSatan/States/Locomotion/IdleState.cs" />
     <Compile Include="Assets/Project/App/Setting/AudioSetting.cs" />
