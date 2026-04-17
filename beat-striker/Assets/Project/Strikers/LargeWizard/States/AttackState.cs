@@ -8,7 +8,8 @@ using System.Collections.Generic;
 using Core.Striker.Components;
 
 namespace Core.LargeWizard {
-
+
+
 
     public class AttackState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
@@ -33,7 +34,7 @@ namespace Core.LargeWizard {
             // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
             context.PlayAnimation(animationClip, OnAnimationEnd);
             disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
-                if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                if (collider.TryGetComponent<Hurtbox>(out var hurtbox) && hurtbox.GetComponentInParent<StrikerHub>() != context.Rigidbody.GetComponent<StrikerHub>()) {
 
                     var hitpoint = collider.ClosestPoint(hitBox.transform.position);
                     hitsInFrame.Add(new(hitpoint, hurtbox));

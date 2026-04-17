@@ -429,6 +429,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.AnimationPlayer
   animator: {fileID: 2773073631056466501}
+  rotationPivot: {fileID: 0}
 --- !u!114 &1223836351378418454
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -519,8 +520,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54baaaa8ee1084a0fa1270acba05a20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.StrikerHub
+  striker: 2
   maxHitPoint: 100
   maxSpecialPoint: 100
+  deathHeightY: -10
   defaultState: {fileID: 1734285505626645502}
   deadState: {fileID: 277970530805844271}
   VictoryState: {fileID: 8835043162424825438}
@@ -1374,7 +1377,7 @@ MonoBehaviour:
   audioClip2: {fileID: 8300000, guid: 4e706ebf9352de1459f4b13fd98bfdd1, type: 3}
   groundMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   fireTime: 0
   groundRayStartHeight: 20
   groundRayDistance: 50
@@ -1786,6 +1789,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tracker
   target: {fileID: 7405808034486750461}
+  enableRigidMove: 1
+  targetTransitionDuration: 0.1
 --- !u!114 &8792560517527999783
 MonoBehaviour:
   m_ObjectHideFlags: 0

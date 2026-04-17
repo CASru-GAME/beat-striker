@@ -5723,7 +5723,7 @@ MonoBehaviour:
   speed: 20
   duration: 0.3
   endSpeedRatio: 0.1
-  damage: 3
+  damage: 10
   nockbackSpeed: 10
   attackPlayer: {fileID: 6365341134110932834}
   impact: 5
@@ -5827,7 +5827,7 @@ MonoBehaviour:
   duration: 0.8
   recoilStartDelay: 0
   recoilEndSpeedRatio: 0.01
-  damage: 3
+  damage: 10
   knockbackSpeed: 5
   impact: 5
   fallbackClearanceRadius: 0.5
@@ -6137,10 +6137,6 @@ MonoBehaviour:
   parents:
   - {fileID: 4606742735444205910}
   - {fileID: 1412494263704707963}
-  animationClip:
-    clip: {fileID: 890845433451932562, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
-    fadeTime: 0.1
-    speed: 1.5
   nextNode: {fileID: 5551572408817209888}
   cancelEffect: {fileID: 1333845493874428297}
   duration: 0.5
