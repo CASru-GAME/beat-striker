@@ -774,6 +774,7 @@
       }
     </style>
 
+    <script src="white-transparency.js"></script>
     <script>
       const dropOverlay = document.getElementById('dropOverlay');
       const fileInput = document.getElementById('fileInput');
@@ -1140,78 +1141,8 @@
 
         // 2. Process pixels on buffer
         const imageData = bufferCtx.getImageData(0, 0, bufferCanvas.width, bufferCanvas.height);
-        const data = imageData.data;
-
-        // Pass 1: Find Global Max Luma and Border Average Luma
-        let borderLumaSum = 0;
-        let borderPixelCount = 0;
-        let globalMaxLuma = 0;
-
-        const width = bufferCanvas.width;
-        const height = bufferCanvas.height;
-
-        for (let y = 0; y < height; y++) {
-          for (let x = 0; x < width; x++) {
-            const i = (y * width + x) * 4;
-
-            const a = data[i + 3];
-
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            const luma = (0.299 * r + 0.587 * g + 0.114 * b) * (a / 255);
-
-            // Track Global Max (to keep brightest parts bright)
-            if (luma > globalMaxLuma) globalMaxLuma = luma;
-
-            // Track Border Luma Sum
-            if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
-              borderLumaSum += luma;
-              borderPixelCount++;
-            }
-          }
-        }
-
-        const borderAvgLuma = borderPixelCount > 0 ? borderLumaSum / borderPixelCount : 0;
-
-        // Apply user threshold adjustment
         const thresholdAdjustment = parseInt(thresholdInput.value) || 0;
-        // Ensure effective threshold doesn't go below 0
-        const effectiveThreshold = Math.max(0, borderAvgLuma + thresholdAdjustment);
-
-        // console.log("Border Avg Luma:", borderAvgLuma, "Adj:", thresholdAdjustment, "Effective:", effectiveThreshold);
-
-        // Pass 2: Apply Remapping
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          const a = data[i + 3];
-
-          // Luma calculation
-          const luma = (0.299 * r + 0.587 * g + 0.114 * b) * (a / 255);
-
-          let newAlpha = 0;
-
-          if (luma <= effectiveThreshold) {
-            // User request: "Average opacity of border is 0" (adjusted)
-            newAlpha = 0;
-          } else {
-            // Smooth ramp from EffectiveThreshold to GlobalMax
-            if (globalMaxLuma > effectiveThreshold) {
-              newAlpha = (globalMaxLuma * (luma - effectiveThreshold)) / (globalMaxLuma - effectiveThreshold);
-            } else {
-              newAlpha = 0;
-            }
-          }
-
-          // User request: "Should be only white"
-          data[i] = 255; // R
-          data[i + 1] = 255; // G
-          data[i + 2] = 255; // B
-          data[i + 3] = newAlpha;
-        }
-
+        applyWhiteTransparency(imageData, thresholdAdjustment);
         bufferCtx.putImageData(imageData, 0, 0);
 
         // 3. Copy buffer to visible canvas

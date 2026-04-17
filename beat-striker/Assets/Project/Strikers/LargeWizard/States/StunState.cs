@@ -3,8 +3,9 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeWizard {
-    
+
     public class StunState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Unknown;
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -13,7 +14,7 @@ namespace Core.LargeWizard {
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip,OnAnimationEnd);
+            context.PlayAnimation(animationClip, OnAnimationEnd);
         }
 
         public void OnAnimationEnd(IStrikerStateContext context) {

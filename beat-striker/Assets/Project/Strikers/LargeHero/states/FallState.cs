@@ -5,26 +5,23 @@ using Core.Striker;
 namespace Core.LargeHero {
     
     public class FallState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Dash;
 
-        // このステートにいる間、再生されるアニメーションクリップ
+
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] GroundChecker groundChecker;
         [SerializeField] StrikerNode landNode;
         [SerializeField] StrikerNode attackNode;
-        // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
-            // アニメーションの再生を開始する
             context.PlayAnimation(animationClip);
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
             if(groundChecker.IsGrounded) {
                 context.TryTransition(landNode);
             }
         }
 
-        // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
         }
 
@@ -33,8 +30,8 @@ namespace Core.LargeHero {
               context.TryTransition(attackNode);
         }
 
-        // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
+            context.TryTransition(attackNode);
         }
 
         // ダッシュコマンドが押された時に呼ばれる
@@ -49,7 +46,6 @@ namespace Core.LargeHero {
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
         }
 
-        // ミスした時に呼ばれる
         public override void OnMiss(IStrikerStateContext context) {
         }
 

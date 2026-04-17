@@ -1,0 +1,590 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4430401366509071009
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5619376666138620005}
+  - component: {fileID: 9133904809460036572}
+  - component: {fileID: 8179424678283996581}
+  - component: {fileID: 9201860890254514560}
+  - component: {fileID: 906267494629859191}
+  - component: {fileID: 7111598241528783917}
+  - component: {fileID: 7689006274051584689}
+  - component: {fileID: 8416357320802876425}
+  - component: {fileID: 3568961321467451832}
+  - component: {fileID: 7738983256970939939}
+  - component: {fileID: 8684236627904277826}
+  - component: {fileID: 3511319359145443329}
+  - component: {fileID: 8014080456772314020}
+  - component: {fileID: 6291877219211561707}
+  - component: {fileID: 7631814504287584424}
+  m_Layer: 0
+  m_Name: App
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5619376666138620005
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 927.7245, y: 430.22546, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4174785440973187577}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9133904809460036572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f09d2fac41e94b4c9b1e135ef36f0b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleSelectSetting
+  selectedStage: 1
+  selectedMusicId: cutie-street
+--- !u!114 &8179424678283996581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cf8eff8ee6f4407790fbdabefe972e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.PlayerSelectSetting
+  defaultSelections:
+  - PlayerId: 0
+    Striker: 1
+  - PlayerId: 1
+    Striker: 0
+--- !u!114 &9201860890254514560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd039f2418dfd4118b5ee9b09d7337ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AppTransitionFactory
+  defaultTransitionPresenterPrefab: {fileID: 5542158287853537125, guid: 50b2ebc5686784b6f8d03d0c315a4742, type: 3}
+  transitionParent: {fileID: 5619376666138620005}
+  transitionAnimationEntries:
+  - FromScene: 1
+    ToScene: 3
+    Prefab: {fileID: 9080934566226436904, guid: 48e5a30ff044e4f9b9832d61fdb00825, type: 3}
+  - FromScene: 1
+    ToScene: 4
+    Prefab: {fileID: 9080934566226436904, guid: 48e5a30ff044e4f9b9832d61fdb00825, type: 3}
+--- !u!114 &906267494629859191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02482d42563ff4c97abe78993dc1173c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AppStrikerRegistry
+  strikerEntries:
+  - DisplayName: "\u52C7\u8005"
+    BattleStriker: 0
+    Prefab: {fileID: 8540004002704815348, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
+    PreviewModel: {fileID: -1728013695380148634, guid: 8cc39aaf813b0554da29865827638db3, type: 3}
+    Portrait: {fileID: 21300000, guid: 0901c2af62c7c4a069f6c64c82d9839e, type: 3}
+  - DisplayName: "\u9B54\u6CD5\u4F7F\u3044"
+    BattleStriker: 1
+    Prefab: {fileID: 1829485864700888609, guid: ecee9c48169c8dc428a6839126804337, type: 3}
+    PreviewModel: {fileID: -1728013695380148634, guid: 37d428df5c910584396dd6cdd0df9fbd, type: 3}
+    Portrait: {fileID: 21300000, guid: fb33f68e3de0cd946be0f5706f1a7fa7, type: 3}
+  - DisplayName: "\u65A7\u6226\u58EB"
+    BattleStriker: 3
+    Prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
+    PreviewModel: {fileID: -1728013695380148634, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
+    Portrait: {fileID: 21300000, guid: 0fb634e71de14479ba7d52195a7c47e6, type: 3}
+--- !u!114 &7111598241528783917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15d8000c32128486abd57dc344b36f51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.StageRegistry
+  stageEntries:
+  - DisplayName: "\u30E9\u30A4\u30D6"
+    Stage: 0
+  - DisplayName: "\u30B9\u30C8\u30EA\u30FC\u30C8"
+    Stage: 1
+--- !u!114 &7689006274051584689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ba94168fa5004fd5a7bf95fef6b7548, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.MusicRegistry
+  musicEntries:
+  - Id: Fighter Street
+    DisplayName: Fighter Street
+    Description: 'Composer: Suno 5
+
+      BPM: 150'
+    AudioClip: {fileID: 8300000, guid: 62df61faddbdc4059b98c3473fcf6704, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 32210dcf28d47fd4aacb109550ccb125, type: 3}
+    Bpm: 150
+    Offset: 0
+  - Id: Beat Striker on Stage
+    DisplayName: Beat Striker on Stage
+    Description: 'Composer: Suno 4.5+
+
+      BPM: 128'
+    AudioClip: {fileID: 8300000, guid: 7ae048916dd31451c97320d14bc258bb, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 19cb94a5ff1b7f243b41c9d42220e510, type: 3}
+    Bpm: 128
+    Offset: 0
+  - Id: cutie-street
+    DisplayName: Beat Striker on Cutie Street
+    Description: 'Composer: Suno 4.5+
+
+      BPM: 110'
+    AudioClip: {fileID: 8300000, guid: c4266cde834724c9585aa2641c14dcf4, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 3f6a662ccaa5346ae86f5ac7bb709c39, type: 3}
+    Bpm: 110
+    Offset: 0
+  - Id: on-street
+    DisplayName: Beat Striker on Street
+    Description: 'Composer: Suno 4.5+
+
+      BPM: 110'
+    AudioClip: {fileID: 8300000, guid: 813c0b1b710a04cea866e61e51daa989, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 3dae220b8b1f4429ea890464629273ed, type: 3}
+    Bpm: 110
+    Offset: 0
+  - Id: fire
+    DisplayName: Beat Striker on Fire
+    Description: 'Composer: Suno 4.5+
+
+      BPM: 109'
+    AudioClip: {fileID: 8300000, guid: 908af2efd514d47f29e3778b8b3c4212, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 5398030452e0a4c618af21947097729e, type: 3}
+    Bpm: 109
+    Offset: 0
+  - Id: sento
+    DisplayName: "\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA"
+    Description: 'Composer: Azuno
+
+      BPM: 110'
+    AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 5a14db5d051ccf7448ffdc129b4a7476, type: 3}
+    Bpm: 110
+    Offset: 0
+--- !u!114 &8416357320802876425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e014cbfb2c5b49fca91023cc544c61f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.ScreenRegistry
+  screenEntries:
+  - DisplayName: Title
+    Scene: 0
+    CreateCursor: 1
+    Bgm: {fileID: 8300000, guid: 80263a7e069d44c539f6d228aece09c6, type: 3}
+    SceneName: TitleScene
+  - DisplayName: Stage Select
+    Scene: 2
+    CreateCursor: 1
+    Bgm: {fileID: 8300000, guid: 80263a7e069d44c539f6d228aece09c6, type: 3}
+    SceneName: StageselectScene1
+  - DisplayName: Character Select
+    Scene: 1
+    CreateCursor: 1
+    Bgm: {fileID: 8300000, guid: 80263a7e069d44c539f6d228aece09c6, type: 3}
+    SceneName: SelectScene
+  - DisplayName: Live
+    Scene: 3
+    CreateCursor: 0
+    Bgm: {fileID: 0}
+    SceneName: StageScene
+  - DisplayName: Street
+    Scene: 4
+    CreateCursor: 0
+    Bgm: {fileID: 0}
+    SceneName: StreetScene
+  - DisplayName: Result Menu
+    Scene: 5
+    CreateCursor: 1
+    Bgm: {fileID: 8300000, guid: 80263a7e069d44c539f6d228aece09c6, type: 3}
+    SceneName: BackScene
+--- !u!114 &3568961321467451832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9ca22baed85d41f58699f144310a8b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AudioSetting
+  commandTimeOffset: 0
+  viewTimeOffset: 0.15
+  beatTimeOffset: 0.15
+  goodWindow: 0.4
+  excellentWindow: 0.25
+  goodScoreMultiplier: 1
+  excellentScoreMultiplier: 1.5
+  masterVolume: 1
+  bgmVolume: 1
+  seVolume: 1
+--- !u!114 &7738983256970939939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d67bac30ad9f4a589f1640e1e1550a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleRuleSetting
+  roundsToWin: 2
+  combo1SpecialPointGain: 0.01
+  specialPointGainConvergenceRate: 0.1
+  specialPointGainConvergenceValue: 2
+--- !u!114 &8684236627904277826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3703d8d4802464b3fb8b2d046966b4e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.CursorFactory
+  cursorPrefab: {fileID: 4829542731859473217, guid: 86b831d7c6d014542a00a06c3c3b727f, type: 3}
+  cursorParent: {fileID: 4174785440973187577}
+--- !u!114 &3511319359145443329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62ebbe8dc0b3a48bda1dfcd4f8f8ed25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AppBGMPlayer
+  audioSource: {fileID: 7631814504287584424}
+--- !u!114 &8014080456772314020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6106d62e900eb487899aec54912b28d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AppScope
+  parentReference:
+    TypeName: 
+  autoRun: 1
+  autoInjectGameObjects: []
+  playerInputManager: {fileID: 6291877219211561707}
+  stageRegistry: {fileID: 7111598241528783917}
+  screenRegistry: {fileID: 8416357320802876425}
+  musicRegistry: {fileID: 7689006274051584689}
+  strikerRegistry: {fileID: 906267494629859191}
+  battleSelectSetting: {fileID: 9133904809460036572}
+  playerSelectSetting: {fileID: 8179424678283996581}
+  audioSetting: {fileID: 3568961321467451832}
+  battleRuleSetting: {fileID: 7738983256970939939}
+  appTransitionFactory: {fileID: 9201860890254514560}
+  cursorFactory: {fileID: 8684236627904277826}
+  appBgmPlayer: {fileID: 3511319359145443329}
+--- !u!114 &6291877219211561707
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 621567455fd1c4ceb811cc8a00b6a1a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInputManager
+  m_NotificationBehavior: 3
+  m_MaxPlayerCount: -1
+  m_AllowJoining: 1
+  m_JoinBehavior: 0
+  m_PlayerJoinedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_PlayerLeftEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_JoinAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 6dcad65f-1ed9-4393-8a52-065bb589c102
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  m_PlayerPrefab: {fileID: 3652572119978379199, guid: 2ab6a3f09112c415a9283322c99c31d9, type: 3}
+  m_SplitScreen: 0
+  m_MaintainAspectRatioInSplitScreen: 0
+  m_FixedNumberOfSplitScreens: -1
+  m_SplitScreenRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+--- !u!82 &7631814504287584424
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!1 &8017169233442486271
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4174785440973187577}
+  - component: {fileID: 3184663862659006686}
+  - component: {fileID: 3598658679041873126}
+  - component: {fileID: 3833146544846041777}
+  m_Layer: 0
+  m_Name: Canvas
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &4174785440973187577
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8017169233442486271}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5619376666138620005}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0}
+--- !u!223 &3184663862659006686
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8017169233442486271}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 0
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 100
+  m_TargetDisplay: 0
+--- !u!114 &3598658679041873126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8017169233442486271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
+  m_UiScaleMode: 1
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 1000, y: 600}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
+--- !u!114 &3833146544846041777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8017169233442486271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295

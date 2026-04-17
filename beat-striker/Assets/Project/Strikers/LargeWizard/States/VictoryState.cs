@@ -3,8 +3,9 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeWizard {
-    
+
     public class VictoryState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Unknown;
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;

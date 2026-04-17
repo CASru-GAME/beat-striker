@@ -3,8 +3,9 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeWizard {
-    
+
     public class SpecialState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Special;
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;

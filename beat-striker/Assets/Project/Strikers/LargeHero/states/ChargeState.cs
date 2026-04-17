@@ -3,10 +3,12 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeHero {
-    
-    public class ChargeState : StrikerState {
 
-        // このステートにいる間、再生されるアニメーションクリップ
+
+
+    public class ChargeState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Charge;
+
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] EnergyStorage energyStorage;
@@ -23,53 +25,28 @@ namespace Core.LargeHero {
             particleprefab.Clear();
         }
 
-        // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
             particleprefab. gameObject.SetActive(true);
             particleprefab.Clear();
             particleprefab.Play();
             AudioSource.PlayClipAtPoint(audioClip, context.Rigidbody.position);
-            // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, context => {
                 energyStorage.StoreEnergy(1);
                 context.TryTransition(nextNode);
             });
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
         }
 
-        // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
             particleprefab.gameObject.SetActive(false);
             particleprefab.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             particleprefab.Clear();
         }
 
-        // 攻撃コマンドが押された時に呼ばれる
-        public override void OnAttackRequested(IStrikerStateContext context) {
-        }
-
-        // チャージコマンドが押された時に呼ばれる
-        public override void OnChargeRequested(IStrikerStateContext context) {
-        }
-
-        // ダッシュコマンドが押された時に呼ばれる
-        public override void OnDashRequested(IStrikerStateContext context) {
-        }
-
-        // ガードコマンドが押された時に呼ばれる
-        public override void OnGuardRequested(IStrikerStateContext context) {
-        }
-
-        // 攻撃を受けた時に呼ばれる
-        public override void OnHit(IStrikerStateContext context, HitStatus status) {
-        }
-
-        // ミスした時に呼ばれる
-        public override void OnMiss(IStrikerStateContext context) {
-        }
 
     }
 }
+
+

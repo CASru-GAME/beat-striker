@@ -5,8 +5,9 @@ using R3;
 using System;
 
 namespace Core.LargeWizard {
-    
+
     public class GuardState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Guard;
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -27,14 +28,13 @@ namespace Core.LargeWizard {
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
-
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
 
             hasShieldBeenHit = false;
             var ownerStrikerHub = context.Rigidbody.GetComponent<StrikerHub>();
 
-            var existingGuards = context.Rigidbody.GetComponentsInChildren<Guard>(true);
+            var existingGuards = context.Rigidbody.GetComponentsInChildren<Core.LargeWizard.Guard>(true);
             if (existingGuards.Length > 0) {
                 disposable = Disposable.Create(() => { });
                 for (var i = 0; i < existingGuards.Length; i++) {
@@ -48,7 +48,7 @@ namespace Core.LargeWizard {
             }
 
             shieldInstance = Instantiate(shieldPrefab, context.Rigidbody.transform);
-            var guard = shieldInstance.GetComponent<Guard>();
+            var guard = shieldInstance.GetComponent<Core.LargeWizard.Guard>();
             guard.SetOwnerStrikerHub(ownerStrikerHub);
             guard.SpawnAtPositionThenReturn(shieldSpawnTransform.position, 0.3f);
 
@@ -57,7 +57,6 @@ namespace Core.LargeWizard {
 
                 hasShieldBeenHit = true;
                 context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
-   
             });
 
             AudioSource.PlayClipAtPoint(audioClip, shieldInstance.transform.position);

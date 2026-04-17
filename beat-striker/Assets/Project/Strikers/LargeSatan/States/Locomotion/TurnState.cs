@@ -3,8 +3,10 @@ using Alice;
 
 namespace Core.LargeSatan {
 
+
+
     public class TurnState : StrikerState {
-        [SerializeField] private StrikerAnimationClip animationClip;
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Idle;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] float duration = 0.2f;
 
@@ -16,12 +18,11 @@ namespace Core.LargeSatan {
 
         public override void OnEnter(IStrikerContext context) {
             originalConstraints = context.Rigidbody.constraints;
-            context.Rigidbody.constraints = originalConstraints & ~RigidbodyConstraints.FreezeRotation;
+            context.Rigidbody.constraints = originalConstraints & ~RigidbodyConstraints.FreezeRotationY;
 
             var startRotation = context.Rigidbody.rotation;
             targetRotation = startRotation * Quaternion.Euler(0f, 180f, 0f);
             turnCompleted = false;
-            context.PlayAnimation(animationClip);
         }
 
         public override void OnUpdate(IStrikerStateContext context) {
@@ -43,7 +44,10 @@ namespace Core.LargeSatan {
         }
 
         public override void OnExit(IStrikerContext context) {
+            context.Rigidbody.rotation = targetRotation;
             context.Rigidbody.constraints = originalConstraints;
         }
     }
 }
+
+

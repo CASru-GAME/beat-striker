@@ -5,28 +5,26 @@ using Core.Striker;
 namespace Core.LargeHero {
     
     public class JumpUPForwardState : StrikerState {
-        // このステートにいる間、再生されるアニメーションクリップ
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Dash;
+
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode fallNode;
         [SerializeField] StrikerNode attackNode;
         [SerializeField] float jumpSpeed;
         
-        // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
         
-            // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
-            context.Rigidbody.linearVelocity = jumpSpeed * context.InputDirection;
+            var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
+            context.Rigidbody.linearVelocity = jumpSpeed * direction;
             
         }
     
 
 
-        // このステートにいる間、毎フレーム呼ばれる
         public override void OnUpdate(IStrikerStateContext context) {
         }
 
-        // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
             
         }
@@ -39,8 +37,8 @@ namespace Core.LargeHero {
             context.TryTransition(attackNode);
         }
 
-        // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
+            context.TryTransition(attackNode);
         }
 
         // ダッシュコマンドが押された時に呼ばれる
@@ -55,7 +53,6 @@ namespace Core.LargeHero {
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
         }
 
-        // ミスした時に呼ばれる
         public override void OnMiss(IStrikerStateContext context) {
         }
 

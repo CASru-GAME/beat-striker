@@ -1,0 +1,113 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using R3;
+using UnityEngine;
+
+namespace Alice {
+    public class StageselectPresenter : IDisposable {
+        const string LOG_PREFIX = "[StageSelectPresenter]";
+
+        readonly StageselectScene view;
+        readonly ISceneTransitionService transitionService;
+        readonly IBattleSelectSetting selectSetting;
+        readonly IMusicRegistry musicRegistry;
+        readonly IAppBGMPlayer appBgmPlayer;
+        readonly CompositeDisposable subscriptions = new();
+        bool initialized;
+        bool isPopupVisible;
+
+        public StageselectPresenter(
+            StageselectScene view,
+            ISceneTransitionService transitionService,
+            IBattleSelectSetting selectSetting,
+            IMusicRegistry musicRegistry,
+            IAppBGMPlayer appBgmPlayer) {
+            this.view = view;
+            this.transitionService = transitionService;
+            this.selectSetting = selectSetting;
+            this.musicRegistry = musicRegistry;
+            this.appBgmPlayer = appBgmPlayer;
+
+            Initialize();
+        }
+
+        void Initialize() {
+            if (initialized) {
+                Debug.Log($"{LOG_PREFIX} Initialize skipped because already initialized");
+                return;
+            }
+
+            Debug.Log($"{LOG_PREFIX} Initialize start");
+
+            var musics = ResolveMusicList(musicRegistry);
+            Debug.Log($"{LOG_PREFIX} Initialize music list resolved. count={musics.Count}");
+            foreach (var stageSelectButton in view.StageSelectButtons) {
+                stageSelectButton.Initialize(musics);
+                stageSelectButton.OnStageSelected.Subscribe(OnStageSelected).AddTo(subscriptions);
+                stageSelectButton.OnMusicSelected.Subscribe(OnMusicSelected).AddTo(subscriptions);
+                stageSelectButton.OnPreviewVisibilityChanged.Subscribe(OnPreviewVisibilityChanged).AddTo(subscriptions);
+            }
+
+            view.BackButton.OnBackPressed.Subscribe(_ => {
+                Debug.Log($"{LOG_PREFIX} BackButton pressed. requesting start transition to {AppScene.Title}");
+                appBgmPlayer.Resume();
+                var result = transitionService.RequestStartTransition(AppScene.Title);
+                Debug.Log($"{LOG_PREFIX} BackButton transition request result. isSuccess={result.IsSuccess}");
+            }).AddTo(subscriptions);
+
+            _ = EnterStageSelectAsync();
+            initialized = true;
+            Debug.Log($"{LOG_PREFIX} Initialize completed");
+        }
+
+        async Task EnterStageSelectAsync() {
+            Debug.Log($"{LOG_PREFIX} EnterStageSelectAsync requesting end transition. scene={AppScene.StageSelect}");
+            var result = await transitionService.RequestEndTransitionAsync(AppScene.StageSelect);
+            Debug.Log($"{LOG_PREFIX} EnterStageSelectAsync completed. isSuccess={result.IsSuccess}");
+        }
+
+        void OnStageSelected(Stage stage) {
+            Debug.Log($"{LOG_PREFIX} OnStageSelected called. stage={stage}");
+            selectSetting.SelectStage(stage);
+        }
+
+        void OnMusicSelected(MusicInfo musicInfo) {
+            Debug.Log($"{LOG_PREFIX} OnMusicSelected called. musicId={musicInfo.Id}");
+            selectSetting.SelectMusic(musicInfo.Id);
+            appBgmPlayer.Resume();
+            var result = transitionService.RequestStartTransition(AppScene.CharacterSelect);
+            Debug.Log($"{LOG_PREFIX} OnMusicSelected transition request result. isSuccess={result.IsSuccess}, nextScene={AppScene.CharacterSelect}");
+        }
+
+        void OnPreviewVisibilityChanged(bool isVisible) {
+            if (isPopupVisible == isVisible) {
+                return;
+            }
+
+            isPopupVisible = isVisible;
+            SyncPopupVisibility(isVisible);
+
+            if (isVisible) {
+                appBgmPlayer.Stop();
+                return;
+            }
+
+            appBgmPlayer.Resume();
+        }
+
+        void SyncPopupVisibility(bool isVisible) {
+            foreach (var stageSelectButton in view.StageSelectButtons) {
+                stageSelectButton.SetPopupShown(isVisible);
+            }
+        }
+
+        static IReadOnlyList<MusicInfo> ResolveMusicList(IMusicRegistry musicRegistry) {
+            return (IReadOnlyList<MusicInfo>)musicRegistry.GetType().GetMethod("GetAll").Invoke(musicRegistry, null);
+        }
+
+        public void Dispose() {
+            subscriptions.Dispose();
+        }
+    }
+}

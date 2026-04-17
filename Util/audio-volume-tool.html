@@ -3,634 +3,409 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>音声ボリューム調整ツール</title>
-    <style>
-      :root {
-        --bg-color: #121212;
-        --surface-color: #1e1e1e;
-        --primary-color: #bb86fc;
-        --secondary-color: #03dac6;
-        --danger-color: #cf6679;
-        --text-color: #e0e0e0;
-        --border-radius: 12px;
-        --transition: all 0.3s ease;
-      }
-
-      body {
-        font-family:
-          'Inter',
-          -apple-system,
-          BlinkMacSystemFont,
-          'Segoe UI',
-          Roboto,
-          Helvetica,
-          Arial,
-          sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        margin: 0;
-        width: 100vw;
-        height: 100dvh;
-        position: fixed;
-        inset: 0;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-      }
-
-      h1 {
-        font-weight: 300;
-        margin-bottom: 0.5rem;
-        margin-top: 0.5rem;
-        letter-spacing: 0.05em;
-        font-size: 1.2rem;
-      }
-
-      .container {
-        width: 100%;
-        max-width: 800px;
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        padding: 1rem;
-        box-sizing: border-box;
-      }
-
-      /* Integrated Drop Zone Styling */
-      .drop-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        pointer-events: none;
-        z-index: 10;
-        text-align: center;
-        padding: 1rem;
-        border-radius: 8px;
-      }
-
-      .drop-overlay.active,
-      .drop-overlay.show-hint {
-        opacity: 1;
-        background: rgba(30, 30, 30, 0.8);
-        pointer-events: auto;
-        cursor: pointer;
-      }
-
-      .drop-overlay p {
-        color: #e0e0e0;
-        margin: 0.5rem 0;
-      }
-
-      .drop-overlay.drag-over {
-        background-color: rgba(187, 134, 252, 0.2);
-        border: 2px dashed var(--primary-color);
-      }
-
-      .card {
-        background-color: var(--surface-color);
-        padding: 1.5rem;
-        border-radius: var(--border-radius);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-        position: relative;
-        box-sizing: border-box;
-        overflow: hidden;
-        width: 100%;
-        flex: 1;
-      }
-
-      .file-info {
-        font-size: 0.9rem;
-        color: #aaa;
-        display: none;
-        text-align: center;
-      }
-
-      .controls {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-        width: 100%;
-        max-width: 500px;
-        padding: 1rem 0;
-        opacity: 0.5;
-        pointer-events: none;
-        transition: opacity 0.3s;
-      }
-
-      .controls.active {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      .control-group {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        width: 100%;
-      }
-
-      .control-label {
-        width: 80px;
-        flex-shrink: 0;
-      }
-
-      .btn {
-        background-color: var(--primary-color);
-        color: #000;
-        border: none;
-        padding: 0.8rem 2rem;
-        border-radius: 50px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: var(--transition);
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        font-size: 1rem;
-        box-sizing: border-box;
-      }
-
-      .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
-      }
-
-      .btn:disabled {
-        background-color: #555;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-      }
-
-      .btn-secondary {
-        background-color: #333;
-        color: #fff;
-      }
-
-      .btn-secondary:hover {
-        background-color: #444;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      }
-
-      input[type='range'] {
-        -webkit-appearance: none;
-        width: 100%;
-        height: 6px;
-        background: #444;
-        border-radius: 5px;
-        outline: none;
-      }
-
-      input[type='range']::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: var(--secondary-color);
-        cursor: pointer;
-        transition: transform 0.1s;
-      }
-
-      input[type='range']::-webkit-slider-thumb:hover {
-        transform: scale(1.2);
-      }
-
-      .spinner {
-        display: none;
-        width: 24px;
-        height: 24px;
-        border: 3px solid rgba(255, 255, 255, 0.1);
-        border-left-color: #000;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      /* Visualizer Area */
-      .visualizer {
-        width: 100%;
-        height: 100px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #555;
-        font-size: 0.8rem;
-      }
-    </style>
+    <title>Audio Editor - Volume, Pitch, Speed, EQ & Reverb</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="audio-volume-tool.css" />
   </head>
   <body>
-    <h1>Audio Volume Adjustment</h1>
+    <div class="scroll-wrapper">
+      <h1>Audio Editor</h1>
 
-    <div class="container">
-      <div class="card">
-        <!-- Drop Overlay -->
-        <div class="drop-overlay show-hint" id="dropOverlay">
-          <p style="font-size: 3rem; margin-bottom: 0.5rem">🎵</p>
-          <p>音声ファイルをここにドラッグ＆ドロップ</p>
-          <p style="font-size: 0.8rem; opacity: 0.7">（クリックしてアップロード）</p>
-        </div>
-
-        <div class="file-info" id="fileInfo">
-          <h2 id="fileName" style="margin: 0; color: var(--text-color); font-size: 1.1rem">-</h2>
-          <p id="fileMeta" style="margin: 0.5rem 0 0 0">-</p>
-        </div>
-
-        <div class="visualizer" id="visualizer">
-          <span>No Audio Loaded</span>
-        </div>
-
-        <div class="controls" id="controls">
-          <div class="control-group">
-            <span class="control-label">音量 (<span id="volumeVal">100</span>%)</span>
-            <input type="range" id="volumeSlider" min="0" max="300" value="100" step="1" />
+      <div class="container">
+        <!-- Main Card -->
+        <div class="card" id="mainCard">
+          <div class="drop-overlay show-hint" id="dropOverlay">
+            <div class="drop-icon">🎵</div>
+            <p>音声ファイルをドラッグ＆ドロップ</p>
+            <p>クリックしてアップロード</p>
+            <div class="drop-separator">
+              <span>または</span>
+            </div>
+            <button class="btn btn-template" id="openTemplateBtn" type="button">🎹 テンプレート波形から生成</button>
           </div>
 
-          <div style="display: flex; gap: 1rem; justify-content: center">
-            <button class="btn btn-secondary" id="playBtn" style="flex: 1">▶ 再生 (プレビュー)</button>
-            <button class="btn btn-secondary" id="stopBtn" style="flex: 0.5; display: none">■</button>
+          <div class="file-info" id="fileInfo">
+            <h2 id="fileName">-</h2>
+            <p id="fileMeta">-</p>
           </div>
 
-          <button class="btn" id="downloadBtn">
-            <span class="spinner" id="dlSpinner"></span>
-            WAVをダウンロード
-          </button>
+          <div class="waveform-container" id="waveformContainer">
+            <canvas id="waveformCanvas"></canvas>
+            <div class="clip-region-outside" id="clipOutLeft" style="left:0; width:0;"></div>
+            <div class="clip-region-outside" id="clipOutRight" style="right:0; width:0;"></div>
+            <div class="clip-handle clip-handle-start" id="clipHandleStart" style="left:0;"></div>
+            <div class="clip-handle clip-handle-end" id="clipHandleEnd" style="right:0;"></div>
+            <div class="clip-time-label clip-time-start" id="clipTimeStart">0.00s</div>
+            <div class="clip-time-label clip-time-end" id="clipTimeEnd">0.00s</div>
+            <div class="playback-cursor" id="playbackCursor"></div>
+            <div class="waveform-empty" id="waveformEmpty">No Audio Loaded</div>
+          </div>
+        </div>
+
+        <!-- Controls Card -->
+        <div class="card">
+          <div class="controls-area" id="controlsArea">
+            <!-- Clip controls -->
+            <div class="clip-controls">
+              <div class="section-label">クリッピング</div>
+              <label>開始: <input type="number" id="clipStartInput" value="0" min="0" step="0.01" /></label>
+              <label>終了: <input type="number" id="clipEndInput" value="0" min="0" step="0.01" /></label>
+              <small style="color: var(--text-muted); font-size: 0.7rem;">(秒)</small>
+            </div>
+
+            <!-- Tabs: 5 tabs -->
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="volume">📊 音量</button>
+              <button class="tab-btn" data-tab="pitch">🎵 音程</button>
+              <button class="tab-btn" data-tab="speed">⏱ 速度</button>
+              <button class="tab-btn" data-tab="eq">🎛 EQ</button>
+              <button class="tab-btn" data-tab="reverb">🔊 残響</button>
+            </div>
+
+            <!-- Volume Curve -->
+            <div class="tab-content active" id="tab-volume">
+              <div class="curve-toolbar">
+                <label>補間:</label>
+                <select id="volumeInterp">
+                  <option value="linear">リニア</option>
+                  <option value="smooth" selected>スムーズ</option>
+                </select>
+                <label>カーソル: <span id="volumeCurveVal">100</span>%</label>
+                <div style="flex:1;"></div>
+                <button class="small-btn" id="volumeResetBtn">リセット</button>
+              </div>
+              <div class="curve-controls-row">
+                <div class="control-group">
+                  <label>全体:</label>
+                  <input type="range" id="volumeOffsetSlider" min="-100" max="200" value="0" step="1" />
+                  <input type="number" id="volumeOffsetInput" value="100" step="1" style="width:55px;" />%
+                </div>
+                <div class="point-info" id="volumePointInfo">
+                  <label>選択pt:</label>
+                  <label>T</label><input type="number" id="volumePointX" value="0" step="0.01" min="0" max="1" style="width:55px;" />
+                  <label>値</label><input type="number" id="volumePointY" value="100" step="1" style="width:60px;" />%
+                </div>
+              </div>
+              <div class="curve-editor-wrapper">
+                <canvas id="volumeCurveCanvas"></canvas>
+              </div>
+            </div>
+
+            <!-- Pitch Curve -->
+            <div class="tab-content" id="tab-pitch">
+              <div class="curve-toolbar">
+                <label>補間:</label>
+                <select id="pitchInterp">
+                  <option value="linear">リニア</option>
+                  <option value="smooth" selected>スムーズ</option>
+                </select>
+                <label>カーソル: <span id="pitchCurveVal">1.00</span>x</label>
+                <div style="flex:1;"></div>
+                <button class="small-btn" id="pitchResetBtn">リセット</button>
+              </div>
+              <div class="curve-controls-row">
+                <div class="control-group">
+                  <label>全体:</label>
+                  <input type="range" id="pitchOffsetSlider" min="-200" max="300" value="0" step="1" />
+                  <input type="number" id="pitchOffsetInput" value="1.00" step="0.01" style="width:55px;" />x
+                </div>
+                <div class="point-info" id="pitchPointInfo">
+                  <label>選択pt:</label>
+                  <label>T</label><input type="number" id="pitchPointX" value="0" step="0.01" min="0" max="1" style="width:55px;" />
+                  <label>値</label><input type="number" id="pitchPointY" value="1.00" step="0.01" style="width:60px;" />x
+                </div>
+              </div>
+              <div class="curve-editor-wrapper">
+                <canvas id="pitchCurveCanvas"></canvas>
+              </div>
+            </div>
+
+            <!-- Speed (Time Stretch) Curve -->
+            <div class="tab-content" id="tab-speed">
+              <div class="curve-toolbar">
+                <label>補間:</label>
+                <select id="speedInterp">
+                  <option value="linear">リニア</option>
+                  <option value="smooth" selected>スムーズ</option>
+                </select>
+                <label>カーソル: <span id="speedCurveVal">1.00</span>x</label>
+                <div style="flex:1;"></div>
+                <button class="small-btn" id="speedResetBtn">リセット</button>
+              </div>
+              <div class="curve-controls-row">
+                <div class="control-group">
+                  <label>全体:</label>
+                  <input type="range" id="speedOffsetSlider" min="-200" max="300" value="0" step="1" />
+                  <input type="number" id="speedOffsetInput" value="1.00" step="0.01" style="width:55px;" />x
+                </div>
+                <div class="point-info" id="speedPointInfo">
+                  <label>選択pt:</label>
+                  <label>T</label><input type="number" id="speedPointX" value="0" step="0.01" min="0" max="1" style="width:55px;" />
+                  <label>値</label><input type="number" id="speedPointY" value="1.00" step="0.01" style="width:60px;" />x
+                </div>
+              </div>
+              <div class="curve-editor-wrapper">
+                <canvas id="speedCurveCanvas"></canvas>
+              </div>
+              <div style="font-size:0.7rem; color:var(--text-muted); padding-top:0.3rem;">
+                ※ ピッチを維持したまま再生速度を変更 (WSOLA)
+              </div>
+            </div>
+
+            <!-- EQ Curve -->
+            <div class="tab-content" id="tab-eq">
+              <div class="curve-toolbar">
+                <label>カーソル: <span id="eqCurveVal">0</span>dB</label>
+                <div style="flex:1;"></div>
+                <button class="small-btn" id="eqResetBtn">リセット</button>
+              </div>
+              <div class="curve-controls-row">
+                <div class="control-group">
+                  <label>全体:</label>
+                  <input type="range" id="eqOffsetSlider" min="-100" max="100" value="0" step="1" />
+                  <input type="number" id="eqOffsetInput" value="0" step="0.5" style="width:55px;" />dB
+                </div>
+                <div class="point-info" id="eqPointInfo">
+                  <label>選択pt:</label>
+                  <label>Hz</label><input type="number" id="eqPointX" value="0" step="1" style="width:65px;" />
+                  <label>dB</label><input type="number" id="eqPointY" value="0" step="0.5" style="width:55px;" />
+                </div>
+              </div>
+              <div class="curve-editor-wrapper">
+                <canvas id="eqCurveCanvas"></canvas>
+              </div>
+              <div style="font-size:0.7rem; color:var(--text-muted); padding-top:0.3rem;">
+                横軸: 周波数 (20Hz〜20kHz, 対数スケール) / 縦軸: ゲイン (-24dB〜+24dB)
+              </div>
+            </div>
+
+            <!-- Reverb -->
+            <div class="tab-content" id="tab-reverb">
+              <div class="reverb-controls">
+                <div class="reverb-row">
+                  <label>リバーブ量</label>
+                  <input type="range" id="reverbAmount" min="0" max="100" value="0" step="1" />
+                  <span class="val" id="reverbAmountVal">0%</span>
+                </div>
+                <div class="reverb-row">
+                  <label>減衰時間</label>
+                  <input type="range" id="reverbDecay" min="0.1" max="5" value="1.5" step="0.1" />
+                  <span class="val" id="reverbDecayVal">1.5s</span>
+                </div>
+                <div style="font-size:0.7rem; color:var(--text-muted);">
+                  ※ 合成インパルス応答によるコンボリューションリバーブ
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-bar">
+              <button class="btn btn-secondary" id="playBtn" style="flex:1; max-width:200px;">▶ 再生</button>
+              <button class="btn" id="downloadBtn" style="flex:1; max-width:250px;">
+                <span class="spinner" id="dlSpinner"></span>
+                ダウンロード
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Hidden file input -->
     <input type="file" id="fileInput" accept="audio/*" style="display: none" />
+
+    <!-- Template Waveform Dialog -->
+    <div class="modal-backdrop" id="templateModal">
+      <div class="modal-dialog">
+        <h3>テンプレート波形を生成</h3>
+        <div class="modal-body">
+          <div class="template-grid">
+            <label class="template-option">
+              <input type="radio" name="waveType" value="sine" checked />
+              <div class="template-card">
+                <svg viewBox="0 0 60 30" class="wave-icon"><path d="M0,15 Q7.5,0 15,15 Q22.5,30 30,15 Q37.5,0 45,15 Q52.5,30 60,15" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <span>サイン波</span>
+              </div>
+            </label>
+            <label class="template-option">
+              <input type="radio" name="waveType" value="square" />
+              <div class="template-card">
+                <svg viewBox="0 0 60 30" class="wave-icon"><path d="M0,25 L0,5 L15,5 L15,25 L30,25 L30,5 L45,5 L45,25 L60,25" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <span>矩形波</span>
+              </div>
+            </label>
+            <label class="template-option">
+              <input type="radio" name="waveType" value="sawtooth" />
+              <div class="template-card">
+                <svg viewBox="0 0 60 30" class="wave-icon"><path d="M0,25 L20,5 L20,25 L40,5 L40,25 L60,5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <span>ノコギリ波</span>
+              </div>
+            </label>
+            <label class="template-option">
+              <input type="radio" name="waveType" value="triangle" />
+              <div class="template-card">
+                <svg viewBox="0 0 60 30" class="wave-icon"><path d="M0,25 L10,5 L30,25 L50,5 L60,25" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <span>三角波</span>
+              </div>
+            </label>
+            <label class="template-option">
+              <input type="radio" name="waveType" value="pulse" />
+              <div class="template-card">
+                <svg viewBox="0 0 60 30" class="wave-icon"><path d="M0,25 L0,5 L7,5 L7,25 L20,25 L20,5 L27,5 L27,25 L40,25 L40,5 L47,5 L47,25 L60,25" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <span>パルス波</span>
+              </div>
+            </label>
+            <label class="template-option">
+              <input type="radio" name="waveType" value="noise" />
+              <div class="template-card">
+                <svg viewBox="0 0 60 30" class="wave-icon"><path d="M0,15 L3,8 L6,22 L9,11 L12,19 L15,7 L18,24 L21,13 L24,18 L27,6 L30,21 L33,10 L36,25 L39,9 L42,20 L45,12 L48,23 L51,8 L54,17 L57,14 L60,15" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                <span>ノイズ</span>
+              </div>
+            </label>
+            <label class="template-option">
+              <input type="radio" name="waveType" value="sine_sweep" />
+              <div class="template-card">
+                <svg viewBox="0 0 60 30" class="wave-icon"><path d="M0,15 Q3,10 6,15 Q8,19 10,15 Q12,8 14,15 Q15.5,22 17,15 Q18,6 19,15 Q19.8,24 20.5,15 Q21,5 21.5,15 Q22,25 22.5,15" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                <span>スイープ</span>
+              </div>
+            </label>
+            <label class="template-option">
+              <input type="radio" name="waveType" value="metallic" />
+              <div class="template-card">
+                <svg viewBox="0 0 60 30" class="wave-icon"><path d="M5,28 L5,15 Q8,3 12,15 Q16,25 20,15 Q23,8 26,15 Q29,20 32,15 Q35,11 38,15 Q40,17 42,15 Q44,14 46,15 Q48,15.5 50,15 L55,15" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="5" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+                <span>金属音</span>
+              </div>
+            </label>
+            <label class="template-option">
+              <input type="radio" name="waveType" value="metallic_bend" />
+              <div class="template-card">
+                <svg viewBox="0 0 60 30" class="wave-icon"><path d="M3,10 Q6,12 9,18 Q12,24 15,26 Q17,20 18,8 Q19,3 20,5 Q22,10 24,13 Q26,16 28,15 Q30,14 33,15 Q36,15.3 40,15 L55,15" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="15" y1="26" x2="18" y2="8" stroke="currentColor" stroke-width="0.8" stroke-dasharray="1.5,1"/></svg>
+                <span>金属キーン</span>
+              </div>
+            </label>
+          </div>
+          <div class="harmonics-editor" id="harmonicsEditor">
+            <div class="harmonics-header">
+              <span class="harmonics-title">倍音調整</span>
+              <span class="harmonics-note" id="harmonicsNote">波形タイプのプリセットを元に調整できます</span>
+            </div>
+            <div class="harmonics-bars" id="harmonicsBars">
+              <div class="harmonic-col">
+                <span class="harmonic-val" id="hVal0">100</span>
+                <input type="range" class="harmonic-slider" data-index="0" id="hSlider0" min="0" max="100" value="100" />
+                <span class="harmonic-label">1</span>
+              </div>
+              <div class="harmonic-col">
+                <span class="harmonic-val" id="hVal1">0</span>
+                <input type="range" class="harmonic-slider" data-index="1" id="hSlider1" min="0" max="100" value="0" />
+                <span class="harmonic-label">2</span>
+              </div>
+              <div class="harmonic-col">
+                <span class="harmonic-val" id="hVal2">0</span>
+                <input type="range" class="harmonic-slider" data-index="2" id="hSlider2" min="0" max="100" value="0" />
+                <span class="harmonic-label">3</span>
+              </div>
+              <div class="harmonic-col">
+                <span class="harmonic-val" id="hVal3">0</span>
+                <input type="range" class="harmonic-slider" data-index="3" id="hSlider3" min="0" max="100" value="0" />
+                <span class="harmonic-label">4</span>
+              </div>
+              <div class="harmonic-col">
+                <span class="harmonic-val" id="hVal4">0</span>
+                <input type="range" class="harmonic-slider" data-index="4" id="hSlider4" min="0" max="100" value="0" />
+                <span class="harmonic-label">5</span>
+              </div>
+              <div class="harmonic-col">
+                <span class="harmonic-val" id="hVal5">0</span>
+                <input type="range" class="harmonic-slider" data-index="5" id="hSlider5" min="0" max="100" value="0" />
+                <span class="harmonic-label">6</span>
+              </div>
+              <div class="harmonic-col">
+                <span class="harmonic-val" id="hVal6">0</span>
+                <input type="range" class="harmonic-slider" data-index="6" id="hSlider6" min="0" max="100" value="0" />
+                <span class="harmonic-label">7</span>
+              </div>
+              <div class="harmonic-col">
+                <span class="harmonic-val" id="hVal7">0</span>
+                <input type="range" class="harmonic-slider" data-index="7" id="hSlider7" min="0" max="100" value="0" />
+                <span class="harmonic-label">8</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-params">
+            <div class="modal-param-row">
+              <label>音程指定</label>
+              <div class="freq-toggle-group">
+                <button type="button" class="freq-toggle-btn active" data-mode="note" id="freqModeNote">音階</button>
+                <button type="button" class="freq-toggle-btn" data-mode="hz" id="freqModeHz">Hz</button>
+              </div>
+            </div>
+            <div class="modal-param-row" id="freqNoteRow">
+              <label for="templateNote">音階</label>
+              <select id="templateNote">
+                <option value="C">C</option>
+                <option value="C#">C# / D♭</option>
+                <option value="D">D</option>
+                <option value="D#">D# / E♭</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="F#">F# / G♭</option>
+                <option value="G">G</option>
+                <option value="G#">G# / A♭</option>
+                <option value="A" selected>A</option>
+                <option value="A#">A# / B♭</option>
+                <option value="B">B</option>
+              </select>
+              <select id="templateOctave">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+              </select>
+              <span class="param-unit freq-display" id="freqDisplay">440 Hz</span>
+            </div>
+            <div class="modal-param-row" id="freqHzRow" style="display:none;">
+              <label for="templateFreq">周波数</label>
+              <input type="number" id="templateFreq" value="440" min="20" max="20000" step="1" />
+              <span class="param-unit">Hz</span>
+            </div>
+            <div class="modal-param-row">
+              <label for="templateDuration">長さ</label>
+              <input type="number" id="templateDuration" value="2.0" min="0.1" max="60" step="0.1" />
+              <span class="param-unit">秒</span>
+            </div>
+            <div class="modal-param-row">
+              <label for="templateSampleRate">サンプルレート</label>
+              <select id="templateSampleRate">
+                <option value="44100" selected>44100 Hz</option>
+                <option value="48000">48000 Hz</option>
+                <option value="22050">22050 Hz</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-preview" id="templatePreviewBtn" type="button">🔊 プレビュー</button>
+          <div style="flex:1;"></div>
+          <button class="btn btn-secondary" id="templateCancelBtn" type="button">キャンセル</button>
+          <button class="btn" id="templateGenerateBtn" type="button">✨ 生成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- External Scripts -->
+    <!-- MP3 Encoder Library -->
     <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
-
-    <script>
-      const dropOverlay = document.getElementById('dropOverlay');
-      const fileInput = document.getElementById('fileInput');
-      const fileInfo = document.getElementById('fileInfo');
-      const fileNameEl = document.getElementById('fileName');
-      const fileMetaEl = document.getElementById('fileMeta');
-      const controls = document.getElementById('controls');
-      const volumeSlider = document.getElementById('volumeSlider');
-      const volumeVal = document.getElementById('volumeVal');
-      const playBtn = document.getElementById('playBtn');
-      const stopBtn = document.getElementById('stopBtn');
-      const downloadBtn = document.getElementById('downloadBtn');
-      const dlSpinner = document.getElementById('dlSpinner');
-      const visualizer = document.getElementById('visualizer');
-
-      let audioContext = null;
-      let originalBuffer = null;
-      let sourceNode = null;
-      let gainNode = null;
-      let isPlaying = false;
-      let currentFileName = '';
-      let currentFileType = '';
-
-      // Drag & Drop
-      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
-        dropOverlay.addEventListener(eventName, preventDefaults, false);
-      });
-
-      function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-
-      dropOverlay.addEventListener('dragenter', () => dropOverlay.classList.add('drag-over'));
-      dropOverlay.addEventListener('dragover', () => dropOverlay.classList.add('drag-over'));
-      dropOverlay.addEventListener('dragleave', () => dropOverlay.classList.remove('drag-over'));
-      dropOverlay.addEventListener('drop', handleDrop);
-      dropOverlay.addEventListener('click', () => fileInput.click());
-
-      fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-      function handleDrop(e) {
-        dropOverlay.classList.remove('drag-over');
-        handleFiles(e.dataTransfer.files);
-      }
-
-      function handleFiles(files) {
-        if (files.length > 0) {
-          const file = files[0];
-          if (file.type.startsWith('audio/')) {
-            loadAudio(file);
-          } else {
-            alert('音声ファイルを選択してください。');
-          }
-        }
-      }
-
-      async function loadAudio(file) {
-        currentFileName = file.name.replace(/\.[^/.]+$/, '');
-        currentFileType = file.type;
-
-        dropOverlay.classList.remove('show-hint'); // Hide overlay
-        fileInfo.style.display = 'block';
-        fileNameEl.textContent = file.name;
-        fileMetaEl.textContent = '読み込み中...';
-        controls.classList.remove('active');
-        visualizer.textContent = 'Loading...';
-
-        // Update button text
-        if (currentFileType === 'audio/mpeg' || currentFileType === 'audio/mp3') {
-          downloadBtn.innerHTML = '<span class="spinner" id="dlSpinner"></span> MP3をダウンロード';
-        } else {
-          downloadBtn.innerHTML = '<span class="spinner" id="dlSpinner"></span> WAVをダウンロード';
-        }
-        document.getElementById('dlSpinner').style.display = 'none';
-
-        try {
-          if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          }
-
-          const arrayBuffer = await file.arrayBuffer();
-          originalBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-          const duration = originalBuffer.duration.toFixed(2);
-          const channels = originalBuffer.numberOfChannels;
-          const rate = originalBuffer.sampleRate;
-          fileMetaEl.textContent = `Time: ${duration}s | Channels: ${channels} | Rate: ${rate}Hz | Type: ${currentFileType || 'wav'}`;
-
-          visualizer.innerHTML = `<span style="color:var(--secondary-color); font-size:1.5rem;">Ready</span>`;
-
-          controls.classList.add('active');
-        } catch (err) {
-          console.error(err);
-          alert('音声の読み込みに失敗しました。');
-          resetUI();
-        }
-      }
-
-      function resetUI() {
-        dropOverlay.classList.add('show-hint');
-        fileInfo.style.display = 'none';
-        controls.classList.remove('active');
-        visualizer.innerHTML = '<span>No Audio Loaded</span>';
-        originalBuffer = null;
-        stopAudio();
-      }
-
-      // Playback
-      playBtn.addEventListener('click', togglePlay);
-      stopBtn.addEventListener('click', stopAudio);
-
-      function togglePlay() {
-        if (isPlaying) {
-          stopAudio();
-        } else {
-          startAudio();
-        }
-      }
-
-      function startAudio() {
-        if (!originalBuffer || !audioContext) return;
-
-        // Resume context if suspended (browser auto-play policy)
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
-        }
-
-        sourceNode = audioContext.createBufferSource();
-        sourceNode.buffer = originalBuffer;
-
-        gainNode = audioContext.createGain();
-        gainNode.gain.value = parseInt(volumeSlider.value) / 100;
-
-        sourceNode.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        sourceNode.start(0);
-        sourceNode.onended = () => {
-          isPlaying = false;
-          updatePlayBtn();
-        };
-
-        isPlaying = true;
-        updatePlayBtn();
-      }
-
-      function stopAudio() {
-        if (sourceNode) {
-          sourceNode.stop();
-          sourceNode.disconnect();
-          sourceNode = null;
-        }
-        if (gainNode) {
-          gainNode.disconnect();
-          gainNode = null;
-        }
-        isPlaying = false;
-        updatePlayBtn();
-      }
-
-      function updatePlayBtn() {
-        if (isPlaying) {
-          playBtn.textContent = '⏸ 停止';
-          // stopBtn.style.display = "inline-block";
-        } else {
-          playBtn.textContent = '▶ 再生 (プレビュー)';
-          // stopBtn.style.display = "none";
-        }
-      }
-
-      // Volume Slider (Real-time update)
-      volumeSlider.addEventListener('input', (e) => {
-        const val = e.target.value;
-        volumeVal.textContent = val;
-        if (gainNode) {
-          gainNode.gain.value = val / 100;
-        }
-      });
-
-      // Export
-      downloadBtn.addEventListener('click', async () => {
-        if (!originalBuffer) return;
-
-        downloadBtn.disabled = true;
-        const spinner = document.getElementById('dlSpinner');
-        if (spinner) spinner.style.display = 'inline-block';
-
-        // Wait for UI update
-        await new Promise((r) => setTimeout(r, 50));
-
-        try {
-          const gainVal = parseInt(volumeSlider.value) / 100;
-          const offlineCtx = new OfflineAudioContext(
-            originalBuffer.numberOfChannels,
-            originalBuffer.length,
-            originalBuffer.sampleRate,
-          );
-
-          const source = offlineCtx.createBufferSource();
-          source.buffer = originalBuffer;
-
-          const gain = offlineCtx.createGain();
-          gain.gain.value = gainVal;
-
-          source.connect(gain);
-          gain.connect(offlineCtx.destination);
-
-          source.start(0);
-
-          const renderedBuffer = await offlineCtx.startRendering(); // Returns AudioBuffer
-
-          let blob;
-          let ext;
-
-          if (currentFileType === 'audio/mpeg' || currentFileType === 'audio/mp3') {
-            blob = bufferToMp3(renderedBuffer);
-            ext = 'mp3';
-          } else {
-            blob = bufferToWave(renderedBuffer, 0, renderedBuffer.length);
-            ext = 'wav';
-          }
-
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${currentFileName}_${parseInt(volumeSlider.value)}%.${ext}`;
-          a.click();
-          URL.revokeObjectURL(url);
-        } catch (err) {
-          console.error(err);
-          alert('書き出しに失敗しました。\n' + err.message);
-        } finally {
-          downloadBtn.disabled = false;
-          const spinner = document.getElementById('dlSpinner');
-          if (spinner) spinner.style.display = 'none';
-        }
-      });
-
-      // MP3 Encoder
-      function bufferToMp3(buffer) {
-        if (!window.lamejs) {
-          throw new Error('lamejsライブラリがロードされていません。インターネット接続を確認してください。');
-        }
-
-        const channels = buffer.numberOfChannels || 1;
-        const sampleRate = buffer.sampleRate || 44100;
-        const kbps = 128;
-
-        const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, kbps);
-        const mp3Data = [];
-
-        const sampleBlockSize = 1152;
-        const leftChannel = buffer.getChannelData(0);
-        const rightChannel = channels > 1 ? buffer.getChannelData(1) : undefined;
-        const length = leftChannel.length;
-
-        for (let i = 0; i < length; i += sampleBlockSize) {
-          const end = Math.min(i + sampleBlockSize, length);
-          const subLen = end - i;
-
-          const leftChunk = new Int16Array(subLen);
-          const rightChunk = channels > 1 ? new Int16Array(subLen) : undefined;
-
-          for (let j = 0; j < subLen; j++) {
-            // simple float to int16 conversion
-            let s = Math.max(-1, Math.min(1, leftChannel[i + j]));
-            leftChunk[j] = s < 0 ? s * 0x8000 : s * 0x7fff;
-
-            if (rightChunk) {
-              let s2 = Math.max(-1, Math.min(1, rightChannel[i + j]));
-              rightChunk[j] = s2 < 0 ? s2 * 0x8000 : s2 * 0x7fff;
-            }
-          }
-
-          const mp3buf =
-            channels === 1 ? mp3encoder.encodeBuffer(leftChunk) : mp3encoder.encodeBuffer(leftChunk, rightChunk);
-
-          if (mp3buf.length > 0) {
-            mp3Data.push(mp3buf);
-          }
-        }
-
-        const mp3buf = mp3encoder.flush();
-        if (mp3buf.length > 0) {
-          mp3Data.push(mp3buf);
-        }
-
-        return new Blob(mp3Data, { type: 'audio/mp3' });
-      }
-
-      // WAV Encoder
-      // Source adapted from standard implementations (e.g. valid AudioBuffer to WAV)
-      function bufferToWave(abuffer, offset, len) {
-        const numOfChan = abuffer.numberOfChannels;
-        const length = len * numOfChan * 2 + 44;
-        const buffer = new ArrayBuffer(length);
-        const view = new DataView(buffer);
-        const channels = [];
-        let i;
-        let sample;
-        let pos = 0;
-
-        // write RIFF chunk
-        writeString(view, 0, 'RIFF');
-        view.setUint32(4, 36 + len * numOfChan * 2, true);
-        writeString(view, 8, 'WAVE');
-
-        // write fmt chunk
-        writeString(view, 12, 'fmt ');
-        view.setUint32(16, 16, true);
-        view.setUint16(20, 1, true); // PCM
-        view.setUint16(22, numOfChan, true);
-        view.setUint32(24, abuffer.sampleRate, true);
-        view.setUint32(28, abuffer.sampleRate * 2 * numOfChan, true);
-        view.setUint16(32, numOfChan * 2, true);
-        view.setUint16(34, 16, true); // 16bit
-
-        // write data chunk
-        writeString(view, 36, 'data');
-        view.setUint32(40, len * numOfChan * 2, true);
-
-        // interleave channels
-        for (i = 0; i < numOfChan; i++) {
-          channels.push(abuffer.getChannelData(i));
-        }
-
-        pos = 44;
-        let offsetP = 0;
-        while (pos < length) {
-          for (i = 0; i < numOfChan; i++) {
-            sample = Math.max(-1, Math.min(1, channels[i][offsetP])); // clamp
-            sample = (sample < 0 ? sample * 0x8000 : sample * 0x7fff) | 0; // scale to 16-bit signed int
-            view.setInt16(pos, sample, true);
-            pos += 2;
-          }
-          offsetP++;
-        }
-
-        return new Blob([buffer], { type: 'audio/wav' });
-      }
-
-      function writeString(view, offset, string) {
-        for (let i = 0; i < string.length; i++) {
-          view.setUint8(offset + i, string.charCodeAt(i));
-        }
-      }
-    </script>
+    <!-- Main Logic (Split into 3 files for local file:// support) -->
+    <script src="curve-editor.js" defer></script>
+    <script src="audio-processor.js" defer></script>
+    <script src="audio-volume-tool.js" defer></script>
   </body>
 </html>

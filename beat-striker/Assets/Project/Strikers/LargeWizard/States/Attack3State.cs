@@ -3,8 +3,11 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeWizard {
-    
+
+
+
     public class Attack3State : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;

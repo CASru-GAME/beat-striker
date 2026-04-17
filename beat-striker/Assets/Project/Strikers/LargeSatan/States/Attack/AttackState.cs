@@ -1,99 +1,90 @@
 using UnityEngine;
 using R3;
-using System;
-using System.Collections.Generic;
 using Alice;
 
 namespace Core.LargeSatan {
 
-    public class AttackState : StrikerState {
 
-        // このステートにいる間、再生されるアニメーションクリップ
+
+    public class AttackState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
+        // 縺薙・繧ケ繝・・繝医↓縺・ｋ髢薙∝・逕溘＆繧後ｋ繧「繝九Γ繝シ繧キ繝ァ繝ウ繧ッ繝ェ繝・・
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
-        [SerializeField] HitBox hitBox;
-        IDisposable disposable;
 
-        [SerializeField] ParticleSystem particlePrefab;
-        [SerializeField] AudioClip audioClip;
+        [SerializeField] float speed = 20f;
+        [SerializeField] float duration = 0.5f;
+        [SerializeField] float endSpeedRatio = 0.1f;
 
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 10;
 
-        [SerializeField] EffectPlayer effectPlayer;
-        [SerializeField] AudioClip slashSound;
+        [SerializeField] AttackPlayer attackPlayer;
         [SerializeField] float impact = 5;
 
-        readonly List<Hit> hitsInFrame = new();
-        bool hitInState;
-        public record Hit(Vector3 hitPoint, Hurtbox hurtBox);
+        Vector3 initialVelocity;
+        float elapsedTime;
 
-        // このステートに遷移した直後に呼ばれる
+
+        // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
         public override void OnEnter(IStrikerContext context) {
-            // アニメーションの再生を開始する
+            // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・
             context.PlayAnimation(animationClip, OnAnimationEnd);
 
-            effectPlayer.Emit(effectPlayer.transform);
-            AudioSource.PlayClipAtPoint(slashSound, transform.position);
+            var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
+            initialVelocity = speed * direction;
+            elapsedTime = 0f;
+            context.Rigidbody.linearVelocity = initialVelocity;
 
-            disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
-                if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                    var hitPoint = collider.ClosestPoint(hitBox.transform.position);
-                    hitsInFrame.Add(new(hitPoint, hurtbox));
-                }
-            });
-            hitsInFrame.Clear();
-            hitInState = false;
+            attackPlayer.OnFilterHit
+                .Subscribe(collider => {
+                    if (!collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                        hurtbox = collider.GetComponentInParent<Hurtbox>();
+                        if (!hurtbox) {
+                            return false;
+                        }
+                    }
+
+                    return hurtbox.transform.root != context.Rigidbody.transform.root;
+                })
+                .AddTo(disposables);
+
+            attackPlayer.OnHit
+                .Subscribe(hit => {
+                    if (!hit.Collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                        hurtbox = hit.Collider.GetComponentInParent<Hurtbox>();
+                        if (!hurtbox) {
+                            return AttackPlayer.HitType.Cancel;
+                        }
+                    }
+
+                    var hitStatus = new HitStatus(damage, nockbackSpeed * (hit.Position - context.Rigidbody.position).normalized);
+                    var hitResult = hurtbox.GiveHit(hitStatus);
+                    context.GenerateImpact(new StrikerImpact(impact * Vector3.down));
+
+                    return hitResult.status == HitResult.Status.Guarded
+                        ? AttackPlayer.HitType.Blocked
+                        : AttackPlayer.HitType.Normal;
+                })
+                .AddTo(disposables);
+
+            attackPlayer.Emit();
+        }
+
+        public override void OnUpdate(IStrikerStateContext context) {
+            elapsedTime += Time.deltaTime;
+            float ratio = Mathf.Max(endSpeedRatio, 0.0001f);
+            float decayRate = Mathf.Log(1f / ratio) / Mathf.Max(duration, 0.0001f);
+            float decay = Mathf.Exp(-decayRate * elapsedTime);
+            context.Rigidbody.linearVelocity = initialVelocity * decay;
         }
 
         public void OnAnimationEnd(IStrikerStateContext context) {
             context.TryTransition(nextNode);
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
-        public override void OnUpdate(IStrikerStateContext context) {
-            if (!hitInState && hitsInFrame.Count >= 1) {
-                var closestHit = hitsInFrame.MinBy(e => Vector3.Distance(e.hitPoint, hitBox.transform.position));
-
-                Instantiate(particlePrefab, closestHit.hitPoint, Quaternion.identity);
-                AudioSource.PlayClipAtPoint(audioClip, closestHit.hitPoint);
-                var nockBackDirection = Mathf.Sign(closestHit.hitPoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
-                closestHit.hurtBox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
-                context.GenerateInpact(new StrikerInpact( impact * Vector3.up));
-
-                hitsInFrame.Clear();
-                hitInState = true;
-            }
-        }
-
-        // 他のステートに遷移する直前に呼ばれる
-        public override void OnExit(IStrikerContext context) {
-            disposable.Dispose();
-        }
-
-        // 攻撃コマンドが押された時に呼ばれる
-        public override void OnAttackRequested(IStrikerStateContext context) {
-        }
-
-        // チャージコマンドが押された時に呼ばれる
-        public override void OnChargeRequested(IStrikerStateContext context) {
-        }
-
-        // ダッシュコマンドが押された時に呼ばれる
-        public override void OnDashRequested(IStrikerStateContext context) {
-        }
-
-        // ガードコマンドが押された時に呼ばれる
-        public override void OnGuardRequested(IStrikerStateContext context) {
-        }
-
-        // 攻撃を受けた時に呼ばれる
-        public override void OnHit(IStrikerStateContext context, HitStatus status) {
-        }
-
-        // ミスした時に呼ばれる
-        public override void OnMiss(IStrikerStateContext context) {
-        }
 
     }
 }
+
+

@@ -3,8 +3,11 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeWizard {
-    
+
+
+
     public class Attack1State : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -26,7 +29,7 @@ namespace Core.LargeWizard {
 
             AudioSource.PlayClipAtPoint(audioClip, firePrefab.transform.position);
 
-            ScheduleStateEvent(fireTime,context => {
+            ScheduleStateEvent(fireTime, context => {
                 var particleInstance = Instantiate(firePrefab, firePosition.position, context.Rigidbody.rotation);
                 var fire = particleInstance.GetComponent<Fire>();
                 fire.Hurtbox = context.Rigidbody.GetComponentInChildren<Hurtbox>();

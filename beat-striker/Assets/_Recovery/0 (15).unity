@@ -1026,7 +1026,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ea2a52296f37c46cbabe8019b35fb943, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.AliceScope
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleScope
   parentReference:
     TypeName: 
   autoRun: 1

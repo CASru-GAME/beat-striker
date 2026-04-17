@@ -1,47 +1,41 @@
+
 using UnityEngine;
-using UnityEngine.EventSystems;
-using System.Collections;
-using Core.Utils;
-using Core.App.Presenters.Scene.Types;
-using Core.App.Types;
 using Core;
 using UnityEngine.UI;
+using R3;
 
 [RequireComponent(typeof(Botan))]
 public class Backbutton : MonoBehaviour {
     private Botan button;
-    public AppScene previousScene;
     public RawImage image;
     public float hoveredAlpha = 0.9f;
     public float hoveredScale = 1.1f;
     public float scaleAnimationDuration = 0.2f;
     private float originalAlpha;
     private Vector3 originalScale;
+    public Observable<Unit> OnBackPressed => onBackPressed;
+    private readonly Subject<Unit> onBackPressed = new();
 
     void Awake() {
         button = GetComponent<Botan>();
-        button.onClick += GoToSceneAfterSound;
+        button.OnClickEvent.Subscribe(data => { onBackPressed.OnNext(Unit.Default); });
         originalAlpha = image.color.a;
         originalScale = transform.localScale;
-        button.onHover += data => {
+        button.OnHoverEvent.Subscribe(data => {
             var col = image.color;
             col.a = hoveredAlpha;
             image.color = col;
             LeanTween.cancel(gameObject);
             LeanTween.scale(gameObject, originalScale * hoveredScale, scaleAnimationDuration).setEaseOutBack();
-        };
-        button.onHoverExit += data => {
+        });
+        button.OnHoverExitEvent.Subscribe(data => {
             var col = image.color;
             col.a = originalAlpha;
             image.color = col;
             LeanTween.cancel(gameObject);
             LeanTween.scale(gameObject, originalScale, scaleAnimationDuration).setEaseOutBack();
-        };
+        });
     }
 
-    void GoToSceneAfterSound(BotanEventData data) {
-        this.GetBus().Publish(new AppMessages.RequireTransition(previousScene));
-
-    }
 
 }

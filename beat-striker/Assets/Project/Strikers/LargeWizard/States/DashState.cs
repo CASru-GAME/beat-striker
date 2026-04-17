@@ -3,15 +3,14 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeWizard {
-    
+
     public class DashState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Dash;
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] float dashSpeed;
         [SerializeField] StrikerNode nextNode;
-
-         // このステートに遷移した直後に呼ばれる
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {

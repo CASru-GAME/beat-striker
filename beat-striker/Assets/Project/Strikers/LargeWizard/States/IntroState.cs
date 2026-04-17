@@ -3,8 +3,9 @@ using UnityEngine;
 using Core.Striker;
 
 namespace Core.LargeWizard {
-    
+
     public class IntroState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Unknown;
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -18,6 +19,7 @@ namespace Core.LargeWizard {
         [SerializeField, Min(0f)] float magicCircleDestroyDelaySeconds = 3f;
         [SerializeField, Min(0f)] float tueAndWizardSpawnDelaySeconds = 1f;
         [SerializeField] AudioClip audioClip;
+        GameObject magicCircleInstance;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -28,9 +30,9 @@ namespace Core.LargeWizard {
             tuePrefab.SetActive(false);
             wizardPrefab.SetActive(false);
 
-                AudioSource.PlayClipAtPoint(audioClip, magicCircleSpawnPoint.position);
+            AudioSource.PlayClipAtPoint(audioClip, magicCircleSpawnPoint.position);
 
-            var magicCircleInstance = Instantiate(magicCirclePrefab, magicCircleSpawnPoint.position, Quaternion.Euler(magicCircleRotationEuler));
+            magicCircleInstance = Instantiate(magicCirclePrefab, magicCircleSpawnPoint.position, Quaternion.Euler(magicCircleRotationEuler));
             var growEffect = magicCircleInstance.AddComponent<GrowFromZeroScaleEffect>();
             growEffect.Initialize(magicCircleInstance.transform.localScale, magicCircleGrowDurationSeconds);
             Destroy(magicCircleInstance, magicCircleDestroyDelaySeconds);
@@ -47,6 +49,13 @@ namespace Core.LargeWizard {
 
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
+            if (magicCircleInstance != null) {
+                Destroy(magicCircleInstance);
+                magicCircleInstance = null;
+            }
+
+            tuePrefab.SetActive(true);
+            wizardPrefab.SetActive(true);
         }
 
         // 攻撃コマンドが押された時に呼ばれる

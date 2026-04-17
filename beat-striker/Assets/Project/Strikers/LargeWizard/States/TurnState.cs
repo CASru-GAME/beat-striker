@@ -2,8 +2,10 @@ using UnityEngine;
 using Alice;
 
 namespace Core.LargeWizard {
+
 
     public class TurnState : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Idle;
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] float duration = 0.2f;
@@ -47,3 +49,5 @@ namespace Core.LargeWizard {
         }
     }
 }
+
+

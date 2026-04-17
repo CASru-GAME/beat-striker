@@ -2,88 +2,72 @@ using Core.Battle;
 using UnityEngine;
 using Core.Striker;
 using R3;
-using System;
-using System.Collections.Generic;
 using Core.Striker.Components;
-using UnityEngine.UIElements;
-
-
 namespace Core.LargeHero {
     
     /// <summary>
-    /// 斬撃1ステート。ヒット成功後にコマンドで斬撃2へチェインする。
     /// </summary>
     public class Slash1State : StrikerState {
+        public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
+
 
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] StrikerNode comboNode;   // → 斬撃2
-        [SerializeField] HitBox hitBox;
-        IDisposable disposable;
-
-        [SerializeField] ParticleSystem particleprefab;
-        [SerializeField] AudioClip audioClip;
-        [SerializeField] AudioClip guradhitsound;
+        [SerializeField] AttackPlayer attackPlayer;
         
 
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 3;
-        [SerializeField] ParticleSystem SlashEffect;
-
-        readonly List<Hit> hitsInFrame = new ();
-        bool hitInState;
-        bool comboRequested;
-        public record Hit(Vector3 hitpoint, Hurtbox hurtbox);
 
         public override void OnEnter(IStrikerContext context) {
-            comboRequested = false;
-            SlashEffect.Play();
-
             context.PlayAnimation(animationClip, OnAnimationEnd);
-            
-            disposable = hitBox.OnEnterTrigger.Subscribe(collider => {
-                if (collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                    var hitpoint = collider.ClosestPoint(hitBox.transform.position);
-                    hitsInFrame.Add(new (hitpoint, hurtbox));
-                }
-            });
-            hitsInFrame.Clear();
-            hitInState = false;
+
+            attackPlayer.OnFilterHit
+                .Subscribe(collider => {
+                    if (!collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                        if (!hurtbox) {
+                            return false;
+                        }
+                    }
+
+                    return hurtbox.transform.root != context.Rigidbody.transform.root;
+                })
+                .AddTo(disposables);
+
+            attackPlayer.OnHit
+                .Subscribe(hit => {
+                    if (!hit.Collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
+                        if (!hurtbox) {
+                            return AttackPlayer.HitType.Cancel;
+                        }
+                    }
+
+                    var hitpoint = hit.Collider.ClosestPoint(attackPlayer.transform.position);
+                    var nockBackDirection = Mathf.Sign(hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
+                    var hitResult = hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
+
+                    return hitResult.status == HitResult.Status.Guarded
+                        ? AttackPlayer.HitType.Blocked
+                        : AttackPlayer.HitType.Normal;
+                })
+                .AddTo(disposables);
+
+            attackPlayer.Emit();
         }
 
         void OnAnimationEnd(IStrikerStateContext context) {
             context.TryTransition(nextNode);
         }
 
-        public override void OnUpdate(IStrikerStateContext context) {
-            if (!hitInState && hitsInFrame.Count >= 1) {
-                var closestHit = hitsInFrame.MinBy(e => Vector3.Distance(e.hitpoint, hitBox.transform.position));
-
-                Instantiate(particleprefab, closestHit.hitpoint, Quaternion.identity);
-
-                if (closestHit.hurtbox.IsGuarding) {
-                    AudioSource.PlayClipAtPoint(guradhitsound, closestHit.hitpoint);
-                }
-                
-                else {
-                    AudioSource.PlayClipAtPoint(audioClip, closestHit.hitpoint);
-                }
-
-                var nockBackDirection = Mathf.Sign(closestHit.hitpoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
-                closestHit.hurtbox.GiveHit(new HitStatus(damage, nockbackSpeed * nockBackDirection));
-
-                hitsInFrame.Clear();
-                hitInState = true;
-            }
-        }
+        public override void OnUpdate(IStrikerStateContext context) {}
 
         public override void OnExit(IStrikerContext context) {
-            
-            disposable.Dispose();
         }
 
         public override void OnAttackRequested(IStrikerStateContext context) {
-                context.TryTransition(comboNode);
+            context.PreventGroup();
+            context.TryTransition(comboNode);
         }
 
     }
