@@ -236,7 +236,7 @@ MonoBehaviour:
     clip: {fileID: -8444228808809566427, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 1
-  dashSpeed: 15
+  dashSpeed: 30
   nextNode: {fileID: 707581214265331847}
 --- !u!1 &1203691853417041816
 GameObject:
@@ -668,7 +668,7 @@ MonoBehaviour:
   animationClip:
     clip: {fileID: 2499177954120741571, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
-    speed: 1
+    speed: 1.5
   nextNode: {fileID: 707581214265331847}
   energyStorage: {fileID: 8599359020340622459}
   audioClip: {fileID: 8300000, guid: f2fa4c0af7115474287490b7732f1019, type: 3}
@@ -1063,7 +1063,7 @@ MonoBehaviour:
     fadeTime: 0
     speed: 2
   fallNode: {fileID: 3250182338819609899}
-  jumpSpeed: 15
+  jumpSpeed: 25
 --- !u!1 &5725501378216450077
 GameObject:
   m_ObjectHideFlags: 0
@@ -1160,7 +1160,7 @@ MonoBehaviour:
     clip: {fileID: -3419257869308726280, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 0.45
-  walkSpeed: 2
+  walkSpeed: 5
 --- !u!1 &5770577689459801561
 GameObject:
   m_ObjectHideFlags: 0
@@ -1533,7 +1533,7 @@ MonoBehaviour:
   animationClip:
     clip: {fileID: 3299788110970749302, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
-    speed: 1
+    speed: 1.5
   nextNode: {fileID: 707581214265331847}
   audioClip: {fileID: 8300000, guid: c3a149582d15a2b49aba6e03f668f067, type: 3}
   audioClip2: {fileID: 8300000, guid: 7a4b7933c6d5e564cbc8f620cfcc12be, type: 3}
