@@ -14,6 +14,7 @@ namespace Core.LargeWizard {
         float launchedDamage;
         float knockbackSpeed;
         bool isLaunched;
+        Coroutine moveCoroutine;
 
         void Awake() {
             hurtbox = GetComponent<Hurtbox>();
@@ -58,7 +59,12 @@ namespace Core.LargeWizard {
 
         public void SpawnAtPositionThenReturn(Vector3 spawnPosition, float returnDurationSeconds) {
             transform.position = spawnPosition;
-            StartCoroutine(ReturnToOriginalPositionOverTime(returnDurationSeconds));
+            RestartMoveCoroutine(ReturnToOriginalPositionOverTime(returnDurationSeconds));
+        }
+
+        public void MoveToPositionAndFix(Vector3 targetPosition, float moveDurationSeconds) {
+            var targetLocalPosition = transform.parent.InverseTransformPoint(targetPosition);
+            RestartMoveCoroutine(MoveToTargetAndFixOverTime(targetLocalPosition, moveDurationSeconds));
         }
 
         public void LaunchForward(Vector3 forward, float speed, float damage, float knockbackSpeed, float lifetime) {
@@ -140,6 +146,47 @@ namespace Core.LargeWizard {
 
             transform.localPosition = originalLocalPosition;
             transform.localScale = originalLocalScale;
+        }
+
+        System.Collections.IEnumerator MoveToTargetAndFixOverTime(Vector3 targetLocalPosition, float durationSeconds) {
+            var elapsed = 0f;
+            var startLocalPosition = transform.localPosition;
+            var startLocalScale = transform.localScale;
+
+            if (durationSeconds <= 0f) {
+                transform.localPosition = targetLocalPosition;
+                transform.localScale = originalLocalScale;
+                originalLocalPosition = targetLocalPosition;
+                yield break;
+            }
+
+            while (elapsed < durationSeconds) {
+                if (isLaunched) {
+                    yield break;
+                }
+
+                elapsed += Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / durationSeconds);
+                transform.localPosition = Vector3.Lerp(startLocalPosition, targetLocalPosition, t);
+                transform.localScale = Vector3.Lerp(startLocalScale, originalLocalScale, t);
+                yield return null;
+            }
+
+            if (isLaunched) {
+                yield break;
+            }
+
+            transform.localPosition = targetLocalPosition;
+            transform.localScale = originalLocalScale;
+            originalLocalPosition = targetLocalPosition;
+        }
+
+        void RestartMoveCoroutine(System.Collections.IEnumerator routine) {
+            if (moveCoroutine != null) {
+                StopCoroutine(moveCoroutine);
+            }
+
+            moveCoroutine = StartCoroutine(routine);
         }
 
         void ApplyOwnerCollisionIgnore() {

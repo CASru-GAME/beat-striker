@@ -210,7 +210,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
@@ -229,10 +229,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Fire
   damage: 10
   nockbackSpeed: 5
-  speed: 20
+  speed: 30
   impactPrefab: {fileID: 2662001439135803105, guid: 75138a5d551570e44b742c7e6a1bebb6, type: 3}
   audioClip: {fileID: 8300000, guid: 866865d01aaa6ec4aadd749de3db7e81, type: 3}
   trail: {fileID: 977642696518137299}
+  Hurtbox: {fileID: 0}
 --- !u!135 &8729262217227970870
 SphereCollider:
   m_ObjectHideFlags: 0
