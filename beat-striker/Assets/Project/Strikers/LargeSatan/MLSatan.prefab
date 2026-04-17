@@ -5346,7 +5346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6006d04b3796b464fb63ec944c6ecaad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hurtbox
-  isGuarding: 1
+  isGuarding: 0
   strikerHub: {fileID: 8716767000433258826}
 --- !u!114 &641907338413459665
 MonoBehaviour:

@@ -564,7 +564,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6006d04b3796b464fb63ec944c6ecaad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hurtbox
-  isGuarding: 1
+  isGuarding: 0
   strikerHub: {fileID: 1829485864700888609}
 --- !u!1 &2997061844858452564
 GameObject:
@@ -1379,7 +1379,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   fireTime: 0
-  groundRayStartHeight: 20
+  raycastStartOffset: {x: 0, y: 0.5, z: 0}
   groundRayDistance: 50
 --- !u!1 &7302355662261391067
 GameObject:
