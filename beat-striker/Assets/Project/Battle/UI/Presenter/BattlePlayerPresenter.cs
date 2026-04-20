@@ -7,6 +7,8 @@ namespace Alice {
     public interface IBattlePlayerPresenter {
         void PresentRoundPlayableStart();
         void PresentRoundPlayableFinish();
+        void PresentTutorialPause();
+        void PresentTutorialResume();
         Task PlayOpeningHpFillAsync();
     }
 
@@ -28,6 +30,7 @@ namespace Alice {
         readonly AliceRingView ringView;
         bool roundPlayable;
         bool isAttentionActive;
+        bool isTutorialPaused;
 
         public BattlePlayerPresenter(BattlePlayerView battlePlayerView, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer, Observable<bool> attentionActiveState, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry) {
             this.battlePlayerView = battlePlayerView;
@@ -88,15 +91,23 @@ namespace Alice {
 
         public void PresentRoundPlayableStart() {
             roundPlayable = true;
-            if (!isAttentionActive) {
-                ringView.ActivateBattleView(playerId);
-            }
+            RefreshBattleViewVisibility();
         }
 
         public void PresentRoundPlayableFinish() {
             roundPlayable = false;
-            ringView.DeactivateBattleView();
+            RefreshBattleViewVisibility();
             comboView.SetComboCount(0);
+        }
+
+        public void PresentTutorialPause() {
+            isTutorialPaused = true;
+            RefreshBattleViewVisibility();
+        }
+
+        public void PresentTutorialResume() {
+            isTutorialPaused = false;
+            RefreshBattleViewVisibility();
         }
 
         public Task PlayOpeningHpFillAsync() {
@@ -172,15 +183,16 @@ namespace Alice {
 
         void OnAttentionActiveStateChanged(bool isActive) {
             isAttentionActive = isActive;
+            RefreshBattleViewVisibility();
+        }
 
-            if (isAttentionActive) {
-                ringView.DeactivateBattleView();
+        void RefreshBattleViewVisibility() {
+            if (roundPlayable && !isAttentionActive && !isTutorialPaused) {
+                ringView.ActivateBattleView(playerId);
                 return;
             }
 
-            if (roundPlayable) {
-                ringView.ActivateBattleView(playerId);
-            }
+            ringView.DeactivateBattleView();
         }
     }
 }

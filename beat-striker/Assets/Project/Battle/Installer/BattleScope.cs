@@ -11,6 +11,7 @@ namespace Alice {
         [SerializeField] AudioSource audioSource;
         [SerializeField] BattleOpeningBgmPlayer battleOpeningBgmPlayer;
         [SerializeField] BattlePresenterView battlePresenter;
+        [SerializeField] BattleTutorialView battleTutorialView;
         [SerializeField] ResultSceneView resultScene;
         [SerializeField] BattlePlayerView[] battlePlayerPresenters;
 
@@ -24,15 +25,17 @@ namespace Alice {
             builder.Register<IBattleJudge, BattleJudge>(Lifetime.Singleton);
             builder.RegisterInstance(battlePresenter);
             builder.RegisterInstance(battlePresenter.SuspendMenuPresenter);
+            builder.RegisterInstance(battleTutorialView);
             builder.RegisterInstance<IBattleOpeningBgmPlayer>(battleOpeningBgmPlayer);
             builder.RegisterInstance(battlePlayerPresenters);
             builder.Register<BattleSuspendMenuPresenter>(Lifetime.Singleton);
             builder.Register<IBattlePresenter, BattlePresenter>(Lifetime.Singleton);
+            builder.Register<IBattleTutorialSignalEmitter, BattleTutorialPresenter>(Lifetime.Singleton);
             builder.Register<BattlePlayerPresenterCollection>(Lifetime.Singleton);
             builder.Register<IBattlePlayerPresenter[]>(resolver => resolver.Resolve<BattlePlayerPresenterCollection>().Presenters, Lifetime.Singleton);
             builder.RegisterInstance(resultScene);
             builder.Register<ResultScene>(Lifetime.Singleton);
-            builder.Register<IBattleFlow, BattleFlow>(Lifetime.Singleton);
+            builder.Register<BattleFlow>(Lifetime.Singleton);
             builder.Register<IBeatjudge, BeatJudge>(Lifetime.Singleton);
             builder.Register<IMusicPlayer, MusicPlayer>(Lifetime.Singleton);
             builder.RegisterEntryPoint<BattleFlowStarter>(Lifetime.Singleton);
@@ -50,7 +53,9 @@ namespace Alice {
                 _ = container.Resolve<IAudioSetting>();
                 _ = container.Resolve<IBattleSelectSetting>();
                 _ = container.Resolve<IBattleOpeningBgmPlayer>();
-                _ = container.Resolve<IBattleFlow>();
+                _ = container.Resolve<BattleFlow>();
+                _ = container.Resolve<BattleTutorialView>();
+                _ = container.Resolve<IBattleTutorialSignalEmitter>();
                 _ = container.Resolve<IBattlePlayerPresenter[]>();
                 _ = container.Resolve<IBeatjudge>();
                 _ = container.Resolve<IMusicPlayer>();
@@ -75,9 +80,9 @@ namespace Alice {
         }
 
         sealed class BattleFlowStarter : IInitializable {
-            readonly IBattleFlow battleFlow;
+            readonly BattleFlow battleFlow;
 
-            public BattleFlowStarter(IBattleFlow battleFlow) {
+            public BattleFlowStarter(BattleFlow battleFlow) {
                 this.battleFlow = battleFlow;
             }
 

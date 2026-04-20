@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5619376666138620005}
   - component: {fileID: 9133904809460036572}
   - component: {fileID: 8179424678283996581}
+  - component: {fileID: 6595342875354204002}
   - component: {fileID: 9201860890254514560}
   - component: {fileID: 906267494629859191}
   - component: {fileID: 7111598241528783917}
@@ -77,6 +78,25 @@ MonoBehaviour:
     Striker: 1
   - PlayerId: 1
     Striker: 0
+--- !u!114 &6595342875354204002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2bff9e7a72ec4ef39324d837761ecdb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.TutorialSetting
+  stage: 1
+  musicId: sento
+  playerSelections:
+  - playerId: 0
+    striker: 3
+  - playerId: 1
+    striker: 3
 --- !u!114 &9201860890254514560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -341,6 +361,7 @@ MonoBehaviour:
   strikerRegistry: {fileID: 906267494629859191}
   battleSelectSetting: {fileID: 9133904809460036572}
   playerSelectSetting: {fileID: 8179424678283996581}
+  tutorialSetting: {fileID: 6595342875354204002}
   audioSetting: {fileID: 3568961321467451832}
   battleRuleSetting: {fileID: 7738983256970939939}
   appTransitionFactory: {fileID: 9201860890254514560}

@@ -1972,6 +1972,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TitleScene
   settingsDialogScopePrefab: {fileID: 258934228708673365, guid: 8b64609053b3949d586478668475fd7c, type: 3}
   settingsDialogParent: {fileID: 984328592}
+  tutorialStartDialogPrefab: {fileID: 6412921582806346075, guid: fd82c29a2631d4386bf878099ed1e7ab, type: 3}
+  tutorialStartDialogParent: {fileID: 984328592}
   settingsEmitter: {fileID: 462537238}
   quitEmitter: {fileID: 1433791947}
 --- !u!4 &1486525827

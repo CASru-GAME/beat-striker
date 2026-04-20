@@ -6,6 +6,7 @@ using UnityEngine;
 namespace Alice {
     public class BattlePresenterView : MonoBehaviour {
         [SerializeField] StageCamera stageCamera;
+        [SerializeField] BeatExpandView beatExpandView;
         [SerializeField] BattleRoundStartView roundStartPresenter;
         [SerializeField] BattleResultTextView resultTextPresenter;
         [SerializeField] AttentionTextView attentionTextView;
@@ -22,6 +23,7 @@ namespace Alice {
         TaskCompletionSource<bool> uiSlideCompletionSource;
 
         public StageCamera StageCamera => stageCamera;
+        public BeatExpandView BeatExpandView => beatExpandView;
         public BattleRoundStartView RoundStartPresenter => roundStartPresenter;
         public BattleResultTextView ResultTextPresenter => resultTextPresenter;
         public AttentionTextView AttentionTextView => attentionTextView;

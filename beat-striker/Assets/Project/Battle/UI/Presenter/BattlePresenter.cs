@@ -167,6 +167,7 @@ namespace Alice {
         }
 
         public async Task PlayBattleFinishFadeInAsync() {
+            battlePresenterView.StageCamera.PresentBattleFinish();
             await battlePresenterView.FadePresenter.PresentFadeInAsync();
         }
 
@@ -276,7 +277,10 @@ namespace Alice {
                 .AddTo(audioSubscriptions);
 
             musicPlayer.OnViewBeatTiming
-                .Subscribe(_ => battlePresenterView.StageCamera.RequestViewBeatPulse())
+                .Subscribe(_ => {
+                    battlePresenterView.StageCamera.RequestViewBeatPulse();
+                    battlePresenterView.BeatExpandView.PlayBeatExpand();
+                })
                 .AddTo(audioSubscriptions);
         }
 

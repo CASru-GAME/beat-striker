@@ -87,7 +87,7 @@ namespace Alice {
                 return;
             }
 
-            currentTapBpmLabel.text = bpmValue > 0f ? bpmValue.ToString("0.0") : "--.-";
+            currentTapBpmLabel.text = bpmValue > 0f ? bpmValue.ToString("0.0") : "タイミング良くタップ！";
         }
 
         IEnumerator TapPulseRoutine() {

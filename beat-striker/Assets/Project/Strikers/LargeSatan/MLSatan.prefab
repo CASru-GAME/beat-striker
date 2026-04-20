@@ -5505,7 +5505,7 @@ MonoBehaviour:
     fadeTime: 0.2
     speed: 1
   fallNode: {fileID: 5108383347425668583}
-  jumpSpeed: 30
+  jumpSpeed: 35
   upwardThreshold: 0.96
   duration: 0.4
   endSpeedRatio: 0.01
@@ -5886,8 +5886,8 @@ MonoBehaviour:
     speed: 1
   nextNode: {fileID: 5551572408817209888}
   consecutiveDashSpeeds:
-  - 20
-  - 30
+  - 35
+  - 45
   - 50
   reentryWindowSeconds: 0.7
   duration: 0.3

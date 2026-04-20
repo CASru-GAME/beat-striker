@@ -20,6 +20,7 @@ namespace Alice {
 		[SerializeField] AppStrikerRegistry strikerRegistry;
 		[SerializeField] BattleSelectSetting battleSelectSetting;
 		[SerializeField] PlayerSelectSetting playerSelectSetting;
+		[SerializeField] TutorialSetting tutorialSetting;
 		[SerializeField] AudioSetting audioSetting;
 		[SerializeField] BattleRuleSetting battleRuleSetting;
 		[SerializeField] AppTransitionFactory appTransitionFactory;
@@ -59,6 +60,7 @@ namespace Alice {
 			builder.RegisterInstance<IAppStrikerRegistry>(strikerRegistry);
 			builder.RegisterInstance<IBattleSelectSetting>(battleSelectSetting);
 			builder.RegisterInstance<IPlayerSelectSetting>(playerSelectSetting);
+			builder.RegisterInstance<ITutorialSetting>(tutorialSetting);
 			builder.RegisterInstance<IAudioSetting>(audioSetting);
 			builder.Register<ICursorMoveSetting, CursorMoveSetting>(Lifetime.Singleton);
 			builder.RegisterInstance<IBattleRuleSetting>(battleRuleSetting);
@@ -80,6 +82,7 @@ namespace Alice {
 				_ = container.Resolve<IAppStrikerRegistry>();
 				_ = container.Resolve<IBattleSelectSetting>();
 				_ = container.Resolve<IPlayerSelectSetting>();
+				_ = container.Resolve<ITutorialSetting>();
 				_ = container.Resolve<IAudioSetting>();
 				_ = container.Resolve<ICursorMoveSetting>();
 				_ = container.Resolve<IBattleRuleSetting>();

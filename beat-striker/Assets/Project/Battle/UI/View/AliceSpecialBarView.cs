@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Alice {
@@ -7,12 +8,15 @@ namespace Alice {
         [SerializeField] Graphic specialBarGraphic;
         [SerializeField] Material normalMaterial;
         [SerializeField] Material fullMaterial;
-        [SerializeField] float fillSmoothSpeed = 4f;
+        [FormerlySerializedAs("fillSmoothSpeed")]
+        [SerializeField, Min(0f)] float fillDurationSeconds = 0.25f;
         [SerializeField] AudioClip fullFillSound;
         [SerializeField] ButtonGuideStartOffsetMotion buttonGuideMotion;
 
         float currentRatio;
         float targetRatio;
+        float fillStartRatio;
+        float fillElapsedSeconds;
         bool isFull;
         bool materialInitialized;
         float lastSetRatio;
@@ -20,6 +24,8 @@ namespace Alice {
         void Awake() {
             currentRatio = 0f;
             targetRatio = currentRatio;
+            fillStartRatio = currentRatio;
+            fillElapsedSeconds = 0f;
             ApplyScale(currentRatio);
             ApplyFullMaterial(false);
         }
@@ -27,21 +33,45 @@ namespace Alice {
         void Update() {
             if (targetRatio <= currentRatio) return;
 
-            currentRatio = Mathf.MoveTowards(currentRatio, targetRatio, fillSmoothSpeed * Time.deltaTime);
+            if (fillDurationSeconds <= 0f) {
+                currentRatio = targetRatio;
+                ApplyScale(currentRatio);
+                ApplyFullMaterial(currentRatio >= 1f);
+                return;
+            }
+
+            fillElapsedSeconds = Mathf.Min(fillDurationSeconds, fillElapsedSeconds + Time.deltaTime);
+            var progress = Mathf.Clamp01(fillElapsedSeconds / fillDurationSeconds);
+            currentRatio = Mathf.Lerp(fillStartRatio, targetRatio, progress);
             ApplyScale(currentRatio);
+
+            if (Mathf.Approximately(currentRatio, targetRatio)) {
+                ApplyFullMaterial(currentRatio >= 1f);
+            }
         }
 
         public void SetSpecialRatio(float ratio) {
             var clampedRatio = Mathf.Clamp01(ratio);
-            targetRatio = clampedRatio;
+            var previousRatio = currentRatio;
 
             if (clampedRatio < currentRatio) {
                 currentRatio = clampedRatio;
                 ApplyScale(currentRatio);
             }
 
-            ApplyFullMaterial(clampedRatio >= 1f);
+            targetRatio = clampedRatio;
+            fillStartRatio = currentRatio;
+            fillElapsedSeconds = 0f;
+
             lastSetRatio = clampedRatio;
+
+            if (clampedRatio < previousRatio) {
+                ApplyFullMaterial(clampedRatio >= 1f);
+            }
+
+            if (clampedRatio >= 1f && currentRatio >= 1f) {
+                ApplyFullMaterial(true);
+            }
         }
 
         void ApplyScale(float ratio) {

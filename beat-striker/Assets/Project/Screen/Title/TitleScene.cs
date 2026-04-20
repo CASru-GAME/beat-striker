@@ -1,24 +1,31 @@
 using R3;
 using UnityEngine;
 using Alice;
-using System;
 
 namespace Alice {
     public class TitleScene : MonoBehaviour {
         readonly Subject<Unit> gotoSelectRequested = new();
         readonly Subject<Unit> openSettingsRequested = new();
         readonly Subject<Unit> quitRequested = new();
+        readonly Subject<Unit> tutorialBattleAccepted = new();
+        readonly Subject<Unit> tutorialBattleDeclined = new();
 
         [SerializeField] SettingsDialogScope settingsDialogScopePrefab;
         [SerializeField] Transform settingsDialogParent;
+        [SerializeField] TutorialStartDialog tutorialStartDialogPrefab;
+        [SerializeField] Transform tutorialStartDialogParent;
         [SerializeField] ActionEmitter settingsEmitter;
         [SerializeField] ActionEmitter quitEmitter;
 
         SettingsDialogScope settingsDialogScope;
+        TutorialStartDialog tutorialStartDialog;
+        bool tutorialDialogBound;
 
         public Observable<Unit> GotoSelectRequested => gotoSelectRequested;
         public Observable<Unit> GotoSettingsRequested => openSettingsRequested;
         public Observable<Unit> QuitRequested => quitRequested;
+        public Observable<Unit> TutorialBattleAccepted => tutorialBattleAccepted;
+        public Observable<Unit> TutorialBattleDeclined => tutorialBattleDeclined;
 
         public void RequestGotoSelectScene() {
             gotoSelectRequested.OnNext(Unit.Default);
@@ -35,10 +42,7 @@ namespace Alice {
         }
 
         void Awake() {
-            if (settingsEmitter != null) {
-                settingsEmitter.OnClickEvent.Subscribe(_ => RequestOpenSettings()).AddTo(this);
-            }
-
+            settingsEmitter.OnClickEvent.Subscribe(_ => RequestOpenSettings()).AddTo(this);
             quitEmitter.OnClickEvent.Subscribe(_ => RequestQuitGame()).AddTo(this);
         }
 
@@ -56,6 +60,45 @@ namespace Alice {
             }
 
             settingsDialogScope.gameObject.SetActive(false);
+        }
+
+        public void OpenTutorialStartDialog() {
+            if (tutorialStartDialog == null) {
+                tutorialStartDialog = Instantiate(tutorialStartDialogPrefab, tutorialStartDialogParent);
+            }
+
+            BindTutorialDialogIfNeeded();
+            tutorialStartDialog.SetVisible(true);
+        }
+
+        public void CloseTutorialStartDialog() {
+            if (tutorialStartDialog == null) {
+                return;
+            }
+
+            tutorialStartDialog.SetVisible(false);
+        }
+
+        void BindTutorialDialogIfNeeded() {
+            if (tutorialDialogBound) {
+                return;
+            }
+
+            tutorialStartDialog.YesRequested
+                .Subscribe(_ => {
+                    tutorialStartDialog.SetVisible(false);
+                    tutorialBattleAccepted.OnNext(Unit.Default);
+                })
+                .AddTo(this);
+
+            tutorialStartDialog.NoRequested
+                .Subscribe(_ => {
+                    tutorialStartDialog.SetVisible(false);
+                    tutorialBattleDeclined.OnNext(Unit.Default);
+                })
+                .AddTo(this);
+
+            tutorialDialogBound = true;
         }
     }
 }
