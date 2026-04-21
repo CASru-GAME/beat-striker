@@ -157,6 +157,17 @@
                 },
                 {
                     "name": "",
+                    "id": "99557071-8b14-44b2-aa90-db93d7b77597",
+                    "path": "<Gamepad>/dpad",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";SwichProController;Gamepad",
+                    "action": "Direction",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "d581ea08-3fb9-4c21-ae43-3c8db3f50b0f",
                     "path": "<Keyboard>/i",
                     "interactions": "",
