@@ -165,96 +165,14 @@ namespace Core.LargeSatan {
         Vector3 ComputeSafeWarpPosition(IStrikerContext context) {
             Vector3 currentPos = context.Rigidbody.position;
             Vector3 targetPos = emitStoppedByWall ? emitStopPosition : poleArm.transform.position;
-            Vector3 dir = targetPos - currentPos;
-            float dist = dir.magnitude;
-
-            if (dist <= 0.01f) {
-                return currentPos;
-            }
-
-            var dirNormalized = dir / dist;
-
-            float radius = fallbackClearanceRadius;
-            float heightOffset = 0f;
-            if (context.Rigidbody.TryGetComponent<CapsuleCollider>(out var capsule)) {
-                radius = capsule.radius;
-                heightOffset = Mathf.Max(0f, capsule.height * 0.5f - capsule.radius);
-            }
-
-            var safeDist = ComputeWallSafeDistance(context, currentPos, dirNormalized, dist, radius, heightOffset);
-            if (safeDist <= 0.01f) {
-                return currentPos;
-            }
-
-            safeDist = ClampDistanceByOpponent(currentPos, dirNormalized, safeDist, context.GetOpponent().CenterPosition.CurrentValue, minWarpDistanceFromOpponent);
-            safeDist = ComputeWallSafeDistance(context, currentPos, dirNormalized, safeDist, radius, heightOffset);
-
-            return currentPos + dirNormalized * safeDist;
-        }
-
-        float ComputeWallSafeDistance(IStrikerContext context, Vector3 startPos, Vector3 moveDirection, float maxDistance, float radius, float heightOffset) {
-            if (maxDistance <= 0f) {
-                return 0f;
-            }
-
-            float safeDist = maxDistance;
-
-            if (context.Rigidbody.TryGetComponent<CapsuleCollider>(out var cap)) {
-                Vector3 startCenter = startPos + cap.center;
-                Vector3 p1 = startCenter + Vector3.up * heightOffset;
-                Vector3 p2 = startCenter - Vector3.up * heightOffset;
-
-                if (Physics.CapsuleCast(p1, p2, radius, moveDirection, out var hit, maxDistance, poleArm.wallMask, QueryTriggerInteraction.Ignore)) {
-                    safeDist = hit.distance - 0.02f;
-                }
-            }
-            else {
-                Vector3 castStart = startPos + Vector3.up * radius;
-                if (Physics.SphereCast(castStart, radius, moveDirection, out var hit, maxDistance, poleArm.wallMask, QueryTriggerInteraction.Ignore)) {
-                    safeDist = hit.distance - 0.02f;
-                }
-            }
-
-            return Mathf.Max(0f, safeDist);
-        }
-
-        static float ClampDistanceByOpponent(Vector3 startPos, Vector3 moveDirection, float desiredDistance, Vector3 opponentPos, float minDistance) {
-            if (minDistance <= 0f || desiredDistance <= 0f) {
-                return Mathf.Max(0f, desiredDistance);
-            }
-
-            var minDistanceSq = minDistance * minDistance;
-            var endPos = startPos + moveDirection * desiredDistance;
-
-            if ((endPos - opponentPos).sqrMagnitude >= minDistanceSq) {
-                return desiredDistance;
-            }
-
-            var startToOpponent = startPos - opponentPos;
-            var startDistanceSq = startToOpponent.sqrMagnitude;
-            if (startDistanceSq <= minDistanceSq) {
-                return 0f;
-            }
-
-            var b = 2f * Vector3.Dot(startToOpponent, moveDirection);
-            var c = startDistanceSq - minDistanceSq;
-            var discriminant = b * b - 4f * c;
-
-            if (discriminant <= 0f) {
-                return 0f;
-            }
-
-            var sqrtDiscriminant = Mathf.Sqrt(discriminant);
-            var t1 = (-b - sqrtDiscriminant) * 0.5f;
-            var t2 = (-b + sqrtDiscriminant) * 0.5f;
-            var enter = Mathf.Min(t1, t2);
-            var exit = Mathf.Max(t1, t2);
-
-            if (desiredDistance <= enter || desiredDistance >= exit) {
-                return desiredDistance;
-            }
-
-            return Mathf.Max(0f, enter - 0.001f);
+            return StrikerWarpSafetyUtility.ComputeSafeDestination(
+                context,
+                currentPos,
+                targetPos,
+                poleArm.wallMask,
+                fallbackClearanceRadius,
+                minWarpDistanceFromOpponent
+            );
         }
 
         Quaternion ComputeFacingRotationTowardsOpponent(IStrikerContext context, Vector3 warpPosition) {

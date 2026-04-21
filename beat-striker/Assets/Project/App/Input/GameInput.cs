@@ -238,7 +238,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/leftStick"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";SwichProController;Gamepad"",
                     ""action"": ""Direction"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -260,7 +260,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/buttonNorth"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";Gamepad;SwichProController"",
                     ""action"": ""North"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -282,7 +282,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/buttonWest"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";Gamepad;SwichProController"",
                     ""action"": ""West"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -304,7 +304,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/buttonSouth"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";Gamepad;SwichProController"",
                     ""action"": ""South"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -326,7 +326,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/buttonEast"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";Gamepad;SwichProController"",
                     ""action"": ""East"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -348,7 +348,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/leftShoulder"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";Gamepad;SwichProController"",
                     ""action"": ""Left"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -370,7 +370,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/rightShoulder"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";Gamepad;SwichProController"",
                     ""action"": ""Right"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -392,7 +392,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/u"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";Gamepad;SwichProController"",
                     ""action"": ""Start"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -414,7 +414,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/e"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";SwichProController"",
+                    ""groups"": "";Gamepad;SwichProController"",
                     ""action"": ""Select"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false

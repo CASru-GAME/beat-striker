@@ -5657,13 +5657,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aac56f22eac514e41a244e7dce151b9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LargeSatanState
-  parents: []
+  parents:
+  - {fileID: 1412494263704707963}
   animationClip:
     clip: {fileID: 7400000, guid: 15481560e7a4b441babdfe3afbb19be0, type: 2}
     fadeTime: 0.3
     speed: 1
   nextNode: {fileID: 3444350880286515863}
-  shield: {fileID: 2151338942946470407}
+  mainCollider: {fileID: 11034109240377141}
+  view: {fileID: 4900833177632029217}
+  effectPlayer: {fileID: 4209059321873154344}
+  endEffectPlayer: {fileID: 3777671353441019161}
+  wallMask:
+    serializedVersion: 2
+    m_Bits: 64
+  guardDuration: 0.65
+  guardShiftDistance: 0
+  fallbackClearanceRadius: 0.5
+  minDistanceFromOpponent: 0.5
 --- !u!1 &2298950488656589939
 GameObject:
   m_ObjectHideFlags: 0
@@ -27741,6 +27752,11 @@ Transform:
 --- !u!4 &3399488055547213054 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 228264232531828921, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
+  m_PrefabInstance: {fileID: 3172677619479974983}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4900833177632029217 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -1728013695380148634, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
   m_PrefabInstance: {fileID: 3172677619479974983}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &5330020994325101532 stripped

@@ -17,6 +17,7 @@ namespace Alice {
 
         readonly TitleScene view;
         readonly ISceneTransitionService sceneTransitionService;
+        readonly IGamePadRegistry gamePadRegistry;
         readonly IPlayerSelectSetting playerSelectSetting;
         readonly IBattleSelectSetting battleSelectSetting;
         readonly ITutorialSetting tutorialSetting;
@@ -27,15 +28,22 @@ namespace Alice {
         public TitlePresenter(
             TitleScene view,
             ISceneTransitionService sceneTransitionService,
+            IGamePadRegistry gamePadRegistry,
             IPlayerSelectSetting playerSelectSetting,
             IBattleSelectSetting battleSelectSetting,
             ITutorialSetting tutorialSetting) {
             this.view = view;
             this.sceneTransitionService = sceneTransitionService;
+            this.gamePadRegistry = gamePadRegistry;
             this.playerSelectSetting = playerSelectSetting;
             this.battleSelectSetting = battleSelectSetting;
             this.tutorialSetting = tutorialSetting;
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
+
+            this.gamePadRegistry.OnAnyButtonDown
+                .Where(e => e.Button == GamePadButton.Select)
+                .Subscribe(_ => RotateFaceButtonWiring())
+                .AddTo(subscriptions);
 
             this.view.GotoSelectRequested
                 .Subscribe(_ => {
@@ -145,6 +153,14 @@ namespace Alice {
             }
 
             inputState = TitleInputState.Ready;
+        }
+
+        void RotateFaceButtonWiring() {
+            if (inputState != TitleInputState.Ready) {
+                return;
+            }
+
+            gamePadRegistry.RotateFaceButtonWiringClockwise();
         }
 
         void QuitGame() {

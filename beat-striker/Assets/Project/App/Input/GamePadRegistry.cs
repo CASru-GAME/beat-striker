@@ -26,6 +26,7 @@ namespace Alice {
         void RequestUnregister(IGamePad gamePad);
         IPlayerGamePad Get(int playerId);
         void HandlePlayerSlotClick(int sourcePlayerId, int targetPlayerId);
+        void RotateFaceButtonWiringClockwise();
         Observable<PlayerGamePadButtonEvent> OnAnyButtonDown { get; }
     }
 
@@ -41,6 +42,7 @@ namespace Alice {
     public class GamePadRegistry : IGamePadRegistry {
         readonly List<PlayerGamePad> registry = new();
         readonly Subject<PlayerGamePadButtonEvent> onAnyButtonDown = new();
+        int faceButtonRotationOffset;
 
         public Observable<PlayerGamePadButtonEvent> OnAnyButtonDown => onAnyButtonDown;
 
@@ -118,6 +120,11 @@ namespace Alice {
             sourceSlot.ClearPrimary();
         }
 
+        public void RotateFaceButtonWiringClockwise() {
+            faceButtonRotationOffset = (faceButtonRotationOffset + 1) % 4;
+            Debug.Log($"Rotated face button wiring clockwise. offset={faceButtonRotationOffset}".ToCyan());
+        }
+
         PlayerGamePad EnsurePlayerSlot(int playerId) {
             while (registry.Count <= playerId) {
                 registry.Add(new PlayerGamePad(registry.Count, null, false, HandleButtonDown, HandleButtonUp));
@@ -127,13 +134,46 @@ namespace Alice {
 
         void HandleButtonDown(int playerId, GamePadButton button) {
             var player = EnsurePlayerSlot(playerId);
-            onAnyButtonDown.OnNext(new PlayerGamePadButtonEvent(playerId, button));
-            player.EmitButtonDown(button);
+            var mappedButton = MapFaceButton(button);
+            onAnyButtonDown.OnNext(new PlayerGamePadButtonEvent(playerId, mappedButton));
+            player.EmitButtonDown(mappedButton);
         }
 
         void HandleButtonUp(int playerId, GamePadButton button) {
             var player = EnsurePlayerSlot(playerId);
-            player.EmitButtonUp(button);
+            player.EmitButtonUp(MapFaceButton(button));
+        }
+
+        GamePadButton MapFaceButton(GamePadButton button) {
+            if (faceButtonRotationOffset == 0) {
+                return button;
+            }
+
+            return button switch {
+                GamePadButton.North => RotateFaceButton(GamePadButton.North),
+                GamePadButton.East => RotateFaceButton(GamePadButton.East),
+                GamePadButton.South => RotateFaceButton(GamePadButton.South),
+                GamePadButton.West => RotateFaceButton(GamePadButton.West),
+                _ => button,
+            };
+        }
+
+        GamePadButton RotateFaceButton(GamePadButton button) {
+            var index = button switch {
+                GamePadButton.North => 0,
+                GamePadButton.East => 1,
+                GamePadButton.South => 2,
+                GamePadButton.West => 3,
+                _ => 0,
+            };
+
+            var rotatedIndex = (index + faceButtonRotationOffset) % 4;
+            return rotatedIndex switch {
+                0 => GamePadButton.North,
+                1 => GamePadButton.East,
+                2 => GamePadButton.South,
+                _ => GamePadButton.West,
+            };
         }
 
         class PlayerGamePad : IPlayerGamePad {

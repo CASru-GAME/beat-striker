@@ -150,7 +150,7 @@
                     "path": "<Gamepad>/leftStick",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": ";SwichProController;Gamepad",
                     "action": "Direction",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -172,7 +172,7 @@
                     "path": "<Gamepad>/buttonNorth",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": ";Gamepad;SwichProController",
                     "action": "North",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -194,7 +194,7 @@
                     "path": "<Gamepad>/buttonWest",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": ";Gamepad;SwichProController",
                     "action": "West",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -216,7 +216,7 @@
                     "path": "<Gamepad>/buttonSouth",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": ";Gamepad;SwichProController",
                     "action": "South",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -238,7 +238,7 @@
                     "path": "<Gamepad>/buttonEast",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": ";Gamepad;SwichProController",
                     "action": "East",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -260,7 +260,7 @@
                     "path": "<Gamepad>/leftShoulder",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": ";Gamepad;SwichProController",
                     "action": "Left",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -282,7 +282,7 @@
                     "path": "<Gamepad>/rightShoulder",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": ";Gamepad;SwichProController",
                     "action": "Right",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -304,7 +304,7 @@
                     "path": "<Keyboard>/u",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": ";Gamepad;SwichProController",
                     "action": "Start",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -326,7 +326,7 @@
                     "path": "<Keyboard>/e",
                     "interactions": "",
                     "processors": "",
-                    "groups": ";SwichProController",
+                    "groups": ";Gamepad;SwichProController",
                     "action": "Select",
                     "isComposite": false,
                     "isPartOfComposite": false

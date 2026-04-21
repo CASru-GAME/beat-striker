@@ -136,6 +136,7 @@
     <Compile Include="Assets/Project/Strikers/LargeHero/states/DeadState.cs" />
     <Compile Include="Assets/Project/Strikers/LargeHero/states/TurnableGroup.cs" />
     <Compile Include="Assets/LeanTween/Testing/Scripts/LeanPool.cs" />
+    <Compile Include="Assets/Project/Strikers/LargeSatan/States/StrikerWarpSafetyUtility.cs" />
     <Compile Include="Assets/Project/Strikers/LargeWizard/Effects/Attack2/Ice.cs" />
     <Compile Include="Assets/Project/Screen/StageSelect/Panel.cs" />
     <Compile Include="Assets/Project/Strikers/LargeHero/states/WalkBackwardState.cs" />
