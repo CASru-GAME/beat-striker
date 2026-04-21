@@ -686,15 +686,9 @@ namespace Alice {
             Vector3 camSpace0 = transform.InverseTransformPoint(GetPlayerCenterPosition(0));
             Vector3 camSpace1 = transform.InverseTransformPoint(GetPlayerCenterPosition(1));
 
-            Vector2 playersDeltaInCameraPlane = new Vector2(
-                camSpace1.x - camSpace0.x,
-                camSpace1.y - camSpace0.y);
-            float playersDistance = playersDeltaInCameraPlane.magnitude;
             float currentDepth = Mathf.Max(0.01f, (camSpace0.z + camSpace1.z) * 0.5f);
-            float diagonalDistanceRatio = CalculateDiagonalDistanceRatio(playersDistance);
-            float diagonalScale = Mathf.Sqrt(stageCamera.aspect * stageCamera.aspect + 1f);
             float tanHalfVertical = Mathf.Max(0.0001f, Mathf.Tan(stageCamera.fieldOfView * 0.5f * Mathf.Deg2Rad));
-            float targetDepth = playersDistance / (2f * tanHalfVertical * diagonalDistanceRatio * diagonalScale);
+            float targetDepth = CalculateTargetDepthToFitPlayers(camSpace0, camSpace1, tanHalfVertical);
             float zoomSmoothTime = targetDepth < currentDepth ? zoomInSmoothTime : zoomOutSmoothTime;
 
             float smoothedDepth = Mathf.SmoothDamp(
@@ -712,6 +706,19 @@ namespace Alice {
             float normalizedDistance = Mathf.Clamp01(playersDistance / safeMaxDistance);
             float diagonalDistanceRatio = normalizedDistanceToDiagonalRatio.Evaluate(normalizedDistance);
             return Mathf.Clamp(diagonalDistanceRatio, 0.05f, 0.95f);
+        }
+
+        private float CalculateTargetDepthToFitPlayers(Vector3 camSpace0, Vector3 camSpace1, float tanHalfVertical) {
+            Vector2 playersDeltaInCameraPlane = new Vector2(
+                camSpace1.x - camSpace0.x,
+                camSpace1.y - camSpace0.y);
+            float playersDistance = playersDeltaInCameraPlane.magnitude;
+            float diagonalDistanceRatio = CalculateDiagonalDistanceRatio(playersDistance);
+            float halfHorizontalSpan = Mathf.Abs(playersDeltaInCameraPlane.x) * 0.5f;
+            float halfVerticalSpan = Mathf.Abs(playersDeltaInCameraPlane.y) * 0.5f;
+            float horizontalDepth = halfHorizontalSpan / (tanHalfVertical * stageCamera.aspect * diagonalDistanceRatio);
+            float verticalDepth = halfVerticalSpan / (tanHalfVertical * diagonalDistanceRatio);
+            return Mathf.Max(horizontalDepth, verticalDepth);
         }
 
         private Vector3 GetPlayersLineOnPlane() {
@@ -775,15 +782,9 @@ namespace Alice {
         private void SnapCameraToBattleFraming() {
             Vector3 camSpace0 = transform.InverseTransformPoint(GetPlayerCenterPosition(0));
             Vector3 camSpace1 = transform.InverseTransformPoint(GetPlayerCenterPosition(1));
-            Vector2 playersDeltaInCameraPlane = new Vector2(
-                camSpace1.x - camSpace0.x,
-                camSpace1.y - camSpace0.y);
-            float playersDistance = playersDeltaInCameraPlane.magnitude;
             float currentDepth = Mathf.Max(0.01f, (camSpace0.z + camSpace1.z) * 0.5f);
-            float diagonalDistanceRatio = CalculateDiagonalDistanceRatio(playersDistance);
-            float diagonalScale = Mathf.Sqrt(stageCamera.aspect * stageCamera.aspect + 1f);
             float tanHalfVertical = Mathf.Max(0.0001f, Mathf.Tan(stageCamera.fieldOfView * 0.5f * Mathf.Deg2Rad));
-            float targetDepth = playersDistance / (2f * tanHalfVertical * diagonalDistanceRatio * diagonalScale);
+            float targetDepth = CalculateTargetDepthToFitPlayers(camSpace0, camSpace1, tanHalfVertical);
             float depthDelta = currentDepth - targetDepth;
             transform.position += transform.forward * depthDelta;
 

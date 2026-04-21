@@ -23,7 +23,9 @@ namespace Core.LargeSatan {
         [SerializeField] float nockbackSpeed = 10;
 
         [SerializeField] AttackPlayer attackPlayer;
-        [SerializeField] float impact = 5;
+        [SerializeField] float impact = 5, landimpact = 10;
+
+        [SerializeField] EffectPlayer landEffectPlayer;
 
         float elapsedTime;
         float groundRayDistance;
@@ -110,6 +112,8 @@ namespace Core.LargeSatan {
             hasLanded = true;
             context.Rigidbody.linearVelocity = Vector3.zero;
             context.PlayAnimation(landAnimationClip);
+            context.GenerateImpact(new StrikerImpact(landimpact * Vector3.up));
+            landEffectPlayer.Emit(landEffectPlayer.transform);
             this.ScheduleStateEvent(landTransitionDelay, nextContext => {
                 nextContext.TryTransition(nextNode);
             });

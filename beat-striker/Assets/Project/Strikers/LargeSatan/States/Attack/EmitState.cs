@@ -32,6 +32,7 @@ namespace Core.LargeSatan {
         bool isFinished;
         bool emitStoppedByWall;
         Vector3 emitStopPosition;
+        bool hasWarped;
 
         public override void OnEnter(IStrikerContext context) {
             context.Rigidbody.useGravity = false;
@@ -40,6 +41,7 @@ namespace Core.LargeSatan {
             isFinished = false;
             emitStoppedByWall = false;
             emitStopPosition = context.Rigidbody.position;
+            hasWarped = false;
 
             poleArm.OnHitHurtbox.Subscribe(hurtbox => {
                 hurtbox.GiveHit(new HitStatus(damage, knockbackSpeed * poleArm.transform.forward));
@@ -100,14 +102,25 @@ namespace Core.LargeSatan {
 
         public override void OnExit(IStrikerContext context) {
             context.Rigidbody.linearVelocity = Vector3.zero;
-            var warpPosition = ComputeSafeWarpPosition(context);
-            context.Rigidbody.position = warpPosition;
-            context.Rigidbody.rotation = ComputeFacingRotationTowardsOpponent(context, warpPosition);
+            WarpIfNeeded(context);
             poleArm.RequestEndEmit();
             context.Rigidbody.useGravity = true;
+        }
 
-            warpEffectPlayer.Emit(warpEffectPlayer.transform);
-            warpOutEffectPlayer.Emit(warpOutEffectPlayer.transform);
+        public override void OnAttackRequested(IStrikerStateContext context) {
+            WarpIfNeeded(context);
+        }
+        
+        public override void OnChargeRequested(IStrikerStateContext context) {
+            WarpIfNeeded(context);
+        }
+
+        public override void OnDashRequested(IStrikerStateContext context) {
+            WarpIfNeeded(context);
+        }
+
+        public override void OnGuardRequested(IStrikerStateContext context) {
+            WarpIfNeeded(context);
         }
 
         void ApplyRecoilMovement(IStrikerStateContext context) {
@@ -134,6 +147,19 @@ namespace Core.LargeSatan {
             }
 
             context.Rigidbody.position += recoilDirection * moveDistance;
+        }
+
+        void WarpIfNeeded(IStrikerContext context) {
+            if (hasWarped) {
+                return;
+            }
+
+            var warpPosition = ComputeSafeWarpPosition(context);
+            context.Rigidbody.position = warpPosition;
+            context.Rigidbody.rotation = ComputeFacingRotationTowardsOpponent(context, warpPosition);
+            warpEffectPlayer.Emit(warpEffectPlayer.transform);
+            warpOutEffectPlayer.Emit(warpOutEffectPlayer.transform);
+            hasWarped = true;
         }
 
         Vector3 ComputeSafeWarpPosition(IStrikerContext context) {

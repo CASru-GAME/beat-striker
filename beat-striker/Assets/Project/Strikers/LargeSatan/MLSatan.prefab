@@ -53,56 +53,6 @@ MonoBehaviour:
   stunEffect: {fileID: 4741410254378923064}
   stunDuration: 0.5
   stunGroup: {fileID: 4606742735444205910}
---- !u!1 &383822901784273879
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1865031652889770126}
-  - component: {fileID: 3816727516848684134}
-  m_Layer: 0
-  m_Name: HitEffect
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1865031652889770126
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 383822901784273879}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4397095357368525757}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3816727516848684134
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 383822901784273879}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
-  effectPrefab: {fileID: 2096984256431161180, guid: 791869b43f6664df4b8fabe66e83c25f, type: 3}
-  sound: {fileID: 0}
-  followEffectPlayerTransform: 1
-  fallbackLifetimeSeconds: 1
-  initialPoolSize: 2
-  maxPoolSize: 32
 --- !u!1 &435555698397086629
 GameObject:
   m_ObjectHideFlags: 0
@@ -5024,13 +4974,21 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7181211830687872934}
+  - {fileID: 5156904069843530130}
+  - {fileID: 6533031446922347011}
+  - {fileID: 1016017405503643552}
   - {fileID: 3515351587860301619}
   - {fileID: 7670338563451008460}
   - {fileID: 8060493130283152232}
   - {fileID: 7080344368245130089}
   - {fileID: 9166524806423445309}
   - {fileID: 3200128266190494492}
+  - {fileID: 8098592969908980384}
+  - {fileID: 6469603916770482490}
   - {fileID: 4397095357368525757}
+  - {fileID: 3616507986131213314}
+  - {fileID: 3414390779727665320}
+  - {fileID: 5344387806863856206}
   m_Father: {fileID: 7201851954051567416}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9214202796625303400
@@ -5047,6 +5005,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AttackNode
   attackState: {fileID: 6465224874055907323}
   airDownState: {fileID: 7291318754253883330}
+  airAttackState: {fileID: 6561768440724477702}
   groundChecker: {fileID: 4726074325913578082}
 --- !u!1 &935480985197784640
 GameObject:
@@ -5142,6 +5101,100 @@ MonoBehaviour:
     clip: {fileID: 7400000, guid: 50f4d40bd06e44171819f13a0fea89f2, type: 2}
     fadeTime: 0.3
     speed: 1
+--- !u!1 &1018212579826592955
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8098592969908980384}
+  - component: {fileID: 6527155484308025993}
+  - component: {fileID: 5529097916207300095}
+  - component: {fileID: 6192075559583134628}
+  m_Layer: 0
+  m_Name: SlashEffectPlayer (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8098592969908980384
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1018212579826592955}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.01922986, y: 0.0026513424, z: 0.27886146, w: -0.96013516}
+  m_LocalPosition: {x: -0.01286, y: 0.30521, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1425690710777153012}
+  m_LocalEulerAnglesHint: {x: -2.201, y: -359.677, z: -32.397}
+--- !u!114 &6527155484308025993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1018212579826592955}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb7bd230ebe14d1ca172f9c8769d36e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
+  attackEffectPlayer: {fileID: 6192075559583134628}
+  hitEffectPlayer: {fileID: 1063649124943374328}
+  blockedHitEffectPlayer: {fileID: 1063649124943374328}
+  attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
+  hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
+  blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
+  multipleHit: 0
+  hitDetectionStartTime: 0
+  hitDetectionDuration: 0.5
+--- !u!135 &5529097916207300095
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1018212579826592955}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.7061147
+  m_Center: {x: -0.0000000015205314, y: -3.4481107e-10, z: 0.77024746}
+--- !u!114 &6192075559583134628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1018212579826592955}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 7388025691144611164, guid: 89a1b52b837324b5fbd8a78fa693257e, type: 3}
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 1
+  fallbackLifetimeSeconds: 1
+  initialPoolSize: 2
+  maxPoolSize: 32
 --- !u!1 &1516419187170184297
 GameObject:
   m_ObjectHideFlags: 0
@@ -5406,7 +5459,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1517210810096820132}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
   m_Name: 
@@ -5437,7 +5490,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1517210810096820132}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 777aaf249b65748dba7f6a759c86970c, type: 3}
   m_Name: 
@@ -5446,6 +5499,56 @@ MonoBehaviour:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
   MaxStep: 0
+--- !u!1 &1706658636488106533
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3414390779727665320}
+  - component: {fileID: 246687739190119347}
+  m_Layer: 0
+  m_Name: ImpactEffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3414390779727665320
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1706658636488106533}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.76, z: 0}
+  m_LocalScale: {x: 0.3, y: 0.1, z: 0.3}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1425690710777153012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &246687739190119347
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1706658636488106533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 1783804891588936140, guid: 18d74492b812b43498cbe9935784e353, type: 3}
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 0
+  fallbackLifetimeSeconds: 1
+  initialPoolSize: 2
+  maxPoolSize: 32
 --- !u!1 &1863899945261721977
 GameObject:
   m_ObjectHideFlags: 0
@@ -5505,7 +5608,7 @@ MonoBehaviour:
     fadeTime: 0.2
     speed: 1
   fallNode: {fileID: 5108383347425668583}
-  jumpSpeed: 35
+  jumpSpeed: 32
   upwardThreshold: 0.96
   duration: 0.4
   endSpeedRatio: 0.01
@@ -5709,17 +5812,19 @@ MonoBehaviour:
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
-    clip: {fileID: -7985434508042447432, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    clip: {fileID: 8733749732401332308, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.2
     speed: 1
   nextNode: {fileID: 5551572408817209888}
-  speed: 20
+  nextAttackNode: {fileID: 660449186396806789}
+  speed: 15
   duration: 0.3
   endSpeedRatio: 0.1
   damage: 10
-  nockbackSpeed: 10
+  nockbackSpeed: 12
   attackPlayer: {fileID: 6365341134110932834}
   impact: 5
+  waitDuration: 0.8
 --- !u!1 &2474257301770036979
 GameObject:
   m_ObjectHideFlags: 0
@@ -5886,9 +5991,9 @@ MonoBehaviour:
     speed: 1
   nextNode: {fileID: 5551572408817209888}
   consecutiveDashSpeeds:
+  - 30
   - 35
-  - 45
-  - 50
+  - 40
   reentryWindowSeconds: 0.7
   duration: 0.3
   endSpeedRatio: 0.1
@@ -6134,6 +6239,67 @@ MonoBehaviour:
   cancelEffect: {fileID: 1333845493874428297}
   duration: 0.5
   stunGroup: {fileID: 4606742735444205910}
+--- !u!1 &2922508591368338493
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5156904069843530130}
+  - component: {fileID: 660449186396806789}
+  m_Layer: 0
+  m_Name: Attack1State
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5156904069843530130
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2922508591368338493}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.76000005, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1425690710777153012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &660449186396806789
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2922508591368338493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb4bd2e5da3a94f01b75722900bb5972, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.Attack1State
+  parents:
+  - {fileID: 1412494263704707963}
+  animationClip:
+    clip: {fileID: 1308175221796859168, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.2
+    speed: 1
+  nextNode: {fileID: 5551572408817209888}
+  nextAttackNode: {fileID: 3891405698403974252}
+  nextAttackNode2: {fileID: 6465224874055907323}
+  speed: 15
+  duration: 0.5
+  endSpeedRatio: 0.1
+  damage: 10
+  nockbackSpeed: 12
+  attackPlayer: {fileID: 6527155484308025993}
+  impact: 5
+  waitDuration: 0.8
 --- !u!1 &3170311701473266641
 GameObject:
   m_ObjectHideFlags: 0
@@ -6144,6 +6310,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5081052142786714084}
   - component: {fileID: 723661110471405025}
+  - component: {fileID: 6548501005657897989}
   m_Layer: 0
   m_Name: AirJumpState
   m_TagString: Untagged
@@ -6159,13 +6326,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3170311701473266641}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.01286, y: 0.008949995, z: -0.029299974}
+  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: -0.01286, y: -0.76, z: -0.029299974}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1107516161165938196}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
 --- !u!114 &723661110471405025
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6192,6 +6359,25 @@ MonoBehaviour:
   jumpSpeed: 12
   duration: 0.5
   downwardAcceleration: 30
+  effectPlayer: {fileID: 6548501005657897989}
+--- !u!114 &6548501005657897989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3170311701473266641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 5221136570754080702, guid: 4c645f93e7bf44ca5a9d44c4d104325b, type: 3}
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 0
+  fallbackLifetimeSeconds: 1
+  initialPoolSize: 4
+  maxPoolSize: 32
 --- !u!1 &3297487639971422894
 GameObject:
   m_ObjectHideFlags: 0
@@ -11216,8 +11402,7 @@ Transform:
   m_LocalPosition: {x: 0, y: -1.88, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1865031652889770126}
+  m_Children: []
   m_Father: {fileID: 1425690710777153012}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!114 &8534614244524601084
@@ -11233,8 +11418,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
   attackEffectPlayer: {fileID: 917046264041560210}
-  hitEffectPlayer: {fileID: 3816727516848684134}
-  blockedHitEffectPlayer: {fileID: 3816727516848684134}
+  hitEffectPlayer: {fileID: 1063649124943374328}
+  blockedHitEffectPlayer: {fileID: 1063649124943374328}
   attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
   hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
@@ -11535,7 +11720,7 @@ MonoBehaviour:
     fadeTime: 0
     speed: 1
   nextNode: {fileID: 5551572408817209888}
-  startupLag: 0.1
+  startupLag: 0
   diveSpeed: 30
   stopDistanceToGround: 0.1
   groundMask:
@@ -11546,10 +11731,106 @@ MonoBehaviour:
     fadeTime: 0.1
     speed: 1
   landTransitionDelay: 0.2
-  damage: 10
+  damage: 15
   nockbackSpeed: 10
   attackPlayer: {fileID: 8534614244524601084}
   impact: 5
+  landimpact: 30
+  landEffectPlayer: {fileID: 246687739190119347}
+--- !u!1 &4171213887744201710
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3616507986131213314}
+  - component: {fileID: 1185131328506559337}
+  - component: {fileID: 3928871652516346861}
+  - component: {fileID: 3734210265828305875}
+  m_Layer: 0
+  m_Name: ThrustForwardEffectPlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3616507986131213314
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4171213887744201710}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.189, z: 2.171}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1425690710777153012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1185131328506559337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4171213887744201710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb7bd230ebe14d1ca172f9c8769d36e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
+  attackEffectPlayer: {fileID: 3928871652516346861}
+  hitEffectPlayer: {fileID: 1063649124943374328}
+  blockedHitEffectPlayer: {fileID: 1063649124943374328}
+  attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
+  hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
+  blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
+  multipleHit: 0
+  hitDetectionStartTime: 0
+  hitDetectionDuration: 0.5
+--- !u!114 &3928871652516346861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4171213887744201710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 2325038595512895362, guid: 65092a1a036504475ad37cfb0ecb5f3e, type: 3}
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 1
+  fallbackLifetimeSeconds: 1
+  initialPoolSize: 2
+  maxPoolSize: 32
+--- !u!65 &3734210265828305875
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4171213887744201710}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.58967966, y: 0.53838974, z: 3.0772462}
+  m_Center: {x: -0.025644988, y: -0.038467683, z: -1.0386237}
 --- !u!1 &4231670236616666507
 GameObject:
   m_ObjectHideFlags: 0
@@ -16645,14 +16926,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4649621161327191430}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.009601851, y: -0.016869115, z: -0.9314876, w: 0.36325496}
+  m_LocalRotation: {x: 0.0018100236, y: -0.019327207, z: -0.9713851, w: -0.23671553}
   m_LocalPosition: {x: -0.01286, y: 0.30521, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 5344387806863856206}
+  m_Children: []
   m_Father: {fileID: 1425690710777153012}
-  m_LocalEulerAnglesHint: {x: -2.201, y: -359.677, z: 222.603}
+  m_LocalEulerAnglesHint: {x: -2.201, y: -359.677, z: 152.603}
 --- !u!114 &6365341134110932834
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21675,12 +21955,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5843599526448153818}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.0018100236, y: -0.019327207, z: -0.9713851, w: -0.23671553}
+  m_LocalPosition: {x: -0.01286, y: 0.30521, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3200128266190494492}
+  m_Father: {fileID: 1425690710777153012}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1063649124943374328
 MonoBehaviour:
@@ -21696,7 +21976,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
   effectPrefab: {fileID: 2096984256431161180, guid: 791869b43f6664df4b8fabe66e83c25f, type: 3}
   sound: {fileID: 0}
-  followEffectPlayerTransform: 1
+  followEffectPlayerTransform: 0
   fallbackLifetimeSeconds: 1
   initialPoolSize: 2
   maxPoolSize: 32
@@ -21742,6 +22022,66 @@ Transform:
   - {fileID: 6834426907013068108}
   m_Father: {fileID: 8056188703651194701}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6363562145227742488
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1016017405503643552}
+  - component: {fileID: 6561768440724477702}
+  m_Layer: 0
+  m_Name: AirAttackState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1016017405503643552
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6363562145227742488}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.76000005, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1425690710777153012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6561768440724477702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6363562145227742488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b605bfcf1fa76472d9bc27edc6df6566, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AirAttackState
+  parents:
+  - {fileID: 1412494263704707963}
+  animationClip:
+    clip: {fileID: -4434995885239225606, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.2
+    speed: 1
+  nextNode: {fileID: 5551572408817209888}
+  nextAttackNode: {fileID: 6465224874055907323}
+  speed: 5
+  duration: 0.5
+  endSpeedRatio: 0.1
+  damage: 10
+  nockbackSpeed: 20
+  attackPlayer: {fileID: 7094352083033261626}
+  impact: 5
+  waitDuration: 0.8
 --- !u!1 &6408498912602806557
 GameObject:
   m_ObjectHideFlags: 0
@@ -26936,6 +27276,101 @@ MonoBehaviour:
   jumpSpeed: 8
   duration: 0.5
   downwardAcceleration: 30
+  effectPlayer: {fileID: 6548501005657897989}
+--- !u!1 &8324381117079983094
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6469603916770482490}
+  - component: {fileID: 7094352083033261626}
+  - component: {fileID: 5775763822270655727}
+  - component: {fileID: 1717125907848184316}
+  m_Layer: 0
+  m_Name: SlashEffectPlayerDown
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6469603916770482490
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8324381117079983094}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.015573656, y: 0.011587851, z: 0.7069353, w: -0.7070118}
+  m_LocalPosition: {x: -0.01286, y: 0.30521, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1425690710777153012}
+  m_LocalEulerAnglesHint: {x: -2.201, y: -359.677, z: -90}
+--- !u!114 &7094352083033261626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8324381117079983094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb7bd230ebe14d1ca172f9c8769d36e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
+  attackEffectPlayer: {fileID: 1717125907848184316}
+  hitEffectPlayer: {fileID: 1063649124943374328}
+  blockedHitEffectPlayer: {fileID: 1063649124943374328}
+  attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
+  hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
+  blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
+  multipleHit: 0
+  hitDetectionStartTime: 0
+  hitDetectionDuration: 0.5
+--- !u!135 &5775763822270655727
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8324381117079983094}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.0258065
+  m_Center: {x: 0.13102317, y: 1.030806e-11, z: 0.43482268}
+--- !u!114 &1717125907848184316
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8324381117079983094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 7388025691144611164, guid: 89a1b52b837324b5fbd8a78fa693257e, type: 3}
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 1
+  fallbackLifetimeSeconds: 1
+  initialPoolSize: 2
+  maxPoolSize: 32
 --- !u!1 &8335504583372205754
 GameObject:
   m_ObjectHideFlags: 0
@@ -27035,6 +27470,65 @@ MonoBehaviour:
     clip: {fileID: 7400000, guid: 814b130d40ac549a3a2653d3aa2b3995, type: 2}
     fadeTime: 0.3
     speed: 1
+--- !u!1 &8575319029017450326
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6533031446922347011}
+  - component: {fileID: 3891405698403974252}
+  m_Layer: 0
+  m_Name: Attack2State
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6533031446922347011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8575319029017450326}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.76000005, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1425690710777153012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3891405698403974252
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8575319029017450326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f069e78f2a15d4876949084bb1b4cc77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.Attack2State
+  parents:
+  - {fileID: 1412494263704707963}
+  animationClip:
+    clip: {fileID: 3425267973116714395, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
+    fadeTime: 0.2
+    speed: 2
+  nextNode: {fileID: 5551572408817209888}
+  speed: 40
+  duration: 0.5
+  endSpeedRatio: 0.1
+  damage: 15
+  nockbackSpeed: 5
+  attackPlayer: {fileID: 1185131328506559337}
+  impact: 5
+  waitDuration: 0.8
 --- !u!1 &8870356801843961656
 GameObject:
   m_ObjectHideFlags: 0

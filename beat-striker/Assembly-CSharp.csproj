@@ -203,6 +203,7 @@
     <Compile Include="Assets/Project/App/Setting/CursorMoveSetting.cs" />
     <Compile Include="Assets/Project/App/Input/GamePad.cs" />
     <Compile Include="Assets/Project/App/Registry/StageRegistry.cs" />
+    <Compile Include="Assets/Project/Strikers/LargeSatan/States/Attack/AttackState0.cs" />
     <Compile Include="Assets/LeanTween/Examples/Scripts/PathSplineTrack.cs" />
     <Compile Include="Assets/Project/Battle/Striker/Util/AttackPlayer.cs" />
     <Compile Include="Assets/Project/Battle/Manager/StrikerRegistry.cs" />
@@ -219,6 +220,7 @@
     <Compile Include="Assets/Project/Battle/UI/View/AliceSpecialBarView.cs" />
     <Compile Include="Assets/LeanTween/Examples/Scripts/GeneralAdvancedTechniques.cs" />
     <Compile Include="Assets/Project/Screen/CharacterSelect/SelectScene.cs" />
+    <Compile Include="Assets/Project/Strikers/LargeSatan/States/Attack/AttackState1.cs" />
     <Compile Include="Assets/Project/Screen/CharacterSelect/Characterselectbutton.cs" />
     <Compile Include="Assets/Project/App/Setting/BattleRuleSetting.cs" />
     <Compile Include="Assets/Project/App/Cursor/CursorFactory.cs" />
@@ -256,6 +258,7 @@
     <Compile Include="Assets/Project/Battle/Striker/Ai/BeatAiBrain.cs" />
     <Compile Include="Assets/LeanTween/Testing/TestingOptionalCancel.cs" />
     <Compile Include="Assets/Project/Strikers/LargeWizard/States/AttackGroup.cs" />
+    <Compile Include="Assets/Project/Strikers/LargeSatan/States/Attack/AirAttackState.cs" />
     <Compile Include="Assets/LeanTween/Framework/LTDescr.cs" />
     <Compile Include="Assets/Project/Battle/UI/View/ResultPanelButton.cs" />
     <Compile Include="Assets/Project/Battle/Striker/Util/MockHurt.cs" />
@@ -272,7 +275,6 @@
     <Compile Include="Assets/Project/Strikers/LargeWizard/States/DashNode.cs" />
     <Compile Include="Assets/Project/App/Setting/TutorialSetting.cs" />
     <Compile Include="Assets/Project/App/Registry/ScreenRegistry.cs" />
-    <Compile Include="Assets/Project/Strikers/LargeSatan/States/Attack/AttackState.cs" />
     <Compile Include="Assets/Project/App/Setting/PlayerSelectSetting.cs" />
     <Compile Include="Assets/Project/Transition/Battle/BattleTransitionScope.cs" />
     <Compile Include="Assets/LeanTween/Testing/Testing243.cs" />
@@ -281,6 +283,7 @@
     <Compile Include="Assets/LeanTween/Examples/Scripts/PathBezier.cs" />
     <Compile Include="Assets/Project/Strikers/LargeWizard/Effects/Special/beam11.cs" />
     <Compile Include="Assets/Project/Battle/UI/View/BattleRoundStartView.cs" />
+    <Compile Include="Assets/Project/Strikers/LargeSatan/States/Attack/AttackState2.cs" />
     <Compile Include="Assets/Project/Strikers/LargeHero/states/StunState.cs" />
     <Compile Include="Assets/Project/Strikers/LargeHero/states/IdleState.cs" />
     <Compile Include="Assets/Project/Strikers/LargeSatan/States/Dash/AirSuperJumpState.cs" />
