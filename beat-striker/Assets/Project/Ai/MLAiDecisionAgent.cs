@@ -5,7 +5,7 @@ using Unity.MLAgents.Sensors;
 using UnityEngine;
 
 namespace Alice {
-    [RequireComponent(typeof(BehaviorParameters))]
+    [DefaultExecutionOrder(-999)]
     public class MLAiDecisionAgent : Agent {
         const int OBSERVATION_STACK_COUNT = 3;
 
@@ -15,6 +15,14 @@ namespace Alice {
         int observationHistoryCount;
 
         public AiAction CurrentAction { get; private set; } = AiAction.None;
+
+        protected override void Awake() {
+            base.Awake();
+            if (GetComponent<BehaviorParameters>() == null) {
+                var behaviorParameters = gameObject.AddComponent<BehaviorParameters>();
+                behaviorParameters.hideFlags = HideFlags.HideInInspector;
+            }
+        }
 
         public void Bind(MLAiBrain brain) {
             this.brain = brain;

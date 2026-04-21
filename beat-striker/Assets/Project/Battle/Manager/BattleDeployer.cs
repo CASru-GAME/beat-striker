@@ -32,7 +32,7 @@ namespace Alice {
             public Vector3 OriginalPosition;
             public Quaternion OriginalRotation;
             public IStrikerHub Hub;
-            public AiBrain AiBrain;
+            public AiBrain RuntimeAiBrain;
             public IDisposable InpactSubscription;
             public IDisposable AttentionSubscription;
             public IDisposable SpecialRequestFailedSubscription;
@@ -45,13 +45,16 @@ namespace Alice {
         readonly IStrikerRegistry strikerRegistry;
         readonly IStrikerFactory strikerHubFactory;
         readonly IGamePadRegistry gamePadRegistry;
+        readonly IAIRegistry aiRegistry;
+        readonly IAISetting aiSetting;
+        readonly IMusicPlayer musicPlayer;
         readonly IBeatjudge beatJudge;
         readonly IBattlePresenter battlePresenter;
         readonly List<DeployedStriker> deployedStrikers = new();
         readonly List<IDisposable> roundSubscriptions = new();
         bool isRoundPaused;
 
-        public BattleDeployer(IBattleSetting battleSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
+        public BattleDeployer(IBattleSetting battleSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.battleSetting = battleSetting;
             this.battleRuleSetting = battleRuleSetting;
             this.playerSelectSetting = playerSelectSetting;
@@ -59,6 +62,9 @@ namespace Alice {
             this.strikerRegistry = strikerRegistry;
             this.strikerHubFactory = strikerHubFactory;
             this.gamePadRegistry = gamePadRegistry;
+            this.aiRegistry = aiRegistry;
+            this.aiSetting = aiSetting;
+            this.musicPlayer = musicPlayer;
             this.beatJudge = beatJudge;
             this.battlePresenter = battlePresenter;
         }
@@ -85,6 +91,7 @@ namespace Alice {
                 var originalPosition = playerTransform.position;
                 var originalRotation = playerTransform.rotation;
                 var instance = strikerHubFactory.Create(selectedStrikerInfo.Prefab, playerTransform, playerId);
+                var runtimeAiBrain = CreateRuntimeAiBrain(playerId, selectedStriker);
                 var inpactSubscription = instance.OnInpactGenerated.Subscribe(command => battlePresenter.PlayInpact(command));
                 var attentionSubscription = instance.OnAtentionRequested.Subscribe(request => battlePresenter.RequestAttention(playerId, request));
                 var specialRequestFailedSubscription = instance.OnSpecialRequestFailed.Subscribe(_ => {
@@ -103,7 +110,7 @@ namespace Alice {
                     OriginalPosition = originalPosition,
                     OriginalRotation = originalRotation,
                     Hub = instance,
-                    AiBrain = instance.AiBrain,
+                    RuntimeAiBrain = runtimeAiBrain,
                     InpactSubscription = inpactSubscription,
                     AttentionSubscription = attentionSubscription,
                     SpecialRequestFailedSubscription = specialRequestFailedSubscription,
@@ -128,6 +135,11 @@ namespace Alice {
                 deployed.Hub?.ExitState();
                 deployed.Hub?.Dispose(); // Hub自体もIDisposableなので呼んでおく
                 deployed.Hub?.DestroyGameObject();
+                if (deployed.RuntimeAiBrain != null) {
+                    gamePadRegistry.RequestUnregister(deployed.RuntimeAiBrain);
+                    deployed.RuntimeAiBrain.DisableAiMode();
+                    UnityEngine.Object.Destroy(deployed.RuntimeAiBrain.gameObject);
+                }
                 deployed.InpactSubscription?.Dispose();
                 deployed.AttentionSubscription?.Dispose();
                 deployed.SpecialRequestFailedSubscription?.Dispose();
@@ -143,14 +155,14 @@ namespace Alice {
             foreach (var deployed in deployedStrikers) {
                 var playerId = deployed.PlayerId;
                 var instance = deployed.Hub;
-                var aiBrain = deployed.AiBrain;
+                var aiBrain = deployed.RuntimeAiBrain;
                 if (instance == null) {
                     continue;
                 }
 
                 var gamePad = gamePadRegistry.Get(playerId);
-                if (aiBrain == null) {
-                    Debug.LogWarning($"AiBrain not found for Player {playerId}");
+                if (aiBrain != null) {
+                    roundSubscriptions.Add(aiSetting.IsLearning.Subscribe(isLearning => aiBrain.ApplyLearningMode(isLearning)));
                 }
 
                 roundSubscriptions.Add(gamePad.HasGamePad.Subscribe(hasGamePad => {
@@ -162,6 +174,7 @@ namespace Alice {
                         aiBrain.EnableAiMode(instance);
                         gamePadRegistry.RequestRegisterLowPriority(playerId, aiBrain);
                     } else {
+                        gamePadRegistry.RequestUnregister(aiBrain);
                         aiBrain.DisableAiMode();
                     }
                 }));
@@ -255,6 +268,37 @@ namespace Alice {
 
         public void Dispose() {
             Undeploy();
+        }
+
+        AiBrain CreateRuntimeAiBrain(int playerId, Striker selfStriker) {
+            var opponentStriker = ResolveOpponentStriker(playerId, selfStriker);
+            if (!aiRegistry.TryResolve(selfStriker, opponentStriker, out var aiRegistration)) {
+                Debug.LogWarning($"Failed to resolve AI brain registration. playerId={playerId}, self={selfStriker}, opponent={opponentStriker}. Configure fallbackAiId in AIRegistry inspector or add matching entry.");
+                return null;
+            }
+
+            var aiBrain = UnityEngine.Object.Instantiate(aiRegistration.BrainPrefab, battleSetting.PlayerTransforms[playerId]);
+            aiBrain.name = $"{aiRegistration.Id}_Player{playerId}";
+            aiBrain.InitializeDependencies(musicPlayer, strikerRegistry);
+            aiBrain.ApplyLearningMode(aiSetting.IsLearning.CurrentValue);
+            aiBrain.DisableAiMode();
+            return aiBrain;
+        }
+
+        Striker ResolveOpponentStriker(int playerId, Striker fallback) {
+            for (var i = 0; i < battleSetting.PlayerTransforms.Count; i++) {
+                if (i == playerId) {
+                    continue;
+                }
+
+                if (!playerSelectSetting.TryGetStriker(i, out var opponent)) {
+                    opponent = appStrikerRegistry.Default.BattleStriker;
+                }
+
+                return opponent;
+            }
+
+            return fallback;
         }
 
         void RequestSpecial(IStrikerHub instance) {

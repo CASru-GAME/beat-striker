@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 9133904809460036572}
   - component: {fileID: 8179424678283996581}
   - component: {fileID: 6595342875354204002}
+  - component: {fileID: 8953530949465533837}
+  - component: {fileID: 904021008660354504}
   - component: {fileID: 9201860890254514560}
   - component: {fileID: 906267494629859191}
   - component: {fileID: 7111598241528783917}
@@ -97,6 +99,38 @@ MonoBehaviour:
     striker: 3
   - playerId: 1
     striker: 3
+  isTutorialBattleRequested: 0
+--- !u!114 &8953530949465533837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f3af4f6d5c8e4c42a000e426a76d35c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AISetting
+  isLearning: 0
+--- !u!114 &904021008660354504
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03d0d3c2b5f4477b93e19d8d08e14de8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AIRegistry
+  fallbackAiId: Satan
+  entries:
+  - Id: Satan
+    BrainPrefab: {fileID: 1718372972706777403, guid: 4866ccc72809a46cb9af8a3fe25cdb0d, type: 3}
+    Self: 0
+    Opponent: 0
 --- !u!114 &9201860890254514560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -367,6 +401,8 @@ MonoBehaviour:
   appTransitionFactory: {fileID: 9201860890254514560}
   cursorFactory: {fileID: 8684236627904277826}
   appBgmPlayer: {fileID: 3511319359145443329}
+  aiRegistry: {fileID: 904021008660354504}
+  aiSetting: {fileID: 8953530949465533837}
 --- !u!114 &6291877219211561707
 MonoBehaviour:
   m_ObjectHideFlags: 0

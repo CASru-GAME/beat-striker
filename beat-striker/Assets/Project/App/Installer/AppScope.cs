@@ -6,6 +6,8 @@ using VContainer;
 using VContainer.Unity;
 
 namespace Alice {
+	[RequireComponent(typeof(AIRegistry))]
+	[RequireComponent(typeof(AISetting))]
 	[DefaultExecutionOrder(-10000)]
 	public class AppScope : LifetimeScope {
 		const string LOG_PREFIX = "[AppScope]";
@@ -26,9 +28,13 @@ namespace Alice {
 		[SerializeField] AppTransitionFactory appTransitionFactory;
 		[SerializeField] CursorFactory cursorFactory;
 		[SerializeField] AppBGMPlayer appBgmPlayer;
+		[SerializeField] AIRegistry aiRegistry;
+		[SerializeField] AISetting aiSetting;
 
 		protected override void Awake() {
 			Debug.Log($"{LOG_PREFIX} Awake begin. scene={gameObject.scene.name}");
+			aiRegistry = GetComponent<AIRegistry>();
+			aiSetting = GetComponent<AISetting>();
 			if (instance != null && instance != this) {
 				Debug.LogWarning($"{LOG_PREFIX} Duplicate AppScope detected. existing={instance.name}, current={name}. current instance will be destroyed");
 				Destroy(gameObject);
@@ -68,6 +74,8 @@ namespace Alice {
 			builder.RegisterInstance<IAppTransitionFactory>(appTransitionFactory);
 			builder.RegisterInstance<ICursorFactory>(cursorFactory);
 			builder.RegisterInstance<IAppBGMPlayer>(appBgmPlayer);
+			builder.RegisterInstance<IAIRegistry>(aiRegistry);
+			builder.RegisterInstance<IAISetting>(aiSetting);
 			builder.Register<ISceneLoader, SceneLoader>(Lifetime.Singleton);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
 
@@ -90,6 +98,8 @@ namespace Alice {
 				_ = container.Resolve<IAppTransitionFactory>();
 				_ = container.Resolve<ICursorFactory>();
 				_ = container.Resolve<IAppBGMPlayer>();
+				_ = container.Resolve<IAIRegistry>();
+				_ = container.Resolve<IAISetting>();
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
 				_ = container.Resolve<ICursorDeployer>();

@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 #endif
 
 namespace Alice {
-    [RequireComponent(typeof(MLAiDecisionAgent))]
+    [DefaultExecutionOrder(-1000)]
     public class MLAiBrain : AiBrain {
         internal const int STRIKER_TYPE_COUNT = 4;
         internal const int STRIKER_STATE_CATEGORY_COUNT = 7;
@@ -30,7 +30,6 @@ namespace Alice {
         [SerializeField] bool autoConfigureInEditor = true;
 
         [Header("ML-Agents Mode")]
-        [SerializeField] bool isLearning = true;
         [SerializeField] ModelAsset inferenceOnnx;
 
         [Header("Distance")]
@@ -74,6 +73,7 @@ namespace Alice {
         readonly Queue<float> movementDistanceWindow = new();
         readonly List<PendingDecision> pendingDecisions = new();
         bool teamIdConfigured;
+        bool isLearningMode = true;
 
         class PendingDecision {
             public GamePadButton? Button;
@@ -84,21 +84,15 @@ namespace Alice {
         }
 
         void Awake() {
+            behaviorParameters = EnsureRuntimeBehaviorParameters();
+
             if (autoConfigureOnAwake) {
                 ConfigureMlAgentComponents();
             }
 
-            behaviorParameters = GetComponent<BehaviorParameters>();
-            decisionAgent = GetComponent<MLAiDecisionAgent>();
+            decisionAgent = EnsureRuntimeDecisionAgent();
+
             decisionAgent.Bind(this);
-        }
-
-        void OnValidate() {
-            if (!autoConfigureInEditor) {
-                return;
-            }
-
-            ConfigureMlAgentComponents();
         }
 
         protected override void OnAiEnabled() {
@@ -120,6 +114,13 @@ namespace Alice {
             movementDistanceWindow.Clear();
             pendingDecisions.Clear();
             teamIdConfigured = false;
+        }
+
+        protected override void OnLearningModeChanged(bool isLearning) {
+            isLearningMode = isLearning;
+            if (behaviorParameters != null) {
+                ConfigureMlAgentComponents();
+            }
         }
 
         protected override AiAction OnGoodWindow(AiObservation observation) {
@@ -485,7 +486,10 @@ namespace Alice {
         }
 
         void ConfigureMlAgentComponents() {
-            behaviorParameters ??= GetComponent<BehaviorParameters>();
+            if (behaviorParameters == null) {
+                return;
+            }
+
             var brainParameters = behaviorParameters.BrainParameters;
 
             brainParameters.VectorObservationSize = STACKED_OBSERVATION_COUNT;
@@ -493,14 +497,37 @@ namespace Alice {
             brainParameters.ActionSpec = new ActionSpec(MOVE_CONTINUOUS_ACTION_SIZE, new[] { BUTTON_ACTION_BRANCH_SIZE });
 
             behaviorParameters.BehaviorName = behaviorName;
-            if (!isLearning) {
-                behaviorParameters.BehaviorType = BehaviorType.InferenceOnly;
+            if (!isLearningMode && inferenceOnnx != null) {
                 behaviorParameters.Model = inferenceOnnx;
+                behaviorParameters.BehaviorType = BehaviorType.InferenceOnly;
             } else {
                 behaviorParameters.BehaviorType = BehaviorType.Default;
                 behaviorParameters.Model = null;
             }
         }
+
+        BehaviorParameters EnsureRuntimeBehaviorParameters() {
+            var runtimeBehaviorParameters = GetComponent<BehaviorParameters>();
+            if (runtimeBehaviorParameters != null) {
+                return runtimeBehaviorParameters;
+            }
+
+            runtimeBehaviorParameters = gameObject.AddComponent<BehaviorParameters>();
+            runtimeBehaviorParameters.hideFlags = HideFlags.HideInInspector;
+            return runtimeBehaviorParameters;
+        }
+
+        MLAiDecisionAgent EnsureRuntimeDecisionAgent() {
+            var runtimeDecisionAgent = GetComponent<MLAiDecisionAgent>();
+            if (runtimeDecisionAgent != null) {
+                return runtimeDecisionAgent;
+            }
+
+            runtimeDecisionAgent = gameObject.AddComponent<MLAiDecisionAgent>();
+            runtimeDecisionAgent.hideFlags = HideFlags.HideInInspector;
+            return runtimeDecisionAgent;
+        }
+
     }
 
     // MLAiDecisionAgent moved to MLAiDecisionAgent.cs

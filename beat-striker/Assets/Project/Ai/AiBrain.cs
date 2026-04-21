@@ -41,6 +41,10 @@ namespace Alice {
             this.strikerRegistry = strikerRegistry;
         }
 
+        public void ApplyLearningMode(bool isLearning) {
+            OnLearningModeChanged(isLearning);
+        }
+
         public void EnableAiMode(IObservableStriker self) {
             if (musicPlayer == null || strikerRegistry == null) {
                 Debug.LogError("AiBrain dependencies are not initialized.", this);
@@ -141,6 +145,7 @@ namespace Alice {
         protected abstract AiAction OnGoodWindow(AiObservation observation);
         protected virtual void OnAiEnabled() { }
         protected virtual void OnAiDisabled() { }
+        protected virtual void OnLearningModeChanged(bool isLearning) { }
 
         void OnDestroy() {
             goodZoneSubscription?.Dispose();

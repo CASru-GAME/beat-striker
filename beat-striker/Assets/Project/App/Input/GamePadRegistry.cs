@@ -82,10 +82,10 @@ namespace Alice {
         }
 
         public void RequestUnregister(IGamePad gamePad) {
-            var playerGamePads = registry.FindAll(p => p.HasPrimaryGamePad && p.Current.GetValue(null) == gamePad);
+            var playerGamePads = registry.FindAll(p => p.Current.GetValue(null) == gamePad);
             foreach (var playerGamePad in playerGamePads) {
                 Debug.Log($"Unregistered GamePad {gamePad.DeviceName} from Player {playerGamePad.PlayerId}".ToOrange());
-                playerGamePad.ClearPrimary();
+                playerGamePad.ClearCurrent();
                 gamePad.DestroyGamePad();
             }
         }
@@ -241,6 +241,15 @@ namespace Alice {
                 }
                 isPrimaryInput = false;
                 hasGamePad.OnNext(false);
+                Current = null;
+            }
+
+            public void ClearCurrent() {
+                if (isPrimaryInput) {
+                    ClearPrimary();
+                    return;
+                }
+
                 Current = null;
             }
 
