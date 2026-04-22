@@ -53,6 +53,7 @@ namespace Alice {
         readonly List<DeployedStriker> deployedStrikers = new();
         readonly List<IDisposable> roundSubscriptions = new();
         bool isRoundPaused;
+        int learningRoundIndex;
 
         public BattleDeployer(IBattleSetting battleSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.battleSetting = battleSetting;
@@ -75,6 +76,13 @@ namespace Alice {
             }
 
             isRoundPaused = false;
+
+            if (aiSetting.IsLearning.CurrentValue) {
+                ApplyLearningSelections();
+                learningRoundIndex += 1;
+            } else {
+                learningRoundIndex = 0;
+            }
 
             for (int i = 0; i < battleSetting.PlayerTransforms.Count; i++) {
                 var playerId = i;
@@ -120,6 +128,16 @@ namespace Alice {
             }
         }
 
+        void ApplyLearningSelections() {
+            playerSelectSetting.SelectStriker(0, aiSetting.LearningPlayer1Striker);
+            
+            if (aiSetting.UseSelfPlay.CurrentValue) {
+                playerSelectSetting.SelectStriker(1, aiSetting.LearningPlayer1Striker);
+            } else {
+                playerSelectSetting.SelectStriker(1, aiSetting.GetLearningOpponentStriker(learningRoundIndex));
+            }
+        }
+
         public void Undeploy() {
             DisconnectRoundInputs();
             isRoundPaused = false;
@@ -136,6 +154,7 @@ namespace Alice {
                 deployed.Hub?.Dispose(); // Hub自体もIDisposableなので呼んでおく
                 deployed.Hub?.DestroyGameObject();
                 if (deployed.RuntimeAiBrain != null) {
+                    deployed.RuntimeAiBrain.EndRoundEpisode();
                     gamePadRegistry.RequestUnregister(deployed.RuntimeAiBrain);
                     deployed.RuntimeAiBrain.DisableAiMode();
                     UnityEngine.Object.Destroy(deployed.RuntimeAiBrain.gameObject);
@@ -162,7 +181,10 @@ namespace Alice {
 
                 var gamePad = gamePadRegistry.Get(playerId);
                 if (aiBrain != null) {
-                    roundSubscriptions.Add(aiSetting.IsLearning.Subscribe(isLearning => aiBrain.ApplyLearningMode(isLearning)));
+                    roundSubscriptions.Add(Observable.CombineLatest(aiSetting.IsLearning, aiSetting.UseSelfPlay, (isLearning, useSelfPlay) => {
+                        if (playerId != 0 && !useSelfPlay) return false;
+                        return isLearning;
+                    }).Subscribe(shouldLearn => aiBrain.ApplyLearningMode(shouldLearn)));
                 }
 
                 roundSubscriptions.Add(gamePad.HasGamePad.Subscribe(hasGamePad => {
@@ -171,13 +193,20 @@ namespace Alice {
                     }
 
                     if (!hasGamePad) {
-                        aiBrain.EnableAiMode(instance);
+                        aiBrain.EnableAiMode();
                         gamePadRegistry.RequestRegisterLowPriority(playerId, aiBrain);
                     } else {
                         gamePadRegistry.RequestUnregister(aiBrain);
                         aiBrain.DisableAiMode();
                     }
                 }));
+
+                if (aiBrain != null) {
+                    roundSubscriptions.Add(musicPlayer.OnExcellentZoneEntered.Subscribe(signal => {
+                        var opponent = ResolveNearestOpponent(instance);
+                        aiBrain.RequestActionOnExcellentWindow(instance, opponent, signal, musicPlayer.CurrentPlaybackTime);
+                    }));
+                }
 
                 roundSubscriptions.Add(gamePad.OnButtonDown.Subscribe(button => {
                     if (button != GamePadButton.Start) {
@@ -279,10 +308,36 @@ namespace Alice {
 
             var aiBrain = UnityEngine.Object.Instantiate(aiRegistration.BrainPrefab, battleSetting.PlayerTransforms[playerId]);
             aiBrain.name = $"{aiRegistration.Id}_Player{playerId}";
-            aiBrain.InitializeDependencies(musicPlayer, strikerRegistry);
-            aiBrain.ApplyLearningMode(aiSetting.IsLearning.CurrentValue);
+            
+            bool initialShouldLearn = aiSetting.IsLearning.CurrentValue;
+            if (playerId != 0 && !aiSetting.UseSelfPlay.CurrentValue) {
+                initialShouldLearn = false;
+            }
+            aiBrain.ApplyLearningMode(initialShouldLearn);
+            
             aiBrain.DisableAiMode();
             return aiBrain;
+        }
+
+        IObservableStriker ResolveNearestOpponent(IObservableStriker self) {
+            IObservableStriker nearestOpponent = null;
+            var nearestSqrDistance = float.MaxValue;
+
+            foreach (var striker in strikerRegistry.GetAllStrikers()) {
+                if (striker.PlayerId.CurrentValue == self.PlayerId.CurrentValue || striker.HitPoint.CurrentValue <= 0f) {
+                    continue;
+                }
+
+                var sqrDistance = (striker.Position.CurrentValue - self.Position.CurrentValue).sqrMagnitude;
+                if (sqrDistance >= nearestSqrDistance) {
+                    continue;
+                }
+
+                nearestOpponent = striker;
+                nearestSqrDistance = sqrDistance;
+            }
+
+            return nearestOpponent;
         }
 
         Striker ResolveOpponentStriker(int playerId, Striker fallback) {

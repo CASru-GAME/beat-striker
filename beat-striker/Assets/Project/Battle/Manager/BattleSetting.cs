@@ -6,7 +6,6 @@ namespace Alice {
         List<Transform> PlayerTransforms { get; }
         AudioClip SpecialUnavailableSound { get; }
         float SpecialUnavailableSoundVolume { get; }
-        bool IsTrainingInfiniteRound { get; }
         bool IsTestMode { get; }
     }
 
@@ -14,13 +13,11 @@ namespace Alice {
         [SerializeField] List<Transform> playerTransforms;
         [SerializeField] AudioClip specialUnavailableSound;
         [SerializeField] float specialUnavailableSoundVolume = 1f;
-        [SerializeField] bool isTrainingInfiniteRound;
         [SerializeField] bool isTestMode;
 
         public List<Transform> PlayerTransforms => playerTransforms;
         public AudioClip SpecialUnavailableSound => specialUnavailableSound;
         public float SpecialUnavailableSoundVolume => specialUnavailableSoundVolume;
-        public bool IsTrainingInfiniteRound => isTrainingInfiniteRound;
         public bool IsTestMode => isTestMode;
     }
 }

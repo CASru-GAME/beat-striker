@@ -48,7 +48,6 @@ namespace Alice {
     }
 
     public interface IStrikerHub : IObservableStriker, System.IDisposable {
-        AiBrain AiBrain { get; }
         void DestroyGameObject();
         void SetPlayerId(int playerId);
         void Tick(float deltaTime);
@@ -86,7 +85,6 @@ namespace Alice {
         GameObject strikerGameObject;
         AnimationPlayer animationPlayer;
         StrikerStateMachine stateMachine;
-        AiBrain aiBrain;
         readonly Subject<Unit> onDeadSubject = new();
         readonly ReactiveProperty<int> playerIdSubject = new(0);
         readonly ReactiveProperty<Alice.Striker> strikerSubject = new(Alice.Striker.Fighter);
@@ -121,7 +119,6 @@ namespace Alice {
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
-        public AiBrain AiBrain => aiBrain;
         public ReadOnlyReactiveProperty<Alice.Striker> Striker => strikerSubject;
         public ReadOnlyReactiveProperty<int> PlayerId => playerIdSubject;
         public ReadOnlyReactiveProperty<Vector3> Position => positionSubject;
@@ -171,11 +168,8 @@ namespace Alice {
         public AliceStrikerHub() {
         }
 
-        public void InitializeRuntimeDependencies(IStrikerRegistry strikerRegistry, IMusicPlayer musicPlayer) {
+        public void InitializeRuntimeDependencies(IStrikerRegistry strikerRegistry) {
             this.strikerRegistry = strikerRegistry;
-            if (aiBrain != null) {
-                aiBrain.InitializeDependencies(musicPlayer, strikerRegistry);
-            }
         }
 
         public void Tick(float deltaTime) {
@@ -216,7 +210,6 @@ namespace Alice {
             deadState = legacy.InspectorDeadState;
             victoryState = legacy.InspectorVictoryState;
             introState = legacy.InspectorIntroState;
-            aiBrain = legacy.InspectorAiBrain;
             rb = legacy.Rigidbody;
             strikerSubject.OnNext(legacy.InspectorStriker);
             strikerGameObject = legacy.gameObject;

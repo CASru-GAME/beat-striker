@@ -18,6 +18,7 @@ namespace Alice {
         readonly IBattleJudge battleJudge;
         readonly IBeatjudge beatJudge;
         readonly IMusicPlayer musicPlayer;
+        readonly IAISetting aiSetting;
         readonly IBattleSelectSetting battleSelectSetting;
         readonly ITutorialSetting tutorialSetting;
         readonly ISceneTransitionService sceneTransitionService;
@@ -50,13 +51,14 @@ namespace Alice {
 
         public Observable<Unit> OnRoundPlayableStarted => roundPlayableStartedSubject;
 
-        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters) {
+        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IAISetting aiSetting, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters) {
             this.battleSetting = battleSetting;
             this.battleDeployer = battleDeployer;
             this.strikerRegistry = strikerRegistry;
             this.battleJudge = battleJudge;
             this.beatJudge = beatJudge;
             this.musicPlayer = musicPlayer;
+            this.aiSetting = aiSetting;
             this.battleSelectSetting = battleSelectSetting;
             this.tutorialSetting = tutorialSetting;
             this.sceneTransitionService = sceneTransitionService;
@@ -159,7 +161,7 @@ namespace Alice {
                 battlePlayerPresenter.PresentRoundPlayableStart();
             }
             CaptureRoundBaselineObjects();
-            StartTrainingRoundTimeoutIfNeeded();
+            StartLearningRoundTimeoutIfNeeded();
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync presenters notified. roundPlayable={roundPlayable}");
         }
 
@@ -210,8 +212,8 @@ namespace Alice {
                 currentRound += 1;
                 var roundResult = BuildRoundResult(finishedRound, deadPlayerId);
                 var judgeResult = battleJudge.Judge(roundResult);
-                var continueBattle = battleSetting.IsTrainingInfiniteRound || judgeResult.ContinueBattle;
-                Debug.Log($"{LOG_PREFIX} ResolveRoundAsync judged. continueBattle={continueBattle}, winner={judgeResult.Winner}, isTrainingInfiniteRound={battleSetting.IsTrainingInfiniteRound}");
+                var continueBattle = aiSetting.IsLearning.CurrentValue || judgeResult.ContinueBattle;
+                Debug.Log($"{LOG_PREFIX} ResolveRoundAsync judged. continueBattle={continueBattle}, winner={judgeResult.Winner}, isLearning={aiSetting.IsLearning.CurrentValue}");
 
                 if (tutorialSetting.IsTutorialBattleRequested) {
                     Debug.Log($"{LOG_PREFIX} ResolveRoundAsync tutorial battle branch. end to title immediately");
@@ -524,24 +526,24 @@ namespace Alice {
             return new RoundResult(roundNumber, rankings);
         }
 
-        void StartTrainingRoundTimeoutIfNeeded() {
+        void StartLearningRoundTimeoutIfNeeded() {
             activeRoundToken += 1;
-            if (!battleSetting.IsTrainingInfiniteRound) {
+            if (!aiSetting.IsLearning.CurrentValue) {
                 return;
             }
 
             var roundToken = activeRoundToken;
-            _ = WatchTrainingRoundTimeoutAsync(roundToken, currentRound);
+            _ = WatchLearningRoundTimeoutAsync(roundToken, currentRound);
         }
 
-        async Task WatchTrainingRoundTimeoutAsync(int roundToken, int roundNumberAtStart) {
+        async Task WatchLearningRoundTimeoutAsync(int roundToken, int roundNumberAtStart) {
             await Task.Delay(TimeSpan.FromSeconds(TRAINING_ROUND_TIMEOUT_SECONDS));
 
             if (roundToken != activeRoundToken) {
                 return;
             }
 
-            if (!battleSetting.IsTrainingInfiniteRound || battleFinished || roundResolving || !roundPlayable) {
+            if (!aiSetting.IsLearning.CurrentValue || battleFinished || roundResolving || !roundPlayable) {
                 return;
             }
 

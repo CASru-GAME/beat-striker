@@ -10,11 +10,9 @@ namespace Alice {
 
     public class StrikerHubFactory : IStrikerFactory {
         readonly IStrikerRegistry strikerRegistry;
-        readonly IMusicPlayer musicPlayer;
 
-        public StrikerHubFactory(IStrikerRegistry strikerRegistry, IMusicPlayer musicPlayer) {
+        public StrikerHubFactory(IStrikerRegistry strikerRegistry) {
             this.strikerRegistry = strikerRegistry;
-            this.musicPlayer = musicPlayer;
         }
 
         public IStrikerHub Create(StrikerHub prefab, Transform playerTransform, int playerId) {
@@ -23,7 +21,7 @@ namespace Alice {
             playerTransform.SetParent(instance.transform);
             var runtime = instance.EnsureAliceRuntimeHub();
             if (runtime is AliceStrikerHub aliceRuntime) {
-                aliceRuntime.InitializeRuntimeDependencies(strikerRegistry, musicPlayer);
+                aliceRuntime.InitializeRuntimeDependencies(strikerRegistry);
             }
             runtime.SetPlayerId(playerId);
             return runtime;

@@ -1,5 +1,4 @@
 using R3;
-using System;
 using UnityEngine;
 
 namespace Alice {
@@ -20,11 +19,7 @@ namespace Alice {
         readonly Subject<GamePadButton> onButtonDown = new();
         readonly Subject<GamePadButton> onButtonUp = new();
 
-        IMusicPlayer musicPlayer;
-        IStrikerRegistry strikerRegistry;
-        IDisposable goodZoneSubscription;
         bool isAiMode;
-        IObservableStriker selfStriker;
 
         public Observable<Vector2> OnDirectionAsObservable => onDirection;
         public Observable<Unit> OnDirectionCanceledAsObservable => onDirectionCanceled;
@@ -36,49 +31,37 @@ namespace Alice {
             DisableAiMode();
         }
 
-        public void InitializeDependencies(IMusicPlayer musicPlayer, IStrikerRegistry strikerRegistry) {
-            this.musicPlayer = musicPlayer;
-            this.strikerRegistry = strikerRegistry;
-        }
-
         public void ApplyLearningMode(bool isLearning) {
             OnLearningModeChanged(isLearning);
         }
 
-        public void EnableAiMode(IObservableStriker self) {
-            if (musicPlayer == null || strikerRegistry == null) {
-                Debug.LogError("AiBrain dependencies are not initialized.", this);
-                return;
-            }
-
+        public void EnableAiMode() {
             enabled = true;
             if (this.isAiMode) {
                 return;
             }
-            this.selfStriker = self;
             this.isAiMode = true;
             OnAiEnabled();
+        }
 
-            goodZoneSubscription = musicPlayer.OnGoodZoneEntered.Subscribe(signal => {
-                if (!this.isAiMode) {
-                    return;
-                }
+        public void RequestActionOnExcellentWindow(IObservableStriker self, IObservableStriker opponent, IMusicPlayer.BeatSignal signal, float currentPlaybackTime) {
+            if (!this.isAiMode) {
+                return;
+            }
 
-                var opponent = ResolveOpponent(selfStriker);
-                if (opponent == null) {
-                    CancelDirection();
-                    return;
-                }
+            if (opponent == null) {
+                CancelDirection();
+                return;
+            }
 
-                var observation = new AiObservation(
-                    selfStriker,
-                    opponent,
-                    signal,
-                    musicPlayer.CurrentPlaybackTime
-                );
-                var action = OnGoodWindow(observation);
-                ApplyActionAtGoodWindow(action);
-            });
+            var observation = new AiObservation(
+                self,
+                opponent,
+                signal,
+                currentPlaybackTime
+            );
+            var action = OnGoodWindow(observation);
+            ApplyActionAtGoodWindow(action);
         }
 
         public void DisableAiMode() {
@@ -89,8 +72,9 @@ namespace Alice {
             this.isAiMode = false;
             OnAiDisabled();
             CancelDirection();
-            goodZoneSubscription?.Dispose();
-            goodZoneSubscription = null;
+        }
+
+        public virtual void EndRoundEpisode() {
         }
 
         // Note: legacy compatibility methods removed — callers should use EnableAiMode/DisableAiMode directly.
@@ -121,34 +105,12 @@ namespace Alice {
             EmitDirection(action.Direction.normalized);
         }
 
-        IObservableStriker ResolveOpponent(IObservableStriker self) {
-            IObservableStriker nearestOpponent = null;
-            var nearestSqrDistance = float.MaxValue;
-
-            foreach (var striker in strikerRegistry.GetAllStrikers()) {
-                if (striker.PlayerId.CurrentValue == self.PlayerId.CurrentValue || striker.HitPoint.CurrentValue <= 0f) {
-                    continue;
-                }
-
-                var sqrDistance = (striker.Position.CurrentValue - self.Position.CurrentValue).sqrMagnitude;
-                if (sqrDistance >= nearestSqrDistance) {
-                    continue;
-                }
-
-                nearestOpponent = striker;
-                nearestSqrDistance = sqrDistance;
-            }
-
-            return nearestOpponent;
-        }
-
         protected abstract AiAction OnGoodWindow(AiObservation observation);
         protected virtual void OnAiEnabled() { }
         protected virtual void OnAiDisabled() { }
         protected virtual void OnLearningModeChanged(bool isLearning) { }
 
-        void OnDestroy() {
-            goodZoneSubscription?.Dispose();
+        protected virtual void OnDestroy() {
             onDirection.Dispose();
             onDirectionCanceled.Dispose();
             onButtonDown.Dispose();

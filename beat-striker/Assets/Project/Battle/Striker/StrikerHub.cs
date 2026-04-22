@@ -21,7 +21,6 @@ public class StrikerHub : MonoBehaviour {
     [Header("References")]
     [SerializeField] private StrikerState defaultState;
     [SerializeField] private StrikerState deadState, VictoryState, IntroState;
-    [SerializeField] private Alice.AiBrain aiBrain;
     [SerializeField] private Transform centerPositionTransform;
 
     private Rigidbody rb;
@@ -36,7 +35,6 @@ public class StrikerHub : MonoBehaviour {
     public StrikerState InspectorDeadState => deadState;
     public StrikerState InspectorVictoryState => VictoryState;
     public StrikerState InspectorIntroState => IntroState;
-    public Alice.AiBrain InspectorAiBrain => aiBrain;
     public Transform InspectorCenterPositionTransform => centerPositionTransform;
     private Alice.IStrikerHub aliceRuntime;
 

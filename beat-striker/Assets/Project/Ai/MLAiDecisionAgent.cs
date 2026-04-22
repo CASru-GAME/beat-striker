@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Alice {
     [DefaultExecutionOrder(-999)]
     public class MLAiDecisionAgent : Agent {
-        const int OBSERVATION_STACK_COUNT = 3;
+        const int OBSERVATION_STACK_COUNT = MLAiBrain.OBSERVATION_STACK_COUNT;
 
         MLAiBrain brain;
         AiObservation latestObservation;
@@ -99,11 +99,9 @@ namespace Alice {
 
         public override void Heuristic(in ActionBuffers actionsOut) {
             if (brain == null) {
-                var continuousActions = actionsOut.ContinuousActions;
                 var discreteActions = actionsOut.DiscreteActions;
-                continuousActions[0] = 1f;
-                continuousActions[1] = 0f;
                 discreteActions[0] = 0;
+                discreteActions[1] = 0;
                 return;
             }
 
