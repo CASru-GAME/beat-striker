@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7672d8190b3c74e14a342c1c9309ff0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BeatAiBrain
-  keepDistance: 1.2
-  keepDistanceTolerance: 0.4
-  attackDistance: 1.5
-  longJumpDistance: 4
-  jumpDirectionY: 1
+  actionSequence:
+  - Button: 1
+    Direction: 0
+  - Button: 3
+    Direction: 0

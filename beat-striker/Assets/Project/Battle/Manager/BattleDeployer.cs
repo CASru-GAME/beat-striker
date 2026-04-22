@@ -300,14 +300,35 @@ namespace Alice {
         }
 
         AiBrain CreateRuntimeAiBrain(int playerId, Striker selfStriker) {
-            var opponentStriker = ResolveOpponentStriker(playerId, selfStriker);
-            if (!aiRegistry.TryResolve(selfStriker, opponentStriker, out var aiRegistration)) {
-                Debug.LogWarning($"Failed to resolve AI brain registration. playerId={playerId}, self={selfStriker}, opponent={opponentStriker}. Configure fallbackAiId in AIRegistry inspector or add matching entry.");
-                return null;
+            AiBrain brainPrefab = null;
+            string brainName = "";
+
+            if (aiSetting.IsLearning.CurrentValue) {
+                if (playerId == 0) {
+                    brainPrefab = aiSetting.LearningPlayer1BrainPrefab;
+                } else {
+                    if (aiSetting.UseSelfPlay.CurrentValue) {
+                        brainPrefab = aiSetting.LearningPlayer1BrainPrefab;
+                    } else {
+                        brainPrefab = aiSetting.GetLearningOpponentBrain(learningRoundIndex);
+                    }
+                }
             }
 
-            var aiBrain = UnityEngine.Object.Instantiate(aiRegistration.BrainPrefab, battleSetting.PlayerTransforms[playerId]);
-            aiBrain.name = $"{aiRegistration.Id}_Player{playerId}";
+            if (brainPrefab != null) {
+                brainName = $"{brainPrefab.name}_Player{playerId}";
+            } else {
+                var opponentStriker = ResolveOpponentStriker(playerId, selfStriker);
+                if (!aiRegistry.TryResolve(selfStriker, opponentStriker, out var aiRegistration)) {
+                    Debug.LogWarning($"Failed to resolve AI brain registration. playerId={playerId}, self={selfStriker}, opponent={opponentStriker}. Configure fallbackAiId in AIRegistry inspector or add matching entry.");
+                    return null;
+                }
+                brainPrefab = aiRegistration.BrainPrefab;
+                brainName = $"{aiRegistration.Id}_Player{playerId}";
+            }
+
+            var aiBrain = UnityEngine.Object.Instantiate(brainPrefab, battleSetting.PlayerTransforms[playerId]);
+            aiBrain.name = brainName;
             
             bool initialShouldLearn = aiSetting.IsLearning.CurrentValue;
             if (playerId != 0 && !aiSetting.UseSelfPlay.CurrentValue) {

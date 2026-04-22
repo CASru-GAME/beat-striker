@@ -114,8 +114,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AISetting
   isLearning: 0
   useSelfPlay: 0
-  learningPlayer1Striker: 3
-  learningOpponentStrikers: 0300000003000000
+  learningPlayer1:
+    Striker: 3
+    BrainPrefab: {fileID: 1718372972706777403, guid: 4866ccc72809a46cb9af8a3fe25cdb0d, type: 3}
+  learningOpponents:
+  - Striker: 3
+    BrainPrefab: {fileID: 8046662237982532771, guid: 2d24625bad15647a891ccb3ba711b69e, type: 3}
 --- !u!114 &904021008660354504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -132,7 +136,7 @@ MonoBehaviour:
   entries:
   - Id: Beat
     BrainPrefab: {fileID: 8046662237982532771, guid: 2d24625bad15647a891ccb3ba711b69e, type: 3}
-    Self: 0
+    Self: 4
     Opponent: 0
 --- !u!114 &9201860890254514560
 MonoBehaviour:

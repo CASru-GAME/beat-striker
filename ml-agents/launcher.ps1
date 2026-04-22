@@ -1,5 +1,8 @@
 ﻿$ErrorActionPreference = "Stop"
 
+# PythonがYAMLファイルを読み込む際に cp932 エラーになるのを防ぐため、UTF-8 を強制する
+$env:PYTHONUTF8 = "1"
+
 # Beat Striker ML-Agents 実行ディレクトリへ移動
 Set-Location -Path $PSScriptRoot
 

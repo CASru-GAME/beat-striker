@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# PythonがYAMLファイルを読み込む際のエンコーディングエラーを防ぐため、UTF-8 を強制する
+export PYTHONUTF8=1
+
 # Beat Striker ML-Agents 対話型ランチャースクリプト
 # 実行するディレクトリを自分自身の場所に移動
 cd "$(dirname "$0")"

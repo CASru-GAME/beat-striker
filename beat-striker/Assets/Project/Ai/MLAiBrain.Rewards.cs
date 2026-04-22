@@ -69,6 +69,14 @@ namespace Alice {
                 decisionAgent.AddStepReward(-receivedDamage * receivedDamagePenaltyScale);
             }
 
+            if (selfStateTransitionHistory[0].EnteredDash) {
+                decisionAgent.AddStepReward(enteredDashFixedReward);
+            }
+
+            if (selfStateTransitionHistory[0].EnteredAttack) {
+                decisionAgent.AddStepReward(enteredAttackFixedPenalty);
+            }
+
             var selfDamagedRecent2 = selfDamagedHistory[0] || selfDamagedHistory[1];
             if (opponentStateTransitionHistory[1].EnteredAttack && !selfDamagedRecent2) {
                 decisionAgent.AddStepReward(punishAvoidedReward);

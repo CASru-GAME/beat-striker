@@ -1,86 +1,91 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Alice {
-    public class BeatAiBrain : AiBrain {
-        [SerializeField] float keepDistance = 1.2f;
-        [SerializeField] float keepDistanceTolerance = 0.4f;
-        [SerializeField] float attackDistance = 1.5f;
-        [SerializeField] float longJumpDistance = 4f;
-        [SerializeField] float jumpDirectionY = 1f;
+    public enum InputDirectionType {
+        None,
+        Deg0,
+        Deg15,
+        Deg30,
+        Deg45,
+        Deg60,
+        Deg75,
+        Deg90,
+        Deg105,
+        Deg120,
+        Deg135,
+        Deg150,
+        Deg165,
+        Deg180,
+        Deg195,
+        Deg210,
+        Deg225,
+        Deg240,
+        Deg255,
+        Deg270,
+        Deg285,
+        Deg300,
+        Deg315,
+        Deg330,
+        Deg345
+    }
 
-        int lastObservedOpponentPlayerId = -1;
+    public enum OptionalGamePadButton {
+        None = -1,
+        North = (int)GamePadButton.North,
+        South = (int)GamePadButton.South,
+        West = (int)GamePadButton.West,
+        East = (int)GamePadButton.East,
+        Right = (int)GamePadButton.Right,
+        Left = (int)GamePadButton.Left,
+        Start = (int)GamePadButton.Start,
+        Select = (int)GamePadButton.Select,
+    }
+
+    [Serializable]
+    public class AiActionSequenceItem {
+        public OptionalGamePadButton Button = OptionalGamePadButton.None;
+        public InputDirectionType Direction = InputDirectionType.None;
+
+        public Vector2 GetDirectionVector() {
+            if (Direction == InputDirectionType.None) {
+                return Vector2.zero;
+            }
+            int angle = ((int)Direction - 1) * 15;
+            return new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+        }
+
+        public GamePadButton? GetButton() {
+            if (Button == OptionalGamePadButton.None) {
+                return null;
+            }
+            return (GamePadButton)Button;
+        }
+    }
+
+    public class BeatAiBrain : AiBrain {
+        [SerializeField] List<AiActionSequenceItem> actionSequence = new List<AiActionSequenceItem>();
+
+        int currentActionIndex = 0;
 
         protected override AiAction OnGoodWindow(AiObservation observation) {
-            var self = observation.Self;
-            var opponent = observation.Opponent;
-
-            if (lastObservedOpponentPlayerId != opponent.PlayerId.CurrentValue) {
-                lastObservedOpponentPlayerId = opponent.PlayerId.CurrentValue;
+            if (actionSequence == null || actionSequence.Count == 0) {
+                return AiAction.None;
             }
 
-            var offset = opponent.Position.CurrentValue - self.Position.CurrentValue;
-            var offset2D = new Vector2(offset.x, offset.y);
-            var distance = offset2D.magnitude;
-            var moveDirection = ComputeSpacingDirection(offset2D, distance);
+            var item = actionSequence[currentActionIndex];
+            currentActionIndex = (currentActionIndex + 1) % actionSequence.Count;
 
-            if (ShouldJumpAgainstConsecutiveAttack(opponent)) {
-                var evadeDirection = ComputeJumpAwayDirection(self, opponent);
-                return new AiAction(evadeDirection, GamePadButton.South);
-            }
-
-            if (distance >= longJumpDistance) {
-                var horizontal = Mathf.Sign(offset2D.x);
-                if (horizontal == 0f) {
-                    horizontal = 1f;
-                }
-                var jumpDir = new Vector2(horizontal, jumpDirectionY).normalized;
-                return new AiAction(jumpDir, GamePadButton.South);
-            }
-
-            if (distance <= attackDistance) {
-                return new AiAction(moveDirection, GamePadButton.East);
-            }
-
-            return new AiAction(moveDirection, null);
+            return new AiAction(item.GetDirectionVector(), item.GetButton());
         }
 
         protected override void OnAiEnabled() {
-            lastObservedOpponentPlayerId = -1;
+            currentActionIndex = 0;
         }
 
         protected override void OnAiDisabled() {
-            lastObservedOpponentPlayerId = -1;
-        }
-
-        Vector2 ComputeSpacingDirection(Vector2 offset2D, float distance) {
-            if (distance <= 0.0001f) {
-                return Vector2.zero;
-            }
-
-            if (distance < keepDistance - keepDistanceTolerance) {
-                return (-offset2D).normalized;
-            }
-
-            if (distance > keepDistance + keepDistanceTolerance) {
-                return offset2D.normalized;
-            }
-
-            return Vector2.zero;
-        }
-
-        bool ShouldJumpAgainstConsecutiveAttack(IObservableStriker opponent) {
-            // Command-history based heuristic removed — never jump based on command history.
-            return false;
-        }
-
-        Vector2 ComputeJumpAwayDirection(IObservableStriker self, IObservableStriker opponent) {
-            var horizontal = Mathf.Sign(self.Position.CurrentValue.x - opponent.Position.CurrentValue.x);
-            if (horizontal == 0f) {
-                horizontal = 1f;
-            }
-
-            return new Vector2(horizontal, jumpDirectionY).normalized;
+            currentActionIndex = 0;
         }
     }
 }

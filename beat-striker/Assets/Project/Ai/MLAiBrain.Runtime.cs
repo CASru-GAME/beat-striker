@@ -48,6 +48,10 @@ namespace Alice {
         [Header("Reward - Timing")]
         [Tooltip("敵の攻撃を直近で回避し、被弾しなかった場合に与えられる報酬。防御や回避行動の成功を評価します。")]
         [SerializeField] float punishAvoidedReward = 0.05f;
+        [Tooltip("ダッシュ状態へ移行した際に無条件で与えられる固定報酬。ダッシュを選択する行動を促進します。")]
+        [SerializeField] float enteredDashFixedReward = 0.01f;
+        [Tooltip("攻撃状態へ移行した際に無条件で与えられる固定ペナルティ。無闇な攻撃選択を抑制します。")]
+        [SerializeField] float enteredAttackFixedPenalty = -0.01f;
         [Tooltip("自分が攻撃を開始したのに直近2ビートで敵にダメージを与えられなかった（空振り等）場合のペナルティ。")]
         [SerializeField] float attackNoDamage2BeatPenalty = -0.03f;
         [Tooltip("敵が最近攻撃していないにもかかわらず、無駄にガード状態へ移行した場合に与えられるペナルティ。")]

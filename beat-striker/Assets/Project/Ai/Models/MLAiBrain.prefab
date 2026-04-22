@@ -47,18 +47,20 @@ MonoBehaviour:
   behaviorName: Satan
   autoConfigureOnAwake: 1
   autoConfigureInEditor: 1
-  inferenceOnnx: {fileID: 0}
+  inferenceOnnx: {fileID: 5022602860645237092, guid: 3713b71ab15cb704c9fecdd9453749fd, type: 3}
   distanceObservationScale: 40
   beatMoveMagnitudeObservationScale: 7
   chargeCountObservationCap: 4
-  stepPenalty: -0.001
+  stepPenalty: 0
   dealtDamageFixedReward: 0.07
-  dealtDamageRewardScale: 0.07
-  dealtDamageHitRateRewardScale: 0.07
+  dealtDamageRewardScale: 0.03
+  dealtDamageHitRateRewardScale: 0.03
   receivedDamagePenaltyScale: 0.1
   hpRewardScale: 10
   punishAvoidedReward: 0.05
-  attackNoDamage2BeatPenalty: -0.03
+  enteredDashFixedReward: 0.03
+  enteredAttackFixedPenalty: -0.01
+  attackNoDamage2BeatPenalty: -1.1
   unnecessaryGuardPenalty: -0.06
   chargeOveruseThreshold: 4
   chargeOverusePenalty: -0.03
