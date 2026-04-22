@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 # Beat Striker ML-Agents 実行ディレクトリへ移動
 Set-Location -Path $PSScriptRoot
