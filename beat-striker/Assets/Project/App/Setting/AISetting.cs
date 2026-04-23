@@ -41,6 +41,9 @@ namespace Alice {
         [SerializeField] bool useSelfPlay;
         [SerializeField] LearningCharacter learningPlayer1 = new() { Enabled = true, Striker = Striker.Hero, Weight = 1f };
         [SerializeField] List<LearningCharacter> learningOpponents = new() { new() { Enabled = true, Striker = Striker.Wizard, Weight = 1f } };
+        
+        [Header("Build Settings")]
+        [SerializeField] string buildPath = "FighterAI.exe";
 
         [Header("Opponent Selection - EMA")]
         [Tooltip("指数移動平均の平滑化係数。1に近いほど過去の値を重視し、変化が緩やかになります。")]

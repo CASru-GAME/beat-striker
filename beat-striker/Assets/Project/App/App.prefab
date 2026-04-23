@@ -120,7 +120,7 @@ MonoBehaviour:
     BrainPrefab: {fileID: 0}
     Weight: 1
   learningOpponents:
-  - Enabled: 0
+  - Enabled: 1
     Striker: 3
     BrainPrefab: {fileID: 8046662237982532771, guid: 8aaa76c934a697740a254a7ea24d78a1, type: 3}
     Weight: 1
@@ -132,7 +132,7 @@ MonoBehaviour:
     Striker: 1
     BrainPrefab: {fileID: 8046662237982532771, guid: 8aaa76c934a697740a254a7ea24d78a1, type: 3}
     Weight: 1
-  - Enabled: 0
+  - Enabled: 1
     Striker: 3
     BrainPrefab: {fileID: -9196028008370385595, guid: dcc7a926967f52e42bcd9699ebb2119d, type: 3}
     Weight: 1
@@ -140,11 +140,11 @@ MonoBehaviour:
     Striker: 1
     BrainPrefab: {fileID: -9196028008370385595, guid: dcc7a926967f52e42bcd9699ebb2119d, type: 3}
     Weight: 1
-  - Enabled: 0
+  - Enabled: 1
     Striker: 3
     BrainPrefab: {fileID: -6002985849842417107, guid: fe96e2b56925df7429f2e0a5365eb181, type: 3}
     Weight: 1
-  - Enabled: 0
+  - Enabled: 1
     Striker: 3
     BrainPrefab: {fileID: 8046662237982532771, guid: 2d24625bad15647a891ccb3ba711b69e, type: 3}
     Weight: 1
@@ -160,7 +160,7 @@ MonoBehaviour:
     Striker: 1
     BrainPrefab: {fileID: 1718372972706777403, guid: 11edb303d1603c14d81212adb4a66f13, type: 3}
     Weight: 1
-  - Enabled: 0
+  - Enabled: 1
     Striker: 3
     BrainPrefab: {fileID: 1718372972706777403, guid: 1352e75daebb66f49a3225a024d5a7a8, type: 3}
     Weight: 1
@@ -172,6 +172,7 @@ MonoBehaviour:
     Striker: 0
     BrainPrefab: {fileID: 8046662237982532771, guid: e121388a1c225224bbcdb77bf5ec1bb2, type: 3}
     Weight: 1
+  buildPath: FighterAI.exe
   emaSmoothing: 0.83
   emaFloorScale: 0.06
 --- !u!114 &904021008660354504
@@ -188,14 +189,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AIRegistry
   fallbackAiId: De
   entries:
-  - Id: Wa
-    BrainPrefab: {fileID: 1718372972706777403, guid: 1352e75daebb66f49a3225a024d5a7a8, type: 3}
-    Self: 4
-    Opponent: 4
-  - Id: Wi
-    BrainPrefab: {fileID: 1718372972706777403, guid: 11edb303d1603c14d81212adb4a66f13, type: 3}
-    Self: 2
-    Opponent: 0
   - Id: De
     BrainPrefab: {fileID: 8046662237982532771, guid: 8aaa76c934a697740a254a7ea24d78a1, type: 3}
     Self: 0
@@ -204,8 +197,12 @@ MonoBehaviour:
     BrainPrefab: {fileID: 1718372972706777403, guid: 8228e91a13561d247986769aae26816b, type: 3}
     Self: 1
     Opponent: 0
-  - Id: Wa-Wi
-    BrainPrefab: {fileID: 1718372972706777403, guid: d90c8cef80c5f814f81e4b182674c738, type: 3}
+  - Id: Wi
+    BrainPrefab: {fileID: 1718372972706777403, guid: 11edb303d1603c14d81212adb4a66f13, type: 3}
+    Self: 2
+    Opponent: 0
+  - Id: Wa
+    BrainPrefab: {fileID: 1718372972706777403, guid: 1352e75daebb66f49a3225a024d5a7a8, type: 3}
     Self: 4
     Opponent: 0
 --- !u!114 &9201860890254514560

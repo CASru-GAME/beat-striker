@@ -52,31 +52,94 @@ MonoBehaviour:
   closeDistanceObservationScale: 10
   yDisplacementObservationScale: 5
   beatMoveMagnitudeObservationScale: 7
-  chargeCountObservationCap: 4
+  chargeCountObservationCap: 2
   stepPenalty: 0
-  dealtDamageFixedReward: 0.1
-  dealtDamageRewardScale: 0.07
-  dealtDamageHitRateRewardScale: 0.03
-  receivedDamagePenaltyScale: 0.13
+  dealtDamageFixedReward: 0.2
+  dealtDamageRewardScale: 0.2
+  dealtDamageHitRateRewardScale: 0.1
+  receivedDamagePenaltyScale: 0.4
   hpRewardScale: 10
-  punishAvoidedReward: 0.05
-  enteredDashFixedReward: 0.05
+  punishAvoidedReward: 0.1
+  enteredDashFixedReward: 0.02
+  upwardDashReward: 0.02
   enteredAttackFixedPenalty: -0.02
   attackNoDamage2BeatPenalty: -0.1
-  unnecessaryGuardPenalty: -0.06
+  unnecessaryGuardPenalty: -0.05
   chargeOveruseThreshold: 2
-  chargeOverusePenalty: -0.03
+  chargeOverusePenalty: -0.1
   chargeAutoResetAfterBeats: 2
   minPreferredDistance: 0.5
   tooCloseApproachPenalty: -0.01
   tooCloseRetreatReward: 0.008
   farApproachDistance: 5
-  farApproachReward: 0.04
-  farRetreatPenalty: -0.05
+  farApproachReward: 0.1
+  farRetreatPenalty: -0.15
   movementAverageWindowBeats: 10
   movementAverageThreshold: 1.1
-  movementBelowAveragePenalty: -0.02
-  movementAboveAverageReward: 0.015
-  damageHitAverageWindowBeats: 10
-  damageHitAverageThreshold: 0.1
+  movementBelowAveragePenalty: -0.05
+  movementAboveAverageReward: 0.03
+  damageHitAverageWindowBeats: 15
+  damageHitAverageThreshold: 0.071
   noDamageLast3BeatsPenalty: -0.1
+  episodeEndRewardScale: 15
+  episodeEndHpCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -1
+      value: -1
+      inSlope: 15.444135
+      outSlope: 15.444135
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.31082082
+    - serializedVersion: 3
+      time: -0.96392655
+      value: -0.7208554
+      inSlope: 3.48205
+      outSlope: 3.48205
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 1
+    - serializedVersion: 3
+      time: -0.9095543
+      value: -0.6182895
+      inSlope: 0.8396736
+      outSlope: 0.8396736
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 1
+      outWeight: 0.1279915
+    - serializedVersion: 3
+      time: 0.0041714385
+      value: -0.0019800067
+      inSlope: 1.0000001
+      outSlope: 1.0000001
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.4275959
+      value: 0.79387444
+      inSlope: 1.3538004
+      outSlope: 1.3538004
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.13119094
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0.074619345
+      outSlope: 0.074619345
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.2599598
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  episodeEndStepScale: 1000

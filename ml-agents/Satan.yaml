@@ -35,7 +35,7 @@ behaviors:
     summary_freq: 1024
 
 engine_settings:
-  time_scale: 10
+  time_scale: 7
   target_frame_rate: -1
   capture_frame_rate: 60
 
