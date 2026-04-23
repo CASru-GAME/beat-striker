@@ -24,6 +24,10 @@ namespace Alice {
         [Header("Observation Scale")]
         [Tooltip("敵との距離をObservationとして正規化(-1~1)する際の基準値。実際の距離をこの値で除算します。")]
         [SerializeField] float distanceObservationScale = 40f;
+        [Tooltip("近距離用の距離観測スケール値。distanceObservationScaleより小さい値を設定することで、近距離での距離変化に敏感な観測値になります。")]
+        [SerializeField] float closeDistanceObservationScale = 10f;
+        [Tooltip("初期Y座標からのY方向変位をObservationとして正規化(-1~1)する際の基準値。")]
+        [SerializeField] float yDisplacementObservationScale = 5f;
         [Tooltip("1ビートあたりの移動量をObservationとして正規化(-1~1)する際の基準値。")]
         [SerializeField] float beatMoveMagnitudeObservationScale = 7f;
         [Tooltip("AIのチャージ回数をObservationとして0~1に正規化するための最大回数の上限値。")]
@@ -50,6 +54,8 @@ namespace Alice {
         [SerializeField] float punishAvoidedReward = 0.05f;
         [Tooltip("ダッシュ状態へ移行した際に無条件で与えられる固定報酬。ダッシュを選択する行動を促進します。")]
         [SerializeField] float enteredDashFixedReward = 0.01f;
+        [Tooltip("上方向(Y+)への移動でダッシュ状態へ移行した際に追加で与えられる報酬。ジャンプダッシュ行動を促します。")]
+        [SerializeField] float upwardDashReward = 0.01f;
         [Tooltip("攻撃状態へ移行した際に無条件で与えられる固定ペナルティ。無闇な攻撃選択を抑制します。")]
         [SerializeField] float enteredAttackFixedPenalty = -0.01f;
         [Tooltip("自分が攻撃を開始したのに直近2ビートで敵にダメージを与えられなかった（空振り等）場合のペナルティ。")]
@@ -72,6 +78,12 @@ namespace Alice {
         [SerializeField] float tooCloseApproachPenalty = -0.01f;
         [Tooltip("敵に近づきすぎた状態から距離を取る(後退する)行動をした場合に与えられる報酬。適切な距離維持を学習。")]
         [SerializeField] float tooCloseRetreatReward = 0.008f;
+        [Tooltip("敵との距離がこの閾値以上のとき、敵に近づく行動に対して報酬を与える基準距離。")]
+        [SerializeField] float farApproachDistance = 5f;
+        [Tooltip("遠距離から敵に近づいた場合に与えられる報酬。積極的なアプローチを促進します。")]
+        [SerializeField] float farApproachReward = 0.01f;
+        [Tooltip("遠距離にいるにも関わらず敵から更に遠ざかった場合に与えられるペナルティ。遠距離での離脱行動を抑制します。")]
+        [SerializeField] float farRetreatPenalty = -0.01f;
 
         [Header("Reward - Movement")]
         [Tooltip("移動量の平均を算出するために記録する、過去の直近ビート数（ウィンドウサイズ）。")]
@@ -91,6 +103,14 @@ namespace Alice {
         [Tooltip("直近3ビートで全くダメージを与えられず、かつ全体の命中率も閾値以下の場合に与えられるペナルティ。")]
         [SerializeField] float noDamageLast3BeatsPenalty = -0.05f;
 
+        [Header("Reward - Episode End")]
+        [Tooltip("エピソード終了時に付与する報酬のスケール値。カーブ(自分HP割合 - 相手HP割合) × 時間ボーナスにこの値を掛けます。")]
+        [SerializeField] float episodeEndRewardScale = 3.0f;
+        [Tooltip("エピソード終了時のHP差(-1~1)を報酬値にリマップするカーブ。デフォルトは線形(そのまま)。")]
+        [SerializeField] AnimationCurve episodeEndHpCurve = AnimationCurve.Linear(-1f, -1f, 1f, 1f);
+        [Tooltip("エピソード終了時の時間ボーナス計算に使うステップ数スケール。max(0, 1 - ステップ数/この値) で時間ボーナスを算出します。")]
+        [SerializeField, Min(1f)] float episodeEndStepScale = 5000f;
+
         MLAiDecisionAgent decisionAgent;
         BehaviorParameters behaviorParameters;
         bool isLearningMode = true;
@@ -100,9 +120,11 @@ namespace Alice {
         Vector3 previousSelfPosition;
         Vector3 previousOpponentPosition;
         float? previousDistance;
+        float? initialSelfY;
         readonly Vector2[] selfMoveDirectionLocalHistory = new Vector2[BEAT_STACK_COUNT];
         readonly Vector2[] opponentMoveDirectionLocalHistory = new Vector2[BEAT_STACK_COUNT];
         readonly float[] selfMoveMagnitudeHistory = new float[BEAT_STACK_COUNT];
+        readonly float[] selfMoveWorldYHistory = new float[BEAT_STACK_COUNT];
         readonly float[] opponentMoveMagnitudeHistory = new float[BEAT_STACK_COUNT];
         readonly StateTransitionFlags[] selfStateTransitionHistory = new StateTransitionFlags[BEAT_STACK_COUNT];
         readonly StateTransitionFlags[] opponentStateTransitionHistory = new StateTransitionFlags[BEAT_STACK_COUNT];

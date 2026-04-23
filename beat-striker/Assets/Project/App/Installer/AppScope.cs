@@ -44,6 +44,7 @@ namespace Alice {
 			instance = this;
 			DontDestroyOnLoad(gameObject);
 			playerSelectSetting.InitializeDefaults();
+			aiSetting.InitializeDefaults();
 			base.Awake();
 			Debug.Log($"{LOG_PREFIX} Awake completed. scene={gameObject.scene.name}");
 		}

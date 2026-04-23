@@ -35,7 +35,7 @@ $action_selection = Read-Host "番号を入力してください [1, 2, 3 のい
 Write-Host "-----------------------------------------"
 $run_id = Read-Host "今回の学習の名前 (Run ID) を入力してください (例: Train_01)"
 
-$arguments = @($yaml_file, "--run-id=$run_id")
+$arguments = @($yaml_file, "--run-id=$run_id", "--num-envs=1")
 
 if ($action_selection -eq "2") {
     $arguments += "--resume"

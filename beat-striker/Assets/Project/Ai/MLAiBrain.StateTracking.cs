@@ -53,6 +53,7 @@ namespace Alice {
             ShiftHistory(opponentMoveDirectionLocalHistory, opponentMoveLocalDir);
             ShiftHistory(selfMoveMagnitudeHistory, selfMoveMagnitude);
             ShiftHistory(opponentMoveMagnitudeHistory, opponentMoveMagnitude);
+            ShiftHistory(selfMoveWorldYHistory, selfBeatDelta.y);
 
             PushWindow(movementAverageWindow, selfMoveMagnitude, movementAverageWindowBeats);
         }

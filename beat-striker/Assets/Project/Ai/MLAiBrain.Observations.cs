@@ -16,6 +16,17 @@ namespace Alice {
 
             sensor.AddObservation(NormalizeSigned(distance, distanceObservationScale));
 
+            // 近距離に敏感な距離観測: スケールが小さいため近距離での変化が大きい
+            sensor.AddObservation(NormalizeSigned(distance, closeDistanceObservationScale));
+
+            // 初期Y座標からのY変位
+            var selfY = self.Position.CurrentValue.y;
+            if (!initialSelfY.HasValue) {
+                initialSelfY = selfY;
+            }
+            var yDisplacement = selfY - initialSelfY.Value;
+            sensor.AddObservation(NormalizeSigned(yDisplacement, yDisplacementObservationScale));
+
             var selfToOpponentLocal = ToLocalDirection(offset2D, self.LookDirection.CurrentValue);
             sensor.AddObservation(selfToOpponentLocal.x);
             sensor.AddObservation(selfToOpponentLocal.y);

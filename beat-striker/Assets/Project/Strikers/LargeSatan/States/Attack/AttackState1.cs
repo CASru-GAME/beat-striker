@@ -35,6 +35,11 @@ namespace Core.LargeSatan {
                 nextContext.TryTransition(nextNode);
             });
 
+            var toOpponent = context.GetOpponent().Position.CurrentValue - context.Rigidbody.position;
+            if (Vector3.Dot(context.Rigidbody.transform.forward, toOpponent) < 0) {
+                context.Rigidbody.rotation *= Quaternion.Euler(0, 180, 0);
+            }
+
             var direction = context.Rigidbody.transform.forward;
             initialVelocity = speed * direction;
             elapsedTime = 0f;

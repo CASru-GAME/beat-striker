@@ -65,6 +65,7 @@ namespace Alice {
     }
 
     public class BeatAiBrain : AiBrain {
+        [SerializeField] bool isRandomSequence = false;
         [SerializeField] List<AiActionSequenceItem> actionSequence = new List<AiActionSequenceItem>();
 
         int currentActionIndex = 0;
@@ -74,8 +75,14 @@ namespace Alice {
                 return AiAction.None;
             }
 
-            var item = actionSequence[currentActionIndex];
-            currentActionIndex = (currentActionIndex + 1) % actionSequence.Count;
+            AiActionSequenceItem item;
+            if (isRandomSequence) {
+                int randomIndex = UnityEngine.Random.Range(0, actionSequence.Count);
+                item = actionSequence[randomIndex];
+            } else {
+                item = actionSequence[currentActionIndex];
+                currentActionIndex = (currentActionIndex + 1) % actionSequence.Count;
+            }
 
             return new AiAction(item.GetDirectionVector(), item.GetButton());
         }

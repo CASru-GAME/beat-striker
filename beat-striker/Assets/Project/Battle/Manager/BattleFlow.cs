@@ -228,6 +228,7 @@ namespace Alice {
                     await battlePresenter.PlayRoundEndTransitionAsync();
                     DestroyRoundSpawnedObjects();
 
+                    battleDeployer.RecordRoundResult(deadPlayerId);
                     battleDeployer.Undeploy();
                     battleDeployer.Deploy();
                     SubscribeStrikerDeadEvents();

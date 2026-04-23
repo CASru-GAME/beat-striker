@@ -95,7 +95,6 @@ namespace Core.LargeWizard {
             }
 
             if (!other.TryGetComponent<Hurtbox>(out var otherHurtbox)) {
-                otherHurtbox = other.GetComponentInParent<Hurtbox>();
                 if (otherHurtbox == null) {
                     return;
                 }

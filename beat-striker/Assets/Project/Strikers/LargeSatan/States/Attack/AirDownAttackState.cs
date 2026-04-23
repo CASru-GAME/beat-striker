@@ -31,6 +31,7 @@ namespace Core.LargeSatan {
         float groundRayDistance;
         bool previousUseGravity;
         bool hasLanded;
+        bool hasHit;
 
         public override void OnEnter(IStrikerContext context) {
 
@@ -38,6 +39,7 @@ namespace Core.LargeSatan {
 
             elapsedTime = 0f;
             hasLanded = false;
+            hasHit = false;
             groundRayDistance = stopDistanceToGround * 2f;
             previousUseGravity = context.Rigidbody.useGravity;
             context.Rigidbody.useGravity = false;
@@ -76,6 +78,12 @@ namespace Core.LargeSatan {
                 .AddTo(disposables);
 
             attackPlayer.Emit();
+        }
+
+        public override void OnHit(IStrikerStateContext hub, HitStatus status) {
+            hub.PreventGroup();
+            hasHit = true;
+            hub.ApplyDamage(status.Damage);
         }
 
         public override void OnUpdate(IStrikerStateContext context) {

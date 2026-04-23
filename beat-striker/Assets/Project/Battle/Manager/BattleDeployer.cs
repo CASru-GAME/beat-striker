@@ -22,6 +22,7 @@ namespace Alice {
         void DisconnectRoundInputs();
         void PauseRound();
         void ResumeRound();
+        void RecordRoundResult(int deadPlayerId);
     }
 
     public class BattleDeployer : IBattleDeployer, IDisposable {
@@ -53,7 +54,9 @@ namespace Alice {
         readonly List<DeployedStriker> deployedStrikers = new();
         readonly List<IDisposable> roundSubscriptions = new();
         bool isRoundPaused;
-        int learningRoundIndex;
+        readonly Dictionary<int, float> opponentEmaScales = new();
+        int lastSelectedOpponentIndex = -1;
+        LearningCharacter lastSelectedOpponent;
 
         public BattleDeployer(IBattleSetting battleSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.battleSetting = battleSetting;
@@ -79,9 +82,6 @@ namespace Alice {
 
             if (aiSetting.IsLearning.CurrentValue) {
                 ApplyLearningSelections();
-                learningRoundIndex += 1;
-            } else {
-                learningRoundIndex = 0;
             }
 
             for (int i = 0; i < battleSetting.PlayerTransforms.Count; i++) {
@@ -91,6 +91,7 @@ namespace Alice {
                     ? appStrikerRegistry.Default
                     : appStrikerRegistry.GetByStriker(selectedStriker);
                 selectedStriker = selectedStrikerInfo.BattleStriker;
+                Debug.Log($"[BattleDeployer] Deploy loop: Player{i} TryGetStriker={selectedStriker}, BattleStriker={selectedStrikerInfo.BattleStriker}, Prefab={selectedStrikerInfo.Prefab?.name ?? "NULL"}".ToOrange());
                 if (selectedStrikerInfo.Prefab == null) {
                     Debug.LogError($"Striker prefab not found for {selectedStriker}");
                     continue;
@@ -129,13 +130,62 @@ namespace Alice {
         }
 
         void ApplyLearningSelections() {
-            playerSelectSetting.SelectStriker(0, aiSetting.LearningPlayer1Striker);
+            var p1Striker = aiSetting.LearningPlayer1Striker;
+            playerSelectSetting.SelectStriker(0, p1Striker);
             
             if (aiSetting.UseSelfPlay.CurrentValue) {
-                playerSelectSetting.SelectStriker(1, aiSetting.LearningPlayer1Striker);
+                playerSelectSetting.SelectStriker(1, p1Striker);
+                lastSelectedOpponentIndex = -1;
+                lastSelectedOpponent = null;
+                Debug.Log($"[BattleDeployer] ApplyLearningSelections: SelfPlay ON, Player2 also set to {p1Striker}".ToOrange());
             } else {
-                playerSelectSetting.SelectStriker(1, aiSetting.GetLearningOpponentStriker(learningRoundIndex));
+                var result = aiSetting.GetWeightedRandomOpponent(GetOpponentEmaScale);
+                if (result.HasValue) {
+                    lastSelectedOpponentIndex = result.Value.Index;
+                    lastSelectedOpponent = result.Value.Character;
+                    playerSelectSetting.SelectStriker(1, result.Value.Character.Striker);
+                    var emaScale = GetOpponentEmaScale(result.Value.Index);
+                    Debug.Log($"[BattleDeployer] ApplyLearningSelections: SelfPlay OFF, Player2 set to {result.Value.Character.Striker} (index={result.Value.Index}, weight={result.Value.Character.Weight:F2}, emaScale={emaScale:F3})".ToOrange());
+                } else {
+                    lastSelectedOpponentIndex = -1;
+                    lastSelectedOpponent = null;
+                    playerSelectSetting.SelectStriker(1, p1Striker);
+                    Debug.Log($"[BattleDeployer] ApplyLearningSelections: No valid opponent, fallback to {p1Striker}".ToOrange());
+                }
             }
+
+            // Verify selections were applied correctly
+            playerSelectSetting.TryGetStriker(0, out var verifyP1);
+            playerSelectSetting.TryGetStriker(1, out var verifyP2);
+            Debug.Log($"[BattleDeployer] ApplyLearningSelections VERIFY: Player0={verifyP1}, Player1={verifyP2}".ToOrange());
+        }
+
+        float GetOpponentEmaScale(int opponentIndex) {
+            if (!opponentEmaScales.TryGetValue(opponentIndex, out var scale)) {
+                return 1f; // 初回は最大スケール
+            }
+            return scale;
+        }
+
+        public void RecordRoundResult(int deadPlayerId) {
+            if (!aiSetting.IsLearning.CurrentValue || lastSelectedOpponentIndex < 0) {
+                return;
+            }
+
+            var idx = lastSelectedOpponentIndex;
+            var smoothing = aiSetting.EmaSmoothing;
+            var floor = aiSetting.EmaFloorScale;
+            float winOrLoss = deadPlayerId != 0 ? 0f : 1f; // 1P勝利=0（スケール低下）, 1P敗北=1（スケール維持）
+
+            if (!opponentEmaScales.TryGetValue(idx, out var currentScale)) {
+                currentScale = 1f;
+            }
+
+            // scale' = (1 - floor) * (smoothing * scale + (1 - smoothing) * winOrLoss) + floor
+            var newScale = (1f - floor) * (smoothing * currentScale + (1f - smoothing) * winOrLoss) + floor;
+            opponentEmaScales[idx] = newScale;
+
+            Debug.Log($"[BattleDeployer] RecordRoundResult: opponentIndex={idx}, deadPlayerId={deadPlayerId}, win={winOrLoss:F0}, scale={currentScale:F3}->{newScale:F3} (smoothing={smoothing:F2}, floor={floor:F2})".ToOrange());
         }
 
         public void Undeploy() {
@@ -309,8 +359,8 @@ namespace Alice {
                 } else {
                     if (aiSetting.UseSelfPlay.CurrentValue) {
                         brainPrefab = aiSetting.LearningPlayer1BrainPrefab;
-                    } else {
-                        brainPrefab = aiSetting.GetLearningOpponentBrain(learningRoundIndex);
+                    } else if (lastSelectedOpponent != null) {
+                        brainPrefab = lastSelectedOpponent.BrainPrefab;
                     }
                 }
             }

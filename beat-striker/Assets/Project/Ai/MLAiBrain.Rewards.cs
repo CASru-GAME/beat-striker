@@ -8,6 +8,7 @@ namespace Alice {
             previousOpponentHp = null;
             hasPreviousPositions = false;
             previousDistance = null;
+            initialSelfY = null;
             movementAverageWindow.Clear();
             damageHitAverageWindow.Clear();
             aiChargeCount = 0;
@@ -17,6 +18,7 @@ namespace Alice {
                 selfMoveDirectionLocalHistory[i] = Vector2.zero;
                 opponentMoveDirectionLocalHistory[i] = Vector2.zero;
                 selfMoveMagnitudeHistory[i] = 0f;
+                selfMoveWorldYHistory[i] = 0f;
                 opponentMoveMagnitudeHistory[i] = 0f;
                 selfStateTransitionHistory[i] = StateTransitionFlags.None;
                 opponentStateTransitionHistory[i] = StateTransitionFlags.None;
@@ -71,6 +73,9 @@ namespace Alice {
 
             if (selfStateTransitionHistory[0].EnteredDash) {
                 decisionAgent.AddStepReward(enteredDashFixedReward);
+                if (selfMoveWorldYHistory[0] > 0f) {
+                    decisionAgent.AddStepReward(upwardDashReward);
+                }
             }
 
             if (selfStateTransitionHistory[0].EnteredAttack) {
@@ -104,8 +109,28 @@ namespace Alice {
         }
 
         public override void EndRoundEpisode() {
+            EvaluateEpisodeEndReward();
             decisionAgent.EndEpisode();
             ResetRuntimeState();
+        }
+
+        void EvaluateEpisodeEndReward() {
+            if (observedSelfStriker == null || observedOpponentStriker == null) {
+                return;
+            }
+
+            var selfMaxHp = observedSelfStriker.MaxHitPoint.CurrentValue;
+            var opponentMaxHp = observedOpponentStriker.MaxHitPoint.CurrentValue;
+            if (selfMaxHp <= 0f || opponentMaxHp <= 0f) {
+                return;
+            }
+
+            var selfHpRatio = observedSelfStriker.HitPoint.CurrentValue / selfMaxHp;
+            var opponentHpRatio = observedOpponentStriker.HitPoint.CurrentValue / opponentMaxHp;
+            var hpDifference = episodeEndHpCurve.Evaluate(selfHpRatio - opponentHpRatio);
+            var timeFactor = Mathf.Max(0f, 1f - (float)decisionAgent.StepCount / episodeEndStepScale);
+            var reward = episodeEndRewardScale * hpDifference * timeFactor;
+            decisionAgent.AddStepReward(reward);
         }
 
         void EvaluateDistanceControlReward(AiObservation observation) {
@@ -121,6 +146,14 @@ namespace Alice {
                     decisionAgent.AddStepReward(tooCloseApproachPenalty);
                 } else if (distance > previousDistance.Value) {
                     decisionAgent.AddStepReward(Mathf.Min(Mathf.Abs(tooCloseApproachPenalty), tooCloseRetreatReward));
+                }
+            }
+
+            if (previousDistance.HasValue && previousDistance.Value >= farApproachDistance) {
+                if (distance < previousDistance.Value) {
+                    decisionAgent.AddStepReward(farApproachReward);
+                } else if (distance > previousDistance.Value) {
+                    decisionAgent.AddStepReward(farRetreatPenalty);
                 }
             }
 

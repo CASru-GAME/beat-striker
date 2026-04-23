@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4117694988147721486}
   - component: {fileID: 8046662237982532771}
   m_Layer: 0
-  m_Name: BeatAiBrain
+  m_Name: AB
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -350,7 +350,7 @@ GameObject:
   - component: {fileID: 8087448069969366748}
   - component: {fileID: 4460241776489062734}
   - component: {fileID: 4056311842256110682}
-  - component: {fileID: 371405182885234800}
+  - component: {fileID: 4729390048324767368}
   m_Layer: 0
   m_Name: rush
   m_TagString: Untagged
@@ -422,8 +422,11 @@ MonoBehaviour:
   rotationSpeed: 700
   impactPrefab: {fileID: 2385203677748898051, guid: 1f5c6c7e575dc844e98d6863e76d0aa4, type: 3}
   trail: {fileID: 1195764271898045502}
---- !u!135 &371405182885234800
-SphereCollider:
+  rootSearchMask:
+    serializedVersion: 2
+    m_Bits: 8
+--- !u!65 &4729390048324767368
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -441,8 +444,8 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 1.1731195
-  m_Center: {x: -0.003578186, y: 0.11302161, z: 0.022776842}
+  m_Size: {x: 8.652214, y: 0.7277951, z: 3.462636}
+  m_Center: {x: 0.080138445, y: 0.06785798, z: 1.5503691}
 --- !u!1001 &3791651564388662318
 PrefabInstance:
   m_ObjectHideFlags: 0

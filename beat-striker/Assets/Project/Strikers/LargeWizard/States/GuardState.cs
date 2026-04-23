@@ -150,6 +150,7 @@ namespace Core.LargeWizard {
         // 攻撃を受けた時に呼ばれる
         public override void OnHit(IStrikerStateContext context, HitStatus status) {
             context.Rigidbody.linearVelocity = 0.5f * status.KnockbackVelocity;
+            context.ApplyDamage(0.1f *status.Damage);
         }
 
         // ミスした時に呼ばれる

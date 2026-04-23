@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &714152330420949822
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4613717739136041729}
+  - component: {fileID: 1718372972706777403}
+  m_Layer: 0
+  m_Name: Wizard
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4613717739136041729
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 714152330420949822}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1204.218, y: 505, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1718372972706777403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 714152330420949822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7498323f35e14c0a9416eb4d7b33956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.MLAiBrain
+  behaviorName: Satan
+  autoConfigureOnAwake: 1
+  autoConfigureInEditor: 1
+  inferenceOnnx: {fileID: 5022602860645237092, guid: 78f3f2b097a3e1346807a2bc0500c9c0, type: 3}
+  distanceObservationScale: 40
+  closeDistanceObservationScale: 10
+  yDisplacementObservationScale: 5
+  beatMoveMagnitudeObservationScale: 7
+  chargeCountObservationCap: 4
+  stepPenalty: 0
+  dealtDamageFixedReward: 0.1
+  dealtDamageRewardScale: 0.07
+  dealtDamageHitRateRewardScale: 0.03
+  receivedDamagePenaltyScale: 0.13
+  hpRewardScale: 10
+  punishAvoidedReward: 0.05
+  enteredDashFixedReward: 0.03
+  enteredAttackFixedPenalty: -0.01
+  attackNoDamage2BeatPenalty: -0.15
+  unnecessaryGuardPenalty: -0.01
+  chargeOveruseThreshold: 4
+  chargeOverusePenalty: -0.03
+  chargeAutoResetAfterBeats: 30
+  minPreferredDistance: 0.5
+  tooCloseApproachPenalty: -0.01
+  tooCloseRetreatReward: 0.008
+  farApproachDistance: 20
+  farApproachReward: 0.01
+  farRetreatPenalty: -0.015
+  movementAverageWindowBeats: 10
+  movementAverageThreshold: 1.1
+  movementBelowAveragePenalty: -0.02
+  movementAboveAverageReward: 0.015
+  damageHitAverageWindowBeats: 10
+  damageHitAverageThreshold: 0.1
+  noDamageLast3BeatsPenalty: -0.1

@@ -12,7 +12,7 @@ namespace Alice {
         internal const int MOVE_DIRECTION_BRANCH_SIZE = 9;
         internal const int BUTTON_ACTION_BRANCH_SIZE = 4;
         internal const int BEAT_STACK_COUNT = 4;
-        internal const int OBSERVATION_COUNT = 72;
+        internal const int OBSERVATION_COUNT = 74;
         internal const int OBSERVATION_STACK_COUNT = 1;
         internal const int STACKED_OBSERVATION_COUNT = OBSERVATION_COUNT * OBSERVATION_STACK_COUNT;
 

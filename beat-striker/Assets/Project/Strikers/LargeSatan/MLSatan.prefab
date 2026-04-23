@@ -5383,7 +5383,6 @@ MonoBehaviour:
   deadState: {fileID: 614530405571233721}
   VictoryState: {fileID: 4353469668150655512}
   IntroState: {fileID: 659335394042643980}
-  aiBrain: {fileID: 0}
   centerPositionTransform: {fileID: 0}
 --- !u!114 &8515823221661986454
 MonoBehaviour:
@@ -5522,7 +5521,7 @@ MonoBehaviour:
     fadeTime: 0.2
     speed: 1
   fallNode: {fileID: 5108383347425668583}
-  jumpSpeed: 32
+  jumpSpeed: 38
   upwardThreshold: 0.96
   duration: 0.4
   endSpeedRatio: 0.01
@@ -5916,9 +5915,9 @@ MonoBehaviour:
     speed: 1
   nextNode: {fileID: 5551572408817209888}
   consecutiveDashSpeeds:
-  - 30
-  - 35
   - 40
+  - 45
+  - 50
   reentryWindowSeconds: 0.7
   duration: 0.3
   endSpeedRatio: 0.1
@@ -6281,7 +6280,7 @@ MonoBehaviour:
     fadeTime: 0.2
     speed: 1
   fallNode: {fileID: 5108383347425668583}
-  jumpSpeed: 12
+  jumpSpeed: 14
   duration: 0.5
   downwardAcceleration: 30
   effectPlayer: {fileID: 6548501005657897989}
@@ -11348,7 +11347,7 @@ MonoBehaviour:
   attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
   hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
-  multipleHit: 0
+  multipleHit: 1
   hitDetectionStartTime: 0
   hitDetectionDuration: 0.5
 --- !u!114 &917046264041560210
@@ -11714,7 +11713,7 @@ MonoBehaviour:
   attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
   hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
-  multipleHit: 0
+  multipleHit: 1
   hitDetectionStartTime: 0
   hitDetectionDuration: 0.5
 --- !u!114 &3928871652516346861
@@ -27198,7 +27197,7 @@ MonoBehaviour:
     fadeTime: 0.2
     speed: 1
   fallNode: {fileID: 5108383347425668583}
-  jumpSpeed: 8
+  jumpSpeed: 9
   duration: 0.5
   downwardAcceleration: 30
   effectPlayer: {fileID: 6548501005657897989}

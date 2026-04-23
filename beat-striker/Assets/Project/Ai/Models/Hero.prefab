@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4613717739136041729}
   - component: {fileID: 1718372972706777403}
   m_Layer: 0
-  m_Name: MLAiBrain
+  m_Name: Hero
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47,31 +47,36 @@ MonoBehaviour:
   behaviorName: Satan
   autoConfigureOnAwake: 1
   autoConfigureInEditor: 1
-  inferenceOnnx: {fileID: 5022602860645237092, guid: 3713b71ab15cb704c9fecdd9453749fd, type: 3}
+  inferenceOnnx: {fileID: 5022602860645237092, guid: 42741a49f43d1b5429d333e83e6603fc, type: 3}
   distanceObservationScale: 40
+  closeDistanceObservationScale: 10
+  yDisplacementObservationScale: 5
   beatMoveMagnitudeObservationScale: 7
   chargeCountObservationCap: 4
   stepPenalty: 0
-  dealtDamageFixedReward: 0.07
-  dealtDamageRewardScale: 0.03
+  dealtDamageFixedReward: 0.1
+  dealtDamageRewardScale: 0.07
   dealtDamageHitRateRewardScale: 0.03
   receivedDamagePenaltyScale: 0.1
   hpRewardScale: 10
   punishAvoidedReward: 0.05
   enteredDashFixedReward: 0.03
   enteredAttackFixedPenalty: -0.01
-  attackNoDamage2BeatPenalty: -1.1
+  attackNoDamage2BeatPenalty: -0.15
   unnecessaryGuardPenalty: -0.06
-  chargeOveruseThreshold: 4
+  chargeOveruseThreshold: 2
   chargeOverusePenalty: -0.03
-  chargeAutoResetAfterBeats: 4
-  minPreferredDistance: 0.8
+  chargeAutoResetAfterBeats: 2
+  minPreferredDistance: 0.5
   tooCloseApproachPenalty: -0.01
   tooCloseRetreatReward: 0.008
+  farApproachDistance: 5
+  farApproachReward: 0.01
+  farRetreatPenalty: -0.015
   movementAverageWindowBeats: 10
   movementAverageThreshold: 1.1
   movementBelowAveragePenalty: -0.02
   movementAboveAverageReward: 0.015
   damageHitAverageWindowBeats: 10
   damageHitAverageThreshold: 0.1
-  noDamageLast3BeatsPenalty: -0.05
+  noDamageLast3BeatsPenalty: -0.1

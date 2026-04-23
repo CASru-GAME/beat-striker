@@ -14,12 +14,19 @@ namespace Core.LargeHero {
         [SerializeField] float rotationSpeed = 700f;
         [SerializeField] GameObject impactPrefab;
         [SerializeField] GameObject trail;
+        [SerializeField] LayerMask rootSearchMask;
+        public GameObject OwnerRoot { get; set; }
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
         }
 
         void Start() {
+            var backward = -rb.transform.forward;
+            if (Physics.Raycast(transform.position, backward, out var hit, Mathf.Infinity, rootSearchMask)) {
+                OwnerRoot = hit.transform.root.gameObject;
+            }
+
             rb.linearVelocity = speed * rb.transform.forward ;
         }
 
@@ -28,6 +35,9 @@ namespace Core.LargeHero {
         }
 
         void OnTriggerEnter(Collider other) {
+            if (other.transform.root.gameObject == OwnerRoot) {
+                return;
+            }
             if (other.TryGetComponent<Hurtbox>(out var hurtbox)) {
                 var nockBackDirection = rb.linearVelocity.normalized;
                 hurtbox.GiveHit(new HitStatus(damage, nockBackDirection * nockbackSpeed));

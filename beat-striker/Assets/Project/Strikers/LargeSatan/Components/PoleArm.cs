@@ -413,6 +413,7 @@ public class PoleArm : MonoBehaviour {
                 // 2. 超近距離でのめり込み対策
                 if (!hitWall && !isStopped) {
                     var overlapsLine = Physics.OverlapCapsule(centerPos, weaponPos, 0.05f, poleArm.hitMask, QueryTriggerInteraction.Ignore);
+                    System.Array.Sort(overlapsLine, (a, b) => Vector3.SqrMagnitude(a.ClosestPoint(centerPos) - centerPos).CompareTo(Vector3.SqrMagnitude(b.ClosestPoint(centerPos) - centerPos)));
                     Debug.Log($"[PoleArm OnEnter] OverlapCapsule hits={overlapsLine.Length}");
                     foreach (var col in overlapsLine) {
                         Debug.Log($"[PoleArm OnEnter] Capsule hit: {col.name}, root: {col.transform.root.name}");
@@ -439,6 +440,8 @@ public class PoleArm : MonoBehaviour {
 
             // 3. 武器の出現位置自体が壁の中に埋まっていないかチェック
             var overlaps = Physics.OverlapSphere(poleArm.transform.position, poleArm.hitRadius, poleArm.hitMask, QueryTriggerInteraction.Ignore);
+            var sphereCenter = poleArm.transform.position;
+            System.Array.Sort(overlaps, (a, b) => Vector3.SqrMagnitude(a.ClosestPoint(sphereCenter) - sphereCenter).CompareTo(Vector3.SqrMagnitude(b.ClosestPoint(sphereCenter) - sphereCenter)));
             Debug.Log($"[PoleArm OnEnter] OverlapSphere hits={overlaps.Length}");
             foreach (var col in overlaps) {
                 Debug.Log($"[PoleArm OnEnter] Sphere hit: {col.name}, root: {col.transform.root.name}");

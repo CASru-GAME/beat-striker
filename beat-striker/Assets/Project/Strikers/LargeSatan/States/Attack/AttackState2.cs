@@ -35,6 +35,7 @@ namespace Core.LargeSatan {
                 nextContext.TryTransition(nextNode);
             });
 
+
             var direction = context.Rigidbody.transform.forward;
             initialVelocity = speed * direction;
             elapsedTime = 0f;
@@ -75,6 +76,11 @@ namespace Core.LargeSatan {
             attackPlayer.Emit();
         }
 
+        public override void OnHit(IStrikerStateContext hub, HitStatus status) {
+            hub.PreventGroup();
+            hub.ApplyDamage(status.Damage);
+        }
+
         public override void OnUpdate(IStrikerStateContext context) {
             elapsedTime += Time.deltaTime;
             float ratio = Mathf.Max(endSpeedRatio, 0.0001f);
@@ -82,6 +88,7 @@ namespace Core.LargeSatan {
             float decay = Mathf.Exp(-decayRate * elapsedTime);
             context.Rigidbody.linearVelocity = initialVelocity * decay;
         }
+
 
 
     }

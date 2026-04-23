@@ -204,6 +204,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
   effectPrefab: {fileID: 5374874989229068094, guid: 75b31a52fbe71493881c66680a6ef039, type: 3}
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 0
   fallbackLifetimeSeconds: 1
   initialPoolSize: 4
   maxPoolSize: 32
@@ -54705,7 +54707,7 @@ MonoBehaviour:
     speed: 2
   nextNode: {fileID: 6059471881157454106}
   attackPlayer: {fileID: 4494497825714075655}
-  rushSpeed: 10
+  rushSpeed: 20
 --- !u!114 &4494497825714075655
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -54740,7 +54742,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
   effectPrefab: {fileID: 6721807718034898878, guid: 867bdfb31d7a68142b135536b8629304, type: 3}
-  fallbackLifetimeSeconds: 1
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 1
+  fallbackLifetimeSeconds: 0.3
   initialPoolSize: 4
   maxPoolSize: 32
 --- !u!135 &1709355794466653195
@@ -59931,6 +59935,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
   effectPrefab: {fileID: 5230052091216382261, guid: 114bf7e66e9e149e2a510d31c9c9bfeb, type: 3}
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 0
   fallbackLifetimeSeconds: 1.11
   initialPoolSize: 4
   maxPoolSize: 32
@@ -74702,6 +74708,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.AnimationPlayer
   animator: {fileID: 0}
+  rotationPivot: {fileID: 0}
 --- !u!114 &5540710793521517555
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -74796,7 +74803,6 @@ MonoBehaviour:
   deadState: {fileID: 9164936248884598044}
   VictoryState: {fileID: 0}
   IntroState: {fileID: 0}
-  aiBrain: {fileID: 0}
   centerPositionTransform: {fileID: 0}
 --- !u!114 &7700695864620580821
 MonoBehaviour:
@@ -80021,6 +80027,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
   effectPrefab: {fileID: 7818138736358230019, guid: d561f17604ee8470bafba9d77d38749a, type: 3}
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 0
   fallbackLifetimeSeconds: 1
   initialPoolSize: 4
   maxPoolSize: 32
@@ -80343,6 +80351,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tracker
   target: {fileID: 4222553309076612399}
+  enableRigidMove: 1
+  targetTransitionDuration: 0.1
 --- !u!114 &6853176110286883142
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -80356,6 +80366,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.AnimationPlayer
   animator: {fileID: 0}
+  rotationPivot: {fileID: 0}
 --- !u!1 &6468506830888108282
 GameObject:
   m_ObjectHideFlags: 0
@@ -90433,6 +90444,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
   effectPrefab: {fileID: 7802418096394129870, guid: 6a6e95d49ce2c4d288e22cd514da7e7a, type: 3}
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 0
   fallbackLifetimeSeconds: 1
   initialPoolSize: 4
   maxPoolSize: 32
@@ -95497,6 +95510,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tracker
   target: {fileID: 4316632233575030992}
+  enableRigidMove: 1
+  targetTransitionDuration: 0.1
 --- !u!1 &7803860918277866793
 GameObject:
   m_ObjectHideFlags: 0
