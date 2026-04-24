@@ -15,16 +15,17 @@ namespace Alice {
     public class AiRegistryEntry {
         public string Id;
         public AiBrain BrainPrefab;
+        [Min(0)] public int Strength = 1;
         public AiStrikerPattern Self = AiStrikerPattern.Any;
         public AiStrikerPattern Opponent = AiStrikerPattern.Any;
     }
 
-    public record AiRegistration(string Id, AiBrain BrainPrefab, AiStrikerPattern Self, AiStrikerPattern Opponent);
+    public record AiRegistration(string Id, AiBrain BrainPrefab, int Strength, AiStrikerPattern Self, AiStrikerPattern Opponent);
 
     public interface IAIRegistry {
         AiRegistration Default { get; }
         bool TryGetById(string id, out AiRegistration registration);
-        bool TryResolve(Striker self, Striker opponent, out AiRegistration registration);
+        bool TryResolve(Striker self, Striker opponent, int maxStrength, out AiRegistration registration);
         IReadOnlyList<AiRegistration> GetAll();
     }
 
@@ -52,11 +53,13 @@ namespace Alice {
             return registrationsById.TryGetValue(id, out registration);
         }
 
-        public bool TryResolve(Striker self, Striker opponent, out AiRegistration registration) {
+        public bool TryResolve(Striker self, Striker opponent, int maxStrength, out AiRegistration registration) {
             EnsureInitialized();
 
             var resolved = defaultRegistration;
-            var bestScore = int.MinValue;
+            var bestStrength = int.MinValue;
+            var bestPatternScore = int.MinValue;
+            var clampedMaxStrength = Mathf.Max(0, maxStrength);
 
             for (var i = 0; i < allRegistrations.Count; i++) {
                 var candidate = allRegistrations[i];
@@ -68,12 +71,21 @@ namespace Alice {
                     continue;
                 }
 
-                var score = MatchScore(candidate.Self, self) + MatchScore(candidate.Opponent, opponent);
-                if (score <= bestScore) {
+                if (candidate.Strength > clampedMaxStrength) {
                     continue;
                 }
 
-                bestScore = score;
+                var patternScore = MatchScore(candidate.Self, self) + MatchScore(candidate.Opponent, opponent);
+                if (candidate.Strength < bestStrength) {
+                    continue;
+                }
+
+                if (candidate.Strength == bestStrength && patternScore <= bestPatternScore) {
+                    continue;
+                }
+
+                bestStrength = candidate.Strength;
+                bestPatternScore = patternScore;
                 resolved = candidate;
             }
 
@@ -96,7 +108,7 @@ namespace Alice {
 
             for (var i = 0; i < entries.Length; i++) {
                 var entry = entries[i];
-                var registration = new AiRegistration(entry.Id, entry.BrainPrefab, entry.Self, entry.Opponent);
+                var registration = new AiRegistration(entry.Id, entry.BrainPrefab, Mathf.Max(0, entry.Strength), entry.Self, entry.Opponent);
                 registrationsById[registration.Id] = registration;
                 allRegistrations.Add(registration);
             }
@@ -107,7 +119,7 @@ namespace Alice {
 
         AiRegistration ResolveFallbackRegistration() {
             if (string.IsNullOrWhiteSpace(fallbackAiId)) {
-                return new AiRegistration(string.Empty, null, AiStrikerPattern.Any, AiStrikerPattern.Any);
+                return new AiRegistration(string.Empty, null, 0, AiStrikerPattern.Any, AiStrikerPattern.Any);
             }
 
             if (registrationsById.TryGetValue(fallbackAiId, out var registration)) {
@@ -115,7 +127,7 @@ namespace Alice {
             }
 
             Debug.LogError($"AI fallback id was not found in registry. fallbackAiId={fallbackAiId}", this);
-            return new AiRegistration(string.Empty, null, AiStrikerPattern.Any, AiStrikerPattern.Any);
+            return new AiRegistration(string.Empty, null, 0, AiStrikerPattern.Any, AiStrikerPattern.Any);
         }
 
         static bool Matches(AiStrikerPattern pattern, Striker striker) {

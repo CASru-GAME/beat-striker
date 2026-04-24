@@ -120,7 +120,7 @@ namespace Core.LargeHero {
                 }
 
                 if (!collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                    hurtbox = collider.GetComponentInParent<Hurtbox>();
+                    hurtbox = collider.GetComponent<Hurtbox>();
                     if (!hurtbox) {
                         continue;
                     }

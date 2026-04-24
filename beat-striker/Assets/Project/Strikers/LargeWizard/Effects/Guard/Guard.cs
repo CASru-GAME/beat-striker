@@ -4,7 +4,10 @@ using Core.Battle;
 
 namespace Core.LargeWizard {
     [RequireComponent(typeof(Hurtbox))]
+    [RequireComponent(typeof(Rigidbody))]
     public class Guard : MonoBehaviour {
+        [SerializeField] float generatingKnockbackSpeed = 10f, waitingKnockbackSpeed = 10f;
+        [SerializeField] LayerMask wallLayerMask;
         Hurtbox hurtbox;
         StrikerHub ownerStrikerHub;
         Rigidbody rb;
@@ -12,11 +15,14 @@ namespace Core.LargeWizard {
         Vector3 originalLocalScale;
         Vector3 launchVelocity;
         float launchedDamage;
-        float knockbackSpeed;
+        float launchingKnockbackSpeed;
         bool isLaunched;
         Coroutine moveCoroutine;
+        bool isVirgin, isGenerating;
 
         void Awake() {
+            isVirgin = true;
+            isGenerating = false;
             hurtbox = GetComponent<Hurtbox>();
             rb = GetComponent<Rigidbody>();
             originalLocalPosition = transform.localPosition;
@@ -34,6 +40,8 @@ namespace Core.LargeWizard {
                 ownerStrikerHub = GetComponentInParent<StrikerHub>();
             }
             ApplyOwnerCollisionIgnore();
+
+            rb.isKinematic = true;
         }
 
         void Update() {
@@ -68,6 +76,8 @@ namespace Core.LargeWizard {
         }
 
         public void LaunchForward(Vector3 forward, float speed, float damage, float knockbackSpeed, float lifetime) {
+            rb.isKinematic = false;
+
             var moveDirection = forward;
             if (moveDirection.sqrMagnitude <= 0.0001f) {
                 moveDirection = transform.forward;
@@ -77,7 +87,7 @@ namespace Core.LargeWizard {
             transform.SetParent(null, true);
             isLaunched = true;
             launchedDamage = damage;
-            this.knockbackSpeed = knockbackSpeed;
+            this.launchingKnockbackSpeed = knockbackSpeed;
             launchVelocity = moveDirection * speed;
             transform.localScale = originalLocalScale;
 
@@ -89,37 +99,64 @@ namespace Core.LargeWizard {
             Destroy(gameObject, lifetime);
         }
 
+
         void OnTriggerEnter(Collider other) {
-            if (!isLaunched) {
-                return;
-            }
+            if (!other.TryGetComponent<Hurtbox>(out var otherHurtbox) || otherHurtbox == hurtbox) return;
 
-            if (!other.TryGetComponent<Hurtbox>(out var otherHurtbox)) {
-                if (otherHurtbox == null) {
-                    return;
+            isVirgin = false;
+
+            TryGetVelocity(out var velocity);
+
+            var knockbackSpeed = isGenerating ? generatingKnockbackSpeed :
+                isLaunched ? launchingKnockbackSpeed :
+                velocity + waitingKnockbackSpeed;
+
+            var knockbackDirection = isLaunched && launchVelocity.sqrMagnitude > 0.0001f
+                ? launchVelocity.normalized
+                : transform.forward.normalized;
+
+            if(TryGetPosition(out var position))    {
+                var dir = (other.ClosestPoint(position) - position).normalized;
+                if (Vector3.Dot(dir, knockbackDirection) < 0.3) {
+                    knockbackDirection = dir;
                 }
             }
-
-            if (otherHurtbox == hurtbox) {
-                return;
-            }
-
-            if (ownerStrikerHub != null) {
-                var otherStrikerHub = otherHurtbox.GetComponentInParent<StrikerHub>();
-                if (otherStrikerHub == ownerStrikerHub) {
-                    return;
-                }
-            }
-
-            var knockbackDirection = launchVelocity.sqrMagnitude > 0.0001f ? launchVelocity.normalized : transform.forward;
+                            
             otherHurtbox.GiveHit(new HitStatus(launchedDamage, knockbackDirection * knockbackSpeed));
-            Destroy(gameObject);
+
+            if (isLaunched || (wallLayerMask & (1 << other.gameObject.layer)) != 0) {
+                Destroy(gameObject);
+            }      
+        }
+
+        void OnTriggerStay(Collider other) {
+            if(isVirgin) OnTriggerEnter(other);
+        }
+
+        bool TryGetPosition(out Vector3 position) {
+            if (ownerStrikerHub == null) {
+                position = Vector3.zero;
+                return false;
+            }
+            position = ownerStrikerHub.EnsureAliceRuntimeHub().CenterPosition.CurrentValue;
+            return true;
+        }
+
+        bool TryGetVelocity(out float velocity ) {
+            if (ownerStrikerHub == null) {
+                velocity = 0;
+                return false;
+            }
+            velocity = Mathf.Max(0, Vector3.Dot(ownerStrikerHub.EnsureAliceRuntimeHub().Velocity.CurrentValue,
+                this.transform.forward.normalized));
+            return true;
         }
 
         System.Collections.IEnumerator ReturnToOriginalPositionOverTime(float durationSeconds) {
             var elapsed = 0f;
             var startLocalPosition = transform.localPosition;
             var startLocalScale = transform.localScale;
+            isGenerating = true;
 
             if (durationSeconds <= 0f) {
                 transform.localPosition = originalLocalPosition;
@@ -138,6 +175,8 @@ namespace Core.LargeWizard {
                 transform.localScale = Vector3.Lerp(startLocalScale, originalLocalScale, t);
                 yield return null;
             }
+
+            isGenerating = false;
 
             if (isLaunched) {
                 yield break;

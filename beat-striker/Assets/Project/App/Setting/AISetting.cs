@@ -4,11 +4,25 @@ using R3;
 using UnityEngine;
 
 namespace Alice {
+    public enum AiPlayMode {
+        Inference,
+        Test,
+        Record,
+        Learning,
+        LearningSelfPlay,
+    }
+
+    [Serializable]
+    public class LearningPlayer1Character {
+        public Striker Striker;
+    }
+
     [Serializable]
     public class LearningCharacter {
         [Tooltip("この対戦相手を選択候補に含めるかどうか。")]
         public bool Enabled = true;
         public Striker Striker;
+        [Tooltip("指定時はこのブレインを優先して使用。未指定ならAIRegistryから自動解決します。")]
         public AiBrain BrainPrefab;
         [Tooltip("選択確率の重み。大きいほど選ばれやすい。")]
         [Min(0.01f)]
@@ -16,11 +30,19 @@ namespace Alice {
     }
 
     public interface IAISetting {
-        ReadOnlyReactiveProperty<bool> IsLearning { get; }
-        ReadOnlyReactiveProperty<bool> UseSelfPlay { get; }
+        ReadOnlyReactiveProperty<AiPlayMode> Mode { get; }
+        bool IsInfiniteRoundMode { get; }
+        bool UsesVirtualPlaybackClock { get; }
+        bool EnablesAgentLearning { get; }
+        bool IsDemonstrationRecordingMode { get; }
+        bool UsesAiSettingStrikerSelection { get; }
+        bool UsesSelfPlayOpponentSelection { get; }
+        bool UsesLearningOpponentPool { get; }
+        bool UsesFixedTestOpponentSequence { get; }
+        string DemonstrationName { get; }
         Striker LearningPlayer1Striker { get; }
-        AiBrain LearningPlayer1BrainPrefab { get; }
         IReadOnlyList<LearningCharacter> LearningOpponents { get; }
+        AiActionSequenceItem TestOpponentSequence { get; }
         float EmaSmoothing { get; }
         float EmaFloorScale { get; }
 
@@ -31,35 +53,42 @@ namespace Alice {
         /// <returns>選択されたOpponentのインデックスと LearningCharacter のペア。有効なエントリが無い場合は null。</returns>
         (int Index, LearningCharacter Character)? GetWeightedRandomOpponent(Func<int, float> weightScaleProvider);
 
-        void SetLearning(bool isLearning);
-        void SetSelfPlay(bool useSelfPlay);
+        void SetMode(AiPlayMode mode);
     }
 
     public class AISetting : MonoBehaviour, IAISetting {
-        [SerializeField] bool isLearning;
-        [Tooltip("ONにすると、学習時に2P側が1Pと同じキャラクターになり、セルフプレイ(AI同士の対戦)が有効になります。")]
-        [SerializeField] bool useSelfPlay;
-        [SerializeField] LearningCharacter learningPlayer1 = new() { Enabled = true, Striker = Striker.Hero, Weight = 1f };
+        [Tooltip("AI実行モード。推論/レコード/学習/セルフプレイ学習を切り替えます。")]
+        [SerializeField] AiPlayMode mode = AiPlayMode.Inference;
+        [Tooltip("Demonstration名のベース文字列。保存時にタイムスタンプが自動付与されます。")]
+        [SerializeField] string demonstrationName = "Player1Demo";
+        [SerializeField] LearningPlayer1Character learningPlayer1 = new() { Striker = Striker.Hero };
         [SerializeField] List<LearningCharacter> learningOpponents = new() { new() { Enabled = true, Striker = Striker.Wizard, Weight = 1f } };
-        
-        [Header("Build Settings")]
-        [SerializeField] string buildPath = "FighterAI.exe";
+        [SerializeField] AiActionSequenceItem testOpponentSequence = new() { IsRandomSequence = false };
 
-        [Header("Opponent Selection - EMA")]
         [Tooltip("指数移動平均の平滑化係数。1に近いほど過去の値を重視し、変化が緩やかになります。")]
         [SerializeField, Range(0f, 1f)] float emaSmoothing = 0.95f;
         [Tooltip("EMAスケールの下限値。勝率が低くても重みがこの値以下にならないようにします。")]
         [SerializeField, Range(0f, 1f)] float emaFloorScale = 0.3f;
 
-        readonly ReactiveProperty<bool> isLearningProperty = new(false);
-        readonly ReactiveProperty<bool> useSelfPlayProperty = new(false);
+        [SerializeField]
+        string buildPath = "FighterAI.exe"; // serializedObject.FindProperty("buildPath") で使います
+
+        readonly ReactiveProperty<AiPlayMode> modeProperty = new(AiPlayMode.Inference);
         bool initialized;
 
-        public ReadOnlyReactiveProperty<bool> IsLearning => isLearningProperty;
-        public ReadOnlyReactiveProperty<bool> UseSelfPlay => useSelfPlayProperty;
+        public ReadOnlyReactiveProperty<AiPlayMode> Mode => modeProperty;
+        public bool IsInfiniteRoundMode => mode is AiPlayMode.Test or AiPlayMode.Record or AiPlayMode.Learning or AiPlayMode.LearningSelfPlay;
+        public bool UsesVirtualPlaybackClock => mode is AiPlayMode.Record or AiPlayMode.Learning or AiPlayMode.LearningSelfPlay;
+        public bool EnablesAgentLearning => mode is AiPlayMode.Learning or AiPlayMode.LearningSelfPlay;
+        public bool IsDemonstrationRecordingMode => mode == AiPlayMode.Record;
+        public bool UsesAiSettingStrikerSelection => mode is AiPlayMode.Record or AiPlayMode.Learning or AiPlayMode.LearningSelfPlay;
+        public bool UsesSelfPlayOpponentSelection => mode == AiPlayMode.LearningSelfPlay;
+        public bool UsesLearningOpponentPool => mode is AiPlayMode.Record or AiPlayMode.Learning;
+        public bool UsesFixedTestOpponentSequence => mode == AiPlayMode.Test;
+        public string DemonstrationName => demonstrationName;
         public Striker LearningPlayer1Striker => learningPlayer1.Striker;
-        public AiBrain LearningPlayer1BrainPrefab => learningPlayer1.BrainPrefab;
         public IReadOnlyList<LearningCharacter> LearningOpponents => learningOpponents;
+        public AiActionSequenceItem TestOpponentSequence => testOpponentSequence;
         public float EmaSmoothing => emaSmoothing;
         public float EmaFloorScale => emaFloorScale;
 
@@ -72,8 +101,7 @@ namespace Alice {
                 return;
             }
 
-            isLearningProperty.OnNext(isLearning);
-            useSelfPlayProperty.OnNext(useSelfPlay);
+            modeProperty.OnNext(mode);
             initialized = true;
         }
 
@@ -123,19 +151,13 @@ namespace Alice {
             return null;
         }
 
-        public void SetLearning(bool isLearning) {
-            this.isLearning = isLearning;
-            isLearningProperty.OnNext(isLearning);
-        }
-
-        public void SetSelfPlay(bool useSelfPlay) {
-            this.useSelfPlay = useSelfPlay;
-            useSelfPlayProperty.OnNext(useSelfPlay);
+        public void SetMode(AiPlayMode mode) {
+            this.mode = mode;
+            modeProperty.OnNext(mode);
         }
 
         void OnDestroy() {
-            isLearningProperty.Dispose();
-            useSelfPlayProperty.Dispose();
+            modeProperty.Dispose();
         }
     }
 }

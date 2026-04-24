@@ -154,6 +154,7 @@ namespace Alice {
             ResumeRoundRuntimeSystems(controlsMusic: false);
             musicPlayer.Play();
             battleDeployer.ConnectRoundInputs();
+            battleDeployer.BeginRoundEpisode(currentRound);
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync resumed systems and connected inputs");
             roundPlayableStartedSubject.OnNext(Unit.Default);
             battlePresenter.EnterRoundPlayablePhase();
@@ -212,8 +213,8 @@ namespace Alice {
                 currentRound += 1;
                 var roundResult = BuildRoundResult(finishedRound, deadPlayerId);
                 var judgeResult = battleJudge.Judge(roundResult);
-                var continueBattle = aiSetting.IsLearning.CurrentValue || judgeResult.ContinueBattle;
-                Debug.Log($"{LOG_PREFIX} ResolveRoundAsync judged. continueBattle={continueBattle}, winner={judgeResult.Winner}, isLearning={aiSetting.IsLearning.CurrentValue}");
+                var continueBattle = WantsInfiniteRounds() || judgeResult.ContinueBattle;
+                Debug.Log($"{LOG_PREFIX} ResolveRoundAsync judged. continueBattle={continueBattle}, winner={judgeResult.Winner}, mode={aiSetting.Mode.CurrentValue}");
 
                 if (tutorialSetting.IsTutorialBattleRequested) {
                     Debug.Log($"{LOG_PREFIX} ResolveRoundAsync tutorial battle branch. end to title immediately");
@@ -228,7 +229,7 @@ namespace Alice {
                     await battlePresenter.PlayRoundEndTransitionAsync();
                     DestroyRoundSpawnedObjects();
 
-                    battleDeployer.RecordRoundResult(deadPlayerId);
+                    battleDeployer.RecordRoundResult(finishedRound, deadPlayerId);
                     battleDeployer.Undeploy();
                     battleDeployer.Deploy();
                     SubscribeStrikerDeadEvents();
@@ -529,7 +530,7 @@ namespace Alice {
 
         void StartLearningRoundTimeoutIfNeeded() {
             activeRoundToken += 1;
-            if (!aiSetting.IsLearning.CurrentValue) {
+            if (!WantsInfiniteRounds()) {
                 return;
             }
 
@@ -555,7 +556,7 @@ namespace Alice {
                 }
             }
 
-            if (!aiSetting.IsLearning.CurrentValue || battleFinished || roundResolving || !roundPlayable) {
+            if (!WantsInfiniteRounds() || battleFinished || roundResolving || !roundPlayable) {
                 return;
             }
 
@@ -570,6 +571,10 @@ namespace Alice {
                 .ThenByDescending(x => x.PlayerId.CurrentValue)
                 .First()
                 .PlayerId.CurrentValue;
+        }
+
+        bool WantsInfiniteRounds() {
+            return aiSetting.IsInfiniteRoundMode;
         }
 
         public void PauseRoundForTutorial() {

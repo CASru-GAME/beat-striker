@@ -392,7 +392,7 @@ public class PoleArm : MonoBehaviour {
                     Debug.Log($"[PoleArm OnEnter] Ray hit: {hit.collider.name}, root: {hit.collider.transform.root.name}");
                     if (hit.collider.transform.root == poleArm.ownerRoot || hit.collider.transform.root == poleArm.transform.root) continue;
 
-                    var hurtbox = hit.collider.GetComponentInParent<Hurtbox>();
+                    var hurtbox = hit.collider.GetComponent<Hurtbox>();
                     bool isWall = hurtbox == null || ((poleArm.wallMask & (1 << hit.collider.gameObject.layer)) != 0);
 
                     if (hurtbox != null && !hasHitHurtbox) {
@@ -418,7 +418,7 @@ public class PoleArm : MonoBehaviour {
                     foreach (var col in overlapsLine) {
                         Debug.Log($"[PoleArm OnEnter] Capsule hit: {col.name}, root: {col.transform.root.name}");
                         if (col.transform.root == poleArm.ownerRoot || col.transform.root == poleArm.transform.root) continue;
-                        var hurtbox = col.GetComponentInParent<Hurtbox>();
+                        var hurtbox = col.GetComponent<Hurtbox>();
                         bool isWall = hurtbox == null || ((poleArm.wallMask & (1 << col.gameObject.layer)) != 0);
 
                         if (hurtbox != null && !hasHitHurtbox) {
@@ -447,7 +447,7 @@ public class PoleArm : MonoBehaviour {
                 Debug.Log($"[PoleArm OnEnter] Sphere hit: {col.name}, root: {col.transform.root.name}");
                 if (col.transform.root == poleArm.ownerRoot || col.transform.root == poleArm.transform.root) continue;
                 
-                var hurtbox = col.GetComponentInParent<Hurtbox>();
+                var hurtbox = col.GetComponent<Hurtbox>();
                 bool isWall = hurtbox == null || ((poleArm.wallMask & (1 << col.gameObject.layer)) != 0);
 
                 if (hurtbox != null && !hasHitHurtbox) {
@@ -487,7 +487,7 @@ public class PoleArm : MonoBehaviour {
             foreach (var hit in hits) {
                 if (hit.collider.transform.root == poleArm.ownerRoot || hit.collider.transform.root == poleArm.transform.root) continue;
 
-                var hurtbox = hit.collider.GetComponentInParent<Hurtbox>();
+                var hurtbox = hit.collider.GetComponent<Hurtbox>();
                 bool isWall = hurtbox == null || ((poleArm.wallMask & (1 << hit.collider.gameObject.layer)) != 0);
 
                 if (hurtbox != null && !hasHitHurtbox) {

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4117694988147721486}
   - component: {fileID: 8046662237982532771}
   m_Layer: 0
-  m_Name: No
+  m_Name: Mock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -44,21 +44,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7672d8190b3c74e14a342c1c9309ff0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BeatAiBrain
-  isRandomSequence: 1
-  actionSequence:
-  - Button: 1
-    Direction: 0
-  - Button: 2
-    Direction: 0
-  - Button: 3
-    Direction: 0
-  - Button: 0
-    Direction: 0
-  - Button: -1
-    Direction: 0
-  - Button: -1
-    Direction: 0
-  - Button: -1
-    Direction: 0
-  - Button: -1
+  rootSequence:
+    IsRandomSequence: 1
+    SequenceItems:
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: -1
+      Direction: 0
+    Button: -1
     Direction: 0

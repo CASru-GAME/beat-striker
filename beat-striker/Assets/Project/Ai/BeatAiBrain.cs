@@ -45,6 +45,8 @@ namespace Alice {
 
     [Serializable]
     public class AiActionSequenceItem {
+        public bool IsRandomSequence = false;
+        public List<AiActionSequenceItem> SequenceItems = new();
         public OptionalGamePadButton Button = OptionalGamePadButton.None;
         public InputDirectionType Direction = InputDirectionType.None;
 
@@ -65,34 +67,92 @@ namespace Alice {
     }
 
     public class BeatAiBrain : AiBrain {
-        [SerializeField] bool isRandomSequence = false;
-        [SerializeField] List<AiActionSequenceItem> actionSequence = new List<AiActionSequenceItem>();
+        [SerializeField] AiActionSequenceItem rootSequence = new() { IsRandomSequence = false };
+        readonly Dictionary<AiActionSequenceItem, int> sequentialIndices = new();
 
-        int currentActionIndex = 0;
+        public void SetActionSequence(AiActionSequenceItem sequence) {
+            rootSequence = CloneSequence(sequence) ?? new AiActionSequenceItem();
+            ResetRuntimeState();
+        }
 
         protected override AiAction OnGoodWindow(AiObservation observation) {
-            if (actionSequence == null || actionSequence.Count == 0) {
+            var actionItem = ResolveNextActionItem(rootSequence);
+            if (actionItem == null) {
                 return AiAction.None;
             }
 
-            AiActionSequenceItem item;
-            if (isRandomSequence) {
-                int randomIndex = UnityEngine.Random.Range(0, actionSequence.Count);
-                item = actionSequence[randomIndex];
-            } else {
-                item = actionSequence[currentActionIndex];
-                currentActionIndex = (currentActionIndex + 1) % actionSequence.Count;
-            }
-
-            return new AiAction(item.GetDirectionVector(), item.GetButton());
+            return new AiAction(actionItem.GetDirectionVector(), actionItem.GetButton());
         }
 
         protected override void OnAiEnabled() {
-            currentActionIndex = 0;
+            ResetRuntimeState();
         }
 
         protected override void OnAiDisabled() {
-            currentActionIndex = 0;
+            ResetRuntimeState();
+        }
+
+        void ResetRuntimeState() {
+            sequentialIndices.Clear();
+        }
+
+        AiActionSequenceItem ResolveNextActionItem(AiActionSequenceItem node) {
+            if (node == null) {
+                return null;
+            }
+
+            if (node.SequenceItems == null || node.SequenceItems.Count == 0) {
+                return node;
+            }
+
+            var selectedChild = node.IsRandomSequence
+                ? SelectRandomChild(node.SequenceItems)
+                : SelectSequentialChild(node);
+
+            return ResolveNextActionItem(selectedChild);
+        }
+
+        AiActionSequenceItem SelectRandomChild(List<AiActionSequenceItem> children) {
+            if (children == null || children.Count == 0) {
+                return null;
+            }
+
+            var randomIndex = UnityEngine.Random.Range(0, children.Count);
+            return children[randomIndex];
+        }
+
+        AiActionSequenceItem SelectSequentialChild(AiActionSequenceItem node) {
+            if (!sequentialIndices.TryGetValue(node, out var currentIndex)) {
+                currentIndex = 0;
+            }
+
+            var clampedIndex = Mathf.Clamp(currentIndex, 0, node.SequenceItems.Count - 1);
+            var selectedChild = node.SequenceItems[clampedIndex];
+            sequentialIndices[node] = (clampedIndex + 1) % node.SequenceItems.Count;
+            return selectedChild;
+        }
+
+        static AiActionSequenceItem CloneSequence(AiActionSequenceItem item) {
+            if (item == null) {
+                return null;
+            }
+
+            var clone = new AiActionSequenceItem {
+                IsRandomSequence = item.IsRandomSequence,
+                Button = item.Button,
+                Direction = item.Direction,
+                SequenceItems = new List<AiActionSequenceItem>(),
+            };
+
+            if (item.SequenceItems == null) {
+                return clone;
+            }
+
+            for (var i = 0; i < item.SequenceItems.Count; i++) {
+                clone.SequenceItems.Add(CloneSequence(item.SequenceItems[i]));
+            }
+
+            return clone;
         }
     }
 }

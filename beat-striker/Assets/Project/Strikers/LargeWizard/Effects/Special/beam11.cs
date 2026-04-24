@@ -171,7 +171,7 @@ public class beam11 : MonoBehaviour
 
         if (!other.TryGetComponent<Hurtbox>(out var hurtbox))
         {
-            hurtbox = other.GetComponentInParent<Hurtbox>();
+            hurtbox = other.GetComponent<Hurtbox>();
             if (hurtbox == null)
             {
                 return;

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4613717739136041729}
   - component: {fileID: 1718372972706777403}
   m_Layer: 0
-  m_Name: Hero
+  m_Name: Wa
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47,7 +47,7 @@ MonoBehaviour:
   behaviorName: Satan
   autoConfigureOnAwake: 1
   autoConfigureInEditor: 1
-  inferenceOnnx: {fileID: 5022602860645237092, guid: 8fa5749119d068443878d57c9f6bd4b8, type: 3}
+  inferenceOnnx: {fileID: 5022602860645237092, guid: 84e88fd1483f0d944991081f13fcf8da, type: 3}
   distanceObservationScale: 40
   closeDistanceObservationScale: 10
   yDisplacementObservationScale: 5
@@ -74,9 +74,6 @@ MonoBehaviour:
   farApproachDistance: 5
   farApproachReward: 0.1
   farRetreatPenalty: -0.15
-  keepDistanceThreshold: 20
-  keepDistanceRetreatReward: 0
-  keepDistanceApproachPenalty: 0
   movementAverageWindowBeats: 10
   movementAverageThreshold: 1.1
   movementBelowAveragePenalty: -0.05

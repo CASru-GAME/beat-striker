@@ -77,6 +77,18 @@ namespace Alice {
         public virtual void EndRoundEpisode() {
         }
 
+        public virtual void ConfigureDemonstrationRecording(bool isRecording, string demonstrationNameBase, int playerId) {
+        }
+
+        public virtual void BeginRoundEpisode(int roundNumber, string player1StrikerName, string player2StrikerName, string aiBrainPrefabName) {
+        }
+
+        public virtual void CompleteRoundEpisode(int roundNumber, bool player1Win) {
+        }
+
+        public virtual void RecordDemonstrationAction(AiAction action) {
+        }
+
         // Note: legacy compatibility methods removed — callers should use EnableAiMode/DisableAiMode directly.
 
         void EmitDirection(Vector2 direction) {

@@ -1,60 +1,50 @@
-using Core.Battle;
 using UnityEngine;
-using Core.Striker;
 
 namespace Core.LargeWizard {
+
 
     public class StunState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Unknown;
 
-        // このステートにいる間、再生されるアニメーションクリップ
-        [SerializeField] private StrikerAnimationClip animationClip;
-        [SerializeField] StrikerNode nextNode;
+        [SerializeField] StrikerNode nextNode,cancelNode;
+        [SerializeField] StrikerAnimationClip stunAnimationClip;
+        [SerializeField] float stunDuration = 0.5f;
+        [SerializeField] StunGroup stunGroup;
 
-        // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
-            // アニメーションの再生を開始する
-            context.PlayAnimation(animationClip, OnAnimationEnd);
+            context.PlayAnimation(stunAnimationClip);
+
+            if(stunGroup.IsCancelled) {
+                ScheduleStateEvent(stunDuration, context => {
+                    context.TryTransition(nextNode);
+                });
+            }
         }
 
-        public void OnAnimationEnd(IStrikerStateContext context) {
+        public override void OnAttackRequested(IStrikerStateContext hub) {
+            if(stunGroup.IsCancelled) return;
+            hub.PreventGroup();
+            hub.TryTransition(cancelNode);
+        }
+        public override void OnChargeRequested(IStrikerStateContext hub) {
+            if(stunGroup.IsCancelled) return;
+            hub.PreventGroup();
+            hub.TryTransition(cancelNode);
+        }
+        public override void OnGuardRequested(IStrikerStateContext hub) {
+            if(stunGroup.IsCancelled) return;
+            hub.PreventGroup();
+            hub.TryTransition(cancelNode);
+        }
+        public override void OnDashRequested(IStrikerStateContext hub) {
+            if(stunGroup.IsCancelled) return;
+            hub.PreventGroup();
+            hub.TryTransition(cancelNode);
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
-        public override void OnUpdate(IStrikerStateContext context) {
+        public override void OnExit(IStrikerContext hub) {
         }
-
-        // 他のステートに遷移する直前に呼ばれる
-        public override void OnExit(IStrikerContext context) {
-        }
-
-        // 攻撃コマンドが押された時に呼ばれる
-        public override void OnAttackRequested(IStrikerStateContext context) {
-            context.TryTransition(nextNode);
-        }
-
-        // チャージコマンドが押された時に呼ばれる
-        public override void OnChargeRequested(IStrikerStateContext context) {
-            context.TryTransition(nextNode);
-        }
-
-        // ダッシュコマンドが押された時に呼ばれる
-        public override void OnDashRequested(IStrikerStateContext context) {
-            context.TryTransition(nextNode);
-        }
-
-        // ガードコマンドが押された時に呼ばれる
-        public override void OnGuardRequested(IStrikerStateContext context) {
-            context.TryTransition(nextNode);
-        }
-
-        // 攻撃を受けた時に呼ばれる
-        public override void OnHit(IStrikerStateContext context, HitStatus status) {
-        }
-
-        // ミスした時に呼ばれる
-        public override void OnMiss(IStrikerStateContext context) {
-        }
-
     }
 }
+
+

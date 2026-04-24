@@ -300,19 +300,51 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8179424678283996581, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: defaultSelections.Array.data[0].Striker
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8179424678283996581, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: defaultSelections.Array.data[1].Striker
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
-      propertyPath: isLearning
+      propertyPath: mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: testOpponentSequence.IsRandomSequence
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
-      propertyPath: learningPlayer1.Striker
+      propertyPath: testOpponentSequence.SequenceItems.Array.size
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: testOpponentSequence.SequenceItems.Array.data[0].Button
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: testOpponentSequence.SequenceItems.Array.data[1].Button
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: testOpponentSequence.SequenceItems.Array.data[2].Button
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: testOpponentSequence.SequenceItems.Array.data[3].Button
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: testOpponentSequence.SequenceItems.Array.data[0].Direction
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: testOpponentSequence.SequenceItems.Array.data[3].Direction
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133904809460036572, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: aiStrength
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

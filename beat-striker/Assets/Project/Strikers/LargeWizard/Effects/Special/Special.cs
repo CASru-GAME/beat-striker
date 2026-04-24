@@ -58,7 +58,7 @@ namespace Core.LargeWizard {
         void OnTriggerEnter(Collider other) {
             // 敵に当たった場合の処理
             if (!other.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                hurtbox = other.GetComponentInParent<Hurtbox>();
+                hurtbox = other.GetComponent<Hurtbox>();
                 if (hurtbox == null) {
                     return;
                 }

@@ -63,6 +63,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleSelectSetting
   selectedStage: 1
   selectedMusicId: cutie-street
+  aiStrength: 1
 --- !u!114 &8179424678283996581
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -112,13 +113,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f3af4f6d5c8e4c42a000e426a76d35c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AISetting
-  isLearning: 0
-  useSelfPlay: 0
+  mode: 0
+  demonstrationName: Player1Demo
   learningPlayer1:
-    Enabled: 1
     Striker: 3
-    BrainPrefab: {fileID: 0}
-    Weight: 1
   learningOpponents:
   - Enabled: 1
     Striker: 3
@@ -172,9 +170,18 @@ MonoBehaviour:
     Striker: 0
     BrainPrefab: {fileID: 8046662237982532771, guid: e121388a1c225224bbcdb77bf5ec1bb2, type: 3}
     Weight: 1
-  buildPath: FighterAI.exe
+  testOpponentSequence:
+    IsRandomSequence: 1
+    SequenceItems:
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: -1
+      Direction: 0
+    Button: -1
+    Direction: 0
   emaSmoothing: 0.83
   emaFloorScale: 0.06
+  buildPath: FighterAI.exe
 --- !u!114 &904021008660354504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -187,22 +194,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03d0d3c2b5f4477b93e19d8d08e14de8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AIRegistry
-  fallbackAiId: De
+  fallbackAiId: Mock
   entries:
-  - Id: De
-    BrainPrefab: {fileID: 8046662237982532771, guid: 8aaa76c934a697740a254a7ea24d78a1, type: 3}
+  - Id: Mock
+    BrainPrefab: {fileID: 8046662237982532771, guid: c7bd9786ae99f4fca9c6ec8a0907d876, type: 3}
+    Strength: 0
     Self: 0
     Opponent: 0
   - Id: He
     BrainPrefab: {fileID: 1718372972706777403, guid: 8228e91a13561d247986769aae26816b, type: 3}
+    Strength: 1
     Self: 1
     Opponent: 0
   - Id: Wi
     BrainPrefab: {fileID: 1718372972706777403, guid: 11edb303d1603c14d81212adb4a66f13, type: 3}
+    Strength: 1
     Self: 2
     Opponent: 0
   - Id: Wa
     BrainPrefab: {fileID: 1718372972706777403, guid: 1352e75daebb66f49a3225a024d5a7a8, type: 3}
+    Strength: 1
     Self: 4
     Opponent: 0
 --- !u!114 &9201860890254514560

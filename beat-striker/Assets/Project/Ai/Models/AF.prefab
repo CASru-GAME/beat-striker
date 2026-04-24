@@ -44,9 +44,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7672d8190b3c74e14a342c1c9309ff0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BeatAiBrain
-  isRandomSequence: 1
-  actionSequence:
-  - Button: 3
-    Direction: 1
-  - Button: 3
-    Direction: 13
+  rootSequence:
+    IsRandomSequence: 1
+    SequenceItems:
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 3
+      Direction: 1
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 3
+      Direction: 13
+    Button: -1
+    Direction: 0

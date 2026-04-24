@@ -51,6 +51,7 @@ namespace Alice {
         void DestroyGameObject();
         void SetPlayerId(int playerId);
         void Tick(float deltaTime);
+        void TickPhysics(float deltaTime);
         void ChangeDirection(Vector2 direction);
         void CancelDirection();
         void Default();
@@ -180,8 +181,6 @@ namespace Alice {
             }
 
             var currentPosition = rb.position;
-            frameVelocity = deltaTime > 0f ? (currentPosition - previousFramePosition) / deltaTime : Vector3.zero;
-            previousFramePosition = currentPosition;
             positionSubject.OnNext(currentPosition);
             centerPositionSubject.OnNext(centerPositionTransform.position);
             lookDirectionSubject.OnNext(strikerTransform.forward);
@@ -200,6 +199,15 @@ namespace Alice {
             stateMachine.CurrentState.OnUpdate(stateMachine);
             NotifyEnemyBehindOnStateChanged();
             currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
+        }
+
+        public void TickPhysics(float deltaTime) {
+            if (!initialized) return;
+
+            var currentPosition = rb.position;
+            frameVelocity = deltaTime > 0f ? (currentPosition - previousFramePosition) / deltaTime : Vector3.zero;
+            previousFramePosition = currentPosition;
+            velocitySubject.OnNext(frameVelocity);
         }
 
         public void InitializeFromLegacy(StrikerHub legacy) {

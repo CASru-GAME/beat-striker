@@ -1,49 +1,26 @@
-using Core.Battle;
 using UnityEngine;
-using Core.Striker;
+using Alice;
+using System;
 
 namespace Core.LargeWizard {
-    
+
     public class StunGroup : StrikerGroup {
-        [SerializeField] StrikerNode stunState;
+        bool isCancelled = false;
+
+        public bool IsCancelled => isCancelled;
+
+        public void CancelStun() {
+            isCancelled = true;
+        }
 
         // このグループに入った時に呼ばれる（前のステートがこのグループに所属していなかった場合）
         public override void OnEnter(IStrikerContext context) {
-        }
-
-        // このグループに所属するステートにいる間、毎フレーム呼ばれる
-        public override void OnUpdate(IStrikerStateContext context) {
+            isCancelled = false;
         }
 
         // このグループから出る時に呼ばれる（次のステートがこのグループに所属していない場合）
         public override void OnExit(IStrikerContext context) {
-        }
-
-        // 攻撃コマンドが押された時に呼ばれる
-        public override void OnAttackRequested(IStrikerStateContext context) {
-        }
-
-        // チャージコマンドが押された時に呼ばれる
-        public override void OnChargeRequested(IStrikerStateContext context) {
-        }
-
-        // ダッシュコマンドが押された時に呼ばれる
-        public override void OnDashRequested(IStrikerStateContext context) {
-        }
-
-        // ガードコマンドが押された時に呼ばれる
-        public override void OnGuardRequested(IStrikerStateContext context) {
-        }
-
-        // 攻撃を受けた時に呼ばれる
-        public override void OnHit(IStrikerStateContext context, HitStatus status) {
-            context.Rigidbody.linearVelocity = status.KnockbackVelocity;
-            context.TryTransition(stunState);
-            context.ApplyDamage(status.Damage);
-        }
-
-        // ミスした時に呼ばれる
-        public override void OnMiss(IStrikerStateContext context) {
+            isCancelled = false;
         }
 
     }

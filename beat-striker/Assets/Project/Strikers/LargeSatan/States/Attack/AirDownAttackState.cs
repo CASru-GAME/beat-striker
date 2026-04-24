@@ -48,7 +48,7 @@ namespace Core.LargeSatan {
             attackPlayer.OnFilterHit
                 .Subscribe(collider => {
                     if (!collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                        hurtbox = collider.GetComponentInParent<Hurtbox>();
+                        hurtbox = collider.GetComponent<Hurtbox>();
                         if (!hurtbox) {
                             return false;
                         }
@@ -61,7 +61,7 @@ namespace Core.LargeSatan {
             attackPlayer.OnHit
                 .Subscribe(hit => {
                     if (!hit.Collider.TryGetComponent<Hurtbox>(out var hurtbox)) {
-                        hurtbox = hit.Collider.GetComponentInParent<Hurtbox>();
+                        hurtbox = hit.Collider.GetComponent<Hurtbox>();
                         if (!hurtbox) {
                             return AttackPlayer.HitType.Cancel;
                         }

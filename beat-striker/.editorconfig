@@ -1,6 +1,7 @@
 root = true
 
 [*.cs]
+# --- 基本フォーマット (これらは維持) ---
 indent_style = space
 indent_size = 4
 charset = utf-8
@@ -11,40 +12,24 @@ trim_trailing_whitespace = true
 dotnet_sort_system_directives_first = true
 csharp_new_line_before_open_brace = false
 
-dotnet_naming_style.pascal_case.capitalization = pascal_case
-dotnet_naming_style.camel_case.capitalization  = camel_case
-dotnet_naming_style._camel_with_underscore.capitalization = camel_case
-dotnet_naming_style._camel_with_underscore.required_prefix = _
-
-dotnet_naming_symbols.types_and_methods.applicable_kinds = class, struct, interface, enum, delegate, method
-dotnet_naming_symbols.types_and_methods.applicable_accessibilities = *
-
-dotnet_naming_symbols.locals.applicable_kinds = local
-dotnet_naming_symbols.locals.applicable_accessibilities = *
-
-dotnet_naming_symbols.all_fields.applicable_kinds = field
-dotnet_naming_symbols.all_fields.applicable_accessibilities = *
-
-dotnet_naming_rule.types_and_methods_should_be_pascalcase.symbols  = types_and_methods
-dotnet_naming_rule.types_and_methods_should_be_pascalcase.style    = pascal_case
-dotnet_naming_rule.types_and_methods_should_be_pascalcase.severity = warning
-
-dotnet_naming_rule.locals_should_be_camelcase.symbols  = locals
-dotnet_naming_rule.locals_should_be_camelcase.style    = camel_case
+# --- 命名規則をすべて「none」にしてオフにする ---
+dotnet_naming_rule.types_and_methods_should_be_pascalcase.severity = none
 dotnet_naming_rule.locals_should_be_camelcase.severity = none
-
-dotnet_naming_rule.fields_should_be_camelcase.symbols  = all_fields
-dotnet_naming_rule.fields_should_be_camelcase.style    = camel_case
 dotnet_naming_rule.fields_should_be_camelcase.severity = none
+dotnet_naming_rule.const_fields_should_be_all_upper.severity = none
+dotnet_naming_rule.enum_members_should_be_pascalcase.severity = none
 
-dotnet_naming_symbols.const_fields.applicable_kinds = field
-dotnet_naming_symbols.const_fields.applicable_accessibilities = *
-dotnet_naming_symbols.const_fields.required_modifiers = const
+# 命名規則違反の診断（IDE1006）自体をオフにする
+dotnet_diagnostic.IDE1006.severity = none
 
-dotnet_naming_style.all_upper.capitalization = all_upper
+# --- 修飾子の設定 (サイレントに維持) ---
+dotnet_style_require_accessibility_modifiers = always:silent
 
-dotnet_naming_rule.const_fields_should_be_all_upper.symbols = const_fields
-dotnet_naming_rule.const_fields_should_be_all_upper.style = all_upper
-dotnet_naming_rule.const_fields_should_be_all_upper.severity = warning
+# --- ReSharperの命名・名前空間チェックを完全に黙らせる ---
+# 名前空間の場所チェックをオフ
+resharper_namespace_does_not_correspond_to_file_location_highlighting = none
+resharper_check_namespace_highlighting = none
 
-dotnet_diagnostic.IDE1006.severity = warning
+# 命名規則（名前の付け方）のチェックをオフ
+resharper_inconsistent_naming_highlighting = none
+

@@ -2,11 +2,8 @@ using UnityEngine;
 using Alice;
 
 namespace Core.LargeSHero {
-
-
     public class TurnState : StrikerState {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Idle;
-        [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] float duration = 0.2f;
 
@@ -18,12 +15,11 @@ namespace Core.LargeSHero {
 
         public override void OnEnter(IStrikerContext context) {
             originalConstraints = context.Rigidbody.constraints;
-            context.Rigidbody.constraints = originalConstraints & ~RigidbodyConstraints.FreezeRotation;
+            context.Rigidbody.constraints = originalConstraints & ~RigidbodyConstraints.FreezeRotationY;
 
             var startRotation = context.Rigidbody.rotation;
             targetRotation = startRotation * Quaternion.Euler(0f, 180f, 0f);
             turnCompleted = false;
-            context.PlayAnimation(animationClip);
         }
 
         public override void OnUpdate(IStrikerStateContext context) {
@@ -32,7 +28,8 @@ namespace Core.LargeSHero {
             }
 
             var turnSpeed = duration <= 0f ? 3600f : 180f / duration;
-            var nextRotation = Quaternion.RotateTowards(context.Rigidbody.rotation, targetRotation, turnSpeed * Time.deltaTime);
+            var nextRotation =
+                Quaternion.RotateTowards(context.Rigidbody.rotation, targetRotation, turnSpeed * Time.deltaTime);
             context.Rigidbody.MoveRotation(nextRotation);
 
             if (Quaternion.Angle(nextRotation, targetRotation) > COMPLETION_ANGLE_EPSILON) {
@@ -45,6 +42,7 @@ namespace Core.LargeSHero {
         }
 
         public override void OnExit(IStrikerContext context) {
+            context.Rigidbody.rotation = targetRotation;
             context.Rigidbody.constraints = originalConstraints;
         }
     }

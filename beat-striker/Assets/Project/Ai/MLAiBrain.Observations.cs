@@ -1,3 +1,4 @@
+using System;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
@@ -86,8 +87,17 @@ namespace Alice {
 
         internal void WriteHeuristic(ActionBuffers actionsOut) {
             var discreteActions = actionsOut.DiscreteActions;
-            discreteActions[0] = 0;
-            discreteActions[1] = 0;
+            if (!isDemonstrationRecordingEnabled || !hasRecordedDemonstrationAction || observedSelfStriker == null) {
+                discreteActions[0] = 0;
+                discreteActions[1] = 0;
+                return;
+            }
+
+            discreteActions[0] = EncodeButton(recordedDemonstrationAction.Button);
+            discreteActions[1] = EncodeMoveDirection(observedSelfStriker, recordedDemonstrationAction.Direction);
+
+            hasRecordedDemonstrationAction = false;
+            recordedDemonstrationAction = AiAction.None;
         }
 
 
@@ -159,6 +169,53 @@ namespace Alice {
                 3 => GamePadButton.North,
                 _ => GamePadButton.East,
             };
+        }
+
+        static int EncodeButton(GamePadButton? button) {
+            return button switch {
+                GamePadButton.East => 0,
+                GamePadButton.South => 1,
+                GamePadButton.West => 2,
+                GamePadButton.North => 3,
+                _ => 0,
+            };
+        }
+
+        static int EncodeMoveDirection(IObservableStriker self, Vector2 worldDirection) {
+            if (worldDirection.sqrMagnitude <= 0.000001f) {
+                return 0;
+            }
+
+            var localDirection = ToLocalDirection(worldDirection, self.LookDirection.CurrentValue);
+            if (localDirection.sqrMagnitude <= 0.000001f) {
+                return 0;
+            }
+
+            ReadOnlySpan<Vector2> candidates = stackalloc Vector2[] {
+                Vector2.right,
+                new Vector2(0.70710677f, 0.70710677f),
+                Vector2.up,
+                new Vector2(-0.70710677f, 0.70710677f),
+                Vector2.left,
+                new Vector2(0.70710677f, -0.70710677f),
+                Vector2.down,
+                new Vector2(-0.70710677f, -0.70710677f),
+            };
+
+            var bestIndex = 0;
+            var bestDot = float.NegativeInfinity;
+
+            for (var i = 0; i < candidates.Length; i++) {
+                var dot = Vector2.Dot(localDirection, candidates[i]);
+                if (dot <= bestDot) {
+                    continue;
+                }
+
+                bestDot = dot;
+                bestIndex = i;
+            }
+
+            return bestIndex + 1;
         }
 
         static float NormalizeSigned(float value, float scale) {

@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.LandState
   parents:
-  - {fileID: 1012561812567522805}
+  - {fileID: 7199184492773224269}
   animationClip:
     clip: {fileID: 9197060619526105886, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
@@ -104,6 +104,7 @@ MonoBehaviour:
     speed: 0.2
   groundChecker: {fileID: 1223836351378418454}
   landNode: {fileID: 8200223140249932611}
+  locomotionNode: {fileID: 707581214265331847}
 --- !u!1 &380259610019652938
 GameObject:
   m_ObjectHideFlags: 0
@@ -230,7 +231,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.DashState
   parents:
-  - {fileID: 1012561812567522805}
+  - {fileID: 7199184492773224269}
   - {fileID: 5017356379004291730}
   animationClip:
     clip: {fileID: -8444228808809566427, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
@@ -282,7 +283,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f96c4816a2db77448ff9db84a25c586, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.LocomotionGroup
-  locomotionNode: {fileID: 707581214265331847}
   dashNode: {fileID: 4775238104718049240}
   attackNode: {fileID: 6682359818595146210}
   stunState: {fileID: 9011587962571819027}
@@ -364,9 +364,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3724751ac5d0bff4a8d37cf1c3e66e7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.SpecialState
-  parents:
-  - {fileID: 1012561812567522805}
-  - {fileID: 8634612905464550332}
+  parents: []
   animationClip:
     clip: {fileID: -1071750961998992225, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0.3
@@ -375,6 +373,50 @@ MonoBehaviour:
   specialPrefab: {fileID: 2572839958750799036, guid: dbfab5bbecf025f43bc6113e4a250f6d, type: 3}
   spawnPoint: {fileID: 3513985008609795516}
   hurtbox: {fileID: 8402618834828561335}
+--- !u!1 &1654087193772110275
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2955877338857830076}
+  - component: {fileID: 7710798929885308751}
+  m_Layer: 0
+  m_Name: StunGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2955877338857830076
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1654087193772110275}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.00709, y: 0.89472, z: -0.12317}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7710798929885308751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1654087193772110275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3f0c3d0f464054469df5f17d9e36960, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.StunGroup
 --- !u!1 &2145360790748758675
 GameObject:
   m_ObjectHideFlags: 0
@@ -529,7 +571,6 @@ MonoBehaviour:
   deadState: {fileID: 277970530805844271}
   VictoryState: {fileID: 8835043162424825438}
   IntroState: {fileID: 1109024110008071340}
-  aiBrain: {fileID: 0}
   centerPositionTransform: {fileID: 0}
 --- !u!95 &8632360735648339568
 Animator:
@@ -596,6 +637,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 5627472480660901862}
+  - {fileID: 2526227894246218286}
+  - {fileID: 2955877338857830076}
   - {fileID: 1156332873455370521}
   - {fileID: 571276501691909030}
   - {fileID: 2480134395438258361}
@@ -608,17 +652,14 @@ Transform:
   - {fileID: 3700136543998877758}
   - {fileID: 3386931230689547467}
   - {fileID: 8478017178241817068}
-  - {fileID: 5627472480660901862}
-  - {fileID: 1702687919367486756}
+  - {fileID: 5896710830146537356}
   - {fileID: 924816658567410061}
   - {fileID: 4478157019123781173}
   - {fileID: 7081092529338615846}
   - {fileID: 5881392693029680116}
   - {fileID: 7989888310175932541}
-  - {fileID: 1940607562943492199}
   - {fileID: 3513985008609795516}
   - {fileID: 3868088446445470085}
-  - {fileID: 2526227894246218286}
   - {fileID: 1947370002435126143}
   - {fileID: 2791010163471014829}
   - {fileID: 1958829038533621058}
@@ -669,7 +710,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.ChargeState
   parents:
-  - {fileID: 1012561812567522805}
+  - {fileID: 7199184492773224269}
   animationClip:
     clip: {fileID: 2499177954120741571, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
@@ -722,8 +763,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.AttackState
   parents:
-  - {fileID: 1012561812567522805}
-  - {fileID: 8634612905464550332}
+  - {fileID: 7199184492773224269}
   animationClip:
     clip: {fileID: 7791916682545647297, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
@@ -828,12 +868,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.StunState
   parents:
-  - {fileID: 1012561812567522805}
-  animationClip:
-    clip: {fileID: -8691261365967096569, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
-    fadeTime: 0
-    speed: 3
+  - {fileID: 7199184492773224269}
+  - {fileID: 7710798929885308751}
   nextNode: {fileID: 707581214265331847}
+  cancelNode: {fileID: 4321049741275361960}
+  stunAnimationClip:
+    clip: {fileID: -8691261365967096569, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  stunDuration: 0.5
+  stunGroup: {fileID: 7710798929885308751}
 --- !u!1 &4120216879851527883
 GameObject:
   m_ObjectHideFlags: 0
@@ -893,6 +937,60 @@ MonoBehaviour:
   magicCircleDestroyDelaySeconds: 3
   tueAndWizardSpawnDelaySeconds: 1
   audioClip: {fileID: 8300000, guid: e21d48dec509f804cbb421199331a893, type: 3}
+--- !u!1 &4125442381663520211
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5896710830146537356}
+  - component: {fileID: 4321049741275361960}
+  m_Layer: 0
+  m_Name: StunCancelState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5896710830146537356
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4125442381663520211}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.00709, y: 0.89472, z: -0.12317}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3805840481463637636}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4321049741275361960
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4125442381663520211}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28513fef6f5454b37a8921103947863f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.StunCancelState
+  parents:
+  - {fileID: 7199184492773224269}
+  - {fileID: 7710798929885308751}
+  stunCancelAnimationClip:
+    clip: {fileID: -449244673057268443, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
+    fadeTime: 0.3
+    speed: 1
+  nextNode: {fileID: 707581214265331847}
+  duration: 0.5
+  stunGroup: {fileID: 7710798929885308751}
 --- !u!1 &4336457620704664207
 GameObject:
   m_ObjectHideFlags: 0
@@ -942,51 +1040,6 @@ MonoBehaviour:
     clip: {fileID: 8076360251129776816, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 0.2
---- !u!1 &4404737297509214527
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1702687919367486756}
-  - component: {fileID: 1012561812567522805}
-  m_Layer: 0
-  m_Name: StunGroup
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1702687919367486756
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4404737297509214527}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.11558, y: 0, z: 2.0224}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3805840481463637636}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1012561812567522805
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4404737297509214527}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b3f0c3d0f464054469df5f17d9e36960, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.StunGroup
-  stunState: {fileID: 9011587962571819027}
 --- !u!1 &5007407367764718778
 GameObject:
   m_ObjectHideFlags: 0
@@ -1063,63 +1116,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.JumpUpwardState
   parents:
-  - {fileID: 1012561812567522805}
+  - {fileID: 7199184492773224269}
   animationClip:
     clip: {fileID: -2993534804863918692, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 2
   fallNode: {fileID: 3250182338819609899}
   jumpSpeed: 20
---- !u!1 &5672714989774515338
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1940607562943492199}
-  - component: {fileID: 8634612905464550332}
-  m_Layer: 0
-  m_Name: AttackGroup
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1940607562943492199
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5672714989774515338}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.51986, y: 0, z: 0.37225}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3805840481463637636}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8634612905464550332
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5672714989774515338}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe4e18bb68b088f44a7f9bf7a317e29f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.AttackGroup
-  attackNode: {fileID: 6682359818595146210}
-  chargeState: {fileID: 7677753745911566938}
-  dashNode: {fileID: 4775238104718049240}
-  guardState: {fileID: 516385516661520776}
-  locomotionNode: {fileID: 707581214265331847}
-  specialState: {fileID: 7084057613530797037}
 --- !u!1 &5725501378216450077
 GameObject:
   m_ObjectHideFlags: 0
@@ -1212,12 +1215,12 @@ MonoBehaviour:
   parents:
   - {fileID: 7199184492773224269}
   - {fileID: 5017356379004291730}
-  - {fileID: 8634612905464550332}
   animationClip:
     clip: {fileID: -3419257869308726280, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 0.45
   walkSpeed: 3
+  locomotionNode: {fileID: 707581214265331847}
 --- !u!1 &5770577689459801561
 GameObject:
   m_ObjectHideFlags: 0
@@ -1315,12 +1318,12 @@ MonoBehaviour:
   parents:
   - {fileID: 7199184492773224269}
   - {fileID: 5017356379004291730}
-  - {fileID: 8634612905464550332}
   animationClip:
     clip: {fileID: 6723761709308234962, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
     speed: 0.45
   walkSpeed: 3
+  locomotionNode: {fileID: 707581214265331847}
 --- !u!1 &5967169009218175757
 GameObject:
   m_ObjectHideFlags: 0
@@ -1366,8 +1369,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack3State
   parents:
-  - {fileID: 1012561812567522805}
-  - {fileID: 8634612905464550332}
+  - {fileID: 7199184492773224269}
   animationClip:
     clip: {fileID: -2248711181809642502, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
@@ -1422,8 +1424,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack2State
   parents:
-  - {fileID: 1012561812567522805}
-  - {fileID: 8634612905464550332}
+  - {fileID: 7199184492773224269}
   animationClip:
     clip: {fileID: -5612658629409835226, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
@@ -1483,8 +1484,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.Attack1State
   parents:
-  - {fileID: 1012561812567522805}
-  - {fileID: 8634612905464550332}
+  - {fileID: 7199184492773224269}
   animationClip:
     clip: {fileID: 7791916682545647297, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
@@ -1546,6 +1546,7 @@ MonoBehaviour:
     clip: {fileID: -449244673057268443, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0.3
     speed: 0.45
+  locomotionNode: {fileID: 707581214265331847}
 --- !u!1 &7760132438464499455
 GameObject:
   m_ObjectHideFlags: 0
@@ -1590,7 +1591,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14bf43845ce1d874da521333be1ca8e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.GuardState
-  parents: []
+  parents:
+  - {fileID: 7199184492773224269}
   animationClip:
     clip: {fileID: 3299788110970749302, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
     fadeTime: 0
@@ -1600,7 +1602,7 @@ MonoBehaviour:
   audioClip2: {fileID: 8300000, guid: 7a4b7933c6d5e564cbc8f620cfcc12be, type: 3}
   launchedShieldSpeed: 14
   launchedShieldDamage: 3
-  launchedShieldKnockbackSpeed: 20
+  launchedShieldKnockbackSpeed: 12
   launchedShieldLifetime: 3
   maxStackedShieldCount: 3
   shieldSpawnTransform: {fileID: 924816658567410061}
@@ -1651,11 +1653,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 721646e4e40834541b3c8f0e664d2f38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeWizard.TurnState
-  parents: []
-  animationClip:
-    clip: {fileID: -2420282054849679639, guid: 506ee87b3c779084ba5f566fb8c55e52, type: 3}
-    fadeTime: 0.3
-    speed: 1
+  parents:
+  - {fileID: 7199184492773224269}
   nextNode: {fileID: 707581214265331847}
   duration: 0.2
 --- !u!1 &9025604009735917705

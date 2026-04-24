@@ -18,28 +18,32 @@ namespace Alice {
     public interface IBattleDeployer {
         void Deploy();
         void Undeploy();
+        void BeginRoundEpisode(int roundNumber);
         void ConnectRoundInputs();
         void DisconnectRoundInputs();
         void PauseRound();
         void ResumeRound();
-        void RecordRoundResult(int deadPlayerId);
+        void RecordRoundResult(int roundNumber, int deadPlayerId);
     }
 
     public class BattleDeployer : IBattleDeployer, IDisposable {
         class DeployedStriker {
             public int PlayerId;
+            public Striker Striker;
             public Transform PlayerTransform;
             public Transform OriginalParent;
             public Vector3 OriginalPosition;
             public Quaternion OriginalRotation;
             public IStrikerHub Hub;
             public AiBrain RuntimeAiBrain;
+            public string RuntimeAiBrainPrefabName;
             public IDisposable InpactSubscription;
             public IDisposable AttentionSubscription;
             public IDisposable SpecialRequestFailedSubscription;
         }
 
         readonly IBattleSetting battleSetting;
+        readonly IBattleSelectSetting battleSelectSetting;
         readonly IBattleRuleSetting battleRuleSetting;
         readonly IPlayerSelectSetting playerSelectSetting;
         readonly IAppStrikerRegistry appStrikerRegistry;
@@ -58,8 +62,9 @@ namespace Alice {
         int lastSelectedOpponentIndex = -1;
         LearningCharacter lastSelectedOpponent;
 
-        public BattleDeployer(IBattleSetting battleSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
+        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.battleSetting = battleSetting;
+            this.battleSelectSetting = battleSelectSetting;
             this.battleRuleSetting = battleRuleSetting;
             this.playerSelectSetting = playerSelectSetting;
             this.appStrikerRegistry = appStrikerRegistry;
@@ -80,7 +85,7 @@ namespace Alice {
 
             isRoundPaused = false;
 
-            if (aiSetting.IsLearning.CurrentValue) {
+            if (aiSetting.UsesAiSettingStrikerSelection) {
                 ApplyLearningSelections();
             }
 
@@ -114,12 +119,14 @@ namespace Alice {
 
                 deployedStrikers.Add(new DeployedStriker {
                     PlayerId = playerId,
+                    Striker = selectedStriker,
                     PlayerTransform = playerTransform,
                     OriginalParent = originalParent,
                     OriginalPosition = originalPosition,
                     OriginalRotation = originalRotation,
                     Hub = instance,
                     RuntimeAiBrain = runtimeAiBrain,
+                    RuntimeAiBrainPrefabName = runtimeAiBrain != null ? runtimeAiBrain.name.Replace($"_Player{playerId}", string.Empty) : string.Empty,
                     InpactSubscription = inpactSubscription,
                     AttentionSubscription = attentionSubscription,
                     SpecialRequestFailedSubscription = specialRequestFailedSubscription,
@@ -133,12 +140,12 @@ namespace Alice {
             var p1Striker = aiSetting.LearningPlayer1Striker;
             playerSelectSetting.SelectStriker(0, p1Striker);
             
-            if (aiSetting.UseSelfPlay.CurrentValue) {
+            if (aiSetting.UsesSelfPlayOpponentSelection) {
                 playerSelectSetting.SelectStriker(1, p1Striker);
                 lastSelectedOpponentIndex = -1;
                 lastSelectedOpponent = null;
                 Debug.Log($"[BattleDeployer] ApplyLearningSelections: SelfPlay ON, Player2 also set to {p1Striker}".ToOrange());
-            } else {
+            } else if (aiSetting.UsesLearningOpponentPool) {
                 var result = aiSetting.GetWeightedRandomOpponent(GetOpponentEmaScale);
                 if (result.HasValue) {
                     lastSelectedOpponentIndex = result.Value.Index;
@@ -152,6 +159,11 @@ namespace Alice {
                     playerSelectSetting.SelectStriker(1, p1Striker);
                     Debug.Log($"[BattleDeployer] ApplyLearningSelections: No valid opponent, fallback to {p1Striker}".ToOrange());
                 }
+            } else {
+                lastSelectedOpponentIndex = -1;
+                lastSelectedOpponent = null;
+                playerSelectSetting.SelectStriker(1, p1Striker);
+                Debug.Log($"[BattleDeployer] ApplyLearningSelections: Opponent pool is disabled in {aiSetting.Mode.CurrentValue}, Player2 fallback to {p1Striker}".ToOrange());
             }
 
             // Verify selections were applied correctly
@@ -167,8 +179,36 @@ namespace Alice {
             return scale;
         }
 
-        public void RecordRoundResult(int deadPlayerId) {
-            if (!aiSetting.IsLearning.CurrentValue || lastSelectedOpponentIndex < 0) {
+        public void BeginRoundEpisode(int roundNumber) {
+            if (deployedStrikers.Count == 0) {
+                return;
+            }
+
+            var player1 = deployedStrikers.Find(x => x.PlayerId == 0);
+            var player2 = deployedStrikers.Find(x => x.PlayerId == 1);
+            var player1StrikerName = player1?.Striker.ToString() ?? "Unknown";
+            var player2StrikerName = player2?.Striker.ToString() ?? "Unknown";
+
+            foreach (var deployed in deployedStrikers) {
+                if (deployed.RuntimeAiBrain == null) {
+                    continue;
+                }
+
+                deployed.RuntimeAiBrain.BeginRoundEpisode(roundNumber, player1StrikerName, player2StrikerName, deployed.RuntimeAiBrainPrefabName);
+            }
+        }
+
+        public void RecordRoundResult(int roundNumber, int deadPlayerId) {
+            if (!IsInfiniteRoundMode()) {
+                return;
+            }
+
+            var player1Win = deadPlayerId != 0;
+            foreach (var deployed in deployedStrikers) {
+                deployed.RuntimeAiBrain?.CompleteRoundEpisode(roundNumber, player1Win);
+            }
+
+            if (lastSelectedOpponentIndex < 0) {
                 return;
             }
 
@@ -231,10 +271,14 @@ namespace Alice {
 
                 var gamePad = gamePadRegistry.Get(playerId);
                 if (aiBrain != null) {
-                    roundSubscriptions.Add(Observable.CombineLatest(aiSetting.IsLearning, aiSetting.UseSelfPlay, (isLearning, useSelfPlay) => {
-                        if (playerId != 0 && !useSelfPlay) return false;
-                        return isLearning;
-                    }).Subscribe(shouldLearn => aiBrain.ApplyLearningMode(shouldLearn)));
+                    roundSubscriptions.Add(aiSetting.Mode.Subscribe(_ => {
+                        if (playerId != 0 && !aiSetting.UsesSelfPlayOpponentSelection) {
+                            aiBrain.ApplyLearningMode(false);
+                            return;
+                        }
+
+                        aiBrain.ApplyLearningMode(aiSetting.EnablesAgentLearning);
+                    }));
                 }
 
                 roundSubscriptions.Add(gamePad.HasGamePad.Subscribe(hasGamePad => {
@@ -247,7 +291,13 @@ namespace Alice {
                         gamePadRegistry.RequestRegisterLowPriority(playerId, aiBrain);
                     } else {
                         gamePadRegistry.RequestUnregister(aiBrain);
-                        aiBrain.DisableAiMode();
+                        if (ShouldKeepAiEnabledForDemonstration(playerId)) {
+                            // Demonstration記録時はAgentがdecisionを回し続ける必要があるため、
+                            // ゲームパッドが接続されていてもAiBrain自体は有効のまま維持する。
+                            aiBrain.EnableAiMode();
+                        } else {
+                            aiBrain.DisableAiMode();
+                        }
                     }
                 }));
 
@@ -271,6 +321,13 @@ namespace Alice {
                 roundSubscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
                     if (!beatResult.IsSuccess) {
                         return;
+                    }
+
+                    if (playerId == 0 && aiBrain != null) {
+                        var recordedDirection = beatResult.Direction.sqrMagnitude > 0.0001f
+                            ? beatResult.Direction.normalized
+                            : Vector2.zero;
+                        aiBrain.RecordDemonstrationAction(new AiAction(recordedDirection, beatResult.Button));
                     }
 
                     if (beatResult.Direction.sqrMagnitude > 0.0001f) {
@@ -350,44 +407,60 @@ namespace Alice {
         }
 
         AiBrain CreateRuntimeAiBrain(int playerId, Striker selfStriker) {
-            AiBrain brainPrefab = null;
-            string brainName = "";
-
-            if (aiSetting.IsLearning.CurrentValue) {
-                if (playerId == 0) {
-                    brainPrefab = aiSetting.LearningPlayer1BrainPrefab;
-                } else {
-                    if (aiSetting.UseSelfPlay.CurrentValue) {
-                        brainPrefab = aiSetting.LearningPlayer1BrainPrefab;
-                    } else if (lastSelectedOpponent != null) {
-                        brainPrefab = lastSelectedOpponent.BrainPrefab;
-                    }
-                }
+            if (playerId != 0 && aiSetting.UsesFixedTestOpponentSequence) {
+                return CreateTestModeOpponentBrain(playerId);
             }
 
-            if (brainPrefab != null) {
-                brainName = $"{brainPrefab.name}_Player{playerId}";
-            } else {
-                var opponentStriker = ResolveOpponentStriker(playerId, selfStriker);
-                if (!aiRegistry.TryResolve(selfStriker, opponentStriker, out var aiRegistration)) {
-                    Debug.LogWarning($"Failed to resolve AI brain registration. playerId={playerId}, self={selfStriker}, opponent={opponentStriker}. Configure fallbackAiId in AIRegistry inspector or add matching entry.");
-                    return null;
-                }
-                brainPrefab = aiRegistration.BrainPrefab;
-                brainName = $"{aiRegistration.Id}_Player{playerId}";
+            if (IsInfiniteRoundMode() && playerId != 0 && !aiSetting.UsesSelfPlayOpponentSelection && lastSelectedOpponent?.BrainPrefab != null) {
+                var specifiedBrain = lastSelectedOpponent.BrainPrefab;
+                var specifiedBrainName = $"{specifiedBrain.name}_Player{playerId}";
+                var specifiedAiBrain = UnityEngine.Object.Instantiate(specifiedBrain, battleSetting.PlayerTransforms[playerId]);
+                specifiedAiBrain.name = specifiedBrainName;
+                specifiedAiBrain.ApplyLearningMode(false);
+                specifiedAiBrain.DisableAiMode();
+                return specifiedAiBrain;
             }
+
+            var opponentStriker = ResolveOpponentStriker(playerId, selfStriker);
+            if (!aiRegistry.TryResolve(selfStriker, opponentStriker, battleSelectSetting.AiStrength, out var aiRegistration)) {
+                Debug.LogWarning($"Failed to resolve AI brain registration. playerId={playerId}, self={selfStriker}, opponent={opponentStriker}, maxStrength={battleSelectSetting.AiStrength}. Configure fallbackAiId in AIRegistry inspector or add matching entry.");
+                return null;
+            }
+            var brainPrefab = aiRegistration.BrainPrefab;
+            var brainName = $"{aiRegistration.Id}_Player{playerId}";
 
             var aiBrain = UnityEngine.Object.Instantiate(brainPrefab, battleSetting.PlayerTransforms[playerId]);
             aiBrain.name = brainName;
             
-            bool initialShouldLearn = aiSetting.IsLearning.CurrentValue;
-            if (playerId != 0 && !aiSetting.UseSelfPlay.CurrentValue) {
+            bool initialShouldLearn = aiSetting.EnablesAgentLearning;
+            if (playerId != 0 && !aiSetting.UsesSelfPlayOpponentSelection) {
                 initialShouldLearn = false;
             }
             aiBrain.ApplyLearningMode(initialShouldLearn);
+            aiBrain.ConfigureDemonstrationRecording(aiSetting.IsDemonstrationRecordingMode, aiSetting.DemonstrationName, playerId);
             
             aiBrain.DisableAiMode();
             return aiBrain;
+        }
+
+        AiBrain CreateTestModeOpponentBrain(int playerId) {
+            var holder = new GameObject($"TestBeatAi_Player{playerId}");
+            holder.transform.SetParent(battleSetting.PlayerTransforms[playerId], false);
+            var beatAiBrain = holder.AddComponent<BeatAiBrain>();
+            beatAiBrain.name = holder.name;
+            beatAiBrain.SetActionSequence(aiSetting.TestOpponentSequence);
+            beatAiBrain.ApplyLearningMode(false);
+            beatAiBrain.ConfigureDemonstrationRecording(false, aiSetting.DemonstrationName, playerId);
+            beatAiBrain.DisableAiMode();
+            return beatAiBrain;
+        }
+
+        bool IsInfiniteRoundMode() {
+            return aiSetting.IsInfiniteRoundMode;
+        }
+
+        bool ShouldKeepAiEnabledForDemonstration(int playerId) {
+            return playerId == 0 && aiSetting.IsDemonstrationRecordingMode;
         }
 
         IObservableStriker ResolveNearestOpponent(IObservableStriker self) {

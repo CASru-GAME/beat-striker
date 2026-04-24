@@ -61,7 +61,7 @@ namespace Alice {
         public Observable<IMusicPlayer.BeatSignal> OnViewBeatTiming => onViewBeatTiming;
         public Observable<float[]> OnBeatTimelinePrepared => onBeatTimelinePrepared;
         public Observable<float> OnViewPlaybackTimeChanged => onViewPlaybackTimeChanged;
-        public float CurrentPlaybackTime => aiSetting.IsLearning.CurrentValue ? virtualPlaybackTime : audioSource.time;
+        public float CurrentPlaybackTime => UsesVirtualPlaybackClock() ? virtualPlaybackTime : audioSource.time;
         public float CurrentViewPlaybackTime => currentViewPlaybackTime;
         public float[] CurrentBeatTimeline => beats;
 
@@ -80,7 +80,7 @@ namespace Alice {
             var clip = selectedMusic.AudioClip;
             audioSource.clip = clip;
             
-            if (!aiSetting.IsLearning.CurrentValue) {
+            if (!UsesVirtualPlaybackClock()) {
                 audioSource.Play();
             }
 
@@ -96,7 +96,7 @@ namespace Alice {
             isVirtualPlaying = true;
             
             beatSoundSubscription = Observable.EveryUpdate().Subscribe(_ => {
-                if (aiSetting.IsLearning.CurrentValue) {
+                if (UsesVirtualPlaybackClock()) {
                     if (!isVirtualPlaying) return;
                     virtualPlaybackTime += Time.deltaTime;
                     if (clip != null && clip.length > 0f) {
@@ -145,10 +145,14 @@ namespace Alice {
         }
 
         public void Resume() {
-            if (!aiSetting.IsLearning.CurrentValue) {
+            if (!UsesVirtualPlaybackClock()) {
                 audioSource.UnPause();
             }
             isVirtualPlaying = true;
+        }
+
+        bool UsesVirtualPlaybackClock() {
+            return aiSetting.UsesVirtualPlaybackClock;
         }
 
         public IMusicPlayer.BeatJudgeResult JudgeTiming(float playbackTime) {

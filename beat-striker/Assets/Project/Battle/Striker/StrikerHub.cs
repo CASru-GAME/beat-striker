@@ -77,6 +77,10 @@ public class StrikerHub : MonoBehaviour {
         aliceRuntime?.Tick(Time.deltaTime);
     }
 
+    private void FixedUpdate() {
+        aliceRuntime?.TickPhysics(Time.fixedDeltaTime);
+    }
+
     void OnDestroy() {
         aliceRuntime?.Dispose();
     }
@@ -88,11 +92,14 @@ public class StrikerHub : MonoBehaviour {
 /// 遷移ロジックを内包した単一のステートマシン実装
 /// </summary>
 public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
+    const float WORLD_Z_EPSILON = 0.0001f;
+    const float FORWARD_XZ_EPSILON = 0.0001f;
     IStrikerState currentState;
     bool isChangingState;
     bool forceSameStateTransitionInProgress;
     bool isGroupProcessingPrevented;
     readonly IStrikerContext context;
+    readonly float deployWorldZ;
     public IStrikerState CurrentState => currentState;
 
     public Rigidbody Rigidbody => context.Rigidbody;
@@ -134,6 +141,7 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
 
     public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = null) {
         this.context = context;
+        deployWorldZ = context.Rigidbody.position.z;
         if (defaultState != null) {
             ChangeState(defaultState);
         }
@@ -160,6 +168,7 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
             var newParents = new HashSet<IStrikerGroup>(newState.Parents ?? Array.Empty<IStrikerGroup>());
 
             currentState?.OnExit(context);
+            RestoreTransformIfNeededAfterStateExit();
 
             foreach (var parent in oldParents) {
                 if (!newParents.Contains(parent)) parent.OnExit(context);
@@ -207,6 +216,7 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
             foreach (var parent in parents) {
                 parent.OnExit(context);
             }
+            RestoreTransformIfNeededAfterStateExit();
             currentState = null;
         }
         finally {
@@ -219,5 +229,32 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
             return stateComponent.gameObject.name;
         }
         return state?.GetType().Name ?? "<null>";
+    }
+
+    void RestoreTransformIfNeededAfterStateExit() {
+        var body = context.Rigidbody;
+        var position = body.position;
+        var forward = body.transform.forward;
+        var isWorldZChanged = Mathf.Abs(position.z - deployWorldZ) > WORLD_Z_EPSILON;
+        var flatForward = Vector3.ProjectOnPlane(forward, Vector3.up);
+        var hasValidFlatForward = flatForward.sqrMagnitude > FORWARD_XZ_EPSILON;
+        var shouldAlignForwardToWorldX = hasValidFlatForward && Mathf.Abs(flatForward.normalized.z) > FORWARD_XZ_EPSILON;
+
+        if (!isWorldZChanged && !shouldAlignForwardToWorldX) {
+            return;
+        }
+
+        if (isWorldZChanged) {
+            position.z = deployWorldZ;
+        }
+
+        body.position = position;
+        if (!shouldAlignForwardToWorldX) {
+            return;
+        }
+
+        flatForward.Normalize();
+        var targetForward = flatForward.x >= 0f ? Vector3.right : Vector3.left;
+        body.rotation = Quaternion.LookRotation(targetForward, Vector3.up);
     }
 }

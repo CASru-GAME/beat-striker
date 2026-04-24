@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Unity.InferenceEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Demonstrations;
 using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
@@ -119,7 +121,19 @@ namespace Alice {
 
         MLAiDecisionAgent decisionAgent;
         BehaviorParameters behaviorParameters;
+        DemonstrationRecorder demonstrationRecorder;
         bool isLearningMode = true;
+        bool isDemonstrationRecordingEnabled;
+        bool hasRecordedDemonstrationAction;
+        AiAction recordedDemonstrationAction = AiAction.None;
+        string demonstrationNameBase = "Player1Demo";
+        string demonstrationRoundDirectory;
+        string demonstrationTempName;
+        bool demonstrationRoundActive;
+        string demonstrationRoundPlayer1StrikerName = "Unknown";
+        string demonstrationRoundPlayer2StrikerName = "Unknown";
+        string demonstrationRoundAiBrainPrefabName = "Unknown";
+        string demonstrationSessionTimestamp;
         float? previousSelfHp;
         float? previousOpponentHp;
         bool hasPreviousPositions;
@@ -174,6 +188,8 @@ namespace Alice {
 
         protected override void OnAiDisabled() {
             ResetRuntimeState();
+            hasRecordedDemonstrationAction = false;
+            recordedDemonstrationAction = AiAction.None;
             DisposeStateCategorySubscriptions();
         }
 
@@ -185,8 +201,84 @@ namespace Alice {
         }
 
         protected override void OnDestroy() {
+            if (demonstrationRecorder != null) {
+                demonstrationRecorder.Record = false;
+                demonstrationRecorder.Close();
+            }
             DisposeStateCategorySubscriptions();
             base.OnDestroy();
+        }
+
+        public override void ConfigureDemonstrationRecording(bool isRecording, string demonstrationNameBase, int playerId) {
+            this.demonstrationNameBase = string.IsNullOrWhiteSpace(demonstrationNameBase) ? "Player1Demo" : demonstrationNameBase.Trim();
+            isDemonstrationRecordingEnabled = isRecording && playerId == 0;
+            if (!isDemonstrationRecordingEnabled) {
+                demonstrationSessionTimestamp = null;
+            }
+
+            ConfigureDemonstrationRecorder();
+            if (behaviorParameters != null) {
+                ConfigureMlAgentComponents();
+            }
+        }
+
+        public override void RecordDemonstrationAction(AiAction action) {
+            if (!isDemonstrationRecordingEnabled) {
+                return;
+            }
+
+            recordedDemonstrationAction = action;
+            hasRecordedDemonstrationAction = true;
+        }
+
+        public override void BeginRoundEpisode(int roundNumber, string player1StrikerName, string player2StrikerName, string aiBrainPrefabName) {
+            if (!isDemonstrationRecordingEnabled) {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(demonstrationSessionTimestamp)) {
+                demonstrationSessionTimestamp = DateTime.Now.ToString("yyyy-MM-dd-hh-mm-ss");
+            }
+
+            demonstrationRoundDirectory = GetDemonstrationRoundDirectoryPath();
+            demonstrationTempName = $"Recording-{roundNumber}";
+            demonstrationRoundPlayer1StrikerName = string.IsNullOrWhiteSpace(player1StrikerName) ? "Unknown" : player1StrikerName;
+            demonstrationRoundPlayer2StrikerName = string.IsNullOrWhiteSpace(player2StrikerName) ? "Unknown" : player2StrikerName;
+            demonstrationRoundAiBrainPrefabName = string.IsNullOrWhiteSpace(aiBrainPrefabName) ? "Unknown" : aiBrainPrefabName;
+            demonstrationRoundActive = true;
+
+            ConfigureDemonstrationRecorder(demonstrationRoundDirectory, demonstrationTempName, true);
+        }
+
+        public override void CompleteRoundEpisode(int roundNumber, bool player1Win) {
+            if (!isDemonstrationRecordingEnabled || !demonstrationRoundActive) {
+                return;
+            }
+
+            var sourceDirectory = demonstrationRoundDirectory;
+            var sourceName = demonstrationTempName;
+            ConfigureDemonstrationRecorder(sourceDirectory, sourceName, false);
+
+            if (string.IsNullOrEmpty(sourceDirectory) || string.IsNullOrEmpty(sourceName)) {
+                demonstrationRoundActive = false;
+                return;
+            }
+
+            var sourcePath = Path.Combine(sourceDirectory, $"{sourceName}.demo");
+            if (!File.Exists(sourcePath)) {
+                demonstrationRoundActive = false;
+                return;
+            }
+
+            var outcomeText = player1Win ? "Win" : "Lose";
+            var finalizedName = BuildFinalDemonstrationName(roundNumber, demonstrationRoundPlayer1StrikerName, demonstrationRoundPlayer2StrikerName, demonstrationRoundAiBrainPrefabName, outcomeText);
+            var destinationPath = Path.Combine(sourceDirectory, $"{finalizedName}.demo");
+            if (File.Exists(destinationPath)) {
+                File.Delete(destinationPath);
+            }
+
+            File.Move(sourcePath, destinationPath);
+            demonstrationRoundActive = false;
         }
 
         void ConfigureTeamId(int playerId) {
@@ -205,8 +297,12 @@ namespace Alice {
             brainParameters.ActionSpec = new ActionSpec(0, new[] { BUTTON_ACTION_BRANCH_SIZE, MOVE_DIRECTION_BRANCH_SIZE });
 
             behaviorParameters.BehaviorName = behaviorName;
-            
-            if (isLearningMode) {
+
+            if (isDemonstrationRecordingEnabled) {
+                behaviorParameters.BehaviorType = BehaviorType.HeuristicOnly;
+                behaviorParameters.Model = null;
+            }
+            else if (isLearningMode) {
                 behaviorParameters.BehaviorType = BehaviorType.Default;
                 behaviorParameters.Model = null;
             }
@@ -220,6 +316,66 @@ namespace Alice {
                     behaviorParameters.Model = null;
                 }
             }
+        }
+
+        void ConfigureDemonstrationRecorder() {
+            if (isDemonstrationRecordingEnabled) {
+                demonstrationRecorder = GetComponent<DemonstrationRecorder>();
+                if (demonstrationRecorder == null) {
+                    demonstrationRecorder = gameObject.AddComponent<DemonstrationRecorder>();
+                    demonstrationRecorder.hideFlags = HideFlags.HideInInspector;
+                }
+
+                ConfigureDemonstrationRecorder(GetDemonstrationRoundDirectoryPath(), $"{demonstrationNameBase}_{DateTime.Now:yyyyMMdd_HHmmss}", false);
+                return;
+            }
+
+            if (demonstrationRecorder == null) {
+                return;
+            }
+
+            demonstrationRecorder.Record = false;
+            demonstrationRecorder.Close();
+        }
+
+        void ConfigureDemonstrationRecorder(string directoryPath, string demoName, bool record) {
+            demonstrationRecorder = GetComponent<DemonstrationRecorder>();
+            if (demonstrationRecorder == null) {
+                demonstrationRecorder = gameObject.AddComponent<DemonstrationRecorder>();
+                demonstrationRecorder.hideFlags = HideFlags.HideInInspector;
+            }
+
+            demonstrationRecorder.Record = false;
+            demonstrationRecorder.Close();
+            demonstrationRecorder.DemonstrationDirectory = directoryPath;
+            demonstrationRecorder.DemonstrationName = demoName;
+            demonstrationRecorder.Record = record;
+        }
+
+        static string BuildFinalDemonstrationName(int roundNumber, string player1StrikerName, string player2StrikerName, string aiBrainPrefabName, string outcomeText) {
+            return SanitizeFileName($"Demo-{roundNumber}-{player1StrikerName}-vs-{player2StrikerName}-{aiBrainPrefabName}-{outcomeText}");
+        }
+
+        static string SanitizeFileName(string value) {
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var sanitized = value;
+            for (var i = 0; i < invalidChars.Length; i++) {
+                sanitized = sanitized.Replace(invalidChars[i], '-');
+            }
+
+            return sanitized;
+        }
+
+        string GetDemonstrationRoundDirectoryPath() {
+            var timestamp = string.IsNullOrEmpty(demonstrationSessionTimestamp)
+                ? DateTime.Now.ToString("yyyy-MM-dd-hh-mm-ss")
+                : demonstrationSessionTimestamp;
+            var projectRoot = Directory.GetParent(Application.dataPath)?.FullName;
+            if (string.IsNullOrEmpty(projectRoot)) {
+                return Path.Combine("Dist", "Demonstration", timestamp);
+            }
+
+            return Path.Combine(projectRoot, "Dist", "Demonstration", timestamp);
         }
 
         BehaviorParameters EnsureRuntimeBehaviorParameters() {

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4117694988147721486}
   - component: {fileID: 8046662237982532771}
   m_Layer: 0
-  m_Name: XX
+  m_Name: Random
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,11 +45,75 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BeatAiBrain
   rootSequence:
-    IsRandomSequence: 0
+    IsRandomSequence: 1
     SequenceItems:
     - IsRandomSequence: 0
       SequenceItems: []
-      Button: 0
+      Button: -1
+      Direction: 0
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 3
+      Direction: 0
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 3
       Direction: 1
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 3
+      Direction: 19
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 3
+      Direction: 13
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 2
+      Direction: 7
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 2
+      Direction: 12
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 2
+      Direction: 2
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 0
+      Direction: 0
+    - IsRandomSequence: 0
+      SequenceItems: []
+      Button: 1
+      Direction: 0
+    - IsRandomSequence: 0
+      SequenceItems:
+      - IsRandomSequence: 0
+        SequenceItems: []
+        Button: 3
+        Direction: 0
+      - IsRandomSequence: 0
+        SequenceItems: []
+        Button: 3
+        Direction: 0
+      - IsRandomSequence: 0
+        SequenceItems: []
+        Button: 3
+        Direction: 0
+      Button: -1
+      Direction: 0
+    - IsRandomSequence: 0
+      SequenceItems:
+      - IsRandomSequence: 0
+        SequenceItems: []
+        Button: 1
+        Direction: 0
+      - IsRandomSequence: 0
+        SequenceItems: []
+        Button: 3
+        Direction: 0
+      Button: -1
+      Direction: 0
     Button: -1
     Direction: 0

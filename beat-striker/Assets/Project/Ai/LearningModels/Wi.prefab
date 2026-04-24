@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4613717739136041729}
   - component: {fileID: 1718372972706777403}
   m_Layer: 0
-  m_Name: Warrior
+  m_Name: Wi
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47,33 +47,36 @@ MonoBehaviour:
   behaviorName: Satan
   autoConfigureOnAwake: 1
   autoConfigureInEditor: 1
-  inferenceOnnx: {fileID: 5022602860645237092, guid: 84e88fd1483f0d944991081f13fcf8da, type: 3}
+  inferenceOnnx: {fileID: 5022602860645237092, guid: 001525986043bdc44be161c36aa3e504, type: 3}
   distanceObservationScale: 40
   closeDistanceObservationScale: 10
   yDisplacementObservationScale: 5
   beatMoveMagnitudeObservationScale: 7
-  chargeCountObservationCap: 2
+  chargeCountObservationCap: 4
   stepPenalty: 0
-  dealtDamageFixedReward: 0.2
-  dealtDamageRewardScale: 0.2
+  dealtDamageFixedReward: 0.1
+  dealtDamageRewardScale: 0.3
   dealtDamageHitRateRewardScale: 0.1
   receivedDamagePenaltyScale: 0.4
   hpRewardScale: 10
-  punishAvoidedReward: 0.1
+  punishAvoidedReward: 0.2
   enteredDashFixedReward: 0.02
-  upwardDashReward: 0.02
-  enteredAttackFixedPenalty: -0.02
-  attackNoDamage2BeatPenalty: -0.1
-  unnecessaryGuardPenalty: -0.05
-  chargeOveruseThreshold: 2
+  upwardDashReward: 0.03
+  enteredAttackFixedPenalty: 0.02
+  attackNoDamage2BeatPenalty: -0.02
+  unnecessaryGuardPenalty: -0.01
+  chargeOveruseThreshold: 4
   chargeOverusePenalty: -0.1
-  chargeAutoResetAfterBeats: 2
+  chargeAutoResetAfterBeats: 100
   minPreferredDistance: 0.5
   tooCloseApproachPenalty: -0.01
   tooCloseRetreatReward: 0.008
-  farApproachDistance: 5
-  farApproachReward: 0.1
-  farRetreatPenalty: -0.15
+  farApproachDistance: 20
+  farApproachReward: 0
+  farRetreatPenalty: 0
+  keepDistanceThreshold: 20
+  keepDistanceRetreatReward: 0.05
+  keepDistanceApproachPenalty: -0.05
   movementAverageWindowBeats: 10
   movementAverageThreshold: 1.1
   movementBelowAveragePenalty: -0.05

@@ -7,12 +7,63 @@ namespace Alice.Editor
     [CustomEditor(typeof(AISetting))]
     public class AISettingEditor : UnityEditor.Editor
     {
+        SerializedProperty modeProp;
+        SerializedProperty demonstrationNameProp;
+        SerializedProperty learningPlayer1Prop;
+        SerializedProperty learningOpponentsProp;
+        SerializedProperty testOpponentSequenceProp;
+        SerializedProperty emaSmoothingProp;
+        SerializedProperty emaFloorScaleProp;
+        SerializedProperty buildPathProp;
+
+        void OnEnable() {
+            modeProp = serializedObject.FindProperty("mode");
+            demonstrationNameProp = serializedObject.FindProperty("demonstrationName");
+            learningPlayer1Prop = serializedObject.FindProperty("learningPlayer1");
+            learningOpponentsProp = serializedObject.FindProperty("learningOpponents");
+            testOpponentSequenceProp = serializedObject.FindProperty("testOpponentSequence");
+            emaSmoothingProp = serializedObject.FindProperty("emaSmoothing");
+            emaFloorScaleProp = serializedObject.FindProperty("emaFloorScale");
+            buildPathProp = serializedObject.FindProperty("buildPath");
+        }
+
         public override void OnInspectorGUI()
         {
-            // デフォルトのインスペクタを表示
-            DrawDefaultInspector();
+            serializedObject.Update();
 
-            var setting = (AISetting)target;
+            EditorGUILayout.PropertyField(modeProp);
+            var mode = (AiPlayMode)modeProp.enumValueIndex;
+
+            if (IsDemonstrationRecordingMode(mode)) {
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("Demonstration Recording", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(demonstrationNameProp);
+                EditorGUILayout.HelpBox("Demonstration Nameには実行時に yyyyMMdd_HHmmss 形式のタイムスタンプが自動付与されます。", MessageType.Info);
+            }
+
+            if (UsesAiSettingStrikerSelection(mode)) {
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("Learning Setup", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(learningPlayer1Prop, true);
+
+                if (UsesLearningOpponentPool(mode)) {
+                    EditorGUILayout.PropertyField(learningOpponentsProp, true);
+                    EditorGUILayout.Space();
+                    EditorGUILayout.LabelField("Opponent Selection - EMA", EditorStyles.boldLabel);
+                    EditorGUILayout.PropertyField(emaSmoothingProp);
+                    EditorGUILayout.PropertyField(emaFloorScaleProp);
+                }
+            }
+
+            if (UsesFixedTestOpponentSequence(mode)) {
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("Test Opponent Sequence", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(testOpponentSequenceProp, true);
+            }
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Build Settings", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(buildPathProp);
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Build Actions", EditorStyles.boldLabel);
@@ -21,7 +72,21 @@ namespace Alice.Editor
             {
                 PerformBuild();
             }
+
+            serializedObject.ApplyModifiedProperties();
         }
+
+        static bool IsDemonstrationRecordingMode(AiPlayMode mode) => mode == AiPlayMode.Record;
+
+        static bool UsesAiSettingStrikerSelection(AiPlayMode mode) {
+            return mode is AiPlayMode.Record or AiPlayMode.Learning or AiPlayMode.LearningSelfPlay;
+        }
+
+        static bool UsesLearningOpponentPool(AiPlayMode mode) {
+            return mode is AiPlayMode.Record or AiPlayMode.Learning;
+        }
+
+        static bool UsesFixedTestOpponentSequence(AiPlayMode mode) => mode == AiPlayMode.Test;
 
         private void PerformBuild()
         {
@@ -33,9 +98,9 @@ namespace Alice.Editor
             }
 
             serializedObject.Update();
-            var buildPathProp = serializedObject.FindProperty("buildPath");
             string fileName = System.IO.Path.GetFileName(buildPathProp?.stringValue ?? "FighterAI.exe");
             if (string.IsNullOrEmpty(fileName)) fileName = "FighterAI.exe";
+            int previousMode = modeProp?.enumValueIndex ?? (int)AiPlayMode.Inference;
 
             // フォルダ構成: Dist/ML-Scene/YYYY-MM-dd-HH-mm-ss/
             string timestamp = System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
@@ -60,16 +125,36 @@ namespace Alice.Editor
                 options = BuildOptions.None
             };
 
-            var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
-            var summary = report.summary;
+            try
+            {
+                if (modeProp != null)
+                {
+                    modeProp.enumValueIndex = (int)AiPlayMode.Learning;
+                    serializedObject.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(target);
+                }
 
-            if (summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
-            {
-                Debug.Log($"Build succeeded: {summary.totalSize} bytes");
+                var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+                var summary = report.summary;
+
+                if (summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                {
+                    Debug.Log($"Build succeeded: {summary.totalSize} bytes");
+                }
+                else if (summary.result == UnityEditor.Build.Reporting.BuildResult.Failed)
+                {
+                    Debug.LogError("Build failed");
+                }
             }
-            else if (summary.result == UnityEditor.Build.Reporting.BuildResult.Failed)
+            finally
             {
-                Debug.LogError("Build failed");
+                if (modeProp != null)
+                {
+                    serializedObject.Update();
+                    modeProp.enumValueIndex = previousMode;
+                    serializedObject.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(target);
+                }
             }
         }
     }
