@@ -84,6 +84,12 @@ namespace Alice {
         [SerializeField] float farApproachReward = 0.01f;
         [Tooltip("遠距離にいるにも関わらず敵から更に遠ざかった場合に与えられるペナルティ。遠距離での離脱行動を抑制します。")]
         [SerializeField] float farRetreatPenalty = -0.01f;
+        [Tooltip("遠距離キャラクター用：この距離以内にいる場合、距離維持報酬を適用する閾値。")]
+        [SerializeField] float keepDistanceThreshold = 20f;
+        [Tooltip("遠距離キャラクター用：閾値内で敵から遠ざかった場合に与えられる報酬。")]
+        [SerializeField] float keepDistanceRetreatReward = 0f;
+        [Tooltip("遠距離キャラクター用：閾値内で敵に近づいた場合に与えられるペナルティ。")]
+        [SerializeField] float keepDistanceApproachPenalty = 0f;
 
         [Header("Reward - Movement")]
         [Tooltip("移動量の平均を算出するために記録する、過去の直近ビート数（ウィンドウサイズ）。")]

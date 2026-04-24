@@ -157,6 +157,14 @@ namespace Alice {
                 }
             }
 
+            if (keepDistanceThreshold > 0f && previousDistance.HasValue && previousDistance.Value <= keepDistanceThreshold) {
+                if (distance < previousDistance.Value) {
+                    decisionAgent.AddStepReward(keepDistanceApproachPenalty);
+                } else if (distance > previousDistance.Value) {
+                    decisionAgent.AddStepReward(keepDistanceRetreatReward);
+                }
+            }
+
             previousDistance = distance;
         }
 

@@ -11,7 +11,7 @@ using CorePlayerId = App.PlayerId;
 namespace Alice {
     public class BattleFlow {
         const string LOG_PREFIX = "[BattleFlow]";
-        const int TRAINING_ROUND_TIMEOUT_SECONDS = 180;
+        const int TRAINING_ROUND_TIMEOUT_SECONDS = 60 * 7;
         readonly IBattleSetting battleSetting;
         readonly IBattleDeployer battleDeployer;
         readonly IStrikerRegistry strikerRegistry;
@@ -538,10 +538,21 @@ namespace Alice {
         }
 
         async Task WatchLearningRoundTimeoutAsync(int roundToken, int roundNumberAtStart) {
-            await Task.Delay(TimeSpan.FromSeconds(TRAINING_ROUND_TIMEOUT_SECONDS));
+            float elapsedGameTime = 0f;
+            while (elapsedGameTime < TRAINING_ROUND_TIMEOUT_SECONDS) {
+                await Task.Yield();
 
-            if (roundToken != activeRoundToken) {
-                return;
+                if (roundToken != activeRoundToken) {
+                    return;
+                }
+
+                if (battleFinished || roundResolving) {
+                    return;
+                }
+
+                if (roundPlayable) {
+                    elapsedGameTime += Time.deltaTime;
+                }
             }
 
             if (!aiSetting.IsLearning.CurrentValue || battleFinished || roundResolving || !roundPlayable) {

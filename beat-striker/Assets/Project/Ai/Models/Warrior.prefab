@@ -47,7 +47,7 @@ MonoBehaviour:
   behaviorName: Satan
   autoConfigureOnAwake: 1
   autoConfigureInEditor: 1
-  inferenceOnnx: {fileID: 5022602860645237092, guid: d5f013cf34872f54496882b374eadb82, type: 3}
+  inferenceOnnx: {fileID: 5022602860645237092, guid: 84e88fd1483f0d944991081f13fcf8da, type: 3}
   distanceObservationScale: 40
   closeDistanceObservationScale: 10
   yDisplacementObservationScale: 5
