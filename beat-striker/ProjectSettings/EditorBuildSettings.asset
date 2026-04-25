@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Project/Screen/Boot/BootScene.unity
+    guid: 0577fe00efd594632b53013e8abef914
+  - enabled: 1
     path: Assets/Project/Screen/Title/TitleScene.unity
     guid: 54ae7c86b0fb4409eab5b776e34424e0
   - enabled: 1
@@ -23,9 +26,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Project/Screen/Streat/StreetScene.unity
     guid: bfaffe002fd704d9d8e9365cc58c2348
-  - enabled: 1
-    path: Assets/Project/Screen/Boot/BootScene.unity
-    guid: 0577fe00efd594632b53013e8abef914
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 3deb260f513e44decbbac50e4095346a, type: 3}
   m_UseUCBPForAssetBundles: 0
