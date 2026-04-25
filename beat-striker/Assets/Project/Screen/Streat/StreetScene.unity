@@ -15,7 +15,7 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
   m_Fog: 1
-  m_FogColor: {r: 0.043120332, g: 0.09002316, b: 0.16037738, a: 0.21960784}
+  m_FogColor: {r: 0.047169805, g: 0.10377359, b: 0.18867922, a: 0.21960784}
   m_FogMode: 3
   m_FogDensity: 0.047
   m_LinearFogStart: 0
@@ -23,10 +23,10 @@ RenderSettings:
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
-  m_AmbientIntensity: 1
+  m_AmbientIntensity: 1.22
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0, g: 0, b: 0, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 698c22d39b45b438bbfc8e8b7133340f, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 0f3ba9a6813349ad806fa2aaaa9eb8a1, type: 2}
   m_HaloStrength: 0.385
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 0}
+  m_Sun: {fileID: 82797464}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -176,14 +176,14 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 0.35875756, g: 0.43069682, b: 0.5471698, a: 1}
-  m_Intensity: 0.3
+  m_Color: {r: 0.5330188, g: 0.7877358, b: 1, a: 1}
+  m_Intensity: 0.2
   m_Range: 10
   m_SpotAngle: 30
-  m_InnerSpotAngle: 21.80208
+  m_InnerSpotAngle: 1
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -219,7 +219,7 @@ Light:
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 0.3
+  m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
@@ -239,13 +239,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 82797462}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalRotation: {x: 0.20546465, y: -0.6765976, z: 0.20546468, w: 0.67659754}
+  m_LocalPosition: {x: 22.92, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 33.784, y: -90, z: 0}
 --- !u!1001 &319646684
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -610,6 +610,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2794153570914629681}
   - component: {fileID: 1854529937416979228}
+  - component: {fileID: 2794153570914629682}
   m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
@@ -676,6 +677,172 @@ Transform:
   - {fileID: 6413649167445868324}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2794153570914629682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2155677181382650660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c134160dce44732b76787758d54379e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.SceneLightingRandomizer
+  applyOnStart: 1
+  presets:
+  - name: Captured Lighting 2026-04-25 19:04:37
+    skyboxMaterial: {fileID: 2100000, guid: 698c22d39b45b438bbfc8e8b7133340f, type: 2}
+    sunSource: {fileID: 82797464}
+    shadowColor: {r: 0, g: 0, b: 0, a: 1}
+    sunLightEnabled: 0
+    sunLightType: 0
+    sunLightColor: {r: 0, g: 0, b: 0, a: 0}
+    sunLightIntensity: 0
+    sunLightBounceIntensity: 0
+    sunLightRange: 0
+    sunLightSpotAngle: 0
+    sunLightShadows: 0
+    sunLightShadowStrength: 0
+    sunLightShadowResolution: 0
+    sunLightShadowBias: 0
+    sunLightShadowNormalBias: 0
+    sunLightShadowNearPlane: 0
+    sunLightRenderMode: 0
+    sunLightCullingMask: 0
+    sunLightPosition: {x: 0, y: 0, z: 0}
+    sunLightRotation: {x: 0, y: 0, z: 0, w: 0}
+    ambientMode: 0
+    ambientColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+    ambientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+    ambientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+    ambientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+    ambientIntensity: 1
+    reflectionMode: 0
+    reflectionResolution: 128
+    customReflection: {fileID: 0}
+    reflectionIntensity: 1
+    reflectionBounces: 1
+    fog: 1
+    fogColor: {r: 0.043120332, g: 0.09002316, b: 0.16037738, a: 0.21960784}
+    fogMode: 3
+    fogDensity: 0.047
+    fogStartDistance: 0
+    fogEndDistance: 300
+  - name: Captured Lighting 2026-04-25 19:22:22
+    skyboxMaterial: {fileID: 2100000, guid: 0f3ba9a6813349ad806fa2aaaa9eb8a1, type: 2}
+    sunSource: {fileID: 82797464}
+    shadowColor: {r: 0, g: 0, b: 0, a: 1}
+    sunLightEnabled: 1
+    sunLightType: 1
+    sunLightColor: {r: 0.8207547, g: 0.81837, b: 0.7859113, a: 1}
+    sunLightIntensity: 0.5
+    sunLightBounceIntensity: 1
+    sunLightRange: 10
+    sunLightSpotAngle: 30
+    sunLightShadows: 1
+    sunLightShadowStrength: 1
+    sunLightShadowResolution: -1
+    sunLightShadowBias: 0.05
+    sunLightShadowNormalBias: 0.4
+    sunLightShadowNearPlane: 0.2
+    sunLightRenderMode: 0
+    sunLightCullingMask: -1
+    sunLightPosition: {x: 896, y: 795, z: 0}
+    sunLightRotation: {x: 0.71325785, y: -0, z: -0, w: 0.70090175}
+    ambientMode: 0
+    ambientColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+    ambientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+    ambientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+    ambientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+    ambientIntensity: 1.22
+    reflectionMode: 0
+    reflectionResolution: 128
+    customReflection: {fileID: 0}
+    reflectionIntensity: 1
+    reflectionBounces: 1
+    fog: 1
+    fogColor: {r: 0.047169805, g: 0.10377359, b: 0.18867922, a: 0.21960784}
+    fogMode: 3
+    fogDensity: 0.047
+    fogStartDistance: 0
+    fogEndDistance: 300
+  - name: Captured Lighting 2026-04-25 19:28:04
+    skyboxMaterial: {fileID: 2100000, guid: d6b534e4a88689d499df389f744ce346, type: 2}
+    sunSource: {fileID: 82797464}
+    shadowColor: {r: 0, g: 0, b: 0, a: 1}
+    sunLightEnabled: 1
+    sunLightType: 1
+    sunLightColor: {r: 0.8584906, g: 0.70782995, b: 0.5547793, a: 1}
+    sunLightIntensity: 0.5
+    sunLightBounceIntensity: 1
+    sunLightRange: 10
+    sunLightSpotAngle: 30
+    sunLightShadows: 1
+    sunLightShadowStrength: 1
+    sunLightShadowResolution: -1
+    sunLightShadowBias: 0.05
+    sunLightShadowNormalBias: 0.4
+    sunLightShadowNearPlane: 0.2
+    sunLightRenderMode: 0
+    sunLightCullingMask: -1
+    sunLightPosition: {x: 22.92, y: 0, z: 0}
+    sunLightRotation: {x: 0.20546468, y: -0.67659765, z: 0.2054647, w: 0.6765976}
+    ambientMode: 0
+    ambientColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+    ambientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+    ambientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+    ambientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+    ambientIntensity: 1.22
+    reflectionMode: 0
+    reflectionResolution: 128
+    customReflection: {fileID: 0}
+    reflectionIntensity: 1
+    reflectionBounces: 1
+    fog: 1
+    fogColor: {r: 0.047169805, g: 0.10377359, b: 0.18867922, a: 0.21960784}
+    fogMode: 3
+    fogDensity: 0.047
+    fogStartDistance: 0
+    fogEndDistance: 300
+  - name: Captured Lighting 2026-04-25 19:37:07
+    skyboxMaterial: {fileID: 2100000, guid: 0f3ba9a6813349ad806fa2aaaa9eb8a1, type: 2}
+    sunSource: {fileID: 82797464}
+    shadowColor: {r: 0, g: 0, b: 0, a: 1}
+    sunLightEnabled: 1
+    sunLightType: 1
+    sunLightColor: {r: 0.5330188, g: 0.7877358, b: 1, a: 1}
+    sunLightIntensity: 0.2
+    sunLightBounceIntensity: 1
+    sunLightRange: 10
+    sunLightSpotAngle: 30
+    sunLightShadows: 1
+    sunLightShadowStrength: 1
+    sunLightShadowResolution: -1
+    sunLightShadowBias: 0.05
+    sunLightShadowNormalBias: 0.4
+    sunLightShadowNearPlane: 0.2
+    sunLightRenderMode: 0
+    sunLightCullingMask: -1
+    sunLightPosition: {x: 22.92, y: 0, z: 0}
+    sunLightRotation: {x: 0.20546465, y: -0.6765976, z: 0.20546468, w: 0.67659754}
+    ambientMode: 0
+    ambientColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+    ambientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+    ambientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+    ambientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+    ambientIntensity: 1.22
+    reflectionMode: 0
+    reflectionResolution: 128
+    customReflection: {fileID: 0}
+    reflectionIntensity: 1
+    reflectionBounces: 1
+    fog: 1
+    fogColor: {r: 0.047169805, g: 0.10377359, b: 0.18867922, a: 0.21960784}
+    fogMode: 3
+    fogDensity: 0.047
+    fogStartDistance: 0
+    fogEndDistance: 300
 --- !u!4 &2978891558492419286
 Transform:
   m_ObjectHideFlags: 0

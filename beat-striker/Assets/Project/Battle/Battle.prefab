@@ -15177,7 +15177,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2563605967664428972
 RectTransform:
   m_ObjectHideFlags: 0
@@ -22813,7 +22813,6 @@ MonoBehaviour:
   - {fileID: 0}
   specialUnavailableSound: {fileID: 8300000, guid: dda8b5e641bec254cb234c0814de7d80, type: 3}
   specialUnavailableSoundVolume: 1
-  isTrainingInfiniteRound: 0
   isTestMode: 0
 --- !u!114 &2202688824872153533
 MonoBehaviour:
@@ -24489,6 +24488,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SPGuidPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 4332855898064780663, guid: efdb695f538574ab8924eca62711fcec, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6815339355837598248, guid: efdb695f538574ab8924eca62711fcec, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -24614,6 +24617,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: GuidPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 4332855898064780663, guid: efdb695f538574ab8924eca62711fcec, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8648564829265296383, guid: efdb695f538574ab8924eca62711fcec, type: 3}
       propertyPath: m_Pivot.x
       value: 1
@@ -24715,6 +24722,10 @@ PrefabInstance:
     - target: {fileID: 1380997860081013331, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
       propertyPath: m_Name
       value: PlayerUI
+      objectReference: {fileID: 0}
+    - target: {fileID: 1380997860081013331, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1486459028039583250, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
       propertyPath: buttonGuideMotion
