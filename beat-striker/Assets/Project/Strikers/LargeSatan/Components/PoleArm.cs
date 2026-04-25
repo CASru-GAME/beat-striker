@@ -383,7 +383,7 @@ public class PoleArm : MonoBehaviour {
 
             if (dist > 0.001f) {
                 // 1. まず通常のRaycastで壁を検知
-                var hits = Physics.RaycastAll(centerPos, dir.normalized, dist, poleArm.hitMask, QueryTriggerInteraction.Ignore);
+                var hits = Physics.RaycastAll(centerPos, dir.normalized, dist, poleArm.hitMask, QueryTriggerInteraction.Collide);
                 System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
                 bool hitWall = false;
                 Debug.Log($"[PoleArm OnEnter] RaycastAll hits={hits.Length}");
@@ -412,7 +412,7 @@ public class PoleArm : MonoBehaviour {
 
                 // 2. 超近距離でのめり込み対策
                 if (!hitWall && !isStopped) {
-                    var overlapsLine = Physics.OverlapCapsule(centerPos, weaponPos, 0.05f, poleArm.hitMask, QueryTriggerInteraction.Ignore);
+                    var overlapsLine = Physics.OverlapCapsule(centerPos, weaponPos, 0.05f, poleArm.hitMask, QueryTriggerInteraction.Collide);
                     System.Array.Sort(overlapsLine, (a, b) => Vector3.SqrMagnitude(a.ClosestPoint(centerPos) - centerPos).CompareTo(Vector3.SqrMagnitude(b.ClosestPoint(centerPos) - centerPos)));
                     Debug.Log($"[PoleArm OnEnter] OverlapCapsule hits={overlapsLine.Length}");
                     foreach (var col in overlapsLine) {
@@ -439,7 +439,7 @@ public class PoleArm : MonoBehaviour {
             if (isStopped) return;
 
             // 3. 武器の出現位置自体が壁の中に埋まっていないかチェック
-            var overlaps = Physics.OverlapSphere(poleArm.transform.position, poleArm.hitRadius, poleArm.hitMask, QueryTriggerInteraction.Ignore);
+            var overlaps = Physics.OverlapSphere(poleArm.transform.position, poleArm.hitRadius, poleArm.hitMask, QueryTriggerInteraction.Collide);
             var sphereCenter = poleArm.transform.position;
             System.Array.Sort(overlaps, (a, b) => Vector3.SqrMagnitude(a.ClosestPoint(sphereCenter) - sphereCenter).CompareTo(Vector3.SqrMagnitude(b.ClosestPoint(sphereCenter) - sphereCenter)));
             Debug.Log($"[PoleArm OnEnter] OverlapSphere hits={overlaps.Length}");
@@ -480,7 +480,7 @@ public class PoleArm : MonoBehaviour {
             float normalizedTime = Mathf.Clamp01(elapsedTime / speedDuration);
             float moveSpeed = speed * speedCurve.Evaluate(normalizedTime);
             float distanceToMove = moveSpeed * deltaTime;
-            var hits = Physics.SphereCastAll(poleArm.transform.position, poleArm.hitRadius, emitDirection, distanceToMove, poleArm.hitMask, QueryTriggerInteraction.Ignore);
+            var hits = Physics.SphereCastAll(poleArm.transform.position, poleArm.hitRadius, emitDirection, distanceToMove, poleArm.hitMask, QueryTriggerInteraction.Collide);
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
             bool wallHit = false;

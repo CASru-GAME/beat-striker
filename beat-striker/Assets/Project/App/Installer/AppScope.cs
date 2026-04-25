@@ -30,6 +30,8 @@ namespace Alice {
 		[SerializeField] AppBGMPlayer appBgmPlayer;
 		[SerializeField] AIRegistry aiRegistry;
 		[SerializeField] AISetting aiSetting;
+		[SerializeField] AppUISetting appUiSetting;
+		[SerializeField] VirtualTouchControllerCanvasView virtualTouchControllerCanvasView;
 
 		protected override void Awake() {
 			Debug.Log($"{LOG_PREFIX} Awake begin. scene={gameObject.scene.name}");
@@ -45,6 +47,7 @@ namespace Alice {
 			DontDestroyOnLoad(gameObject);
 			playerSelectSetting.InitializeDefaults();
 			aiSetting.InitializeDefaults();
+			appUiSetting.InitializeDefaults();
 			base.Awake();
 			Debug.Log($"{LOG_PREFIX} Awake completed. scene={gameObject.scene.name}");
 		}
@@ -77,11 +80,14 @@ namespace Alice {
 			builder.RegisterInstance<IAppBGMPlayer>(appBgmPlayer);
 			builder.RegisterInstance<IAIRegistry>(aiRegistry);
 			builder.RegisterInstance<IAISetting>(aiSetting);
+			builder.RegisterInstance<IAppUISetting>(appUiSetting);
+			builder.RegisterInstance(virtualTouchControllerCanvasView);
 			builder.Register<ISceneLoader, SceneLoader>(Lifetime.Singleton);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
 
 			builder.RegisterInstance(playerInputManager);
 			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
+			builder.RegisterEntryPoint<VirtualTouchControllerPresenter>(Lifetime.Singleton);
 
 			builder.RegisterBuildCallback(container => {
 				Debug.Log($"{LOG_PREFIX} BuildCallback begin. scene={gameObject.scene.name}");
@@ -101,6 +107,8 @@ namespace Alice {
 				_ = container.Resolve<IAppBGMPlayer>();
 				_ = container.Resolve<IAIRegistry>();
 				_ = container.Resolve<IAISetting>();
+				_ = container.Resolve<IAppUISetting>();
+				_ = container.Resolve<VirtualTouchControllerCanvasView>();
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
 				_ = container.Resolve<ICursorDeployer>();

@@ -11,6 +11,7 @@ namespace Alice {
         Live,
         Street,
         ResultMenu,
+        Boot,
     }
 
     public interface ISceneLoader {

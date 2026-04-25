@@ -52,6 +52,7 @@ namespace Alice {
         readonly IGamePadRegistry gamePadRegistry;
         readonly IAIRegistry aiRegistry;
         readonly IAISetting aiSetting;
+        readonly ITutorialSetting tutorialSetting;
         readonly IMusicPlayer musicPlayer;
         readonly IBeatjudge beatJudge;
         readonly IBattlePresenter battlePresenter;
@@ -62,7 +63,7 @@ namespace Alice {
         int lastSelectedOpponentIndex = -1;
         LearningCharacter lastSelectedOpponent;
 
-        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
+        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.battleSetting = battleSetting;
             this.battleSelectSetting = battleSelectSetting;
             this.battleRuleSetting = battleRuleSetting;
@@ -73,6 +74,7 @@ namespace Alice {
             this.gamePadRegistry = gamePadRegistry;
             this.aiRegistry = aiRegistry;
             this.aiSetting = aiSetting;
+            this.tutorialSetting = tutorialSetting;
             this.musicPlayer = musicPlayer;
             this.beatJudge = beatJudge;
             this.battlePresenter = battlePresenter;
@@ -422,8 +424,9 @@ namespace Alice {
             }
 
             var opponentStriker = ResolveOpponentStriker(playerId, selfStriker);
-            if (!aiRegistry.TryResolve(selfStriker, opponentStriker, battleSelectSetting.AiStrength, out var aiRegistration)) {
-                Debug.LogWarning($"Failed to resolve AI brain registration. playerId={playerId}, self={selfStriker}, opponent={opponentStriker}, maxStrength={battleSelectSetting.AiStrength}. Configure fallbackAiId in AIRegistry inspector or add matching entry.");
+            var maxAiStrength = ResolveMaxAiStrength();
+            if (!aiRegistry.TryResolve(selfStriker, opponentStriker, maxAiStrength, out var aiRegistration)) {
+                Debug.LogWarning($"Failed to resolve AI brain registration. playerId={playerId}, self={selfStriker}, opponent={opponentStriker}, maxStrength={maxAiStrength}. Configure fallbackAiId in AIRegistry inspector or add matching entry.");
                 return null;
             }
             var brainPrefab = aiRegistration.BrainPrefab;
@@ -441,6 +444,12 @@ namespace Alice {
             
             aiBrain.DisableAiMode();
             return aiBrain;
+        }
+
+        int ResolveMaxAiStrength() {
+            return tutorialSetting.IsTutorialBattleRequested
+                ? tutorialSetting.AiStrength
+                : battleSelectSetting.AiStrength;
         }
 
         AiBrain CreateTestModeOpponentBrain(int playerId) {

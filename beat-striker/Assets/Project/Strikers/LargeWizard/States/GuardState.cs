@@ -122,39 +122,9 @@ namespace Core.LargeWizard {
             context.TryTransition(nextNode);
         }
 
-        // このステートにいる間、毎フレーム呼ばれる
-        public override void OnUpdate(IStrikerStateContext context) {
-        }
-
         // 他のステートに遷移する直前に呼ばれる
         public override void OnExit(IStrikerContext context) {
             disposable.Dispose();
-        }
-
-        // 攻撃コマンドが押された時に呼ばれる
-        public override void OnAttackRequested(IStrikerStateContext context) {
-        }
-
-        // チャージコマンドが押された時に呼ばれる
-        public override void OnChargeRequested(IStrikerStateContext context) {
-        }
-
-        // ダッシュコマンドが押された時に呼ばれる
-        public override void OnDashRequested(IStrikerStateContext context) {
-        }
-
-        // ガードコマンドが押された時に呼ばれる
-        public override void OnGuardRequested(IStrikerStateContext context) {
-        }
-
-        // 攻撃を受けた時に呼ばれる
-        public override void OnHit(IStrikerStateContext context, HitStatus status) {
-            context.Rigidbody.linearVelocity = 0.5f * status.KnockbackVelocity;
-            context.ApplyDamage(0.1f *status.Damage);
-        }
-
-        // ミスした時に呼ばれる
-        public override void OnMiss(IStrikerStateContext context) {
         }
 
     }

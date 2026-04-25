@@ -2,10 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Alice {
-    public record TutorialBattleSelection(Stage Stage, string MusicId, IReadOnlyList<StrikerSelectionRequest> PlayerSelections);
+    public record TutorialBattleSelection(Stage Stage, string MusicId, IReadOnlyList<StrikerSelectionRequest> PlayerSelections, int AiStrength);
 
     public interface ITutorialSetting {
         TutorialBattleSelection BattleSelection { get; }
+        int AiStrength { get; }
         bool IsTutorialBattleRequested { get; }
         void RequestTutorialBattle();
         void ClearTutorialBattleRequest();
@@ -25,8 +26,10 @@ namespace Alice {
         [SerializeField] Stage stage = Stage.Live;
         [SerializeField] string musicId;
         [SerializeField] List<TutorialPlayerStrikerEntry> playerSelections = new();
+        [SerializeField, Min(0)] int aiStrength = 1;
         [SerializeField] bool isTutorialBattleRequested;
 
+        public int AiStrength => Mathf.Max(0, aiStrength);
         public bool IsTutorialBattleRequested => isTutorialBattleRequested;
 
         public TutorialBattleSelection BattleSelection {
@@ -36,7 +39,7 @@ namespace Alice {
                     selections.Add(playerSelections[i].ToSelectionRequest());
                 }
 
-                return new TutorialBattleSelection(stage, musicId, selections);
+                return new TutorialBattleSelection(stage, musicId, selections, AiStrength);
             }
         }
 
