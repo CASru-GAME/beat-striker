@@ -326,13 +326,23 @@ namespace Alice {
                 return;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(hideDelaySeconds));
+            await DelayAsync(hideDelaySeconds);
             if (isDisposed || sequence != attentionRequestSequence) {
                 return;
             }
 
             suppressAttentionTextForCurrentRequest = true;
             battlePresenterView.AttentionTextView.Hide();
+        }
+
+        static Task DelayAsync(float seconds) {
+            if (seconds <= 0f) {
+                return Task.CompletedTask;
+            }
+
+            var completionSource = new TaskCompletionSource<bool>();
+            LeanTween.delayedCall(seconds, () => completionSource.TrySetResult(true));
+            return completionSource.Task;
         }
     }
 }

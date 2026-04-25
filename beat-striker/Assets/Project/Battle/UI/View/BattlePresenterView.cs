@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using System.Linq;
 using UnityEngine;
@@ -53,7 +52,7 @@ namespace Alice {
         }
 
         public Task WaitAfterSlideBattleUiInAsync() {
-            return Task.Delay(TimeSpan.FromSeconds(openingAfterSlideDelaySeconds));
+            return DelayAsync(openingAfterSlideDelaySeconds);
         }
 
         Task SlideBattleUiAsync(bool useHiddenTarget) {
@@ -111,6 +110,16 @@ namespace Alice {
                 battleUiDefaultAnchoredPositions[i] = defaultPosition;
                 battleUiHiddenTopAnchoredYs[i] = defaultPosition.y + rootHeight + target.rect.height + battleUiHiddenTopMargin;
             }
+        }
+
+        static Task DelayAsync(float seconds) {
+            if (seconds <= 0f) {
+                return Task.CompletedTask;
+            }
+
+            var completionSource = new TaskCompletionSource<bool>();
+            LeanTween.delayedCall(seconds, () => completionSource.TrySetResult(true));
+            return completionSource.Task;
         }
     }
 }

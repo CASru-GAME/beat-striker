@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -140,7 +139,7 @@ namespace Alice {
 
             var waitSeconds = GetPracticeSuccessWaitSeconds(practiceKey);
             if (waitSeconds > 0f) {
-                await Task.Delay(TimeSpan.FromSeconds(waitSeconds));
+                await DelayAsync(waitSeconds);
             }
 
             HideAllPanels();
@@ -149,7 +148,7 @@ namespace Alice {
 
         public async Task HideAfterFinalDelayAsync() {
             if (finalPanelDisplaySeconds > 0f) {
-                await Task.Delay(TimeSpan.FromSeconds(finalPanelDisplaySeconds));
+                await DelayAsync(finalPanelDisplaySeconds);
             }
 
             HideAllPanels();
@@ -457,6 +456,16 @@ namespace Alice {
                 or TutorialUiKey.ChargeAttackPractice
                 or TutorialUiKey.GuardPractice
                 or TutorialUiKey.SpecialPractice;
+        }
+
+        static Task DelayAsync(float seconds) {
+            if (seconds <= 0f) {
+                return Task.CompletedTask;
+            }
+
+            var completionSource = new TaskCompletionSource<bool>();
+            LeanTween.delayedCall(seconds, () => completionSource.TrySetResult(true));
+            return completionSource.Task;
         }
     }
 }
