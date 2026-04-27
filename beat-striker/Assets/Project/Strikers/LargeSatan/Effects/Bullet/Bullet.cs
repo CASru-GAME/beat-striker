@@ -25,7 +25,7 @@ namespace Core.LargeSatan {
 
         void Start() {
             rb.linearVelocity = speed * rb.transform.forward;
-            whizClip.PlayAtPoint(transform);
+            whizClip.PlayAtApp(transform.position);
         }
 
         void Update() {
@@ -39,7 +39,7 @@ namespace Core.LargeSatan {
 
                 var hitPoint = other.ClosestPoint(transform.position);
 
-                impactClip.PlayAtPoint(hitPoint);
+                impactClip.PlayAtApp(hitPoint);
 
                 Destroy(Instantiate(impactPrefab, hitPoint, transform.rotation), 5f);
                 trail.transform.SetParent(null);

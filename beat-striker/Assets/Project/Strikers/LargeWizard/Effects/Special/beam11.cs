@@ -85,7 +85,7 @@ public class beam11 : MonoBehaviour
 
         if (audioPlayDelaySeconds <= 0f)
         {
-            AudioSource.PlayClipAtPoint(audioClip, transform.position);
+            audioClip.PlayAtApp(transform.position);
             return;
         }
 
@@ -211,7 +211,7 @@ public class beam11 : MonoBehaviour
     System.Collections.IEnumerator PlayAudioAfterDelay()
     {
         yield return new WaitForSeconds(audioPlayDelaySeconds);
-        AudioSource.PlayClipAtPoint(audioClip, transform.position);
+        audioClip.PlayAtApp(transform.position);
     }
 
     System.Collections.IEnumerator EnableColliderAfterDelay()

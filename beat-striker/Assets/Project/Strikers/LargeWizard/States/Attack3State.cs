@@ -36,7 +36,7 @@ namespace Core.LargeWizard {
                 rockBehavior.SetAttackerPosition(ctx.Rigidbody.transform.position);
                 rockBehavior.SetAttackerRoot(ctx.Rigidbody.transform.root);
                 rockBehavior.SetOwnerStrikerHub(ctx.Rigidbody.GetComponent<StrikerHub>());
-                AudioSource.PlayClipAtPoint(audioClip, rockPrefab.transform.position);
+                audioClip.PlayAtApp(rockPrefab.transform.position);
             });
         }
 

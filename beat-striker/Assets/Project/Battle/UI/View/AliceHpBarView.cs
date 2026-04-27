@@ -69,7 +69,7 @@ namespace Alice {
         public Task PlayOpeningFillAsync(float durationSeconds) {
             var completionSource = new TaskCompletionSource<bool>();
             var targetHpRatio = pendingHpRatio;
-            AudioSource.PlayClipAtPoint(openingFillSound, Vector3.zero, openingFillSoundVolume);
+            openingFillSound.PlayAtApp(Vector3.zero, openingFillSoundVolume);
 
             LeanTween.cancel(hpBar.gameObject);
             LeanTween.cancel(damageBar.gameObject);

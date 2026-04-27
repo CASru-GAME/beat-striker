@@ -43,7 +43,7 @@ namespace Core {
             onClickEvent?.Invoke();
             clickSubject.OnNext(new BotanEventData(eventData));
             if (clickSound != null) {
-                AudioSource.PlayClipAtPoint(clickSound, Camera.main.transform.position);
+                clickSound.PlayAtApp(Camera.main.transform.position);
             }
         }
     }

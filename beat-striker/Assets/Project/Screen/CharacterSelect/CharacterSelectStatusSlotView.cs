@@ -56,7 +56,7 @@ public class CharacterSelectStatusSlotView : MonoBehaviour
         if (wasSelected != isSelected) {
             ApplyBlinkState(isSelected);
             if (!isSelected) {
-                AudioSource.PlayClipAtPoint(unselectedSound, Camera.main.transform.position, unselectedSoundVolume);
+                unselectedSound.PlayAtApp(Camera.main.transform.position, unselectedSoundVolume);
             }
         }
 

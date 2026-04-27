@@ -305,7 +305,7 @@ namespace Alice {
                 var clip = clips[i];
                 if (clip == null) continue;
 
-                AudioSource.PlayClipAtPoint(clip, Vector3.zero);
+                clip.PlayAtApp(Vector3.zero);
                 return;
             }
         }

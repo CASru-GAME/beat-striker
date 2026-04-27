@@ -51,7 +51,7 @@ namespace Core.LargeHero {
             slashEffect.Play();
             slashEffect2.Play();
             var swingAudioClip = missAudioClip ? missAudioClip : hitAudioClip;
-            AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
+            swingAudioClip.PlayAtApp(context.Rigidbody.position);
             context.PlayAnimation(animationClip, OnAnimationEnd);
             hitInState = false;
         }
@@ -65,7 +65,7 @@ namespace Core.LargeHero {
                         Instantiate(slashEffectPrefab, hit.hitPoint, Quaternion.identity);
                     }
                     if (hitAudioClip) {
-                        AudioSource.PlayClipAtPoint(hitAudioClip, hit.hitPoint);
+                        hitAudioClip.PlayAtApp(hit.hitPoint);
                     }
 
                     hitInState = specialSequenceContext.HasLockedVictim;

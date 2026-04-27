@@ -57,7 +57,7 @@ namespace Core.LargeWizard {
 
             var hitPoint = other.ClosestPoint(transform.position);
             Destroy(Instantiate(impactPrefab, hitPoint, transform.rotation), 5f);
-            AudioSource.PlayClipAtPoint(audioClip, hitPoint);
+            audioClip.PlayAtApp(hitPoint);
             trail.transform.SetParent(null);
             Destroy(trail, 5f);
             Destroy(this.gameObject);

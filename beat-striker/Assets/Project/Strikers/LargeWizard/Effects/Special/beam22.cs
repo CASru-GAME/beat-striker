@@ -10,7 +10,7 @@ public class beam22 : MonoBehaviour
     {
         if (audioPlayDelaySeconds <= 0f)
         {
-            AudioSource.PlayClipAtPoint(audioClip, transform.position);
+            audioClip.PlayAtApp(transform.position);
             return;
         }
 
@@ -26,6 +26,6 @@ public class beam22 : MonoBehaviour
     System.Collections.IEnumerator PlayAudioAfterDelay()
     {
         yield return new WaitForSeconds(audioPlayDelaySeconds);
-        AudioSource.PlayClipAtPoint(audioClip, transform.position);
+        audioClip.PlayAtApp(transform.position);
     }
 }

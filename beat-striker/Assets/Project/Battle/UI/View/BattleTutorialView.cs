@@ -266,7 +266,7 @@ namespace Alice {
             successPanel.alpha = 0f;
 
             if (successSound != null) {
-                AudioSource.PlayClipAtPoint(successSound, Vector3.zero);
+                successSound.PlayAtApp(Vector3.zero);
             }
 
             LeanTween.value(successPanel.gameObject, 0f, totalSeconds, totalSeconds)
@@ -426,12 +426,12 @@ namespace Alice {
             }
 
             if (IsPracticeKey(nextKey)) {
-                AudioSource.PlayClipAtPoint(practiceStartSound, Vector3.zero);
+                practiceStartSound.PlayAtApp(Vector3.zero);
                 return;
             }
 
             if (IsDescriptionKey(nextKey)) {
-                AudioSource.PlayClipAtPoint(descriptionChangeSound, Vector3.zero);
+                descriptionChangeSound.PlayAtApp(Vector3.zero);
             }
         }
 

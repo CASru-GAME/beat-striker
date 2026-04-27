@@ -30,7 +30,7 @@ namespace Core.LargeWizard {
             tuePrefab.SetActive(false);
             wizardPrefab.SetActive(false);
 
-            AudioSource.PlayClipAtPoint(audioClip, magicCircleSpawnPoint.position);
+            audioClip.PlayAtApp(magicCircleSpawnPoint.position);
 
             magicCircleInstance = Instantiate(magicCirclePrefab, magicCircleSpawnPoint.position, Quaternion.Euler(magicCircleRotationEuler));
             var growEffect = magicCircleInstance.AddComponent<GrowFromZeroScaleEffect>();

@@ -9,7 +9,6 @@ using TMPro;
 public record StrikerClickRequest(int PlayerId, Striker Striker);
 
 [RequireComponent(typeof(Botan))]
-[RequireComponent(typeof(AudioSource))]
 public class Characterselectbutton : MonoBehaviour
 {
     Botan botan;
@@ -17,7 +16,6 @@ public class Characterselectbutton : MonoBehaviour
     public RawImage image2; // 追加の画像
     public TextMeshProUGUI text; // 追加のテキスト
     public AudioClip hoverSound;
-    AudioSource audioSource;
     [SerializeField] Striker striker;
     public Striker Striker => striker;
 
@@ -25,7 +23,6 @@ public class Characterselectbutton : MonoBehaviour
     public Observable<StrikerClickRequest> OnStrikerClicked => strikerClicked;
     void Awake() {
         botan = GetComponent<Botan>();
-        audioSource = GetComponent<AudioSource>();
 
         image.color = Color.gray;
         image2.color = Color.gray;
@@ -35,7 +32,7 @@ public class Characterselectbutton : MonoBehaviour
             image.color = Color.white;
             image2.color = Color.white;
             text.color = Color.white;
-            audioSource.PlayOneShot(hoverSound);
+            hoverSound.PlayAtApp();
         });
         botan.OnClickEvent.Subscribe((e) => {
             var playerId = e.EventData.pointerId;

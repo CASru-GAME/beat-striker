@@ -7,7 +7,6 @@ namespace Alice {
     public record TimeingAdjustBeatEvent(int BeatIndex, double BeatDspTime);
 
     public class TimeingAdjustView : MonoBehaviour {
-        [SerializeField] AudioSource audioSource;
         [SerializeField] AudioClip beatSe;
         [SerializeField] float bpm = 110f;
         [SerializeField] int ignoreBeatCount = 5;
@@ -49,10 +48,6 @@ namespace Alice {
             if (sessionCoroutine != null) {
                 StopCoroutine(sessionCoroutine);
                 sessionCoroutine = null;
-            }
-
-            if (audioSource.isPlaying) {
-                audioSource.Stop();
             }
 
             if (tapPulseCoroutine != null) {
@@ -124,7 +119,7 @@ namespace Alice {
                     yield return null;
                 }
 
-                audioSource.PlayOneShot(beatSe);
+                beatSe.PlayAtApp();
                 beatPlayed.OnNext(new TimeingAdjustBeatEvent(i, nextBeatDspTime));
                 nextBeatDspTime += beatInterval;
             }

@@ -81,7 +81,7 @@ public class EffectPlayer : MonoBehaviour {
         playingEffects.Add(effect);
 
         if(sound) {
-            AudioSource.PlayClipAtPoint(sound, position);
+            sound.PlayAtApp(position);
         }
 
         if (particleSystem) {

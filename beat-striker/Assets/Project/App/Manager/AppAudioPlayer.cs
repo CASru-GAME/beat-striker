@@ -6,7 +6,9 @@ namespace Alice {
     public interface IAppAudioPlayer {
         void Initialize(IAudioSetting audioSetting);
         void Play(AudioClip clip);
+        void Play(AudioClip clip, float volumeScale);
         void Play(AudioClip clip, Vector3 worldPosition);
+        void Play(AudioClip clip, Vector3 worldPosition, float volumeScale);
     }
 
     [DisallowMultipleComponent]
@@ -18,10 +20,6 @@ namespace Alice {
         [SerializeField] int initialPoolSize = 8;
         [Min(1)]
         [SerializeField] int maxPoolSize = 32;
-
-        [Header("Audio Source")]
-        [Range(0f, 1f)]
-        [SerializeField] float spatialBlend = 1f;
 
         IObjectPool<AudioSource> pool;
         Transform poolRoot;
@@ -37,10 +35,18 @@ namespace Alice {
         }
 
         public void Play(AudioClip clip) {
-            Play(clip, transform.position);
+            Play(clip, ResolvePlaybackPosition());
+        }
+
+        public void Play(AudioClip clip, float volumeScale) {
+            Play(clip, ResolvePlaybackPosition(), volumeScale);
         }
 
         public void Play(AudioClip clip, Vector3 worldPosition) {
+            Play(clip, worldPosition, 1f);
+        }
+
+        public void Play(AudioClip clip, Vector3 worldPosition, float volumeScale) {
             if (!clip) {
                 return;
             }
@@ -48,10 +54,10 @@ namespace Alice {
             EnsurePool();
 
             var audioSource = pool.Get();
-            audioSource.transform.position = worldPosition;
+            audioSource.transform.position = ResolvePlaybackPosition();
             audioSource.clip = clip;
-            audioSource.volume = ResolveSeVolume();
-            audioSource.spatialBlend = spatialBlend;
+            audioSource.volume = ResolveSeVolume(volumeScale);
+            audioSource.spatialBlend = 0f;
             audioSource.Play();
 
             StartCoroutine(ReleaseWhenFinished(audioSource, clip.length));
@@ -93,7 +99,7 @@ namespace Alice {
             var audioSource = audioSourceObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.loop = false;
-            audioSource.spatialBlend = spatialBlend;
+            audioSource.spatialBlend = 0f;
             audioSourceObject.SetActive(false);
             return audioSource;
         }
@@ -127,13 +133,21 @@ namespace Alice {
             }
         }
 
-        float ResolveSeVolume() {
+        float ResolveSeVolume(float volumeScale) {
             if (audioSetting == null) {
-                return 1f;
+                return Mathf.Clamp01(volumeScale);
             }
 
             var volumeBalance = audioSetting.VolumeBalance.CurrentValue;
-            return Mathf.Clamp01(volumeBalance.MasterVolume * volumeBalance.SeVolume);
+            return Mathf.Clamp01(volumeBalance.MasterVolume * volumeBalance.SeVolume * Mathf.Max(0f, volumeScale));
+        }
+
+        Vector3 ResolvePlaybackPosition() {
+            if (Camera.main != null) {
+                return Camera.main.transform.position;
+            }
+
+            return transform.position;
         }
     }
 }

@@ -70,8 +70,8 @@ namespace Core.LargeWizard {
 
                 iceBehavior.SetOwnerStrikerHub(ctx.Rigidbody.GetComponent<StrikerHub>());
 
-                AudioSource.PlayClipAtPoint(audioClip1, spawnPos);
-                AudioSource.PlayClipAtPoint(audioClip2, spawnPos);
+                audioClip1.PlayAtApp(spawnPos);
+                audioClip2.PlayAtApp(spawnPos);
 
             });
         }

@@ -73,7 +73,7 @@ namespace Alice {
 
         void PlaySound(AudioClip clip) {
             if (clip == null) return;
-            AudioSource.PlayClipAtPoint(clip, Vector3.zero);
+            clip.PlayAtApp(Vector3.zero);
         }
 
         void PlayRoundVoice(int roundNumber) {

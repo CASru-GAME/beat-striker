@@ -275,7 +275,7 @@ namespace Alice {
 
             musicPlayer.OnBeatTiming
                 .Subscribe(signal => {
-                    if(battlePresenterView.BeatSound) AudioSource.PlayClipAtPoint(battlePresenterView.BeatSound, Vector3.zero);
+                    if(battlePresenterView.BeatSound) battlePresenterView.BeatSound.PlayAtApp(Vector3.zero);
                     var remainingBeatCount = totalBeatCount - (signal.BeatIndex + 1);
                     battlePresenterView.SetRemainingBeatCount(remainingBeatCount);
                 })

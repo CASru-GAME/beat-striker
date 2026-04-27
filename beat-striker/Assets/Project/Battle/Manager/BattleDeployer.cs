@@ -111,8 +111,7 @@ namespace Alice {
                 var inpactSubscription = instance.OnInpactGenerated.Subscribe(command => battlePresenter.PlayInpact(command));
                 var attentionSubscription = instance.OnAtentionRequested.Subscribe(request => battlePresenter.RequestAttention(playerId, request));
                 var specialRequestFailedSubscription = instance.OnSpecialRequestFailed.Subscribe(_ => {
-                    AudioSource.PlayClipAtPoint(
-                        battleSetting.SpecialUnavailableSound,
+                    battleSetting.SpecialUnavailableSound.PlayAtApp(
                         instance.Position.CurrentValue,
                         battleSetting.SpecialUnavailableSoundVolume);
                 });

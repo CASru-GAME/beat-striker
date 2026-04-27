@@ -58,7 +58,7 @@ namespace Core.LargeWizard {
                 var particleInstance = Instantiate(particlePrefab, closestHit.hitPoint, Quaternion.identity);
                 particleInstance.Play();
 
-                AudioSource.PlayClipAtPoint(audioClip, closestHit.hitPoint);
+                audioClip.PlayAtApp(closestHit.hitPoint);
 
                 var nockBackDirection = Mathf.Sign(closestHit.hitPoint.x - context.Rigidbody.transform.position.x) * Vector2.right;
 

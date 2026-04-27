@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Alice;
 
 [RequireComponent(typeof(Button))]
-[RequireComponent(typeof(AudioSource))]
 public class ResultPanelButton : MonoBehaviour
 {
     [Header("References")]
@@ -71,7 +70,6 @@ public class ResultPanelButton : MonoBehaviour
     public float autoStartDelay = 0.5f; // 自動開始の遅延時間
     
     private Button button;
-    private AudioSource audioSource;
     private CanvasGroup blackImageCanvasGroup;
     private RectTransform blackImageRect;
     private RectTransform lineRect;
@@ -114,14 +112,6 @@ public class ResultPanelButton : MonoBehaviour
         }
 
         button = GetComponent<Button>();
-        audioSource = GetComponent<AudioSource>();
-        
-        // AudioSourceが無ければ追加
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
-        
         Debug.Log($"ResultPanelButton Start - Button: {button != null}");
         Debug.Log($"ResultPanelButton GameObject: {gameObject.name}, Active: {gameObject.activeInHierarchy}");
         
@@ -611,9 +601,9 @@ public class ResultPanelButton : MonoBehaviour
     
     void PlaySound(AudioClip clip, float volume = 1f)
     {
-        if (audioSource != null && clip != null)
+        if (clip != null)
         {
-            audioSource.PlayOneShot(clip, volume);
+            clip.PlayAtApp(volume);
         }
     }
     

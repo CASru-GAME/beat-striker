@@ -32,7 +32,7 @@ namespace Core.LargeHero {
         public override void OnEnter(IStrikerContext context) {
             chaseState1SlashEffect.Play();
             var swingAudioClip = missAudioClip ? missAudioClip : hitAudioClip;
-            AudioSource.PlayClipAtPoint(swingAudioClip, context.Rigidbody.position);
+            swingAudioClip.PlayAtApp(context.Rigidbody.position);
             context.PlayAnimation(chaseState1, OnChaseState1End);
             specialSequenceContext.KeepAerialFormation(context.Rigidbody);
             chaseState1HitApplied = false;
@@ -91,7 +91,7 @@ namespace Core.LargeHero {
                 Instantiate(slashEffectPrefab, hitPoint, Quaternion.identity);
             }
             if (hitAudioClip) {
-                AudioSource.PlayClipAtPoint(hitAudioClip, hitPoint);
+                hitAudioClip.PlayAtApp(hitPoint);
             }
 
             specialSequenceContext.ApplyHitToLockedVictim(damage, Vector3.zero);

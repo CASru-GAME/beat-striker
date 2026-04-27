@@ -18,4 +18,22 @@ public static class AudioClipAppExtensions {
 
         appScope.AppAudioPlayer?.Play(clip, worldPosition);
     }
+
+    public static void PlayAtApp(this AudioClip clip, float volumeScale) {
+        var appScope = Alice.AppScope.Instance;
+        if (!appScope) {
+            return;
+        }
+
+        appScope.AppAudioPlayer?.Play(clip, volumeScale);
+    }
+
+    public static void PlayAtApp(this AudioClip clip, Vector3 worldPosition, float volumeScale) {
+        var appScope = Alice.AppScope.Instance;
+        if (!appScope) {
+            return;
+        }
+
+        appScope.AppAudioPlayer?.Play(clip, worldPosition, volumeScale);
+    }
 }

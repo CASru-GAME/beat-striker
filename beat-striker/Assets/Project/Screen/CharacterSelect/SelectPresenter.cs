@@ -181,7 +181,7 @@ namespace Alice {
 
             inputState = SceneInputState.TransitioningToScreen;
             Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition accepted. inputState={inputState}, nextScene={nextScene}");
-            AudioSource.PlayClipAtPoint(view.ClickSound, Camera.main.transform.position);
+            view.ClickSound.PlayAtApp(Camera.main.transform.position);
         }
 
         AppScene ResolvePlayScene() {

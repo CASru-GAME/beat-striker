@@ -131,7 +131,7 @@ namespace Alice {
             }
 
             effectParticleSystem.Play();
-            AudioSource.PlayClipAtPoint(shrinkImpactSound, Vector3.zero, soundVolume);
+            shrinkImpactSound.PlayAtApp(Vector3.zero, soundVolume);
             impactCoroutine = null;
         }
 

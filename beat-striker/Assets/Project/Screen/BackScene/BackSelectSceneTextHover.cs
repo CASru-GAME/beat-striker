@@ -7,7 +7,6 @@ using R3;
 
 namespace Alice {
     [RequireComponent(typeof(Botan))]
-    [RequireComponent(typeof(AudioSource))]
     public class BackSelectSceneTextHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler {
         [Header("Image References")]
         public Image[] gradientImages; // グラデーションの四角いImageの配列（左から右の順）
@@ -28,7 +27,6 @@ namespace Alice {
         readonly Subject<AppScene> clicked = new();
 
         private CanvasGroup[] imageCanvasGroups;
-        private AudioSource audioSource;
         private bool isHovering = false;
 
         public AppScene scene = AppScene.Title;
@@ -39,12 +37,6 @@ namespace Alice {
         void Start() {
 
         botan = GetComponent<Botan>();
-        // AudioSourceを取得または追加
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null) {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
-
         // 各ImageにCanvasGroupを追加
         if (gradientImages != null && gradientImages.Length > 0) {
             imageCanvasGroups = new CanvasGroup[gradientImages.Length];
@@ -73,8 +65,8 @@ namespace Alice {
         isHovering = true;
         
         // 効果音を再生
-        if (audioSource != null && hoverSound != null) {
-            audioSource.PlayOneShot(hoverSound, hoverSoundVolume);
+        if (hoverSound != null) {
+            hoverSound.PlayAtApp(hoverSoundVolume);
         }
         
         // 左から順番にフェードイン
@@ -108,8 +100,8 @@ namespace Alice {
         public void OnPointerClick(PointerEventData eventData) {
         
         // クリック時の効果音を再生
-        if (audioSource != null && clickSound != null) {
-            audioSource.PlayOneShot(clickSound, clickSoundVolume);
+        if (clickSound != null) {
+            clickSound.PlayAtApp(clickSoundVolume);
         }
 
         clicked.OnNext(scene);

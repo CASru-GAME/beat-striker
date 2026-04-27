@@ -90,7 +90,7 @@ namespace Alice {
             specialBarGraphic.material = isFull ? fullMaterial : normalMaterial;
 
             if(fullFillSound && lastSetRatio > 0.5f && lastSetRatio < 1f) {
-                AudioSource.PlayClipAtPoint(fullFillSound, Camera.main.transform.position);
+                fullFillSound.PlayAtApp(Camera.main.transform.position);
                 buttonGuideMotion.Play();
             }
         }

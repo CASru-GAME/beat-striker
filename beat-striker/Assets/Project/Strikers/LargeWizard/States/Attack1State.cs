@@ -27,7 +27,7 @@ namespace Core.LargeWizard {
                 context.TryTransition(nextNode);
             });
 
-            AudioSource.PlayClipAtPoint(audioClip, firePrefab.transform.position);
+            audioClip.PlayAtApp(firePrefab.transform.position);
 
             ScheduleStateEvent(fireTime, context => {
                 var particleInstance = Instantiate(firePrefab, firePosition.position, context.Rigidbody.rotation);

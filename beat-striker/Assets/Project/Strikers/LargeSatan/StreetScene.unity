@@ -348,7 +348,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9133904809460036572, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: selectedMusicId
-      value: Fighter Street
+      value: tick
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

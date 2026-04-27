@@ -27,7 +27,7 @@ namespace Core.LargeHero {
                 var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
                 var particleInstance =
                 Instantiate(beamPrefab, firePosition.position, GetBeamRotation(context));
-                AudioSource.PlayClipAtPoint(swingAudioClip, firePosition.position);
+                swingAudioClip.PlayAtApp(firePosition.position);
             });
         }
 

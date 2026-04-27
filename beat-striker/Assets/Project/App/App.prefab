@@ -1552,6 +1552,7 @@ GameObject:
   - component: {fileID: 8014080456772314020}
   - component: {fileID: 6291877219211561707}
   - component: {fileID: 7631814504287584424}
+  - component: {fileID: 7192238475324129042}
   m_Layer: 0
   m_Name: App
   m_TagString: Untagged
@@ -2028,6 +2029,7 @@ MonoBehaviour:
   appTransitionFactory: {fileID: 9201860890254514560}
   cursorFactory: {fileID: 8684236627904277826}
   appBgmPlayer: {fileID: 3511319359145443329}
+  appAudioPlayer: {fileID: 0}
   aiRegistry: {fileID: 904021008660354504}
   aiSetting: {fileID: 8953530949465533837}
   appUiSetting: {fileID: 4371772477456092809}
@@ -2173,6 +2175,21 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &7192238475324129042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bb4cbbffb6c04ca4a54f022369dc400, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AppAudioPlayer
+  initialPoolSize: 8
+  maxPoolSize: 32
+  spatialBlend: 1
 --- !u!1 &4556684102402312736
 GameObject:
   m_ObjectHideFlags: 0

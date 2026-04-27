@@ -29,7 +29,7 @@ namespace Core.LargeHero {
             particleprefab. gameObject.SetActive(true);
             particleprefab.Clear();
             particleprefab.Play();
-            AudioSource.PlayClipAtPoint(audioClip, context.Rigidbody.position);
+            audioClip.PlayAtApp(context.Rigidbody.position);
             context.PlayAnimation(animationClip, context => {
                 energyStorage.StoreEnergy(1);
                 context.TryTransition(nextNode);

@@ -46,8 +46,7 @@ public class MusicCard : MonoBehaviour {
 
             // クリック効果音を再生（プレビュー音楽を一旦止めて効果音を再生）
             if (clickSound != null) {
-                audioSource.Stop();
-                audioSource.PlayOneShot(clickSound);
+                clickSound.PlayAtApp();
             }
 
             musicSelected.OnNext(currentMusic);

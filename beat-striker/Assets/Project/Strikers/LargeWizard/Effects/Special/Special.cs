@@ -34,7 +34,7 @@ namespace Core.LargeWizard {
             rb.linearVelocity = transform.forward * speed;
             Destroy(gameObject, lifeTime);
             StartCoroutine(SpawnBeamAfterDelay());
-            AudioSource.PlayClipAtPoint(audioClip, transform.position);
+            audioClip.PlayAtApp(transform.position);
         }
 
         void Update() {

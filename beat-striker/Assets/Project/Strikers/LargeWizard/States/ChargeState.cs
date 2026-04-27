@@ -20,7 +20,7 @@ namespace Core.LargeWizard {
                 energyStorage.StoreEnergy(1);
                 context.TryTransition(nextNode);
 
-                AudioSource.PlayClipAtPoint(audioClip, context.Rigidbody.transform.position);
+                audioClip.PlayAtApp(context.Rigidbody.transform.position);
             });
         }
 

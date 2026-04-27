@@ -38,7 +38,7 @@ public class AttackPlayer : MonoBehaviour {
         effectTransform = effectTransform != null ? effectTransform : transform;
 
         if(attackEffectPlayer != null) attackEffectPlayer.Emit(effectTransform.position, effectTransform.rotation, effectTransform.lossyScale);
-        if(attackSound != null) AudioSource.PlayClipAtPoint(attackSound, effectTransform.position);
+        if(attackSound != null) attackSound.PlayAtApp(effectTransform.position);
 
         enabled = true;
     }
@@ -99,7 +99,7 @@ public class AttackPlayer : MonoBehaviour {
 
         if(onHitSubject.InvokeAllAndTryGetFirst(hit, out var hitType) && hitType != HitType.Cancel) {
             var clip = hitType == HitType.Blocked ? blockedHitSound : hitSound;
-            if(clip != null) AudioSource.PlayClipAtPoint(clip, hit.Position);
+            if(clip != null) clip.PlayAtApp(hit.Position);
 
             var effectPlayer = hitType == HitType.Blocked ? blockedHitEffectPlayer : hitEffectPlayer;
             effectPlayer.Emit(hit.Position, Quaternion.identity, Vector3.one);

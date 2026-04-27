@@ -46,7 +46,7 @@ namespace Core.LargeWizard {
                     guardToLaunch.SetOwnerStrikerHub(ownerStrikerHub);
                     guardToLaunch.LaunchForward(context.Rigidbody.transform.forward, launchedShieldSpeed, launchedShieldDamage, launchedShieldKnockbackSpeed, launchedShieldLifetime);
 
-                    AudioSource.PlayClipAtPoint(audioClip2, context.Rigidbody.transform.position);
+                    audioClip2.PlayAtApp(context.Rigidbody.transform.position);
                     return;
                 }
 
@@ -66,7 +66,7 @@ namespace Core.LargeWizard {
             if (thirdGuard != null) {
                 thirdGuard.SetOwnerStrikerHub(ownerStrikerHub);
                 thirdGuard.LaunchForward(context.Rigidbody.transform.forward, launchedShieldSpeed, launchedShieldDamage, launchedShieldKnockbackSpeed, launchedShieldLifetime);
-                AudioSource.PlayClipAtPoint(audioClip2, context.Rigidbody.transform.position);
+                audioClip2.PlayAtApp(context.Rigidbody.transform.position);
             }
 
             if (secondGuard != null) {
@@ -95,7 +95,7 @@ namespace Core.LargeWizard {
                 context.Rigidbody.linearVelocity = 0.5f * hit.KnockbackVelocity;
             });
 
-            AudioSource.PlayClipAtPoint(audioClip, shieldInstance.transform.position);
+            audioClip.PlayAtApp(shieldInstance.transform.position);
         }
 
         Core.LargeWizard.Guard TakeNearestGuard(System.Collections.Generic.List<Core.LargeWizard.Guard> guards, Vector3 targetPosition) {

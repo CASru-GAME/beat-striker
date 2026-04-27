@@ -7,7 +7,6 @@ using Alice;
 using Core;
 
 [RequireComponent(typeof(Botan))]
-[RequireComponent(typeof(AudioSource))]
 public class Stageselectbutton : MonoBehaviour
 {
     Botan botan;
@@ -15,7 +14,6 @@ public class Stageselectbutton : MonoBehaviour
     public AudioClip hoverSound;
     [Range(0f, 1f)]
     public float hoverSoundVolume = 1f; // ホバー音の音量
-    AudioSource audioSource;
     public Panel panel; // Panel参照
     public Transform popParent; // Popupの親Transform
     public enum MoveType { None, Right, Left }
@@ -55,7 +53,6 @@ public class Stageselectbutton : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start() {
         botan = GetComponent<Botan>();
-        audioSource = GetComponent<AudioSource>();
 
         image.color = Color.gray;
         
@@ -80,8 +77,8 @@ public class Stageselectbutton : MonoBehaviour
             Debug.Log($"{gameObject.name}: Hovered. isPopupShown={isPopupShown}");
             if (isPopupShown) return;
             image.color = Color.white;
-            if (hoverSound != null && audioSource != null) {
-                audioSource.PlayOneShot(hoverSound, hoverSoundVolume);
+            if (hoverSound != null) {
+                hoverSound.PlayAtApp(hoverSoundVolume);
             }
              if(panel != null) {
                 if (moveType == MoveType.Right) {
