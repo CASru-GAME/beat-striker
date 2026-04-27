@@ -6,6 +6,8 @@ using R3;
 using TMPro;
 using Alice;
 using Core;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 [RequireComponent(typeof(AudioSource))]
 public class MusicCard : MonoBehaviour {
@@ -20,6 +22,9 @@ public class MusicCard : MonoBehaviour {
     private Vector3 originalScale;
     private MusicInfo currentMusic;
     private bool isPreviewEnabled;
+    AsyncOperationHandle<AudioClip>? previewClipHandle;
+    AsyncOperationHandle<TextAsset>? spectrumHandle;
+    AsyncOperationHandle<TextAsset>? beatDataHandle;
     readonly Subject<MusicInfo> musicSelected = new();
 
     public Observable<MusicInfo> OnMusicSelected => musicSelected;
@@ -89,21 +94,24 @@ public class MusicCard : MonoBehaviour {
 
     public void SetMusic(MusicInfo music) {
         CacheComponents();
+        ReleaseLoadedAssets();
         audioSource.Stop();
-        audioSource.clip = music.AudioClip;
+        currentMusic = music;
+        audioSource.clip = LoadAsset<AudioClip>(music.AudioClipReference, ref previewClipHandle);
+        if (audioSpectrum != null) {
+            var spectrumData = LoadAsset<TextAsset>(music.SpectrumDataReference, ref spectrumHandle);
+            audioSpectrum.SetBakedSpectrumText(spectrumData);
+        }
+        var beatData = LoadAsset<TextAsset>(music.BeatDataReference, ref beatDataHandle);
+        var bpm = BeatDataParser.CalculateBpm(beatData);
+        description.text = $"Composer: {music.Composer}\nBPM: {bpm}\nLength: {FormatLength(audioSource.clip != null ? audioSource.clip.length : 0f)}\n{music.Description}";
+        title.text = music.DisplayName;
         if (audioSource.clip == null) {
             return;
         }
         audioSource.time = 0f;
         audioSource.volume = 0f;
         audioSource.Play();
-        if (audioSpectrum != null) {
-            audioSpectrum.SetBakedSpectrumText(music.SpectrumData);
-        }
-        var length = FormatLength(audioSource.clip.length);
-        description.text = $"Composer: {music.Composer}\nBPM: {music.Bpm}\nLength: {length}\n{music.Description}";
-        title.text = music.DisplayName;
-        currentMusic = music;
     }
 
     static string FormatLength(float seconds) {
@@ -122,6 +130,7 @@ public class MusicCard : MonoBehaviour {
         if (!isPreviewEnabled) {
             audioSource.Stop();
             audioSource.volume = 0f;
+            ReleaseLoadedAssets();
         }
     }
 
@@ -129,5 +138,36 @@ public class MusicCard : MonoBehaviour {
         isPreviewEnabled = false;
         audioSource.Stop();
         audioSource.volume = 0f;
+        ReleaseLoadedAssets();
+    }
+
+    void OnDestroy() {
+        ReleaseLoadedAssets();
+    }
+
+    static T LoadAsset<T>(AssetReferenceT<T> assetReference, ref AsyncOperationHandle<T>? handle) where T : Object {
+        if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
+            return null;
+        }
+
+        handle = assetReference.LoadAssetAsync();
+        return handle.Value.WaitForCompletion();
+    }
+
+    void ReleaseLoadedAssets() {
+        if (previewClipHandle.HasValue) {
+            Addressables.Release(previewClipHandle.Value);
+            previewClipHandle = null;
+        }
+
+        if (spectrumHandle.HasValue) {
+            Addressables.Release(spectrumHandle.Value);
+            spectrumHandle = null;
+        }
+
+        if (beatDataHandle.HasValue) {
+            Addressables.Release(beatDataHandle.Value);
+            beatDataHandle = null;
+        }
     }
 }

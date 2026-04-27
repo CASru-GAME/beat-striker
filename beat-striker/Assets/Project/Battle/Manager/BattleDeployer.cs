@@ -6,6 +6,8 @@ using App;
 using Alice;
 using UnityEngine;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Alice {
     public enum Striker {
@@ -40,6 +42,7 @@ namespace Alice {
             public IDisposable InpactSubscription;
             public IDisposable AttentionSubscription;
             public IDisposable SpecialRequestFailedSubscription;
+            public AsyncOperationHandle<GameObject>? PrefabHandle;
         }
 
         readonly IBattleSetting battleSetting;
@@ -98,15 +101,20 @@ namespace Alice {
                     ? appStrikerRegistry.Default
                     : appStrikerRegistry.GetByStriker(selectedStriker);
                 selectedStriker = selectedStrikerInfo.BattleStriker;
-                Debug.Log($"[BattleDeployer] Deploy loop: Player{i} TryGetStriker={selectedStriker}, BattleStriker={selectedStrikerInfo.BattleStriker}, Prefab={selectedStrikerInfo.Prefab?.name ?? "NULL"}".ToOrange());
-                if (selectedStrikerInfo.Prefab == null) {
-                    Debug.LogError($"Striker prefab not found for {selectedStriker}");
+                var prefabObject = LoadAsset<GameObject>(selectedStrikerInfo.PrefabReference, out var prefabHandle);
+                var prefab = prefabObject != null ? prefabObject.GetComponent<StrikerHub>() : null;
+                Debug.Log($"[BattleDeployer] Deploy loop: Player{i} TryGetStriker={selectedStriker}, BattleStriker={selectedStrikerInfo.BattleStriker}, Prefab={prefab?.name ?? "NULL"}".ToOrange());
+                if (prefab == null) {
+                    if (prefabHandle.HasValue) {
+                        Addressables.Release(prefabHandle.Value);
+                    }
+                    Debug.LogError($"Striker prefab not found or missing StrikerHub for {selectedStriker}");
                     continue;
                 }
                 var originalParent = playerTransform.parent;
                 var originalPosition = playerTransform.position;
                 var originalRotation = playerTransform.rotation;
-                var instance = strikerHubFactory.Create(selectedStrikerInfo.Prefab, playerTransform, playerId);
+                var instance = strikerHubFactory.Create(prefab, playerTransform, playerId);
                 var runtimeAiBrain = CreateRuntimeAiBrain(playerId, selectedStriker);
                 var inpactSubscription = instance.OnInpactGenerated.Subscribe(command => battlePresenter.PlayInpact(command));
                 var attentionSubscription = instance.OnAtentionRequested.Subscribe(request => battlePresenter.RequestAttention(playerId, request));
@@ -131,6 +139,7 @@ namespace Alice {
                     InpactSubscription = inpactSubscription,
                     AttentionSubscription = attentionSubscription,
                     SpecialRequestFailedSubscription = specialRequestFailedSubscription,
+                    PrefabHandle = prefabHandle,
                 });
 
                 Debug.Log($"Deployed Striker {selectedStriker} for Player {i}".ToCyan());
@@ -253,6 +262,10 @@ namespace Alice {
                 deployed.InpactSubscription?.Dispose();
                 deployed.AttentionSubscription?.Dispose();
                 deployed.SpecialRequestFailedSubscription?.Dispose();
+                if (deployed.PrefabHandle.HasValue) {
+                    Addressables.Release(deployed.PrefabHandle.Value);
+                    deployed.PrefabHandle = null;
+                }
             }
 
             deployedStrikers.Clear();
@@ -523,6 +536,16 @@ namespace Alice {
             var convergenceValue = Mathf.Max(combo1Gain, battleRuleSetting.SpecialPointGainConvergenceValue.CurrentValue);
             var x = combo - 1;
             return convergenceValue - (convergenceValue - combo1Gain) * Mathf.Exp(-convergenceRate * x);
+        }
+
+        static T LoadAsset<T>(AssetReferenceT<T> assetReference, out AsyncOperationHandle<T>? handle) where T : UnityEngine.Object {
+            handle = null;
+            if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
+                return null;
+            }
+
+            handle = assetReference.LoadAssetAsync();
+            return handle.Value.WaitForCompletion();
         }
     }
 

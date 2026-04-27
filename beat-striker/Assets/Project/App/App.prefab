@@ -1781,18 +1781,36 @@ MonoBehaviour:
   strikerEntries:
   - DisplayName: "\u52C7\u8005"
     BattleStriker: 0
-    Prefab: {fileID: 8540004002704815348, guid: 829be4a497a76e2488b2d07ea5cb28b4, type: 3}
-    PreviewModel: {fileID: -1728013695380148634, guid: 8cc39aaf813b0554da29865827638db3, type: 3}
+    PrefabReference:
+      m_AssetGUID: 829be4a497a76e2488b2d07ea5cb28b4
+      m_SubObjectName: 
+      m_SubObjectType: 
+    PreviewModelReference:
+      m_AssetGUID: 8cc39aaf813b0554da29865827638db3
+      m_SubObjectName: 
+      m_SubObjectType: 
     Portrait: {fileID: 21300000, guid: 0901c2af62c7c4a069f6c64c82d9839e, type: 3}
   - DisplayName: "\u9B54\u6CD5\u4F7F\u3044"
     BattleStriker: 1
-    Prefab: {fileID: 1829485864700888609, guid: ecee9c48169c8dc428a6839126804337, type: 3}
-    PreviewModel: {fileID: -1728013695380148634, guid: 37d428df5c910584396dd6cdd0df9fbd, type: 3}
+    PrefabReference:
+      m_AssetGUID: ecee9c48169c8dc428a6839126804337
+      m_SubObjectName: 
+      m_SubObjectType: 
+    PreviewModelReference:
+      m_AssetGUID: 37d428df5c910584396dd6cdd0df9fbd
+      m_SubObjectName: 
+      m_SubObjectType: 
     Portrait: {fileID: 21300000, guid: fb33f68e3de0cd946be0f5706f1a7fa7, type: 3}
   - DisplayName: "\u65A7\u6226\u58EB"
     BattleStriker: 3
-    Prefab: {fileID: 8716767000433258826, guid: 0ac05c6cbb7924775a3f51a772c44cff, type: 3}
-    PreviewModel: {fileID: -1728013695380148634, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
+    PrefabReference:
+      m_AssetGUID: 0ac05c6cbb7924775a3f51a772c44cff
+      m_SubObjectName: 
+      m_SubObjectType: 
+    PreviewModelReference:
+      m_AssetGUID: 61caf16d520024b3f926c5e7ee0e8c5e
+      m_SubObjectName: 
+      m_SubObjectType: 
     Portrait: {fileID: 21300000, guid: 0fb634e71de14479ba7d52195a7c47e6, type: 3}
 --- !u!114 &7111598241528783917
 MonoBehaviour:
@@ -1828,51 +1846,114 @@ MonoBehaviour:
     DisplayName: Fighter Street
     Composer: Suno v5
     Description: 
-    AudioClip: {fileID: 8300000, guid: 62df61faddbdc4059b98c3473fcf6704, type: 3}
-    SpectrumData: {fileID: 4900000, guid: 32210dcf28d47fd4aacb109550ccb125, type: 3}
-    BeatData: {fileID: 4900000, guid: ae05ca4b13d8142cdbb2e337d530630f, type: 3}
+    AudioClipReference:
+      m_AssetGUID: 62df61faddbdc4059b98c3473fcf6704
+      m_SubObjectName: 
+      m_SubObjectType: 
+    SpectrumDataReference:
+      m_AssetGUID: 32210dcf28d47fd4aacb109550ccb125
+      m_SubObjectName: 
+      m_SubObjectType: 
+    BeatDataReference:
+      m_AssetGUID: ae05ca4b13d8142cdbb2e337d530630f
+      m_SubObjectName: 
+      m_SubObjectType: 
   - Id: tick
     DisplayName: Tick Tack
     Composer: Suno v5.5
     Description: 
-    AudioClip: {fileID: 8300000, guid: bcf70a7e0b8a0445abcf445e1b0db6f6, type: 3}
-    SpectrumData: {fileID: 4900000, guid: 423b820994d534d81af55bc3e75597c3, type: 3}
-    BeatData: {fileID: 4900000, guid: 71795534d648e42c5aa690cea2adc2f8, type: 3}
+    AudioClipReference:
+      m_AssetGUID: bcf70a7e0b8a0445abcf445e1b0db6f6
+      m_SubObjectName: 
+      m_SubObjectType: 
+    SpectrumDataReference:
+      m_AssetGUID: 423b820994d534d81af55bc3e75597c3
+      m_SubObjectName: 
+      m_SubObjectType: 
+    BeatDataReference:
+      m_AssetGUID: 71795534d648e42c5aa690cea2adc2f8
+      m_SubObjectName: 
+      m_SubObjectType: 
   - Id: Beat Striker on Stage
     DisplayName: Beat Striker on Stage
     Composer: Suno v4.5+
     Description: 
-    AudioClip: {fileID: 8300000, guid: 7ae048916dd31451c97320d14bc258bb, type: 3}
-    SpectrumData: {fileID: 4900000, guid: 19cb94a5ff1b7f243b41c9d42220e510, type: 3}
-    BeatData: {fileID: 4900000, guid: 6cf97a3e927d14b168b6e2b39c841466, type: 3}
+    AudioClipReference:
+      m_AssetGUID: 7ae048916dd31451c97320d14bc258bb
+      m_SubObjectName: 
+      m_SubObjectType: 
+    SpectrumDataReference:
+      m_AssetGUID: 19cb94a5ff1b7f243b41c9d42220e510
+      m_SubObjectName: 
+      m_SubObjectType: 
+    BeatDataReference:
+      m_AssetGUID: 6cf97a3e927d14b168b6e2b39c841466
+      m_SubObjectName: 
+      m_SubObjectType: 
   - Id: code
     DisplayName: Code on the Beat
     Composer: Suno v5.5
     Description: 
-    AudioClip: {fileID: 8300000, guid: f0ccdeecb29834594aaaedff23a87e96, type: 3}
-    SpectrumData: {fileID: 4900000, guid: 40c1247d2fc644a4287c268b3160950c, type: 3}
-    BeatData: {fileID: 4900000, guid: f99f291578c4e4be89b16db2720d2293, type: 3}
+    AudioClipReference:
+      m_AssetGUID: f0ccdeecb29834594aaaedff23a87e96
+      m_SubObjectName: 
+      m_SubObjectType: 
+    SpectrumDataReference:
+      m_AssetGUID: 40c1247d2fc644a4287c268b3160950c
+      m_SubObjectName: 
+      m_SubObjectType: 
+    BeatDataReference:
+      m_AssetGUID: f99f291578c4e4be89b16db2720d2293
+      m_SubObjectName: 
+      m_SubObjectType: 
   - Id: cutie-street
     DisplayName: Beat Striker on Cutie Street
     Composer: Suno v4.5+
     Description: 
-    AudioClip: {fileID: 8300000, guid: c4266cde834724c9585aa2641c14dcf4, type: 3}
-    SpectrumData: {fileID: 4900000, guid: 3f6a662ccaa5346ae86f5ac7bb709c39, type: 3}
-    BeatData: {fileID: 4900000, guid: b7412a065a00046f4a5bfbf902d1bed7, type: 3}
+    AudioClipReference:
+      m_AssetGUID: c4266cde834724c9585aa2641c14dcf4
+      m_SubObjectName: 
+      m_SubObjectType: 
+    SpectrumDataReference:
+      m_AssetGUID: 3f6a662ccaa5346ae86f5ac7bb709c39
+      m_SubObjectName: 
+      m_SubObjectType: 
+    BeatDataReference:
+      m_AssetGUID: b7412a065a00046f4a5bfbf902d1bed7
+      m_SubObjectName: 
+      m_SubObjectType: 
   - Id: fire
     DisplayName: Beat Striker on Fire
     Composer: Suno v4.5+
     Description: 
-    AudioClip: {fileID: 8300000, guid: 908af2efd514d47f29e3778b8b3c4212, type: 3}
-    SpectrumData: {fileID: 4900000, guid: 5398030452e0a4c618af21947097729e, type: 3}
-    BeatData: {fileID: 4900000, guid: 5595f80bf3fde49f2959315a8faf12d1, type: 3}
+    AudioClipReference:
+      m_AssetGUID: 908af2efd514d47f29e3778b8b3c4212
+      m_SubObjectName: 
+      m_SubObjectType: 
+    SpectrumDataReference:
+      m_AssetGUID: 5398030452e0a4c618af21947097729e
+      m_SubObjectName: 
+      m_SubObjectType: 
+    BeatDataReference:
+      m_AssetGUID: 5595f80bf3fde49f2959315a8faf12d1
+      m_SubObjectName: 
+      m_SubObjectType: 
   - Id: sento
     DisplayName: "\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA"
     Composer: Azuno
     Description: 
-    AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
-    SpectrumData: {fileID: 4900000, guid: 5a14db5d051ccf7448ffdc129b4a7476, type: 3}
-    BeatData: {fileID: 4900000, guid: dacc99fbf686e4339b3f1ffa4b1d2e0e, type: 3}
+    AudioClipReference:
+      m_AssetGUID: a9f0bcf4c529b4943a076f1bf1c76272
+      m_SubObjectName: 
+      m_SubObjectType: 
+    SpectrumDataReference:
+      m_AssetGUID: 5a14db5d051ccf7448ffdc129b4a7476
+      m_SubObjectName: 
+      m_SubObjectType: 
+    BeatDataReference:
+      m_AssetGUID: dacc99fbf686e4339b3f1ffa4b1d2e0e
+      m_SubObjectName: 
+      m_SubObjectType: 
 --- !u!114 &8416357320802876425
 MonoBehaviour:
   m_ObjectHideFlags: 0

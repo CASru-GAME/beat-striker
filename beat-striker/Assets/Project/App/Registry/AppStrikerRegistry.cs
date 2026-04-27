@@ -1,17 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Alice {
     [System.Serializable]
     public class AppStrikerEntry {
         public string DisplayName;
         public Striker BattleStriker;
-        public StrikerHub Prefab;
-        public GameObject PreviewModel;
+        public AssetReferenceGameObject PrefabReference;
+        public AssetReferenceGameObject PreviewModelReference;
         public Sprite Portrait;
     }
 
-    public record StrikerInfo(string DisplayName, Striker BattleStriker, StrikerHub Prefab, GameObject PreviewModel, Sprite Portrait);
+    public record StrikerInfo(string DisplayName, Striker BattleStriker, AssetReferenceGameObject PrefabReference, AssetReferenceGameObject PreviewModelReference, Sprite Portrait);
     public record PlayerStrikerSelection(int PlayerId, StrikerInfo Striker);
 
     public interface IAppStrikerRegistry {
@@ -54,7 +55,7 @@ namespace Alice {
             strikerByType.Clear();
             allStrikers.Clear();
             foreach (var entry in strikerEntries) {
-                var strikerInfo = new StrikerInfo(entry.DisplayName, entry.BattleStriker, entry.Prefab, entry.PreviewModel, entry.Portrait);
+                var strikerInfo = new StrikerInfo(entry.DisplayName, entry.BattleStriker, entry.PrefabReference, entry.PreviewModelReference, entry.Portrait);
                 strikerByType[strikerInfo.BattleStriker] = strikerInfo;
                 allStrikers.Add(strikerInfo);
             }

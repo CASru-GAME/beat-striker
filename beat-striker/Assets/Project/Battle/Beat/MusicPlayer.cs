@@ -4,6 +4,8 @@ using System.Collections.Generic;
  
 using R3;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Alice {
     public enum BeatJudgeZone {
@@ -71,6 +73,8 @@ namespace Alice {
         bool isPlaybackClockRunning;
         bool playbackCompleted;
         bool isPlaybackPaused;
+        AsyncOperationHandle<AudioClip>? loadedClipHandle;
+        AsyncOperationHandle<TextAsset>? loadedBeatDataHandle;
 
         public Observable<IMusicPlayer.BeatSignal> OnGoodZoneEntered => onGoodZoneEntered;
         public Observable<IMusicPlayer.BeatSignal> OnExcellentZoneEntered => onExcellentZoneEntered;
@@ -94,8 +98,10 @@ namespace Alice {
         }
 
         public void Play() {
+            ReleaseLoadedAssets();
             var selectedMusic = musicRegistry.GetById(battleSelectSetting.SelectedMusicId.CurrentValue);
-            var clip = selectedMusic.AudioClip;
+            var clip = LoadAsset<AudioClip>(selectedMusic.AudioClipReference, ref loadedClipHandle);
+            var beatData = LoadAsset<TextAsset>(selectedMusic.BeatDataReference, ref loadedBeatDataHandle);
             var beatOffset = audioSetting.BeatTimeOffset.CurrentValue;
             Debug.Log($"{LOG_PREFIX} Play start. musicId={selectedMusic.Id}, beatOffset={beatOffset:0.###}, commandOffset={audioSetting.CommandTimeOffset.CurrentValue:0.###}, viewOffset={audioSetting.ViewTimeOffset.CurrentValue:0.###}");
             audioSource.clip = clip;
@@ -105,7 +111,7 @@ namespace Alice {
             audioSource.loop = ShouldLoopAudioPlayback(playbackClockMode);
 
             beatSoundSubscription?.Dispose();
-            beats = BuildPlaybackTimelineBeats(selectedMusic, playbackClipLengthSeconds, playbackTimelineLengthSeconds);
+            beats = BuildPlaybackTimelineBeats(beatData, playbackClipLengthSeconds, playbackTimelineLengthSeconds);
             onBeatTimelinePrepared.OnNext(beats);
             ResetBeatEventIndexes();
             lastPlaybackTime = -1f;
@@ -115,6 +121,12 @@ namespace Alice {
             isPlaybackClockRunning = true;
             playbackCompleted = false;
             isPlaybackPaused = false;
+
+            if (clip == null && playbackClockMode != PlaybackClockMode.VirtualLoop) {
+                Debug.LogWarning($"{LOG_PREFIX} Selected music clip was not loaded. musicId={selectedMusic.Id}");
+                CompletePlayback();
+                return;
+            }
 
             if (playbackClockMode != PlaybackClockMode.VirtualLoop) {
                 audioSource.Play();
@@ -150,6 +162,8 @@ namespace Alice {
             beatSoundSubscription?.Dispose();
             beatSoundSubscription = null;
             audioSource.Stop();
+            audioSource.clip = null;
+            ReleaseLoadedAssets();
             isPlaybackClockRunning = false;
             playbackCompleted = true;
             isPlaybackPaused = false;
@@ -302,8 +316,8 @@ namespace Alice {
             return loopCount * clipLength;
         }
 
-        float[] BuildPlaybackTimelineBeats(MusicInfo selectedMusic, float clipLength, float targetPlaybackLengthSeconds) {
-            var oneLoopBeats = LoadSingleLoopBeats(selectedMusic, clipLength);
+        float[] BuildPlaybackTimelineBeats(TextAsset beatData, float clipLength, float targetPlaybackLengthSeconds) {
+            var oneLoopBeats = LoadSingleLoopBeats(beatData, clipLength);
             if (clipLength <= 0f || targetPlaybackLengthSeconds <= clipLength) {
                 return oneLoopBeats;
             }
@@ -334,14 +348,14 @@ namespace Alice {
                 || (clockMode == PlaybackClockMode.AudioTimeline && playbackTimelineLengthSeconds > playbackClipLengthSeconds);
         }
 
-        float[] LoadSingleLoopBeats(MusicInfo selectedMusic, float clipLength) {
-            if (clipLength <= 0f || selectedMusic.BeatData == null) {
+        float[] LoadSingleLoopBeats(TextAsset beatData, float clipLength) {
+            if (clipLength <= 0f || beatData == null) {
                 return Array.Empty<float>();
             }
 
             var timeline = new List<float>();
             var beatOffset = audioSetting.BeatTimeOffset.CurrentValue;
-            foreach (var beatTimeRaw in BeatDataParser.ParseBeatTimes(selectedMusic.BeatData)) {
+            foreach (var beatTimeRaw in BeatDataParser.ParseBeatTimes(beatData)) {
                 var beatTime = beatTimeRaw + beatOffset;
                 if (beatTime < 0f || beatTime >= clipLength) {
                     continue;
@@ -427,6 +441,7 @@ namespace Alice {
         }
 
         public void Dispose() {
+            Stop();
             beatSoundSubscription?.Dispose();
             volumeSubscription?.Dispose();
             onGoodZoneEntered.Dispose();
@@ -440,6 +455,27 @@ namespace Alice {
 
         void ApplyVolume(VolumeBalance volumeBalance) {
             audioSource.volume = Mathf.Clamp01(volumeBalance.MasterVolume * volumeBalance.BgmVolume);
+        }
+
+        static T LoadAsset<T>(AssetReferenceT<T> assetReference, ref AsyncOperationHandle<T>? handle) where T : UnityEngine.Object {
+            if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
+                return null;
+            }
+
+            handle = assetReference.LoadAssetAsync();
+            return handle.Value.WaitForCompletion();
+        }
+
+        void ReleaseLoadedAssets() {
+            if (loadedClipHandle.HasValue) {
+                Addressables.Release(loadedClipHandle.Value);
+                loadedClipHandle = null;
+            }
+
+            if (loadedBeatDataHandle.HasValue) {
+                Addressables.Release(loadedBeatDataHandle.Value);
+                loadedBeatDataHandle = null;
+            }
         }
 
         

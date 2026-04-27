@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Default Local Group
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Default Local Group
+  m_GUID: 67d9f17718069420b876466f73243380
+  m_SerializeEntries:
+  - m_GUID: 0ac05c6cbb7924775a3f51a772c44cff
+    m_Address: Assets/Project/Strikers/LargeSatan/MLSatan.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3449bc14609be458280b04559c2ad3b0
+    m_Address: Assets/Project/BGM
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 37d428df5c910584396dd6cdd0df9fbd
+    m_Address: Assets/Project/Strikers/LargeWizard/Magic.bone.vrm
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 61caf16d520024b3f926c5e7ee0e8c5e
+    m_Address: "Assets/Project/Strikers/LargeSatan/\u308C\u3092\u308B.vrm"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 829be4a497a76e2488b2d07ea5cb28b4
+    m_Address: Assets/Project/Strikers/LargeHero/Hero.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8cc39aaf813b0554da29865827638db3
+    m_Address: Assets/Project/Strikers/LargeHero/Hero.vrm
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ecee9c48169c8dc428a6839126804337
+    m_Address: Assets/Project/Strikers/LargeWizard/Wizard 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: b3db2403530b146249ea2259dd135d7b, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: b7d1d36206a114079a74b88add6b820c, type: 2}
+    - {fileID: 11400000, guid: f427be25d95804b489b2a1e988344be8, type: 2}

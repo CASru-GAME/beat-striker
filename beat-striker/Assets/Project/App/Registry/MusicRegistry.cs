@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Globalization;
+using UnityEngine.AddressableAssets;
 using UnityEngine;
 
 namespace Alice {
@@ -23,6 +24,34 @@ namespace Alice {
                 yield return beatTime;
             }
         }
+
+        public static int CalculateBpm(TextAsset beatData) {
+            var previousTime = 0f;
+            var hasPrevious = false;
+            var intervalSum = 0f;
+            var intervalCount = 0;
+
+            foreach (var beatTime in ParseBeatTimes(beatData)) {
+                if (hasPrevious) {
+                    var interval = beatTime - previousTime;
+                    if (interval > 0f) {
+                        intervalSum += interval;
+                        intervalCount += 1;
+                    }
+                }
+
+                previousTime = beatTime;
+                hasPrevious = true;
+            }
+
+            if (intervalCount == 0 || intervalSum <= 0f) {
+                return 0;
+            }
+
+            var averageInterval = intervalSum / intervalCount;
+            var bpm = 60f / averageInterval;
+            return Mathf.RoundToInt(bpm);
+        }
     }
 
     [System.Serializable]
@@ -32,20 +61,19 @@ namespace Alice {
         public string Composer;
         [TextArea]
         public string Description;
-        public AudioClip AudioClip;
-        public TextAsset SpectrumData;
-        public TextAsset BeatData;
+        public AssetReferenceT<AudioClip> AudioClipReference;
+        public AssetReferenceT<TextAsset> SpectrumDataReference;
+        public AssetReferenceT<TextAsset> BeatDataReference;
     }
 
     public record MusicInfo(
         string Id,
         string DisplayName,
         string Composer,
-        int Bpm,
         string Description,
-        AudioClip AudioClip,
-        TextAsset SpectrumData,
-        TextAsset BeatData);
+        AssetReferenceT<AudioClip> AudioClipReference,
+        AssetReferenceT<TextAsset> SpectrumDataReference,
+        AssetReferenceT<TextAsset> BeatDataReference);
 
     public interface IMusicRegistry {
         MusicInfo Default { get; }
@@ -87,8 +115,14 @@ namespace Alice {
             musicById.Clear();
             allMusic.Clear();
             foreach (var entry in musicEntries) {
-                var bpm = CalculateBpm(entry.BeatData);
-                var music = new MusicInfo(entry.Id, entry.DisplayName, entry.Composer, bpm, entry.Description, entry.AudioClip, entry.SpectrumData, entry.BeatData);
+                var music = new MusicInfo(
+                    entry.Id,
+                    entry.DisplayName,
+                    entry.Composer,
+                    entry.Description,
+                    entry.AudioClipReference,
+                    entry.SpectrumDataReference,
+                    entry.BeatDataReference);
                 musicById[music.Id] = music;
                 allMusic.Add(music);
             }
@@ -97,32 +131,5 @@ namespace Alice {
             isInitialized = true;
         }
 
-        static int CalculateBpm(TextAsset beatData) {
-            var previousTime = 0f;
-            var hasPrevious = false;
-            var intervalSum = 0f;
-            var intervalCount = 0;
-
-            foreach (var beatTime in BeatDataParser.ParseBeatTimes(beatData)) {
-                if (hasPrevious) {
-                    var interval = beatTime - previousTime;
-                    if (interval > 0f) {
-                        intervalSum += interval;
-                        intervalCount++;
-                    }
-                }
-
-                previousTime = beatTime;
-                hasPrevious = true;
-            }
-
-            if (intervalCount == 0 || intervalSum <= 0f) {
-                return 0;
-            }
-
-            var averageInterval = intervalSum / intervalCount;
-            var bpm = 60f / averageInterval;
-            return Mathf.RoundToInt(bpm);
-        }
     }
 }

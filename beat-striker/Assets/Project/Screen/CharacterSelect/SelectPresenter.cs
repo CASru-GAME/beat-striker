@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using R3;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Alice {
     public class SelectPresenter : System.IDisposable {
@@ -24,6 +26,7 @@ namespace Alice {
         readonly CharacterSelectSelectionPolicy selectionPolicy = new();
         readonly List<CharacterSelectSlotState> slotStates = new();
         readonly Dictionary<Striker, GameObject> strikerModelMap = new();
+        readonly List<AsyncOperationHandle<GameObject>> previewModelHandles = new();
         bool initialized;
         bool startTransitionInputEnabled;
         bool eastStartConfirmationArmed;
@@ -294,7 +297,14 @@ namespace Alice {
             var strikers = appStrikerRegistry.GetAll();
             for (var i = 0; i < strikers.Count; i++) {
                 var info = strikers[i];
-                strikerModelMap[info.BattleStriker] = info.PreviewModel;
+                var modelPrefab = LoadAsset<GameObject>(info.PreviewModelReference, out var handle);
+                if (modelPrefab != null) {
+                    strikerModelMap[info.BattleStriker] = modelPrefab;
+                }
+
+                if (handle.HasValue) {
+                    previewModelHandles.Add(handle.Value);
+                }
             }
         }
 
@@ -323,6 +333,20 @@ namespace Alice {
 
         public void Dispose() {
             subscriptions.Dispose();
+            for (var i = 0; i < previewModelHandles.Count; i++) {
+                Addressables.Release(previewModelHandles[i]);
+            }
+            previewModelHandles.Clear();
+        }
+
+        static T LoadAsset<T>(AssetReferenceT<T> assetReference, out AsyncOperationHandle<T>? handle) where T : UnityEngine.Object {
+            handle = null;
+            if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
+                return null;
+            }
+
+            handle = assetReference.LoadAssetAsync();
+            return handle.Value.WaitForCompletion();
         }
     }
 }
