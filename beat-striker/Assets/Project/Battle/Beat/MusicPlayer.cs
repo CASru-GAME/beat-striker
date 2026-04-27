@@ -1,5 +1,6 @@
 
 using System;
+using System.Collections.Generic;
  
 using R3;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace Alice {
         Observable<BeatSignal> OnViewBeatTiming { get; }
         Observable<float[]> OnBeatTimelinePrepared { get; }
         Observable<float> OnViewPlaybackTimeChanged { get; }
+        Observable<Unit> OnPlaybackCompleted { get; }
         BeatJudgeResult JudgeTiming(float playbackTime);
         float CurrentPlaybackTime { get; }
         float CurrentViewPlaybackTime { get; }
@@ -32,6 +34,13 @@ namespace Alice {
     }
 
     public class MusicPlayer : IMusicPlayer, IDisposable {
+        const string LOG_PREFIX = "[MusicPlayer]";
+        enum PlaybackClockMode {
+            AudioTimeline,
+            AudioLoop,
+            VirtualLoop,
+        }
+
         readonly AudioSource audioSource;
         readonly IMusicRegistry musicRegistry;
         readonly IAudioSetting audioSetting;
@@ -43,6 +52,7 @@ namespace Alice {
         readonly Subject<IMusicPlayer.BeatSignal> onViewBeatTiming = new();
         readonly Subject<float[]> onBeatTimelinePrepared = new();
         readonly Subject<float> onViewPlaybackTimeChanged = new();
+        readonly Subject<Unit> onPlaybackCompleted = new();
         IDisposable beatSoundSubscription;
         IDisposable volumeSubscription;
         float[] beats = Array.Empty<float>();
@@ -52,8 +62,15 @@ namespace Alice {
         int viewBeatTimingIndex;
         float lastPlaybackTime;
         float currentViewPlaybackTime;
-        float virtualPlaybackTime;
-        bool isVirtualPlaying;
+        float logicalPlaybackTime;
+        float playbackClipLengthSeconds;
+        float playbackTimelineLengthSeconds;
+        PlaybackClockMode playbackClockMode;
+        int completedAudioLoopCount;
+        float lastRawAudioTime;
+        bool isPlaybackClockRunning;
+        bool playbackCompleted;
+        bool isPlaybackPaused;
 
         public Observable<IMusicPlayer.BeatSignal> OnGoodZoneEntered => onGoodZoneEntered;
         public Observable<IMusicPlayer.BeatSignal> OnExcellentZoneEntered => onExcellentZoneEntered;
@@ -61,7 +78,8 @@ namespace Alice {
         public Observable<IMusicPlayer.BeatSignal> OnViewBeatTiming => onViewBeatTiming;
         public Observable<float[]> OnBeatTimelinePrepared => onBeatTimelinePrepared;
         public Observable<float> OnViewPlaybackTimeChanged => onViewPlaybackTimeChanged;
-        public float CurrentPlaybackTime => UsesVirtualPlaybackClock() ? virtualPlaybackTime : audioSource.time;
+        public Observable<Unit> OnPlaybackCompleted => onPlaybackCompleted;
+        public float CurrentPlaybackTime => GetCurrentPlaybackTime();
         public float CurrentViewPlaybackTime => currentViewPlaybackTime;
         public float[] CurrentBeatTimeline => beats;
 
@@ -78,49 +96,45 @@ namespace Alice {
         public void Play() {
             var selectedMusic = musicRegistry.GetById(battleSelectSetting.SelectedMusicId.CurrentValue);
             var clip = selectedMusic.AudioClip;
+            var beatOffset = audioSetting.BeatTimeOffset.CurrentValue;
+            Debug.Log($"{LOG_PREFIX} Play start. musicId={selectedMusic.Id}, beatOffset={beatOffset:0.###}, commandOffset={audioSetting.CommandTimeOffset.CurrentValue:0.###}, viewOffset={audioSetting.ViewTimeOffset.CurrentValue:0.###}");
             audioSource.clip = clip;
-            
-            if (!UsesVirtualPlaybackClock()) {
-                audioSource.Play();
-            }
+            playbackClipLengthSeconds = clip != null ? Mathf.Max(0f, clip.length) : 0f;
+            playbackClockMode = ResolvePlaybackClockMode();
+            playbackTimelineLengthSeconds = ResolvePlaybackTimelineLengthSeconds(playbackClipLengthSeconds, playbackClockMode);
+            audioSource.loop = ShouldLoopAudioPlayback(playbackClockMode);
 
             beatSoundSubscription?.Dispose();
-            beats = audioSetting.CalculateBeats(selectedMusic);
+            beats = BuildPlaybackTimelineBeats(selectedMusic, playbackClipLengthSeconds, playbackTimelineLengthSeconds);
             onBeatTimelinePrepared.OnNext(beats);
-            goodWindowIndex = 0;
-            excellentWindowIndex = 0;
-            beatTimingIndex = 0;
-            viewBeatTimingIndex = 0;
+            ResetBeatEventIndexes();
             lastPlaybackTime = -1f;
-            virtualPlaybackTime = 0f;
-            isVirtualPlaying = true;
+            logicalPlaybackTime = 0f;
+            completedAudioLoopCount = 0;
+            lastRawAudioTime = -1f;
+            isPlaybackClockRunning = true;
+            playbackCompleted = false;
+            isPlaybackPaused = false;
+
+            if (playbackClockMode != PlaybackClockMode.VirtualLoop) {
+                audioSource.Play();
+            }
             
             beatSoundSubscription = Observable.EveryUpdate().Subscribe(_ => {
-                if (UsesVirtualPlaybackClock()) {
-                    if (!isVirtualPlaying) return;
-                    virtualPlaybackTime += Time.deltaTime;
-                    if (clip != null && clip.length > 0f) {
-                        if (audioSource.loop) {
-                            while (virtualPlaybackTime >= clip.length) {
-                                virtualPlaybackTime -= clip.length;
-                            }
-                        } else if (virtualPlaybackTime >= clip.length) {
-                            virtualPlaybackTime = clip.length;
-                            isVirtualPlaying = false;
-                        }
-                    }
-                } else {
-                    if (!audioSource.isPlaying) return;
+                if (!AdvancePlaybackClock(clip)) {
+                    return;
                 }
 
                 var currentTime = CurrentPlaybackTime;
+                if (HasReachedAudioTimelineEnd(currentTime)) {
+                    StopAudioPlayback();
+                    CompletePlayback();
+                    return;
+                }
                 currentViewPlaybackTime = currentTime + audioSetting.ViewTimeOffset.CurrentValue;
                 onViewPlaybackTimeChanged.OnNext(currentViewPlaybackTime);
                 if (lastPlaybackTime >= 0f && currentTime < lastPlaybackTime) {
-                    goodWindowIndex = 0;
-                    excellentWindowIndex = 0;
-                    beatTimingIndex = 0;
-                    viewBeatTimingIndex = 0;
+                    ResetBeatEventIndexes();
                 }
 
                 EmitExcellentZoneEvents();
@@ -136,23 +150,208 @@ namespace Alice {
             beatSoundSubscription?.Dispose();
             beatSoundSubscription = null;
             audioSource.Stop();
-            isVirtualPlaying = false;
+            isPlaybackClockRunning = false;
+            playbackCompleted = true;
+            isPlaybackPaused = false;
         }
 
         public void Pause() {
             audioSource.Pause();
-            isVirtualPlaying = false;
+            isPlaybackClockRunning = false;
+            isPlaybackPaused = true;
         }
 
         public void Resume() {
-            if (!UsesVirtualPlaybackClock()) {
+            if (playbackClockMode != PlaybackClockMode.VirtualLoop) {
                 audioSource.UnPause();
             }
-            isVirtualPlaying = true;
+            isPlaybackClockRunning = true;
+            isPlaybackPaused = false;
         }
 
-        bool UsesVirtualPlaybackClock() {
-            return aiSetting.UsesVirtualPlaybackClock;
+        void CompletePlayback() {
+            if (playbackCompleted) {
+                return;
+            }
+
+            playbackCompleted = true;
+            onPlaybackCompleted.OnNext(Unit.Default);
+        }
+
+        void ResetBeatEventIndexes() {
+            goodWindowIndex = 0;
+            excellentWindowIndex = 0;
+            beatTimingIndex = 0;
+            viewBeatTimingIndex = 0;
+        }
+
+        PlaybackClockMode ResolvePlaybackClockMode() {
+            if (aiSetting.UsesVirtualPlaybackClock) {
+                return PlaybackClockMode.VirtualLoop;
+            }
+
+            if (aiSetting.IsInfiniteRoundMode) {
+                return PlaybackClockMode.AudioLoop;
+            }
+
+            return PlaybackClockMode.AudioTimeline;
+        }
+
+        bool AdvancePlaybackClock(AudioClip clip) {
+            if (playbackClockMode == PlaybackClockMode.VirtualLoop) {
+                if (!isPlaybackClockRunning) {
+                    return false;
+                }
+
+                AdvanceVirtualLoopClock();
+                return true;
+            }
+
+            if (!audioSource.isPlaying) {
+                if (!isPlaybackPaused && clip != null && !audioSource.loop && lastPlaybackTime >= clip.length - 0.05f) {
+                    CompletePlayback();
+                }
+
+                return false;
+            }
+
+            UpdateAudioLoopProgress();
+            return true;
+        }
+
+        float GetCurrentPlaybackTime() {
+            return playbackClockMode switch {
+                PlaybackClockMode.VirtualLoop => logicalPlaybackTime,
+                PlaybackClockMode.AudioLoop => GetLoopedAudioTime(),
+                PlaybackClockMode.AudioTimeline => GetContinuousAudioTimelineTime(),
+                _ => 0f,
+            };
+        }
+
+        float GetLoopedAudioTime() {
+            return Mathf.Max(0f, audioSource.time);
+        }
+
+        float GetContinuousAudioTimelineTime() {
+            if (playbackClipLengthSeconds <= 0f) {
+                return GetLoopedAudioTime();
+            }
+
+            var playbackTime = completedAudioLoopCount * playbackClipLengthSeconds + GetLoopedAudioTime();
+            if (playbackTimelineLengthSeconds > 0f) {
+                playbackTime = Mathf.Min(playbackTime, playbackTimelineLengthSeconds);
+            }
+
+            return playbackTime;
+        }
+
+        void UpdateAudioLoopProgress() {
+            if (playbackClipLengthSeconds <= 0f || !audioSource.loop) {
+                lastRawAudioTime = GetLoopedAudioTime();
+                return;
+            }
+
+            var rawAudioTime = GetLoopedAudioTime();
+            if (lastRawAudioTime >= 0f && rawAudioTime + 0.001f < lastRawAudioTime) {
+                completedAudioLoopCount += 1;
+            }
+
+            lastRawAudioTime = rawAudioTime;
+        }
+
+        void AdvanceVirtualLoopClock() {
+            logicalPlaybackTime += Time.deltaTime;
+            if (playbackTimelineLengthSeconds <= 0f) {
+                return;
+            }
+
+            while (logicalPlaybackTime >= playbackTimelineLengthSeconds) {
+                logicalPlaybackTime -= playbackTimelineLengthSeconds;
+            }
+        }
+
+        bool HasReachedAudioTimelineEnd(float playbackTime) {
+            return playbackClockMode == PlaybackClockMode.AudioTimeline
+                && playbackTimelineLengthSeconds > 0f
+                && playbackTime >= playbackTimelineLengthSeconds;
+        }
+
+        void StopAudioPlayback() {
+            if (playbackClockMode != PlaybackClockMode.VirtualLoop) {
+                audioSource.Stop();
+            }
+
+            isPlaybackClockRunning = false;
+        }
+
+        float ResolvePlaybackTimelineLengthSeconds(float clipLength, PlaybackClockMode clockMode) {
+            if (clipLength <= 0f) {
+                return clipLength;
+            }
+
+            if (clockMode == PlaybackClockMode.AudioLoop) {
+                return clipLength;
+            }
+
+            var minimumPlaybackSeconds = Mathf.Max(0f, audioSetting.MinimumPlaybackSeconds);
+            if (minimumPlaybackSeconds <= 0f || clipLength >= minimumPlaybackSeconds) {
+                return clipLength;
+            }
+
+            var loopCount = Mathf.CeilToInt(minimumPlaybackSeconds / clipLength);
+            return loopCount * clipLength;
+        }
+
+        float[] BuildPlaybackTimelineBeats(MusicInfo selectedMusic, float clipLength, float targetPlaybackLengthSeconds) {
+            var oneLoopBeats = LoadSingleLoopBeats(selectedMusic, clipLength);
+            if (clipLength <= 0f || targetPlaybackLengthSeconds <= clipLength) {
+                return oneLoopBeats;
+            }
+
+            var loopCount = Mathf.Max(1, Mathf.CeilToInt(targetPlaybackLengthSeconds / clipLength));
+            var timeline = new List<float>(oneLoopBeats.Length * loopCount);
+            for (var loopIndex = 0; loopIndex < loopCount; loopIndex++) {
+                var loopStartTime = loopIndex * clipLength;
+                for (var beatIndex = 0; beatIndex < oneLoopBeats.Length; beatIndex++) {
+                    var beatTime = loopStartTime + oneLoopBeats[beatIndex];
+                    if (beatTime >= targetPlaybackLengthSeconds) {
+                        break;
+                    }
+
+                    timeline.Add(beatTime);
+                }
+            }
+
+            return timeline.ToArray();
+        }
+
+        bool ShouldLoopAudioPlayback(PlaybackClockMode clockMode) {
+            if (playbackClipLengthSeconds <= 0f) {
+                return false;
+            }
+
+            return clockMode == PlaybackClockMode.AudioLoop
+                || (clockMode == PlaybackClockMode.AudioTimeline && playbackTimelineLengthSeconds > playbackClipLengthSeconds);
+        }
+
+        float[] LoadSingleLoopBeats(MusicInfo selectedMusic, float clipLength) {
+            if (clipLength <= 0f || selectedMusic.BeatData == null) {
+                return Array.Empty<float>();
+            }
+
+            var timeline = new List<float>();
+            var beatOffset = audioSetting.BeatTimeOffset.CurrentValue;
+            foreach (var beatTimeRaw in BeatDataParser.ParseBeatTimes(selectedMusic.BeatData)) {
+                var beatTime = beatTimeRaw + beatOffset;
+                if (beatTime < 0f || beatTime >= clipLength) {
+                    continue;
+                }
+
+                timeline.Add(beatTime);
+            }
+
+            timeline.Sort();
+            return timeline.ToArray();
         }
 
         public IMusicPlayer.BeatJudgeResult JudgeTiming(float playbackTime) {
@@ -236,6 +435,7 @@ namespace Alice {
             onViewBeatTiming.Dispose();
             onBeatTimelinePrepared.Dispose();
             onViewPlaybackTimeChanged.Dispose();
+            onPlaybackCompleted.Dispose();
         }
 
         void ApplyVolume(VolumeBalance volumeBalance) {

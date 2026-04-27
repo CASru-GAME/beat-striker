@@ -24,6 +24,11 @@ namespace Core.LargeSatan {
         bool isTransitioningToEmitState;
 
         public override void OnEnter(IStrikerContext context) {
+            var toOpponent = context.GetOpponent().Position.CurrentValue - context.Rigidbody.position;
+            if (Vector3.Dot(context.Rigidbody.transform.forward, toOpponent) < 0) {
+                context.Rigidbody.rotation *= Quaternion.Euler(0, 180, 0);
+            }
+
             context.Rigidbody.useGravity = false;
 
             initialSpeed = speed * context.InputDirection.x * Vector3.right;

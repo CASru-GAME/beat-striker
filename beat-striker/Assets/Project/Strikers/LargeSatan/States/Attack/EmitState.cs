@@ -156,7 +156,6 @@ namespace Core.LargeSatan {
 
             var warpPosition = ComputeSafeWarpPosition(context);
             context.Rigidbody.position = warpPosition;
-            context.Rigidbody.rotation = ComputeFacingRotationTowardsOpponent(context, warpPosition);
             warpEffectPlayer.Emit(warpEffectPlayer.transform);
             warpOutEffectPlayer.Emit(warpOutEffectPlayer.transform);
             hasWarped = true;
@@ -173,13 +172,6 @@ namespace Core.LargeSatan {
                 fallbackClearanceRadius,
                 minWarpDistanceFromOpponent
             );
-        }
-
-        Quaternion ComputeFacingRotationTowardsOpponent(IStrikerContext context, Vector3 warpPosition) {
-            var opponent = context.GetOpponent();
-            var direction = opponent.CenterPosition.CurrentValue - warpPosition;
-
-            return Quaternion.LookRotation(Mathf.Sign(direction.x) * Vector3.right, Vector3.up);
         }
 
         static Vector3 GetLookDirection(IStrikerContext context) {

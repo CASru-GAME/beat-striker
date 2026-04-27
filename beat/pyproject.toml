@@ -1,0 +1,15 @@
+[project]
+name = "beat"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "BeatNet",
+    "librosa",
+    "madmom>=0.16.1",
+    "numpy>=2.4.4",
+    "setuptools<81",
+]
+[tool.uv.extra-build-dependencies]
+madmom = ["Cython", "setuptools", "numpy"]

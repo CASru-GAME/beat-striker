@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Alice {
     public class BeatExpandView : MonoBehaviour {
+        [SerializeField] BattlePresenterView presenterView;
         [SerializeField] RectTransform expandTarget;
 
         [Header("Animation")]
@@ -15,6 +16,12 @@ namespace Alice {
             settledScale = expandTarget.localScale;
             if (settledScale.sqrMagnitude <= 0.000001f) {
                 settledScale = Vector3.one;
+            }
+        }
+
+        void OnEnable() {
+            if (presenterView != null) {
+                presenterView.OnViewBeatTiming += PlayBeatExpand;
             }
         }
 
@@ -35,6 +42,9 @@ namespace Alice {
         }
 
         void OnDisable() {
+            if (presenterView != null) {
+                presenterView.OnViewBeatTiming -= PlayBeatExpand;
+            }
             LeanTween.cancel(expandTarget.gameObject);
             expandTarget.localScale = settledScale;
         }

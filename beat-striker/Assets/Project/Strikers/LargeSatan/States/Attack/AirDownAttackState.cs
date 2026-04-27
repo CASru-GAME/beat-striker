@@ -32,6 +32,7 @@ namespace Core.LargeSatan {
         bool previousUseGravity;
         bool hasLanded;
         bool hasHit;
+        bool hasDamaged;
 
         public override void OnEnter(IStrikerContext context) {
 
@@ -44,6 +45,7 @@ namespace Core.LargeSatan {
             previousUseGravity = context.Rigidbody.useGravity;
             context.Rigidbody.useGravity = false;
             context.Rigidbody.linearVelocity = Vector3.zero;
+            hasDamaged = false;
 
             attackPlayer.OnFilterHit
                 .Subscribe(collider => {
@@ -66,8 +68,14 @@ namespace Core.LargeSatan {
                             return AttackPlayer.HitType.Cancel;
                         }
                     }
+                    
+                    var dmg = 0f;
+                    if(!hasDamaged && hurtbox.TryGetComponent<StrikerHub>(out _)) {
+                        dmg = this.damage;
+                        hasDamaged = true;
+                    }
 
-                    var hitStatus = new HitStatus(damage, nockbackSpeed * (hit.Position - context.Rigidbody.position).normalized);
+                    var hitStatus = new HitStatus(dmg, nockbackSpeed * (hit.Position - context.Rigidbody.position).normalized);
                     var hitResult = hurtbox.GiveHit(hitStatus);
                     context.GenerateImpact(new StrikerImpact(impact * Vector3.down));
 
@@ -110,6 +118,7 @@ namespace Core.LargeSatan {
 
         public override void OnExit(IStrikerContext context) {
             context.Rigidbody.useGravity = previousUseGravity;
+            hasDamaged = false;
         }
 
         void HandleLanded(IStrikerStateContext context) {

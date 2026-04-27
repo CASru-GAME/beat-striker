@@ -101,9 +101,21 @@ public class MusicCard : MonoBehaviour {
         if (audioSpectrum != null) {
             audioSpectrum.SetBakedSpectrumText(music.SpectrumData);
         }
-        description.text = music.Description;
+        var length = FormatLength(audioSource.clip.length);
+        description.text = $"Composer: {music.Composer}\nBPM: {music.Bpm}\nLength: {length}\n{music.Description}";
         title.text = music.DisplayName;
         currentMusic = music;
+    }
+
+    static string FormatLength(float seconds) {
+        if (seconds <= 0f) {
+            return "0:00";
+        }
+
+        var totalSeconds = Mathf.FloorToInt(seconds);
+        var minutes = totalSeconds / 60;
+        var remainSeconds = totalSeconds % 60;
+        return $"{minutes}:{remainSeconds:00}";
     }
 
     public void SetPreviewEnabled(bool enabled) {

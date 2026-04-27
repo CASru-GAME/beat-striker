@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beat Editor</title>
+    <link rel="stylesheet" href="beat-editor.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="panel">
+        <h1>Beat Editor</h1>
+        <p class="subtitle">音声と beats.txt を読み込み、再生しながらビート編集</p>
+        <div class="row wrap">
+          <button id="loadAudioBtn" class="btn">音声を読み込む</button>
+          <button id="loadBeatsBtn" class="btn">beats.txt を読み込む</button>
+          <button id="playBtn" class="btn btn-primary" disabled>▶ 再生</button>
+          <button id="stopBtn" class="btn" disabled>■ 停止</button>
+          <label class="offset">
+            入力補正(ms)
+            <input id="offsetMsInput" type="number" value="-50" step="1" />
+          </label>
+        </div>
+        <div class="row wrap small">
+          <span id="audioInfo">音声: 未読込</span>
+          <span id="beatsInfo">beats: 未読込</span>
+          <span id="statusText">状態: 停止</span>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="timeline-header">
+          <div>重ね表示: 青=ファイル / ピンク=手打ち / オレンジ=差分 / 赤=手打ちが最近傍ビートから閾値超過 / 暗赤=未所属</div>
+          <div>Spaceで手打ち / Ctrl(Cmd)+クリック=複数選択 / Shift+クリック=範囲選択</div>
+        </div>
+        <div class="row wrap small">
+          <label class="offset">
+            表示幅(s)
+            <input id="viewSpanInput" type="number" min="2" step="1" value="5" />
+          </label>
+          <label class="offset">
+            表示開始(s)
+            <input id="viewStartInput" type="number" step="0.1" value="0" />
+          </label>
+          <button id="followPlayheadBtn" class="btn">再生追従: ON</button>
+        </div>
+        <div class="row wrap small">
+          <label class="offset view-slider">
+            全体位置
+            <input id="viewPositionSlider" type="range" min="0" max="0" step="0.01" value="0" disabled />
+          </label>
+          <span id="viewRangeLabel">0.00s / 0.00s</span>
+        </div>
+        <div id="timeline" class="timeline">
+          <canvas id="timelineCanvas"></canvas>
+        </div>
+        <div class="row wrap small">
+          <span>再生位置: <strong id="currentTimeLabel">0.000</strong>s</span>
+          <span>選択ビート: <strong id="selectedBeatLabel">なし</strong></span>
+          <span>手打ち数: <strong id="manualCountLabel">0</strong></span>
+          <button id="jumpNextAlertManualBtn" class="btn" disabled>右側の赤/未所属へ</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>編集</h2>
+        <div class="row wrap">
+          <button id="insertModeBtn" class="btn">挿入モード: OFF</button>
+          <button id="addAtPlayheadBtn" class="btn" disabled>再生位置に追加</button>
+          <button id="deleteSelectedBtn" class="btn" disabled>選択ビート削除</button>
+          <button id="snapBtn" class="btn">スナップ: ON</button>
+          <button id="sortMergeBtn" class="btn" disabled>整列＆近接マージ</button>
+          <label>
+            選択時刻(s)
+            <input id="selectedBeatInput" type="number" step="0.001" />
+          </label>
+          <button id="applySelectedBtn" class="btn" disabled>時刻更新</button>
+        </div>
+        <div class="row wrap">
+          <label>
+            警告閾値(s)
+            <input id="warningThresholdInput" type="number" min="0" step="0.001" value="0.1" />
+          </label>
+          <label>
+            手打ち赤表示閾値(s)
+            <input id="manualWarningThresholdInput" type="number" min="0" step="0.001" value="0.1" />
+          </label>
+          <label>
+            所属範囲Min(比率)
+            <input id="assignmentMinRelativeInput" type="number" step="0.01" value="-0.5" />
+          </label>
+          <label>
+            所属範囲Max(比率)
+            <input id="assignmentMaxRelativeInput" type="number" step="0.01" value="0.3" />
+          </label>
+          <button id="nudgeWarningsBtn" class="btn" disabled>警告ビートを平均へ20%寄せる</button>
+        </div>
+        <div class="row wrap">
+          <label>
+            BPM
+            <input id="generateBpmInput" type="number" min="1" step="0.01" value="120" />
+          </label>
+          <label>
+            開始オフセット(s)
+            <input id="generateOffsetInput" type="number" step="0.001" value="0" />
+          </label>
+          <button id="generateBeatsBtn" class="btn" disabled>BPMで全長ビート生成</button>
+        </div>
+        <div class="row wrap">
+          <label>
+            シフト量(s)
+            <input id="shiftSelectedInput" type="number" step="0.001" value="0" />
+          </label>
+          <button id="shiftSelectedBtn" class="btn" disabled>選択ビートをシフト</button>
+          <label>
+            全体シフト量(s)
+            <input id="shiftAllInput" type="number" step="0.001" value="0" />
+          </label>
+          <button id="shiftAllBtn" class="btn" disabled>全ビートをシフト</button>
+        </div>
+        <div class="row wrap">
+          <button id="undoManualBtn" class="btn" disabled>手打ち1件取り消し</button>
+          <button id="clearManualBtn" class="btn" disabled>手打ち全消去</button>
+          <button id="exportManualBtn" class="btn" disabled>手打ちを保存</button>
+          <button id="importManualBtn" class="btn">手打ちを読み込む</button>
+          <button id="compareBtn" class="btn" disabled>ズレ統計を計算</button>
+          <button id="downloadBtn" class="btn btn-primary" disabled>編集結果を保存</button>
+        </div>
+        <pre id="statsBox" class="stats">統計: -</pre>
+      </section>
+    </main>
+
+    <input id="audioInput" type="file" accept="audio/*" hidden />
+    <input id="beatsInput" type="file" accept=".txt,.beats" hidden />
+    <input id="manualInput" type="file" accept=".txt,.beats" hidden />
+
+    <script src="beat-editor-state.js" defer></script>
+    <script src="beat-editor-audio.js" defer></script>
+    <script src="beat-editor-timeline.js" defer></script>
+    <script src="beat-editor.js" defer></script>
+  </body>
+</html>

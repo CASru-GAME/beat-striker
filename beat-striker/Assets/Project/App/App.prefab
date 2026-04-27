@@ -1825,58 +1825,53 @@ MonoBehaviour:
   musicEntries:
   - Id: Fighter Street
     DisplayName: Fighter Street
-    Description: 'Composer: Suno 5
-
-      BPM: 150'
+    Composer: Suno v5
+    Description: 
     AudioClip: {fileID: 8300000, guid: 62df61faddbdc4059b98c3473fcf6704, type: 3}
     SpectrumData: {fileID: 4900000, guid: 32210dcf28d47fd4aacb109550ccb125, type: 3}
-    Bpm: 150
-    Offset: 0
+    BeatData: {fileID: 4900000, guid: ae05ca4b13d8142cdbb2e337d530630f, type: 3}
+  - Id: tick
+    DisplayName: Tick Tack
+    Composer: Suno v5.5
+    Description: 
+    AudioClip: {fileID: 8300000, guid: bcf70a7e0b8a0445abcf445e1b0db6f6, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 423b820994d534d81af55bc3e75597c3, type: 3}
+    BeatData: {fileID: 4900000, guid: 71795534d648e42c5aa690cea2adc2f8, type: 3}
   - Id: Beat Striker on Stage
     DisplayName: Beat Striker on Stage
-    Description: 'Composer: Suno 4.5+
-
-      BPM: 128'
+    Composer: Suno v4.5+
+    Description: 
     AudioClip: {fileID: 8300000, guid: 7ae048916dd31451c97320d14bc258bb, type: 3}
     SpectrumData: {fileID: 4900000, guid: 19cb94a5ff1b7f243b41c9d42220e510, type: 3}
-    Bpm: 128
-    Offset: 0
+    BeatData: {fileID: 4900000, guid: 6cf97a3e927d14b168b6e2b39c841466, type: 3}
+  - Id: code
+    DisplayName: Code on the Beat
+    Composer: Suno v5.5
+    Description: 
+    AudioClip: {fileID: 8300000, guid: f0ccdeecb29834594aaaedff23a87e96, type: 3}
+    SpectrumData: {fileID: 4900000, guid: 40c1247d2fc644a4287c268b3160950c, type: 3}
+    BeatData: {fileID: 4900000, guid: f99f291578c4e4be89b16db2720d2293, type: 3}
   - Id: cutie-street
     DisplayName: Beat Striker on Cutie Street
-    Description: 'Composer: Suno 4.5+
-
-      BPM: 110'
+    Composer: Suno v4.5+
+    Description: 
     AudioClip: {fileID: 8300000, guid: c4266cde834724c9585aa2641c14dcf4, type: 3}
     SpectrumData: {fileID: 4900000, guid: 3f6a662ccaa5346ae86f5ac7bb709c39, type: 3}
-    Bpm: 110
-    Offset: 0
-  - Id: on-street
-    DisplayName: Beat Striker on Street
-    Description: 'Composer: Suno 4.5+
-
-      BPM: 110'
-    AudioClip: {fileID: 8300000, guid: 813c0b1b710a04cea866e61e51daa989, type: 3}
-    SpectrumData: {fileID: 4900000, guid: 3dae220b8b1f4429ea890464629273ed, type: 3}
-    Bpm: 110
-    Offset: 0
+    BeatData: {fileID: 4900000, guid: b7412a065a00046f4a5bfbf902d1bed7, type: 3}
   - Id: fire
     DisplayName: Beat Striker on Fire
-    Description: 'Composer: Suno 4.5+
-
-      BPM: 109'
+    Composer: Suno v4.5+
+    Description: 
     AudioClip: {fileID: 8300000, guid: 908af2efd514d47f29e3778b8b3c4212, type: 3}
     SpectrumData: {fileID: 4900000, guid: 5398030452e0a4c618af21947097729e, type: 3}
-    Bpm: 109
-    Offset: 0
+    BeatData: {fileID: 4900000, guid: 5595f80bf3fde49f2959315a8faf12d1, type: 3}
   - Id: sento
     DisplayName: "\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA"
-    Description: 'Composer: Azuno
-
-      BPM: 110'
+    Composer: Azuno
+    Description: 
     AudioClip: {fileID: 8300000, guid: a9f0bcf4c529b4943a076f1bf1c76272, type: 3}
     SpectrumData: {fileID: 4900000, guid: 5a14db5d051ccf7448ffdc129b4a7476, type: 3}
-    Bpm: 110
-    Offset: 0
+    BeatData: {fileID: 4900000, guid: dacc99fbf686e4339b3f1ffa4b1d2e0e, type: 3}
 --- !u!114 &8416357320802876425
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1938,15 +1933,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AudioSetting
   commandTimeOffset: 0
-  viewTimeOffset: 0.15
-  beatTimeOffset: 0.15
-  goodWindow: 0.4
-  excellentWindow: 0.25
+  viewTimeOffset: 0.07
+  beatTimeOffset: 0.07
+  goodWindow: 0.3
+  excellentWindow: 0.2
   goodScoreMultiplier: 1
   excellentScoreMultiplier: 1.5
   masterVolume: 1
   bgmVolume: 1
   seVolume: 1
+  minimumPlaybackSeconds: 100
 --- !u!114 &7738983256970939939
 MonoBehaviour:
   m_ObjectHideFlags: 0

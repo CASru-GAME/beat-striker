@@ -19,6 +19,11 @@ namespace Core.LargeSatan {
         bool previousUseGravity;
 
         public override void OnEnter(IStrikerContext context) {
+            var toOpponent = context.GetOpponent().Position.CurrentValue - context.Rigidbody.position;
+            if (Vector3.Dot(context.Rigidbody.transform.forward, toOpponent) < 0) {
+                context.Rigidbody.rotation *= Quaternion.Euler(0, 180, 0);
+            }
+            
             var direction = context.InputDirection == Vector2.zero ? Vector2.up : context.InputDirection;
             var requestedDirection = context.LocalInputDirection == Vector2.zero ? Vector2.up : context.LocalInputDirection;
 

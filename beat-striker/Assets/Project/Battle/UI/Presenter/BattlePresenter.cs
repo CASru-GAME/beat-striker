@@ -46,6 +46,7 @@ namespace Alice {
         int attentionRequestSequence;
         bool suppressAttentionTextForCurrentRequest;
         bool isDisposed;
+        int totalBeatCount;
 
         public Observable<Unit> OnPauseMenuRequested => pauseMenuRequestedSubject;
         public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
@@ -68,6 +69,7 @@ namespace Alice {
             battlePresenterView.SetBattleUiHiddenAboveImmediately();
             CloseSuspendMenu();
             battlePresenterView.AttentionTextView.HideImmediately();
+            battlePresenterView.SetRemainingBeatCountVs();
         }
 
         public void Dispose() {
@@ -142,6 +144,7 @@ namespace Alice {
         public async Task PlayRoundEndTransitionAsync() {
             EnsureStageCameraConfigured();
             battlePresenterView.StageCamera.PresentRoundFinish();
+            await battlePresenterView.WaitBeforeRoundEndFadeInAsync();
             await battlePresenterView.FadePresenter.PresentFadeInAsync();
         }
 
@@ -271,15 +274,29 @@ namespace Alice {
             audioSubscriptions = new CompositeDisposable();
 
             musicPlayer.OnBeatTiming
-                .Subscribe(_ => {
+                .Subscribe(signal => {
                     if(battlePresenterView.BeatSound) AudioSource.PlayClipAtPoint(battlePresenterView.BeatSound, Vector3.zero);
+                    var remainingBeatCount = totalBeatCount - (signal.BeatIndex + 1);
+                    battlePresenterView.SetRemainingBeatCount(remainingBeatCount);
                 })
                 .AddTo(audioSubscriptions);
 
             musicPlayer.OnViewBeatTiming
                 .Subscribe(_ => {
-                    battlePresenterView.StageCamera.RequestViewBeatPulse();
-                    battlePresenterView.BeatExpandView.PlayBeatExpand();
+                    battlePresenterView.RequestViewBeatPulse();
+                })
+                .AddTo(audioSubscriptions);
+
+            musicPlayer.OnBeatTimelinePrepared
+                .Subscribe(beatTimeline => {
+                    totalBeatCount = beatTimeline?.Length ?? 0;
+                    battlePresenterView.SetRemainingBeatCountVs();
+                })
+                .AddTo(audioSubscriptions);
+
+            musicPlayer.OnPlaybackCompleted
+                .Subscribe(_ => {
+                    battlePresenterView.SetRemainingBeatCount(0);
                 })
                 .AddTo(audioSubscriptions);
         }

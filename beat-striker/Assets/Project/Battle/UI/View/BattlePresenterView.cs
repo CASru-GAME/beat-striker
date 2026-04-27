@@ -1,28 +1,38 @@
 using System.Threading.Tasks;
 using System.Linq;
+using System;
 using UnityEngine;
+using TMPro;
 
 namespace Alice {
     public class BattlePresenterView : MonoBehaviour {
+        [Header("References")]
         [SerializeField] StageCamera stageCamera;
-        [SerializeField] BeatExpandView beatExpandView;
         [SerializeField] BattleRoundStartView roundStartPresenter;
+        [SerializeField] BattleFadeView fadePresenter;
         [SerializeField] BattleResultTextView resultTextPresenter;
         [SerializeField] AttentionTextView attentionTextView;
-        [SerializeField] BattleFadeView fadePresenter;
         [SerializeField] BattleSuspendMenuView suspendMenuPresenter;
+
+        [Header("Opening")]
         [SerializeField] AudioClip beatSound;
+        [SerializeField] TMP_Text remainingBeatCountText;
+        [SerializeField] float remainingBeatCountUpdateDelaySeconds;
         [SerializeField] RectTransform[] battleUiSlideTargets;
         [SerializeField] float battleUiSlideDuration = 0.2f;
         [SerializeField] float battleUiHiddenTopMargin = 80f;
         [SerializeField] float openingAfterSlideDelaySeconds = 0.3f;
 
+        [Header("Round Transition")]
+        [SerializeField] float roundEndBeforeFadeInDelaySeconds = 0.2f;
+
         Vector2[] battleUiDefaultAnchoredPositions;
         float[] battleUiHiddenTopAnchoredYs;
         TaskCompletionSource<bool> uiSlideCompletionSource;
+        int remainingBeatCountDelayTweenId = -1;
+        public event Action OnViewBeatTiming;
 
         public StageCamera StageCamera => stageCamera;
-        public BeatExpandView BeatExpandView => beatExpandView;
         public BattleRoundStartView RoundStartPresenter => roundStartPresenter;
         public BattleResultTextView ResultTextPresenter => resultTextPresenter;
         public AttentionTextView AttentionTextView => attentionTextView;
@@ -53,6 +63,52 @@ namespace Alice {
 
         public Task WaitAfterSlideBattleUiInAsync() {
             return DelayAsync(openingAfterSlideDelaySeconds);
+        }
+
+        public Task WaitBeforeRoundEndFadeInAsync() {
+            return DelayAsync(roundEndBeforeFadeInDelaySeconds);
+        }
+
+        public void RequestViewBeatPulse() {
+            stageCamera.RequestViewBeatPulse();
+            OnViewBeatTiming?.Invoke();
+        }
+
+        public void SetRemainingBeatCount(int remainingBeatCount) {
+            if (!remainingBeatCountText) {
+                return;
+            }
+
+            if (remainingBeatCountDelayTweenId >= 0) {
+                LeanTween.cancel(remainingBeatCountDelayTweenId);
+                remainingBeatCountDelayTweenId = -1;
+            }
+
+            var safeRemainingBeatCount = Mathf.Max(0, remainingBeatCount);
+            var delaySeconds = Mathf.Max(0f, remainingBeatCountUpdateDelaySeconds);
+            if (delaySeconds <= 0f) {
+                remainingBeatCountText.text = safeRemainingBeatCount.ToString();
+                return;
+            }
+
+            remainingBeatCountDelayTweenId = LeanTween.delayedCall(gameObject, delaySeconds, () => {
+                    remainingBeatCountText.text = safeRemainingBeatCount.ToString();
+                    remainingBeatCountDelayTweenId = -1;
+                })
+                .id;
+        }
+
+        public void SetRemainingBeatCountVs() {
+            if (!remainingBeatCountText) {
+                return;
+            }
+
+            if (remainingBeatCountDelayTweenId >= 0) {
+                LeanTween.cancel(remainingBeatCountDelayTweenId);
+                remainingBeatCountDelayTweenId = -1;
+            }
+
+            remainingBeatCountText.text = "VS";
         }
 
         Task SlideBattleUiAsync(bool useHiddenTarget) {

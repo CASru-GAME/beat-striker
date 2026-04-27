@@ -300,11 +300,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8179424678283996581, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: defaultSelections.Array.data[0].Striker
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8179424678283996581, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: defaultSelections.Array.data[1].Striker
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: mode
@@ -344,7 +344,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9133904809460036572, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: aiStrength
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133904809460036572, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: selectedMusicId
+      value: Fighter Street
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1116,6 +1120,18 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -27.634094
       objectReference: {fileID: 0}
+    - target: {fileID: 1192851481553187827, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1192851481553187827, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1192851481553187827, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1619890639852673609, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: m_LocalScale.x
       value: 1
@@ -1151,6 +1167,18 @@ PrefabInstance:
     - target: {fileID: 3213649888692210279, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -27.634094
+      objectReference: {fileID: 0}
+    - target: {fileID: 4790091098944487284, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4790091098944487284, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4790091098944487284, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_Color.r
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5542736649675389792, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: m_AnchoredPosition.x

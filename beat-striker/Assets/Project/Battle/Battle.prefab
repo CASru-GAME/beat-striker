@@ -346,13 +346,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BattlePresenterView
   stageCamera: {fileID: 201953975555647493}
-  beatExpandView: {fileID: 4945346797720124066}
   roundStartPresenter: {fileID: 3002513440487676816}
+  fadePresenter: {fileID: 105999830312541164}
   resultTextPresenter: {fileID: 1477628563152843228}
   attentionTextView: {fileID: 5986513790901501900}
-  fadePresenter: {fileID: 105999830312541164}
   suspendMenuPresenter: {fileID: 6026150257795842806}
   beatSound: {fileID: 0}
+  remainingBeatCountText: {fileID: 7823570987018085422}
+  remainingBeatCountUpdateDelaySeconds: 0
   battleUiSlideTargets:
   - {fileID: 6461915154581045318}
   - {fileID: 7507402603160468980}
@@ -360,6 +361,7 @@ MonoBehaviour:
   battleUiSlideDuration: 0.2
   battleUiHiddenTopMargin: 80
   openingAfterSlideDelaySeconds: 0.3
+  roundEndBeforeFadeInDelaySeconds: 0.7
 --- !u!114 &1456590923008834014
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4239,8 +4241,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: VS
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: d6f18265e1bd548b294d4ebd8d18de15, type: 2}
-  m_sharedMaterial: {fileID: -3747908785310202315, guid: d6f18265e1bd548b294d4ebd8d18de15, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: b668dd0be616a4750b6baad383efb709, type: 2}
+  m_sharedMaterial: {fileID: -7934055981531862594, guid: b668dd0be616a4750b6baad383efb709, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -14225,13 +14227,13 @@ MonoBehaviour:
   - {fileID: 8300000, guid: b38615dca8d544558a71ced669323c47, type: 3}
   - {fileID: 8300000, guid: 67c1678f1c64941aabcd83915a58b2fb, type: 3}
   fightVoiceSound: {fileID: 8300000, guid: 02c4146e3ecab4e1ba11b90a8adeb7dc, type: 3}
-  roundFadeInDuration: 0.5
-  roundDisplayDuration: 0.5
-  roundFadeOutDuration: 0.5
-  delayBeforeFight: 0.2
+  roundFadeInDuration: 0.2
+  roundDisplayDuration: 0.4
+  roundFadeOutDuration: 0.2
+  delayBeforeFight: 0.3
   fightScaleDuration: 0.2
-  fightDisplayDuration: 0.7
-  delayBeforeRoundText: 0.5
+  fightDisplayDuration: 0.5
+  delayBeforeRoundText: 0.3
 --- !u!114 &1477628563152843228
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15714,7 +15716,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae5953459f2ef428ca77115a81ded620, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BeatExpandView
-  expandTarget: {fileID: 8016138452497033416}
+  presenterView: {fileID: 8035787521497820640}
+  expandTarget: {fileID: 717197469960045678}
   expandScaleMultiplier: 1.15
   expandDuration: 0
   returnDuration: 0.08
@@ -22854,7 +22857,7 @@ AudioSource:
   m_PlayOnAwake: 1
   m_Volume: 0.225
   m_Pitch: 1
-  Loop: 1
+  Loop: 0
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -24231,6 +24234,10 @@ PrefabInstance:
       propertyPath: playerId
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6140260680399090628, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
+      propertyPath: presenterView
+      value: 
+      objectReference: {fileID: 8035787521497820640}
     - target: {fileID: 7588056627542756503, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
       propertyPath: m_LocalScale.x
       value: -0.8
@@ -24731,6 +24738,10 @@ PrefabInstance:
       propertyPath: buttonGuideMotion
       value: 
       objectReference: {fileID: 8202476348064237686}
+    - target: {fileID: 6140260680399090628, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
+      propertyPath: presenterView
+      value: 
+      objectReference: {fileID: 8035787521497820640}
     - target: {fileID: 8751813634135345540, guid: 5dd3c37cce5124553b7d5f0f7fcf662c, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

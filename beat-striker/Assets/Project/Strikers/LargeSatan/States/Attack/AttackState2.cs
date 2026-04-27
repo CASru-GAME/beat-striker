@@ -26,6 +26,7 @@ namespace Core.LargeSatan {
 
         Vector3 initialVelocity;
         float elapsedTime;
+        bool hasDamaged;
 
         public override void OnEnter(IStrikerContext context) {
 
@@ -40,6 +41,7 @@ namespace Core.LargeSatan {
             initialVelocity = speed * direction;
             elapsedTime = 0f;
             context.Rigidbody.linearVelocity = initialVelocity;
+            hasDamaged = false;
 
             attackPlayer.OnFilterHit
                 .Subscribe(collider => {
@@ -63,7 +65,13 @@ namespace Core.LargeSatan {
                         }
                     }
 
-                    var hitStatus = new HitStatus(damage, nockbackSpeed * initialVelocity.normalized);
+                    var dmg = 0f;
+                    if (!hasDamaged && hurtbox.TryGetComponent<StrikerHub>(out _)) {
+                        dmg = this.damage;
+                        hasDamaged = true;
+                    }
+
+                    var hitStatus = new HitStatus(dmg, nockbackSpeed * initialVelocity.normalized);
                     var hitResult = hurtbox.GiveHit(hitStatus);
                     context.GenerateImpact(new StrikerImpact(impact * Vector3.down));
 
@@ -89,7 +97,9 @@ namespace Core.LargeSatan {
             context.Rigidbody.linearVelocity = initialVelocity * decay;
         }
 
-
+        public override void OnExit(IStrikerContext context) {
+            hasDamaged = false;
+        }
 
     }
 }
