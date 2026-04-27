@@ -43,7 +43,7 @@ namespace Alice {
             var musics = ResolveMusicList(musicRegistry);
             Debug.Log($"{LOG_PREFIX} Initialize music list resolved. count={musics.Count}");
             foreach (var stageSelectButton in view.StageSelectButtons) {
-                stageSelectButton.Initialize(musics);
+                stageSelectButton.Initialize(musics, musicRegistry);
                 stageSelectButton.OnStageSelected.Subscribe(OnStageSelected).AddTo(subscriptions);
                 stageSelectButton.OnMusicSelected.Subscribe(OnMusicSelected).AddTo(subscriptions);
                 stageSelectButton.OnPreviewVisibilityChanged.Subscribe(OnPreviewVisibilityChanged).AddTo(subscriptions);

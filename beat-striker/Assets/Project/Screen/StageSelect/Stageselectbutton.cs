@@ -32,6 +32,7 @@ public class Stageselectbutton : MonoBehaviour
     private bool isHovering = false;
     private bool hasCompletedMove = false;
     IReadOnlyList<MusicInfo> musics;
+    IMusicRegistry musicRegistry;
     readonly Subject<Stage> stageSelected = new();
     readonly Subject<MusicInfo> musicSelected = new();
     readonly Subject<bool> previewVisibilityChanged = new();
@@ -41,8 +42,9 @@ public class Stageselectbutton : MonoBehaviour
     public Observable<MusicInfo> OnMusicSelected => musicSelected;
     public Observable<bool> OnPreviewVisibilityChanged => previewVisibilityChanged;
 
-    public void Initialize(IReadOnlyList<MusicInfo> musics) {
+    public void Initialize(IReadOnlyList<MusicInfo> musics, IMusicRegistry musicRegistry) {
         this.musics = musics;
+        this.musicRegistry = musicRegistry;
     }
 
     public void SetPopupShown(bool isShown)
@@ -105,7 +107,7 @@ public class Stageselectbutton : MonoBehaviour
                     currentPopup = Instantiate(popupPrefab, popParent);
 
                     popupSubscriptions.Clear();
-                    currentPopup.Initialize(selectedStage, musics);
+                    currentPopup.Initialize(selectedStage, musics, musicRegistry);
                     currentPopup.OnMusicSelected.Subscribe(x => musicSelected.OnNext(x)).AddTo(popupSubscriptions);
                     currentPopup.OnHidden.Subscribe(_ => OnPopupHidden()).AddTo(popupSubscriptions);
                 }

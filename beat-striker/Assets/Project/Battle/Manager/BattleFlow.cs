@@ -233,8 +233,7 @@ namespace Alice {
                     }
 
                     battleDeployer.RecordRoundResult(finishedRound, deadPlayerId);
-                    battleDeployer.Undeploy();
-                    battleDeployer.Deploy();
+                    battleDeployer.RedeployForNextRound();
                     SubscribeStrikerDeadEvents();
                     SetAllStrikersDefault();
                     await battlePresenter.PlayRoundResumeTransitionAsync();

@@ -3,11 +3,7 @@ using R3;
 using System;
 using System.Collections.Generic;
 using App;
-using Alice;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Alice {
     public enum Striker {
@@ -19,6 +15,7 @@ namespace Alice {
 
     public interface IBattleDeployer {
         void Deploy();
+        void RedeployForNextRound();
         void Undeploy();
         void BeginRoundEpisode(int roundNumber);
         void ConnectRoundInputs();
@@ -42,7 +39,7 @@ namespace Alice {
             public IDisposable InpactSubscription;
             public IDisposable AttentionSubscription;
             public IDisposable SpecialRequestFailedSubscription;
-            public AsyncOperationHandle<GameObject>? PrefabHandle;
+            public LoadedAsset<GameObject> PrefabAsset;
         }
 
         readonly IBattleSetting battleSetting;
@@ -84,6 +81,19 @@ namespace Alice {
         }
 
         public void Deploy() {
+            DeployCore(null);
+        }
+
+        public void RedeployForNextRound() {
+            var carriedSpecialPoints = new Dictionary<int, float>();
+            foreach (var striker in strikerRegistry.GetAllStrikers()) {
+                carriedSpecialPoints[striker.PlayerId.CurrentValue] = striker.SpecialPoint.CurrentValue;
+            }
+
+            DeployCore(carriedSpecialPoints);
+        }
+
+        void DeployCore(IReadOnlyDictionary<int, float> initialSpecialPointsByPlayerId) {
             if (deployedStrikers.Count > 0) {
                 Undeploy();
             }
@@ -101,13 +111,12 @@ namespace Alice {
                     ? appStrikerRegistry.Default
                     : appStrikerRegistry.GetByStriker(selectedStriker);
                 selectedStriker = selectedStrikerInfo.BattleStriker;
-                var prefabObject = LoadAsset<GameObject>(selectedStrikerInfo.PrefabReference, out var prefabHandle);
+                var prefabAsset = appStrikerRegistry.LoadBattlePrefab(selectedStriker);
+                var prefabObject = prefabAsset.Asset;
                 var prefab = prefabObject != null ? prefabObject.GetComponent<StrikerHub>() : null;
                 Debug.Log($"[BattleDeployer] Deploy loop: Player{i} TryGetStriker={selectedStriker}, BattleStriker={selectedStrikerInfo.BattleStriker}, Prefab={prefab?.name ?? "NULL"}".ToOrange());
                 if (prefab == null) {
-                    if (prefabHandle.HasValue) {
-                        Addressables.Release(prefabHandle.Value);
-                    }
+                    prefabAsset.Dispose();
                     Debug.LogError($"Striker prefab not found or missing StrikerHub for {selectedStriker}");
                     continue;
                 }
@@ -124,6 +133,12 @@ namespace Alice {
                         battleSetting.SpecialUnavailableSoundVolume);
                 });
 
+                if (initialSpecialPointsByPlayerId != null
+                    && initialSpecialPointsByPlayerId.TryGetValue(playerId, out var initialSp)
+                    && initialSp > 0f) {
+                    instance.AddSpecialPoint(initialSp);
+                }
+
                 strikerRegistry.RequestRegister(i, instance);
 
                 deployedStrikers.Add(new DeployedStriker {
@@ -139,7 +154,7 @@ namespace Alice {
                     InpactSubscription = inpactSubscription,
                     AttentionSubscription = attentionSubscription,
                     SpecialRequestFailedSubscription = specialRequestFailedSubscription,
-                    PrefabHandle = prefabHandle,
+                    PrefabAsset = prefabAsset,
                 });
 
                 Debug.Log($"Deployed Striker {selectedStriker} for Player {i}".ToCyan());
@@ -262,10 +277,8 @@ namespace Alice {
                 deployed.InpactSubscription?.Dispose();
                 deployed.AttentionSubscription?.Dispose();
                 deployed.SpecialRequestFailedSubscription?.Dispose();
-                if (deployed.PrefabHandle.HasValue) {
-                    Addressables.Release(deployed.PrefabHandle.Value);
-                    deployed.PrefabHandle = null;
-                }
+                deployed.PrefabAsset?.Dispose();
+                deployed.PrefabAsset = null;
             }
 
             deployedStrikers.Clear();
@@ -538,15 +551,6 @@ namespace Alice {
             return convergenceValue - (convergenceValue - combo1Gain) * Mathf.Exp(-convergenceRate * x);
         }
 
-        static T LoadAsset<T>(AssetReferenceT<T> assetReference, out AsyncOperationHandle<T>? handle) where T : UnityEngine.Object {
-            handle = null;
-            if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
-                return null;
-            }
-
-            handle = assetReference.LoadAssetAsync();
-            return handle.Value.WaitForCompletion();
-        }
     }
 
 

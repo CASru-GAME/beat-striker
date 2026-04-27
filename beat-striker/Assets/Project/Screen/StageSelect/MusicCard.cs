@@ -1,13 +1,9 @@
 
 using UnityEngine;
-using UnityEngine.UI;
-using System.Collections.Generic;
 using R3;
 using TMPro;
 using Alice;
 using Core;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 [RequireComponent(typeof(AudioSource))]
 public class MusicCard : MonoBehaviour {
@@ -21,10 +17,11 @@ public class MusicCard : MonoBehaviour {
     [SerializeField] float fadeOutSeconds = 0.3f;
     private Vector3 originalScale;
     private MusicInfo currentMusic;
+    private IMusicRegistry musicRegistry;
     private bool isPreviewEnabled;
-    AsyncOperationHandle<AudioClip>? previewClipHandle;
-    AsyncOperationHandle<TextAsset>? spectrumHandle;
-    AsyncOperationHandle<TextAsset>? beatDataHandle;
+    LoadedAsset<AudioClip> previewClipAsset;
+    LoadedAsset<TextAsset> spectrumAsset;
+    LoadedAsset<TextAsset> beatDataAsset;
     readonly Subject<MusicInfo> musicSelected = new();
 
     public Observable<MusicInfo> OnMusicSelected => musicSelected;
@@ -92,18 +89,13 @@ public class MusicCard : MonoBehaviour {
         audioSource.volume = previewVolume * Mathf.Min(fadeIn, fadeOut);
     }
 
-    public void SetMusic(MusicInfo music) {
+    public void SetMusic(MusicInfo music, IMusicRegistry musicRegistry) {
         CacheComponents();
         ReleaseLoadedAssets();
         audioSource.Stop();
         currentMusic = music;
-        audioSource.clip = LoadAsset<AudioClip>(music.AudioClipReference, ref previewClipHandle);
-        if (audioSpectrum != null) {
-            var spectrumData = LoadAsset<TextAsset>(music.SpectrumDataReference, ref spectrumHandle);
-            audioSpectrum.SetBakedSpectrumText(spectrumData);
-        }
-        var beatData = LoadAsset<TextAsset>(music.BeatDataReference, ref beatDataHandle);
-        var bpm = BeatDataParser.CalculateBpm(beatData);
+        this.musicRegistry = musicRegistry;
+        var bpm = LoadMusicAssets();
         description.text = $"Composer: {music.Composer}\nBPM: {bpm}\nLength: {FormatLength(audioSource.clip != null ? audioSource.clip.length : 0f)}\n{music.Description}";
         title.text = music.DisplayName;
         if (audioSource.clip == null) {
@@ -127,6 +119,9 @@ public class MusicCard : MonoBehaviour {
 
     public void SetPreviewEnabled(bool enabled) {
         isPreviewEnabled = enabled;
+        if (isPreviewEnabled && currentMusic != null && musicRegistry != null && audioSource.clip == null) {
+            LoadMusicAssets();
+        }
         if (!isPreviewEnabled) {
             audioSource.Stop();
             audioSource.volume = 0f;
@@ -145,29 +140,31 @@ public class MusicCard : MonoBehaviour {
         ReleaseLoadedAssets();
     }
 
-    static T LoadAsset<T>(AssetReferenceT<T> assetReference, ref AsyncOperationHandle<T>? handle) where T : Object {
-        if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
-            return null;
+    int LoadMusicAssets() {
+        if (currentMusic == null || musicRegistry == null) {
+            return 0;
         }
 
-        handle = assetReference.LoadAssetAsync();
-        return handle.Value.WaitForCompletion();
+        previewClipAsset = musicRegistry.LoadAudioClip(currentMusic.Id);
+        audioSource.clip = previewClipAsset.Asset;
+        if (audioSpectrum != null) {
+            spectrumAsset = musicRegistry.LoadSpectrumData(currentMusic.Id);
+            audioSpectrum.SetBakedSpectrumText(spectrumAsset.Asset);
+        }
+        beatDataAsset = musicRegistry.LoadBeatData(currentMusic.Id);
+        return BeatDataParser.CalculateBpm(beatDataAsset.Asset);
     }
 
     void ReleaseLoadedAssets() {
-        if (previewClipHandle.HasValue) {
-            Addressables.Release(previewClipHandle.Value);
-            previewClipHandle = null;
+        if (audioSource != null) {
+            audioSource.clip = null;
         }
 
-        if (spectrumHandle.HasValue) {
-            Addressables.Release(spectrumHandle.Value);
-            spectrumHandle = null;
-        }
-
-        if (beatDataHandle.HasValue) {
-            Addressables.Release(beatDataHandle.Value);
-            beatDataHandle = null;
-        }
+        previewClipAsset?.Dispose();
+        previewClipAsset = null;
+        spectrumAsset?.Dispose();
+        spectrumAsset = null;
+        beatDataAsset?.Dispose();
+        beatDataAsset = null;
     }
 }

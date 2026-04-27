@@ -70,21 +70,22 @@ namespace Alice {
         string Id,
         string DisplayName,
         string Composer,
-        string Description,
-        AssetReferenceT<AudioClip> AudioClipReference,
-        AssetReferenceT<TextAsset> SpectrumDataReference,
-        AssetReferenceT<TextAsset> BeatDataReference);
+        string Description);
 
     public interface IMusicRegistry {
         MusicInfo Default { get; }
         MusicInfo GetById(string id);
         IReadOnlyList<MusicInfo> GetAll();
+        LoadedAsset<AudioClip> LoadAudioClip(string id);
+        LoadedAsset<TextAsset> LoadSpectrumData(string id);
+        LoadedAsset<TextAsset> LoadBeatData(string id);
     }
 
     public class MusicRegistry : MonoBehaviour, IMusicRegistry {
         [SerializeField] AppMusicEntry[] musicEntries;
 
         readonly Dictionary<string, MusicInfo> musicById = new Dictionary<string, MusicInfo>();
+        readonly Dictionary<string, AppMusicEntry> entryById = new Dictionary<string, AppMusicEntry>();
         readonly List<MusicInfo> allMusic = new List<MusicInfo>();
 
         bool isInitialized;
@@ -107,28 +108,57 @@ namespace Alice {
             return allMusic;
         }
 
+        public LoadedAsset<AudioClip> LoadAudioClip(string id) {
+            EnsureInitialized();
+            return !entryById.TryGetValue(id, out var entry)
+                ? LoadedAsset<AudioClip>.Empty()
+                : LoadAsset<AudioClip>(entry.AudioClipReference);
+        }
+
+        public LoadedAsset<TextAsset> LoadSpectrumData(string id) {
+            EnsureInitialized();
+            return !entryById.TryGetValue(id, out var entry)
+                ? LoadedAsset<TextAsset>.Empty()
+                : LoadAsset<TextAsset>(entry.SpectrumDataReference);
+        }
+
+        public LoadedAsset<TextAsset> LoadBeatData(string id) {
+            EnsureInitialized();
+            return !entryById.TryGetValue(id, out var entry)
+                ? LoadedAsset<TextAsset>.Empty()
+                : LoadAsset<TextAsset>(entry.BeatDataReference);
+        }
+
         void EnsureInitialized() {
             if (isInitialized) {
                 return;
             }
 
             musicById.Clear();
+            entryById.Clear();
             allMusic.Clear();
             foreach (var entry in musicEntries) {
                 var music = new MusicInfo(
                     entry.Id,
                     entry.DisplayName,
                     entry.Composer,
-                    entry.Description,
-                    entry.AudioClipReference,
-                    entry.SpectrumDataReference,
-                    entry.BeatDataReference);
+                    entry.Description);
                 musicById[music.Id] = music;
+                entryById[music.Id] = entry;
                 allMusic.Add(music);
             }
 
             defaultMusic = allMusic[0];
             isInitialized = true;
+        }
+
+        static LoadedAsset<T> LoadAsset<T>(AssetReferenceT<T> assetReference) where T : UnityEngine.Object {
+            if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
+                return LoadedAsset<T>.Empty();
+            }
+
+            var handle = Addressables.LoadAssetAsync<T>(assetReference);
+            return new LoadedAsset<T>(handle.WaitForCompletion(), handle);
         }
 
     }

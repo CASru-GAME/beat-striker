@@ -38,7 +38,7 @@ public class MusicCards : MonoBehaviour
 
     public Observable<MusicInfo> OnMusicSelected => musicSelected;
 
-    public void Initialize(IReadOnlyList<MusicInfo> musics) {
+    public void Initialize(IReadOnlyList<MusicInfo> musics, IMusicRegistry musicRegistry) {
         if (initialized) return;
 
         cards.Clear();
@@ -47,7 +47,7 @@ public class MusicCards : MonoBehaviour
             var card = Instantiate(cardPrefab, cardContainer);
             card.name = "Card_" + i;
             card.OnMusicSelected.Subscribe(HandleMusicSelected).AddTo(subscriptions);
-            card.SetMusic(musics[i]);
+            card.SetMusic(musics[i], musicRegistry);
             cards.Add(card);
         }
         cardContainer.gameObject.SetActive(true);

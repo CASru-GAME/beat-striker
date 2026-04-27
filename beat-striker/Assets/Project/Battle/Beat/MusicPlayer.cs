@@ -4,8 +4,6 @@ using System.Collections.Generic;
  
 using R3;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Alice {
     public enum BeatJudgeZone {
@@ -73,8 +71,8 @@ namespace Alice {
         bool isPlaybackClockRunning;
         bool playbackCompleted;
         bool isPlaybackPaused;
-        AsyncOperationHandle<AudioClip>? loadedClipHandle;
-        AsyncOperationHandle<TextAsset>? loadedBeatDataHandle;
+        LoadedAsset<AudioClip> loadedClipAsset;
+        LoadedAsset<TextAsset> loadedBeatDataAsset;
 
         public Observable<IMusicPlayer.BeatSignal> OnGoodZoneEntered => onGoodZoneEntered;
         public Observable<IMusicPlayer.BeatSignal> OnExcellentZoneEntered => onExcellentZoneEntered;
@@ -100,8 +98,10 @@ namespace Alice {
         public void Play() {
             ReleaseLoadedAssets();
             var selectedMusic = musicRegistry.GetById(battleSelectSetting.SelectedMusicId.CurrentValue);
-            var clip = LoadAsset<AudioClip>(selectedMusic.AudioClipReference, ref loadedClipHandle);
-            var beatData = LoadAsset<TextAsset>(selectedMusic.BeatDataReference, ref loadedBeatDataHandle);
+            loadedClipAsset = musicRegistry.LoadAudioClip(selectedMusic.Id);
+            loadedBeatDataAsset = musicRegistry.LoadBeatData(selectedMusic.Id);
+            var clip = loadedClipAsset.Asset;
+            var beatData = loadedBeatDataAsset.Asset;
             var beatOffset = audioSetting.BeatTimeOffset.CurrentValue;
             Debug.Log($"{LOG_PREFIX} Play start. musicId={selectedMusic.Id}, beatOffset={beatOffset:0.###}, commandOffset={audioSetting.CommandTimeOffset.CurrentValue:0.###}, viewOffset={audioSetting.ViewTimeOffset.CurrentValue:0.###}");
             audioSource.clip = clip;
@@ -457,25 +457,12 @@ namespace Alice {
             audioSource.volume = Mathf.Clamp01(volumeBalance.MasterVolume * volumeBalance.BgmVolume);
         }
 
-        static T LoadAsset<T>(AssetReferenceT<T> assetReference, ref AsyncOperationHandle<T>? handle) where T : UnityEngine.Object {
-            if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
-                return null;
-            }
-
-            handle = assetReference.LoadAssetAsync();
-            return handle.Value.WaitForCompletion();
-        }
-
         void ReleaseLoadedAssets() {
-            if (loadedClipHandle.HasValue) {
-                Addressables.Release(loadedClipHandle.Value);
-                loadedClipHandle = null;
-            }
-
-            if (loadedBeatDataHandle.HasValue) {
-                Addressables.Release(loadedBeatDataHandle.Value);
-                loadedBeatDataHandle = null;
-            }
+            audioSource.clip = null;
+            loadedClipAsset?.Dispose();
+            loadedClipAsset = null;
+            loadedBeatDataAsset?.Dispose();
+            loadedBeatDataAsset = null;
         }
 
         
