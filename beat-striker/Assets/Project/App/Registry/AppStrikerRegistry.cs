@@ -53,8 +53,8 @@ namespace Alice {
         StrikerInfo Default { get; }
         StrikerInfo GetByStriker(Striker striker);
         IReadOnlyList<StrikerInfo> GetAll();
-        LoadedAsset<GameObject> LoadBattlePrefab(Striker striker);
-        LoadedAsset<GameObject> LoadPreviewModel(Striker striker);
+        Awaitable<LoadedAsset<GameObject>> LoadBattlePrefabAsync(Striker striker);
+        Awaitable<LoadedAsset<GameObject>> LoadPreviewModelAsync(Striker striker);
     }
 
     public class AppStrikerRegistry : MonoBehaviour, IAppStrikerRegistry {
@@ -84,18 +84,22 @@ namespace Alice {
             return allStrikers;
         }
 
-        public LoadedAsset<GameObject> LoadBattlePrefab(Striker striker) {
+        public async Awaitable<LoadedAsset<GameObject>> LoadBattlePrefabAsync(Striker striker) {
             EnsureInitialized();
-            return !entryByType.TryGetValue(striker, out var entry)
-                ? LoadedAsset<GameObject>.Empty()
-                : LoadAsset<GameObject>(entry.PrefabReference);
+            if (!entryByType.TryGetValue(striker, out var entry)) {
+                return LoadedAsset<GameObject>.Empty();
+            }
+
+            return await LoadAssetAsync<GameObject>(entry.PrefabReference);
         }
 
-        public LoadedAsset<GameObject> LoadPreviewModel(Striker striker) {
+        public async Awaitable<LoadedAsset<GameObject>> LoadPreviewModelAsync(Striker striker) {
             EnsureInitialized();
-            return !entryByType.TryGetValue(striker, out var entry)
-                ? LoadedAsset<GameObject>.Empty()
-                : LoadAsset<GameObject>(entry.PreviewModelReference);
+            if (!entryByType.TryGetValue(striker, out var entry)) {
+                return LoadedAsset<GameObject>.Empty();
+            }
+
+            return await LoadAssetAsync<GameObject>(entry.PreviewModelReference);
         }
 
         void EnsureInitialized() {
@@ -117,13 +121,24 @@ namespace Alice {
             isInitialized = true;
         }
 
-        static LoadedAsset<T> LoadAsset<T>(AssetReferenceT<T> assetReference) where T : UnityEngine.Object {
+        static async Awaitable<LoadedAsset<T>> LoadAssetAsync<T>(AssetReferenceT<T> assetReference) where T : UnityEngine.Object {
             if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
                 return LoadedAsset<T>.Empty();
             }
 
             var handle = Addressables.LoadAssetAsync<T>(assetReference);
-            return new LoadedAsset<T>(handle.WaitForCompletion(), handle);
+            while (!handle.IsDone) {
+                await Awaitable.NextFrameAsync();
+            }
+
+            if (handle.Status != AsyncOperationStatus.Succeeded) {
+                if (handle.IsValid()) {
+                    Addressables.Release(handle);
+                }
+                return LoadedAsset<T>.Empty();
+            }
+
+            return new LoadedAsset<T>(handle.Result, handle);
         }
     }
 }

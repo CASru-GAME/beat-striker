@@ -13,7 +13,7 @@ namespace Alice {
     }
 
     public interface IMusicPlayer {
-        void Play();
+        Awaitable PlayAsync();
         void Stop();
         void Pause();
         void Resume();
@@ -71,6 +71,7 @@ namespace Alice {
         bool isPlaybackClockRunning;
         bool playbackCompleted;
         bool isPlaybackPaused;
+        int playVersion;
         LoadedAsset<AudioClip> loadedClipAsset;
         LoadedAsset<TextAsset> loadedBeatDataAsset;
 
@@ -95,11 +96,25 @@ namespace Alice {
             volumeSubscription = this.audioSetting.VolumeBalance.Subscribe(ApplyVolume);
         }
 
-        public void Play() {
+        public async Awaitable PlayAsync() {
             ReleaseLoadedAssets();
+            var version = playVersion;
             var selectedMusic = musicRegistry.GetById(battleSelectSetting.SelectedMusicId.CurrentValue);
-            loadedClipAsset = musicRegistry.LoadAudioClip(selectedMusic.Id);
-            loadedBeatDataAsset = musicRegistry.LoadBeatData(selectedMusic.Id);
+            var clipAsset = await musicRegistry.LoadAudioClipAsync(selectedMusic.Id);
+            if (version != playVersion) {
+                clipAsset.Dispose();
+                return;
+            }
+
+            var beatDataAsset = await musicRegistry.LoadBeatDataAsync(selectedMusic.Id);
+            if (version != playVersion) {
+                clipAsset.Dispose();
+                beatDataAsset.Dispose();
+                return;
+            }
+
+            loadedClipAsset = clipAsset;
+            loadedBeatDataAsset = beatDataAsset;
             var clip = loadedClipAsset.Asset;
             var beatData = loadedBeatDataAsset.Asset;
             var beatOffset = audioSetting.BeatTimeOffset.CurrentValue;
@@ -458,6 +473,7 @@ namespace Alice {
         }
 
         void ReleaseLoadedAssets() {
+            playVersion++;
             audioSource.clip = null;
             loadedClipAsset?.Dispose();
             loadedClipAsset = null;

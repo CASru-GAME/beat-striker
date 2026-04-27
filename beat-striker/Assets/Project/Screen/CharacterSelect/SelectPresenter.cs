@@ -26,6 +26,7 @@ namespace Alice {
         readonly Dictionary<Striker, GameObject> strikerModelMap = new();
         readonly List<LoadedAsset<GameObject>> previewModelAssets = new();
         bool initialized;
+        bool disposed;
         bool startTransitionInputEnabled;
         bool eastStartConfirmationArmed;
         bool wasReadyToStart;
@@ -51,10 +52,10 @@ namespace Alice {
         async Awaitable InitializeAfterFrameAsync() {
             await Task.Yield();
             Debug.Log($"{LOG_PREFIX} InitializeAfterFrameAsync resumed and will initialize");
-            Initialize();
+            await InitializeAsync();
         }
 
-        void Initialize() {
+        async Awaitable InitializeAsync() {
             if (initialized) {
                 Debug.Log($"{LOG_PREFIX} Initialize skipped because already initialized");
                 return;
@@ -63,7 +64,10 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Initialize start. buttonCount={view.CharacterSelectButtons.Length}");
 
             selectionPolicy.Reset(playerSelectSetting);
-            BuildStrikerModelMap();
+            await BuildStrikerModelMapAsync();
+            if (disposed) {
+                return;
+            }
 
             for (var i = 0; i < view.CharacterSelectButtons.Length; i++) {
                 view.CharacterSelectButtons[i].OnStrikerClicked
@@ -290,12 +294,17 @@ namespace Alice {
             return joinedPlayers;
         }
 
-        void BuildStrikerModelMap() {
+        async Awaitable BuildStrikerModelMapAsync() {
             strikerModelMap.Clear();
             var strikers = appStrikerRegistry.GetAll();
             for (var i = 0; i < strikers.Count; i++) {
                 var info = strikers[i];
-                var modelAsset = appStrikerRegistry.LoadPreviewModel(info.BattleStriker);
+                var modelAsset = await appStrikerRegistry.LoadPreviewModelAsync(info.BattleStriker);
+                if (disposed) {
+                    modelAsset.Dispose();
+                    return;
+                }
+
                 previewModelAssets.Add(modelAsset);
                 var modelPrefab = modelAsset.Asset;
                 if (modelPrefab != null) {
@@ -328,6 +337,7 @@ namespace Alice {
         }
 
         public void Dispose() {
+            disposed = true;
             subscriptions.Dispose();
             for (var i = 0; i < previewModelAssets.Count; i++) {
                 previewModelAssets[i].Dispose();

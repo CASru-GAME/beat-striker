@@ -23,6 +23,8 @@ public class MusicCard : MonoBehaviour {
     LoadedAsset<TextAsset> spectrumAsset;
     LoadedAsset<TextAsset> beatDataAsset;
     readonly Subject<MusicInfo> musicSelected = new();
+    int loadVersion;
+    int loadingVersion = -1;
 
     public Observable<MusicInfo> OnMusicSelected => musicSelected;
 
@@ -89,15 +91,19 @@ public class MusicCard : MonoBehaviour {
         audioSource.volume = previewVolume * Mathf.Min(fadeIn, fadeOut);
     }
 
-    public void SetMusic(MusicInfo music, IMusicRegistry musicRegistry) {
+    public async void SetMusic(MusicInfo music, IMusicRegistry musicRegistry) {
         CacheComponents();
         ReleaseLoadedAssets();
         audioSource.Stop();
         currentMusic = music;
         this.musicRegistry = musicRegistry;
-        var bpm = LoadMusicAssets();
-        description.text = $"Composer: {music.Composer}\nBPM: {bpm}\nLength: {FormatLength(audioSource.clip != null ? audioSource.clip.length : 0f)}\n{music.Description}";
         title.text = music.DisplayName;
+        description.text = $"Composer: {music.Composer}\nBPM: Loading...\nLength: 0:00\n{music.Description}";
+        var version = loadVersion;
+        await LoadMusicAssetsAndRefreshDescriptionAsync(version);
+        if (version != loadVersion || currentMusic != music) {
+            return;
+        }
         if (audioSource.clip == null) {
             return;
         }
@@ -119,8 +125,8 @@ public class MusicCard : MonoBehaviour {
 
     public void SetPreviewEnabled(bool enabled) {
         isPreviewEnabled = enabled;
-        if (isPreviewEnabled && currentMusic != null && musicRegistry != null && audioSource.clip == null) {
-            LoadMusicAssets();
+        if (isPreviewEnabled && currentMusic != null && musicRegistry != null && audioSource.clip == null && loadingVersion != loadVersion) {
+            _ = LoadMusicAssetsAndRefreshDescriptionAsync(loadVersion);
         }
         if (!isPreviewEnabled) {
             audioSource.Stop();
@@ -140,22 +146,70 @@ public class MusicCard : MonoBehaviour {
         ReleaseLoadedAssets();
     }
 
-    int LoadMusicAssets() {
+    async Awaitable<int> LoadMusicAssetsAndRefreshDescriptionAsync(int version) {
+        var music = currentMusic;
+        var bpm = await LoadMusicAssetsAsync(version);
+        if (version != loadVersion || currentMusic != music || music == null) {
+            return 0;
+        }
+
+        description.text = $"Composer: {music.Composer}\nBPM: {bpm}\nLength: {FormatLength(audioSource.clip != null ? audioSource.clip.length : 0f)}\n{music.Description}";
+        return bpm;
+    }
+
+    async Awaitable<int> LoadMusicAssetsAsync(int version) {
         if (currentMusic == null || musicRegistry == null) {
             return 0;
         }
 
-        previewClipAsset = musicRegistry.LoadAudioClip(currentMusic.Id);
-        audioSource.clip = previewClipAsset.Asset;
-        if (audioSpectrum != null) {
-            spectrumAsset = musicRegistry.LoadSpectrumData(currentMusic.Id);
-            audioSpectrum.SetBakedSpectrumText(spectrumAsset.Asset);
+        if (loadingVersion == version) {
+            return 0;
         }
-        beatDataAsset = musicRegistry.LoadBeatData(currentMusic.Id);
-        return BeatDataParser.CalculateBpm(beatDataAsset.Asset);
+
+        loadingVersion = version;
+        var music = currentMusic;
+        try {
+            var loadedPreviewClipAsset = await musicRegistry.LoadAudioClipAsync(music.Id);
+            if (version != loadVersion || currentMusic != music) {
+                loadedPreviewClipAsset.Dispose();
+                return 0;
+            }
+
+            var loadedSpectrumAsset = audioSpectrum != null
+                ? await musicRegistry.LoadSpectrumDataAsync(music.Id)
+                : null;
+            if (version != loadVersion || currentMusic != music) {
+                loadedPreviewClipAsset.Dispose();
+                loadedSpectrumAsset?.Dispose();
+                return 0;
+            }
+
+            var loadedBeatDataAsset = await musicRegistry.LoadBeatDataAsync(music.Id);
+            if (version != loadVersion || currentMusic != music) {
+                loadedPreviewClipAsset.Dispose();
+                loadedSpectrumAsset?.Dispose();
+                loadedBeatDataAsset.Dispose();
+                return 0;
+            }
+
+            previewClipAsset = loadedPreviewClipAsset;
+            audioSource.clip = previewClipAsset.Asset;
+            if (audioSpectrum != null) {
+                spectrumAsset = loadedSpectrumAsset;
+                audioSpectrum.SetBakedSpectrumText(spectrumAsset != null ? spectrumAsset.Asset : null);
+            }
+            beatDataAsset = loadedBeatDataAsset;
+            return BeatDataParser.CalculateBpm(beatDataAsset.Asset);
+        }
+        finally {
+            if (loadingVersion == version) {
+                loadingVersion = -1;
+            }
+        }
     }
 
     void ReleaseLoadedAssets() {
+        loadVersion++;
         if (audioSource != null) {
             audioSource.clip = null;
         }

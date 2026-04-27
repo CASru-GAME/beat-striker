@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine.AddressableAssets;
 using UnityEngine;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Alice {
     public static class BeatDataParser {
@@ -76,9 +77,9 @@ namespace Alice {
         MusicInfo Default { get; }
         MusicInfo GetById(string id);
         IReadOnlyList<MusicInfo> GetAll();
-        LoadedAsset<AudioClip> LoadAudioClip(string id);
-        LoadedAsset<TextAsset> LoadSpectrumData(string id);
-        LoadedAsset<TextAsset> LoadBeatData(string id);
+        Awaitable<LoadedAsset<AudioClip>> LoadAudioClipAsync(string id);
+        Awaitable<LoadedAsset<TextAsset>> LoadSpectrumDataAsync(string id);
+        Awaitable<LoadedAsset<TextAsset>> LoadBeatDataAsync(string id);
     }
 
     public class MusicRegistry : MonoBehaviour, IMusicRegistry {
@@ -108,25 +109,31 @@ namespace Alice {
             return allMusic;
         }
 
-        public LoadedAsset<AudioClip> LoadAudioClip(string id) {
+        public async Awaitable<LoadedAsset<AudioClip>> LoadAudioClipAsync(string id) {
             EnsureInitialized();
-            return !entryById.TryGetValue(id, out var entry)
-                ? LoadedAsset<AudioClip>.Empty()
-                : LoadAsset<AudioClip>(entry.AudioClipReference);
+            if (!entryById.TryGetValue(id, out var entry)) {
+                return LoadedAsset<AudioClip>.Empty();
+            }
+
+            return await LoadAssetAsync<AudioClip>(entry.AudioClipReference);
         }
 
-        public LoadedAsset<TextAsset> LoadSpectrumData(string id) {
+        public async Awaitable<LoadedAsset<TextAsset>> LoadSpectrumDataAsync(string id) {
             EnsureInitialized();
-            return !entryById.TryGetValue(id, out var entry)
-                ? LoadedAsset<TextAsset>.Empty()
-                : LoadAsset<TextAsset>(entry.SpectrumDataReference);
+            if (!entryById.TryGetValue(id, out var entry)) {
+                return LoadedAsset<TextAsset>.Empty();
+            }
+
+            return await LoadAssetAsync<TextAsset>(entry.SpectrumDataReference);
         }
 
-        public LoadedAsset<TextAsset> LoadBeatData(string id) {
+        public async Awaitable<LoadedAsset<TextAsset>> LoadBeatDataAsync(string id) {
             EnsureInitialized();
-            return !entryById.TryGetValue(id, out var entry)
-                ? LoadedAsset<TextAsset>.Empty()
-                : LoadAsset<TextAsset>(entry.BeatDataReference);
+            if (!entryById.TryGetValue(id, out var entry)) {
+                return LoadedAsset<TextAsset>.Empty();
+            }
+
+            return await LoadAssetAsync<TextAsset>(entry.BeatDataReference);
         }
 
         void EnsureInitialized() {
@@ -152,13 +159,24 @@ namespace Alice {
             isInitialized = true;
         }
 
-        static LoadedAsset<T> LoadAsset<T>(AssetReferenceT<T> assetReference) where T : UnityEngine.Object {
+        static async Awaitable<LoadedAsset<T>> LoadAssetAsync<T>(AssetReferenceT<T> assetReference) where T : UnityEngine.Object {
             if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
                 return LoadedAsset<T>.Empty();
             }
 
             var handle = Addressables.LoadAssetAsync<T>(assetReference);
-            return new LoadedAsset<T>(handle.WaitForCompletion(), handle);
+            while (!handle.IsDone) {
+                await Awaitable.NextFrameAsync();
+            }
+
+            if (handle.Status != AsyncOperationStatus.Succeeded) {
+                if (handle.IsValid()) {
+                    Addressables.Release(handle);
+                }
+                return LoadedAsset<T>.Empty();
+            }
+
+            return new LoadedAsset<T>(handle.Result, handle);
         }
 
     }

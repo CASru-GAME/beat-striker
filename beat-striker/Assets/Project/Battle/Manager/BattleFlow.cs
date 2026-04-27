@@ -69,7 +69,7 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Constructed. initialRound={currentRound}, playerPresenterCount={battlePlayerPresenters.Length}");
         }
 
-        void PrepareBattle() {
+        async Task PrepareBattleAsync() {
             if (battlePrepared) {
                 Debug.Log($"{LOG_PREFIX} PrepareBattle skipped because already prepared");
                 return;
@@ -77,7 +77,7 @@ namespace Alice {
 
             Debug.Log($"{LOG_PREFIX} PrepareBattle start");
             battlePrepared = true;
-            battleDeployer.Deploy();
+            await battleDeployer.DeployAsync();
             Debug.Log($"{LOG_PREFIX} PrepareBattle completed and deploy requested");
         }
 
@@ -88,15 +88,6 @@ namespace Alice {
                 return;
             }
 
-            PrepareBattle();
-            Debug.Log($"{LOG_PREFIX} StartBattle reset battle state");
-            beatJudge.ResetBattleState();
-            battleMusicStarted = false;
-            musicEndBattleRequested = false;
-            Debug.Log($"{LOG_PREFIX} StartBattle subscribe striker dead events");
-            SubscribeStrikerDeadEvents();
-            Debug.Log($"{LOG_PREFIX} StartBattle subscribe flow events");
-            SubscribeFlowEvents();
             Debug.Log($"{LOG_PREFIX} StartBattle launching async sequence");
             _ = StartBattleSequenceAsync();
         }
@@ -105,6 +96,15 @@ namespace Alice {
             try {
                 var scene = ResolveCurrentBattleScene();
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync begin. targetScene={scene}");
+                await PrepareBattleAsync();
+                Debug.Log($"{LOG_PREFIX} StartBattle reset battle state");
+                beatJudge.ResetBattleState();
+                battleMusicStarted = false;
+                musicEndBattleRequested = false;
+                Debug.Log($"{LOG_PREFIX} StartBattle subscribe striker dead events");
+                SubscribeStrikerDeadEvents();
+                Debug.Log($"{LOG_PREFIX} StartBattle subscribe flow events");
+                SubscribeFlowEvents();
                 var endResult = await sceneTransitionService.RequestEndTransitionAsync(ResolveCurrentBattleScene());
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync transition end completed. isSuccess={endResult.IsSuccess}");
                 await battlePresenter.PlayBattleOpeningAsync();
@@ -146,7 +146,7 @@ namespace Alice {
             beatJudge.ResetRoundState();
             ResumeRoundRuntimeSystems(controlsMusic: false);
             if (!battleMusicStarted) {
-                musicPlayer.Play();
+                await musicPlayer.PlayAsync();
                 battleMusicStarted = true;
             }
             battleDeployer.ConnectRoundInputs();
@@ -233,7 +233,7 @@ namespace Alice {
                     }
 
                     battleDeployer.RecordRoundResult(finishedRound, deadPlayerId);
-                    battleDeployer.RedeployForNextRound();
+                    await battleDeployer.RedeployForNextRoundAsync();
                     SubscribeStrikerDeadEvents();
                     SetAllStrikersDefault();
                     await battlePresenter.PlayRoundResumeTransitionAsync();
