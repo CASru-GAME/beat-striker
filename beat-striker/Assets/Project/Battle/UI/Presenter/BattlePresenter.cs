@@ -25,10 +25,12 @@ namespace Alice {
 
     public class BattlePresenter : IBattlePresenter, IDisposable {
         const int MAX_SKIP_INPUT_PLAYER_SLOTS = 8;
+        const int BATTLE_PLAYER_COUNT = 2;
 
         readonly IStrikerRegistry strikerRegistry;
         readonly IGamePadRegistry gamePadRegistry;
         readonly IMusicPlayer musicPlayer;
+        readonly IBeatjudge beatJudge;
         readonly IBattleOpeningBgmPlayer battleOpeningBgmPlayer;
         readonly BattlePresenterView battlePresenterView;
         readonly BattleSuspendMenuPresenter suspendMenuPresenter;
@@ -47,16 +49,19 @@ namespace Alice {
         bool suppressAttentionTextForCurrentRequest;
         bool isDisposed;
         int totalBeatCount;
+        bool isViewBeatSuccessWindowActive;
+        bool hasPlayedSuccessSoundForCurrentViewBeatWindow;
 
         public Observable<Unit> OnPauseMenuRequested => pauseMenuRequestedSubject;
         public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<bool> OnAttentionActiveStateChanged => battlePresenterView.StageCamera.OnAttentionActiveStateChanged;
 
-        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
+        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
             this.strikerRegistry = strikerRegistry;
             this.gamePadRegistry = gamePadRegistry;
             this.musicPlayer = musicPlayer;
+            this.beatJudge = beatJudge;
             this.battleOpeningBgmPlayer = battleOpeningBgmPlayer;
             this.battlePresenterView = battlePresenterView;
             this.suspendMenuPresenter = suspendMenuPresenter;
@@ -276,6 +281,7 @@ namespace Alice {
             musicPlayer.OnBeatTiming
                 .Subscribe(signal => {
                     if(battlePresenterView.BeatSound) battlePresenterView.BeatSound.PlayAtApp(Vector3.zero);
+
                     var remainingBeatCount = totalBeatCount - (signal.BeatIndex + 1);
                     battlePresenterView.SetRemainingBeatCount(remainingBeatCount);
                 })
@@ -283,6 +289,8 @@ namespace Alice {
 
             musicPlayer.OnViewBeatTiming
                 .Subscribe(_ => {
+                    isViewBeatSuccessWindowActive = true;
+                    hasPlayedSuccessSoundForCurrentViewBeatWindow = false;
                     battlePresenterView.RequestViewBeatPulse();
                 })
                 .AddTo(audioSubscriptions);
@@ -296,9 +304,43 @@ namespace Alice {
 
             musicPlayer.OnPlaybackCompleted
                 .Subscribe(_ => {
+                    isViewBeatSuccessWindowActive = false;
+                    hasPlayedSuccessSoundForCurrentViewBeatWindow = false;
                     battlePresenterView.SetRemainingBeatCount(0);
                 })
                 .AddTo(audioSubscriptions);
+
+            for (var playerId = 0; playerId < BATTLE_PLAYER_COUNT; playerId++) {
+                var beatPlayer = beatJudge.GetBeatPlayer(playerId);
+
+                beatPlayer.OnBeatCommandRequested
+                    .Subscribe(result => {
+                        if (!result.IsSuccess || result.Zone == BeatJudgeZone.Miss) {
+                            battlePresenterView.PlayJudgeMissSound();
+                        }
+                    })
+                    .AddTo(audioSubscriptions);
+
+                beatPlayer.OnBeatCommandExecuted
+                    .Subscribe(result => {
+                        if (!isViewBeatSuccessWindowActive) {
+                            return;
+                        }
+
+                        if (result.Zone != BeatJudgeZone.Excellent && result.Zone != BeatJudgeZone.Good) {
+                            return;
+                        }
+
+                        if (hasPlayedSuccessSoundForCurrentViewBeatWindow) {
+                            return;
+                        }
+
+                        hasPlayedSuccessSoundForCurrentViewBeatWindow = true;
+                        battlePresenterView.PlayJudgeSuccessSound();
+                    })
+                    .AddTo(audioSubscriptions);
+
+            }
         }
 
         void SubscribeAttentionTextEvents() {

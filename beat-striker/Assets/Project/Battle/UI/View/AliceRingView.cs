@@ -24,7 +24,6 @@ namespace Alice {
         [SerializeField] float beatPulseScale = 1.1f;
         [SerializeField] float beatPulseExpandDuration = 0.06f;
         [SerializeField] float beatPulseShrinkDuration = 0.1f;
-        [SerializeField] AudioClip successSound, excellentSound, missSound;
         [SerializeField] Color[] colors;
 
         int playerId = UNASSIGNED_PLAYER_ID;
@@ -286,30 +285,6 @@ namespace Alice {
             return hasRenderableBeat;
         }
 
-        void PlayJudgeSound(BeatJudgeZone zone) {
-            if (zone == BeatJudgeZone.Excellent) {
-                PlayClipIfAvailable(excellentSound, successSound);
-                return;
-            }
-
-            if (zone == BeatJudgeZone.Good) {
-                PlayClipIfAvailable(successSound, excellentSound);
-                return;
-            }
-
-            PlayClipIfAvailable(missSound);
-        }
-
-        void PlayClipIfAvailable(params AudioClip[] clips) {
-            for (var i = 0; i < clips.Length; i++) {
-                var clip = clips[i];
-                if (clip == null) continue;
-
-                clip.PlayAtApp(Vector3.zero);
-                return;
-            }
-        }
-
         void FlashCenterRing() {
             for (var i = 0; i < centerRing.Length; i++) {
                 var color = centerRing[i].color;
@@ -324,7 +299,6 @@ namespace Alice {
             if (!playerVisualReady) return;
             if (playerId < 0) return;
 
-            PlayJudgeSound(zone);
             FlashCenterRing();
             SpawnJudgeText(ToJudgeLabel(zone));
         }

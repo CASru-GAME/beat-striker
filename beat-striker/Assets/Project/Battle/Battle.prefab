@@ -362,6 +362,8 @@ MonoBehaviour:
   battleUiHiddenTopMargin: 80
   openingAfterSlideDelaySeconds: 0.3
   roundEndBeforeFadeInDelaySeconds: 0.7
+  judgeSuccessSound: {fileID: 8300000, guid: 3756e792e3e614b60b821b26949b4342, type: 3}
+  judgeMissSound: {fileID: 8300000, guid: 63d68b446e452af4a8a4608dd9771d89, type: 3}
 --- !u!114 &1456590923008834014
 MonoBehaviour:
   m_ObjectHideFlags: 0

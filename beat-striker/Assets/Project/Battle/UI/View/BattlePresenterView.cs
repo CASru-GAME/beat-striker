@@ -26,6 +26,10 @@ namespace Alice {
         [Header("Round Transition")]
         [SerializeField] float roundEndBeforeFadeInDelaySeconds = 0.2f;
 
+        [Header("Beat Judge Audio")]
+        [SerializeField] AudioClip judgeSuccessSound;
+        [SerializeField] AudioClip judgeMissSound;
+
         Vector2[] battleUiDefaultAnchoredPositions;
         float[] battleUiHiddenTopAnchoredYs;
         TaskCompletionSource<bool> uiSlideCompletionSource;
@@ -72,6 +76,18 @@ namespace Alice {
         public void RequestViewBeatPulse() {
             stageCamera.RequestViewBeatPulse();
             OnViewBeatTiming?.Invoke();
+        }
+
+        public void PlayJudgeSuccessSound() {
+            if (judgeSuccessSound) {
+                judgeSuccessSound.PlayAtApp(Vector3.zero);
+            }
+        }
+
+        public void PlayJudgeMissSound() {
+            if (judgeMissSound) {
+                judgeMissSound.PlayAtApp(Vector3.zero);
+            }
         }
 
         public void SetRemainingBeatCount(int remainingBeatCount) {
