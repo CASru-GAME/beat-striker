@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 67d9f17718069420b876466f73243380
   m_currentHash:
     serializedVersion: 2
-    Hash: 00000000000000000000000000000000
+    Hash: 139ceb10078ad60518929a36c740e12c
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -24,11 +24,11 @@ MonoBehaviour:
   m_InternalBundleIdMode: 1
   m_AssetLoadMode: 0
   m_BundledAssetProviderType:
-    m_AssemblyName: 
-    m_ClassName: 
+    m_AssemblyName: Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    m_ClassName: UnityEngine.ResourceManagement.ResourceProviders.BundledAssetProvider
   m_AssetBundleProviderType:
-    m_AssemblyName: 
-    m_ClassName: 
+    m_AssemblyName: Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    m_ClassName: UnityEngine.ResourceManagement.ResourceProviders.AssetBundleProvider
   m_IgnoreUnsupportedFilesInBuild: 0
   m_UniqueBundleIds: 0
   m_EnableJsonCatalog: 0
@@ -54,7 +54,7 @@ MonoBehaviour:
     m_Id: 
   m_RemoteCatalogLoadPath:
     m_Id: 
-  m_ContentStateBuildPathProfileVariableName: 
+  m_ContentStateBuildPathProfileVariableName: <default settings path>
   m_CustomContentStateBuildPath: 
   m_ContentStateBuildPath: 
   m_BuildAddressablesWithPlayerBuild: 0
@@ -71,13 +71,13 @@ MonoBehaviour:
       m_ProfileName: Default
       m_Values:
       - m_Id: 4750ddc0597f1495291517c4c9c9d584
-        m_Value: '{UnityEngine.AddressableAssets.Addressables.RuntimePath}/[BuildTarget]'
+        m_Value: 'StreamingAssets/[BuildTarget]'
       - m_Id: 6f18bfed2af7b46bdb5d72f71644492e
         m_Value: '[UnityEditor.EditorUserBuildSettings.activeBuildTarget]'
       - m_Id: 85ef61d3ae04944f58d403631bbe1a5e
         m_Value: <undefined>
       - m_Id: af2fa9e44ed2b4e20ba102e3e341756b
-        m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
+        m_Value: 'Library/com.unity.addressables/StreamingAssetsCopy/aa/[BuildTarget]'
       - m_Id: e0a0e1371f4ea4024830d031a893e002
         m_Value: 'ServerData/[BuildTarget]'
     m_ProfileEntryNames:
