@@ -26,23 +26,15 @@ namespace Alice {
         readonly IBattleTutorialSignalEmitter tutorialSignalEmitter;
         readonly ResultScene resultScene;
         readonly IBattlePlayerPresenter[] battlePlayerPresenters;
+        readonly BattleFlowStateMachine stateMachine = new();
+        readonly RoundSceneSpawnTracker roundSceneSpawnTracker = new();
         int currentRound;
         bool battlePrepared;
-        bool battleStarted;
-        bool battleFinished;
-        bool roundResolving;
-        bool roundPlayable;
-        bool roundSuspended;
-        bool roundAttentionSuspended;
-        bool roundTutorialSuspended;
         bool outroHandled;
         bool battleMusicStarted;
         bool musicEndBattleRequested;
         readonly List<IDisposable> deadEventDisposables = new();
         readonly List<IDisposable> flowEventDisposables = new();
-        readonly HashSet<int> roundBaselineObjectInstanceIds = new();
-        readonly List<GameObject> roundSpawnedRootObjects = new();
-        bool hasRoundBaseline;
         int activeRoundToken;
 
         readonly Subject<int> roundStartedSubject = new();
@@ -70,13 +62,6 @@ namespace Alice {
             this.battlePlayerPresenters = battlePlayerPresenters;
             currentRound = 1;
             battlePrepared = false;
-            battleStarted = false;
-            battleFinished = false;
-            roundResolving = false;
-            roundPlayable = false;
-            roundSuspended = false;
-            roundAttentionSuspended = false;
-            roundTutorialSuspended = false;
             outroHandled = false;
             battleMusicStarted = false;
             musicEndBattleRequested = false;
@@ -97,9 +82,9 @@ namespace Alice {
         }
 
         public void StartBattle() {
-            Debug.Log($"{LOG_PREFIX} StartBattle called. started={battleStarted}, prepared={battlePrepared}, finished={battleFinished}");
-            if (battleStarted) {
-                Debug.Log($"{LOG_PREFIX} StartBattle skipped because already started");
+            Debug.Log($"{LOG_PREFIX} StartBattle called. state={stateMachine.Current}, prepared={battlePrepared}");
+            if (!stateMachine.TryStartBattle(nameof(StartBattle))) {
+                Debug.Log($"{LOG_PREFIX} StartBattle skipped because state does not allow start. state={stateMachine.Current}");
                 return;
             }
 
@@ -112,8 +97,7 @@ namespace Alice {
             SubscribeStrikerDeadEvents();
             Debug.Log($"{LOG_PREFIX} StartBattle subscribe flow events");
             SubscribeFlowEvents();
-            battleStarted = true;
-            Debug.Log($"{LOG_PREFIX} StartBattle marked started=true and launching async sequence");
+            Debug.Log($"{LOG_PREFIX} StartBattle launching async sequence");
             _ = StartBattleSequenceAsync();
         }
 
@@ -145,17 +129,20 @@ namespace Alice {
 
         async Task StartRoundPlayableAsync() {
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync begin. round={currentRound}");
+            if (!stateMachine.TryBeginRoundStarting(nameof(StartRoundPlayableAsync))) {
+                return;
+            }
+
             battlePresenter.CloseSuspendMenu();
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync closed suspend menu");
             await battlePresenter.PlayRoundStartAsync(currentRound);
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync round start animation completed. round={currentRound}");
             roundStartedSubject.OnNext(currentRound);
 
-            roundResolving = false;
-            roundPlayable = true;
-            roundSuspended = false;
-            roundAttentionSuspended = false;
-            roundTutorialSuspended = false;
+            if (!stateMachine.TryEnterPlaying($"{nameof(StartRoundPlayableAsync)} completed")) {
+                return;
+            }
+
             beatJudge.ResetRoundState();
             ResumeRoundRuntimeSystems(controlsMusic: false);
             if (!battleMusicStarted) {
@@ -170,19 +157,16 @@ namespace Alice {
             foreach (var battlePlayerPresenter in battlePlayerPresenters) {
                 battlePlayerPresenter.PresentRoundPlayableStart();
             }
-            CaptureRoundBaselineObjects();
+            roundSceneSpawnTracker.CaptureBaseline();
             StartLearningRoundTimeoutIfNeeded();
-            Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync presenters notified. roundPlayable={roundPlayable}");
+            Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync presenters notified. state={stateMachine.Current}");
         }
 
         void CompleteBattle() {
             if (outroHandled) return;
 
             outroHandled = true;
-            roundPlayable = false;
-            roundSuspended = false;
-            roundAttentionSuspended = false;
-            roundTutorialSuspended = false;
+            stateMachine.TryMarkFinished(nameof(CompleteBattle));
             battlePresenter.CloseSuspendMenu();
             musicPlayer.Stop();
             battleMusicStarted = false;
@@ -193,12 +177,12 @@ namespace Alice {
         }
 
         void OnStrikerDead(int deadPlayerId) {
-            Debug.Log($"{LOG_PREFIX} OnStrikerDead received. deadPlayerId={deadPlayerId}, battleFinished={battleFinished}, roundResolving={roundResolving}, roundPlayable={roundPlayable}");
-            if (battleFinished || roundResolving) {
+            Debug.Log($"{LOG_PREFIX} OnStrikerDead received. deadPlayerId={deadPlayerId}, state={stateMachine.Current}");
+            if (stateMachine.IsBattleEndingOrFinished || stateMachine.IsRoundResolving) {
                 return;
             }
 
-            if (!roundPlayable) {
+            if (!stateMachine.IsPlaying) {
                 if (!tutorialSetting.IsTutorialBattleRequested) {
                     return;
                 }
@@ -209,7 +193,10 @@ namespace Alice {
                 return;
             }
 
-            BeginRoundResolution(stopMusic: false);
+            if (!BeginRoundResolution(stopMusic: false)) {
+                return;
+            }
+
             beatJudge.ResetRoundState();
             PresentRoundPlayableFinishToPlayers();
 
@@ -228,7 +215,6 @@ namespace Alice {
 
                 if (tutorialSetting.IsTutorialBattleRequested) {
                     Debug.Log($"{LOG_PREFIX} ResolveRoundAsync tutorial battle branch. end to title immediately");
-                    roundResolving = false;
                     tutorialSetting.ClearTutorialBattleRequest();
                     await EndBattleToTitleAsync();
                     return;
@@ -237,7 +223,7 @@ namespace Alice {
                 if (continueBattle) {
                     roundFinishedSubject.OnNext(Unit.Default);
                     await battlePresenter.PlayRoundEndTransitionAsync();
-                    DestroyRoundSpawnedObjects();
+                    roundSceneSpawnTracker.DestroySpawnedObjects();
                     var winnerIfMusicEndsBeforeNextRound = ResolveMusicEndWinner(judgeResult.RoundWins);
 
                     if (ShouldCompleteBattleByMusicEnd()) {
@@ -259,6 +245,12 @@ namespace Alice {
                     }
 
                     await StartRoundPlayableAsync();
+                    if (ShouldCompleteBattleByMusicEnd()) {
+                        Debug.Log($"{LOG_PREFIX} ResolveRoundAsync music ended during next round start. winner={winnerIfMusicEndsBeforeNextRound}");
+                        await CompleteBattleWithWinnerAsync(winnerIfMusicEndsBeforeNextRound, judgeResult.RoundWins);
+                        return;
+                    }
+
                     Debug.Log($"{LOG_PREFIX} ResolveRoundAsync next round started. currentRound={currentRound}");
                 }
                 else {
@@ -268,7 +260,6 @@ namespace Alice {
                 }
             }
             catch (Exception exception) {
-                roundResolving = false;
                 Debug.LogError($"{LOG_PREFIX} ResolveRoundAsync failed: {exception.Message}");
                 Debug.LogException(exception);
             }
@@ -296,7 +287,7 @@ namespace Alice {
         }
 
         void OnPauseMenuRequested() {
-            if (!roundPlayable || roundResolving || battleFinished || roundSuspended || roundAttentionSuspended || roundTutorialSuspended) {
+            if (!stateMachine.CanPauseForSuspend) {
                 return;
             }
 
@@ -305,7 +296,7 @@ namespace Alice {
         }
 
         void OnSuspendRequested() {
-            if (battleFinished || roundResolving || !roundSuspended) {
+            if (!stateMachine.CanSuspendBattle) {
                 return;
             }
 
@@ -319,14 +310,14 @@ namespace Alice {
         }
 
         void OnMusicPlaybackCompleted() {
-            if (WantsInfiniteRounds() || battleFinished || musicEndBattleRequested) {
+            if (WantsInfiniteRounds() || stateMachine.IsBattleEndingOrFinished || musicEndBattleRequested) {
                 return;
             }
 
             musicEndBattleRequested = true;
-            Debug.Log($"{LOG_PREFIX} Music playback completed. roundPlayable={roundPlayable}, roundResolving={roundResolving}");
+            Debug.Log($"{LOG_PREFIX} Music playback completed. state={stateMachine.Current}");
 
-            if (!roundPlayable || roundResolving) {
+            if (!stateMachine.CanCompleteBattleByMusicEnd) {
                 return;
             }
 
@@ -335,7 +326,10 @@ namespace Alice {
 
         async Task CompleteBattleByMusicEndAsync() {
             try {
-                BeginRoundResolution(stopMusic: false);
+                if (!BeginRoundResolution(stopMusic: false)) {
+                    return;
+                }
+
                 beatJudge.ResetRoundState();
                 PresentRoundPlayableFinishToPlayers();
 
@@ -344,14 +338,16 @@ namespace Alice {
                 await CompleteBattleWithWinnerAsync(winner, roundWins);
             }
             catch (Exception exception) {
-                roundResolving = false;
                 Debug.LogException(exception);
             }
         }
 
         async Task CompleteBattleBySuspendMenuAsync() {
             try {
-                BeginRoundResolution(stopMusic: true);
+                if (!BeginRoundResolution(stopMusic: true)) {
+                    return;
+                }
+
                 beatJudge.ResetRoundState();
                 PresentRoundPlayableFinishToPlayers();
 
@@ -360,13 +356,20 @@ namespace Alice {
                 await CompleteBattleWithWinnerAsync(new CorePlayerId(winnerPlayerId), battleJudge.GetRoundWins());
             }
             catch (Exception exception) {
-                roundResolving = false;
                 Debug.LogException(exception);
             }
         }
 
         bool ShouldCompleteBattleByMusicEnd() {
-            return musicEndBattleRequested && !WantsInfiniteRounds();
+            return musicEndBattleRequested && !WantsInfiniteRounds() && !stateMachine.IsBattleEndingOrFinished;
+        }
+
+        void CompleteBattleByPendingMusicEndIfNeeded() {
+            if (!ShouldCompleteBattleByMusicEnd() || !stateMachine.CanCompleteBattleByMusicEnd) {
+                return;
+            }
+
+            _ = CompleteBattleByMusicEndAsync();
         }
 
         CorePlayerId ResolveMusicEndWinner(IReadOnlyDictionary<CorePlayerId, int> roundWins) {
@@ -387,9 +390,10 @@ namespace Alice {
 
         async Task CompleteBattleWithWinnerAsync(CorePlayerId winner, IReadOnlyDictionary<CorePlayerId, int> roundWins) {
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync begin. winner={winner}");
-            battleFinished = true;
-            roundResolving = false;
-            roundSuspended = false;
+            if (!stateMachine.TryBeginEndingBattle(nameof(CompleteBattleWithWinnerAsync))) {
+                return;
+            }
+
             battleFinishedSubject.OnNext(Unit.Default);
             outroStartedSubject.OnNext(winner);
             await battlePresenter.PlayBattleEndingAsync(winner);
@@ -403,13 +407,12 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync start transition result. nextScene={AppScene.ResultMenu}, isSuccess={startResult.IsSuccess}");
         }
 
-        void BeginRoundResolution(bool stopMusic) {
+        bool BeginRoundResolution(bool stopMusic) {
+            if (!stateMachine.TryBeginResolvingRound(nameof(BeginRoundResolution))) {
+                return false;
+            }
+
             activeRoundToken += 1;
-            roundResolving = true;
-            roundPlayable = false;
-            roundSuspended = false;
-            roundAttentionSuspended = false;
-            roundTutorialSuspended = false;
             PauseRoundRuntimeSystems(controlsMusic: false);
             battlePresenter.CloseSuspendMenu();
             if (stopMusic) {
@@ -417,6 +420,7 @@ namespace Alice {
                 battleMusicStarted = false;
             }
             battleDeployer.DisconnectRoundInputs();
+            return true;
         }
 
         void PresentRoundPlayableFinishToPlayers() {
@@ -445,37 +449,55 @@ namespace Alice {
         }
 
         void PauseRoundForSuspendMenu() {
-            PauseRoundCommon(ref roundSuspended, controlsMusic: true);
-        }
-
-        void OnResumeRequested() {
-            if (!roundSuspended || roundResolving || battleFinished) {
+            if (!stateMachine.TryBeginSuspend(nameof(PauseRoundForSuspendMenu))) {
                 return;
             }
 
-            ResumeRoundCommon(ref roundSuspended, controlsMusic: true);
+            PauseRoundRuntimeSystems(controlsMusic: true);
+        }
+
+        void OnResumeRequested() {
+            if (!stateMachine.CanResumeFromSuspend) {
+                return;
+            }
+
+            if (!stateMachine.TryEnterPlaying(nameof(OnResumeRequested))) {
+                return;
+            }
+
+            ResumeRoundRuntimeSystems(controlsMusic: true);
             battlePresenter.CloseSuspendMenu();
+            CompleteBattleByPendingMusicEndIfNeeded();
         }
 
         void OnAttentionActiveStateChanged(bool isActive) {
-            if (battleFinished || roundResolving || roundSuspended || roundTutorialSuspended) {
+            if (stateMachine.IsBattleEndingOrFinished || stateMachine.IsRoundResolving || stateMachine.IsSuspended || stateMachine.IsTutorialSuspended) {
                 return;
             }
 
             if (isActive) {
-                if (!roundPlayable || roundAttentionSuspended) {
+                if (!stateMachine.CanPauseForAttention) {
                     return;
                 }
 
-                PauseRoundCommon(ref roundAttentionSuspended, controlsMusic: false);
+                if (!stateMachine.TryBeginAttentionSuspend(nameof(OnAttentionActiveStateChanged))) {
+                    return;
+                }
+
+                PauseRoundRuntimeSystems(controlsMusic: false);
                 return;
             }
 
-            if (!roundAttentionSuspended) {
+            if (!stateMachine.CanResumeFromAttention) {
                 return;
             }
 
-            ResumeRoundCommon(ref roundAttentionSuspended, controlsMusic: false);
+            if (!stateMachine.TryEnterPlaying(nameof(OnAttentionActiveStateChanged))) {
+                return;
+            }
+
+            ResumeRoundRuntimeSystems(controlsMusic: false);
+            CompleteBattleByPendingMusicEndIfNeeded();
         }
 
         void PauseRoundRuntimeSystems(bool controlsMusic) {
@@ -521,71 +543,6 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} SetAllStrikersDefault completed. strikerCount={count}");
         }
 
-        void CaptureRoundBaselineObjects() {
-            roundBaselineObjectInstanceIds.Clear();
-            var sceneObjects = Resources.FindObjectsOfTypeAll<GameObject>();
-            for (var i = 0; i < sceneObjects.Length; i++) {
-                var gameObject = sceneObjects[i];
-                if (!gameObject.scene.IsValid() || !gameObject.scene.isLoaded) {
-                    continue;
-                }
-
-                if ((gameObject.hideFlags & HideFlags.DontSave) != 0) {
-                    continue;
-                }
-
-                roundBaselineObjectInstanceIds.Add(gameObject.GetInstanceID());
-            }
-
-            hasRoundBaseline = true;
-            Debug.Log($"{LOG_PREFIX} CaptureRoundBaselineObjects completed. objectCount={roundBaselineObjectInstanceIds.Count}");
-        }
-
-        void DestroyRoundSpawnedObjects() {
-            if (!hasRoundBaseline) {
-                return;
-            }
-
-            roundSpawnedRootObjects.Clear();
-            var roundSpawnedRootIds = new HashSet<int>();
-            var sceneObjects = Resources.FindObjectsOfTypeAll<GameObject>();
-            for (var i = 0; i < sceneObjects.Length; i++) {
-                var gameObject = sceneObjects[i];
-                if (!gameObject.scene.IsValid() || !gameObject.scene.isLoaded) {
-                    continue;
-                }
-
-                if ((gameObject.hideFlags & HideFlags.DontSave) != 0) {
-                    continue;
-                }
-
-                if (roundBaselineObjectInstanceIds.Contains(gameObject.GetInstanceID())) {
-                    continue;
-                }
-
-                var root = gameObject.transform.root.gameObject;
-                var rootId = root.GetInstanceID();
-                if (roundBaselineObjectInstanceIds.Contains(rootId)) {
-                    continue;
-                }
-
-                if (!roundSpawnedRootIds.Add(rootId)) {
-                    continue;
-                }
-
-                roundSpawnedRootObjects.Add(root);
-            }
-
-            for (var i = 0; i < roundSpawnedRootObjects.Count; i++) {
-                UnityEngine.Object.Destroy(roundSpawnedRootObjects[i]);
-            }
-
-            Debug.Log($"{LOG_PREFIX} DestroyRoundSpawnedObjects completed. destroyedCount={roundSpawnedRootObjects.Count}");
-            roundSpawnedRootObjects.Clear();
-            hasRoundBaseline = false;
-            roundBaselineObjectInstanceIds.Clear();
-        }
-
         RoundResult BuildRoundResult(int roundNumber, int deadPlayerId) {
             var strikers = strikerRegistry.GetAllStrikers().ToList();
             var deadHub = strikers.FirstOrDefault(x => x.PlayerId.CurrentValue == deadPlayerId);
@@ -625,16 +582,16 @@ namespace Alice {
                     return;
                 }
 
-                if (battleFinished || roundResolving) {
+                if (stateMachine.IsBattleEndingOrFinished || stateMachine.IsRoundResolving) {
                     return;
                 }
 
-                if (roundPlayable) {
+                if (stateMachine.IsPlaying) {
                     elapsedGameTime += Time.deltaTime;
                 }
             }
 
-            if (!WantsInfiniteRounds() || battleFinished || roundResolving || !roundPlayable) {
+            if (!WantsInfiniteRounds() || stateMachine.IsBattleEndingOrFinished || stateMachine.IsRoundResolving || !stateMachine.IsPlaying) {
                 return;
             }
 
@@ -656,37 +613,50 @@ namespace Alice {
         }
 
         public void PauseRoundForTutorial() {
-            if (!roundPlayable || roundResolving || battleFinished || roundSuspended || roundAttentionSuspended || roundTutorialSuspended) {
+            if (!stateMachine.CanPauseForTutorial) {
                 return;
             }
 
-            PauseRoundCommon(ref roundTutorialSuspended, controlsMusic: false);
+            if (!stateMachine.TryBeginTutorialSuspend(nameof(PauseRoundForTutorial))) {
+                return;
+            }
+
+            PauseRoundRuntimeSystems(controlsMusic: false);
             PresentTutorialPausedToPlayers();
             battlePresenter.CloseSuspendMenu();
         }
 
         public void ResumeRoundFromTutorial() {
-            if (!roundTutorialSuspended || roundResolving || battleFinished || roundSuspended || roundAttentionSuspended) {
+            if (!stateMachine.CanResumeFromTutorial) {
                 return;
             }
 
-            ResumeRoundCommon(ref roundTutorialSuspended, controlsMusic: false);
+            if (!stateMachine.TryEnterPlaying(nameof(ResumeRoundFromTutorial))) {
+                return;
+            }
+
+            ResumeRoundRuntimeSystems(controlsMusic: false);
             PresentTutorialResumedToPlayers();
+            CompleteBattleByPendingMusicEndIfNeeded();
         }
 
         public async Task EndBattleToTitleAsync() {
-            if (battleFinished || roundResolving) {
+            if (!stateMachine.CanBeginEndingToTitle) {
                 return;
             }
 
-            BeginRoundResolution(stopMusic: true);
+            if (!stateMachine.TryBeginEndingToTitle(nameof(EndBattleToTitleAsync))) {
+                return;
+            }
+
+            activeRoundToken += 1;
+            PauseRoundRuntimeSystems(controlsMusic: false);
+            battlePresenter.CloseSuspendMenu();
+            musicPlayer.Stop();
+            battleMusicStarted = false;
+            battleDeployer.DisconnectRoundInputs();
             beatJudge.ResetRoundState();
             PresentRoundPlayableFinishToPlayers();
-            battleFinished = true;
-            roundResolving = false;
-            roundSuspended = false;
-            roundAttentionSuspended = false;
-            roundTutorialSuspended = false;
             battleFinishedSubject.OnNext(Unit.Default);
 
             await battlePresenter.PlayBattleFinishFadeInAsync();
@@ -694,34 +664,6 @@ namespace Alice {
 
             var startResult = sceneTransitionService.RequestStartTransition(AppScene.Title);
             Debug.Log($"{LOG_PREFIX} EndBattleToTitleAsync start transition result. nextScene={AppScene.Title}, isSuccess={startResult.IsSuccess}");
-        }
-
-        void PauseRoundCommon(ref bool pauseFlag, bool controlsMusic) {
-            if (pauseFlag) {
-                return;
-            }
-
-            pauseFlag = true;
-            roundPlayable = false;
-            PauseRoundRuntimeSystems(controlsMusic);
-        }
-
-        void ResumeRoundCommon(ref bool pauseFlag, bool controlsMusic) {
-            if (!pauseFlag) {
-                return;
-            }
-
-            pauseFlag = false;
-            if (roundResolving || battleFinished || IsAnyRoundPauseActive()) {
-                return;
-            }
-
-            roundPlayable = true;
-            ResumeRoundRuntimeSystems(controlsMusic);
-        }
-
-        bool IsAnyRoundPauseActive() {
-            return roundSuspended || roundAttentionSuspended || roundTutorialSuspended;
         }
     }
 }
