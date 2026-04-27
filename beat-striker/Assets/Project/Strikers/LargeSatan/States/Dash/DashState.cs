@@ -34,6 +34,11 @@ namespace Core.LargeSatan {
         int consecutiveEnterCount;
 
         public override void OnEnter(IStrikerContext context) {
+            var toOpponent = context.GetOpponent().Position.CurrentValue - context.Rigidbody.position;
+            if (Vector3.Dot(context.Rigidbody.transform.forward, toOpponent) < 0) {
+                context.Rigidbody.rotation *= Quaternion.Euler(0, 180, 0);
+            }
+            
             int requestedInputX = Math.Sign(context.LocalInputDirection.x);
             int enterDirectionSign = requestedInputX < 0 ? -1 : 1;
             int movementInputX = Math.Sign(context.InputDirection.x);
