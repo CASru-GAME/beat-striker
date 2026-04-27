@@ -28,10 +28,13 @@ namespace Alice {
 		[SerializeField] AppTransitionFactory appTransitionFactory;
 		[SerializeField] CursorFactory cursorFactory;
 		[SerializeField] AppBGMPlayer appBgmPlayer;
+		[SerializeField] AppAudioPlayer appAudioPlayer;
 		[SerializeField] AIRegistry aiRegistry;
 		[SerializeField] AISetting aiSetting;
 		[SerializeField] AppUISetting appUiSetting;
 		[SerializeField] VirtualTouchControllerCanvasView virtualTouchControllerCanvasView;
+
+		public IAppAudioPlayer AppAudioPlayer => appAudioPlayer;
 
 		protected override void Awake() {
 			Debug.Log($"{LOG_PREFIX} Awake begin. scene={gameObject.scene.name}");
@@ -45,6 +48,11 @@ namespace Alice {
 
 			instance = this;
 			DontDestroyOnLoad(gameObject);
+			appAudioPlayer = GetComponent<AppAudioPlayer>();
+			if (!appAudioPlayer) {
+				appAudioPlayer = gameObject.AddComponent<AppAudioPlayer>();
+			}
+			appAudioPlayer.Initialize(audioSetting);
 			playerSelectSetting.InitializeDefaults();
 			aiSetting.InitializeDefaults();
 			appUiSetting.InitializeDefaults();
@@ -78,6 +86,7 @@ namespace Alice {
 			builder.RegisterInstance<IAppTransitionFactory>(appTransitionFactory);
 			builder.RegisterInstance<ICursorFactory>(cursorFactory);
 			builder.RegisterInstance<IAppBGMPlayer>(appBgmPlayer);
+			builder.RegisterInstance<IAppAudioPlayer>(appAudioPlayer);
 			builder.RegisterInstance<IAIRegistry>(aiRegistry);
 			builder.RegisterInstance<IAISetting>(aiSetting);
 			builder.RegisterInstance<IAppUISetting>(appUiSetting);
@@ -105,6 +114,7 @@ namespace Alice {
 				_ = container.Resolve<IAppTransitionFactory>();
 				_ = container.Resolve<ICursorFactory>();
 				_ = container.Resolve<IAppBGMPlayer>();
+				_ = container.Resolve<IAppAudioPlayer>();
 				_ = container.Resolve<IAIRegistry>();
 				_ = container.Resolve<IAISetting>();
 				_ = container.Resolve<IAppUISetting>();
