@@ -31,7 +31,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 61caf16d520024b3f926c5e7ee0e8c5e
-    m_Address: "Assets/Project/Strikers/LargeSatan/\u308C\u3092\u308B.vrm"
+    m_Address: Assets/Project/Strikers/LargeSatan/Warrior.vrm
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

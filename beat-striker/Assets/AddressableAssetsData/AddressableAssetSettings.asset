@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 67d9f17718069420b876466f73243380
   m_currentHash:
     serializedVersion: 2
-    Hash: 139ceb10078ad60518929a36c740e12c
+    Hash: 4ede25334af4d83f6655d67c34b0e901
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -71,13 +71,13 @@ MonoBehaviour:
       m_ProfileName: Default
       m_Values:
       - m_Id: 4750ddc0597f1495291517c4c9c9d584
-        m_Value: 'StreamingAssets/[BuildTarget]'
+        m_Value: '{UnityEngine.AddressableAssets.Addressables.RuntimePath}/[BuildTarget]'
       - m_Id: 6f18bfed2af7b46bdb5d72f71644492e
         m_Value: '[UnityEditor.EditorUserBuildSettings.activeBuildTarget]'
       - m_Id: 85ef61d3ae04944f58d403631bbe1a5e
         m_Value: <undefined>
       - m_Id: af2fa9e44ed2b4e20ba102e3e341756b
-        m_Value: 'Library/com.unity.addressables/StreamingAssetsCopy/aa/[BuildTarget]'
+        m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
       - m_Id: e0a0e1371f4ea4024830d031a893e002
         m_Value: 'ServerData/[BuildTarget]'
     m_ProfileEntryNames:
