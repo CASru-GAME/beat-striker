@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,15 +13,15 @@ namespace Alice {
 
         [SerializeField] Image[] centerRing;
         [SerializeField] Image[] rings;
-        [SerializeField] TextMeshProUGUI judgeTextPrefab;
-        [SerializeField] RectTransform judgeTextForwardReference;
+        [SerializeField] RectTransform judgeParticleForwardReference;
+        [SerializeField] ParticleSystem excellentJudgeParticle;
+        [SerializeField] ParticleSystem goodJudgeParticle;
+        [SerializeField] ParticleSystem missJudgeParticle;
+        [SerializeField] ParticleSystem excellentJudgeParticlePlain;
+        [SerializeField] ParticleSystem goodJudgeParticlePlain;
+        [SerializeField] ParticleSystem missJudgeParticlePlain;
         [SerializeField] float ringRadiusPerSecond = 1f;
         [SerializeField] float windowScale = 3f;
-        [SerializeField] float judgeTextFadeDuration = 0.6f;
-        [SerializeField] float judgeTextDropDistance = 48f;
-        [SerializeField] float beatPulseScale = 1.1f;
-        [SerializeField] float beatPulseExpandDuration = 0.06f;
-        [SerializeField] float beatPulseShrinkDuration = 0.1f;
         [SerializeField] Color[] colors;
 
         int playerId = UNASSIGNED_PLAYER_ID;
@@ -35,25 +33,23 @@ namespace Alice {
         Vector3 currentWorldPosition;
         Vector3 currentLookDirection = Vector3.right;
         bool hasWorldPosition;
-        Vector2 judgeTextForwardAnchoredPosition;
-        float judgeTextForwardSignedZ;
+        Vector2 judgeParticleForwardAnchoredPosition;
+        float judgeParticleForwardSignedZ;
         Vector3 initialLocalScale;
         Vector3[] centerRingInitialLocalScales = Array.Empty<Vector3>();
         Vector3[] ringInitialLocalScales = Array.Empty<Vector3>();
-        float currentPulseScale = 1f;
         bool playerVisualReady;
         VisualMode visualMode = VisualMode.Hidden;
-        readonly List<TextMeshProUGUI> activeJudgeTexts = new();
 
         public void NotifyBeatPassed() {
-            PlayBeatPulse();
         }
 
         void Awake() {
             CacheInitialState();
-            judgeTextForwardAnchoredPosition = judgeTextForwardReference.anchoredPosition;
-            judgeTextForwardSignedZ = Mathf.DeltaAngle(0f, judgeTextForwardReference.localEulerAngles.z);
-            judgeTextPrefab.gameObject.SetActive(false);
+            if (judgeParticleForwardReference != null) {
+                judgeParticleForwardAnchoredPosition = judgeParticleForwardReference.anchoredPosition;
+                judgeParticleForwardSignedZ = Mathf.DeltaAngle(0f, judgeParticleForwardReference.localEulerAngles.z);
+            }
             DeactivateInternal();
         }
 
@@ -94,8 +90,7 @@ namespace Alice {
             hasWorldPosition = false;
             LeanTween.cancel(gameObject);
             transform.localScale = initialLocalScale;
-            currentPulseScale = 1f;
-            ClearActiveJudgeTexts();
+            StopJudgeParticles();
             visualMode = VisualMode.Hidden;
             HideVisualImmediate();
         }
@@ -254,14 +249,18 @@ namespace Alice {
             }
         }
 
-        void ClearActiveJudgeTexts() {
-            for (var i = activeJudgeTexts.Count - 1; i >= 0; i--) {
-                var activeText = activeJudgeTexts[i];
-                LeanTween.cancel(activeText.gameObject);
-                Destroy(activeText.gameObject);
-            }
+        void StopJudgeParticles() {
+            StopJudgeParticle(excellentJudgeParticle);
+            StopJudgeParticle(goodJudgeParticle);
+            StopJudgeParticle(missJudgeParticle);
+            StopJudgeParticle(excellentJudgeParticlePlain);
+            StopJudgeParticle(goodJudgeParticlePlain);
+            StopJudgeParticle(missJudgeParticlePlain);
+        }
 
-            activeJudgeTexts.Clear();
+        void StopJudgeParticle(ParticleSystem particle) {
+            if (particle == null) return;
+            particle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
         bool TryGetFirstRenderableBeatIndex(float now, out int firstUpcoming) {
@@ -300,62 +299,61 @@ namespace Alice {
             if (playerId < 0) return;
 
             FlashCenterRing();
-            SpawnJudgeText(ToJudgeLabel(zone));
+            PlayJudgeParticle(zone);
         }
 
-        string ToJudgeLabel(BeatJudgeZone zone) {
-            if (zone == BeatJudgeZone.Excellent) {
-                return "excellent";
-            }
+        void PlayJudgeParticle(BeatJudgeZone zone) {
+            var mirroredParticle = zone switch {
+                BeatJudgeZone.Excellent => excellentJudgeParticle,
+                BeatJudgeZone.Good => goodJudgeParticle,
+                _ => missJudgeParticle,
+            };
+            var plainParticle = zone switch {
+                BeatJudgeZone.Excellent => excellentJudgeParticlePlain,
+                BeatJudgeZone.Good => goodJudgeParticlePlain,
+                _ => missJudgeParticlePlain,
+            };
 
-            if (zone == BeatJudgeZone.Good) {
-                return "good";
-            }
-
-            return "miss";
+            PlayMirroredJudgeParticle(mirroredParticle);
+            PlayPlainJudgeParticle(plainParticle);
         }
 
-        void SpawnJudgeText(string label) {
-            var instance = Instantiate(judgeTextPrefab, transform, false);
-            activeJudgeTexts.Add(instance);
+        void PlayMirroredJudgeParticle(ParticleSystem particle) {
+            if (particle == null) return;
+            ApplyJudgeParticleTransform(particle);
+            particle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particle.Play(true);
+        }
 
-            instance.gameObject.SetActive(true);
-            instance.text = label;
+        void PlayPlainJudgeParticle(ParticleSystem particle) {
+            if (particle == null) return;
+            particle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particle.Play(true);
+        }
 
-            var judgeColor = GetPlayerColor();
-            judgeColor.a = 1f;
-            instance.color = judgeColor;
+        void ApplyJudgeParticleTransform(ParticleSystem particle) {
+            var particleRect = particle.transform as RectTransform;
+            if (particleRect == null) return;
+
+            var baseAnchoredPosition = judgeParticleForwardReference != null
+                ? judgeParticleForwardAnchoredPosition
+                : particleRect.anchoredPosition;
+            var baseSignedZ = judgeParticleForwardReference != null
+                ? judgeParticleForwardSignedZ
+                : Mathf.DeltaAngle(0f, particleRect.localEulerAngles.z);
 
             var cam = Camera.main;
             var mirrored = cam != null
                 ? Vector3.Dot(currentLookDirection, cam.transform.right) < 0f
                 : currentLookDirection.x < 0f;
-            var startAnchoredPosition = mirrored
-                ? new Vector2(-judgeTextForwardAnchoredPosition.x, judgeTextForwardAnchoredPosition.y)
-                : judgeTextForwardAnchoredPosition;
-            instance.rectTransform.anchoredPosition = startAnchoredPosition;
 
-            instance.rectTransform.localScale = Vector3.one;
-            var startZ = mirrored ? -judgeTextForwardSignedZ : judgeTextForwardSignedZ;
-            instance.rectTransform.localRotation = Quaternion.Euler(0f, 0f, startZ);
+            var anchoredPosition = mirrored
+                ? new Vector2(-baseAnchoredPosition.x, baseAnchoredPosition.y)
+                : baseAnchoredPosition;
+            particleRect.anchoredPosition = anchoredPosition;
 
-            var targetAnchoredPosition = startAnchoredPosition + Vector2.down * judgeTextDropDistance;
-            LeanTween.value(instance.gameObject, startAnchoredPosition, targetAnchoredPosition, judgeTextFadeDuration)
-                .setEase(LeanTweenType.easeInSine)
-                .setOnUpdate((Vector2 position) => {
-                    instance.rectTransform.anchoredPosition = position;
-                });
-
-            LeanTween.value(instance.gameObject, 1f, 0f, judgeTextFadeDuration)
-                .setOnUpdate((float alpha) => {
-                    var currentColor = instance.color;
-                    currentColor.a = alpha;
-                    instance.color = currentColor;
-                })
-                .setOnComplete(() => {
-                    activeJudgeTexts.Remove(instance);
-                    Destroy(instance.gameObject);
-                });
+            var z = mirrored ? -baseSignedZ : baseSignedZ;
+            particleRect.localRotation = Quaternion.Euler(0f, 0f, z);
         }
 
         void Update() {
@@ -374,11 +372,13 @@ namespace Alice {
             SetVisualMode(VisualMode.Active);
             EnsurePlayerColorRgb();
 
-            var screenPos = Camera.main.WorldToScreenPoint(currentWorldPosition);
+            var cam = Camera.main;
+            if (cam == null) return;
+            var screenPos = cam.WorldToScreenPoint(currentWorldPosition);
             transform.position = screenPos;
 
             for (var i = 0; i < centerRing.Length; i++) {
-                centerRing[i].transform.localScale = centerRingInitialLocalScales[i] * currentPulseScale;
+                centerRing[i].transform.localScale = centerRingInitialLocalScales[i];
             }
 
             for (var i = 0; i < rings.Length; i++) {
@@ -398,7 +398,7 @@ namespace Alice {
                 if (timeSpan < 0f) timeSpan = 0f;
 
                 var scale = ringRadiusPerSecond * timeSpan + 1f;
-                rings[i].transform.localScale = ringInitialLocalScales[i] * (scale * currentPulseScale);
+                rings[i].transform.localScale = ringInitialLocalScales[i] * scale;
 
                 var alpha = ringFirstAlpha * Mathf.Clamp01(windowScale - scale);
                 SetImageAlpha(rings[i], alpha);
@@ -415,24 +415,5 @@ namespace Alice {
             return -1;
         }
 
-        void PlayBeatPulse() {
-            if (!battleViewActive) return;
-
-            LeanTween.cancel(gameObject);
-            currentPulseScale = 1f;
-
-            LeanTween.value(gameObject, 1f, beatPulseScale, beatPulseExpandDuration)
-                .setEase(LeanTweenType.easeOutQuad)
-                .setOnUpdate((float scale) => {
-                    currentPulseScale = scale;
-                })
-                .setOnComplete(() => {
-                    LeanTween.value(gameObject, currentPulseScale, 1f, beatPulseShrinkDuration)
-                        .setEase(LeanTweenType.easeInQuad)
-                        .setOnUpdate((float scale) => {
-                            currentPulseScale = scale;
-                        });
-                });
-        }
     }
 }
