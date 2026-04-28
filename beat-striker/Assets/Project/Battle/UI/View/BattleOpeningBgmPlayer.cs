@@ -4,12 +4,16 @@ using UnityEngine;
 namespace Alice {
     public interface IBattleOpeningBgmPlayer {
         void Play();
+        void PlayBattleFinish();
         void Stop();
+        void StopBattleFinish();
     }
 
     public class BattleOpeningBgmPlayer : MonoBehaviour, IBattleOpeningBgmPlayer {
         [SerializeField] AudioClip openingBgmPrimary;
         [SerializeField] AudioClip openingBgmSecondary;
+        [SerializeField] AudioClip battleFinishBgmPrimary;
+        [SerializeField] AudioClip battleFinishBgmSecondary;
         [SerializeField] float volume = 1f;
         [SerializeField] float startDelaySeconds = 0f;
         [SerializeField] float fadeInDuration = 0.5f;
@@ -29,10 +33,26 @@ namespace Alice {
         }
 
         public void Play() {
+            PlayClips(openingBgmPrimary, openingBgmSecondary);
+        }
+
+        public void PlayBattleFinish() {
+            PlayClips(battleFinishBgmPrimary, battleFinishBgmSecondary);
+        }
+
+        public void Stop() {
+            StopAllManagedAudioSources();
+        }
+
+        public void StopBattleFinish() {
+            StopAllManagedAudioSources();
+        }
+
+        void PlayClips(AudioClip primary, AudioClip secondary) {
             InitializeAudioSources();
 
-            if (openingBgmPrimary == null && openingBgmSecondary == null) {
-                Stop();
+            if (primary == null && secondary == null) {
+                StopAllManagedAudioSources();
                 return;
             }
 
@@ -41,7 +61,7 @@ namespace Alice {
                 StopScheduledPlay(managedAudioSource);
                 BeginFadeOut(managedAudioSource);
 
-                managedAudioSource.Clip = i == 0 ? openingBgmPrimary : openingBgmSecondary;
+                managedAudioSource.Clip = i == 0 ? primary : secondary;
                 if (managedAudioSource.Clip == null) {
                     continue;
                 }
@@ -54,7 +74,7 @@ namespace Alice {
             }
         }
 
-        public void Stop() {
+        void StopAllManagedAudioSources() {
             InitializeAudioSources();
 
             for (var i = 0; i < managedAudioSources.Length; i++) {

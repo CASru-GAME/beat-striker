@@ -99,6 +99,7 @@ namespace Alice {
                 await PrepareBattleAsync();
                 Debug.Log($"{LOG_PREFIX} StartBattle reset battle state");
                 beatJudge.ResetBattleState();
+                battlePresenter.HandleBattleStarted();
                 battleMusicStarted = false;
                 musicEndBattleRequested = false;
                 Debug.Log($"{LOG_PREFIX} StartBattle subscribe striker dead events");
@@ -219,6 +220,12 @@ namespace Alice {
                     await EndBattleToTitleAsync();
                     return;
                 }
+
+                var winnerPlayerId = deadPlayerId == 0 ? 1 : 0;
+                var winnerRoundWinCount = judgeResult.RoundWins.TryGetValue(new CorePlayerId(winnerPlayerId), out var roundWinCount)
+                    ? roundWinCount
+                    : 0;
+                battlePresenter.HandleRoundResolved(winnerPlayerId, winnerRoundWinCount, continueBattle);
 
                 if (continueBattle) {
                     roundFinishedSubject.OnNext(Unit.Default);

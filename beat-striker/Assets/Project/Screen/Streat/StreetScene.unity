@@ -701,7 +701,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c134160dce44732b76787758d54379e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.SceneLightingRandomizer
-  applyOnStart: 0
+  applyOnStart: 1
   presets:
   - name: Captured Lighting 2026-04-25 19:04:37
     skyboxMaterial: {fileID: 2100000, guid: 698c22d39b45b438bbfc8e8b7133340f, type: 2}

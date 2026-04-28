@@ -225,6 +225,41 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &161337135686766887
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8057580666602975129}
+  m_Layer: 5
+  m_Name: Trophys (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8057580666602975129
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 161337135686766887}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2840832735964313971}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -275, y: -148}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &225001582696620582
 GameObject:
   m_ObjectHideFlags: 0
@@ -364,6 +399,24 @@ MonoBehaviour:
   roundEndBeforeFadeInDelaySeconds: 0.7
   judgeSuccessSound: {fileID: 8300000, guid: c49be10f61ded45af97b58e7b2aa2476, type: 3}
   judgeMissSound: {fileID: 8300000, guid: 63d68b446e452af4a8a4608dd9771d89, type: 3}
+  roundWinTrophySound: {fileID: 8300000, guid: 9a1d28e383d59ed469a73f14fd1f5099, type: 3}
+  roundWinTrophyRoot: {fileID: 2840832735964313971}
+  roundWinTrophyPrefab: {fileID: 6490848533440560377, guid: 8216b6d1f659b4362999a7e99efdb771, type: 3}
+  roundWinTrophyCenterAnchor: {fileID: 2840832735964313971}
+  roundWinTrophyPlayer1StartAnchor: {fileID: 8057580666602975129}
+  roundWinTrophyPlayer2StartAnchor: {fileID: 3224424193043840158}
+  roundWinTrophyCenterScale: 7
+  roundWinTrophyStackScale: 0.8
+  roundWinTrophySpawnDurationSeconds: 0.28
+  roundWinTrophySpawnSpinCount: 1
+  roundWinTrophyCenterHoldSeconds: 0.7
+  roundWinTrophyMoveDurationSeconds: 0.3
+  roundWinTrophyStackSpacing: 25
+  roundWinTrophyExitDurationSeconds: 0.32
+  roundWinTrophyHiddenBottomMargin: 80
+  roundWinTrophyBeatExpandScaleMultiplier: 1.3
+  roundWinTrophyBeatExpandDuration: 0
+  roundWinTrophyBeatReturnDuration: 0.08
 --- !u!114 &1456590923008834014
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -378,6 +431,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleOpeningBgmPlayer
   openingBgmPrimary: {fileID: 8300000, guid: cb3b0d3fff8884f2eafa530cdba69532, type: 3}
   openingBgmSecondary: {fileID: 8300000, guid: 57c9c9d96d0224b848976c87b5436708, type: 3}
+  battleFinishBgmPrimary: {fileID: 8300000, guid: 05d71c71452ce41cdb56f48029c1be33, type: 3}
+  battleFinishBgmSecondary: {fileID: 8300000, guid: cb3b0d3fff8884f2eafa530cdba69532, type: 3}
   volume: 1
   startDelaySeconds: 0.2
   fadeInDuration: 0.5
@@ -12573,6 +12628,41 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &4822368951838019730
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3224424193043840158}
+  m_Layer: 5
+  m_Name: Trophys (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &3224424193043840158
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4822368951838019730}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2840832735964313971}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 268, y: -148}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &4831780091055664652
 GameObject:
   m_ObjectHideFlags: 0
@@ -14129,6 +14219,7 @@ RectTransform:
   - {fileID: 4277200408172219494}
   - {fileID: 8272914268589842912}
   - {fileID: 3023355490224369729}
+  - {fileID: 2840832735964313971}
   - {fileID: 717197469960045678}
   - {fileID: 5833716736655561002}
   - {fileID: 5231505444595221528}
@@ -15873,6 +15964,43 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &7048014238346028134
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2840832735964313971}
+  m_Layer: 5
+  m_Name: Trophys
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2840832735964313971
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7048014238346028134}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8057580666602975129}
+  - {fileID: 3224424193043840158}
+  m_Father: {fileID: 1391624084580501542}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &7191099602731104322
 GameObject:
   m_ObjectHideFlags: 0

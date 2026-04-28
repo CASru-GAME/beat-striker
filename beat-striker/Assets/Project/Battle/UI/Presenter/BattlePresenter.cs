@@ -8,6 +8,8 @@ namespace Alice {
     public interface IBattlePresenter {
         Task PlayBattleOpeningAsync();
         Task PlayRoundStartAsync(int roundNumber);
+        void HandleRoundResolved(int winnerPlayerId, int winnerRoundWinCount, bool continueBattle);
+        void HandleBattleStarted();
         void EnterRoundPlayablePhase();
         Task PlayRoundEndTransitionAsync();
         Task PlayRoundResumeTransitionAsync();
@@ -31,6 +33,7 @@ namespace Alice {
         readonly IGamePadRegistry gamePadRegistry;
         readonly IMusicPlayer musicPlayer;
         readonly IBeatjudge beatJudge;
+        readonly IAISetting aiSetting;
         readonly IBattleOpeningBgmPlayer battleOpeningBgmPlayer;
         readonly BattlePresenterView battlePresenterView;
         readonly BattleSuspendMenuPresenter suspendMenuPresenter;
@@ -57,11 +60,12 @@ namespace Alice {
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<bool> OnAttentionActiveStateChanged => battlePresenterView.StageCamera.OnAttentionActiveStateChanged;
 
-        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
+        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IAISetting aiSetting, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
             this.strikerRegistry = strikerRegistry;
             this.gamePadRegistry = gamePadRegistry;
             this.musicPlayer = musicPlayer;
             this.beatJudge = beatJudge;
+            this.aiSetting = aiSetting;
             this.battleOpeningBgmPlayer = battleOpeningBgmPlayer;
             this.battlePresenterView = battlePresenterView;
             this.suspendMenuPresenter = suspendMenuPresenter;
@@ -75,10 +79,13 @@ namespace Alice {
             CloseSuspendMenu();
             battlePresenterView.AttentionTextView.HideImmediately();
             battlePresenterView.SetRemainingBeatCountVs();
+            battlePresenterView.ResetRoundWinTrophies();
         }
 
         public void Dispose() {
             isDisposed = true;
+            battleOpeningBgmPlayer.Stop();
+            battleOpeningBgmPlayer.StopBattleFinish();
             skipInputSubscriptions.Dispose();
             pauseMenuInputSubscriptions.Dispose();
             suspendMenuSubscriptions.Dispose();
@@ -146,6 +153,20 @@ namespace Alice {
             battlePresenterView.StageCamera.PresentRoundPlayableStart();
         }
 
+        public void HandleRoundResolved(int winnerPlayerId, int winnerRoundWinCount, bool continueBattle) {
+            if (aiSetting.IsInfiniteRoundMode || !continueBattle) {
+                return;
+            }
+
+            var winnerRoundWinIndex = Mathf.Max(0, winnerRoundWinCount - 1);
+            battlePresenterView.PlayRoundWinTrophySound();
+            _ = battlePresenterView.PlayRoundWinTrophyAsync(winnerPlayerId, winnerRoundWinIndex);
+        }
+
+        public void HandleBattleStarted() {
+            battlePresenterView.ResetRoundWinTrophies();
+        }
+
         public async Task PlayRoundEndTransitionAsync() {
             EnsureStageCameraConfigured();
             battlePresenterView.StageCamera.PresentRoundFinish();
@@ -163,10 +184,13 @@ namespace Alice {
             EnsureStageCameraConfigured();
             battlePresenterView.StageCamera.PresentBattleFinish();
             await battlePresenterView.ResultTextPresenter.PresentBattleFinishAsync();
-            await battlePresenterView.SlideBattleUiOutAsync();
+            await Task.WhenAll(
+                battlePresenterView.SlideBattleUiOutAsync(),
+                battlePresenterView.HideRoundWinTrophiesToBottomAsync());
 
             isCinematicSkipEnabled = true;
             try {
+                battleOpeningBgmPlayer.PlayBattleFinish();
                 await battlePresenterView.StageCamera.PresentOutroAsync(winner);
             }
             finally {
