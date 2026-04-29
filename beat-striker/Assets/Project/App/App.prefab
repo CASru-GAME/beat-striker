@@ -2232,7 +2232,7 @@ MonoBehaviour:
   - {fileID: 7321489969164814695}
   fadeInDuration: 0.18
   fadeOutDuration: 0.15
-  showDelaySeconds: 0.3
+  showDelaySeconds: 1
   bounceHeight: 14
   bounceDuration: 0.22
   characterDelay: 0.1

@@ -398,10 +398,14 @@
   });
 
   manualInput.addEventListener("change", async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    state.manualBeats = parseBeatsText(text);
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    const manualBeats = [...state.manualBeats];
+    for (const file of files) {
+      const text = await file.text();
+      manualBeats.push(...parseBeatsText(text));
+    }
+    state.manualBeats = manualBeats.sort((a, b) => a - b);
     updateButtonStates();
     draw();
     manualInput.value = "";
