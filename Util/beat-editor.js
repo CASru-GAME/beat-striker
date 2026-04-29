@@ -11,6 +11,7 @@
   const loadBeatsBtn = document.getElementById("loadBeatsBtn");
   const playBtn = document.getElementById("playBtn");
   const stopBtn = document.getElementById("stopBtn");
+  const beatSeToggle = document.getElementById("beatSeToggle");
   const addAtPlayheadBtn = document.getElementById("addAtPlayheadBtn");
   const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
   const sortMergeBtn = document.getElementById("sortMergeBtn");
@@ -54,9 +55,37 @@
   const canvas = document.getElementById("timelineCanvas");
 
   let currentPlayheadSec = 0;
+  let previousPlaybackSec = 0;
+  let nextBeatSeIndex = 0;
   let isAreaSelecting = false;
   let areaSelectStartX = 0;
   let areaSelectCurrentX = 0;
+
+  function resetBeatSeCursor(startSec) {
+    nextBeatSeIndex = 0;
+    while (nextBeatSeIndex < state.beats.length && state.beats[nextBeatSeIndex] < startSec - 0.0005) {
+      nextBeatSeIndex++;
+    }
+    previousPlaybackSec = startSec;
+  }
+
+  function playBeatSeOnCrossedBeats(currentSec) {
+    if (!state.isBeatSeEnabled || !state.beats.length) {
+      previousPlaybackSec = currentSec;
+      return;
+    }
+    if (currentSec < previousPlaybackSec - 0.001) {
+      resetBeatSeCursor(currentSec);
+      return;
+    }
+    while (nextBeatSeIndex < state.beats.length && state.beats[nextBeatSeIndex] <= currentSec + 0.0005) {
+      if (state.beats[nextBeatSeIndex] >= previousPlaybackSec - 0.0005) {
+        A.playBeatSe();
+      }
+      nextBeatSeIndex++;
+    }
+    previousPlaybackSec = currentSec;
+  }
 
   function clearSelection() {
     state.selectedBeatIndex = -1;
@@ -178,6 +207,7 @@
     assignmentMinRelativeInput.value = state.assignmentMinRelative.toFixed(2);
     assignmentMaxRelativeInput.value = state.assignmentMaxRelative.toFixed(2);
     updateSelectedBeatUI();
+    beatSeToggle.checked = state.isBeatSeEnabled;
   }
 
   function addBeatAt(sec) {
@@ -220,9 +250,9 @@
     state.dragSelectionIndices = [];
   }
 
-  function collectOutlierTargets(maxDelta = 0.2) {
+  function collectOutlierTargets() {
     const targets = [];
-    const assignments = buildManualNearestAssignments(maxDelta);
+    const assignments = buildManualNearestAssignments();
     if (!assignments.length) return targets;
 
     const buckets = new Map();
@@ -269,7 +299,7 @@
     if (!state.manualBeats.length) return null;
     const windowEnd = state.viewStartSeconds + state.viewSpanSeconds;
     const manualWarningThreshold = state.manualWarningThresholdSeconds ?? 0.1;
-    const assignments = buildManualNearestAssignments(0.2);
+    const assignments = buildManualNearestAssignments();
     const assignedIndices = new Set(assignments.map((item) => item.manualIndex));
 
     for (let i = 0; i < state.manualBeats.length; i++) {
@@ -386,9 +416,18 @@
       return;
     }
     const startAt = getViewCenterSeconds();
+    if (state.isBeatSeEnabled) {
+      try {
+        await A.ensureBeatSeLoaded();
+      } catch (error) {
+        console.error(error);
+      }
+    }
     state.playbackOffsetSeconds = startAt;
     currentPlayheadSec = startAt;
+    resetBeatSeCursor(startAt);
     await A.startPlayback((sec) => {
+      playBeatSeOnCrossedBeats(sec);
       currentPlayheadSec = sec;
       T.ensurePlayheadVisible(sec);
       statusText.textContent = "状態: 再生中（Spaceで記録）";
@@ -410,7 +449,13 @@
     A.stopPlayback();
     statusText.textContent = "状態: 停止";
     playBtn.textContent = "▶ 再生";
+    previousPlaybackSec = 0;
+    nextBeatSeIndex = 0;
     draw();
+  });
+
+  beatSeToggle.addEventListener("change", () => {
+    state.isBeatSeEnabled = beatSeToggle.checked;
   });
 
   viewSpanInput.addEventListener("change", () => {
@@ -546,7 +591,6 @@
   assignmentMinRelativeInput.addEventListener("change", () => {
     const value = Number.parseFloat(assignmentMinRelativeInput.value);
     if (!Number.isFinite(value)) return;
-    if (value >= state.assignmentMaxRelative) return;
     state.assignmentMinRelative = value;
     updateButtonStates();
     draw();
@@ -555,7 +599,6 @@
   assignmentMaxRelativeInput.addEventListener("change", () => {
     const value = Number.parseFloat(assignmentMaxRelativeInput.value);
     if (!Number.isFinite(value)) return;
-    if (value <= state.assignmentMinRelative) return;
     state.assignmentMaxRelative = value;
     updateButtonStates();
     draw();

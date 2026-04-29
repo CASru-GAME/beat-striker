@@ -40,9 +40,9 @@
     return best;
   }
 
-  function buildNearestPairs(maxDelta = 0.2) {
+  function buildNearestPairs() {
     const pairs = [];
-    const assignments = buildManualNearestAssignments(maxDelta);
+    const assignments = buildManualNearestAssignments();
     for (const item of assignments) {
       pairs.push({ file: state.beats[item.beatIndex], manual: item.manual, diff: item.diff });
     }
@@ -59,9 +59,9 @@
     return min;
   }
 
-  function buildOutlierBeatIndexSet(maxDelta = 0.2, threshold = state.warningThresholdSeconds ?? 0.1) {
+  function buildOutlierBeatIndexSet(threshold = state.warningThresholdSeconds ?? 0.1) {
     const outliers = new Set();
-    const assignments = buildManualNearestAssignments(maxDelta);
+    const assignments = buildManualNearestAssignments();
     if (!assignments.length) return outliers;
 
     const buckets = new Map();
@@ -78,9 +78,9 @@
     return outliers;
   }
 
-  function buildAssignedManualIndexSet(maxDelta = 0.2) {
+  function buildAssignedManualIndexSet() {
     const assigned = new Set();
-    const assignments = buildManualNearestAssignments(maxDelta);
+    const assignments = buildManualNearestAssignments();
     for (const item of assignments) assigned.add(item.manualIndex);
     return assigned;
   }
@@ -122,7 +122,7 @@
     }
 
     // Difference overlay lines
-    const pairs = buildNearestPairs(0.2);
+    const pairs = buildNearestPairs();
     for (const p of pairs) {
       if (p.file < state.viewStartSeconds || p.file > state.viewStartSeconds + state.viewSpanSeconds) continue;
       if (p.manual < state.viewStartSeconds || p.manual > state.viewStartSeconds + state.viewSpanSeconds) continue;
@@ -138,7 +138,7 @@
     }
 
     // File beats
-    const outlierBeatIndices = buildOutlierBeatIndexSet(0.2, state.warningThresholdSeconds ?? 0.1);
+    const outlierBeatIndices = buildOutlierBeatIndexSet(state.warningThresholdSeconds ?? 0.1);
     ctx.lineWidth = 2;
     for (let i = 0; i < state.beats.length; i++) {
       const sec = state.beats[i];
@@ -160,7 +160,7 @@
 
     // Manual beats (same lane, dots)
     const manualWarningThreshold = state.manualWarningThresholdSeconds ?? 0.1;
-    const assignedManualIndices = buildAssignedManualIndexSet(0.2);
+    const assignedManualIndices = buildAssignedManualIndexSet();
     for (let i = 0; i < state.manualBeats.length; i++) {
       const sec = state.manualBeats[i];
       if (sec < state.viewStartSeconds || sec > state.viewStartSeconds + state.viewSpanSeconds) continue;

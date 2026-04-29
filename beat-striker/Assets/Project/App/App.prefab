@@ -1658,6 +1658,7 @@ GameObject:
   - component: {fileID: 6291877219211561707}
   - component: {fileID: 7631814504287584424}
   - component: {fileID: 4786530424506437196}
+  - component: {fileID: 2328229850213635790}
   m_Layer: 0
   m_Name: App
   m_TagString: Untagged
@@ -1695,7 +1696,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.BattleSelectSetting
   selectedStage: 1
-  selectedMusicId: cutie-street
+  selectedMusicId: sento
   aiStrength: 1
 --- !u!114 &8179424678283996581
 MonoBehaviour:
@@ -2195,8 +2196,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AudioSetting
   commandTimeOffset: 0
-  viewTimeOffset: 0.07
-  beatTimeOffset: 0.07
+  viewTimeOffset: 0.12
+  beatTimeOffset: 0.12
   goodWindow: 0.3
   excellentWindow: 0.2
   goodScoreMultiplier: 1
@@ -2290,7 +2291,7 @@ MonoBehaviour:
   appTransitionFactory: {fileID: 9201860890254514560}
   cursorFactory: {fileID: 8684236627904277826}
   appBgmPlayer: {fileID: 3511319359145443329}
-  appAudioPlayer: {fileID: 0}
+  appAudioPlayer: {fileID: 2328229850213635790}
   aiRegistry: {fileID: 904021008660354504}
   aiSetting: {fileID: 8953530949465533837}
   appUiSetting: {fileID: 4371772477456092809}
@@ -2455,6 +2456,20 @@ MonoBehaviour:
   includeNestedCanvases: 0
   swapCanvasScalerReference: 1
   canvasRefreshIntervalFrames: 30
+--- !u!114 &2328229850213635790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bb4cbbffb6c04ca4a54f022369dc400, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AppAudioPlayer
+  initialPoolSize: 8
+  maxPoolSize: 32
 --- !u!1 &4556684102402312736
 GameObject:
   m_ObjectHideFlags: 0

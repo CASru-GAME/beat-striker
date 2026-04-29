@@ -8,6 +8,40 @@
     }
   }
 
+  async function ensureBeatSeLoaded() {
+    if (state.beatSeBuffer || state.beatSeFallbackAudio) return;
+    ensureAudioContext();
+    try {
+      const response = await fetch("./hand.mp3");
+      if (!response.ok) throw new Error(`Failed to load hand.mp3: ${response.status}`);
+      const arrayBuffer = await response.arrayBuffer();
+      state.beatSeBuffer = await state.audioContext.decodeAudioData(arrayBuffer);
+    } catch (_error) {
+      // Some environments (e.g. file://) may block fetch. Fall back to HTMLAudio.
+      state.beatSeFallbackAudio = new Audio("./hand.mp3");
+      state.beatSeFallbackAudio.preload = "auto";
+      state.beatSeFallbackAudio.load();
+    }
+  }
+
+  function playBeatSe() {
+    if (state.audioContext && state.beatSeBuffer) {
+      const source = state.audioContext.createBufferSource();
+      const gainNode = state.audioContext.createGain();
+      gainNode.gain.value = 0.85;
+      source.buffer = state.beatSeBuffer;
+      source.connect(gainNode);
+      gainNode.connect(state.audioContext.destination);
+      source.start();
+      return;
+    }
+    if (state.beatSeFallbackAudio) {
+      const oneShot = state.beatSeFallbackAudio.cloneNode();
+      oneShot.volume = 0.85;
+      oneShot.play().catch(() => {});
+    }
+  }
+
   function getCurrentPlaybackSeconds() {
     if (!state.isPlaying || !state.audioContext) return state.playbackOffsetSeconds;
     const elapsed = state.audioContext.currentTime - state.playbackStartAudioTime;
@@ -71,6 +105,8 @@
 
   window.BeatEditorAudio = {
     ensureAudioContext,
+    ensureBeatSeLoaded,
+    playBeatSe,
     startPlayback,
     stopPlayback,
     getCurrentPlaybackSeconds,

@@ -21,6 +21,9 @@
     playbackStartPerfMs: 0,
     playbackOffsetSeconds: 0,
     rafId: 0,
+    isBeatSeEnabled: true,
+    beatSeBuffer: null,
+    beatSeFallbackAudio: null,
     isDraggingBeat: false,
     dragBeatIndex: -1,
     dragSelectionIndices: [],
@@ -86,7 +89,7 @@
     state.selectedBeatIndex = -1;
   }
 
-  function buildManualNearestAssignments(maxDelta = 0.2) {
+  function buildManualNearestAssignments() {
     const assignments = [];
     if (!state.beats.length || !state.manualBeats.length) return assignments;
     const minRel = state.assignmentMinRelative ?? -0.5;
@@ -101,22 +104,19 @@
         const prevBeat = i > 0 ? state.beats[i - 1] : null;
         const nextBeat = i < state.beats.length - 1 ? state.beats[i + 1] : null;
         const diff = Math.abs(manual - beat);
-        if (diff > maxDelta) continue;
 
         let rel;
         if (manual < beat) {
-          if (prevBeat == null) continue;
-          const span = beat - prevBeat;
+          const span = prevBeat != null ? (beat - prevBeat) : (nextBeat != null ? (nextBeat - beat) : 0);
           if (span <= 0) continue;
           rel = (manual - beat) / span; // prev=-1, beat=0
         } else {
-          if (nextBeat == null) continue;
-          const span = nextBeat - beat;
+          const span = nextBeat != null ? (nextBeat - beat) : (prevBeat != null ? (beat - prevBeat) : 0);
           if (span <= 0) continue;
           rel = (manual - beat) / span; // beat=0, next=1
         }
 
-        if (rel < minRel || rel >= maxRel) continue;
+        if (rel < minRel || rel > maxRel) continue;
 
         // 1つの手打ち点に対して、最も近い1ビートだけを採用する
         if (!best || diff < best.diff) {
