@@ -7,10 +7,14 @@ namespace Alice {
     }
 
     public class LoadingOverlayService : ILoadingOverlayService {
+        const float ContinuousHideGraceSeconds = 0.15f;
+
         readonly LoadingView loadingView;
         int activeRequestCount;
-        int version;
+        int stateVersion;
         bool isVisible;
+        float accumulatedActiveSeconds;
+        float activeSegmentStartTime = -1f;
 
         public LoadingOverlayService(LoadingView loadingView) {
             this.loadingView = loadingView;
@@ -18,19 +22,23 @@ namespace Alice {
 
         public IDisposable Begin() {
             activeRequestCount += 1;
-            version += 1;
-            var beginVersion = version;
-            _ = ShowIfNeededAfterDelayAsync(beginVersion);
-            return new Scope(this, beginVersion);
+            if (activeRequestCount == 1) {
+                activeSegmentStartTime = Time.realtimeSinceStartup;
+                stateVersion += 1;
+                var beginVersion = stateVersion;
+                _ = ShowIfNeededAfterDelayAsync(beginVersion);
+            }
+
+            return new Scope(this);
         }
 
         async Awaitable ShowIfNeededAfterDelayAsync(int beginVersion) {
-            var showDelaySeconds = loadingView.ShowDelaySeconds;
-            if (showDelaySeconds > 0f) {
-                await Awaitable.WaitForSecondsAsync(showDelaySeconds);
+            var remainingSeconds = loadingView.ShowDelaySeconds - GetContinuousLoadingSeconds();
+            if (remainingSeconds > 0f) {
+                await WaitForSecondsRealtimeAsync(remainingSeconds);
             }
 
-            if (activeRequestCount <= 0 || beginVersion != version || isVisible) {
+            if (activeRequestCount <= 0 || beginVersion != stateVersion || isVisible) {
                 return;
             }
 
@@ -38,7 +46,7 @@ namespace Alice {
             await loadingView.ShowAsync();
         }
 
-        async Awaitable EndAsync(int beginVersion) {
+        async Awaitable EndAsync() {
             if (activeRequestCount <= 0) {
                 return;
             }
@@ -48,7 +56,15 @@ namespace Alice {
                 return;
             }
 
-            version = beginVersion + 1;
+            AccumulateCurrentSegment();
+            stateVersion += 1;
+            var endVersion = stateVersion;
+            await WaitForSecondsRealtimeAsync(ContinuousHideGraceSeconds);
+            if (activeRequestCount > 0 || endVersion != stateVersion) {
+                return;
+            }
+
+            accumulatedActiveSeconds = 0f;
             if (!isVisible) {
                 return;
             }
@@ -57,14 +73,40 @@ namespace Alice {
             await loadingView.HideAsync();
         }
 
+        float GetContinuousLoadingSeconds() {
+            if (activeRequestCount <= 0 || activeSegmentStartTime < 0f) {
+                return accumulatedActiveSeconds;
+            }
+
+            return accumulatedActiveSeconds + (Time.realtimeSinceStartup - activeSegmentStartTime);
+        }
+
+        void AccumulateCurrentSegment() {
+            if (activeSegmentStartTime < 0f) {
+                return;
+            }
+
+            accumulatedActiveSeconds += Time.realtimeSinceStartup - activeSegmentStartTime;
+            activeSegmentStartTime = -1f;
+        }
+
+        static async Awaitable WaitForSecondsRealtimeAsync(float seconds) {
+            if (seconds <= 0f) {
+                return;
+            }
+
+            var endTime = Time.realtimeSinceStartup + seconds;
+            while (Time.realtimeSinceStartup < endTime) {
+                await Awaitable.NextFrameAsync();
+            }
+        }
+
         sealed class Scope : IDisposable {
             readonly LoadingOverlayService owner;
-            readonly int beginVersion;
             bool disposed;
 
-            public Scope(LoadingOverlayService owner, int beginVersion) {
+            public Scope(LoadingOverlayService owner) {
                 this.owner = owner;
-                this.beginVersion = beginVersion;
             }
 
             public void Dispose() {
@@ -73,7 +115,7 @@ namespace Alice {
                 }
 
                 disposed = true;
-                _ = owner.EndAsync(beginVersion);
+                _ = owner.EndAsync();
             }
         }
     }
