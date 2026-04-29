@@ -35,6 +35,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 62df61faddbdc4059b98c3473fcf6704
+    m_Address: Assets/Project/BGM/Fighter Street.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7ae048916dd31451c97320d14bc258bb
+    m_Address: Assets/Project/BGM/Beat Striker on Stage (1).mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 829be4a497a76e2488b2d07ea5cb28b4
     m_Address: Assets/Project/Strikers/LargeHero/Hero.prefab
     m_ReadOnly: 0
@@ -45,8 +55,33 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 908af2efd514d47f29e3778b8b3c4212
+    m_Address: Assets/Project/BGM/Beat Striker on Fire.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9f0bcf4c529b4943a076f1bf1c76272
+    m_Address: "Assets/Project/BGM/\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA.mp3"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bcf70a7e0b8a0445abcf445e1b0db6f6
+    m_Address: Assets/Project/BGM/Tick.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c4266cde834724c9585aa2641c14dcf4
+    m_Address: Assets/Project/BGM/Beat Striker on Cutie Street.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ecee9c48169c8dc428a6839126804337
     m_Address: Assets/Project/Strikers/LargeWizard/Wizard 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f0ccdeecb29834594aaaedff23a87e96
+    m_Address: Assets/Project/BGM/CodeOnTheBeat.mp3
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

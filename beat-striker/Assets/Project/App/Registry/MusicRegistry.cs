@@ -63,21 +63,29 @@ namespace Alice {
         [TextArea]
         public string Description;
         public AssetReferenceT<AudioClip> AudioClipReference;
+        public AssetReferenceT<AudioClip> PreviewAudioClipReference;
         public AssetReferenceT<TextAsset> SpectrumDataReference;
-        public AssetReferenceT<TextAsset> BeatDataReference;
+        public TextAsset BeatData;
+        [Min(0)]
+        public int PrecomputedBpm;
+        [Min(0f)]
+        public float PrecomputedLengthSeconds;
     }
 
     public record MusicInfo(
         string Id,
         string DisplayName,
         string Composer,
-        string Description);
+        string Description,
+        int Bpm,
+        float LengthSeconds);
 
     public interface IMusicRegistry {
         MusicInfo Default { get; }
         MusicInfo GetById(string id);
         IReadOnlyList<MusicInfo> GetAll();
         Awaitable<LoadedAsset<AudioClip>> LoadAudioClipAsync(string id);
+        Awaitable<LoadedAsset<AudioClip>> LoadPreviewAudioClipAsync(string id);
         Awaitable<LoadedAsset<TextAsset>> LoadSpectrumDataAsync(string id);
         Awaitable<LoadedAsset<TextAsset>> LoadBeatDataAsync(string id);
     }
@@ -118,6 +126,19 @@ namespace Alice {
             return await LoadAssetAsync<AudioClip>(entry.AudioClipReference);
         }
 
+        public async Awaitable<LoadedAsset<AudioClip>> LoadPreviewAudioClipAsync(string id) {
+            EnsureInitialized();
+            if (!entryById.TryGetValue(id, out var entry)) {
+                return LoadedAsset<AudioClip>.Empty();
+            }
+
+            if (entry.PreviewAudioClipReference != null && entry.PreviewAudioClipReference.RuntimeKeyIsValid()) {
+                return await LoadAssetAsync<AudioClip>(entry.PreviewAudioClipReference);
+            }
+
+            return await LoadAssetAsync<AudioClip>(entry.AudioClipReference);
+        }
+
         public async Awaitable<LoadedAsset<TextAsset>> LoadSpectrumDataAsync(string id) {
             EnsureInitialized();
             if (!entryById.TryGetValue(id, out var entry)) {
@@ -127,14 +148,16 @@ namespace Alice {
             return await LoadAssetAsync<TextAsset>(entry.SpectrumDataReference);
         }
 
+#pragma warning disable CS1998
         public async Awaitable<LoadedAsset<TextAsset>> LoadBeatDataAsync(string id) {
             EnsureInitialized();
-            if (!entryById.TryGetValue(id, out var entry)) {
+            if (!entryById.TryGetValue(id, out var entry) || entry.BeatData == null) {
                 return LoadedAsset<TextAsset>.Empty();
             }
 
-            return await LoadAssetAsync<TextAsset>(entry.BeatDataReference);
+            return new LoadedAsset<TextAsset>(entry.BeatData);
         }
+#pragma warning restore CS1998
 
         void EnsureInitialized() {
             if (isInitialized) {
@@ -149,7 +172,9 @@ namespace Alice {
                     entry.Id,
                     entry.DisplayName,
                     entry.Composer,
-                    entry.Description);
+                    entry.Description,
+                    entry.PrecomputedBpm,
+                    entry.PrecomputedLengthSeconds);
                 musicById[music.Id] = music;
                 entryById[music.Id] = entry;
                 allMusic.Add(music);

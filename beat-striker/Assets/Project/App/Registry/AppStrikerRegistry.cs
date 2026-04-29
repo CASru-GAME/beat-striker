@@ -15,6 +15,9 @@ namespace Alice {
         public LoadedAsset(T asset, AsyncOperationHandle<T> handle) : this(asset, handle, true) {
         }
 
+        public LoadedAsset(T asset) : this(asset, default, false) {
+        }
+
         LoadedAsset(T asset, AsyncOperationHandle<T> handle, bool hasHandle) {
             Asset = asset;
             this.handle = handle;

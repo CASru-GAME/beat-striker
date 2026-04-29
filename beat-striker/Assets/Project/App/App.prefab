@@ -1969,18 +1969,21 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+    PreviewAudioClipReference:
+      m_AssetGUID: 32d6848f8c8024cbbbcd472e1316353a
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
     SpectrumDataReference:
-      m_AssetGUID: 32210dcf28d47fd4aacb109550ccb125
+      m_AssetGUID: 37edaeaa18d484c5b9fa156f40f7d342
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
-    BeatDataReference:
-      m_AssetGUID: ae05ca4b13d8142cdbb2e337d530630f
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
+    BeatData: {fileID: 4900000, guid: ae05ca4b13d8142cdbb2e337d530630f, type: 3}
+    PrecomputedBpm: 150
+    PrecomputedLengthSeconds: 196.056
   - Id: tick
     DisplayName: Tick Tack
     Composer: Suno v5.5
@@ -1991,18 +1994,21 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+    PreviewAudioClipReference:
+      m_AssetGUID: f0f37ff4d3a934cad8e8ab8f03a96a95
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
     SpectrumDataReference:
-      m_AssetGUID: 423b820994d534d81af55bc3e75597c3
+      m_AssetGUID: 2f889c696a6a344f7a312c715c1d8ce5
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
-    BeatDataReference:
-      m_AssetGUID: 71795534d648e42c5aa690cea2adc2f8
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
+    BeatData: {fileID: 4900000, guid: 71795534d648e42c5aa690cea2adc2f8, type: 3}
+    PrecomputedBpm: 136
+    PrecomputedLengthSeconds: 190.27592
   - Id: Beat Striker on Stage
     DisplayName: Beat Striker on Stage
     Composer: Suno v4.5+
@@ -2013,18 +2019,21 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+    PreviewAudioClipReference:
+      m_AssetGUID: 24849911fd8f74e3a912be96c87c672a
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
     SpectrumDataReference:
-      m_AssetGUID: 19cb94a5ff1b7f243b41c9d42220e510
+      m_AssetGUID: 2a1d17b938f2e486daae0483934e2e87
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
-    BeatDataReference:
-      m_AssetGUID: 6cf97a3e927d14b168b6e2b39c841466
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
+    BeatData: {fileID: 4900000, guid: 6cf97a3e927d14b168b6e2b39c841466, type: 3}
+    PrecomputedBpm: 128
+    PrecomputedLengthSeconds: 189.408
   - Id: code
     DisplayName: Code on the Beat
     Composer: Suno v5.5
@@ -2035,18 +2044,21 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+    PreviewAudioClipReference:
+      m_AssetGUID: 14c5f297ac47a4517bae807f7cadff16
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
     SpectrumDataReference:
-      m_AssetGUID: 40c1247d2fc644a4287c268b3160950c
+      m_AssetGUID: 1666c2719ce6e4d7e97532555cb4d21a
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
-    BeatDataReference:
-      m_AssetGUID: f99f291578c4e4be89b16db2720d2293
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
+    BeatData: {fileID: 4900000, guid: f99f291578c4e4be89b16db2720d2293, type: 3}
+    PrecomputedBpm: 108
+    PrecomputedLengthSeconds: 123.624
   - Id: cutie-street
     DisplayName: Beat Striker on Cutie Street
     Composer: Suno v4.5+
@@ -2057,18 +2069,21 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+    PreviewAudioClipReference:
+      m_AssetGUID: 2ed85984d4cdf4affa3860c2d181ddf7
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
     SpectrumDataReference:
-      m_AssetGUID: 3f6a662ccaa5346ae86f5ac7bb709c39
+      m_AssetGUID: a557d21199be74f6cbf9ef91666e4e0a
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
-    BeatDataReference:
-      m_AssetGUID: b7412a065a00046f4a5bfbf902d1bed7
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
+    BeatData: {fileID: 4900000, guid: b7412a065a00046f4a5bfbf902d1bed7, type: 3}
+    PrecomputedBpm: 110
+    PrecomputedLengthSeconds: 157.224
   - Id: fire
     DisplayName: Beat Striker on Fire
     Composer: Suno v4.5+
@@ -2079,18 +2094,21 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+    PreviewAudioClipReference:
+      m_AssetGUID: b5674d6b077e34266ae6358bed352b92
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
     SpectrumDataReference:
-      m_AssetGUID: 5398030452e0a4c618af21947097729e
+      m_AssetGUID: 5569a20f69e754c5281bbc03aadbe4cd
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
-    BeatDataReference:
-      m_AssetGUID: 5595f80bf3fde49f2959315a8faf12d1
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
+    BeatData: {fileID: 4900000, guid: 5595f80bf3fde49f2959315a8faf12d1, type: 3}
+    PrecomputedBpm: 109
+    PrecomputedLengthSeconds: 256.968
   - Id: sento
     DisplayName: "\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA"
     Composer: Azuno
@@ -2101,18 +2119,21 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+    PreviewAudioClipReference:
+      m_AssetGUID: f21d840c7e7f0426b9018f44fd68a949
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
     SpectrumDataReference:
-      m_AssetGUID: 5a14db5d051ccf7448ffdc129b4a7476
+      m_AssetGUID: 8f1438f5010d848c5b0497ca811f22c6
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
-    BeatDataReference:
-      m_AssetGUID: dacc99fbf686e4339b3f1ffa4b1d2e0e
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
+    BeatData: {fileID: 4900000, guid: dacc99fbf686e4339b3f1ffa4b1d2e0e, type: 3}
+    PrecomputedBpm: 110
+    PrecomputedLengthSeconds: 43.702858
 --- !u!114 &8416357320802876425
 MonoBehaviour:
   m_ObjectHideFlags: 0

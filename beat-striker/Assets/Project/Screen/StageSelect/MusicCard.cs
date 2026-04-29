@@ -21,7 +21,6 @@ public class MusicCard : MonoBehaviour {
     private bool isPreviewEnabled;
     LoadedAsset<AudioClip> previewClipAsset;
     LoadedAsset<TextAsset> spectrumAsset;
-    LoadedAsset<TextAsset> beatDataAsset;
     readonly Subject<MusicInfo> musicSelected = new();
     int loadVersion;
     int loadingVersion = -1;
@@ -98,7 +97,7 @@ public class MusicCard : MonoBehaviour {
         currentMusic = music;
         this.musicRegistry = musicRegistry;
         title.text = music.DisplayName;
-        description.text = $"Composer: {music.Composer}\nBPM: Loading...\nLength: 0:00\n{music.Description}";
+        description.text = $"Composer: {music.Composer}\nBPM: {music.Bpm}\nLength: {FormatLength(music.LengthSeconds)}\n{music.Description}";
         var version = loadVersion;
         await LoadMusicAssetsAndRefreshDescriptionAsync(version);
         if (version != loadVersion || currentMusic != music) {
@@ -148,13 +147,16 @@ public class MusicCard : MonoBehaviour {
 
     async Awaitable<int> LoadMusicAssetsAndRefreshDescriptionAsync(int version) {
         var music = currentMusic;
-        var bpm = await LoadMusicAssetsAsync(version);
+        await LoadMusicAssetsAsync(version);
         if (version != loadVersion || currentMusic != music || music == null) {
             return 0;
         }
 
-        description.text = $"Composer: {music.Composer}\nBPM: {bpm}\nLength: {FormatLength(audioSource.clip != null ? audioSource.clip.length : 0f)}\n{music.Description}";
-        return bpm;
+        var lengthSeconds = music.LengthSeconds > 0f
+            ? music.LengthSeconds
+            : (audioSource.clip != null ? audioSource.clip.length : 0f);
+        description.text = $"Composer: {music.Composer}\nBPM: {music.Bpm}\nLength: {FormatLength(lengthSeconds)}\n{music.Description}";
+        return music.Bpm;
     }
 
     async Awaitable<int> LoadMusicAssetsAsync(int version) {
@@ -169,7 +171,7 @@ public class MusicCard : MonoBehaviour {
         loadingVersion = version;
         var music = currentMusic;
         try {
-            var loadedPreviewClipAsset = await musicRegistry.LoadAudioClipAsync(music.Id);
+            var loadedPreviewClipAsset = await musicRegistry.LoadPreviewAudioClipAsync(music.Id);
             if (version != loadVersion || currentMusic != music) {
                 loadedPreviewClipAsset.Dispose();
                 return 0;
@@ -184,22 +186,13 @@ public class MusicCard : MonoBehaviour {
                 return 0;
             }
 
-            var loadedBeatDataAsset = await musicRegistry.LoadBeatDataAsync(music.Id);
-            if (version != loadVersion || currentMusic != music) {
-                loadedPreviewClipAsset.Dispose();
-                loadedSpectrumAsset?.Dispose();
-                loadedBeatDataAsset.Dispose();
-                return 0;
-            }
-
             previewClipAsset = loadedPreviewClipAsset;
             audioSource.clip = previewClipAsset.Asset;
             if (audioSpectrum != null) {
                 spectrumAsset = loadedSpectrumAsset;
                 audioSpectrum.SetBakedSpectrumText(spectrumAsset != null ? spectrumAsset.Asset : null);
             }
-            beatDataAsset = loadedBeatDataAsset;
-            return BeatDataParser.CalculateBpm(beatDataAsset.Asset);
+            return music.Bpm;
         }
         finally {
             if (loadingVersion == version) {
@@ -218,7 +211,5 @@ public class MusicCard : MonoBehaviour {
         previewClipAsset = null;
         spectrumAsset?.Dispose();
         spectrumAsset = null;
-        beatDataAsset?.Dispose();
-        beatDataAsset = null;
     }
 }
