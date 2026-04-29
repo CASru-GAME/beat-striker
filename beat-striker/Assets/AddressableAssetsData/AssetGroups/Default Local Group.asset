@@ -60,8 +60,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 930ae6e4c115e4974a914763c85fc47b
+    m_Address: Assets/Project/BGM/Discotheque.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a9f0bcf4c529b4943a076f1bf1c76272
     m_Address: "Assets/Project/BGM/\u6226\u95D8\u3063\u307D\u3044\u97F3\u697DA.mp3"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b3c070c68429e40bcb08333da8695444
+    m_Address: Assets/Project/BGM/Infinity_cut_90sec.mp3
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

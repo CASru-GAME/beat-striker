@@ -1985,6 +1985,31 @@ MonoBehaviour:
     BeatData: {fileID: 4900000, guid: ae05ca4b13d8142cdbb2e337d530630f, type: 3}
     PrecomputedBpm: 150
     PrecomputedLengthSeconds: 196.056
+  - Id: Infinity
+    DisplayName: Infinity
+    Composer: RockCapers
+    Description: 
+    AudioClipReference:
+      m_AssetGUID: b3c070c68429e40bcb08333da8695444
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    PreviewAudioClipReference:
+      m_AssetGUID: c23d54cbbb57f4c4aaa0d039704235f9
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    SpectrumDataReference:
+      m_AssetGUID: 766467f21fd024c7bb038ce9f78c250e
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    BeatData: {fileID: 4900000, guid: ac91dde6e61024ffb898a5b7e68ccd18, type: 3}
+    PrecomputedBpm: 150
+    PrecomputedLengthSeconds: 89.928
   - Id: tick
     DisplayName: Tick Tack
     Composer: Suno v5.5
@@ -2008,8 +2033,33 @@ MonoBehaviour:
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     BeatData: {fileID: 4900000, guid: 71795534d648e42c5aa690cea2adc2f8, type: 3}
-    PrecomputedBpm: 136
+    PrecomputedBpm: 137
     PrecomputedLengthSeconds: 190.27592
+  - Id: Discotheque
+    DisplayName: Discotheque
+    Composer: "FLASH\u2606BEAT"
+    Description: 
+    AudioClipReference:
+      m_AssetGUID: 930ae6e4c115e4974a914763c85fc47b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    PreviewAudioClipReference:
+      m_AssetGUID: 365395780739c47c082aadb1c16ab1f2
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    SpectrumDataReference:
+      m_AssetGUID: b2bfdb1b0907345eb9adcae0fb33a048
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    BeatData: {fileID: 4900000, guid: bfc73803f51514cd5b1564529482eb10, type: 3}
+    PrecomputedBpm: 130
+    PrecomputedLengthSeconds: 200.07184
   - Id: Beat Striker on Stage
     DisplayName: Beat Striker on Stage
     Composer: Suno v4.5+
