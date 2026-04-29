@@ -29,7 +29,7 @@ namespace Alice {
         [Header("Beat Judge Audio")]
         [SerializeField] AudioClip judgeSuccessSound;
         [SerializeField] AudioClip judgeMissSound;
-        [SerializeField] AudioClip roundWinTrophySound;
+        [SerializeField] AudioClip roundWinTrophySound, roundWinTrophySubSound;
 
         [Header("Round Win Trophy")]
         [Tooltip("ラウンド勝利トロフィーを生成する親RectTransform。Canvas配下を指定し、表示順や座標系を統一することで中央演出と左右整列の配置ズレを防ぎます。")]
@@ -133,6 +133,10 @@ namespace Alice {
         public void PlayRoundWinTrophySound() {
             if (roundWinTrophySound) {
                 roundWinTrophySound.PlayAtApp(Vector3.zero);
+            }
+
+            if (roundWinTrophySubSound) {
+                roundWinTrophySubSound.PlayAtApp(Vector3.zero);
             }
         }
 

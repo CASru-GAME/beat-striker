@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using VContainer;
 
 namespace Alice {
     public sealed class LoadedAsset<T> : IDisposable where T : UnityEngine.Object {
@@ -62,6 +63,8 @@ namespace Alice {
 
     public class AppStrikerRegistry : MonoBehaviour, IAppStrikerRegistry {
         [SerializeField] AppStrikerEntry[] strikerEntries;
+        [SerializeField, Min(0f)] float debugLoadDelaySeconds;
+        ILoadingOverlayService loadingOverlayService;
 
         readonly Dictionary<Striker, StrikerInfo> strikerByType = new Dictionary<Striker, StrikerInfo>();
         readonly Dictionary<Striker, AppStrikerEntry> entryByType = new Dictionary<Striker, AppStrikerEntry>();
@@ -69,6 +72,11 @@ namespace Alice {
 
         bool isInitialized;
         StrikerInfo defaultStriker;
+
+        [Inject]
+        public void Construct(ILoadingOverlayService loadingOverlayService) {
+            this.loadingOverlayService = loadingOverlayService;
+        }
 
         public StrikerInfo Default {
             get {
@@ -93,7 +101,8 @@ namespace Alice {
                 return LoadedAsset<GameObject>.Empty();
             }
 
-            return await LoadAssetAsync<GameObject>(entry.PrefabReference);
+            using var scope = loadingOverlayService.Begin();
+            return await LoadAssetAsync<GameObject>(entry.PrefabReference, debugLoadDelaySeconds);
         }
 
         public async Awaitable<LoadedAsset<GameObject>> LoadPreviewModelAsync(Striker striker) {
@@ -102,7 +111,8 @@ namespace Alice {
                 return LoadedAsset<GameObject>.Empty();
             }
 
-            return await LoadAssetAsync<GameObject>(entry.PreviewModelReference);
+            using var scope = loadingOverlayService.Begin();
+            return await LoadAssetAsync<GameObject>(entry.PreviewModelReference, debugLoadDelaySeconds);
         }
 
         void EnsureInitialized() {
@@ -124,9 +134,13 @@ namespace Alice {
             isInitialized = true;
         }
 
-        static async Awaitable<LoadedAsset<T>> LoadAssetAsync<T>(AssetReferenceT<T> assetReference) where T : UnityEngine.Object {
+        async Awaitable<LoadedAsset<T>> LoadAssetAsync<T>(AssetReferenceT<T> assetReference, float loadDelaySeconds) where T : UnityEngine.Object {
             if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
                 return LoadedAsset<T>.Empty();
+            }
+
+            if (loadDelaySeconds > 0f) {
+                await Awaitable.WaitForSecondsAsync(loadDelaySeconds);
             }
 
             var handle = Addressables.LoadAssetAsync<T>(assetReference);

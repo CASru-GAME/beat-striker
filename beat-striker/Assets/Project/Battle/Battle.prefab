@@ -400,6 +400,7 @@ MonoBehaviour:
   judgeSuccessSound: {fileID: 8300000, guid: c49be10f61ded45af97b58e7b2aa2476, type: 3}
   judgeMissSound: {fileID: 8300000, guid: 63d68b446e452af4a8a4608dd9771d89, type: 3}
   roundWinTrophySound: {fileID: 8300000, guid: 9a1d28e383d59ed469a73f14fd1f5099, type: 3}
+  roundWinTrophySubSound: {fileID: 0}
   roundWinTrophyRoot: {fileID: 2840832735964313971}
   roundWinTrophyPrefab: {fileID: 6490848533440560377, guid: 8216b6d1f659b4362999a7e99efdb771, type: 3}
   roundWinTrophyCenterAnchor: {fileID: 2840832735964313971}
@@ -14313,7 +14314,7 @@ MonoBehaviour:
   battleStartText: {fileID: 7117598716367936400}
   roundNumberText: {fileID: 6992997161171841534}
   roundNumberCanvasGroup: {fileID: 7591765555252197459}
-  roundSound: {fileID: 0}
+  roundSound: {fileID: 8300000, guid: 095b0d7cfe5e88244820b51f28719fa8, type: 3}
   fightSound: {fileID: 8300000, guid: 08295c655501b33458fcb85e8882ecbd, type: 3}
   roundVoiceSounds:
   - {fileID: 8300000, guid: e5bcffb4a231f49ea8a93aa7f2a11c06, type: 3}

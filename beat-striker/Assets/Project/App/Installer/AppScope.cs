@@ -1,5 +1,3 @@
-
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using VContainer;
@@ -33,6 +31,7 @@ namespace Alice {
 		[SerializeField] AISetting aiSetting;
 		[SerializeField] AppUISetting appUiSetting;
 		[SerializeField] VirtualTouchControllerCanvasView virtualTouchControllerCanvasView;
+		[SerializeField] LoadingView loadingView;
 
 		public IAppAudioPlayer AppAudioPlayer => appAudioPlayer;
 
@@ -74,8 +73,8 @@ namespace Alice {
 			Debug.Log($"{LOG_PREFIX} Configure begin. scene={gameObject.scene.name}");
 			builder.RegisterInstance<IStageRegistry>(stageRegistry);
 			builder.RegisterInstance<IScreenRegistry>(screenRegistry);
-			builder.RegisterInstance<IMusicRegistry>(musicRegistry);
-			builder.RegisterInstance<IAppStrikerRegistry>(strikerRegistry);
+			builder.RegisterComponent(musicRegistry).As<IMusicRegistry>();
+			builder.RegisterComponent(strikerRegistry).As<IAppStrikerRegistry>();
 			builder.RegisterInstance<IBattleSelectSetting>(battleSelectSetting);
 			builder.RegisterInstance<IPlayerSelectSetting>(playerSelectSetting);
 			builder.RegisterInstance<ITutorialSetting>(tutorialSetting);
@@ -91,6 +90,8 @@ namespace Alice {
 			builder.RegisterInstance<IAISetting>(aiSetting);
 			builder.RegisterInstance<IAppUISetting>(appUiSetting);
 			builder.RegisterInstance(virtualTouchControllerCanvasView);
+			builder.RegisterComponent(loadingView);
+			builder.Register<ILoadingOverlayService, LoadingOverlayService>(Lifetime.Singleton);
 			builder.Register<ISceneLoader, SceneLoader>(Lifetime.Singleton);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
 
@@ -119,6 +120,7 @@ namespace Alice {
 				_ = container.Resolve<IAISetting>();
 				_ = container.Resolve<IAppUISetting>();
 				_ = container.Resolve<VirtualTouchControllerCanvasView>();
+				_ = container.Resolve<ILoadingOverlayService>();
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
 				_ = container.Resolve<ICursorDeployer>();

@@ -5,6 +5,18 @@ using TMPro;
 using Alice;
 using Core;
 
+namespace Alice {
+    public sealed class MusicCardAddressableAssets {
+        public LoadedAsset<AudioClip> PreviewClipAsset { get; }
+        public LoadedAsset<TextAsset> SpectrumAsset { get; }
+
+        public MusicCardAddressableAssets(LoadedAsset<AudioClip> previewClipAsset, LoadedAsset<TextAsset> spectrumAsset) {
+            PreviewClipAsset = previewClipAsset;
+            SpectrumAsset = spectrumAsset;
+        }
+    }
+}
+
 [RequireComponent(typeof(AudioSource))]
 public class MusicCard : MonoBehaviour {
     AudioSource audioSource;
@@ -17,13 +29,9 @@ public class MusicCard : MonoBehaviour {
     [SerializeField] float fadeOutSeconds = 0.3f;
     private Vector3 originalScale;
     private MusicInfo currentMusic;
-    private IMusicRegistry musicRegistry;
     private bool isPreviewEnabled;
-    LoadedAsset<AudioClip> previewClipAsset;
-    LoadedAsset<TextAsset> spectrumAsset;
+    MusicCardAddressableAssets addressableAssets;
     readonly Subject<MusicInfo> musicSelected = new();
-    int loadVersion;
-    int loadingVersion = -1;
 
     public Observable<MusicInfo> OnMusicSelected => musicSelected;
 
@@ -90,19 +98,18 @@ public class MusicCard : MonoBehaviour {
         audioSource.volume = previewVolume * Mathf.Min(fadeIn, fadeOut);
     }
 
-    public async void SetMusic(MusicInfo music, IMusicRegistry musicRegistry) {
+    public void SetMusic(MusicInfo music, MusicCardAddressableAssets addressableAssets) {
         CacheComponents();
-        ReleaseLoadedAssets();
+        ClearLoadedAssetReferences();
         audioSource.Stop();
         currentMusic = music;
-        this.musicRegistry = musicRegistry;
+        this.addressableAssets = addressableAssets;
         title.text = music.DisplayName;
-        description.text = $"Composer: {music.Composer}\nBPM: {music.Bpm}\nLength: {FormatLength(music.LengthSeconds)}\n{music.Description}";
-        var version = loadVersion;
-        await LoadMusicAssetsAndRefreshDescriptionAsync(version);
-        if (version != loadVersion || currentMusic != music) {
-            return;
-        }
+        ApplyLoadedAssets();
+        var lengthSeconds = music.LengthSeconds > 0f
+            ? music.LengthSeconds
+            : (audioSource.clip != null ? audioSource.clip.length : 0f);
+        description.text = $"Composer: {music.Composer}\nBPM: {music.Bpm}\nLength: {FormatLength(lengthSeconds)}\n{music.Description}";
         if (audioSource.clip == null) {
             return;
         }
@@ -124,13 +131,16 @@ public class MusicCard : MonoBehaviour {
 
     public void SetPreviewEnabled(bool enabled) {
         isPreviewEnabled = enabled;
-        if (isPreviewEnabled && currentMusic != null && musicRegistry != null && audioSource.clip == null && loadingVersion != loadVersion) {
-            _ = LoadMusicAssetsAndRefreshDescriptionAsync(loadVersion);
-        }
         if (!isPreviewEnabled) {
             audioSource.Stop();
             audioSource.volume = 0f;
-            ReleaseLoadedAssets();
+            return;
+        }
+
+        if (audioSource.clip != null && !audioSource.isPlaying) {
+            audioSource.time = 0f;
+            audioSource.volume = 0f;
+            audioSource.Play();
         }
     }
 
@@ -138,78 +148,28 @@ public class MusicCard : MonoBehaviour {
         isPreviewEnabled = false;
         audioSource.Stop();
         audioSource.volume = 0f;
-        ReleaseLoadedAssets();
     }
 
     void OnDestroy() {
-        ReleaseLoadedAssets();
+        ClearLoadedAssetReferences();
     }
 
-    async Awaitable<int> LoadMusicAssetsAndRefreshDescriptionAsync(int version) {
-        var music = currentMusic;
-        await LoadMusicAssetsAsync(version);
-        if (version != loadVersion || currentMusic != music || music == null) {
-            return 0;
-        }
-
-        var lengthSeconds = music.LengthSeconds > 0f
-            ? music.LengthSeconds
-            : (audioSource.clip != null ? audioSource.clip.length : 0f);
-        description.text = $"Composer: {music.Composer}\nBPM: {music.Bpm}\nLength: {FormatLength(lengthSeconds)}\n{music.Description}";
-        return music.Bpm;
-    }
-
-    async Awaitable<int> LoadMusicAssetsAsync(int version) {
-        if (currentMusic == null || musicRegistry == null) {
-            return 0;
-        }
-
-        if (loadingVersion == version) {
-            return 0;
-        }
-
-        loadingVersion = version;
-        var music = currentMusic;
-        try {
-            var loadedPreviewClipAsset = await musicRegistry.LoadPreviewAudioClipAsync(music.Id);
-            if (version != loadVersion || currentMusic != music) {
-                loadedPreviewClipAsset.Dispose();
-                return 0;
-            }
-
-            var loadedSpectrumAsset = audioSpectrum != null
-                ? await musicRegistry.LoadSpectrumDataAsync(music.Id)
-                : null;
-            if (version != loadVersion || currentMusic != music) {
-                loadedPreviewClipAsset.Dispose();
-                loadedSpectrumAsset?.Dispose();
-                return 0;
-            }
-
-            previewClipAsset = loadedPreviewClipAsset;
-            audioSource.clip = previewClipAsset.Asset;
-            if (audioSpectrum != null) {
-                spectrumAsset = loadedSpectrumAsset;
-                audioSpectrum.SetBakedSpectrumText(spectrumAsset != null ? spectrumAsset.Asset : null);
-            }
-            return music.Bpm;
-        }
-        finally {
-            if (loadingVersion == version) {
-                loadingVersion = -1;
-            }
+    void ApplyLoadedAssets() {
+        audioSource.clip = addressableAssets?.PreviewClipAsset?.Asset;
+        if (audioSpectrum != null) {
+            audioSpectrum.SetBakedSpectrumText(addressableAssets?.SpectrumAsset?.Asset);
         }
     }
 
-    void ReleaseLoadedAssets() {
-        loadVersion++;
+    void ClearLoadedAssetReferences() {
         if (audioSource != null) {
             audioSource.clip = null;
         }
 
-        previewClipAsset?.Dispose();
-        previewClipAsset = null;
-        spectrumAsset?.Dispose();
-        spectrumAsset = null;
+        if (audioSpectrum != null) {
+            audioSpectrum.SetBakedSpectrumText(null);
+        }
+
+        addressableAssets = null;
     }
 }

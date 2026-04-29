@@ -14,6 +14,7 @@ namespace Alice {
         Task PlayRoundEndTransitionAsync();
         Task PlayRoundResumeTransitionAsync();
         Task PlayBattleEndingAsync(CorePlayerId winner);
+        Task PlayBattleFinishFadeOutAsync();
         Task PlayBattleFinishFadeInAsync();
         void PlayInpact(StrikerImpact command);
         void RequestAttention(int playerId, AttentionRequest request);
@@ -196,6 +197,12 @@ namespace Alice {
             finally {
                 isCinematicSkipEnabled = false;
             }
+        }
+
+        public async Task PlayBattleFinishFadeOutAsync() {
+            EnsureStageCameraConfigured();
+            battlePresenterView.StageCamera.PresentBattleFinish();
+            await battlePresenterView.FadePresenter.PresentFadeOutAsync();
         }
 
         public async Task PlayBattleFinishFadeInAsync() {

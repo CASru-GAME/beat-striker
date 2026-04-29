@@ -38,7 +38,6 @@ namespace Alice {
         void ShowRoundText(int roundNumber) {
             roundNumberText.text = $"Round {roundNumber}";
             roundNumberText.gameObject.SetActive(true);
-            PlaySound(roundSound);
             PlayRoundVoice(roundNumber);
 
             roundNumberCanvasGroup.alpha = 0f;
@@ -78,11 +77,13 @@ namespace Alice {
 
         void PlayRoundVoice(int roundNumber) {
             if (roundVoiceSounds == null || roundVoiceSounds.Length == 0) {
+                PlaySound(roundSound);
                 return;
             }
 
             var roundIndex = roundNumber - 1;
             if (roundIndex < 0 || roundIndex >= roundVoiceSounds.Length) {
+                PlaySound(roundSound);
                 return;
             }
 

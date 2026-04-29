@@ -3,6 +3,7 @@ using System.Globalization;
 using UnityEngine.AddressableAssets;
 using UnityEngine;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using VContainer;
 
 namespace Alice {
     public static class BeatDataParser {
@@ -92,6 +93,8 @@ namespace Alice {
 
     public class MusicRegistry : MonoBehaviour, IMusicRegistry {
         [SerializeField] AppMusicEntry[] musicEntries;
+        [SerializeField, Min(0f)] float debugLoadDelaySeconds;
+        ILoadingOverlayService loadingOverlayService;
 
         readonly Dictionary<string, MusicInfo> musicById = new Dictionary<string, MusicInfo>();
         readonly Dictionary<string, AppMusicEntry> entryById = new Dictionary<string, AppMusicEntry>();
@@ -99,6 +102,11 @@ namespace Alice {
 
         bool isInitialized;
         MusicInfo defaultMusic;
+
+        [Inject]
+        public void Construct(ILoadingOverlayService loadingOverlayService) {
+            this.loadingOverlayService = loadingOverlayService;
+        }
 
         public MusicInfo Default {
             get {
@@ -123,7 +131,8 @@ namespace Alice {
                 return LoadedAsset<AudioClip>.Empty();
             }
 
-            return await LoadAssetAsync<AudioClip>(entry.AudioClipReference);
+            using var scope = loadingOverlayService.Begin();
+            return await LoadAssetAsync<AudioClip>(entry.AudioClipReference, debugLoadDelaySeconds);
         }
 
         public async Awaitable<LoadedAsset<AudioClip>> LoadPreviewAudioClipAsync(string id) {
@@ -132,11 +141,12 @@ namespace Alice {
                 return LoadedAsset<AudioClip>.Empty();
             }
 
+            using var scope = loadingOverlayService.Begin();
             if (entry.PreviewAudioClipReference != null && entry.PreviewAudioClipReference.RuntimeKeyIsValid()) {
-                return await LoadAssetAsync<AudioClip>(entry.PreviewAudioClipReference);
+                return await LoadAssetAsync<AudioClip>(entry.PreviewAudioClipReference, debugLoadDelaySeconds);
             }
 
-            return await LoadAssetAsync<AudioClip>(entry.AudioClipReference);
+            return await LoadAssetAsync<AudioClip>(entry.AudioClipReference, debugLoadDelaySeconds);
         }
 
         public async Awaitable<LoadedAsset<TextAsset>> LoadSpectrumDataAsync(string id) {
@@ -145,7 +155,8 @@ namespace Alice {
                 return LoadedAsset<TextAsset>.Empty();
             }
 
-            return await LoadAssetAsync<TextAsset>(entry.SpectrumDataReference);
+            using var scope = loadingOverlayService.Begin();
+            return await LoadAssetAsync<TextAsset>(entry.SpectrumDataReference, debugLoadDelaySeconds);
         }
 
 #pragma warning disable CS1998
@@ -184,9 +195,13 @@ namespace Alice {
             isInitialized = true;
         }
 
-        static async Awaitable<LoadedAsset<T>> LoadAssetAsync<T>(AssetReferenceT<T> assetReference) where T : UnityEngine.Object {
+        async Awaitable<LoadedAsset<T>> LoadAssetAsync<T>(AssetReferenceT<T> assetReference, float loadDelaySeconds) where T : UnityEngine.Object {
             if (assetReference == null || !assetReference.RuntimeKeyIsValid()) {
                 return LoadedAsset<T>.Empty();
+            }
+
+            if (loadDelaySeconds > 0f) {
+                await Awaitable.WaitForSecondsAsync(loadDelaySeconds);
             }
 
             var handle = Addressables.LoadAssetAsync<T>(assetReference);

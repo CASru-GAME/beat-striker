@@ -20,12 +20,15 @@ namespace Alice {
 
     public class SceneLoader : ISceneLoader {
         readonly IScreenRegistry appScreenRegistry;
+        readonly ILoadingOverlayService loadingOverlayService;
 
-        public SceneLoader(IScreenRegistry screenRegistry) {
+        public SceneLoader(IScreenRegistry screenRegistry, ILoadingOverlayService loadingOverlayService) {
             appScreenRegistry = screenRegistry;
+            this.loadingOverlayService = loadingOverlayService;
         }
 
         public async Task LoadAsync(AppScene scene) {
+            using var scope = loadingOverlayService.Begin();
             var sceneName = appScreenRegistry.GetByScene(scene).SceneName;
             if (string.IsNullOrWhiteSpace(sceneName)) {
                 throw new InvalidOperationException($"SceneName is empty for AppScene '{scene}'.");

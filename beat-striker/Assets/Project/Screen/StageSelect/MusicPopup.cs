@@ -67,13 +67,13 @@ public class MusicPopup : MonoBehaviour
         StartCoroutine(ShowWithFadeAndMusicSlide());
     }
 
-    public void Initialize(Stage stage, IReadOnlyList<MusicInfo> musics, IMusicRegistry musicRegistry) {
+    public void Initialize(Stage stage, IReadOnlyList<MusicInfo> musics, IReadOnlyDictionary<string, MusicCardAddressableAssets> preloadedAssetsByMusicId) {
         ApplyStageThumbnail(stage);
-        musicCards.Initialize(musics, musicRegistry);
+        musicCards.Initialize(musics, preloadedAssetsByMusicId);
     }
 
-    public void Initialize(IReadOnlyList<MusicInfo> musics, IMusicRegistry musicRegistry) {
-        musicCards.Initialize(musics, musicRegistry);
+    public void Initialize(IReadOnlyList<MusicInfo> musics, IReadOnlyDictionary<string, MusicCardAddressableAssets> preloadedAssetsByMusicId) {
+        musicCards.Initialize(musics, preloadedAssetsByMusicId);
     }
     
     public void Hide()

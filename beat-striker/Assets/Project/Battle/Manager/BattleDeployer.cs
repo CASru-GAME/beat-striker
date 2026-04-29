@@ -14,8 +14,8 @@ namespace Alice {
     }
 
     public interface IBattleDeployer {
-        Awaitable DeployAsync();
-        Awaitable RedeployForNextRoundAsync();
+        Awaitable DeployAsync(BattleAddressablePreload preload = null);
+        Awaitable RedeployForNextRoundAsync(BattleAddressablePreload preload = null);
         void Undeploy();
         void BeginRoundEpisode(int roundNumber);
         void ConnectRoundInputs();
@@ -40,6 +40,7 @@ namespace Alice {
             public IDisposable AttentionSubscription;
             public IDisposable SpecialRequestFailedSubscription;
             public LoadedAsset<GameObject> PrefabAsset;
+            public bool OwnsPrefabAsset;
         }
 
         class PendingDeployment {
@@ -48,6 +49,7 @@ namespace Alice {
             public Transform PlayerTransform;
             public StrikerInfo SelectedStrikerInfo;
             public LoadedAsset<GameObject> PrefabAsset;
+            public bool OwnsPrefabAsset;
         }
 
         readonly IBattleSetting battleSetting;
@@ -88,20 +90,20 @@ namespace Alice {
             this.battlePresenter = battlePresenter;
         }
 
-        public Awaitable DeployAsync() {
-            return DeployCoreAsync(null);
+        public Awaitable DeployAsync(BattleAddressablePreload preload = null) {
+            return DeployCoreAsync(null, preload);
         }
 
-        public async Awaitable RedeployForNextRoundAsync() {
+        public async Awaitable RedeployForNextRoundAsync(BattleAddressablePreload preload = null) {
             var carriedSpecialPoints = new Dictionary<int, float>();
             foreach (var striker in strikerRegistry.GetAllStrikers()) {
                 carriedSpecialPoints[striker.PlayerId.CurrentValue] = striker.SpecialPoint.CurrentValue;
             }
 
-            await DeployCoreAsync(carriedSpecialPoints);
+            await DeployCoreAsync(carriedSpecialPoints, preload);
         }
 
-        async Awaitable DeployCoreAsync(IReadOnlyDictionary<int, float> initialSpecialPointsByPlayerId) {
+        async Awaitable DeployCoreAsync(IReadOnlyDictionary<int, float> initialSpecialPointsByPlayerId, BattleAddressablePreload preload) {
             isRoundPaused = false;
 
             if (aiSetting.UsesAiSettingStrikerSelection) {
@@ -116,13 +118,17 @@ namespace Alice {
                     ? appStrikerRegistry.Default
                     : appStrikerRegistry.GetByStriker(selectedStriker);
                 selectedStriker = selectedStrikerInfo.BattleStriker;
-                var prefabAsset = await appStrikerRegistry.LoadBattlePrefabAsync(selectedStriker);
+                var ownsPrefabAsset = !TryGetPreloadedBattlePrefab(preload, selectedStriker, out var prefabAsset);
+                if (ownsPrefabAsset) {
+                    prefabAsset = await appStrikerRegistry.LoadBattlePrefabAsync(selectedStriker);
+                }
                 pendingDeployments.Add(new PendingDeployment {
                     PlayerId = playerId,
                     SelectedStriker = selectedStriker,
                     PlayerTransform = playerTransform,
                     SelectedStrikerInfo = selectedStrikerInfo,
                     PrefabAsset = prefabAsset,
+                    OwnsPrefabAsset = ownsPrefabAsset,
                 });
             }
 
@@ -137,11 +143,14 @@ namespace Alice {
                 var selectedStriker = deployment.SelectedStriker;
                 var selectedStrikerInfo = deployment.SelectedStrikerInfo;
                 var prefabAsset = deployment.PrefabAsset;
+                var ownsPrefabAsset = deployment.OwnsPrefabAsset;
                 var prefabObject = prefabAsset.Asset;
                 var prefab = prefabObject != null ? prefabObject.GetComponent<StrikerHub>() : null;
                 Debug.Log($"[BattleDeployer] Deploy loop: Player{playerId} TryGetStriker={selectedStriker}, BattleStriker={selectedStrikerInfo.BattleStriker}, Prefab={prefab?.name ?? "NULL"}".ToOrange());
                 if (prefab == null) {
-                    prefabAsset.Dispose();
+                    if (ownsPrefabAsset) {
+                        prefabAsset.Dispose();
+                    }
                     Debug.LogError($"Striker prefab not found or missing StrikerHub for {selectedStriker}");
                     continue;
                 }
@@ -180,10 +189,16 @@ namespace Alice {
                     AttentionSubscription = attentionSubscription,
                     SpecialRequestFailedSubscription = specialRequestFailedSubscription,
                     PrefabAsset = prefabAsset,
+                    OwnsPrefabAsset = ownsPrefabAsset,
                 });
 
                 Debug.Log($"Deployed Striker {selectedStriker} for Player {playerId}".ToCyan());
             }
+        }
+
+        static bool TryGetPreloadedBattlePrefab(BattleAddressablePreload preload, Striker striker, out LoadedAsset<GameObject> prefabAsset) {
+            prefabAsset = null;
+            return preload != null && preload.TryGetBattlePrefab(striker, out prefabAsset) && prefabAsset?.Asset != null;
         }
 
         void ApplyLearningSelections() {
@@ -302,7 +317,9 @@ namespace Alice {
                 deployed.InpactSubscription?.Dispose();
                 deployed.AttentionSubscription?.Dispose();
                 deployed.SpecialRequestFailedSubscription?.Dispose();
-                deployed.PrefabAsset?.Dispose();
+                if (deployed.OwnsPrefabAsset) {
+                    deployed.PrefabAsset?.Dispose();
+                }
                 deployed.PrefabAsset = null;
             }
 

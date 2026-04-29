@@ -7,6 +7,7 @@ using Core;
 
 public class MusicCards : MonoBehaviour
 {
+    readonly IReadOnlyDictionary<string, MusicCardAddressableAssets> emptyAssetsByMusicId = new Dictionary<string, MusicCardAddressableAssets>();
     [Header("Card Prefab")]
     public MusicCard cardPrefab;
     private List<MusicCard> cards = new();
@@ -38,8 +39,22 @@ public class MusicCards : MonoBehaviour
 
     public Observable<MusicInfo> OnMusicSelected => musicSelected;
 
-    public void Initialize(IReadOnlyList<MusicInfo> musics, IMusicRegistry musicRegistry) {
+    public void Initialize(IReadOnlyList<MusicInfo> musics, IReadOnlyDictionary<string, MusicCardAddressableAssets> preloadedAssetsByMusicId) {
         if (initialized) return;
+        initialized = true;
+        BuildCards(musics ?? System.Array.Empty<MusicInfo>(), preloadedAssetsByMusicId ?? emptyAssetsByMusicId);
+    }
+
+    void BuildCards(IReadOnlyList<MusicInfo> musics, IReadOnlyDictionary<string, MusicCardAddressableAssets> preloadedAssetsByMusicId) {
+        if (cardContainer == null) {
+            Debug.LogError("[MusicCards] cardContainer is not assigned.");
+            return;
+        }
+
+        if (cardPrefab == null) {
+            Debug.LogError("[MusicCards] cardPrefab is not assigned.");
+            return;
+        }
 
         cards.Clear();
         cardContainer.gameObject.SetActive(false);
@@ -47,15 +62,21 @@ public class MusicCards : MonoBehaviour
             var card = Instantiate(cardPrefab, cardContainer);
             card.name = "Card_" + i;
             card.OnMusicSelected.Subscribe(HandleMusicSelected).AddTo(subscriptions);
-            card.SetMusic(musics[i], musicRegistry);
+            var music = musics[i];
+            preloadedAssetsByMusicId.TryGetValue(music.Id, out var addressableAsset);
+            card.SetMusic(music, addressableAsset);
             cards.Add(card);
         }
         cardContainer.gameObject.SetActive(true);
         ApplyPreviewState();
 
-        rightButton.OnClickEvent.Subscribe(e => OnRightPressed()).AddTo(subscriptions);
-        leftButton.OnClickEvent.Subscribe(e => OnLeftPressed()).AddTo(subscriptions);
-        initialized = true;
+        if (rightButton != null) {
+            rightButton.OnClickEvent.Subscribe(e => OnRightPressed()).AddTo(subscriptions);
+        }
+
+        if (leftButton != null) {
+            leftButton.OnClickEvent.Subscribe(e => OnLeftPressed()).AddTo(subscriptions);
+        }
     }
 
     void HandleMusicSelected(MusicInfo musicInfo) {
@@ -64,6 +85,7 @@ public class MusicCards : MonoBehaviour
 
     public void OnRightPressed()
     {
+        if (cards.Count == 0) return;
         if (isAnimating) return;
         isAnimating = true;
         
@@ -96,6 +118,7 @@ public class MusicCards : MonoBehaviour
 
     public void OnLeftPressed()
     {
+        if (cards.Count == 0) return;
         if (isAnimating) return;
         isAnimating = true;
         

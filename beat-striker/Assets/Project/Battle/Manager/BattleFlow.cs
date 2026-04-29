@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using App;
 using UnityEngine;
 using CorePlayerId = App.PlayerId;
 
@@ -15,13 +14,16 @@ namespace Alice {
         readonly IBattleSetting battleSetting;
         readonly IBattleDeployer battleDeployer;
         readonly IStrikerRegistry strikerRegistry;
+        readonly IAppStrikerRegistry appStrikerRegistry;
         readonly IBattleJudge battleJudge;
         readonly IBeatjudge beatJudge;
         readonly IMusicPlayer musicPlayer;
+        readonly IMusicRegistry musicRegistry;
         readonly IAISetting aiSetting;
         readonly IBattleSelectSetting battleSelectSetting;
         readonly ITutorialSetting tutorialSetting;
         readonly ISceneTransitionService sceneTransitionService;
+        readonly ILoadingOverlayService loadingOverlayService;
         readonly IBattlePresenter battlePresenter;
         readonly IBattleTutorialSignalEmitter tutorialSignalEmitter;
         readonly ResultScene resultScene;
@@ -36,6 +38,7 @@ namespace Alice {
         readonly List<IDisposable> deadEventDisposables = new();
         readonly List<IDisposable> flowEventDisposables = new();
         int activeRoundToken;
+        BattleAddressablePreload battleAddressablePreload;
 
         readonly Subject<int> roundStartedSubject = new();
         readonly Subject<Unit> roundPlayableStartedSubject = new();
@@ -45,17 +48,20 @@ namespace Alice {
 
         public Observable<Unit> OnRoundPlayableStarted => roundPlayableStartedSubject;
 
-        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IAISetting aiSetting, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters) {
+        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IAppStrikerRegistry appStrikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IMusicRegistry musicRegistry, IAISetting aiSetting, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, ILoadingOverlayService loadingOverlayService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters) {
             this.battleSetting = battleSetting;
             this.battleDeployer = battleDeployer;
             this.strikerRegistry = strikerRegistry;
+            this.appStrikerRegistry = appStrikerRegistry;
             this.battleJudge = battleJudge;
             this.beatJudge = beatJudge;
             this.musicPlayer = musicPlayer;
+            this.musicRegistry = musicRegistry;
             this.aiSetting = aiSetting;
             this.battleSelectSetting = battleSelectSetting;
             this.tutorialSetting = tutorialSetting;
             this.sceneTransitionService = sceneTransitionService;
+            this.loadingOverlayService = loadingOverlayService;
             this.battlePresenter = battlePresenter;
             this.tutorialSignalEmitter = tutorialSignalEmitter;
             this.resultScene = resultScene;
@@ -77,8 +83,34 @@ namespace Alice {
 
             Debug.Log($"{LOG_PREFIX} PrepareBattle start");
             battlePrepared = true;
-            await battleDeployer.DeployAsync();
+            battleAddressablePreload = await LoadBattleAddressablesAsync();
+            await battleDeployer.DeployAsync(battleAddressablePreload);
             Debug.Log($"{LOG_PREFIX} PrepareBattle completed and deploy requested");
+        }
+
+        async Task<BattleAddressablePreload> LoadBattleAddressablesAsync() {
+            Debug.Log($"{LOG_PREFIX} LoadBattleAddressablesAsync start");
+            using var scope = loadingOverlayService.Begin();
+            var preload = new BattleAddressablePreload();
+            try {
+                var strikers = appStrikerRegistry.GetAll();
+                for (var i = 0; i < strikers.Count; i++) {
+                    var striker = strikers[i].BattleStriker;
+                    var prefabAsset = await appStrikerRegistry.LoadBattlePrefabAsync(striker);
+                    preload.AddBattlePrefab(striker, prefabAsset);
+                }
+
+                var selectedMusic = musicRegistry.GetById(battleSelectSetting.SelectedMusicId.CurrentValue);
+                var clipAsset = await musicRegistry.LoadAudioClipAsync(selectedMusic.Id);
+                var beatDataAsset = await musicRegistry.LoadBeatDataAsync(selectedMusic.Id);
+                preload.SetMusic(selectedMusic.Id, clipAsset, beatDataAsset);
+                Debug.Log($"{LOG_PREFIX} LoadBattleAddressablesAsync completed. strikerCount={strikers.Count}, musicId={selectedMusic.Id}");
+                return preload;
+            }
+            catch {
+                preload.Dispose();
+                throw;
+            }
         }
 
         public void StartBattle() {
@@ -117,6 +149,7 @@ namespace Alice {
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync completed first round playable start");
             }
             catch (Exception exception) {
+                DisposeBattleAddressablePreload();
                 Debug.LogError($"{LOG_PREFIX} StartBattleSequenceAsync failed: {exception.Message}");
                 Debug.LogException(exception);
             }
@@ -138,6 +171,11 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync closed suspend menu");
             await battlePresenter.PlayRoundStartAsync(currentRound);
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync round start animation completed. round={currentRound}");
+            if (ShouldCompleteBattleByMusicEnd()) {
+                Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync stopped before playable phase because music end is pending. round={currentRound}");
+                return;
+            }
+
             roundStartedSubject.OnNext(currentRound);
 
             if (!stateMachine.TryEnterPlaying($"{nameof(StartRoundPlayableAsync)} completed")) {
@@ -147,7 +185,7 @@ namespace Alice {
             beatJudge.ResetRoundState();
             ResumeRoundRuntimeSystems(controlsMusic: false);
             if (!battleMusicStarted) {
-                await musicPlayer.PlayAsync();
+                await musicPlayer.PlayAsync(battleAddressablePreload);
                 battleMusicStarted = true;
             }
             battleDeployer.ConnectRoundInputs();
@@ -175,6 +213,12 @@ namespace Alice {
             DisposeDeadEventSubscriptions();
             DisposeFlowEventSubscriptions();
             battleDeployer.Undeploy();
+            DisposeBattleAddressablePreload();
+        }
+
+        void DisposeBattleAddressablePreload() {
+            battleAddressablePreload?.Dispose();
+            battleAddressablePreload = null;
         }
 
         void OnStrikerDead(int deadPlayerId) {
@@ -235,17 +279,24 @@ namespace Alice {
 
                     if (ShouldCompleteBattleByMusicEnd()) {
                         Debug.Log($"{LOG_PREFIX} ResolveRoundAsync music ended during round transition. winner={winnerIfMusicEndsBeforeNextRound}");
-                        await CompleteBattleWithWinnerAsync(winnerIfMusicEndsBeforeNextRound, judgeResult.RoundWins);
+                        await CompleteBattleFromDarkRoundTransitionAsync(winnerIfMusicEndsBeforeNextRound, judgeResult.RoundWins);
                         return;
                     }
 
                     battleDeployer.RecordRoundResult(finishedRound, deadPlayerId);
-                    await battleDeployer.RedeployForNextRoundAsync();
+                    await battleDeployer.RedeployForNextRoundAsync(battleAddressablePreload);
+                    await Awaitable.NextFrameAsync();
+                    if (ShouldCompleteBattleByMusicEnd()) {
+                        Debug.Log($"{LOG_PREFIX} ResolveRoundAsync music ended before round resume. winner={winnerIfMusicEndsBeforeNextRound}");
+                        await CompleteBattleFromDarkRoundTransitionAsync(winnerIfMusicEndsBeforeNextRound, judgeResult.RoundWins);
+                        return;
+                    }
+
                     SubscribeStrikerDeadEvents();
                     SetAllStrikersDefault();
                     await battlePresenter.PlayRoundResumeTransitionAsync();
                     if (ShouldCompleteBattleByMusicEnd()) {
-                        Debug.Log($"{LOG_PREFIX} ResolveRoundAsync music ended before next round. winner={winnerIfMusicEndsBeforeNextRound}");
+                        Debug.Log($"{LOG_PREFIX} ResolveRoundAsync music ended during round resume. winner={winnerIfMusicEndsBeforeNextRound}");
                         await CompleteBattleWithWinnerAsync(winnerIfMusicEndsBeforeNextRound, judgeResult.RoundWins);
                         return;
                     }
@@ -269,6 +320,11 @@ namespace Alice {
                 Debug.LogError($"{LOG_PREFIX} ResolveRoundAsync failed: {exception.Message}");
                 Debug.LogException(exception);
             }
+        }
+
+        async Task CompleteBattleFromDarkRoundTransitionAsync(CorePlayerId winner, IReadOnlyDictionary<CorePlayerId, int> roundWins) {
+            await battlePresenter.PlayBattleFinishFadeOutAsync();
+            await CompleteBattleWithWinnerAsync(winner, roundWins);
         }
 
         void SubscribeFlowEvents() {

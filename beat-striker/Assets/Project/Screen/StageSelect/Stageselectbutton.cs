@@ -32,7 +32,7 @@ public class Stageselectbutton : MonoBehaviour
     private bool isHovering = false;
     private bool hasCompletedMove = false;
     IReadOnlyList<MusicInfo> musics;
-    IMusicRegistry musicRegistry;
+    IReadOnlyDictionary<string, MusicCardAddressableAssets> preloadedAssetsByMusicId = new Dictionary<string, MusicCardAddressableAssets>();
     readonly Subject<Stage> stageSelected = new();
     readonly Subject<MusicInfo> musicSelected = new();
     readonly Subject<bool> previewVisibilityChanged = new();
@@ -42,9 +42,9 @@ public class Stageselectbutton : MonoBehaviour
     public Observable<MusicInfo> OnMusicSelected => musicSelected;
     public Observable<bool> OnPreviewVisibilityChanged => previewVisibilityChanged;
 
-    public void Initialize(IReadOnlyList<MusicInfo> musics, IMusicRegistry musicRegistry) {
+    public void Initialize(IReadOnlyList<MusicInfo> musics, IReadOnlyDictionary<string, MusicCardAddressableAssets> preloadedAssetsByMusicId) {
         this.musics = musics;
-        this.musicRegistry = musicRegistry;
+        this.preloadedAssetsByMusicId = preloadedAssetsByMusicId;
     }
 
     public void SetPopupShown(bool isShown)
@@ -99,6 +99,10 @@ public class Stageselectbutton : MonoBehaviour
         });
         botan.OnClickEvent.Subscribe((e) => {
             if (isPopupShown) return;
+            if (musics == null || preloadedAssetsByMusicId == null) {
+                Debug.LogWarning($"{gameObject.name}: popup initialize skipped because preload is not ready yet.");
+                return;
+            }
 
             if (popupPrefab != null) {
                 // Popupをインスタンス化
@@ -107,7 +111,7 @@ public class Stageselectbutton : MonoBehaviour
                     currentPopup = Instantiate(popupPrefab, popParent);
 
                     popupSubscriptions.Clear();
-                    currentPopup.Initialize(selectedStage, musics, musicRegistry);
+                    currentPopup.Initialize(selectedStage, musics, preloadedAssetsByMusicId);
                     currentPopup.OnMusicSelected.Subscribe(x => musicSelected.OnNext(x)).AddTo(popupSubscriptions);
                     currentPopup.OnHidden.Subscribe(_ => OnPopupHidden()).AddTo(popupSubscriptions);
                 }

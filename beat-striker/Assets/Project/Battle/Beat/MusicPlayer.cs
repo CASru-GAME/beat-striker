@@ -13,7 +13,7 @@ namespace Alice {
     }
 
     public interface IMusicPlayer {
-        Awaitable PlayAsync();
+        Awaitable PlayAsync(BattleAddressablePreload preload = null);
         void Stop();
         void Pause();
         void Resume();
@@ -74,6 +74,7 @@ namespace Alice {
         int playVersion;
         LoadedAsset<AudioClip> loadedClipAsset;
         LoadedAsset<TextAsset> loadedBeatDataAsset;
+        bool ownsLoadedAssets;
 
         public Observable<IMusicPlayer.BeatSignal> OnGoodZoneEntered => onGoodZoneEntered;
         public Observable<IMusicPlayer.BeatSignal> OnExcellentZoneEntered => onExcellentZoneEntered;
@@ -96,23 +97,37 @@ namespace Alice {
             volumeSubscription = this.audioSetting.VolumeBalance.Subscribe(ApplyVolume);
         }
 
-        public async Awaitable PlayAsync() {
+        public async Awaitable PlayAsync(BattleAddressablePreload preload = null) {
             ReleaseLoadedAssets();
             var version = playVersion;
             var selectedMusic = musicRegistry.GetById(battleSelectSetting.SelectedMusicId.CurrentValue);
-            var clipAsset = await musicRegistry.LoadAudioClipAsync(selectedMusic.Id);
+            var usesPreloadedAssets = preload != null && preload.HasMusic(selectedMusic.Id);
+            LoadedAsset<AudioClip> clipAsset;
+            if (usesPreloadedAssets) {
+                clipAsset = preload.MusicClipAsset;
+            }
+            else {
+                clipAsset = await musicRegistry.LoadAudioClipAsync(selectedMusic.Id);
+            }
             if (version != playVersion) {
-                clipAsset.Dispose();
+                DisposeIfOwned(clipAsset, !usesPreloadedAssets);
                 return;
             }
 
-            var beatDataAsset = await musicRegistry.LoadBeatDataAsync(selectedMusic.Id);
+            LoadedAsset<TextAsset> beatDataAsset;
+            if (usesPreloadedAssets) {
+                beatDataAsset = preload.BeatDataAsset;
+            }
+            else {
+                beatDataAsset = await musicRegistry.LoadBeatDataAsync(selectedMusic.Id);
+            }
             if (version != playVersion) {
-                clipAsset.Dispose();
-                beatDataAsset.Dispose();
+                DisposeIfOwned(clipAsset, !usesPreloadedAssets);
+                DisposeIfOwned(beatDataAsset, !usesPreloadedAssets);
                 return;
             }
 
+            ownsLoadedAssets = !usesPreloadedAssets;
             loadedClipAsset = clipAsset;
             loadedBeatDataAsset = beatDataAsset;
             var clip = loadedClipAsset.Asset;
@@ -475,10 +490,20 @@ namespace Alice {
         void ReleaseLoadedAssets() {
             playVersion++;
             audioSource.clip = null;
-            loadedClipAsset?.Dispose();
+            if (ownsLoadedAssets) {
+                loadedClipAsset?.Dispose();
+                loadedBeatDataAsset?.Dispose();
+            }
+
             loadedClipAsset = null;
-            loadedBeatDataAsset?.Dispose();
             loadedBeatDataAsset = null;
+            ownsLoadedAssets = false;
+        }
+
+        static void DisposeIfOwned<T>(LoadedAsset<T> asset, bool ownsAsset) where T : UnityEngine.Object {
+            if (ownsAsset) {
+                asset?.Dispose();
+            }
         }
 
         

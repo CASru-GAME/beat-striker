@@ -13,26 +13,31 @@ namespace Alice {
         readonly IBattleSelectSetting selectSetting;
         readonly IMusicRegistry musicRegistry;
         readonly IAppBGMPlayer appBgmPlayer;
+        readonly ILoadingOverlayService loadingOverlayService;
         readonly CompositeDisposable subscriptions = new();
+        readonly Dictionary<string, MusicCardAddressableAssets> preloadedAssetsByMusicId = new();
         bool initialized;
         bool isPopupVisible;
+        bool disposed;
 
         public StageselectPresenter(
             StageselectScene view,
             ISceneTransitionService transitionService,
             IBattleSelectSetting selectSetting,
             IMusicRegistry musicRegistry,
-            IAppBGMPlayer appBgmPlayer) {
+            IAppBGMPlayer appBgmPlayer,
+            ILoadingOverlayService loadingOverlayService) {
             this.view = view;
             this.transitionService = transitionService;
             this.selectSetting = selectSetting;
             this.musicRegistry = musicRegistry;
             this.appBgmPlayer = appBgmPlayer;
+            this.loadingOverlayService = loadingOverlayService;
 
-            Initialize();
+            _ = InitializeAsync();
         }
 
-        void Initialize() {
+        async Awaitable InitializeAsync() {
             if (initialized) {
                 Debug.Log($"{LOG_PREFIX} Initialize skipped because already initialized");
                 return;
@@ -42,8 +47,24 @@ namespace Alice {
 
             var musics = ResolveMusicList(musicRegistry);
             Debug.Log($"{LOG_PREFIX} Initialize music list resolved. count={musics.Count}");
+            try {
+                await PreloadMusicCardAssetsAsync(musics);
+            }
+            catch (Exception exception) {
+                Debug.LogException(exception);
+                ClearPreloadedAssets();
+            }
+            if (disposed) {
+                return;
+            }
+
+            await EnterStageSelectAsync();
+            if (disposed) {
+                return;
+            }
+
             foreach (var stageSelectButton in view.StageSelectButtons) {
-                stageSelectButton.Initialize(musics, musicRegistry);
+                stageSelectButton.Initialize(musics, preloadedAssetsByMusicId);
                 stageSelectButton.OnStageSelected.Subscribe(OnStageSelected).AddTo(subscriptions);
                 stageSelectButton.OnMusicSelected.Subscribe(OnMusicSelected).AddTo(subscriptions);
                 stageSelectButton.OnPreviewVisibilityChanged.Subscribe(OnPreviewVisibilityChanged).AddTo(subscriptions);
@@ -56,7 +77,6 @@ namespace Alice {
                 Debug.Log($"{LOG_PREFIX} BackButton transition request result. isSuccess={result.IsSuccess}");
             }).AddTo(subscriptions);
 
-            _ = EnterStageSelectAsync();
             initialized = true;
             Debug.Log($"{LOG_PREFIX} Initialize completed");
         }
@@ -103,11 +123,49 @@ namespace Alice {
         }
 
         static IReadOnlyList<MusicInfo> ResolveMusicList(IMusicRegistry musicRegistry) {
-            return (IReadOnlyList<MusicInfo>)musicRegistry.GetType().GetMethod("GetAll").Invoke(musicRegistry, null);
+            var getAllMethod = musicRegistry.GetType().GetMethod("GetAll");
+            if (getAllMethod == null) {
+                return Array.Empty<MusicInfo>();
+            }
+
+            var result = getAllMethod.Invoke(musicRegistry, null);
+            return result as IReadOnlyList<MusicInfo> ?? Array.Empty<MusicInfo>();
+        }
+
+        async Awaitable PreloadMusicCardAssetsAsync(IReadOnlyList<MusicInfo> musics) {
+            using var scope = loadingOverlayService.Begin();
+            for (var i = 0; i < musics.Count; i++) {
+                var music = musics[i];
+                var previewClipAsset = await musicRegistry.LoadPreviewAudioClipAsync(music.Id);
+                var spectrumAsset = await musicRegistry.LoadSpectrumDataAsync(music.Id);
+                if (disposed) {
+                    previewClipAsset.Dispose();
+                    spectrumAsset.Dispose();
+                    return;
+                }
+
+                if (preloadedAssetsByMusicId.TryGetValue(music.Id, out var existingAsset)) {
+                    existingAsset.PreviewClipAsset?.Dispose();
+                    existingAsset.SpectrumAsset?.Dispose();
+                }
+
+                preloadedAssetsByMusicId[music.Id] = new MusicCardAddressableAssets(previewClipAsset, spectrumAsset);
+            }
         }
 
         public void Dispose() {
+            disposed = true;
             subscriptions.Dispose();
+            ClearPreloadedAssets();
+        }
+
+        void ClearPreloadedAssets() {
+            foreach (var asset in preloadedAssetsByMusicId.Values) {
+                asset.PreviewClipAsset?.Dispose();
+                asset.SpectrumAsset?.Dispose();
+            }
+
+            preloadedAssetsByMusicId.Clear();
         }
     }
 }
