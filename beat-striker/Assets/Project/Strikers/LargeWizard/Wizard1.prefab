@@ -435,7 +435,7 @@ GameObject:
   - component: {fileID: 8632360735648339568}
   - component: {fileID: 8402618834828561335}
   m_Layer: 3
-  m_Name: Wizard 1
+  m_Name: Wizard1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
