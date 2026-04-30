@@ -752,8 +752,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioSpectrum
   fftRes: 512
-  dataOffset: 0
-  fftWf: 1
   spectrumData: []
   bars:
   - {fileID: 1721188852930879002}
@@ -769,7 +767,8 @@ MonoBehaviour:
   - {fileID: 4540453042236956721}
   - {fileID: 4253350559743641429}
   heightMultiplier: 300
-  spectrumLengthOffset: -1
+  bakedSpectrumDisplayGain: 0.085
+  spectrumLengthOffset: 0
   colorGradient:
     serializedVersion: 2
     key0: {r: 0.42538425, g: 0.16468628, b: 0.7254902, a: 0.8117647}

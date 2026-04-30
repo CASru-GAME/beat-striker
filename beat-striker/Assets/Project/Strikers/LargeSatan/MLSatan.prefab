@@ -11713,7 +11713,7 @@ MonoBehaviour:
   attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
   hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
-  multipleHit: 1
+  multipleHit: 0
   hitDetectionStartTime: 0
   hitDetectionDuration: 0.5
 --- !u!114 &3928871652516346861

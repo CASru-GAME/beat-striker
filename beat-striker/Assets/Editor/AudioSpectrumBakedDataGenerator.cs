@@ -1,12 +1,11 @@
 using System;
 using System.IO;
-using System.IO.Compression;
 using System.Numerics;
 using UnityEditor;
 using UnityEngine;
 
 public static class AudioSpectrumBakedDataGenerator {
-    private const uint MAGIC = 0x32534241; // ASB2
+    private const uint MAGIC = 0x33425341; // ASB3 (raw packed, no deflate)
     private const byte QUANTIZE_BITS = 4;
     private const int FFT_SIZE = 512;
     private const int FRAME_RATE = 60;
@@ -143,9 +142,8 @@ public static class AudioSpectrumBakedDataGenerator {
         }
 
         byte[] packedQuantized = Pack4BitQuantized(flattenedSpectrum, maxMagnitude);
-        byte[] compressedPayload = Deflate(packedQuantized);
 
-        using (MemoryStream stream = new MemoryStream(30 + compressedPayload.Length)) {
+        using (MemoryStream stream = new MemoryStream(29 + packedQuantized.Length)) {
             using (BinaryWriter writer = new BinaryWriter(stream)) {
                 writer.Write(MAGIC);
                 writer.Write(fftSize);
@@ -154,8 +152,8 @@ public static class AudioSpectrumBakedDataGenerator {
                 writer.Write(maxMagnitude);
                 writer.Write(QUANTIZE_BITS);
                 writer.Write(packedQuantized.Length);
-                writer.Write(compressedPayload.Length);
-                writer.Write(compressedPayload);
+                writer.Write(packedQuantized.Length);
+                writer.Write(packedQuantized);
             }
 
             return stream.ToArray();
@@ -181,14 +179,5 @@ public static class AudioSpectrumBakedDataGenerator {
         }
 
         return packed;
-    }
-
-    private static byte[] Deflate(byte[] source) {
-        using (MemoryStream output = new MemoryStream(source.Length)) {
-            using (DeflateStream compressor = new DeflateStream(output, System.IO.Compression.CompressionLevel.Optimal, true)) {
-                compressor.Write(source, 0, source.Length);
-            }
-            return output.ToArray();
-        }
     }
 }

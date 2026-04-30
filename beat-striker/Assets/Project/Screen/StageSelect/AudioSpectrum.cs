@@ -4,24 +4,24 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class AudioSpectrum : MonoBehaviour {
-    private const uint BAKED_MAGIC = 0x32534241; // ASB2
+    private const uint BAKED_MAGIC_ASB2 = 0x32534241; // ASB2 (deflate payload)
+    private const uint BAKED_MAGIC_ASB3 = 0x33425341; // ASB3 (raw packed payload)
 
-    // FFT 設定 (GetAudioData から吸収)
+    // ベイク済みスペクトラムの FFT サイズ（生成ツールと一致させる）
     public enum FFT_Resolution {
         _8192 = 8192, _4096 = 4096, _2048 = 2048, _1024 = 1024, _512 = 512, _256 = 256, _128 = 128, _64 = 64
     }
 
-    [Tooltip("64-8192の間の2の累乗の数字である必要がある")]
+    [Tooltip("64-8192の間の2の累乗。ベイクデータの FFT サイズと一致させる")]
     public FFT_Resolution fftRes = FFT_Resolution._512;
-    [SerializeField] private int dataOffset = 0;
-    [Tooltip("高速フーリエ変換の窓関数指定")]
-    [SerializeField] private FFTWindow fftWf = FFTWindow.Triangle;
     [HideInInspector] public float[] spectrumData;
-    private float[] data;
 
     // UI / 設定
     [SerializeField] Image[] bars;           // InspectorでバーImageをセット
     [SerializeField] float heightMultiplier = 300f;
+    [Tooltip("ベイク値の表示ゲイン。旧版はファイル長チェックの誤りでベイクが読めず GetSpectrumData 相当の細いバーだったため、その見た目に寄せる係数（目安 0.05～0.12）")]
+    [SerializeField, Range(0.001f, 4f)] float bakedSpectrumDisplayGain = 0.085f;
+    [Tooltip("バー高さへの加算（px）。負の大きい値は表示ゲインが小さいときバー全体が0に潰れやすい")]
     [SerializeField] float spectrumLengthOffset = 0f;
     public Gradient colorGradient; // Inspectorで色グラデーションをセット
     [SerializeField] float convergenceReferenceValue = 100f;
@@ -35,7 +35,6 @@ public class AudioSpectrum : MonoBehaviour {
     private BakedSpectrumCache bakedSpectrumCache;
 
     void Awake() {
-        data = new float[0];
         spectrumData = new float[(int)fftRes];
         bakedSpectrumCache = ParseBakedSpectrum(bakedSpectrumText);
         editorBarHeights = new float[bars.Length];
@@ -54,21 +53,10 @@ public class AudioSpectrum : MonoBehaviour {
         bool isPlaying = source.isPlaying;
 
         if (isPlaying && !wasPlaying) {
-            // 再生開始: 初期化
-            if (source.clip != null) {
-                var clip = source.clip;
-                data = new float[clip.channels * clip.samples];
-                clip.GetData(data, dataOffset);
-            }
-            else {
-                data = new float[0];
-            }
             spectrumData = new float[(int)fftRes];
         }
 
         if (!isPlaying && wasPlaying) {
-            // 再生停止: データとbarをリセット
-            data = new float[0];
             spectrumData = new float[(int)fftRes];
             ResetBars();
         }
@@ -81,21 +69,14 @@ public class AudioSpectrum : MonoBehaviour {
             CopyBakedSpectrum(source.time, bakedSpectrumCache, spectrumData);
         }
         else {
-            // フォールバック: 音楽が再生中ならスペクトラムを更新
-            bool cond = source.timeSamples < data.Length;
-            if (cond) {
-                source.GetSpectrumData(spectrumData, 0, fftWf);
-            }
-            else {
-                for (int i = 0; i < spectrumData.Length; i++) {
-                    spectrumData[i] = 0f;
-                }
+            for (int i = 0; i < spectrumData.Length; i++) {
+                spectrumData[i] = 0f;
             }
         }
 
         int len = Mathf.Min(bars.Length, spectrumData.Length);
         for (int i = 0; i < len; i++) {
-            float value = spectrumData[i] * heightMultiplier;
+            float value = spectrumData[i] * bakedSpectrumDisplayGain * heightMultiplier;
             value = Mathf.Clamp(value + spectrumLengthOffset, 0f, heightMultiplier);
 
             // 入力値が基準値のときに指定割合で収束値へ近づく
@@ -151,14 +132,16 @@ public class AudioSpectrum : MonoBehaviour {
         }
 
         byte[] bytes = sourceText.bytes;
-        if (bytes == null || bytes.Length < 30) {
+        if (bytes == null || bytes.Length < 29) {
             return null;
         }
 
         using (MemoryStream stream = new MemoryStream(bytes)) {
             using (BinaryReader reader = new BinaryReader(stream)) {
                 uint magic = reader.ReadUInt32();
-                if (magic != BAKED_MAGIC) {
+                bool asb3 = magic == BAKED_MAGIC_ASB3;
+                bool asb2 = magic == BAKED_MAGIC_ASB2;
+                if (!asb3 && !asb2) {
                     return null;
                 }
 
@@ -177,14 +160,24 @@ public class AudioSpectrum : MonoBehaviour {
                 if (packedLength != (expectedLength + 1) / 2) {
                     return null;
                 }
-                if (compressedLength < 0 || bytes.Length < 33 + compressedLength) {
+                if (compressedLength < 0 || bytes.Length < 29 + compressedLength) {
                     return null;
                 }
 
-                byte[] compressedPayload = reader.ReadBytes(compressedLength);
-                byte[] packed = Inflate(compressedPayload, packedLength);
-                if (packed == null || packed.Length != packedLength) {
-                    return null;
+                byte[] storedPayload = reader.ReadBytes(compressedLength);
+                byte[] packed;
+                if (asb3) {
+                    if (storedPayload.Length != packedLength) {
+                        return null;
+                    }
+
+                    packed = storedPayload;
+                }
+                else {
+                    packed = Inflate(storedPayload, packedLength);
+                    if (packed == null || packed.Length != packedLength) {
+                        return null;
+                    }
                 }
 
                 byte[] quantized = Unpack4Bit(packed, expectedLength);
@@ -202,17 +195,26 @@ public class AudioSpectrum : MonoBehaviour {
     }
 
     private static byte[] Inflate(byte[] compressed, int expectedLength) {
-        using (MemoryStream input = new MemoryStream(compressed)) {
-            using (DeflateStream decompressor = new DeflateStream(input, CompressionMode.Decompress)) {
-                using (MemoryStream output = new MemoryStream(expectedLength)) {
-                    decompressor.CopyTo(output);
-                    byte[] result = output.ToArray();
-                    if (result.Length != expectedLength) {
+        try {
+            using (MemoryStream input = new MemoryStream(compressed)) {
+                using (DeflateStream decompressor = new DeflateStream(input, CompressionMode.Decompress)) {
+                    byte[] buffer = new byte[expectedLength];
+                    int total = 0;
+                    int read;
+                    while (total < expectedLength && (read = decompressor.Read(buffer, total, expectedLength - total)) > 0) {
+                        total += read;
+                    }
+
+                    if (total != expectedLength) {
                         return null;
                     }
-                    return result;
+
+                    return buffer;
                 }
             }
+        }
+        catch {
+            return null;
         }
     }
 
