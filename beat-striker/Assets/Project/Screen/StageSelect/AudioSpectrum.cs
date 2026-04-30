@@ -7,7 +7,6 @@ public class AudioSpectrum : MonoBehaviour {
     private const uint BAKED_MAGIC_ASB2 = 0x32534241; // ASB2 (deflate payload)
     private const uint BAKED_MAGIC_ASB3 = 0x33425341; // ASB3 (raw packed payload)
 
-    // ベイク済みスペクトラムの FFT サイズ（生成ツールと一致させる）
     public enum FFT_Resolution {
         _8192 = 8192, _4096 = 4096, _2048 = 2048, _1024 = 1024, _512 = 512, _256 = 256, _128 = 128, _64 = 64
     }
@@ -16,14 +15,12 @@ public class AudioSpectrum : MonoBehaviour {
     public FFT_Resolution fftRes = FFT_Resolution._512;
     [HideInInspector] public float[] spectrumData;
 
-    // UI / 設定
-    [SerializeField] Image[] bars;           // InspectorでバーImageをセット
+    [SerializeField] Image[] bars;
     [SerializeField] float heightMultiplier = 300f;
-    [Tooltip("ベイク値の表示ゲイン。旧版はファイル長チェックの誤りでベイクが読めず GetSpectrumData 相当の細いバーだったため、その見た目に寄せる係数（目安 0.05～0.12）")]
-    [SerializeField, Range(0.001f, 4f)] float bakedSpectrumDisplayGain = 0.085f;
-    [Tooltip("バー高さへの加算（px）。負の大きい値は表示ゲインが小さいときバー全体が0に潰れやすい")]
+    [Tooltip("ベイク値の表示倍率。旧 GetSpectrum フォールバック時よりベイクは /FFT で抑えられるため、既定で少し上げる")]
+    [SerializeField, Min(0.01f)] float spectrumAmplitudeScale = 1.35f;
     [SerializeField] float spectrumLengthOffset = 0f;
-    public Gradient colorGradient; // Inspectorで色グラデーションをセット
+    public Gradient colorGradient;
     [SerializeField] float convergenceReferenceValue = 100f;
     [SerializeField, Range(0f, 1f)] float convergenceRatioAtReference = 0.4f;
 
@@ -76,19 +73,16 @@ public class AudioSpectrum : MonoBehaviour {
 
         int len = Mathf.Min(bars.Length, spectrumData.Length);
         for (int i = 0; i < len; i++) {
-            float value = spectrumData[i] * bakedSpectrumDisplayGain * heightMultiplier;
+            float value = spectrumData[i] * spectrumAmplitudeScale * heightMultiplier;
             value = Mathf.Clamp(value + spectrumLengthOffset, 0f, heightMultiplier);
 
-            // 入力値が基準値のときに指定割合で収束値へ近づく
             float normalized = Mathf.Clamp01(value / convergenceReferenceValue);
             float convergenceRatio = normalized * convergenceRatioAtReference;
             float convergenceValue = editorBarHeights[i];
             value = Mathf.Lerp(value, convergenceValue, convergenceRatio);
 
-            // バーの高さ変更
             bars[i].rectTransform.sizeDelta = new Vector2(bars[i].rectTransform.sizeDelta.x, value);
 
-            // 色変更（低音→高音でグラデーション）
             bars[i].color = colorGradient.Evaluate((float)i / len);
         }
 
@@ -98,7 +92,6 @@ public class AudioSpectrum : MonoBehaviour {
     }
 
     private void ResetBars() {
-        // barの高さをEditorで設定した初期値に戻す
         for (int i = 0; i < bars.Length; i++) {
             bars[i].rectTransform.sizeDelta = new Vector2(bars[i].rectTransform.sizeDelta.x, 0);
         }
