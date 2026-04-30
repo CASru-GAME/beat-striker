@@ -72,4 +72,49 @@ public static class RemoveUIButtonMenu {
 
 }
 
+public class VRMTextureCompressor {
+    // --- 右クリックメニューの追加 ---
+
+    [MenuItem("Assets/VRM Utils/Texture Max Size to 128")]
+    private static void ResizeTo128() => ResizeSelectedTextures(128);
+
+    [MenuItem("Assets/VRM Utils/Texture Max Size to 256")]
+    private static void ResizeTo256() => ResizeSelectedTextures(256);
+
+    [MenuItem("Assets/VRM Utils/Texture Max Size to 512")]
+    private static void ResizeTo512() => ResizeSelectedTextures(512);
+
+    // --- 処理本体 ---
+    private static void ResizeSelectedTextures(int maxSize) {
+        // 選択されたアセットの中からテクスチャのみを抽出（フォルダ選択にも対応）
+        Object[] textures = Selection.GetFiltered(typeof(Texture2D), SelectionMode.DeepAssets);
+
+        if (textures.Length == 0) {
+            Debug.LogWarning("対象となるテクスチャファイルが見つかりませんでした。抽出済みの画像ファイルを選択してください。");
+            return;
+        }
+
+        int count = 0;
+
+        foreach (Object tex in textures) {
+            string path = AssetDatabase.GetAssetPath(tex);
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+
+            if (importer != null) {
+                // UnityのmaxTextureSizeは「長辺」を基準に制限をかけます（アスペクト比は維持されます）
+                importer.maxTextureSize = maxSize;
+
+                // 圧縮設定も強制的にオン（モバイル・Web向けに最適化）
+                importer.textureCompression = TextureImporterCompression.Compressed;
+
+                // 設定を適用して再インポート
+                importer.SaveAndReimport();
+                count++;
+            }
+        }
+
+        Debug.Log($"完了：{count}枚のテクスチャを最大 {maxSize}px (長辺基準) に圧縮しました。");
+    }
+}
+
 #endif

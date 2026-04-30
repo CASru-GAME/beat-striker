@@ -2278,7 +2278,7 @@ RectTransform:
   m_GameObject: {fileID: 4246735249938648290}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7636740090148284414}
@@ -2377,7 +2377,6 @@ MonoBehaviour:
   stickRoot: {fileID: 1933935187458348173}
   stickHandle: {fileID: 6096565044404828480}
   stickRadius: 140
-  topLayerSortingOrder: 5000
 --- !u!1 &4325647164318000619
 GameObject:
   m_ObjectHideFlags: 0
@@ -2617,7 +2616,7 @@ MonoBehaviour:
   - playerId: 0
     striker: 3
   - playerId: 1
-    striker: 1
+    striker: 3
   aiStrength: 0
   isTutorialBattleRequested: 0
 --- !u!114 &8953530949465533837
@@ -2778,7 +2777,7 @@ MonoBehaviour:
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     PreviewModelReference:
-      m_AssetGUID: 8cc39aaf813b0554da29865827638db3
+      m_AssetGUID: 61caf16d520024b3f926c5e7ee0e8c5e
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
@@ -2793,7 +2792,7 @@ MonoBehaviour:
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     PreviewModelReference:
-      m_AssetGUID: 37d428df5c910584396dd6cdd0df9fbd
+      m_AssetGUID: 61caf16d520024b3f926c5e7ee0e8c5e
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
@@ -4173,7 +4172,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.1981132, g: 0.19344072, b: 0.19344072, a: 0.70980394}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -5693,7 +5692,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.1981132, g: 0.19344072, b: 0.19344072, a: 0.70980394}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:

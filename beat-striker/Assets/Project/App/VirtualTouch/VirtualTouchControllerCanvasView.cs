@@ -8,14 +8,13 @@ namespace Alice {
         [SerializeField] RectTransform stickRoot;
         [SerializeField] RectTransform stickHandle;
         [SerializeField, Min(1f)] float stickRadius = 140f;
-        [SerializeField] int topLayerSortingOrder = 5000;
 
         readonly Subject<Vector2> directionChanged = new();
         readonly Subject<Unit> directionCanceled = new();
         readonly Subject<GamePadButton> buttonDown = new();
         readonly Subject<GamePadButton> buttonUp = new();
 
-        Vector2 dragStartLocalPosition;
+        Vector2 stickRootDefaultPosition;
         bool isDragging;
         bool isVisible;
 
@@ -25,8 +24,7 @@ namespace Alice {
         public Observable<GamePadButton> OnButtonUp => buttonUp;
 
         void Awake() {
-            targetCanvas.overrideSorting = true;
-            targetCanvas.sortingOrder = topLayerSortingOrder;
+            stickRootDefaultPosition = stickRoot.anchoredPosition;
             ApplyVisible();
             stickRoot.gameObject.SetActive(false);
         }
@@ -43,23 +41,23 @@ namespace Alice {
             targetCanvas.gameObject.SetActive(isVisible);
         }
 
-        public void BeginDrag(Vector2 screenPosition) {
-            ScreenToCanvasLocalPoint(screenPosition, out dragStartLocalPosition);
-            stickRoot.anchoredPosition = dragStartLocalPosition;
+        public void BeginDrag(Vector2 screenPosition, Camera eventCamera = null) {
+            ScreenToStickParentWorldPoint(screenPosition, eventCamera, out var worldPoint);
+            stickRoot.position = worldPoint;
             stickHandle.anchoredPosition = Vector2.zero;
             stickRoot.gameObject.SetActive(true);
+            stickRoot.SetAsLastSibling();
             isDragging = true;
             directionChanged.OnNext(Vector2.zero);
         }
 
-        public void UpdateDrag(Vector2 screenPosition) {
+        public void UpdateDrag(Vector2 screenPosition, Camera eventCamera = null) {
             if (!isDragging) {
                 return;
             }
 
-            ScreenToCanvasLocalPoint(screenPosition, out var currentLocalPosition);
-            var delta = currentLocalPosition - dragStartLocalPosition;
-            var clamped = Vector2.ClampMagnitude(delta, stickRadius);
+            ScreenToStickLocalPoint(screenPosition, eventCamera, out var currentLocalPosition);
+            var clamped = Vector2.ClampMagnitude(currentLocalPosition, stickRadius);
             stickHandle.anchoredPosition = clamped;
 
             var normalizedDirection = clamped / stickRadius;
@@ -84,11 +82,23 @@ namespace Alice {
             buttonUp.OnNext(button);
         }
 
-        void ScreenToCanvasLocalPoint(Vector2 screenPosition, out Vector2 localPoint) {
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition, targetCanvas.worldCamera, out localPoint);
+        void ScreenToStickParentWorldPoint(Vector2 screenPosition, Camera eventCamera, out Vector3 worldPoint) {
+            var targetRect = stickRoot.parent as RectTransform;
+            if (!targetRect) {
+                targetRect = canvasRect;
+            }
+
+            var uiCamera = eventCamera ? eventCamera : targetCanvas.worldCamera;
+            RectTransformUtility.ScreenPointToWorldPointInRectangle(targetRect, screenPosition, uiCamera, out worldPoint);
+        }
+
+        void ScreenToStickLocalPoint(Vector2 screenPosition, Camera eventCamera, out Vector2 localPoint) {
+            var uiCamera = eventCamera ? eventCamera : targetCanvas.worldCamera;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(stickRoot, screenPosition, uiCamera, out localPoint);
         }
 
         void ResetStick() {
+            stickRoot.anchoredPosition = stickRootDefaultPosition;
             stickRoot.gameObject.SetActive(false);
             stickHandle.anchoredPosition = Vector2.zero;
         }
