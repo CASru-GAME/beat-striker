@@ -24,12 +24,14 @@ namespace Alice {
         public readonly Striker OpponentStriker;
         public readonly Stage Stage;
         public readonly string MusicId;
+        public readonly bool LocalIsPlayer1;
 
-        public OnlineMatchResult(Striker localStriker, Striker opponentStriker, Stage stage, string musicId) {
+        public OnlineMatchResult(Striker localStriker, Striker opponentStriker, Stage stage, string musicId, bool localIsPlayer1) {
             LocalStriker = localStriker;
             OpponentStriker = opponentStriker;
             Stage = stage;
             MusicId = musicId;
+            LocalIsPlayer1 = localIsPlayer1;
         }
     }
 
@@ -135,8 +137,8 @@ namespace Alice {
             var selectedStage = random.Next(2) == 0 ? hostRequest.CandidateStage : opponentRequest.CandidateStage;
             var selectedMusicId = random.Next(2) == 0 ? hostRequest.CandidateMusicId : opponentRequest.CandidateMusicId;
 
-            var hostResult = new OnlineMatchResult(hostRequest.LocalStriker, opponentRequest.LocalStriker, selectedStage, selectedMusicId);
-            var opponentResult = new OnlineMatchResult(opponentRequest.LocalStriker, hostRequest.LocalStriker, selectedStage, selectedMusicId);
+            var hostResult = new OnlineMatchResult(hostRequest.LocalStriker, opponentRequest.LocalStriker, selectedStage, selectedMusicId, true);
+            var opponentResult = new OnlineMatchResult(opponentRequest.LocalStriker, hostRequest.LocalStriker, selectedStage, selectedMusicId, false);
 
             runner.SendReliableDataToPlayer(opponentPlayer, ResultKey, SerializeResult(opponentResult));
             matchCompletion.TrySetResult(hostResult);
@@ -170,6 +172,7 @@ namespace Alice {
                 opponentStriker = (int)result.OpponentStriker,
                 stage = (int)result.Stage,
                 musicId = result.MusicId,
+                localIsPlayer1 = result.LocalIsPlayer1,
             };
             return Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
         }
@@ -183,7 +186,7 @@ namespace Alice {
         static OnlineMatchResult DeserializeResult(ArraySegment<byte> data) {
             var json = Decode(data);
             var payload = JsonUtility.FromJson<MatchResultPayload>(json);
-            return new OnlineMatchResult((Striker)payload.localStriker, (Striker)payload.opponentStriker, (Stage)payload.stage, payload.musicId);
+            return new OnlineMatchResult((Striker)payload.localStriker, (Striker)payload.opponentStriker, (Stage)payload.stage, payload.musicId, payload.localIsPlayer1);
         }
 
         static string Decode(ArraySegment<byte> data) {
@@ -254,6 +257,7 @@ namespace Alice {
             public int opponentStriker;
             public int stage;
             public string musicId;
+            public bool localIsPlayer1;
         }
     }
 }

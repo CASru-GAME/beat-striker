@@ -21,6 +21,7 @@ namespace Alice {
 
     public interface IGamePadRegistry {
         IPlayerGamePad RequestRegister(IGamePad gamePad);
+        IPlayerGamePad RequestRegister(int playerId, IGamePad gamePad);
         IPlayerGamePad RequestRegisterLowPriority(int playerId, IGamePad gamePad);
         void RequestUnregister(int playerId);
         void RequestUnregister(IGamePad gamePad);
@@ -60,6 +61,14 @@ namespace Alice {
             registry.Add(playerGamePad);
 
             Debug.Log($"Registered GamePad {gamePad.DeviceName} to Player {playerGamePad.PlayerId}".ToGreen());
+            return playerGamePad;
+        }
+
+        public IPlayerGamePad RequestRegister(int playerId, IGamePad gamePad) {
+            RequestUnregister(playerId);
+            var playerGamePad = EnsurePlayerSlot(playerId);
+            playerGamePad.SetPrimary(gamePad.ToOption());
+            Debug.Log($"Registered GamePad {gamePad.DeviceName} to Player {playerId}".ToGreen());
             return playerGamePad;
         }
 

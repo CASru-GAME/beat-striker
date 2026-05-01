@@ -268,11 +268,18 @@ namespace Alice {
             battleSelectSetting.SelectStage(result.Stage);
             battleSelectSetting.SelectMusic(result.MusicId);
             playerSelectSetting.ResetSelections();
-            playerSelectSetting.SelectStriker(0, result.LocalStriker);
-            playerSelectSetting.SelectStriker(1, result.OpponentStriker);
+            selectionPolicy.Reset(playerSelectSetting);
+            var localPlayerId = result.LocalIsPlayer1 ? 0 : 1;
+            var opponentPlayerId = result.LocalIsPlayer1 ? 1 : 0;
+            if (localPlayerId != 0) {
+                gamePadRegistry.HandlePlayerSlotClick(0, localPlayerId);
+            }
+            gamePadRegistry.RequestRegister(opponentPlayerId, new RemoteGamePad(opponentPlayerId));
+            playerSelectSetting.SelectStriker(localPlayerId, result.LocalStriker);
+            playerSelectSetting.SelectStriker(opponentPlayerId, result.OpponentStriker);
             selectionPolicy.RecordSelection(0);
             selectionPolicy.RecordSelection(1);
-            Debug.Log($"{LOG_PREFIX} Online match applied. stage={result.Stage}, musicId={result.MusicId}, local={result.LocalStriker}, opponent={result.OpponentStriker}");
+            Debug.Log($"{LOG_PREFIX} Online match applied. stage={result.Stage}, musicId={result.MusicId}, local={result.LocalStriker}, opponent={result.OpponentStriker}, localPlayerId={localPlayerId}");
         }
 
         bool TryResolveUndoSlotFallback(out int slot) {
