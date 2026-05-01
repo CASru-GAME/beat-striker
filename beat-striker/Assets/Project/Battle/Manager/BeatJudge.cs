@@ -155,7 +155,7 @@ namespace Alice {
         }
 
         void SubmitLocalOnlineCommandIfNeeded(int playerId, IBeatPlayer.BeatResult result) {
-            if (!IsOnlineBattle() || playerId != appNetworkSetting.LocalOnlinePlayerId || result.BeatIndex < 0 || !result.IsSuccess) {
+            if (!IsOnlineBattle() || playerId != ResolveLocalOnlinePlayerId() || result.BeatIndex < 0 || !result.IsSuccess) {
                 return;
             }
 
@@ -175,7 +175,7 @@ namespace Alice {
 
         void ApplyOnlineBeatCommand(OnlineBeatCommandSnapshot command) {
             if (!IsOnlineBattle()
-                || command.PlayerId == appNetworkSetting.LocalOnlinePlayerId
+                || command.PlayerId == ResolveLocalOnlinePlayerId()
                 || command.PlayerId < 0
                 || command.PlayerId >= beatPlayer.Length) {
                 return;
@@ -275,7 +275,7 @@ namespace Alice {
         }
 
         void SubmitLocalOnlineMissIfNeeded(IMusicPlayer.BeatSignal signal) {
-            var localPlayerId = appNetworkSetting.LocalOnlinePlayerId;
+            var localPlayerId = ResolveLocalOnlinePlayerId();
             if (onlineCommandBuffer.HasSubmission(signal.BeatIndex, localPlayerId)) {
                 return;
             }
@@ -322,6 +322,10 @@ namespace Alice {
 
         bool IsOnlineBattle() {
             return appNetworkSetting.IsOnline.CurrentValue && battleOnlineSync.IsReady;
+        }
+
+        int ResolveLocalOnlinePlayerId() {
+            return battleOnlineSync.IsSessionHost ? 0 : 1;
         }
 
         void SyncPlaybackTime(float hostPlaybackTime) {
