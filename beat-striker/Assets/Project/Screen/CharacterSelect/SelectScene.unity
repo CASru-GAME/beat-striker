@@ -481,6 +481,10 @@ PrefabInstance:
       propertyPath: isOnline
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7025038246402514433, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: sessionName
+      value: fafafafdfasdf
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
