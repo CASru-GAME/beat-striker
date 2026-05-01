@@ -136,6 +136,7 @@ namespace Alice {
                 }
 
                 if (IsOnlineBattle()) {
+                    SubmitLocalOnlineMissIfNeeded(signal);
                     EnqueueOnlineBeatSignal(signal);
                     return;
                 }
@@ -241,7 +242,6 @@ namespace Alice {
 
             lastOnlineBeatIndex = signal.BeatIndex;
 
-            SubmitLocalOnlineMissIfNeeded(signal);
             if (isPaused || !IsOnlineBattle()) {
                 return;
             }
