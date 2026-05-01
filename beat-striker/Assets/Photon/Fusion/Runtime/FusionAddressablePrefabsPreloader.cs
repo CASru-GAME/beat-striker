@@ -1,4 +1,4 @@
-﻿namespace Fusion {
+namespace Fusion {
   using System.Collections.Generic;
   using UnityEngine;
 

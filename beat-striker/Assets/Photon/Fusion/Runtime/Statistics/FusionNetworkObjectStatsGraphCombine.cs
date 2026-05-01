@@ -1,4 +1,4 @@
-﻿namespace Fusion.Statistics {
+namespace Fusion.Statistics {
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
