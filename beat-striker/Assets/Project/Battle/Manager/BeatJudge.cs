@@ -11,15 +11,6 @@ namespace Alice {
 
     public record BeatPlayerBattleResult(int Score, int Excellent, int Good, int Miss, int MaxCombo);
 
-    public interface IBeatPlayer{
-        public Observable<BeatResult> OnBeatCommandRequested { get; }
-        public Observable<BeatResult> OnBeatCommandExecuted { get; }
-        public Observable<BeatResult> OnBeatPassed { get; }
-        public ReadOnlyReactiveProperty<int> ComboCount { get; }
-
-        public record BeatResult(int BeatIndex, float Time, bool IsSuccess, BeatJudgeZone Zone, GamePadButton Button, Vector2 Direction, int ComboCount);
-    }
-
     public interface IBeatjudge {
         IBeatPlayer GetBeatPlayer(int playerId);
         IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> GetBattleResults();
@@ -29,7 +20,7 @@ namespace Alice {
         void Resume();
     }
 
-    public class BeatJudge : IBeatjudge, IDisposable {
+    public partial class BeatJudge : IBeatjudge, IDisposable {
         const string LOG_PREFIX = "[BeatJudge]";
         const int PLAYER_COUNT = 2;
 
@@ -38,23 +29,27 @@ namespace Alice {
         readonly IBattleOnlineSync battleOnlineSync;
         readonly BeatOnlineCommandBuffer onlineCommandBuffer;
         readonly List<IDisposable> subscriptions = new();
+        readonly Queue<IMusicPlayer.BeatSignal> pendingOnlineBeatSignals = new();
         BeatPlayer[] beatPlayer = new BeatPlayer[PLAYER_COUNT];
         float lastCommandPlaybackTime = -1f;
         int lastOnlineBeatIndex = -1;
+        bool isOnlineBeatDrainRunning;
         bool isPaused;
 
-        public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync, BeatOnlineCommandBuffer onlineCommandBuffer) {
+        public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting,
+            IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync,
+            BeatOnlineCommandBuffer onlineCommandBuffer) {
             this.audioSetting = audioSetting;
             this.appNetworkSetting = appNetworkSetting;
             this.battleOnlineSync = battleOnlineSync;
             this.onlineCommandBuffer = onlineCommandBuffer;
-            
 
-            for(int i = 0; i < beatPlayer.Length; i++) {
+
+            for (int i = 0; i < beatPlayer.Length; i++) {
                 beatPlayer[i] = new BeatPlayer();
             }
 
-            for(int i = 0; i < beatPlayer.Length; i++) {
+            for (int i = 0; i < beatPlayer.Length; i++) {
                 var playerIndex = i;
                 var gamePad = gamePadRegistry.Get(playerIndex);
 
@@ -81,8 +76,10 @@ namespace Alice {
                         for (var j = 0; j < beatPlayer.Length; j++) {
                             beatPlayer[j].ResetForLoop();
                         }
+
                         ResetOnlineCommandState();
                     }
+
                     lastCommandPlaybackTime = time;
 
                     if (player.IsInputLocked) {
@@ -91,15 +88,19 @@ namespace Alice {
 
                     var result = musicPlayer.JudgeTiming(time);
                     var isTimingSuccess = result.Zone != BeatJudgeZone.Miss && time < result.BeatTime;
-                    var isGood = isTimingSuccess && player.TrySavePendingCommand(result.BeatIndex, result.Zone, button, player.CurrentInputDirection);
+                    var isGood = isTimingSuccess && player.TrySavePendingCommand(result.BeatIndex, result.Zone, button,
+                        player.CurrentInputDirection);
                     if (isTimingSuccess && !isGood) {
                     }
+
                     if (isGood) {
                         player.LockInputUntilBeat(result.BeatIndex);
-                        var beatResult = new IBeatPlayer.BeatResult(result.BeatIndex, time, true, result.Zone, button, player.CurrentInputDirection, player.ComboCount.CurrentValue);
+                        var beatResult = new IBeatPlayer.BeatResult(result.BeatIndex, time, true, result.Zone, button,
+                            player.CurrentInputDirection, player.ComboCount.CurrentValue);
                         player.onBeatCommandRequested.OnNext(beatResult);
                         SubmitLocalOnlineCommandIfNeeded(playerIndex, beatResult);
                     }
+
                     // Record that player attempted this beat so it's not considered a pass later
                     player.RecordAttempt(result.BeatIndex);
                 });
@@ -114,25 +115,31 @@ namespace Alice {
                 }
 
                 if (IsOnlineBattle()) {
-                    _ = ProcessOnlineBeatAsync(signal);
+                    EnqueueOnlineBeatSignal(signal);
                     return;
                 }
 
                 for (var playerIndex = 0; playerIndex < beatPlayer.Length; playerIndex++) {
-                    if (!beatPlayer[playerIndex].TryConsumePendingCommand(signal.BeatIndex, out var zone, out var button, out var direction)) {
+                    if (!beatPlayer[playerIndex].TryConsumePendingCommand(signal.BeatIndex, out var zone,
+                            out var button, out var direction)) {
                         // If player attempted this beat (but it wasn't saved as pending), it's a miss rather than a pass
                         if (beatPlayer[playerIndex].HasAttempt(signal.BeatIndex)) {
                             beatPlayer[playerIndex].ClearAttempt(signal.BeatIndex);
                             beatPlayer[playerIndex].ResetCombo();
                             beatPlayer[playerIndex].IncrementMiss();
-                            beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false, BeatJudgeZone.Miss, default, Vector2.zero, beatPlayer[playerIndex].ComboCount.CurrentValue));
+                            beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(
+                                new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false, BeatJudgeZone.Miss,
+                                    default, Vector2.zero, beatPlayer[playerIndex].ComboCount.CurrentValue));
                             continue;
                         }
 
                         // No pending command and no attempt -> player passed the beat
                         beatPlayer[playerIndex].ResetCombo();
                         beatPlayer[playerIndex].IncrementMiss();
-                        beatPlayer[playerIndex].onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false, BeatJudgeZone.Miss, default, beatPlayer[playerIndex].CurrentInputDirection, beatPlayer[playerIndex].ComboCount.CurrentValue));
+                        beatPlayer[playerIndex].onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex,
+                            signal.BeatTime, false, BeatJudgeZone.Miss, default,
+                            beatPlayer[playerIndex].CurrentInputDirection,
+                            beatPlayer[playerIndex].ComboCount.CurrentValue));
                         continue;
                     }
 
@@ -146,13 +153,16 @@ namespace Alice {
                     }
 
                     beatPlayer[playerIndex].AddScore(CalculateScore(zone));
-                    beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, true, zone, button, direction, beatPlayer[playerIndex].ComboCount.CurrentValue));
+                    beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex,
+                        signal.BeatTime, true, zone, button, direction,
+                        beatPlayer[playerIndex].ComboCount.CurrentValue));
                 }
             }));
         }
 
         void SubmitLocalOnlineCommandIfNeeded(int playerId, IBeatPlayer.BeatResult result) {
-            if (!IsOnlineBattle() || playerId != ResolveLocalOnlinePlayerId() || result.BeatIndex < 0 || !result.IsSuccess) {
+            if (!IsOnlineBattle() || playerId != ResolveLocalOnlinePlayerId() || result.BeatIndex < 0 ||
+                !result.IsSuccess) {
                 return;
             }
 
@@ -182,7 +192,8 @@ namespace Alice {
                 return;
             }
 
-            Debug.Log($"{LOG_PREFIX} Applied remote online command. player={command.PlayerId}, beat={command.BeatIndex}, success={command.IsSuccess}, ready={onlineCommandBuffer.IsReady(command.BeatIndex, PLAYER_COUNT)}");
+            Debug.Log(
+                $"{LOG_PREFIX} Applied remote online command. player={command.PlayerId}, beat={command.BeatIndex}, success={command.IsSuccess}, ready={onlineCommandBuffer.IsReady(command.BeatIndex, PLAYER_COUNT)}");
             var player = beatPlayer[command.PlayerId];
             if (command.IsSuccess) {
                 player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
@@ -200,6 +211,7 @@ namespace Alice {
             if (lastOnlineBeatIndex >= 0 && signal.BeatIndex < lastOnlineBeatIndex) {
                 ResetOnlineCommandState();
             }
+
             lastOnlineBeatIndex = signal.BeatIndex;
 
             SubmitLocalOnlineMissIfNeeded(signal);
@@ -208,12 +220,14 @@ namespace Alice {
             }
 
             if (!onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
-                Debug.Log($"{LOG_PREFIX} Waiting online beat. beat={signal.BeatIndex}, localPlayer={ResolveLocalOnlinePlayerId()}, isHost={battleOnlineSync.IsSessionHost}");
+                Debug.Log(
+                    $"{LOG_PREFIX} Waiting online beat. beat={signal.BeatIndex}, localPlayer={ResolveLocalOnlinePlayerId()}, isHost={battleOnlineSync.IsSessionHost}");
                 while (!isPaused
-                    && IsOnlineBattle()
-                    && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                       && IsOnlineBattle()
+                       && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
                     await Task.Yield();
                 }
+
                 if (isPaused || !IsOnlineBattle()) {
                     return;
                 }
@@ -235,6 +249,32 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Completed online beat. beat={signal.BeatIndex}");
         }
 
+        void EnqueueOnlineBeatSignal(IMusicPlayer.BeatSignal signal) {
+            pendingOnlineBeatSignals.Enqueue(signal);
+            if (isOnlineBeatDrainRunning) {
+                return;
+            }
+
+            isOnlineBeatDrainRunning = true;
+            _ = DrainOnlineBeatSignalsAsync();
+        }
+
+        async Task DrainOnlineBeatSignalsAsync() {
+            try {
+                while (pendingOnlineBeatSignals.Count > 0) {
+                    var signal = pendingOnlineBeatSignals.Dequeue();
+                    await ProcessOnlineBeatAsync(signal);
+                }
+            }
+            finally {
+                isOnlineBeatDrainRunning = false;
+                if (pendingOnlineBeatSignals.Count > 0 && !isOnlineBeatDrainRunning) {
+                    isOnlineBeatDrainRunning = true;
+                    _ = DrainOnlineBeatSignalsAsync();
+                }
+            }
+        }
+
         void SubmitLocalOnlineMissIfNeeded(IMusicPlayer.BeatSignal signal) {
             var localPlayerId = ResolveLocalOnlinePlayerId();
             if (onlineCommandBuffer.HasSubmission(signal.BeatIndex, localPlayerId)) {
@@ -243,7 +283,8 @@ namespace Alice {
 
             var command = CreateMissCommand(localPlayerId, signal);
             if (onlineCommandBuffer.TrySubmit(command)) {
-                Debug.Log($"{LOG_PREFIX} Submitted local online miss. player={localPlayerId}, beat={signal.BeatIndex}, ready={onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)}");
+                Debug.Log(
+                    $"{LOG_PREFIX} Submitted local online miss. player={localPlayerId}, beat={signal.BeatIndex}, ready={onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)}");
                 battleOnlineSync.PublishBeatCommand(command);
             }
         }
@@ -266,7 +307,11 @@ namespace Alice {
             if (!command.IsSuccess) {
                 player.ResetCombo();
                 player.IncrementMiss();
-                player.onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false, BeatJudgeZone.Miss, command.Button, command.Direction, player.ComboCount.CurrentValue));
+                player.onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false,
+                    BeatJudgeZone.Miss, command.Button, command.Direction, player.ComboCount.CurrentValue));
+                // Keep direction state in sync with offline flow where pass updates direction each beat.
+                player.onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false,
+                    BeatJudgeZone.Miss, command.Button, command.Direction, player.ComboCount.CurrentValue));
                 return;
             }
 
@@ -279,7 +324,8 @@ namespace Alice {
             }
 
             player.AddScore(CalculateScore(command.Zone));
-            player.onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, true, command.Zone, command.Button, command.Direction, player.ComboCount.CurrentValue));
+            player.onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, true,
+                command.Zone, command.Button, command.Direction, player.ComboCount.CurrentValue));
         }
 
         bool IsOnlineBattle() {
@@ -292,6 +338,7 @@ namespace Alice {
 
         void ResetOnlineCommandState() {
             onlineCommandBuffer.Clear();
+            pendingOnlineBeatSignals.Clear();
             lastOnlineBeatIndex = -1;
         }
 
@@ -305,7 +352,9 @@ namespace Alice {
         public IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> GetBattleResults() {
             var results = new Dictionary<PlayerId, BeatPlayerBattleResult>(beatPlayer.Length);
             for (var playerId = 0; playerId < beatPlayer.Length; playerId++) {
-                results[new PlayerId(playerId)] = new BeatPlayerBattleResult(beatPlayer[playerId].Score, beatPlayer[playerId].Excellent, beatPlayer[playerId].Good, beatPlayer[playerId].Miss, beatPlayer[playerId].MaxCombo);
+                results[new PlayerId(playerId)] = new BeatPlayerBattleResult(beatPlayer[playerId].Score,
+                    beatPlayer[playerId].Excellent, beatPlayer[playerId].Good, beatPlayer[playerId].Miss,
+                    beatPlayer[playerId].MaxCombo);
             }
 
             return results;
@@ -337,167 +386,22 @@ namespace Alice {
 
         public IBeatPlayer GetBeatPlayer(int playerId) {
             if (playerId < 0 || playerId >= beatPlayer.Length) {
-                throw new ArgumentOutOfRangeException(nameof(playerId), $"Player ID must be between 0 and {beatPlayer.Length - 1}");
+                throw new ArgumentOutOfRangeException(nameof(playerId),
+                    $"Player ID must be between 0 and {beatPlayer.Length - 1}");
             }
+
             return beatPlayer[playerId];
         }
 
         public void Dispose() {
-            
+
             foreach (var subscription in subscriptions) {
                 subscription.Dispose();
             }
+
             subscriptions.Clear();
         }
 
-        
 
-        class BeatPlayer : IBeatPlayer {
-            readonly Dictionary<int, PendingCommand> pendingCommands = new Dictionary<int, PendingCommand>();
-            readonly HashSet<int> attemptedCommands = new HashSet<int>();
-            readonly ReactiveProperty<int> comboCount = new(0);
-            public Subject<IBeatPlayer.BeatResult> onBeatCommandRequested = new Subject<IBeatPlayer.BeatResult>();
-            public Subject<IBeatPlayer.BeatResult> onBeatCommandExecuted = new Subject<IBeatPlayer.BeatResult>();
-            public Subject<IBeatPlayer.BeatResult> onBeatPassed = new Subject<IBeatPlayer.BeatResult>();
-            Vector2 currentInputDirection = Vector2.zero;
-            int score;
-            int excellent;
-            int good;
-            int miss;
-            int maxCombo;
-            bool isInputLocked;
-            int lockedBeatIndex = -1;
-
-            record PendingCommand(BeatJudgeZone Zone, GamePadButton Button, Vector2 Direction);
-
-            public Observable<IBeatPlayer.BeatResult> OnBeatCommandRequested => onBeatCommandRequested;
-            public Observable<IBeatPlayer.BeatResult> OnBeatCommandExecuted => onBeatCommandExecuted;
-            public Observable<IBeatPlayer.BeatResult> OnBeatPassed => onBeatPassed;
-            public ReadOnlyReactiveProperty<int> ComboCount => comboCount;
-            public Vector2 CurrentInputDirection => currentInputDirection;
-            public int Score => score;
-            public int Excellent => excellent;
-            public int Good => good;
-            public int Miss => miss;
-            public int MaxCombo => maxCombo;
-            public bool IsInputLocked => isInputLocked;
-
-            public bool TrySavePendingCommand(int beatIndex, BeatJudgeZone zone, GamePadButton button, Vector2 direction) {
-                if (pendingCommands.ContainsKey(beatIndex)) {
-                    
-                    return false;
-                }
-
-                pendingCommands[beatIndex] = new PendingCommand(zone, button, direction);
-                
-                return true;
-            }
-
-            public void LockInputUntilBeat(int beatIndex) {
-                isInputLocked = true;
-                lockedBeatIndex = beatIndex;
-            }
-
-            public void UnlockInputIfBeatMatched(int beatIndex) {
-                if (!isInputLocked || lockedBeatIndex != beatIndex) {
-                    return;
-                }
-
-                isInputLocked = false;
-                lockedBeatIndex = -1;
-            }
-
-            public void UpdateInputDirection(Vector2 direction) {
-                currentInputDirection = direction;
-            }
-
-            public void ClearInputDirection() {
-                currentInputDirection = Vector2.zero;
-            }
-
-            public void RecordAttempt(int beatIndex) {
-                if (beatIndex < 0) return;
-                attemptedCommands.Add(beatIndex);
-            }
-
-            public bool HasAttempt(int beatIndex) {
-                return attemptedCommands.Contains(beatIndex);
-            }
-
-            public void ClearAttempt(int beatIndex) {
-                attemptedCommands.Remove(beatIndex);
-            }
-
-            public bool TryConsumePendingCommand(int beatIndex, out BeatJudgeZone zone, out GamePadButton button, out Vector2 direction) {
-                if (!pendingCommands.TryGetValue(beatIndex, out var command)) {
-                    zone = BeatJudgeZone.Miss;
-                    button = default;
-                    direction = Vector2.zero;
-                    
-                    return false;
-                }
-
-                pendingCommands.Remove(beatIndex);
-                attemptedCommands.Remove(beatIndex);
-                zone = command.Zone;
-                button = command.Button;
-                direction = command.Direction;
-                
-                return true;
-            }
-
-            public void ClearSubmittedCommand(int beatIndex) {
-                pendingCommands.Remove(beatIndex);
-                attemptedCommands.Remove(beatIndex);
-                UnlockInputIfBeatMatched(beatIndex);
-            }
-
-            public void ResetForLoop() {
-                pendingCommands.Clear();
-                attemptedCommands.Clear();
-                comboCount.OnNext(0);
-                isInputLocked = false;
-                lockedBeatIndex = -1;
-            }
-
-            public void ResetBattleState() {
-                score = 0;
-                excellent = 0;
-                good = 0;
-                miss = 0;
-                maxCombo = 0;
-                ResetForLoop();
-            }
-
-            public void AddScore(int value) {
-                score += value;
-            }
-
-            public void IncrementExcellent() {
-                excellent += 1;
-            }
-
-            public void IncrementGood() {
-                good += 1;
-            }
-
-            public void IncrementMiss() {
-                miss += 1;
-            }
-
-            public void IncrementCombo() {
-                var nextCombo = comboCount.CurrentValue + 1;
-                comboCount.OnNext(nextCombo);
-                if (maxCombo < nextCombo) {
-                    maxCombo = nextCombo;
-                }
-            }
-
-            public void ResetCombo() {
-                comboCount.OnNext(0);
-            }
-
-            
-        }
     }
 }
