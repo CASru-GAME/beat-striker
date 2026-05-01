@@ -47,6 +47,8 @@ namespace Alice {
         readonly Subject<Unit> roundFinishedSubject = new();
         readonly Subject<Unit> battleFinishedSubject = new();
         readonly Subject<CorePlayerId> outroStartedSubject = new();
+        ulong lastAppliedPhaseSequence;
+        ulong lastAppliedOutcomeSequence;
 
         public Observable<Unit> OnRoundPlayableStarted => roundPlayableStartedSubject;
 
@@ -76,6 +78,8 @@ namespace Alice {
             battleMusicStarted = false;
             musicEndBattleRequested = false;
             activeRoundToken = 0;
+            lastAppliedPhaseSequence = 0;
+            lastAppliedOutcomeSequence = 0;
             stateMachine.OnStateChanged.Subscribe(OnBattleFlowStateChanged);
             Debug.Log($"{LOG_PREFIX} Constructed. initialRound={currentRound}, playerPresenterCount={battlePlayerPresenters.Length}");
         }
@@ -321,8 +325,11 @@ namespace Alice {
                 var winnerRoundWinCount = judgeResult.RoundWins.TryGetValue(new CorePlayerId(winnerPlayerId), out var roundWinCount)
                     ? roundWinCount
                     : 0;
-                if (IsOnlineHost() && continueBattle) {
-                    PublishRoundOutcome(finishedRound, deadPlayerId, winnerPlayerId, continueBattle, -1, false, judgeResult.RoundWins);
+                if (IsOnlineHost()) {
+                    var finalWinnerPlayerId = continueBattle
+                        ? -1
+                        : ResolveMusicEndWinner(judgeResult.RoundWins).Value;
+                    PublishRoundOutcome(finishedRound, deadPlayerId, winnerPlayerId, continueBattle, finalWinnerPlayerId, false, judgeResult.RoundWins);
                 }
                 battlePresenter.HandleRoundResolved(winnerPlayerId, winnerRoundWinCount, continueBattle);
 
@@ -379,6 +386,16 @@ namespace Alice {
 
         async Task ResolveRoundFromHostOutcomeAsync(int finishedRound) {
             var outcome = await battleOnlineSync.WaitForOutcomeAsync(BattleOutcomeKind.RoundResolved, finishedRound);
+            if (outcome.Kind == BattleOutcomeKind.BattleFinished) {
+                TryApplyBattleFinishedOutcome(outcome);
+                return;
+            }
+
+            if (outcome.Sequence <= lastAppliedOutcomeSequence) {
+                return;
+            }
+
+            lastAppliedOutcomeSequence = outcome.Sequence;
             var roundWins = BuildRoundWins(outcome.PlayerIds, outcome.RoundWinCounts);
             battleJudge.ApplyRoundWins(roundWins);
 
@@ -488,6 +505,11 @@ namespace Alice {
                 return;
             }
 
+            if (snapshot.Sequence <= lastAppliedPhaseSequence) {
+                return;
+            }
+
+            lastAppliedPhaseSequence = snapshot.Sequence;
             if (snapshot.State == BattleFlowState.Suspended) {
                 ApplySuspendMenuPause();
                 return;
@@ -515,21 +537,7 @@ namespace Alice {
         }
 
         void ApplyOnlineOutcomeSnapshot(BattleOutcomeSnapshot outcome) {
-            if (!IsOnlineClient() || outcome.Kind != BattleOutcomeKind.BattleFinished || stateMachine.IsRoundResolving || stateMachine.IsBattleEndingOrFinished) {
-                return;
-            }
-
-            var roundWins = BuildRoundWins(outcome.PlayerIds, outcome.RoundWinCounts);
-            battleJudge.ApplyRoundWins(roundWins);
-            var finalWinnerId = outcome.FinalWinnerPlayerId >= 0
-                ? outcome.FinalWinnerPlayerId
-                : outcome.RoundWinnerPlayerId;
-
-            if (BeginRoundResolution(stopMusic: outcome.StopMusic)) {
-                beatJudge.ResetRoundState();
-                PresentRoundPlayableFinishToPlayers();
-                _ = CompleteBattleWithWinnerAsync(new CorePlayerId(finalWinnerId), roundWins);
-            }
+            TryApplyBattleFinishedOutcome(outcome);
         }
 
         void ApplyOnlinePauseRequest() {
@@ -594,6 +602,7 @@ namespace Alice {
 
                 var roundWins = battleJudge.GetRoundWins();
                 var winner = ResolveMusicEndWinner(roundWins);
+                PublishRoundOutcome(Math.Max(1, currentRound), -1, winner.Value, false, winner.Value, false, roundWins);
                 await CompleteBattleWithWinnerAsync(winner, roundWins);
             }
             catch (Exception exception) {
@@ -616,8 +625,9 @@ namespace Alice {
                 PresentRoundPlayableFinishToPlayers();
 
                 var winnerPlayerId = ResolveTopHitPointPlayerId();
-
-                await CompleteBattleWithWinnerAsync(new CorePlayerId(winnerPlayerId), battleJudge.GetRoundWins(), stopMusic: true);
+                var roundWins = battleJudge.GetRoundWins();
+                PublishRoundOutcome(Math.Max(1, currentRound), -1, winnerPlayerId, false, winnerPlayerId, true, roundWins);
+                await CompleteBattleWithWinnerAsync(new CorePlayerId(winnerPlayerId), roundWins, stopMusic: true);
             }
             catch (Exception exception) {
                 Debug.LogException(exception);
@@ -679,6 +689,35 @@ namespace Alice {
                 roundWinCounts));
         }
 
+        bool TryApplyBattleFinishedOutcome(BattleOutcomeSnapshot outcome) {
+            if (!IsOnlineClient() || outcome.Kind != BattleOutcomeKind.BattleFinished || stateMachine.IsBattleEndingOrFinished) {
+                return false;
+            }
+
+            if (outcome.Sequence <= lastAppliedOutcomeSequence) {
+                return false;
+            }
+
+            lastAppliedOutcomeSequence = outcome.Sequence;
+            var roundWins = BuildRoundWins(outcome.PlayerIds, outcome.RoundWinCounts);
+            battleJudge.ApplyRoundWins(roundWins);
+            var finalWinnerId = outcome.FinalWinnerPlayerId >= 0
+                ? outcome.FinalWinnerPlayerId
+                : outcome.RoundWinnerPlayerId;
+
+            if (!stateMachine.IsRoundResolving) {
+                if (!BeginRoundResolution(stopMusic: outcome.StopMusic)) {
+                    return false;
+                }
+
+                beatJudge.ResetRoundState();
+                PresentRoundPlayableFinishToPlayers();
+            }
+
+            _ = CompleteBattleWithWinnerAsync(new CorePlayerId(finalWinnerId), roundWins);
+            return true;
+        }
+
         static IReadOnlyDictionary<CorePlayerId, int> BuildRoundWins(int[] playerIds, int[] roundWinCounts) {
             var roundWins = new Dictionary<CorePlayerId, int>();
             var count = Math.Min(playerIds.Length, roundWinCounts.Length);
@@ -694,8 +733,6 @@ namespace Alice {
             if (!stateMachine.TryBeginEndingBattle(nameof(CompleteBattleWithWinnerAsync))) {
                 return;
             }
-
-            PublishRoundOutcome(Math.Max(1, currentRound - 1), -1, winner.Value, false, winner.Value, stopMusic, roundWins);
 
             battleFinishedSubject.OnNext(Unit.Default);
             outroStartedSubject.OnNext(winner);
