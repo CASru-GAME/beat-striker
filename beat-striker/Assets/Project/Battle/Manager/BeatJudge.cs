@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
  
 using App;
@@ -42,7 +43,6 @@ namespace Alice {
         BeatPlayer[] beatPlayer = new BeatPlayer[PLAYER_COUNT];
         float lastCommandPlaybackTime = -1f;
         int lastOnlineBeatIndex = -1;
-        int onlineCommandGeneration;
         bool isPaused;
 
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync, BeatOnlineCommandBuffer onlineCommandBuffer) {
@@ -99,11 +99,10 @@ namespace Alice {
                     }
                     if (isGood) {
                         player.LockInputUntilBeat(result.BeatIndex);
+                        var beatResult = new IBeatPlayer.BeatResult(result.BeatIndex, time, true, result.Zone, button, player.CurrentInputDirection, player.ComboCount.CurrentValue);
+                        player.onBeatCommandRequested.OnNext(beatResult);
+                        SubmitLocalOnlineCommandIfNeeded(playerIndex, beatResult);
                     }
-                    var requestZone = isGood ? result.Zone : BeatJudgeZone.Miss;
-                    var beatResult = new IBeatPlayer.BeatResult(result.BeatIndex, time, isGood, requestZone, button, player.CurrentInputDirection, player.ComboCount.CurrentValue);
-                    player.onBeatCommandRequested.OnNext(beatResult);
-                    SubmitLocalOnlineCommandIfNeeded(playerIndex, beatResult);
                     // Record that player attempted this beat so it's not considered a pass later
                     player.RecordAttempt(result.BeatIndex);
                 });
@@ -156,7 +155,7 @@ namespace Alice {
         }
 
         void SubmitLocalOnlineCommandIfNeeded(int playerId, IBeatPlayer.BeatResult result) {
-            if (!IsOnlineBattle() || playerId != appNetworkSetting.LocalOnlinePlayerId || result.BeatIndex < 0) {
+            if (!IsOnlineBattle() || playerId != appNetworkSetting.LocalOnlinePlayerId || result.BeatIndex < 0 || !result.IsSuccess) {
                 return;
             }
 
@@ -187,14 +186,16 @@ namespace Alice {
             }
 
             var player = beatPlayer[command.PlayerId];
-            player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
-                command.BeatIndex,
-                command.Time,
-                command.IsSuccess,
-                command.Zone,
-                command.Button,
-                command.Direction,
-                player.ComboCount.CurrentValue));
+            if (command.IsSuccess) {
+                player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
+                    command.BeatIndex,
+                    command.Time,
+                    true,
+                    command.Zone,
+                    command.Button,
+                    command.Direction,
+                    player.ComboCount.CurrentValue));
+            }
         }
 
         async Task ProcessOnlineBeatAsync(IMusicPlayer.BeatSignal signal) {
@@ -202,45 +203,17 @@ namespace Alice {
                 ResetOnlineCommandState();
             }
             lastOnlineBeatIndex = signal.BeatIndex;
-            var generation = onlineCommandGeneration;
 
             SubmitLocalOnlineMissIfNeeded(signal);
-            musicPlayer.Pause();
+            if (isPaused || !IsOnlineBattle()) {
+                return;
+            }
 
-            OnlineBeatSyncResumeSnapshot resumeSnapshot;
-            if (battleOnlineSync.IsSessionHost) {
-                while (!isPaused
-                    && IsOnlineBattle()
-                    && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
-                    await Task.Yield();
-                }
-
-                if (isPaused || !IsOnlineBattle() || generation != onlineCommandGeneration) {
+            if (!onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                await WaitForOnlineBeatReadyAsync(signal);
+                if (isPaused || !IsOnlineBattle()) {
                     return;
                 }
-
-                var resumeNetworkTime = battleOnlineSync.NetworkTime + ONLINE_BEAT_RESUME_LEAD_SECONDS;
-                battleOnlineSync.PublishBeatSyncResume(signal.BeatIndex, resumeNetworkTime);
-                resumeSnapshot = new OnlineBeatSyncResumeSnapshot(0, signal.BeatIndex, resumeNetworkTime);
-            }
-            else {
-                resumeSnapshot = await battleOnlineSync.WaitForBeatSyncResumeAsync(signal.BeatIndex);
-            }
-
-            if (isPaused || !IsOnlineBattle() || generation != onlineCommandGeneration) {
-                return;
-            }
-
-            while (!isPaused
-                && IsOnlineBattle()
-                && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
-                await Task.Yield();
-            }
-
-            await WaitForNetworkTimeAsync(resumeSnapshot.ResumeNetworkTime);
-
-            if (isPaused || !IsOnlineBattle() || generation != onlineCommandGeneration) {
-                return;
             }
 
             for (var playerId = 0; playerId < PLAYER_COUNT; playerId++) {
@@ -256,7 +229,49 @@ namespace Alice {
             }
 
             onlineCommandBuffer.CloseBeat(signal.BeatIndex);
-            musicPlayer.Resume();
+        }
+
+        async Task WaitForOnlineBeatReadyAsync(IMusicPlayer.BeatSignal signal) {
+            musicPlayer.Pause();
+            OnlineBeatSyncResumeSnapshot resumeSnapshot;
+            if (battleOnlineSync.IsSessionHost) {
+                while (!isPaused
+                    && IsOnlineBattle()
+                    && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                    await Task.Yield();
+                }
+
+                if (isPaused || !IsOnlineBattle()) {
+                    return;
+                }
+
+                var resumeNetworkTime = battleOnlineSync.NetworkTime + ONLINE_BEAT_RESUME_LEAD_SECONDS;
+                var hostPlaybackTime = musicPlayer.CurrentPlaybackTime;
+                battleOnlineSync.PublishBeatSyncResume(signal.BeatIndex, resumeNetworkTime, hostPlaybackTime);
+                resumeSnapshot = new OnlineBeatSyncResumeSnapshot(0, signal.BeatIndex, resumeNetworkTime, hostPlaybackTime);
+            }
+            else {
+                resumeSnapshot = await battleOnlineSync.WaitForBeatSyncResumeAsync(signal.BeatIndex);
+            }
+
+            while (!isPaused
+                && IsOnlineBattle()
+                && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                await Task.Yield();
+            }
+
+            if (isPaused || !IsOnlineBattle()) {
+                return;
+            }
+
+            SyncPlaybackTime(resumeSnapshot.HostPlaybackTime);
+            while (!isPaused && IsOnlineBattle() && battleOnlineSync.NetworkTime < resumeSnapshot.ResumeNetworkTime) {
+                await Task.Yield();
+            }
+
+            if (!isPaused && IsOnlineBattle()) {
+                musicPlayer.Resume();
+            }
         }
 
         void SubmitLocalOnlineMissIfNeeded(IMusicPlayer.BeatSignal signal) {
@@ -309,16 +324,16 @@ namespace Alice {
             return appNetworkSetting.IsOnline.CurrentValue && battleOnlineSync.IsReady;
         }
 
-        async Task WaitForNetworkTimeAsync(float networkTime) {
-            while (!isPaused && IsOnlineBattle() && battleOnlineSync.NetworkTime < networkTime) {
-                await Task.Yield();
+        void SyncPlaybackTime(float hostPlaybackTime) {
+            var method = musicPlayer.GetType().GetMethod("SyncPlaybackTime", BindingFlags.Public | BindingFlags.Instance);
+            if (method != null) {
+                method.Invoke(musicPlayer, new object[] { hostPlaybackTime });
             }
         }
 
         void ResetOnlineCommandState() {
             onlineCommandBuffer.Clear();
             lastOnlineBeatIndex = -1;
-            onlineCommandGeneration += 1;
         }
 
         int CalculateScore(BeatJudgeZone zone) {

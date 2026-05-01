@@ -17,6 +17,7 @@ namespace Alice {
         void Stop();
         void Pause();
         void Resume();
+        void SyncPlaybackTime(float playbackTime);
         Observable<BeatSignal> OnGoodZoneEntered { get; }
         Observable<BeatSignal> OnExcellentZoneEntered { get; }
         Observable<BeatSignal> OnBeatTiming { get; }
@@ -213,6 +214,35 @@ namespace Alice {
             isPlaybackPaused = false;
         }
 
+        public void SyncPlaybackTime(float playbackTime) {
+            var clampedTime = Mathf.Max(0f, playbackTime);
+            if (playbackTimelineLengthSeconds > 0f) {
+                if (playbackClockMode == PlaybackClockMode.AudioLoop) {
+                    clampedTime %= playbackTimelineLengthSeconds;
+                }
+                else {
+                    clampedTime = Mathf.Min(clampedTime, playbackTimelineLengthSeconds);
+                }
+            }
+
+            logicalPlaybackTime = clampedTime;
+            if (playbackClockMode != PlaybackClockMode.VirtualLoop && audioSource.clip != null) {
+                var clipLength = Mathf.Max(0f, audioSource.clip.length);
+                if (clipLength > 0f) {
+                    var audioTime = playbackClockMode == PlaybackClockMode.AudioLoop
+                        ? clampedTime % clipLength
+                        : Mathf.Min(clampedTime, clipLength);
+                    audioSource.time = audioTime;
+                    lastRawAudioTime = audioTime;
+                }
+            }
+
+            currentViewPlaybackTime = clampedTime + audioSetting.ViewTimeOffset.CurrentValue;
+            onViewPlaybackTimeChanged.OnNext(currentViewPlaybackTime);
+            ResetBeatIndexesForTime(clampedTime);
+            lastPlaybackTime = clampedTime;
+        }
+
         void CompletePlayback() {
             if (playbackCompleted) {
                 return;
@@ -227,6 +257,55 @@ namespace Alice {
             excellentWindowIndex = 0;
             beatTimingIndex = 0;
             viewBeatTimingIndex = 0;
+        }
+
+        void ResetBeatIndexesForTime(float playbackTime) {
+            goodWindowIndex = ResolveNextGoodWindowIndex(playbackTime);
+            excellentWindowIndex = ResolveNextExcellentWindowIndex(playbackTime);
+            beatTimingIndex = ResolveNextBeatTimingIndex(playbackTime);
+            viewBeatTimingIndex = ResolveNextViewBeatTimingIndex(playbackTime);
+        }
+
+        int ResolveNextGoodWindowIndex(float playbackTime) {
+            var judgeTime = playbackTime + audioSetting.CommandTimeOffset.CurrentValue;
+            var window = Mathf.Max(0f, audioSetting.GoodWindow.CurrentValue);
+            var index = 0;
+            while (index < beats.Length && beats[index] - window <= judgeTime) {
+                index += 1;
+            }
+
+            return index;
+        }
+
+        int ResolveNextExcellentWindowIndex(float playbackTime) {
+            var judgeTime = playbackTime + audioSetting.CommandTimeOffset.CurrentValue;
+            var goodWindow = Mathf.Max(0f, audioSetting.GoodWindow.CurrentValue);
+            var excellentWindow = Mathf.Clamp(audioSetting.ExcellentWindow.CurrentValue, 0f, goodWindow);
+            var index = 0;
+            while (index < beats.Length && beats[index] - excellentWindow <= judgeTime) {
+                index += 1;
+            }
+
+            return index;
+        }
+
+        int ResolveNextBeatTimingIndex(float playbackTime) {
+            var index = 0;
+            while (index < beats.Length && beats[index] <= playbackTime) {
+                index += 1;
+            }
+
+            return index;
+        }
+
+        int ResolveNextViewBeatTimingIndex(float playbackTime) {
+            var viewTime = playbackTime + audioSetting.ViewTimeOffset.CurrentValue;
+            var index = 0;
+            while (index < beats.Length && beats[index] <= viewTime) {
+                index += 1;
+            }
+
+            return index;
         }
 
         PlaybackClockMode ResolvePlaybackClockMode() {

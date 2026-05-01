@@ -39,7 +39,7 @@ namespace Alice {
 
     public record OnlineRoundStartSnapshot(ulong Sequence, int Round, float StartNetworkTime);
 
-    public record OnlineBeatSyncResumeSnapshot(ulong Sequence, int BeatIndex, float ResumeNetworkTime);
+    public record OnlineBeatSyncResumeSnapshot(ulong Sequence, int BeatIndex, float ResumeNetworkTime, float HostPlaybackTime);
 
     public interface IBattleOnlineSync {
         bool IsSessionHost { get; }
@@ -62,7 +62,7 @@ namespace Alice {
         void PublishBeatCommand(OnlineBeatCommandSnapshot snapshot);
         void RequestRoundStartReady(int round);
         void PublishRoundStartSchedule(int round, float startNetworkTime);
-        void PublishBeatSyncResume(int beatIndex, float resumeNetworkTime);
+        void PublishBeatSyncResume(int beatIndex, float resumeNetworkTime, float hostPlaybackTime);
         Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round);
         Task<BattleOutcomeSnapshot> WaitForOutcomeAsync(BattleOutcomeKind kind, int finishedRound);
         Task WaitForRoundStartReadyAsync(int round);
@@ -88,7 +88,7 @@ namespace Alice {
         readonly ReactiveProperty<BattleFlowPhaseSnapshot> latestPhase = new(new BattleFlowPhaseSnapshot(0, BattleFlowState.NotStarted, 0));
         readonly ReactiveProperty<BattleOutcomeSnapshot> latestOutcome = new(new BattleOutcomeSnapshot(0, 0, 0, -1, -1, false, -1, false, Array.Empty<int>(), Array.Empty<int>()));
         readonly ReactiveProperty<OnlineRoundStartSnapshot> latestRoundStart = new(new OnlineRoundStartSnapshot(0, 0, 0));
-        readonly ReactiveProperty<OnlineBeatSyncResumeSnapshot> latestBeatSyncResume = new(new OnlineBeatSyncResumeSnapshot(0, -1, 0));
+        readonly ReactiveProperty<OnlineBeatSyncResumeSnapshot> latestBeatSyncResume = new(new OnlineBeatSyncResumeSnapshot(0, -1, 0, 0));
         readonly Subject<OnlineBeatCommandSnapshot> beatCommandReceivedSubject = new();
         readonly Subject<Unit> pauseRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
@@ -227,21 +227,22 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Published round start schedule. sequence={snapshot.Sequence}, round={round}, start={startNetworkTime:0.000}");
         }
 
-        public void PublishBeatSyncResume(int beatIndex, float resumeNetworkTime) {
+        public void PublishBeatSyncResume(int beatIndex, float resumeNetworkTime, float hostPlaybackTime) {
             if (!IsSessionHost) {
                 return;
             }
 
             beatSyncResumeSequence += 1;
-            var snapshot = new OnlineBeatSyncResumeSnapshot(beatSyncResumeSequence, beatIndex, resumeNetworkTime);
+            var snapshot = new OnlineBeatSyncResumeSnapshot(beatSyncResumeSequence, beatIndex, resumeNetworkTime, hostPlaybackTime);
             latestBeatSyncResume.Value = snapshot;
             var payload = new BeatSyncResumePayload {
                 sequence = (long)snapshot.Sequence,
                 beatIndex = snapshot.BeatIndex,
                 resumeNetworkTime = snapshot.ResumeNetworkTime,
+                hostPlaybackTime = snapshot.HostPlaybackTime,
             };
             Broadcast(BeatSyncResumeKey, payload);
-            Debug.Log($"{LOG_PREFIX} Published beat sync resume. sequence={snapshot.Sequence}, beat={beatIndex}, resume={resumeNetworkTime:0.000}");
+            Debug.Log($"{LOG_PREFIX} Published beat sync resume. sequence={snapshot.Sequence}, beat={beatIndex}, resume={resumeNetworkTime:0.000}, hostPlayback={hostPlaybackTime:0.000}");
         }
 
         public async Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round) {
@@ -474,10 +475,11 @@ namespace Alice {
                 var snapshot = new OnlineBeatSyncResumeSnapshot(
                     (ulong)payload.sequence,
                     payload.beatIndex,
-                    payload.resumeNetworkTime);
+                    payload.resumeNetworkTime,
+                    payload.hostPlaybackTime);
                 if (snapshot.Sequence > latestBeatSyncResume.CurrentValue.Sequence) {
                     latestBeatSyncResume.Value = snapshot;
-                    Debug.Log($"{LOG_PREFIX} Received beat sync resume. sequence={snapshot.Sequence}, beat={snapshot.BeatIndex}, resume={snapshot.ResumeNetworkTime:0.000}");
+                    Debug.Log($"{LOG_PREFIX} Received beat sync resume. sequence={snapshot.Sequence}, beat={snapshot.BeatIndex}, resume={snapshot.ResumeNetworkTime:0.000}, hostPlayback={snapshot.HostPlaybackTime:0.000}");
                 }
                 return;
             }
@@ -631,6 +633,7 @@ namespace Alice {
             public long sequence;
             public int beatIndex;
             public float resumeNetworkTime;
+            public float hostPlaybackTime;
         }
     }
 }
