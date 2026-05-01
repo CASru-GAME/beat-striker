@@ -6,7 +6,6 @@ using UnityEngine;
 
 public record StrikerImpact(Vector3 DirectionAndMagnitude);
 public record AttentionRequest(float DurationSeconds, string TechniqueText = "");
-public record StrikerAuthoritativeState(Vector3 Position, int FacingSign, float HitPoint, float SpecialPoint, int StateIndex);
 
 public interface IStrikerContext {
     Rigidbody Rigidbody { get; }
@@ -49,7 +48,6 @@ namespace Alice {
     }
 
     public interface IStrikerHub : IObservableStriker, System.IDisposable {
-        Transform RootTransform { get; }
         void DestroyGameObject();
         void SetPlayerId(int playerId);
         void Tick(float deltaTime);
@@ -68,10 +66,6 @@ namespace Alice {
         void ExitState();
         void IntroPose();
         void VictoryPose();
-        string[] GetStateCatalogNames();
-        void ApplyStateCatalog(string[] stateNames);
-        int GetCurrentStateIndex();
-        void ApplyAuthoritativeState(StrikerAuthoritativeState state, float positionBlend);
         Observable<StrikerImpact> OnInpactGenerated { get; }
         Observable<AttentionRequest> OnAtentionRequested { get; }
         Observable<Unit> OnSpecialRequestFailed { get; }
@@ -123,11 +117,6 @@ namespace Alice {
         IStrikerState observedState;
         bool hasObservedState;
         bool isDead;
-        bool hasAuthoritativeStateCategory;
-        float authoritativeStateCategoryExpireTime;
-        StrikerStateCategory authoritativeStateCategory;
-        List<StrikerState> stateCatalog = new();
-        Dictionary<string, StrikerState> stateCatalogByName = new();
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
@@ -145,7 +134,6 @@ namespace Alice {
         public Observable<StrikerImpact> OnInpactGenerated => onInpactGeneratedSubject;
         public Observable<AttentionRequest> OnAtentionRequested => onAttentionRequestedSubject;
         public Observable<Unit> OnSpecialRequestFailed => onSpecialRequestFailedSubject;
-        public Transform RootTransform => strikerTransform;
 
         public Vector2 LocalInputDirection {
             get {
@@ -206,11 +194,11 @@ namespace Alice {
 
             UpdateEnemyInFrontState();
             NotifyEnemyBehindOnStateChanged();
-            UpdateStateCategory();
+            currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
 
             stateMachine.CurrentState.OnUpdate(stateMachine);
             NotifyEnemyBehindOnStateChanged();
-            UpdateStateCategory();
+            currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
         }
 
         public void TickPhysics(float deltaTime) {
@@ -253,10 +241,6 @@ namespace Alice {
             isEnemyInFront = true;
             hasObservedState = false;
             isDead = false;
-            hasAuthoritativeStateCategory = false;
-            authoritativeStateCategoryExpireTime = 0f;
-            authoritativeStateCategory = StrikerStateCategory.Unknown;
-            BuildStateCatalogFromChildren();
             currentStateCategorySubject.OnNext(StrikerStateCategory.Unknown);
             initialized = true;
         }
@@ -388,91 +372,6 @@ namespace Alice {
             stateMachine.ChangeState(victoryState);
         }
 
-        public string[] GetStateCatalogNames() {
-            if (stateCatalog.Count == 0) {
-                BuildStateCatalogFromChildren();
-            }
-
-            var names = new string[stateCatalog.Count];
-            for (var i = 0; i < stateCatalog.Count; i++) {
-                names[i] = BuildStateName(stateCatalog[i]);
-            }
-            return names;
-        }
-
-        public void ApplyStateCatalog(string[] stateNames) {
-            if (stateNames == null || stateNames.Length == 0) {
-                return;
-            }
-
-            if (stateCatalogByName.Count == 0) {
-                BuildStateCatalogFromChildren();
-            }
-
-            var ordered = new List<StrikerState>(stateNames.Length);
-            for (var i = 0; i < stateNames.Length; i++) {
-                if (stateCatalogByName.TryGetValue(stateNames[i], out var state)) {
-                    ordered.Add(state);
-                }
-            }
-
-            if (ordered.Count > 0) {
-                stateCatalog = ordered;
-            }
-        }
-
-        public int GetCurrentStateIndex() {
-            if (stateMachine == null || stateCatalog.Count == 0) {
-                return -1;
-            }
-
-            var current = stateMachine.CurrentState;
-            for (var i = 0; i < stateCatalog.Count; i++) {
-                if (ReferenceEquals(stateCatalog[i], current)) {
-                    return i;
-                }
-            }
-
-            return -1;
-        }
-
-        public void ApplyAuthoritativeState(StrikerAuthoritativeState state, float positionBlend) {
-            if (!initialized) {
-                return;
-            }
-
-            currentHitPoint = Mathf.Clamp(state.HitPoint, 0f, maxHitPoint);
-            hitPointSubject.OnNext(currentHitPoint);
-            currentSpecialPoint = Mathf.Clamp(state.SpecialPoint, 0f, maxSpecialPoint);
-            specialPointSubject.OnNext(currentSpecialPoint);
-
-            if (positionBlend >= 0f) {
-                var currentPosition = rb.position;
-                var blendedPosition = Vector3.Lerp(currentPosition, state.Position, positionBlend);
-                rb.position = blendedPosition;
-
-                if (state.FacingSign != 0) {
-                    var facing = state.FacingSign >= 0 ? Vector3.right : Vector3.left;
-                    rb.rotation = Quaternion.LookRotation(facing, Vector3.up);
-                }
-            }
-
-            if (currentHitPoint <= 0f && !isDead) {
-                Die();
-            }
-
-            if (state.StateIndex >= 0 && stateCatalog.Count > state.StateIndex) {
-                if (stateMachine == null) {
-                    stateMachine = new StrikerStateMachine(this, defaultState);
-                }
-                stateMachine.ChangeState(stateCatalog[state.StateIndex], true);
-                authoritativeStateCategory = stateCatalog[state.StateIndex].Category;
-                authoritativeStateCategoryExpireTime = Time.unscaledTime + 0.15f;
-                hasAuthoritativeStateCategory = true;
-                currentStateCategorySubject.OnNext(authoritativeStateCategory);
-            }
-        }
-
         public void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null) {
             animationPlayer.PlayAnimation(animation, () => onComplete?.Invoke(stateMachine));
         }
@@ -533,52 +432,5 @@ namespace Alice {
                 currentState.OnEnemyBehind(stateMachine);
             }
         }
-
-        void UpdateStateCategory() {
-            if (hasAuthoritativeStateCategory && Time.unscaledTime < authoritativeStateCategoryExpireTime) {
-                currentStateCategorySubject.OnNext(authoritativeStateCategory);
-                return;
-            }
-
-            hasAuthoritativeStateCategory = false;
-            currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
-        }
-
-        void BuildStateCatalogFromChildren() {
-            var states = strikerGameObject.GetComponentsInChildren<StrikerState>(true);
-            var entries = new List<StateCatalogEntry>(states.Length);
-            for (var i = 0; i < states.Length; i++) {
-                entries.Add(new StateCatalogEntry(BuildStateName(states[i]), states[i]));
-            }
-
-            entries.Sort((a, b) => StringComparer.Ordinal.Compare(a.Name, b.Name));
-
-            stateCatalog = new List<StrikerState>(entries.Count);
-            stateCatalogByName = new Dictionary<string, StrikerState>(entries.Count);
-            for (var i = 0; i < entries.Count; i++) {
-                stateCatalog.Add(entries[i].State);
-                stateCatalogByName[entries[i].Name] = entries[i].State;
-            }
-        }
-
-        string BuildStateName(StrikerState state) {
-            var path = BuildTransformPath(state.transform, strikerTransform);
-            return $"{path}<{state.GetType().Name}>";
-        }
-
-        static string BuildTransformPath(Transform target, Transform root) {
-            var stack = new Stack<string>();
-            var current = target;
-            while (current != null) {
-                stack.Push(current.name);
-                if (current == root) {
-                    break;
-                }
-                current = current.parent;
-            }
-            return string.Join("/", stack);
-        }
-
-        record StateCatalogEntry(string Name, StrikerState State);
     }
 }

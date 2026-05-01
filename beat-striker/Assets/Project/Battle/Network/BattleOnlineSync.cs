@@ -15,29 +15,6 @@ namespace Alice {
 
     public record BattleFlowPhaseSnapshot(ulong Sequence, BattleFlowState State, int Round);
 
-    public record BeatCommandSnapshot(
-        ulong Sequence,
-        int PlayerId,
-        int BeatIndex,
-        int ComboCount,
-        GamePadButton Button,
-        Vector2 Direction);
-
-    public record StrikerStateSnapshot(
-        ulong Sequence,
-        int PlayerId,
-        Vector3 Position,
-        int FacingSign,
-        float HitPoint,
-        float SpecialPoint,
-        int StateIndex,
-        int BeatIndex);
-
-    public record StrikerStateCatalogSnapshot(
-        ulong Sequence,
-        int PlayerId,
-        string[] StateNames);
-
     public record BattleOutcomeSnapshot(
         ulong Sequence,
         BattleOutcomeKind Kind,
@@ -55,20 +32,12 @@ namespace Alice {
         bool IsReady { get; }
         Observable<BattleFlowPhaseSnapshot> OnPhaseReceived { get; }
         Observable<BattleOutcomeSnapshot> OnOutcomeReceived { get; }
-        Observable<BeatCommandSnapshot> OnBeatCommandReceived { get; }
-        Observable<StrikerStateSnapshot> OnStrikerSnapshotReceived { get; }
-        Observable<StrikerStateCatalogSnapshot> OnStrikerStateCatalogReceived { get; }
         Observable<Unit> OnPauseRequested { get; }
         Observable<Unit> OnResumeRequested { get; }
         Observable<Unit> OnSuspendFinishRequested { get; }
         Observable<int> OnRoundResolutionRequested { get; }
         Observable<Unit> OnDisconnected { get; }
         void PublishPhase(BattleFlowState state, int round);
-        void PublishBeatCommand(BeatCommandSnapshot snapshot);
-        void SendBeatCommand(BeatCommandSnapshot snapshot);
-        void PublishStrikerSnapshot(StrikerStateSnapshot snapshot);
-        void PublishStrikerStateCatalog(StrikerStateCatalogSnapshot snapshot);
-        void QueueLocalBeatCommand(BattleNetworkInput input);
         void RequestPause();
         void RequestResume();
         void RequestSuspendFinish();
@@ -86,17 +55,11 @@ namespace Alice {
         static readonly ReliableKey ResumeRequestKey = ReliableKey.FromInts(0x4253, 2, 4);
         static readonly ReliableKey SuspendFinishRequestKey = ReliableKey.FromInts(0x4253, 2, 5);
         static readonly ReliableKey RoundResolutionRequestKey = ReliableKey.FromInts(0x4253, 2, 6);
-        static readonly ReliableKey BeatCommandKey = ReliableKey.FromInts(0x4253, 2, 7);
-        static readonly ReliableKey StrikerSnapshotKey = ReliableKey.FromInts(0x4253, 2, 8);
-        static readonly ReliableKey StrikerStateCatalogKey = ReliableKey.FromInts(0x4253, 2, 9);
 
         readonly INetworkRunnerProvider runnerProvider;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly ReactiveProperty<BattleFlowPhaseSnapshot> latestPhase = new(new BattleFlowPhaseSnapshot(0, BattleFlowState.NotStarted, 0));
         readonly ReactiveProperty<BattleOutcomeSnapshot> latestOutcome = new(new BattleOutcomeSnapshot(0, 0, 0, -1, -1, false, -1, false, Array.Empty<int>(), Array.Empty<int>()));
-        readonly Subject<BeatCommandSnapshot> beatCommandReceivedSubject = new();
-        readonly Subject<StrikerStateSnapshot> strikerSnapshotReceivedSubject = new();
-        readonly Subject<StrikerStateCatalogSnapshot> strikerStateCatalogReceivedSubject = new();
         readonly Subject<Unit> pauseRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
         readonly Subject<Unit> suspendFinishRequestedSubject = new();
@@ -105,13 +68,8 @@ namespace Alice {
         NetworkRunner runner;
         ulong phaseSequence;
         ulong outcomeSequence;
-        ulong beatCommandSequence;
-        ulong strikerSnapshotSequence;
-        ulong strikerStateCatalogSequence;
         bool callbacksRegistered;
         bool disconnected;
-        bool hasPendingInput;
-        BattleNetworkInput pendingInput;
 
         public BattleOnlineSync(INetworkRunnerProvider runnerProvider, IAppNetworkSetting appNetworkSetting) {
             this.runnerProvider = runnerProvider;
@@ -123,9 +81,6 @@ namespace Alice {
         public bool IsSessionHost => IsReady && runner.IsServer;
         public Observable<BattleFlowPhaseSnapshot> OnPhaseReceived => latestPhase.Where(snapshot => snapshot.Sequence > 0);
         public Observable<BattleOutcomeSnapshot> OnOutcomeReceived => latestOutcome.Where(snapshot => snapshot.Sequence > 0);
-        public Observable<BeatCommandSnapshot> OnBeatCommandReceived => beatCommandReceivedSubject;
-        public Observable<StrikerStateSnapshot> OnStrikerSnapshotReceived => strikerSnapshotReceivedSubject;
-        public Observable<StrikerStateCatalogSnapshot> OnStrikerStateCatalogReceived => strikerStateCatalogReceivedSubject;
         public Observable<Unit> OnPauseRequested => pauseRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<Unit> OnSuspendFinishRequested => suspendFinishRequestedSubject;
@@ -165,82 +120,6 @@ namespace Alice {
             SendRequest(RoundResolutionRequestKey, new RoundResolutionRequestPayload {
                 deadPlayerId = deadPlayerId,
             });
-        }
-
-        public void PublishBeatCommand(BeatCommandSnapshot snapshot) {
-            if (!IsSessionHost) {
-                return;
-            }
-
-            beatCommandSequence += 1;
-            var sequencedSnapshot = snapshot with {
-                Sequence = beatCommandSequence,
-            };
-            Broadcast(BeatCommandKey, new BeatCommandPayload {
-                sequence = (long)sequencedSnapshot.Sequence,
-                playerId = sequencedSnapshot.PlayerId,
-                beatIndex = sequencedSnapshot.BeatIndex,
-                comboCount = sequencedSnapshot.ComboCount,
-                button = (int)sequencedSnapshot.Button,
-                direction = sequencedSnapshot.Direction,
-            });
-        }
-
-        public void SendBeatCommand(BeatCommandSnapshot snapshot) {
-            if (!IsReady || IsSessionHost) {
-                return;
-            }
-
-            SendRequest(BeatCommandKey, new BeatCommandPayload {
-                sequence = 0,
-                playerId = snapshot.PlayerId,
-                beatIndex = snapshot.BeatIndex,
-                comboCount = snapshot.ComboCount,
-                button = (int)snapshot.Button,
-                direction = snapshot.Direction,
-            });
-        }
-
-        public void PublishStrikerSnapshot(StrikerStateSnapshot snapshot) {
-            if (!IsSessionHost) {
-                return;
-            }
-
-            strikerSnapshotSequence += 1;
-            var sequencedSnapshot = snapshot with {
-                Sequence = strikerSnapshotSequence,
-            };
-            Broadcast(StrikerSnapshotKey, new StrikerSnapshotPayload {
-                sequence = (long)sequencedSnapshot.Sequence,
-                playerId = sequencedSnapshot.PlayerId,
-                position = sequencedSnapshot.Position,
-                facingSign = sequencedSnapshot.FacingSign,
-                hitPoint = sequencedSnapshot.HitPoint,
-                specialPoint = sequencedSnapshot.SpecialPoint,
-                stateIndex = sequencedSnapshot.StateIndex,
-                beatIndex = sequencedSnapshot.BeatIndex,
-            });
-        }
-
-        public void PublishStrikerStateCatalog(StrikerStateCatalogSnapshot snapshot) {
-            if (!IsSessionHost) {
-                return;
-            }
-
-            strikerStateCatalogSequence += 1;
-            var sequencedSnapshot = snapshot with {
-                Sequence = strikerStateCatalogSequence,
-            };
-            Broadcast(StrikerStateCatalogKey, new StrikerStateCatalogPayload {
-                sequence = (long)sequencedSnapshot.Sequence,
-                playerId = sequencedSnapshot.PlayerId,
-                stateNames = sequencedSnapshot.StateNames,
-            });
-        }
-
-        public void QueueLocalBeatCommand(BattleNetworkInput input) {
-            pendingInput = input;
-            hasPendingInput = input.HasCommand != 0;
         }
 
         public void PublishOutcome(BattleOutcomeSnapshot snapshot) {
@@ -401,44 +280,6 @@ namespace Alice {
                 return;
             }
 
-            if (key == BeatCommandKey) {
-                var payload = JsonUtility.FromJson<BeatCommandPayload>(Decode(data));
-                var snapshot = new BeatCommandSnapshot(
-                    (ulong)payload.sequence,
-                    payload.playerId,
-                    payload.beatIndex,
-                    payload.comboCount,
-                    (GamePadButton)payload.button,
-                    payload.direction);
-                beatCommandReceivedSubject.OnNext(snapshot);
-                return;
-            }
-
-            if (key == StrikerSnapshotKey && !runner.IsServer) {
-                var payload = JsonUtility.FromJson<StrikerSnapshotPayload>(Decode(data));
-                var snapshot = new StrikerStateSnapshot(
-                    (ulong)payload.sequence,
-                    payload.playerId,
-                    payload.position,
-                    payload.facingSign,
-                    payload.hitPoint,
-                    payload.specialPoint,
-                    payload.stateIndex,
-                    payload.beatIndex);
-                strikerSnapshotReceivedSubject.OnNext(snapshot);
-                return;
-            }
-
-            if (key == StrikerStateCatalogKey && !runner.IsServer) {
-                var payload = JsonUtility.FromJson<StrikerStateCatalogPayload>(Decode(data));
-                var snapshot = new StrikerStateCatalogSnapshot(
-                    (ulong)payload.sequence,
-                    payload.playerId,
-                    payload.stateNames ?? Array.Empty<string>());
-                strikerStateCatalogReceivedSubject.OnNext(snapshot);
-                return;
-            }
-
             if (!runner.IsServer) {
                 return;
             }
@@ -488,9 +329,6 @@ namespace Alice {
 
             latestPhase.Dispose();
             latestOutcome.Dispose();
-            beatCommandReceivedSubject.Dispose();
-            strikerSnapshotReceivedSubject.Dispose();
-            strikerStateCatalogReceivedSubject.Dispose();
             pauseRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();
             suspendFinishRequestedSubject.Dispose();
@@ -501,17 +339,7 @@ namespace Alice {
         public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
         public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
         public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
-        public void OnInput(NetworkRunner runner, NetworkInput input) {
-            if (!hasPendingInput) {
-                input.Set(new BattleNetworkInput {
-                    HasCommand = 0,
-                });
-                return;
-            }
-
-            input.Set(pendingInput);
-            hasPendingInput = false;
-        }
+        public void OnInput(NetworkRunner runner, NetworkInput input) { }
         public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
         public void OnConnectedToServer(NetworkRunner runner) { }
         public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
@@ -557,35 +385,6 @@ namespace Alice {
         [Serializable]
         class RoundResolutionRequestPayload {
             public int deadPlayerId;
-        }
-
-        [Serializable]
-        class BeatCommandPayload {
-            public long sequence;
-            public int playerId;
-            public int beatIndex;
-            public int comboCount;
-            public int button;
-            public Vector2 direction;
-        }
-
-        [Serializable]
-        class StrikerSnapshotPayload {
-            public long sequence;
-            public int playerId;
-            public Vector3 position;
-            public int facingSign;
-            public float hitPoint;
-            public float specialPoint;
-            public int stateIndex;
-            public int beatIndex;
-        }
-
-        [Serializable]
-        class StrikerStateCatalogPayload {
-            public long sequence;
-            public int playerId;
-            public string[] stateNames;
         }
     }
 }

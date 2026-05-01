@@ -3,7 +3,6 @@ using R3;
 using System;
 using System.Collections.Generic;
 using App;
-using Fusion;
 using UnityEngine;
 
 namespace Alice {
@@ -27,8 +26,6 @@ namespace Alice {
     }
 
     public class BattleDeployer : IBattleDeployer, IDisposable {
-        record BeatCommandSignature(int BeatIndex, GamePadButton Button);
-
         class DeployedStriker {
             public int PlayerId;
             public Striker Striker;
@@ -69,24 +66,15 @@ namespace Alice {
         readonly IMusicPlayer musicPlayer;
         readonly IBeatjudge beatJudge;
         readonly IBattlePresenter battlePresenter;
-        readonly IAppNetworkSetting appNetworkSetting;
-        readonly IBattleOnlineSync battleOnlineSync;
-        readonly INetworkRunnerProvider runnerProvider;
         readonly List<DeployedStriker> deployedStrikers = new();
         readonly List<IDisposable> roundSubscriptions = new();
         readonly HashSet<int> pendingPauseBeatIndexes = new();
         bool isRoundPaused;
         readonly Dictionary<int, float> opponentEmaScales = new();
-        readonly Dictionary<int, BeatCommandSignature> lastPredictedCommands = new();
-        readonly Dictionary<int, ulong> lastBeatCommandSequences = new();
-        readonly Dictionary<int, ulong> lastSnapshotSequences = new();
         int lastSelectedOpponentIndex = -1;
         LearningCharacter lastSelectedOpponent;
 
-        const float SNAPSHOT_BLEND_LOCAL = 0.2f;
-        const float SNAPSHOT_BLEND_REMOTE = 0.35f;
-
-        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync, INetworkRunnerProvider runnerProvider) {
+        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.battleSetting = battleSetting;
             this.battleSelectSetting = battleSelectSetting;
             this.battleRuleSetting = battleRuleSetting;
@@ -101,9 +89,6 @@ namespace Alice {
             this.musicPlayer = musicPlayer;
             this.beatJudge = beatJudge;
             this.battlePresenter = battlePresenter;
-            this.appNetworkSetting = appNetworkSetting;
-            this.battleOnlineSync = battleOnlineSync;
-            this.runnerProvider = runnerProvider;
         }
 
         public Awaitable DeployAsync(BattleAddressablePreload preload = null) {
@@ -121,16 +106,6 @@ namespace Alice {
 
         async Awaitable DeployCoreAsync(IReadOnlyDictionary<int, float> initialSpecialPointsByPlayerId, BattleAddressablePreload preload) {
             isRoundPaused = false;
-
-            if (IsFusionNetworkedBattle() && !IsFusionNetworkedHost()) {
-                if (deployedStrikers.Count > 0) {
-                    Undeploy();
-                }
-
-                await WaitForNetworkStrikersAsync();
-                RebuildDeployedStrikersFromRegistry();
-                return;
-            }
 
             if (aiSetting.UsesAiSettingStrikerSelection) {
                 ApplyLearningSelections();
@@ -219,48 +194,6 @@ namespace Alice {
                 });
 
                 Debug.Log($"Deployed Striker {selectedStriker} for Player {playerId}".ToCyan());
-            }
-        }
-
-        async Awaitable WaitForNetworkStrikersAsync() {
-            var expectedCount = battleSetting.PlayerTransforms.Count;
-            while (true) {
-                var count = 0;
-                foreach (var _ in strikerRegistry.GetAllStrikers()) {
-                    count += 1;
-                }
-
-                if (count >= expectedCount) {
-                    return;
-                }
-
-                await Awaitable.NextFrameAsync();
-            }
-        }
-
-        void RebuildDeployedStrikersFromRegistry() {
-            deployedStrikers.Clear();
-            foreach (var striker in strikerRegistry.GetAllStrikers()) {
-                var playerId = striker.PlayerId.CurrentValue;
-                var playerTransform = battleSetting.PlayerTransforms[playerId];
-                deployedStrikers.Add(new DeployedStriker {
-                    PlayerId = playerId,
-                    Striker = striker.Striker.CurrentValue,
-                    PlayerTransform = playerTransform,
-                    OriginalParent = playerTransform.parent,
-                    OriginalPosition = playerTransform.position,
-                    OriginalRotation = playerTransform.rotation,
-                    Hub = striker,
-                    RuntimeAiBrain = null,
-                    RuntimeAiBrainPrefabName = string.Empty,
-                    InpactSubscription = null,
-                    AttentionSubscription = null,
-                    SpecialRequestFailedSubscription = null,
-                    PrefabAsset = null,
-                    OwnsPrefabAsset = false,
-                });
-
-                playerTransform.SetParent(striker.RootTransform);
             }
         }
 
@@ -365,25 +298,6 @@ namespace Alice {
             DisconnectRoundInputs();
             isRoundPaused = false;
 
-            if (IsFusionNetworkedBattle()) {
-                if (!IsFusionNetworkedHost()) {
-                    deployedStrikers.Clear();
-                    return;
-                }
-
-                if (runnerProvider.TryGetRunner(out var runner) && runner.IsRunning) {
-                    foreach (var deployed in deployedStrikers) {
-                        var networkObject = deployed.Hub.RootTransform.GetComponent<NetworkObject>();
-                        if (networkObject != null) {
-                            runner.Despawn(networkObject);
-                        }
-                    }
-                }
-
-                deployedStrikers.Clear();
-                return;
-            }
-
             foreach (var deployed in deployedStrikers) {
                 strikerRegistry.RequestUnregister(deployed.PlayerId);
 
@@ -417,23 +331,6 @@ namespace Alice {
             DisconnectRoundInputs();
             isRoundPaused = false;
             pendingPauseBeatIndexes.Clear();
-            lastPredictedCommands.Clear();
-            lastBeatCommandSequences.Clear();
-            lastSnapshotSequences.Clear();
-
-            if (IsOnlineBattle() && !IsFusionNetworkedBattle()) {
-                roundSubscriptions.Add(battleOnlineSync.OnBeatCommandReceived.Subscribe(HandleBeatCommandSnapshot));
-                roundSubscriptions.Add(battleOnlineSync.OnStrikerSnapshotReceived.Subscribe(HandleStrikerSnapshot));
-                roundSubscriptions.Add(battleOnlineSync.OnStrikerStateCatalogReceived.Subscribe(HandleStrikerStateCatalog));
-
-                if (battleOnlineSync.IsSessionHost) {
-                    PublishAllStrikerStateCatalogs();
-                    PublishAllStrikerSnapshots(-1);
-                    roundSubscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
-                        PublishAllStrikerSnapshots(signal.BeatIndex);
-                    }));
-                }
-            }
 
             foreach (var deployed in deployedStrikers) {
                 var playerId = deployed.PlayerId;
@@ -482,11 +379,6 @@ namespace Alice {
                     }));
                 }
 
-                var isLocalPlayer = IsLocalPlayer(playerId) || !IsFusionNetworkedBattle();
-                if (!isLocalPlayer) {
-                    continue;
-                }
-
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
 
                 roundSubscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
@@ -506,38 +398,34 @@ namespace Alice {
                         aiBrain.RecordDemonstrationAction(new AiAction(recordedDirection, beatResult.Button));
                     }
 
-                    if (IsFusionNetworkedBattle()) {
-                        battleOnlineSync.QueueLocalBeatCommand(new BattleNetworkInput {
-                            BeatIndex = beatResult.BeatIndex,
-                            ComboCount = beatResult.ComboCount,
-                            Button = beatResult.Button,
-                            Direction = beatResult.Direction,
-                            HasCommand = 1,
-                        });
-                        return;
+                    if (beatResult.Direction.sqrMagnitude > 0.0001f) {
+                        instance.ChangeDirection(beatResult.Direction);
+                    } else {
+                        instance.CancelDirection();
                     }
 
-                    if (IsOnlineBattle()) {
-                        var snapshot = new BeatCommandSnapshot(
-                            0,
-                            playerId,
-                            beatResult.BeatIndex,
-                            beatResult.ComboCount,
-                            beatResult.Button,
-                            beatResult.Direction);
+                    var specialPointGain = CalculateSpecialPointGain(beatResult.ComboCount);
+                    instance.AddSpecialPoint(specialPointGain);
 
-                        if (battleOnlineSync.IsSessionHost) {
-                            ExecuteBeatCommand(playerId, instance, beatResult.Button, beatResult.Direction, beatResult.ComboCount);
-                            battleOnlineSync.PublishBeatCommand(snapshot);
-                        } else {
-                            battleOnlineSync.SendBeatCommand(snapshot);
-                            ExecuteBeatCommand(playerId, instance, beatResult.Button, beatResult.Direction, beatResult.ComboCount);
-                            lastPredictedCommands[playerId] = new BeatCommandSignature(beatResult.BeatIndex, beatResult.Button);
-                        }
-                        return;
+                    switch (beatResult.Button) {
+                        case GamePadButton.Start:
+                            RequestSpecial(instance);
+                            break;
+                        case GamePadButton.East:
+                            instance.Attack();
+                            break;
+                        case GamePadButton.South:
+                            instance.Charge();
+                            break;
+                        case GamePadButton.West:
+                            instance.Dash();
+                            break;
+                        case GamePadButton.Left:
+                        case GamePadButton.Right:
+                        case GamePadButton.North:
+                            instance.Guard();
+                            break;
                     }
-
-                    ExecuteBeatCommand(playerId, instance, beatResult.Button, beatResult.Direction, beatResult.ComboCount);
                 }));
 
                 roundSubscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
@@ -548,16 +436,14 @@ namespace Alice {
                     battlePresenter.RequestPauseMenu();
                 }));
 
-                if (!IsFusionNetworkedBattle()) {
-                    roundSubscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(beatResult => {
-                        if (beatResult.Direction.sqrMagnitude > 0.0001f) {
-                            instance.ChangeDirection(beatResult.Direction);
-                            return;
-                        }
+                roundSubscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(beatResult => {
+                    if (beatResult.Direction.sqrMagnitude > 0.0001f) {
+                        instance.ChangeDirection(beatResult.Direction);
+                        return;
+                    }
 
-                        instance.CancelDirection();
-                    }));
-                }
+                    instance.CancelDirection();
+                }));
 
                 roundSubscriptions.Add(Disposable.Create(() => {
                     if (aiBrain != null) {
@@ -569,171 +455,6 @@ namespace Alice {
                     }
                 }));
             }
-        }
-
-        void ExecuteBeatCommand(int playerId, IStrikerHub instance, GamePadButton button, Vector2 direction, int comboCount) {
-            if (direction.sqrMagnitude > 0.0001f) {
-                instance.ChangeDirection(direction);
-            } else {
-                instance.CancelDirection();
-            }
-
-            var specialPointGain = CalculateSpecialPointGain(comboCount);
-            instance.AddSpecialPoint(specialPointGain);
-
-            switch (button) {
-                case GamePadButton.Start:
-                    RequestSpecial(instance);
-                    break;
-                case GamePadButton.East:
-                    instance.Attack();
-                    break;
-                case GamePadButton.South:
-                    instance.Charge();
-                    break;
-                case GamePadButton.West:
-                    instance.Dash();
-                    break;
-                case GamePadButton.Left:
-                case GamePadButton.Right:
-                case GamePadButton.North:
-                    instance.Guard();
-                    break;
-            }
-        }
-
-        void HandleBeatCommandSnapshot(BeatCommandSnapshot snapshot) {
-            if (!IsOnlineBattle()) {
-                return;
-            }
-
-            if (battleOnlineSync.IsSessionHost) {
-                var hubOption = strikerRegistry.Get(snapshot.PlayerId);
-                if (!hubOption.TryGetValue(out var hub)) {
-                    return;
-                }
-
-                ExecuteBeatCommand(snapshot.PlayerId, hub, snapshot.Button, snapshot.Direction, snapshot.ComboCount);
-                battleOnlineSync.PublishBeatCommand(snapshot);
-                return;
-            }
-
-            if (snapshot.Sequence > 0
-                && lastBeatCommandSequences.TryGetValue(snapshot.PlayerId, out var lastSequence)
-                && snapshot.Sequence <= lastSequence) {
-                return;
-            }
-
-            if (snapshot.Sequence > 0) {
-                lastBeatCommandSequences[snapshot.PlayerId] = snapshot.Sequence;
-            }
-
-            if (lastPredictedCommands.TryGetValue(snapshot.PlayerId, out var signature)
-                && signature.BeatIndex == snapshot.BeatIndex
-                && signature.Button == snapshot.Button) {
-                lastPredictedCommands.Remove(snapshot.PlayerId);
-                return;
-            }
-
-            var clientHubOption = strikerRegistry.Get(snapshot.PlayerId);
-            if (!clientHubOption.TryGetValue(out var clientHub)) {
-                return;
-            }
-
-            ExecuteBeatCommand(snapshot.PlayerId, clientHub, snapshot.Button, snapshot.Direction, snapshot.ComboCount);
-        }
-
-        void HandleStrikerSnapshot(StrikerStateSnapshot snapshot) {
-            if (!IsOnlineBattle() || battleOnlineSync.IsSessionHost) {
-                return;
-            }
-
-            if (snapshot.Sequence > 0
-                && lastSnapshotSequences.TryGetValue(snapshot.PlayerId, out var lastSequence)
-                && snapshot.Sequence <= lastSequence) {
-                return;
-            }
-
-            if (snapshot.Sequence > 0) {
-                lastSnapshotSequences[snapshot.PlayerId] = snapshot.Sequence;
-            }
-
-            var hubOption = strikerRegistry.Get(snapshot.PlayerId);
-            if (!hubOption.TryGetValue(out var hub)) {
-                return;
-            }
-
-            var positionBlend = IsLocalPlayer(snapshot.PlayerId) ? SNAPSHOT_BLEND_LOCAL : SNAPSHOT_BLEND_REMOTE;
-            var state = new StrikerAuthoritativeState(
-                snapshot.Position,
-                snapshot.FacingSign,
-                snapshot.HitPoint,
-                snapshot.SpecialPoint,
-                snapshot.StateIndex);
-            hub.ApplyAuthoritativeState(state, positionBlend);
-        }
-
-        void HandleStrikerStateCatalog(StrikerStateCatalogSnapshot snapshot) {
-            if (!IsOnlineBattle() || battleOnlineSync.IsSessionHost) {
-                return;
-            }
-
-            var hubOption = strikerRegistry.Get(snapshot.PlayerId);
-            if (!hubOption.TryGetValue(out var hub)) {
-                return;
-            }
-
-            hub.ApplyStateCatalog(snapshot.StateNames);
-        }
-
-        void PublishAllStrikerSnapshots(int beatIndex) {
-            foreach (var deployed in deployedStrikers) {
-                var instance = deployed.Hub;
-                var lookDirection = instance.LookDirection.CurrentValue;
-                var facingSign = lookDirection.x >= 0f ? 1 : -1;
-                var stateIndex = instance.GetCurrentStateIndex();
-                var snapshot = new StrikerStateSnapshot(
-                    0,
-                    deployed.PlayerId,
-                    instance.Position.CurrentValue,
-                    facingSign,
-                    instance.HitPoint.CurrentValue,
-                    instance.SpecialPoint.CurrentValue,
-                    stateIndex,
-                    beatIndex);
-                battleOnlineSync.PublishStrikerSnapshot(snapshot);
-            }
-        }
-
-        void PublishAllStrikerStateCatalogs() {
-            foreach (var deployed in deployedStrikers) {
-                var instance = deployed.Hub;
-                var names = instance.GetStateCatalogNames();
-                var snapshot = new StrikerStateCatalogSnapshot(
-                    0,
-                    deployed.PlayerId,
-                    names);
-                battleOnlineSync.PublishStrikerStateCatalog(snapshot);
-            }
-        }
-
-        bool IsOnlineBattle() {
-            return appNetworkSetting.IsOnline.CurrentValue && battleOnlineSync.IsReady;
-        }
-
-        bool IsFusionNetworkedBattle() {
-            return appNetworkSetting.IsOnline.CurrentValue
-                && runnerProvider.TryGetRunner(out var runner)
-                && runner.IsRunning;
-        }
-
-        bool IsFusionNetworkedHost() {
-            return runnerProvider.TryGetRunner(out var runner) && runner.IsRunning && runner.IsServer;
-        }
-
-        bool IsLocalPlayer(int playerId) {
-            var gamePad = gamePadRegistry.Get(playerId);
-            return gamePad.HasGamePad.CurrentValue;
         }
 
         public void DisconnectRoundInputs() {
