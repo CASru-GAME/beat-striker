@@ -68,6 +68,7 @@ namespace Alice {
         void SendBeatCommand(BeatCommandSnapshot snapshot);
         void PublishStrikerSnapshot(StrikerStateSnapshot snapshot);
         void PublishStrikerStateCatalog(StrikerStateCatalogSnapshot snapshot);
+        void QueueLocalBeatCommand(BattleNetworkInput input);
         void RequestPause();
         void RequestResume();
         void RequestSuspendFinish();
@@ -109,6 +110,8 @@ namespace Alice {
         ulong strikerStateCatalogSequence;
         bool callbacksRegistered;
         bool disconnected;
+        bool hasPendingInput;
+        BattleNetworkInput pendingInput;
 
         public BattleOnlineSync(INetworkRunnerProvider runnerProvider, IAppNetworkSetting appNetworkSetting) {
             this.runnerProvider = runnerProvider;
@@ -233,6 +236,11 @@ namespace Alice {
                 playerId = sequencedSnapshot.PlayerId,
                 stateNames = sequencedSnapshot.StateNames,
             });
+        }
+
+        public void QueueLocalBeatCommand(BattleNetworkInput input) {
+            pendingInput = input;
+            hasPendingInput = input.HasCommand != 0;
         }
 
         public void PublishOutcome(BattleOutcomeSnapshot snapshot) {
@@ -493,7 +501,17 @@ namespace Alice {
         public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
         public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
         public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
-        public void OnInput(NetworkRunner runner, NetworkInput input) { }
+        public void OnInput(NetworkRunner runner, NetworkInput input) {
+            if (!hasPendingInput) {
+                input.Set(new BattleNetworkInput {
+                    HasCommand = 0,
+                });
+                return;
+            }
+
+            input.Set(pendingInput);
+            hasPendingInput = false;
+        }
         public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
         public void OnConnectedToServer(NetworkRunner runner) { }
         public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }

@@ -24,6 +24,7 @@ public class StrikerHub : MonoBehaviour {
     [SerializeField] private Transform centerPositionTransform;
 
     private Rigidbody rb;
+    private Alice.NetworkStriker networkStriker;
 
     public Rigidbody Rigidbody => rb;
     public Striker InspectorStriker => striker;
@@ -45,6 +46,7 @@ public class StrikerHub : MonoBehaviour {
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
         animationPlayer = GetComponent<AnimationPlayer>();
+        networkStriker = GetComponent<Alice.NetworkStriker>();
         EnsureAliceRuntimeHub();
     }
 
@@ -74,10 +76,16 @@ public class StrikerHub : MonoBehaviour {
     }
 
     private void Update() {
+        if (networkStriker != null && networkStriker.UsesNetworkLoop) {
+            return;
+        }
         aliceRuntime?.Tick(Time.deltaTime);
     }
 
     private void FixedUpdate() {
+        if (networkStriker != null && networkStriker.UsesNetworkLoop) {
+            return;
+        }
         aliceRuntime?.TickPhysics(Time.fixedDeltaTime);
     }
 

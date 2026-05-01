@@ -49,6 +49,7 @@ namespace Alice {
     }
 
     public interface IStrikerHub : IObservableStriker, System.IDisposable {
+        Transform RootTransform { get; }
         void DestroyGameObject();
         void SetPlayerId(int playerId);
         void Tick(float deltaTime);
@@ -144,6 +145,7 @@ namespace Alice {
         public Observable<StrikerImpact> OnInpactGenerated => onInpactGeneratedSubject;
         public Observable<AttentionRequest> OnAtentionRequested => onAttentionRequestedSubject;
         public Observable<Unit> OnSpecialRequestFailed => onSpecialRequestFailedSubject;
+        public Transform RootTransform => strikerTransform;
 
         public Vector2 LocalInputDirection {
             get {
@@ -444,13 +446,19 @@ namespace Alice {
             currentSpecialPoint = Mathf.Clamp(state.SpecialPoint, 0f, maxSpecialPoint);
             specialPointSubject.OnNext(currentSpecialPoint);
 
-            var currentPosition = rb.position;
-            var blendedPosition = Vector3.Lerp(currentPosition, state.Position, positionBlend);
-            rb.position = blendedPosition;
+            if (positionBlend >= 0f) {
+                var currentPosition = rb.position;
+                var blendedPosition = Vector3.Lerp(currentPosition, state.Position, positionBlend);
+                rb.position = blendedPosition;
 
-            if (state.FacingSign != 0) {
-                var facing = state.FacingSign >= 0 ? Vector3.right : Vector3.left;
-                rb.rotation = Quaternion.LookRotation(facing, Vector3.up);
+                if (state.FacingSign != 0) {
+                    var facing = state.FacingSign >= 0 ? Vector3.right : Vector3.left;
+                    rb.rotation = Quaternion.LookRotation(facing, Vector3.up);
+                }
+            }
+
+            if (currentHitPoint <= 0f && !isDead) {
+                Die();
             }
 
             if (state.StateIndex >= 0 && stateCatalog.Count > state.StateIndex) {
@@ -553,16 +561,19 @@ namespace Alice {
             }
         }
 
-        static string BuildStateName(StrikerState state) {
-            var path = BuildTransformPath(state.transform);
+        string BuildStateName(StrikerState state) {
+            var path = BuildTransformPath(state.transform, strikerTransform);
             return $"{path}<{state.GetType().Name}>";
         }
 
-        static string BuildTransformPath(Transform target) {
+        static string BuildTransformPath(Transform target, Transform root) {
             var stack = new Stack<string>();
             var current = target;
             while (current != null) {
                 stack.Push(current.name);
+                if (current == root) {
+                    break;
+                }
                 current = current.parent;
             }
             return string.Join("/", stack);

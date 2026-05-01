@@ -3,6 +3,7 @@ using R3;
 using System;
 using System.Collections.Generic;
 using App;
+using Fusion;
 using UnityEngine;
 
 namespace Alice {
@@ -70,19 +71,22 @@ namespace Alice {
         readonly IBattlePresenter battlePresenter;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly IBattleOnlineSync battleOnlineSync;
+        readonly INetworkRunnerProvider runnerProvider;
         readonly List<DeployedStriker> deployedStrikers = new();
         readonly List<IDisposable> roundSubscriptions = new();
         readonly HashSet<int> pendingPauseBeatIndexes = new();
         bool isRoundPaused;
         readonly Dictionary<int, float> opponentEmaScales = new();
         readonly Dictionary<int, BeatCommandSignature> lastPredictedCommands = new();
+        readonly Dictionary<int, ulong> lastBeatCommandSequences = new();
+        readonly Dictionary<int, ulong> lastSnapshotSequences = new();
         int lastSelectedOpponentIndex = -1;
         LearningCharacter lastSelectedOpponent;
 
         const float SNAPSHOT_BLEND_LOCAL = 0.2f;
         const float SNAPSHOT_BLEND_REMOTE = 0.35f;
 
-        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync) {
+        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync, INetworkRunnerProvider runnerProvider) {
             this.battleSetting = battleSetting;
             this.battleSelectSetting = battleSelectSetting;
             this.battleRuleSetting = battleRuleSetting;
@@ -99,6 +103,7 @@ namespace Alice {
             this.battlePresenter = battlePresenter;
             this.appNetworkSetting = appNetworkSetting;
             this.battleOnlineSync = battleOnlineSync;
+            this.runnerProvider = runnerProvider;
         }
 
         public Awaitable DeployAsync(BattleAddressablePreload preload = null) {
@@ -116,6 +121,16 @@ namespace Alice {
 
         async Awaitable DeployCoreAsync(IReadOnlyDictionary<int, float> initialSpecialPointsByPlayerId, BattleAddressablePreload preload) {
             isRoundPaused = false;
+
+            if (IsFusionNetworkedBattle() && !IsFusionNetworkedHost()) {
+                if (deployedStrikers.Count > 0) {
+                    Undeploy();
+                }
+
+                await WaitForNetworkStrikersAsync();
+                RebuildDeployedStrikersFromRegistry();
+                return;
+            }
 
             if (aiSetting.UsesAiSettingStrikerSelection) {
                 ApplyLearningSelections();
@@ -204,6 +219,48 @@ namespace Alice {
                 });
 
                 Debug.Log($"Deployed Striker {selectedStriker} for Player {playerId}".ToCyan());
+            }
+        }
+
+        async Awaitable WaitForNetworkStrikersAsync() {
+            var expectedCount = battleSetting.PlayerTransforms.Count;
+            while (true) {
+                var count = 0;
+                foreach (var _ in strikerRegistry.GetAllStrikers()) {
+                    count += 1;
+                }
+
+                if (count >= expectedCount) {
+                    return;
+                }
+
+                await Awaitable.NextFrameAsync();
+            }
+        }
+
+        void RebuildDeployedStrikersFromRegistry() {
+            deployedStrikers.Clear();
+            foreach (var striker in strikerRegistry.GetAllStrikers()) {
+                var playerId = striker.PlayerId.CurrentValue;
+                var playerTransform = battleSetting.PlayerTransforms[playerId];
+                deployedStrikers.Add(new DeployedStriker {
+                    PlayerId = playerId,
+                    Striker = striker.Striker.CurrentValue,
+                    PlayerTransform = playerTransform,
+                    OriginalParent = playerTransform.parent,
+                    OriginalPosition = playerTransform.position,
+                    OriginalRotation = playerTransform.rotation,
+                    Hub = striker,
+                    RuntimeAiBrain = null,
+                    RuntimeAiBrainPrefabName = string.Empty,
+                    InpactSubscription = null,
+                    AttentionSubscription = null,
+                    SpecialRequestFailedSubscription = null,
+                    PrefabAsset = null,
+                    OwnsPrefabAsset = false,
+                });
+
+                playerTransform.SetParent(striker.RootTransform);
             }
         }
 
@@ -308,6 +365,25 @@ namespace Alice {
             DisconnectRoundInputs();
             isRoundPaused = false;
 
+            if (IsFusionNetworkedBattle()) {
+                if (!IsFusionNetworkedHost()) {
+                    deployedStrikers.Clear();
+                    return;
+                }
+
+                if (runnerProvider.TryGetRunner(out var runner) && runner.IsRunning) {
+                    foreach (var deployed in deployedStrikers) {
+                        var networkObject = deployed.Hub.RootTransform.GetComponent<NetworkObject>();
+                        if (networkObject != null) {
+                            runner.Despawn(networkObject);
+                        }
+                    }
+                }
+
+                deployedStrikers.Clear();
+                return;
+            }
+
             foreach (var deployed in deployedStrikers) {
                 strikerRegistry.RequestUnregister(deployed.PlayerId);
 
@@ -342,8 +418,10 @@ namespace Alice {
             isRoundPaused = false;
             pendingPauseBeatIndexes.Clear();
             lastPredictedCommands.Clear();
+            lastBeatCommandSequences.Clear();
+            lastSnapshotSequences.Clear();
 
-            if (IsOnlineBattle()) {
+            if (IsOnlineBattle() && !IsFusionNetworkedBattle()) {
                 roundSubscriptions.Add(battleOnlineSync.OnBeatCommandReceived.Subscribe(HandleBeatCommandSnapshot));
                 roundSubscriptions.Add(battleOnlineSync.OnStrikerSnapshotReceived.Subscribe(HandleStrikerSnapshot));
                 roundSubscriptions.Add(battleOnlineSync.OnStrikerStateCatalogReceived.Subscribe(HandleStrikerStateCatalog));
@@ -404,6 +482,11 @@ namespace Alice {
                     }));
                 }
 
+                var isLocalPlayer = IsLocalPlayer(playerId) || !IsFusionNetworkedBattle();
+                if (!isLocalPlayer) {
+                    continue;
+                }
+
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
 
                 roundSubscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
@@ -421,6 +504,17 @@ namespace Alice {
                             ? beatResult.Direction.normalized
                             : Vector2.zero;
                         aiBrain.RecordDemonstrationAction(new AiAction(recordedDirection, beatResult.Button));
+                    }
+
+                    if (IsFusionNetworkedBattle()) {
+                        battleOnlineSync.QueueLocalBeatCommand(new BattleNetworkInput {
+                            BeatIndex = beatResult.BeatIndex,
+                            ComboCount = beatResult.ComboCount,
+                            Button = beatResult.Button,
+                            Direction = beatResult.Direction,
+                            HasCommand = 1,
+                        });
+                        return;
                     }
 
                     if (IsOnlineBattle()) {
@@ -454,14 +548,16 @@ namespace Alice {
                     battlePresenter.RequestPauseMenu();
                 }));
 
-                roundSubscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(beatResult => {
-                    if (beatResult.Direction.sqrMagnitude > 0.0001f) {
-                        instance.ChangeDirection(beatResult.Direction);
-                        return;
-                    }
+                if (!IsFusionNetworkedBattle()) {
+                    roundSubscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(beatResult => {
+                        if (beatResult.Direction.sqrMagnitude > 0.0001f) {
+                            instance.ChangeDirection(beatResult.Direction);
+                            return;
+                        }
 
-                    instance.CancelDirection();
-                }));
+                        instance.CancelDirection();
+                    }));
+                }
 
                 roundSubscriptions.Add(Disposable.Create(() => {
                     if (aiBrain != null) {
@@ -522,6 +618,16 @@ namespace Alice {
                 return;
             }
 
+            if (snapshot.Sequence > 0
+                && lastBeatCommandSequences.TryGetValue(snapshot.PlayerId, out var lastSequence)
+                && snapshot.Sequence <= lastSequence) {
+                return;
+            }
+
+            if (snapshot.Sequence > 0) {
+                lastBeatCommandSequences[snapshot.PlayerId] = snapshot.Sequence;
+            }
+
             if (lastPredictedCommands.TryGetValue(snapshot.PlayerId, out var signature)
                 && signature.BeatIndex == snapshot.BeatIndex
                 && signature.Button == snapshot.Button) {
@@ -540,6 +646,16 @@ namespace Alice {
         void HandleStrikerSnapshot(StrikerStateSnapshot snapshot) {
             if (!IsOnlineBattle() || battleOnlineSync.IsSessionHost) {
                 return;
+            }
+
+            if (snapshot.Sequence > 0
+                && lastSnapshotSequences.TryGetValue(snapshot.PlayerId, out var lastSequence)
+                && snapshot.Sequence <= lastSequence) {
+                return;
+            }
+
+            if (snapshot.Sequence > 0) {
+                lastSnapshotSequences[snapshot.PlayerId] = snapshot.Sequence;
             }
 
             var hubOption = strikerRegistry.Get(snapshot.PlayerId);
@@ -603,6 +719,16 @@ namespace Alice {
 
         bool IsOnlineBattle() {
             return appNetworkSetting.IsOnline.CurrentValue && battleOnlineSync.IsReady;
+        }
+
+        bool IsFusionNetworkedBattle() {
+            return appNetworkSetting.IsOnline.CurrentValue
+                && runnerProvider.TryGetRunner(out var runner)
+                && runner.IsRunning;
+        }
+
+        bool IsFusionNetworkedHost() {
+            return runnerProvider.TryGetRunner(out var runner) && runner.IsRunning && runner.IsServer;
         }
 
         bool IsLocalPlayer(int playerId) {

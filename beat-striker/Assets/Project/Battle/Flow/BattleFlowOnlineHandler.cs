@@ -96,8 +96,24 @@ namespace Alice {
                 return;
             }
 
+            if ((snapshot.State == BattleFlowState.EndingBattle || snapshot.State == BattleFlowState.Finished)
+                && !stateMachine.IsBattleEndingOrFinished) {
+                _ = WaitAndApplyBattleFinishedOutcomeAsync(snapshot.Round);
+                return;
+            }
+
             if (snapshot.State == BattleFlowState.EndingToTitle) {
                 _ = endBattleToTitleAsync();
+            }
+        }
+
+        async Task WaitAndApplyBattleFinishedOutcomeAsync(int round) {
+            try {
+                var outcome = await battleOnlineSync.WaitForOutcomeAsync(BattleOutcomeKind.BattleFinished, round);
+                TryApplyBattleFinishedOutcome(outcome);
+            }
+            catch {
+                // Outcome wait failure is handled by disconnect flow elsewhere.
             }
         }
 
