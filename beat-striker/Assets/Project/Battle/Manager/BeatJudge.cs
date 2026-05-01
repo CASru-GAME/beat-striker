@@ -52,7 +52,7 @@ namespace Alice {
             
 
             for(int i = 0; i < beatPlayer.Length; i++) {
-                beatPlayer[i] = new BeatPlayer(i);
+                beatPlayer[i] = new BeatPlayer();
             }
 
             for(int i = 0; i < beatPlayer.Length; i++) {
@@ -344,7 +344,6 @@ namespace Alice {
         
 
         class BeatPlayer : IBeatPlayer {
-            readonly int playerIndex;
             readonly Dictionary<int, PendingCommand> pendingCommands = new Dictionary<int, PendingCommand>();
             readonly HashSet<int> attemptedCommands = new HashSet<int>();
             readonly ReactiveProperty<int> comboCount = new(0);
@@ -361,10 +360,6 @@ namespace Alice {
             int lockedBeatIndex = -1;
 
             record PendingCommand(BeatJudgeZone Zone, GamePadButton Button, Vector2 Direction);
-
-            public BeatPlayer(int playerIndex) {
-                this.playerIndex = playerIndex;
-            }
 
             public Observable<IBeatPlayer.BeatResult> OnBeatCommandRequested => onBeatCommandRequested;
             public Observable<IBeatPlayer.BeatResult> OnBeatCommandExecuted => onBeatCommandExecuted;

@@ -92,6 +92,7 @@ namespace Alice {
                 return;
             }
 
+            var playbackStartNetworkTime = await onlineHandler.PrepareRoundPlaybackStartAsync(currentRound);
             notifyRoundStarted(currentRound);
 
             if (!stateMachine.TryEnterPlaying($"{nameof(StartRoundPlayableAsync)} completed")) {
@@ -99,6 +100,7 @@ namespace Alice {
             }
 
             await onlineHandler.WaitForHostPhaseAsync(BattleFlowState.Playing, currentRound);
+            await onlineHandler.WaitForRoundPlaybackStartAsync(playbackStartNetworkTime);
 
             beatJudge.ResetRoundState();
             pauseHandler.ResumeRoundRuntimeSystems(controlsMusic: false);

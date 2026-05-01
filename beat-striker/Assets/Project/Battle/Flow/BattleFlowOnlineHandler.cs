@@ -5,6 +5,8 @@ using CorePlayerId = App.PlayerId;
 
 namespace Alice {
     public sealed class BattleFlowOnlineHandler {
+        const float ROUND_START_LEAD_SECONDS = 1f;
+
         readonly BattleFlowStateMachine stateMachine;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly IBattleOnlineSync battleOnlineSync;
@@ -63,6 +65,33 @@ namespace Alice {
 
         public Task<BattleOutcomeSnapshot> WaitForOutcomeAsync(BattleOutcomeKind kind, int round) {
             return battleOnlineSync.WaitForOutcomeAsync(kind, round);
+        }
+
+        public async Task<float> PrepareRoundPlaybackStartAsync(int round) {
+            if (!IsOnlineBattle) {
+                return 0f;
+            }
+
+            if (IsOnlineHost) {
+                await battleOnlineSync.WaitForRoundStartReadyAsync(round);
+                var startNetworkTime = battleOnlineSync.NetworkTime + ROUND_START_LEAD_SECONDS;
+                battleOnlineSync.PublishRoundStartSchedule(round, startNetworkTime);
+                return startNetworkTime;
+            }
+
+            battleOnlineSync.RequestRoundStartReady(round);
+            var schedule = await battleOnlineSync.WaitForRoundStartScheduleAsync(round);
+            return schedule.StartNetworkTime;
+        }
+
+        public async Task WaitForRoundPlaybackStartAsync(float startNetworkTime) {
+            if (!IsOnlineBattle || startNetworkTime <= 0f) {
+                return;
+            }
+
+            while (battleOnlineSync.NetworkTime < startNetworkTime) {
+                await Task.Yield();
+            }
         }
 
         public void ApplyOnlinePhaseSnapshot(BattleFlowPhaseSnapshot snapshot) {

@@ -483,7 +483,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7025038246402514433, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: isOnline
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7025038246402514433, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: sessionName

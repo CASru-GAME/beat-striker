@@ -37,9 +37,12 @@ namespace Alice {
         GamePadButton Button,
         Vector2 Direction);
 
+    public record OnlineRoundStartSnapshot(ulong Sequence, int Round, float StartNetworkTime);
+
     public interface IBattleOnlineSync {
         bool IsSessionHost { get; }
         bool IsReady { get; }
+        float NetworkTime { get; }
         Observable<BattleFlowPhaseSnapshot> OnPhaseReceived { get; }
         Observable<BattleOutcomeSnapshot> OnOutcomeReceived { get; }
         Observable<OnlineBeatCommandSnapshot> OnBeatCommandReceived { get; }
@@ -55,8 +58,12 @@ namespace Alice {
         void RequestRoundResolution(int deadPlayerId);
         void PublishOutcome(BattleOutcomeSnapshot snapshot);
         void PublishBeatCommand(OnlineBeatCommandSnapshot snapshot);
+        void RequestRoundStartReady(int round);
+        void PublishRoundStartSchedule(int round, float startNetworkTime);
         Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round);
         Task<BattleOutcomeSnapshot> WaitForOutcomeAsync(BattleOutcomeKind kind, int finishedRound);
+        Task WaitForRoundStartReadyAsync(int round);
+        Task<OnlineRoundStartSnapshot> WaitForRoundStartScheduleAsync(int round);
     }
 
     public class BattleOnlineSync : IBattleOnlineSync, INetworkRunnerCallbacks, IDisposable {
@@ -68,11 +75,14 @@ namespace Alice {
         static readonly ReliableKey SuspendFinishRequestKey = ReliableKey.FromInts(0x4253, 2, 5);
         static readonly ReliableKey RoundResolutionRequestKey = ReliableKey.FromInts(0x4253, 2, 6);
         static readonly ReliableKey BeatCommandKey = ReliableKey.FromInts(0x4253, 2, 7);
+        static readonly ReliableKey RoundStartReadyKey = ReliableKey.FromInts(0x4253, 2, 8);
+        static readonly ReliableKey RoundStartScheduleKey = ReliableKey.FromInts(0x4253, 2, 9);
 
         readonly INetworkRunnerProvider runnerProvider;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly ReactiveProperty<BattleFlowPhaseSnapshot> latestPhase = new(new BattleFlowPhaseSnapshot(0, BattleFlowState.NotStarted, 0));
         readonly ReactiveProperty<BattleOutcomeSnapshot> latestOutcome = new(new BattleOutcomeSnapshot(0, 0, 0, -1, -1, false, -1, false, Array.Empty<int>(), Array.Empty<int>()));
+        readonly ReactiveProperty<OnlineRoundStartSnapshot> latestRoundStart = new(new OnlineRoundStartSnapshot(0, 0, 0));
         readonly Subject<OnlineBeatCommandSnapshot> beatCommandReceivedSubject = new();
         readonly Subject<Unit> pauseRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
@@ -83,6 +93,8 @@ namespace Alice {
         ulong phaseSequence;
         ulong outcomeSequence;
         ulong beatCommandSequence;
+        ulong roundStartSequence;
+        int latestRoundStartReadyRound;
         bool callbacksRegistered;
         bool disconnected;
 
@@ -94,6 +106,7 @@ namespace Alice {
 
         public bool IsReady => IsOnline() && TryRegisterCallbacks();
         public bool IsSessionHost => IsReady && runner.IsServer;
+        public float NetworkTime => IsReady ? runner.SimulationTime : Time.realtimeSinceStartup;
         public Observable<BattleFlowPhaseSnapshot> OnPhaseReceived => latestPhase.Where(snapshot => snapshot.Sequence > 0);
         public Observable<BattleOutcomeSnapshot> OnOutcomeReceived => latestOutcome.Where(snapshot => snapshot.Sequence > 0);
         public Observable<OnlineBeatCommandSnapshot> OnBeatCommandReceived => beatCommandReceivedSubject;
@@ -184,6 +197,29 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Published beat command. sequence={sequencedSnapshot.Sequence}, player={sequencedSnapshot.PlayerId}, beat={sequencedSnapshot.BeatIndex}, success={sequencedSnapshot.IsSuccess}");
         }
 
+        public void RequestRoundStartReady(int round) {
+            SendRequest(RoundStartReadyKey, new RoundStartReadyPayload {
+                round = round,
+            });
+        }
+
+        public void PublishRoundStartSchedule(int round, float startNetworkTime) {
+            if (!IsSessionHost) {
+                return;
+            }
+
+            roundStartSequence += 1;
+            var snapshot = new OnlineRoundStartSnapshot(roundStartSequence, round, startNetworkTime);
+            latestRoundStart.Value = snapshot;
+            var payload = new RoundStartSchedulePayload {
+                sequence = (long)snapshot.Sequence,
+                round = snapshot.Round,
+                startNetworkTime = snapshot.StartNetworkTime,
+            };
+            Broadcast(RoundStartScheduleKey, payload);
+            Debug.Log($"{LOG_PREFIX} Published round start schedule. sequence={snapshot.Sequence}, round={round}, start={startNetworkTime:0.000}");
+        }
+
         public async Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round) {
             if (!IsReady || IsSessionHost) {
                 return;
@@ -212,6 +248,29 @@ namespace Alice {
             }
 
             throw new InvalidOperationException("Online battle sync disconnected while waiting for outcome.");
+        }
+
+        public async Task WaitForRoundStartReadyAsync(int round) {
+            if (!IsReady || !IsSessionHost) {
+                return;
+            }
+
+            while (!disconnected && latestRoundStartReadyRound < round) {
+                await Task.Yield();
+            }
+        }
+
+        public async Task<OnlineRoundStartSnapshot> WaitForRoundStartScheduleAsync(int round) {
+            while (!disconnected) {
+                var snapshot = latestRoundStart.CurrentValue;
+                if (snapshot.Sequence > 0 && snapshot.Round == round) {
+                    return snapshot;
+                }
+
+                await Task.Yield();
+            }
+
+            throw new InvalidOperationException("Online battle sync disconnected while waiting for round start schedule.");
         }
 
         bool TryRegisterCallbacks() {
@@ -360,6 +419,19 @@ namespace Alice {
                 return;
             }
 
+            if (key == RoundStartScheduleKey && !runner.IsServer) {
+                var payload = JsonUtility.FromJson<RoundStartSchedulePayload>(Decode(data));
+                var snapshot = new OnlineRoundStartSnapshot(
+                    (ulong)payload.sequence,
+                    payload.round,
+                    payload.startNetworkTime);
+                if (snapshot.Sequence > latestRoundStart.CurrentValue.Sequence) {
+                    latestRoundStart.Value = snapshot;
+                    Debug.Log($"{LOG_PREFIX} Received round start schedule. sequence={snapshot.Sequence}, round={snapshot.Round}, start={snapshot.StartNetworkTime:0.000}");
+                }
+                return;
+            }
+
             if (!runner.IsServer) {
                 return;
             }
@@ -382,6 +454,15 @@ namespace Alice {
             if (key == RoundResolutionRequestKey) {
                 var payload = JsonUtility.FromJson<RoundResolutionRequestPayload>(Decode(data));
                 roundResolutionRequestedSubject.OnNext(payload.deadPlayerId);
+                return;
+            }
+
+            if (key == RoundStartReadyKey) {
+                var payload = JsonUtility.FromJson<RoundStartReadyPayload>(Decode(data));
+                if (payload.round > latestRoundStartReadyRound) {
+                    latestRoundStartReadyRound = payload.round;
+                }
+                Debug.Log($"{LOG_PREFIX} Received round start ready. round={payload.round}");
             }
         }
 
@@ -409,6 +490,7 @@ namespace Alice {
 
             latestPhase.Dispose();
             latestOutcome.Dispose();
+            latestRoundStart.Dispose();
             beatCommandReceivedSubject.Dispose();
             pauseRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();
@@ -479,6 +561,18 @@ namespace Alice {
             public int button;
             public float directionX;
             public float directionY;
+        }
+
+        [Serializable]
+        class RoundStartReadyPayload {
+            public int round;
+        }
+
+        [Serializable]
+        class RoundStartSchedulePayload {
+            public long sequence;
+            public int round;
+            public float startNetworkTime;
         }
     }
 }
