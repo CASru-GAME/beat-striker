@@ -37,6 +37,16 @@ namespace Alice {
         GamePadButton Button,
         Vector2 Direction);
 
+    public record OnlineStrikerPreCommandSnapshot(
+        ulong Sequence,
+        int ApplyBeatIndex,
+        int PlayerId,
+        float HitPoint,
+        float SpecialPoint,
+        Vector3 Position,
+        string StatePathId,
+        float SentNetworkTime);
+
     public record OnlineRoundStartSnapshot(ulong Sequence, int Round, float StartNetworkTime);
 
     public record OnlineBeatSyncResumeSnapshot(ulong Sequence, int BeatIndex, float ResumeNetworkTime, float HostPlaybackTime);
@@ -48,6 +58,7 @@ namespace Alice {
         Observable<BattleFlowPhaseSnapshot> OnPhaseReceived { get; }
         Observable<BattleOutcomeSnapshot> OnOutcomeReceived { get; }
         Observable<OnlineBeatCommandSnapshot> OnBeatCommandReceived { get; }
+        Observable<OnlineStrikerPreCommandSnapshot> OnStrikerPreCommandSnapshotReceived { get; }
         Observable<Unit> OnPauseRequested { get; }
         Observable<Unit> OnResumeRequested { get; }
         Observable<Unit> OnSuspendFinishRequested { get; }
@@ -60,6 +71,10 @@ namespace Alice {
         void RequestRoundResolution(int deadPlayerId);
         void PublishOutcome(BattleOutcomeSnapshot snapshot);
         void PublishBeatCommand(OnlineBeatCommandSnapshot snapshot);
+        void PublishStrikerPreCommandSnapshot(OnlineStrikerPreCommandSnapshot snapshot);
+        bool TryGetLatestStrikerPreCommandSnapshot(int applyBeatIndex, int playerId, out OnlineStrikerPreCommandSnapshot snapshot);
+        Task<OnlineStrikerPreCommandSnapshot> WaitForStrikerPreCommandSnapshotAsync(int applyBeatIndex, int playerId, float waitTimeoutSeconds);
+        void ClearStrikerPreCommandSnapshotsBefore(int beatIndex);
         void RequestRoundStartReady(int round);
         void PublishRoundStartSchedule(int round, float startNetworkTime);
         void PublishBeatSyncResume(int beatIndex, float resumeNetworkTime, float hostPlaybackTime);
@@ -82,6 +97,7 @@ namespace Alice {
         static readonly ReliableKey RoundStartReadyKey = ReliableKey.FromInts(0x4253, 2, 8);
         static readonly ReliableKey RoundStartScheduleKey = ReliableKey.FromInts(0x4253, 2, 9);
         static readonly ReliableKey BeatSyncResumeKey = ReliableKey.FromInts(0x4253, 2, 10);
+        static readonly ReliableKey StrikerPreCommandSnapshotKey = ReliableKey.FromInts(0x4253, 2, 11);
 
         readonly INetworkRunnerProvider runnerProvider;
         readonly IAppNetworkSetting appNetworkSetting;
@@ -90,6 +106,8 @@ namespace Alice {
         readonly ReactiveProperty<OnlineRoundStartSnapshot> latestRoundStart = new(new OnlineRoundStartSnapshot(0, 0, 0));
         readonly ReactiveProperty<OnlineBeatSyncResumeSnapshot> latestBeatSyncResume = new(new OnlineBeatSyncResumeSnapshot(0, -1, 0, 0));
         readonly Subject<OnlineBeatCommandSnapshot> beatCommandReceivedSubject = new();
+        readonly Subject<OnlineStrikerPreCommandSnapshot> strikerPreCommandSnapshotReceivedSubject = new();
+        readonly Dictionary<(int ApplyBeatIndex, int PlayerId), OnlineStrikerPreCommandSnapshot> latestStrikerPreCommandSnapshots = new();
         readonly Subject<Unit> pauseRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
         readonly Subject<Unit> suspendFinishRequestedSubject = new();
@@ -99,6 +117,7 @@ namespace Alice {
         ulong phaseSequence;
         ulong outcomeSequence;
         ulong beatCommandSequence;
+        ulong strikerPreCommandSnapshotSequence;
         ulong roundStartSequence;
         ulong beatSyncResumeSequence;
         int latestRoundStartReadyRound;
@@ -117,6 +136,7 @@ namespace Alice {
         public Observable<BattleFlowPhaseSnapshot> OnPhaseReceived => latestPhase.Where(snapshot => snapshot.Sequence > 0);
         public Observable<BattleOutcomeSnapshot> OnOutcomeReceived => latestOutcome.Where(snapshot => snapshot.Sequence > 0);
         public Observable<OnlineBeatCommandSnapshot> OnBeatCommandReceived => beatCommandReceivedSubject;
+        public Observable<OnlineStrikerPreCommandSnapshot> OnStrikerPreCommandSnapshotReceived => strikerPreCommandSnapshotReceivedSubject;
         public Observable<Unit> OnPauseRequested => pauseRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<Unit> OnSuspendFinishRequested => suspendFinishRequestedSubject;
@@ -202,6 +222,56 @@ namespace Alice {
             }
 
             Debug.Log($"{LOG_PREFIX} Published beat command. sequence={sequencedSnapshot.Sequence}, player={sequencedSnapshot.PlayerId}, beat={sequencedSnapshot.BeatIndex}, success={sequencedSnapshot.IsSuccess}");
+        }
+
+        public void PublishStrikerPreCommandSnapshot(OnlineStrikerPreCommandSnapshot snapshot) {
+            if (!IsReady) {
+                return;
+            }
+
+            strikerPreCommandSnapshotSequence += 1;
+            var sequencedSnapshot = snapshot with {
+                Sequence = strikerPreCommandSnapshotSequence,
+            };
+            var payload = BuildStrikerPreCommandSnapshotPayload(sequencedSnapshot);
+            if (runner.IsServer) {
+                Broadcast(StrikerPreCommandSnapshotKey, payload);
+            }
+            else {
+                runner.SendReliableDataToServer(StrikerPreCommandSnapshotKey, Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload)));
+            }
+
+            Debug.Log($"{LOG_PREFIX} Published striker pre-command snapshot. sequence={sequencedSnapshot.Sequence}, player={sequencedSnapshot.PlayerId}, beat={sequencedSnapshot.ApplyBeatIndex}, sent={sequencedSnapshot.SentNetworkTime:0.000}");
+        }
+
+        public bool TryGetLatestStrikerPreCommandSnapshot(int applyBeatIndex, int playerId, out OnlineStrikerPreCommandSnapshot snapshot) {
+            return latestStrikerPreCommandSnapshots.TryGetValue((applyBeatIndex, playerId), out snapshot);
+        }
+
+        public async Task<OnlineStrikerPreCommandSnapshot> WaitForStrikerPreCommandSnapshotAsync(int applyBeatIndex, int playerId, float waitTimeoutSeconds) {
+            var waitUntil = NetworkTime + Mathf.Max(0f, waitTimeoutSeconds);
+            while (!disconnected && NetworkTime < waitUntil) {
+                if (TryGetLatestStrikerPreCommandSnapshot(applyBeatIndex, playerId, out var snapshot)) {
+                    return snapshot;
+                }
+
+                await Task.Yield();
+            }
+
+            throw new TimeoutException($"Timed out waiting striker pre-command snapshot. beat={applyBeatIndex}, player={playerId}");
+        }
+
+        public void ClearStrikerPreCommandSnapshotsBefore(int beatIndex) {
+            var removeKeys = new List<(int ApplyBeatIndex, int PlayerId)>();
+            foreach (var pair in latestStrikerPreCommandSnapshots) {
+                if (pair.Key.ApplyBeatIndex < beatIndex) {
+                    removeKeys.Add(pair.Key);
+                }
+            }
+
+            foreach (var key in removeKeys) {
+                latestStrikerPreCommandSnapshots.Remove(key);
+            }
         }
 
         public void RequestRoundStartReady(int round) {
@@ -374,6 +444,21 @@ namespace Alice {
             };
         }
 
+        static StrikerPreCommandSnapshotPayload BuildStrikerPreCommandSnapshotPayload(OnlineStrikerPreCommandSnapshot snapshot) {
+            return new StrikerPreCommandSnapshotPayload {
+                sequence = (long)snapshot.Sequence,
+                applyBeatIndex = snapshot.ApplyBeatIndex,
+                playerId = snapshot.PlayerId,
+                hitPoint = snapshot.HitPoint,
+                specialPoint = snapshot.SpecialPoint,
+                positionX = snapshot.Position.x,
+                positionY = snapshot.Position.y,
+                positionZ = snapshot.Position.z,
+                statePathId = snapshot.StatePathId,
+                sentNetworkTime = snapshot.SentNetworkTime,
+            };
+        }
+
         static bool IsPhaseAtLeast(BattleFlowPhaseSnapshot snapshot, BattleFlowState state, int round) {
             if (snapshot.Round != round) {
                 return snapshot.Round > round;
@@ -453,6 +538,26 @@ namespace Alice {
                 Debug.Log($"{LOG_PREFIX} Received beat command. sequence={snapshot.Sequence}, player={snapshot.PlayerId}, beat={snapshot.BeatIndex}, success={snapshot.IsSuccess}");
                 if (runner.IsServer) {
                     BroadcastExcept(BeatCommandKey, payload, player);
+                }
+                return;
+            }
+
+            if (key == StrikerPreCommandSnapshotKey) {
+                var payload = JsonUtility.FromJson<StrikerPreCommandSnapshotPayload>(Decode(data));
+                var snapshot = new OnlineStrikerPreCommandSnapshot(
+                    (ulong)payload.sequence,
+                    payload.applyBeatIndex,
+                    payload.playerId,
+                    payload.hitPoint,
+                    payload.specialPoint,
+                    new Vector3(payload.positionX, payload.positionY, payload.positionZ),
+                    payload.statePathId ?? string.Empty,
+                    payload.sentNetworkTime);
+                StoreStrikerPreCommandSnapshot(snapshot);
+                strikerPreCommandSnapshotReceivedSubject.OnNext(snapshot);
+                Debug.Log($"{LOG_PREFIX} Received striker pre-command snapshot. sequence={snapshot.Sequence}, player={snapshot.PlayerId}, beat={snapshot.ApplyBeatIndex}, sent={snapshot.SentNetworkTime:0.000}");
+                if (runner.IsServer) {
+                    BroadcastExcept(StrikerPreCommandSnapshotKey, payload, player);
                 }
                 return;
             }
@@ -545,6 +650,7 @@ namespace Alice {
             latestRoundStart.Dispose();
             latestBeatSyncResume.Dispose();
             beatCommandReceivedSubject.Dispose();
+            strikerPreCommandSnapshotReceivedSubject.Dispose();
             pauseRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();
             suspendFinishRequestedSubject.Dispose();
@@ -572,6 +678,16 @@ namespace Alice {
 
         public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) {
             request.Accept();
+        }
+
+        void StoreStrikerPreCommandSnapshot(OnlineStrikerPreCommandSnapshot snapshot) {
+            var key = (snapshot.ApplyBeatIndex, snapshot.PlayerId);
+            if (latestStrikerPreCommandSnapshots.TryGetValue(key, out var current)
+                && current.SentNetworkTime > snapshot.SentNetworkTime) {
+                return;
+            }
+
+            latestStrikerPreCommandSnapshots[key] = snapshot;
         }
 
         [Serializable]
@@ -614,6 +730,20 @@ namespace Alice {
             public int button;
             public float directionX;
             public float directionY;
+        }
+
+        [Serializable]
+        class StrikerPreCommandSnapshotPayload {
+            public long sequence;
+            public int applyBeatIndex;
+            public int playerId;
+            public float hitPoint;
+            public float specialPoint;
+            public float positionX;
+            public float positionY;
+            public float positionZ;
+            public string statePathId;
+            public float sentNetworkTime;
         }
 
         [Serializable]

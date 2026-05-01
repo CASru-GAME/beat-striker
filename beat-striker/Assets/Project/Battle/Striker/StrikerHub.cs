@@ -24,6 +24,8 @@ public class StrikerHub : MonoBehaviour {
     [SerializeField] private Transform centerPositionTransform;
 
     private Rigidbody rb;
+    readonly Dictionary<string, StrikerState> stateByPathId = new();
+    readonly Dictionary<StrikerState, string> pathIdByState = new();
 
     public Rigidbody Rigidbody => rb;
     public Striker InspectorStriker => striker;
@@ -45,6 +47,7 @@ public class StrikerHub : MonoBehaviour {
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
         animationPlayer = GetComponent<AnimationPlayer>();
+        BuildStatePathTable();
         EnsureAliceRuntimeHub();
     }
 
@@ -83,6 +86,41 @@ public class StrikerHub : MonoBehaviour {
 
     void OnDestroy() {
         aliceRuntime?.Dispose();
+    }
+
+    public bool TryGetStatePathId(IStrikerState state, out string pathId) {
+        pathId = string.Empty;
+        if (state is not StrikerState strikerState) {
+            return false;
+        }
+
+        return pathIdByState.TryGetValue(strikerState, out pathId);
+    }
+
+    public bool TryGetStateByPathId(string pathId, out StrikerState state) {
+        return stateByPathId.TryGetValue(pathId, out state);
+    }
+
+    void BuildStatePathTable() {
+        stateByPathId.Clear();
+        pathIdByState.Clear();
+        var states = GetComponentsInChildren<StrikerState>(true);
+        foreach (var state in states) {
+            var pathId = BuildStatePathId(state.transform);
+            stateByPathId[pathId] = state;
+            pathIdByState[state] = pathId;
+        }
+    }
+
+    string BuildStatePathId(Transform stateTransform) {
+        var segments = new Stack<string>();
+        var current = stateTransform;
+        while (current != null && current != transform) {
+            segments.Push(current.name);
+            current = current.parent;
+        }
+
+        return string.Join("/", segments);
     }
 
 }

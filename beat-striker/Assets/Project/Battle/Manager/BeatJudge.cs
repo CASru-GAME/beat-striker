@@ -23,13 +23,17 @@ namespace Alice {
     public partial class BeatJudge : IBeatjudge, IDisposable {
         const string LOG_PREFIX = "[BeatJudge]";
         const int PLAYER_COUNT = 2;
+        const float PRE_COMMAND_SNAPSHOT_INTERVAL_SECONDS = 0.05f;
+        const float PRE_COMMAND_SNAPSHOT_WAIT_SECONDS = 0.05f;
 
         readonly IAudioSetting audioSetting;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly IBattleOnlineSync battleOnlineSync;
         readonly BeatOnlineCommandBuffer onlineCommandBuffer;
+        readonly IStrikerRegistry strikerRegistry;
         readonly List<IDisposable> subscriptions = new();
         readonly Queue<IMusicPlayer.BeatSignal> pendingOnlineBeatSignals = new();
+        readonly HashSet<int> activePreCommandSnapshotPublishBeats = new();
         BeatPlayer[] beatPlayer = new BeatPlayer[PLAYER_COUNT];
         float lastCommandPlaybackTime = -1f;
         int lastOnlineBeatIndex = -1;
@@ -38,11 +42,12 @@ namespace Alice {
 
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting,
             IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync,
-            BeatOnlineCommandBuffer onlineCommandBuffer) {
+            BeatOnlineCommandBuffer onlineCommandBuffer, IStrikerRegistry strikerRegistry) {
             this.audioSetting = audioSetting;
             this.appNetworkSetting = appNetworkSetting;
             this.battleOnlineSync = battleOnlineSync;
             this.onlineCommandBuffer = onlineCommandBuffer;
+            this.strikerRegistry = strikerRegistry;
 
 
             for (int i = 0; i < beatPlayer.Length; i++) {
@@ -189,6 +194,7 @@ namespace Alice {
                 result.Direction);
             if (onlineCommandBuffer.TrySubmit(command)) {
                 battleOnlineSync.PublishBeatCommand(command);
+                StartStrikerPreCommandSnapshotPublishLoop(command.BeatIndex);
             }
         }
 
@@ -251,6 +257,8 @@ namespace Alice {
                 }
             }
 
+            await ApplyStrikerPreCommandSnapshotsAsync(signal.BeatIndex);
+
             for (var playerId = 0; playerId < PLAYER_COUNT; playerId++) {
                 if (onlineCommandBuffer.TryGetCommand(signal.BeatIndex, playerId, out var command)) {
                     ExecuteOnlineCommand(playerId, command, signal);
@@ -258,6 +266,8 @@ namespace Alice {
             }
 
             onlineCommandBuffer.CloseBeat(signal.BeatIndex);
+            activePreCommandSnapshotPublishBeats.Remove(signal.BeatIndex);
+            battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(signal.BeatIndex);
             Debug.Log($"{LOG_PREFIX} Completed online beat. beat={signal.BeatIndex}");
         }
 
@@ -309,6 +319,72 @@ namespace Alice {
                 Debug.Log(
                     $"{LOG_PREFIX} Submitted local online miss. player={localPlayerId}, beat={signal.BeatIndex}, ready={onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)}");
                 battleOnlineSync.PublishBeatCommand(command);
+                StartStrikerPreCommandSnapshotPublishLoop(command.BeatIndex);
+            }
+        }
+
+        void StartStrikerPreCommandSnapshotPublishLoop(int beatIndex) {
+            if (!IsOnlineBattle() || !activePreCommandSnapshotPublishBeats.Add(beatIndex)) {
+                return;
+            }
+
+            _ = PublishStrikerPreCommandSnapshotsUntilBeatExecutesAsync(beatIndex);
+        }
+
+        async Task PublishStrikerPreCommandSnapshotsUntilBeatExecutesAsync(int beatIndex) {
+            try {
+                while (!isPaused && IsOnlineBattle() && activePreCommandSnapshotPublishBeats.Contains(beatIndex)) {
+                    PublishLocalStrikerPreCommandSnapshot(beatIndex);
+                    var nextPublishTime = battleOnlineSync.NetworkTime + PRE_COMMAND_SNAPSHOT_INTERVAL_SECONDS;
+                    while (!isPaused
+                           && IsOnlineBattle()
+                           && activePreCommandSnapshotPublishBeats.Contains(beatIndex)
+                           && battleOnlineSync.NetworkTime < nextPublishTime) {
+                        await Task.Yield();
+                    }
+                }
+            }
+            finally {
+                activePreCommandSnapshotPublishBeats.Remove(beatIndex);
+            }
+        }
+
+        void PublishLocalStrikerPreCommandSnapshot(int beatIndex) {
+            var localPlayerId = ResolveLocalOnlinePlayerId();
+            if (!strikerRegistry.Get(localPlayerId).TryGetValue(out var striker)) {
+                return;
+            }
+
+            var sentNetworkTime = battleOnlineSync.NetworkTime;
+            battleOnlineSync.PublishStrikerPreCommandSnapshot(
+                striker.BuildPreCommandSnapshot(beatIndex, sentNetworkTime));
+        }
+
+        async Task ApplyStrikerPreCommandSnapshotsAsync(int beatIndex) {
+            var localPlayerId = ResolveLocalOnlinePlayerId();
+            for (var playerId = 0; playerId < PLAYER_COUNT; playerId++) {
+                if (playerId == localPlayerId) {
+                    continue;
+                }
+
+                if (!battleOnlineSync.TryGetLatestStrikerPreCommandSnapshot(beatIndex, playerId, out var snapshot)) {
+                    try {
+                        snapshot = await battleOnlineSync.WaitForStrikerPreCommandSnapshotAsync(
+                            beatIndex,
+                            playerId,
+                            PRE_COMMAND_SNAPSHOT_WAIT_SECONDS);
+                    }
+                    catch (TimeoutException) {
+                        Debug.Log($"{LOG_PREFIX} Missing striker pre-command snapshot. player={playerId}, beat={beatIndex}");
+                        continue;
+                    }
+                }
+
+                if (!strikerRegistry.Get(playerId).TryGetValue(out var striker)) {
+                    continue;
+                }
+
+                striker.ApplyPreCommandDelta(snapshot);
             }
         }
 
@@ -362,6 +438,8 @@ namespace Alice {
         void ResetOnlineCommandState() {
             onlineCommandBuffer.Clear();
             pendingOnlineBeatSignals.Clear();
+            activePreCommandSnapshotPublishBeats.Clear();
+            battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(int.MaxValue);
             lastOnlineBeatIndex = -1;
         }
 

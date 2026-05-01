@@ -10,9 +10,11 @@ namespace Alice {
 
     public class StrikerHubFactory : IStrikerFactory {
         readonly IStrikerRegistry strikerRegistry;
+        readonly IBattleOnlineSync battleOnlineSync;
 
-        public StrikerHubFactory(IStrikerRegistry strikerRegistry) {
+        public StrikerHubFactory(IStrikerRegistry strikerRegistry, IBattleOnlineSync battleOnlineSync) {
             this.strikerRegistry = strikerRegistry;
+            this.battleOnlineSync = battleOnlineSync;
         }
 
         public IStrikerHub Create(StrikerHub prefab, Transform playerTransform, int playerId) {
@@ -21,7 +23,7 @@ namespace Alice {
             playerTransform.SetParent(instance.transform);
             var runtime = instance.EnsureAliceRuntimeHub();
             if (runtime is AliceStrikerHub aliceRuntime) {
-                aliceRuntime.InitializeRuntimeDependencies(strikerRegistry);
+                aliceRuntime.InitializeRuntimeDependencies(strikerRegistry, battleOnlineSync);
             }
             runtime.SetPlayerId(playerId);
             return runtime;

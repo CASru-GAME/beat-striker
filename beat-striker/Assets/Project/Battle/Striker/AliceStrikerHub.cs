@@ -52,6 +52,9 @@ namespace Alice {
         void SetPlayerId(int playerId);
         void Tick(float deltaTime);
         void TickPhysics(float deltaTime);
+        void RecordRemoteReplicaHistory(float networkTime);
+        OnlineStrikerPreCommandSnapshot BuildPreCommandSnapshot(int applyBeatIndex, float sentNetworkTime);
+        void ApplyPreCommandDelta(OnlineStrikerPreCommandSnapshot snapshot);
         void ChangeDirection(Vector2 direction);
         void CancelDirection();
         void Default();
@@ -72,7 +75,11 @@ namespace Alice {
     }
 
     public class AliceStrikerHub : IStrikerContext, IStrikerHub, IDisposable {
+        const float HISTORY_SECONDS = 1f;
+        const float POSITION_SNAP_THRESHOLD = 0.2f;
+        const float POSITION_LERP_RATE = 0.5f;
         IStrikerRegistry strikerRegistry;
+        IBattleOnlineSync battleOnlineSync;
 
         float maxHitPoint;
         float maxSpecialPoint;
@@ -84,8 +91,10 @@ namespace Alice {
 
         Rigidbody rb;
         GameObject strikerGameObject;
+        StrikerHub legacyHub;
         AnimationPlayer animationPlayer;
         StrikerStateMachine stateMachine;
+        readonly List<StrikerSyncHistoryFrame> syncHistory = new();
         readonly Subject<Unit> onDeadSubject = new();
         readonly ReactiveProperty<int> playerIdSubject = new(0);
         readonly ReactiveProperty<Alice.Striker> strikerSubject = new(Alice.Striker.Fighter);
@@ -117,6 +126,13 @@ namespace Alice {
         IStrikerState observedState;
         bool hasObservedState;
         bool isDead;
+
+        record StrikerSyncHistoryFrame(
+            float NetworkTime,
+            float HitPoint,
+            float SpecialPoint,
+            Vector3 Position,
+            string StatePathId);
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
@@ -169,8 +185,9 @@ namespace Alice {
         public AliceStrikerHub() {
         }
 
-        public void InitializeRuntimeDependencies(IStrikerRegistry strikerRegistry) {
+        public void InitializeRuntimeDependencies(IStrikerRegistry strikerRegistry, IBattleOnlineSync battleOnlineSync) {
             this.strikerRegistry = strikerRegistry;
+            this.battleOnlineSync = battleOnlineSync;
         }
 
         public void Tick(float deltaTime) {
@@ -199,6 +216,9 @@ namespace Alice {
             stateMachine.CurrentState.OnUpdate(stateMachine);
             NotifyEnemyBehindOnStateChanged();
             currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
+            if (battleOnlineSync != null && battleOnlineSync.IsReady) {
+                RecordRemoteReplicaHistory(battleOnlineSync.NetworkTime);
+            }
         }
 
         public void TickPhysics(float deltaTime) {
@@ -211,6 +231,7 @@ namespace Alice {
         }
 
         public void InitializeFromLegacy(StrikerHub legacy) {
+            legacyHub = legacy;
             maxHitPoint = legacy.InspectorMaxHitPoint;
             maxSpecialPoint = legacy.InspectorMaxSpecialPoint;
             deathHeightY = legacy.InspectorDeathHeightY;
@@ -243,6 +264,47 @@ namespace Alice {
             isDead = false;
             currentStateCategorySubject.OnNext(StrikerStateCategory.Unknown);
             initialized = true;
+        }
+
+        public void RecordRemoteReplicaHistory(float networkTime) {
+            if (!initialized || stateMachine == null) {
+                return;
+            }
+
+            syncHistory.Add(new StrikerSyncHistoryFrame(
+                networkTime,
+                currentHitPoint,
+                currentSpecialPoint,
+                rb.position,
+                GetCurrentStatePathId()));
+
+            var expireBefore = networkTime - HISTORY_SECONDS;
+            while (syncHistory.Count > 0 && syncHistory[0].NetworkTime < expireBefore) {
+                syncHistory.RemoveAt(0);
+            }
+        }
+
+        public OnlineStrikerPreCommandSnapshot BuildPreCommandSnapshot(int applyBeatIndex, float sentNetworkTime) {
+            return new OnlineStrikerPreCommandSnapshot(
+                0,
+                applyBeatIndex,
+                playerId,
+                currentHitPoint,
+                currentSpecialPoint,
+                rb.position,
+                GetCurrentStatePathId(),
+                sentNetworkTime);
+        }
+
+        public void ApplyPreCommandDelta(OnlineStrikerPreCommandSnapshot snapshot) {
+            if (!initialized || stateMachine == null || !TryGetNearestHistory(snapshot.SentNetworkTime, out var history)) {
+                return;
+            }
+
+            ApplyHitPointDelta(snapshot.HitPoint - history.HitPoint);
+            ApplySpecialPointDelta(snapshot.SpecialPoint - history.SpecialPoint);
+            ApplyPositionDelta(snapshot.Position - history.Position);
+            ApplyStateCorrectionIfNeeded(history.StatePathId, snapshot.StatePathId);
         }
 
         public void SetPlayerId(int playerId) {
@@ -284,6 +346,83 @@ namespace Alice {
             if (currentHitPoint <= 0f) {
                 Die();
             }
+        }
+
+        bool TryGetNearestHistory(float networkTime, out StrikerSyncHistoryFrame nearest) {
+            nearest = null;
+            if (syncHistory.Count == 0) {
+                return false;
+            }
+
+            var nearestIndex = 0;
+            var nearestDistance = Mathf.Abs(syncHistory[0].NetworkTime - networkTime);
+            for (var i = 1; i < syncHistory.Count; i++) {
+                var distance = Mathf.Abs(syncHistory[i].NetworkTime - networkTime);
+                if (distance >= nearestDistance) {
+                    continue;
+                }
+
+                nearestIndex = i;
+                nearestDistance = distance;
+            }
+
+            nearest = syncHistory[nearestIndex];
+            return true;
+        }
+
+        void ApplyHitPointDelta(float delta) {
+            if (Mathf.Abs(delta) <= 0.0001f) {
+                return;
+            }
+
+            currentHitPoint = Mathf.Clamp(currentHitPoint + delta, 0f, maxHitPoint);
+            hitPointSubject.OnNext(currentHitPoint);
+            if (currentHitPoint <= 0f) {
+                Die();
+            }
+        }
+
+        void ApplySpecialPointDelta(float delta) {
+            if (Mathf.Abs(delta) <= 0.0001f) {
+                return;
+            }
+
+            currentSpecialPoint = Mathf.Clamp(currentSpecialPoint + delta, 0f, maxSpecialPoint);
+            specialPointSubject.OnNext(currentSpecialPoint);
+        }
+
+        void ApplyPositionDelta(Vector3 delta) {
+            if (delta.sqrMagnitude <= 0.000001f) {
+                return;
+            }
+
+            var targetPosition = rb.position + delta;
+            rb.position = delta.magnitude >= POSITION_SNAP_THRESHOLD
+                ? targetPosition
+                : Vector3.Lerp(rb.position, targetPosition, POSITION_LERP_RATE);
+            positionSubject.OnNext(rb.position);
+            centerPositionSubject.OnNext(centerPositionTransform.position);
+        }
+
+        void ApplyStateCorrectionIfNeeded(string historyStatePathId, string ownerStatePathId) {
+            if (historyStatePathId == ownerStatePathId || GetCurrentStatePathId() == ownerStatePathId) {
+                return;
+            }
+
+            if (legacyHub.TryGetStateByPathId(ownerStatePathId, out var targetState)) {
+                stateMachine.ChangeState(targetState, true);
+                currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
+            }
+        }
+
+        string GetCurrentStatePathId() {
+            if (stateMachine == null || stateMachine.CurrentState == null) {
+                return string.Empty;
+            }
+
+            return legacyHub.TryGetStatePathId(stateMachine.CurrentState, out var pathId)
+                ? pathId
+                : string.Empty;
         }
 
         public void ChangeDirection(Vector2 direction) {
