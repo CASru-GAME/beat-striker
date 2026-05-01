@@ -26,6 +26,8 @@ namespace Alice {
     }
 
     public class BattleDeployer : IBattleDeployer, IDisposable {
+        record BeatCommandSignature(int BeatIndex, GamePadButton Button);
+
         class DeployedStriker {
             public int PlayerId;
             public Striker Striker;
@@ -66,15 +68,21 @@ namespace Alice {
         readonly IMusicPlayer musicPlayer;
         readonly IBeatjudge beatJudge;
         readonly IBattlePresenter battlePresenter;
+        readonly IAppNetworkSetting appNetworkSetting;
+        readonly IBattleOnlineSync battleOnlineSync;
         readonly List<DeployedStriker> deployedStrikers = new();
         readonly List<IDisposable> roundSubscriptions = new();
         readonly HashSet<int> pendingPauseBeatIndexes = new();
         bool isRoundPaused;
         readonly Dictionary<int, float> opponentEmaScales = new();
+        readonly Dictionary<int, BeatCommandSignature> lastPredictedCommands = new();
         int lastSelectedOpponentIndex = -1;
         LearningCharacter lastSelectedOpponent;
 
-        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
+        const float SNAPSHOT_BLEND_LOCAL = 0.2f;
+        const float SNAPSHOT_BLEND_REMOTE = 0.35f;
+
+        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync) {
             this.battleSetting = battleSetting;
             this.battleSelectSetting = battleSelectSetting;
             this.battleRuleSetting = battleRuleSetting;
@@ -89,6 +97,8 @@ namespace Alice {
             this.musicPlayer = musicPlayer;
             this.beatJudge = beatJudge;
             this.battlePresenter = battlePresenter;
+            this.appNetworkSetting = appNetworkSetting;
+            this.battleOnlineSync = battleOnlineSync;
         }
 
         public Awaitable DeployAsync(BattleAddressablePreload preload = null) {
@@ -331,6 +341,21 @@ namespace Alice {
             DisconnectRoundInputs();
             isRoundPaused = false;
             pendingPauseBeatIndexes.Clear();
+            lastPredictedCommands.Clear();
+
+            if (IsOnlineBattle()) {
+                roundSubscriptions.Add(battleOnlineSync.OnBeatCommandReceived.Subscribe(HandleBeatCommandSnapshot));
+                roundSubscriptions.Add(battleOnlineSync.OnStrikerSnapshotReceived.Subscribe(HandleStrikerSnapshot));
+                roundSubscriptions.Add(battleOnlineSync.OnStrikerStateCatalogReceived.Subscribe(HandleStrikerStateCatalog));
+
+                if (battleOnlineSync.IsSessionHost) {
+                    PublishAllStrikerStateCatalogs();
+                    PublishAllStrikerSnapshots(-1);
+                    roundSubscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
+                        PublishAllStrikerSnapshots(signal.BeatIndex);
+                    }));
+                }
+            }
 
             foreach (var deployed in deployedStrikers) {
                 var playerId = deployed.PlayerId;
@@ -398,34 +423,27 @@ namespace Alice {
                         aiBrain.RecordDemonstrationAction(new AiAction(recordedDirection, beatResult.Button));
                     }
 
-                    if (beatResult.Direction.sqrMagnitude > 0.0001f) {
-                        instance.ChangeDirection(beatResult.Direction);
-                    } else {
-                        instance.CancelDirection();
+                    if (IsOnlineBattle()) {
+                        var snapshot = new BeatCommandSnapshot(
+                            0,
+                            playerId,
+                            beatResult.BeatIndex,
+                            beatResult.ComboCount,
+                            beatResult.Button,
+                            beatResult.Direction);
+
+                        if (battleOnlineSync.IsSessionHost) {
+                            ExecuteBeatCommand(playerId, instance, beatResult.Button, beatResult.Direction, beatResult.ComboCount);
+                            battleOnlineSync.PublishBeatCommand(snapshot);
+                        } else {
+                            battleOnlineSync.SendBeatCommand(snapshot);
+                            ExecuteBeatCommand(playerId, instance, beatResult.Button, beatResult.Direction, beatResult.ComboCount);
+                            lastPredictedCommands[playerId] = new BeatCommandSignature(beatResult.BeatIndex, beatResult.Button);
+                        }
+                        return;
                     }
 
-                    var specialPointGain = CalculateSpecialPointGain(beatResult.ComboCount);
-                    instance.AddSpecialPoint(specialPointGain);
-
-                    switch (beatResult.Button) {
-                        case GamePadButton.Start:
-                            RequestSpecial(instance);
-                            break;
-                        case GamePadButton.East:
-                            instance.Attack();
-                            break;
-                        case GamePadButton.South:
-                            instance.Charge();
-                            break;
-                        case GamePadButton.West:
-                            instance.Dash();
-                            break;
-                        case GamePadButton.Left:
-                        case GamePadButton.Right:
-                        case GamePadButton.North:
-                            instance.Guard();
-                            break;
-                    }
+                    ExecuteBeatCommand(playerId, instance, beatResult.Button, beatResult.Direction, beatResult.ComboCount);
                 }));
 
                 roundSubscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
@@ -455,6 +473,141 @@ namespace Alice {
                     }
                 }));
             }
+        }
+
+        void ExecuteBeatCommand(int playerId, IStrikerHub instance, GamePadButton button, Vector2 direction, int comboCount) {
+            if (direction.sqrMagnitude > 0.0001f) {
+                instance.ChangeDirection(direction);
+            } else {
+                instance.CancelDirection();
+            }
+
+            var specialPointGain = CalculateSpecialPointGain(comboCount);
+            instance.AddSpecialPoint(specialPointGain);
+
+            switch (button) {
+                case GamePadButton.Start:
+                    RequestSpecial(instance);
+                    break;
+                case GamePadButton.East:
+                    instance.Attack();
+                    break;
+                case GamePadButton.South:
+                    instance.Charge();
+                    break;
+                case GamePadButton.West:
+                    instance.Dash();
+                    break;
+                case GamePadButton.Left:
+                case GamePadButton.Right:
+                case GamePadButton.North:
+                    instance.Guard();
+                    break;
+            }
+        }
+
+        void HandleBeatCommandSnapshot(BeatCommandSnapshot snapshot) {
+            if (!IsOnlineBattle()) {
+                return;
+            }
+
+            if (battleOnlineSync.IsSessionHost) {
+                var hubOption = strikerRegistry.Get(snapshot.PlayerId);
+                if (!hubOption.TryGetValue(out var hub)) {
+                    return;
+                }
+
+                ExecuteBeatCommand(snapshot.PlayerId, hub, snapshot.Button, snapshot.Direction, snapshot.ComboCount);
+                battleOnlineSync.PublishBeatCommand(snapshot);
+                return;
+            }
+
+            if (lastPredictedCommands.TryGetValue(snapshot.PlayerId, out var signature)
+                && signature.BeatIndex == snapshot.BeatIndex
+                && signature.Button == snapshot.Button) {
+                lastPredictedCommands.Remove(snapshot.PlayerId);
+                return;
+            }
+
+            var clientHubOption = strikerRegistry.Get(snapshot.PlayerId);
+            if (!clientHubOption.TryGetValue(out var clientHub)) {
+                return;
+            }
+
+            ExecuteBeatCommand(snapshot.PlayerId, clientHub, snapshot.Button, snapshot.Direction, snapshot.ComboCount);
+        }
+
+        void HandleStrikerSnapshot(StrikerStateSnapshot snapshot) {
+            if (!IsOnlineBattle() || battleOnlineSync.IsSessionHost) {
+                return;
+            }
+
+            var hubOption = strikerRegistry.Get(snapshot.PlayerId);
+            if (!hubOption.TryGetValue(out var hub)) {
+                return;
+            }
+
+            var positionBlend = IsLocalPlayer(snapshot.PlayerId) ? SNAPSHOT_BLEND_LOCAL : SNAPSHOT_BLEND_REMOTE;
+            var state = new StrikerAuthoritativeState(
+                snapshot.Position,
+                snapshot.FacingSign,
+                snapshot.HitPoint,
+                snapshot.SpecialPoint,
+                snapshot.StateIndex);
+            hub.ApplyAuthoritativeState(state, positionBlend);
+        }
+
+        void HandleStrikerStateCatalog(StrikerStateCatalogSnapshot snapshot) {
+            if (!IsOnlineBattle() || battleOnlineSync.IsSessionHost) {
+                return;
+            }
+
+            var hubOption = strikerRegistry.Get(snapshot.PlayerId);
+            if (!hubOption.TryGetValue(out var hub)) {
+                return;
+            }
+
+            hub.ApplyStateCatalog(snapshot.StateNames);
+        }
+
+        void PublishAllStrikerSnapshots(int beatIndex) {
+            foreach (var deployed in deployedStrikers) {
+                var instance = deployed.Hub;
+                var lookDirection = instance.LookDirection.CurrentValue;
+                var facingSign = lookDirection.x >= 0f ? 1 : -1;
+                var stateIndex = instance.GetCurrentStateIndex();
+                var snapshot = new StrikerStateSnapshot(
+                    0,
+                    deployed.PlayerId,
+                    instance.Position.CurrentValue,
+                    facingSign,
+                    instance.HitPoint.CurrentValue,
+                    instance.SpecialPoint.CurrentValue,
+                    stateIndex,
+                    beatIndex);
+                battleOnlineSync.PublishStrikerSnapshot(snapshot);
+            }
+        }
+
+        void PublishAllStrikerStateCatalogs() {
+            foreach (var deployed in deployedStrikers) {
+                var instance = deployed.Hub;
+                var names = instance.GetStateCatalogNames();
+                var snapshot = new StrikerStateCatalogSnapshot(
+                    0,
+                    deployed.PlayerId,
+                    names);
+                battleOnlineSync.PublishStrikerStateCatalog(snapshot);
+            }
+        }
+
+        bool IsOnlineBattle() {
+            return appNetworkSetting.IsOnline.CurrentValue && battleOnlineSync.IsReady;
+        }
+
+        bool IsLocalPlayer(int playerId) {
+            var gamePad = gamePadRegistry.Get(playerId);
+            return gamePad.HasGamePad.CurrentValue;
         }
 
         public void DisconnectRoundInputs() {
