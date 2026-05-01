@@ -15,6 +15,7 @@ namespace Alice {
     public interface IBattleJudge {
         BattleJudgeResult Judge(RoundResult roundResult);
         IReadOnlyDictionary<PlayerId, int> GetRoundWins();
+        void ApplyRoundWins(IReadOnlyDictionary<PlayerId, int> sourceRoundWins);
     }
 
     public class BattleJudge : IBattleJudge {
@@ -45,6 +46,13 @@ namespace Alice {
 
         public IReadOnlyDictionary<PlayerId, int> GetRoundWins() {
             return new Dictionary<PlayerId, int>(roundWins);
+        }
+
+        public void ApplyRoundWins(IReadOnlyDictionary<PlayerId, int> sourceRoundWins) {
+            roundWins.Clear();
+            foreach (var roundWin in sourceRoundWins) {
+                roundWins[roundWin.Key] = roundWin.Value;
+            }
         }
     }
 }

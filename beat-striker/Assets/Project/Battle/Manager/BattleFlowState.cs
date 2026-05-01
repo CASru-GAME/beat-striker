@@ -1,3 +1,4 @@
+using R3;
 using UnityEngine;
 
 namespace Alice {
@@ -17,8 +18,10 @@ namespace Alice {
 
     public sealed class BattleFlowStateMachine {
         const string LOG_PREFIX = "[BattleFlowState]";
+        readonly Subject<BattleFlowState> stateChangedSubject = new();
 
         public BattleFlowState Current { get; private set; } = BattleFlowState.NotStarted;
+        public Observable<BattleFlowState> OnStateChanged => stateChangedSubject;
 
         public bool IsPlaying => Current == BattleFlowState.Playing;
         public bool IsRoundStarting => Current == BattleFlowState.RoundStarting;
@@ -94,6 +97,7 @@ namespace Alice {
 
             Debug.Log($"{LOG_PREFIX} Transition. trigger={trigger}, from={Current}, to={next}");
             Current = next;
+            stateChangedSubject.OnNext(Current);
             return true;
         }
 

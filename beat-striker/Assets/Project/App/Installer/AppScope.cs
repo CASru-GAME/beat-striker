@@ -99,7 +99,9 @@ namespace Alice {
 			builder.Register<ILoadingOverlayService, LoadingOverlayService>(Lifetime.Singleton);
 			builder.Register<ISceneLoader, SceneLoader>(Lifetime.Singleton);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
-			builder.Register<IOnlineSessionBootstrap, OnlineSessionBootstrap>(Lifetime.Singleton);
+			builder.Register<OnlineSessionBootstrap>(Lifetime.Singleton);
+			builder.Register<IOnlineSessionBootstrap>(resolver => resolver.Resolve<OnlineSessionBootstrap>(), Lifetime.Singleton);
+			builder.Register<INetworkRunnerProvider>(resolver => resolver.Resolve<OnlineSessionBootstrap>(), Lifetime.Singleton);
 
 			builder.RegisterInstance(playerInputManager);
 			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
@@ -131,6 +133,7 @@ namespace Alice {
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
 				_ = container.Resolve<IOnlineSessionBootstrap>();
+				_ = container.Resolve<INetworkRunnerProvider>();
 				_ = container.Resolve<ICursorDeployer>();
 				Debug.Log($"{LOG_PREFIX} BuildCallback resolve completed");
 			});

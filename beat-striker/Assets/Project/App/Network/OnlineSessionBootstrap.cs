@@ -39,7 +39,11 @@ namespace Alice {
         Task<OnlineMatchResult> MatchAsync(OnlineMatchRequest request);
     }
 
-    public class OnlineSessionBootstrap : IOnlineSessionBootstrap, INetworkRunnerCallbacks {
+    public interface INetworkRunnerProvider {
+        bool TryGetRunner(out NetworkRunner runner);
+    }
+
+    public class OnlineSessionBootstrap : IOnlineSessionBootstrap, INetworkRunnerProvider, INetworkRunnerCallbacks {
         const string LOG_PREFIX = "[OnlineSessionBootstrap]";
         static readonly ReliableKey RequestKey = ReliableKey.FromInts(0x4253, 1, 1);
         static readonly ReliableKey ResultKey = ReliableKey.FromInts(0x4253, 1, 2);
@@ -54,6 +58,11 @@ namespace Alice {
 
         public OnlineSessionBootstrap(IAppNetworkSetting networkSetting) {
             this.networkSetting = networkSetting;
+        }
+
+        public bool TryGetRunner(out NetworkRunner runner) {
+            runner = this.runner;
+            return runner != null && runner.IsRunning;
         }
 
         public async Task<OnlineMatchResult> MatchAsync(OnlineMatchRequest request) {

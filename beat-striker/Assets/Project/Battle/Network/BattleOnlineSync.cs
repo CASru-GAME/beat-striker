@@ -1,0 +1,390 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+using Fusion;
+using Fusion.Sockets;
+using R3;
+using UnityEngine;
+
+namespace Alice {
+    public enum BattleOutcomeKind {
+        RoundResolved = 1,
+        BattleFinished = 2,
+    }
+
+    public record BattleFlowPhaseSnapshot(ulong Sequence, BattleFlowState State, int Round);
+
+    public record BattleOutcomeSnapshot(
+        ulong Sequence,
+        BattleOutcomeKind Kind,
+        int FinishedRound,
+        int DeadPlayerId,
+        int RoundWinnerPlayerId,
+        bool ContinueBattle,
+        int FinalWinnerPlayerId,
+        bool StopMusic,
+        int[] PlayerIds,
+        int[] RoundWinCounts);
+
+    public interface IBattleOnlineSync {
+        bool IsSessionHost { get; }
+        bool IsReady { get; }
+        Observable<BattleFlowPhaseSnapshot> OnPhaseReceived { get; }
+        Observable<BattleOutcomeSnapshot> OnOutcomeReceived { get; }
+        Observable<Unit> OnPauseRequested { get; }
+        Observable<Unit> OnResumeRequested { get; }
+        Observable<Unit> OnSuspendFinishRequested { get; }
+        Observable<int> OnRoundResolutionRequested { get; }
+        Observable<Unit> OnDisconnected { get; }
+        void PublishPhase(BattleFlowState state, int round);
+        void RequestPause();
+        void RequestResume();
+        void RequestSuspendFinish();
+        void RequestRoundResolution(int deadPlayerId);
+        void PublishOutcome(BattleOutcomeSnapshot snapshot);
+        Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round);
+        Task<BattleOutcomeSnapshot> WaitForOutcomeAsync(BattleOutcomeKind kind, int finishedRound);
+    }
+
+    public class BattleOnlineSync : IBattleOnlineSync, INetworkRunnerCallbacks, IDisposable {
+        const string LOG_PREFIX = "[BattleOnlineSync]";
+        static readonly ReliableKey PhaseKey = ReliableKey.FromInts(0x4253, 2, 1);
+        static readonly ReliableKey OutcomeKey = ReliableKey.FromInts(0x4253, 2, 2);
+        static readonly ReliableKey PauseRequestKey = ReliableKey.FromInts(0x4253, 2, 3);
+        static readonly ReliableKey ResumeRequestKey = ReliableKey.FromInts(0x4253, 2, 4);
+        static readonly ReliableKey SuspendFinishRequestKey = ReliableKey.FromInts(0x4253, 2, 5);
+        static readonly ReliableKey RoundResolutionRequestKey = ReliableKey.FromInts(0x4253, 2, 6);
+
+        readonly INetworkRunnerProvider runnerProvider;
+        readonly IAppNetworkSetting appNetworkSetting;
+        readonly ReactiveProperty<BattleFlowPhaseSnapshot> latestPhase = new(new BattleFlowPhaseSnapshot(0, BattleFlowState.NotStarted, 0));
+        readonly ReactiveProperty<BattleOutcomeSnapshot> latestOutcome = new(new BattleOutcomeSnapshot(0, 0, 0, -1, -1, false, -1, false, Array.Empty<int>(), Array.Empty<int>()));
+        readonly Subject<Unit> pauseRequestedSubject = new();
+        readonly Subject<Unit> resumeRequestedSubject = new();
+        readonly Subject<Unit> suspendFinishRequestedSubject = new();
+        readonly Subject<int> roundResolutionRequestedSubject = new();
+        readonly Subject<Unit> disconnectedSubject = new();
+        NetworkRunner runner;
+        ulong phaseSequence;
+        ulong outcomeSequence;
+        bool callbacksRegistered;
+        bool disconnected;
+
+        public BattleOnlineSync(INetworkRunnerProvider runnerProvider, IAppNetworkSetting appNetworkSetting) {
+            this.runnerProvider = runnerProvider;
+            this.appNetworkSetting = appNetworkSetting;
+            TryRegisterCallbacks();
+        }
+
+        public bool IsReady => IsOnline() && TryRegisterCallbacks();
+        public bool IsSessionHost => IsReady && runner.IsServer;
+        public Observable<BattleFlowPhaseSnapshot> OnPhaseReceived => latestPhase.Where(snapshot => snapshot.Sequence > 0);
+        public Observable<BattleOutcomeSnapshot> OnOutcomeReceived => latestOutcome.Where(snapshot => snapshot.Sequence > 0);
+        public Observable<Unit> OnPauseRequested => pauseRequestedSubject;
+        public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
+        public Observable<Unit> OnSuspendFinishRequested => suspendFinishRequestedSubject;
+        public Observable<int> OnRoundResolutionRequested => roundResolutionRequestedSubject;
+        public Observable<Unit> OnDisconnected => disconnectedSubject;
+
+        public void PublishPhase(BattleFlowState state, int round) {
+            if (!IsSessionHost) {
+                return;
+            }
+
+            phaseSequence += 1;
+            var snapshot = new BattleFlowPhaseSnapshot(phaseSequence, state, round);
+            latestPhase.Value = snapshot;
+            var payload = new PhasePayload {
+                sequence = (long)snapshot.Sequence,
+                phase = (int)snapshot.State,
+                round = snapshot.Round,
+            };
+            Broadcast(PhaseKey, payload);
+            Debug.Log($"{LOG_PREFIX} Published phase. sequence={snapshot.Sequence}, state={state}, round={round}");
+        }
+
+        public void RequestPause() {
+            SendRequest(PauseRequestKey, new EmptyPayload());
+        }
+
+        public void RequestResume() {
+            SendRequest(ResumeRequestKey, new EmptyPayload());
+        }
+
+        public void RequestSuspendFinish() {
+            SendRequest(SuspendFinishRequestKey, new EmptyPayload());
+        }
+
+        public void RequestRoundResolution(int deadPlayerId) {
+            SendRequest(RoundResolutionRequestKey, new RoundResolutionRequestPayload {
+                deadPlayerId = deadPlayerId,
+            });
+        }
+
+        public void PublishOutcome(BattleOutcomeSnapshot snapshot) {
+            if (!IsSessionHost) {
+                return;
+            }
+
+            outcomeSequence += 1;
+            var sequencedSnapshot = snapshot with {
+                Sequence = outcomeSequence,
+            };
+            latestOutcome.Value = sequencedSnapshot;
+            var payload = new OutcomePayload {
+                sequence = (long)sequencedSnapshot.Sequence,
+                kind = (int)sequencedSnapshot.Kind,
+                finishedRound = sequencedSnapshot.FinishedRound,
+                deadPlayerId = sequencedSnapshot.DeadPlayerId,
+                roundWinnerPlayerId = sequencedSnapshot.RoundWinnerPlayerId,
+                continueBattle = sequencedSnapshot.ContinueBattle,
+                finalWinnerPlayerId = sequencedSnapshot.FinalWinnerPlayerId,
+                stopMusic = sequencedSnapshot.StopMusic,
+                playerIds = sequencedSnapshot.PlayerIds,
+                roundWinCounts = sequencedSnapshot.RoundWinCounts,
+            };
+            Broadcast(OutcomeKey, payload);
+            Debug.Log($"{LOG_PREFIX} Published outcome. sequence={sequencedSnapshot.Sequence}, kind={sequencedSnapshot.Kind}, round={sequencedSnapshot.FinishedRound}, winner={sequencedSnapshot.RoundWinnerPlayerId}, finalWinner={sequencedSnapshot.FinalWinnerPlayerId}");
+        }
+
+        public async Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round) {
+            if (!IsReady || IsSessionHost) {
+                return;
+            }
+
+            while (!disconnected && !IsPhaseAtLeast(latestPhase.CurrentValue, state, round)) {
+                await Task.Yield();
+            }
+        }
+
+        public async Task<BattleOutcomeSnapshot> WaitForOutcomeAsync(BattleOutcomeKind kind, int finishedRound) {
+            while (!disconnected) {
+                var snapshot = latestOutcome.CurrentValue;
+                if (snapshot.Sequence > 0 && snapshot.Kind == kind && snapshot.FinishedRound >= finishedRound) {
+                    return snapshot;
+                }
+
+                if (kind == BattleOutcomeKind.RoundResolved
+                    && snapshot.Sequence > 0
+                    && snapshot.Kind == BattleOutcomeKind.BattleFinished
+                    && snapshot.FinishedRound >= finishedRound) {
+                    return snapshot;
+                }
+
+                await Task.Yield();
+            }
+
+            throw new InvalidOperationException("Online battle sync disconnected while waiting for outcome.");
+        }
+
+        bool TryRegisterCallbacks() {
+            if (callbacksRegistered && runner != null && runner.IsRunning) {
+                return true;
+            }
+
+            if (!runnerProvider.TryGetRunner(out runner)) {
+                return false;
+            }
+
+            runner.AddCallbacks(this);
+            callbacksRegistered = true;
+            Debug.Log($"{LOG_PREFIX} Registered runner callbacks. isServer={runner.IsServer}");
+            return true;
+        }
+
+        bool IsOnline() {
+            return appNetworkSetting.IsOnline.CurrentValue;
+        }
+
+        void Broadcast<T>(ReliableKey key, T payload) {
+            var bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
+            foreach (var player in runner.ActivePlayers) {
+                if (player == runner.LocalPlayer) {
+                    continue;
+                }
+
+                runner.SendReliableDataToPlayer(player, key, bytes);
+            }
+        }
+
+        void SendRequest<T>(ReliableKey key, T payload) {
+            if (!IsReady || IsSessionHost) {
+                return;
+            }
+
+            runner.SendReliableDataToServer(key, Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload)));
+        }
+
+        static bool IsPhaseAtLeast(BattleFlowPhaseSnapshot snapshot, BattleFlowState state, int round) {
+            if (snapshot.Round != round) {
+                return snapshot.Round > round;
+            }
+
+            return GetPhaseOrder(snapshot.State) >= GetPhaseOrder(state);
+        }
+
+        static int GetPhaseOrder(BattleFlowState state) {
+            return state switch {
+                BattleFlowState.NotStarted => 0,
+                BattleFlowState.Opening => 1,
+                BattleFlowState.RoundStarting => 2,
+                BattleFlowState.Playing => 3,
+                BattleFlowState.Suspended => 4,
+                BattleFlowState.AttentionSuspended => 4,
+                BattleFlowState.TutorialSuspended => 4,
+                BattleFlowState.ResolvingRound => 5,
+                BattleFlowState.EndingBattle => 6,
+                BattleFlowState.EndingToTitle => 6,
+                BattleFlowState.Finished => 7,
+                _ => 0,
+            };
+        }
+
+        static string Decode(ArraySegment<byte> data) {
+            if (data.Array == null) {
+                throw new InvalidOperationException("Reliable data payload is empty.");
+            }
+
+            return Encoding.UTF8.GetString(data.Array, data.Offset, data.Count);
+        }
+
+        public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) {
+            if (key == PhaseKey && !runner.IsServer) {
+                var payload = JsonUtility.FromJson<PhasePayload>(Decode(data));
+                var snapshot = new BattleFlowPhaseSnapshot((ulong)payload.sequence, (BattleFlowState)payload.phase, payload.round);
+                if (snapshot.Sequence > latestPhase.CurrentValue.Sequence) {
+                    latestPhase.Value = snapshot;
+                    Debug.Log($"{LOG_PREFIX} Received phase. sequence={snapshot.Sequence}, state={snapshot.State}, round={snapshot.Round}");
+                }
+                return;
+            }
+
+            if (key == OutcomeKey && !runner.IsServer) {
+                var payload = JsonUtility.FromJson<OutcomePayload>(Decode(data));
+                var snapshot = new BattleOutcomeSnapshot(
+                    (ulong)payload.sequence,
+                    (BattleOutcomeKind)payload.kind,
+                    payload.finishedRound,
+                    payload.deadPlayerId,
+                    payload.roundWinnerPlayerId,
+                    payload.continueBattle,
+                    payload.finalWinnerPlayerId,
+                    payload.stopMusic,
+                    payload.playerIds ?? Array.Empty<int>(),
+                    payload.roundWinCounts ?? Array.Empty<int>());
+                if (snapshot.Sequence > latestOutcome.CurrentValue.Sequence) {
+                    latestOutcome.Value = snapshot;
+                    Debug.Log($"{LOG_PREFIX} Received outcome. sequence={snapshot.Sequence}, kind={snapshot.Kind}, round={snapshot.FinishedRound}");
+                }
+                return;
+            }
+
+            if (!runner.IsServer) {
+                return;
+            }
+
+            if (key == PauseRequestKey) {
+                pauseRequestedSubject.OnNext(Unit.Default);
+                return;
+            }
+
+            if (key == ResumeRequestKey) {
+                resumeRequestedSubject.OnNext(Unit.Default);
+                return;
+            }
+
+            if (key == SuspendFinishRequestKey) {
+                suspendFinishRequestedSubject.OnNext(Unit.Default);
+                return;
+            }
+
+            if (key == RoundResolutionRequestKey) {
+                var payload = JsonUtility.FromJson<RoundResolutionRequestPayload>(Decode(data));
+                roundResolutionRequestedSubject.OnNext(payload.deadPlayerId);
+            }
+        }
+
+        public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) {
+            disconnected = true;
+            disconnectedSubject.OnNext(Unit.Default);
+        }
+
+        public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) {
+            if (shutdownReason != ShutdownReason.Ok) {
+                disconnected = true;
+                disconnectedSubject.OnNext(Unit.Default);
+            }
+        }
+
+        public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) {
+            disconnected = true;
+            disconnectedSubject.OnNext(Unit.Default);
+        }
+
+        public void Dispose() {
+            if (callbacksRegistered && runner != null) {
+                runner.RemoveCallbacks(this);
+            }
+
+            latestPhase.Dispose();
+            latestOutcome.Dispose();
+            pauseRequestedSubject.Dispose();
+            resumeRequestedSubject.Dispose();
+            suspendFinishRequestedSubject.Dispose();
+            roundResolutionRequestedSubject.Dispose();
+            disconnectedSubject.Dispose();
+        }
+
+        public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
+        public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
+        public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+        public void OnInput(NetworkRunner runner, NetworkInput input) { }
+        public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
+        public void OnConnectedToServer(NetworkRunner runner) { }
+        public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
+        public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
+        public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
+        public void OnSceneLoadDone(NetworkRunner runner) { }
+        public void OnSceneLoadStart(NetworkRunner runner) { }
+        public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+        public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+        public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) {
+            disconnected = true;
+            disconnectedSubject.OnNext(Unit.Default);
+        }
+
+        public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) {
+            request.Accept();
+        }
+
+        [Serializable]
+        class EmptyPayload { }
+
+        [Serializable]
+        class PhasePayload {
+            public long sequence;
+            public int phase;
+            public int round;
+        }
+
+        [Serializable]
+        class OutcomePayload {
+            public long sequence;
+            public int kind;
+            public int finishedRound;
+            public int deadPlayerId;
+            public int roundWinnerPlayerId;
+            public bool continueBattle;
+            public int finalWinnerPlayerId;
+            public bool stopMusic;
+            public int[] playerIds;
+            public int[] roundWinCounts;
+        }
+
+        [Serializable]
+        class RoundResolutionRequestPayload {
+            public int deadPlayerId;
+        }
+    }
+}
