@@ -55,7 +55,7 @@ public class ButtonGuideStartOffsetMotion : MonoBehaviour {
 
     private IEnumerator PlaySequence() {
         if (startDelay > 0f) {
-            yield return new WaitForSeconds(startDelay);
+            yield return Ex.Wait(startDelay);
         }
 
         yield return MoveTo(originalPosition, duration);
@@ -65,7 +65,7 @@ public class ButtonGuideStartOffsetMotion : MonoBehaviour {
         }
 
         if (waitDurationBeforeExit > 0f) {
-            yield return new WaitForSeconds(waitDurationBeforeExit);
+            yield return Ex.Wait(waitDurationBeforeExit);
         }
 
         var exitPosition = originalPosition + startOffset;

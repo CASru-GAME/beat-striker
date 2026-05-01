@@ -126,7 +126,7 @@ namespace Alice {
         }
 
         IEnumerator ReleaseWhenFinished(AudioSource audioSource, float clipLength) {
-            yield return new WaitForSeconds(clipLength);
+            yield return Ex.Wait(clipLength);
 
             if (audioSource) {
                 pool.Release(audioSource);

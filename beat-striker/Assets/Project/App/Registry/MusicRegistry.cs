@@ -201,7 +201,7 @@ namespace Alice {
             }
 
             if (loadDelaySeconds > 0f) {
-                await Awaitable.WaitForSecondsAsync(loadDelaySeconds);
+                await Ex.WaitAsync(loadDelaySeconds);
             }
 
             var handle = Addressables.LoadAssetAsync<T>(assetReference);

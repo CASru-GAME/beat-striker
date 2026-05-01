@@ -210,7 +210,7 @@ public class beam11 : MonoBehaviour
 
     System.Collections.IEnumerator PlayAudioAfterDelay()
     {
-        yield return new WaitForSeconds(audioPlayDelaySeconds);
+        yield return Ex.Wait(audioPlayDelaySeconds);
         audioClip.PlayAtApp(transform.position);
     }
 
@@ -218,7 +218,7 @@ public class beam11 : MonoBehaviour
     {
         if (colliderEnableDelaySeconds > 0f)
         {
-            yield return new WaitForSeconds(colliderEnableDelaySeconds);
+            yield return Ex.Wait(colliderEnableDelaySeconds);
         }
 
         hitCollider.enabled = true;

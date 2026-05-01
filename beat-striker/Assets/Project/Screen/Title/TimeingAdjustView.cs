@@ -125,7 +125,7 @@ namespace Alice {
             }
 
             if (closeDelaySeconds > 0f) {
-                yield return new WaitForSecondsRealtime(closeDelaySeconds);
+                yield return Ex.WaitRealtime(closeDelaySeconds);
             }
 
             sessionCoroutine = null;

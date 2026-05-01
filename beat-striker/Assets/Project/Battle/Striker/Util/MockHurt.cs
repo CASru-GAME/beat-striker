@@ -26,7 +26,7 @@ public class MockHurt : MonoBehaviour
 
     private System.Collections.IEnumerator ReturnToInitialPositionAfterDelay(float delay)
     {
-        yield return new WaitForSeconds(delay);
+        yield return Ex.Wait(delay);
         transform.position = _initialPosition;
         var rb = GetComponent<Rigidbody>();
         rb.linearVelocity = Vector3.zero;

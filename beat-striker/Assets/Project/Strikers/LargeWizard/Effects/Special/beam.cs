@@ -74,7 +74,7 @@ namespace Core.LargeWizard {
         }
 
         System.Collections.IEnumerator LaunchAfterDelay() {
-            yield return new WaitForSeconds(launchDelay);
+            yield return Ex.Wait(launchDelay);
             Launch();
         }
 

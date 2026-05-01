@@ -32,8 +32,47 @@ public static class Ex {
     }
 
     private static IEnumerator CoroutineAction(Action action, float delay) {
-        yield return new WaitForSeconds(delay);
+        if (delay > 0f) {
+            float elapsed = 0f;
+            while (elapsed < delay) {
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+        }
         action?.Invoke();
+    }
+    
+    public static IEnumerator Wait(float seconds) {
+        if (seconds <= 0f) {
+            yield break;
+        }
+        float elapsed = 0f;
+        while (elapsed < seconds) {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    public static IEnumerator WaitRealtime(float seconds) {
+        if (seconds <= 0f) {
+            yield break;
+        }
+        float elapsed = 0f;
+        while (elapsed < seconds) {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    public static async Awaitable WaitAsync(float seconds) {
+        if (seconds <= 0f) {
+            return;
+        }
+        float elapsed = 0f;
+        while (elapsed < seconds) {
+            elapsed += Time.deltaTime;
+            await Awaitable.NextFrameAsync();
+        }
     }
     
     public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)

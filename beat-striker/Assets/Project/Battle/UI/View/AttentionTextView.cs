@@ -127,7 +127,7 @@ namespace Alice {
 
         IEnumerator PlayImpactAfterDelay(float delay) {
             if (delay > 0f) {
-                yield return new WaitForSeconds(delay);
+                yield return Ex.Wait(delay);
             }
 
             effectParticleSystem.Play();
@@ -137,7 +137,7 @@ namespace Alice {
 
         IEnumerator PlayCharacterShrink(float startDelay) {
             if (startDelay > 0f) {
-                yield return new WaitForSeconds(startDelay);
+                yield return Ex.Wait(startDelay);
             }
 
             var textInfo = attentionText.textInfo;

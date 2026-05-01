@@ -128,10 +128,10 @@ public class DiagonalStripeVisual : AppTransitionPresenter {
                 })
                 .setEase(LeanTweenType.easeInOutQuad);
 
-            yield return new WaitForSeconds(stripeDelay);
+            yield return Ex.Wait(stripeDelay);
         }
 
-        yield return new WaitForSeconds(transitionDuration);
+        yield return Ex.Wait(transitionDuration);
         Debug.Log($"{LOG_PREFIX} PlayTransition completed. isFadeIn={isFadeIn}");
         
     }

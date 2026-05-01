@@ -25,7 +25,7 @@ public class beam22 : MonoBehaviour
 
     System.Collections.IEnumerator PlayAudioAfterDelay()
     {
-        yield return new WaitForSeconds(audioPlayDelaySeconds);
+        yield return Ex.Wait(audioPlayDelaySeconds);
         audioClip.PlayAtApp(transform.position);
     }
 }

@@ -103,7 +103,7 @@ public class MusicPopup : MonoBehaviour
             musicSelection.localPosition = rightOff;
         }
         
-        yield return new WaitForSeconds(popupDelay);
+        yield return Ex.Wait(popupDelay);
         
         // フェードイン
         LeanTween.cancel(stageSelectPop);
@@ -124,10 +124,10 @@ public class MusicPopup : MonoBehaviour
         {
             Vector3 centerPos = musicSelection.localPosition - new Vector3(musicSlideDistance, 0f, 0f);
             LeanTween.moveLocal(musicSelection.gameObject, centerPos, musicSlideDuration).setEase(LeanTweenType.easeOutQuad);
-            yield return new WaitForSeconds(musicSlideDuration);
+            yield return Ex.Wait(musicSlideDuration);
         }
 
-        yield return new WaitForSeconds(stageSelectSlideDuration);
+        yield return Ex.Wait(stageSelectSlideDuration);
     }
 
     void ApplyStageThumbnail(Stage stage)

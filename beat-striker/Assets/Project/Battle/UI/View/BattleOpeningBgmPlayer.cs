@@ -132,7 +132,7 @@ namespace Alice {
 
         IEnumerator PlayRoutine(ManagedAudioSource managedAudioSource) {
             if (startDelaySeconds > 0f) {
-                yield return new WaitForSeconds(startDelaySeconds);
+                yield return Ex.Wait(startDelaySeconds);
             }
 
             if (managedAudioSource.Source == null || managedAudioSource.Clip == null) {

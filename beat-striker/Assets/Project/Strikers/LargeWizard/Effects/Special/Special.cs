@@ -87,7 +87,7 @@ namespace Core.LargeWizard {
         }
 
         System.Collections.IEnumerator SpawnBeamAfterDelay() {
-            yield return new WaitForSeconds(beamSpawnDelay);
+            yield return Ex.Wait(beamSpawnDelay);
             var beamInstance = Instantiate(beamPrefab, transform.position, transform.rotation);
             beamInstance.Hurtbox = Hurtbox;
             beamInstance.SetOwnerStrikerHub(ownerStrikerHub);

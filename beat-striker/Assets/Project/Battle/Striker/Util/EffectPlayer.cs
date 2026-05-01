@@ -140,7 +140,7 @@ public class EffectPlayer : MonoBehaviour {
     }
 
     private IEnumerator ReturnToPoolAfterDelay(GameObject effect) {
-        yield return new WaitForSeconds(fallbackLifetimeSeconds);
+        yield return Ex.Wait(fallbackLifetimeSeconds);
 
         if (effect && playingEffects.Contains(effect)) {
             pool.Release(effect);
