@@ -35,6 +35,7 @@ namespace Alice {
         readonly List<IDisposable> subscriptions = new();
         readonly Queue<IMusicPlayer.BeatSignal> pendingOnlineBeatSignals = new();
         readonly HashSet<int> activePreCommandSnapshotPublishBeats = new();
+        readonly int[] lastReceivedOnlineBeatIndexByPlayer = new int[PLAYER_COUNT];
         BeatPlayer[] beatPlayer = new BeatPlayer[PLAYER_COUNT];
         float lastCommandPlaybackTime = -1f;
         int lastOnlineBeatIndex = -1;
@@ -54,6 +55,7 @@ namespace Alice {
 
             for (int i = 0; i < beatPlayer.Length; i++) {
                 beatPlayer[i] = new BeatPlayer();
+                lastReceivedOnlineBeatIndexByPlayer[i] = -1;
             }
 
             for (int i = 0; i < beatPlayer.Length; i++) {
@@ -206,10 +208,14 @@ namespace Alice {
                 return;
             }
 
+            FillMissingRemoteBeatCommandsIfNeeded(command.PlayerId, command.BeatIndex);
             if (!onlineCommandBuffer.TrySubmit(command)) {
                 return;
             }
 
+            lastReceivedOnlineBeatIndexByPlayer[command.PlayerId] = Mathf.Max(
+                lastReceivedOnlineBeatIndexByPlayer[command.PlayerId],
+                command.BeatIndex);
             Debug.Log(
                 $"{LOG_PREFIX} Applied remote online command. player={command.PlayerId}, beat={command.BeatIndex}, success={command.IsSuccess}, ready={onlineCommandBuffer.IsReady(command.BeatIndex, PLAYER_COUNT)}");
             var player = beatPlayer[command.PlayerId];
@@ -400,6 +406,41 @@ namespace Alice {
                 beatPlayer[playerId].CurrentInputDirection);
         }
 
+        OnlineBeatCommandSnapshot CreateMissCommand(int playerId, int beatIndex) {
+            var beatTimeline = musicPlayer.CurrentBeatTimeline;
+            var beatTime = beatIndex >= 0 && beatIndex < beatTimeline.Length
+                ? beatTimeline[beatIndex]
+                : musicPlayer.CurrentPlaybackTime;
+            return new OnlineBeatCommandSnapshot(
+                0,
+                playerId,
+                beatIndex,
+                beatTime,
+                false,
+                BeatJudgeZone.Miss,
+                default,
+                beatPlayer[playerId].CurrentInputDirection);
+        }
+
+        void FillMissingRemoteBeatCommandsIfNeeded(int playerId, int incomingBeatIndex) {
+            if (incomingBeatIndex < 0) {
+                return;
+            }
+
+            var expectedBeatIndex = lastReceivedOnlineBeatIndexByPlayer[playerId] + 1;
+            if (incomingBeatIndex <= expectedBeatIndex) {
+                return;
+            }
+
+            for (var beatIndex = expectedBeatIndex; beatIndex < incomingBeatIndex; beatIndex++) {
+                if (onlineCommandBuffer.HasSubmission(beatIndex, playerId)) {
+                    continue;
+                }
+                onlineCommandBuffer.TrySubmit(CreateMissCommand(playerId, beatIndex));
+                Debug.Log($"{LOG_PREFIX} Filled missing remote beat as miss. player={playerId}, beat={beatIndex}");
+            }
+        }
+
         void ExecuteOnlineCommand(int playerId, OnlineBeatCommandSnapshot command, IMusicPlayer.BeatSignal signal) {
             var player = beatPlayer[playerId];
             player.ClearSubmittedCommand(signal.BeatIndex);
@@ -441,6 +482,9 @@ namespace Alice {
             activePreCommandSnapshotPublishBeats.Clear();
             battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(int.MaxValue);
             lastOnlineBeatIndex = -1;
+            for (var i = 0; i < lastReceivedOnlineBeatIndexByPlayer.Length; i++) {
+                lastReceivedOnlineBeatIndexByPlayer[i] = -1;
+            }
         }
 
         void ResetOnlineCommandStateForRoundResume() {
@@ -450,6 +494,12 @@ namespace Alice {
             activePreCommandSnapshotPublishBeats.Clear();
             battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(preserveFromBeatIndex);
             lastOnlineBeatIndex = preserveFromBeatIndex - 1;
+            for (var i = 0; i < lastReceivedOnlineBeatIndexByPlayer.Length; i++) {
+                if (i == ResolveLocalOnlinePlayerId()) {
+                    continue;
+                }
+                lastReceivedOnlineBeatIndexByPlayer[i] = preserveFromBeatIndex - 1;
+            }
             Debug.Log($"{LOG_PREFIX} Reset online command state for round resume. preserveFromBeat={preserveFromBeatIndex}");
         }
 
