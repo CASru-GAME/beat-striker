@@ -271,6 +271,7 @@ namespace Alice {
             selectionPolicy.Reset(playerSelectSetting);
             var localPlayerId = result.LocalIsPlayer1 ? 0 : 1;
             var opponentPlayerId = result.LocalIsPlayer1 ? 1 : 0;
+            appNetworkSetting.SetLocalOnlinePlayerId(localPlayerId);
             if (localPlayerId != 0) {
                 gamePadRegistry.HandlePlayerSlotClick(0, localPlayerId);
             }

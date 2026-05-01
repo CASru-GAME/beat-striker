@@ -27,11 +27,22 @@ namespace Alice {
         int[] PlayerIds,
         int[] RoundWinCounts);
 
+    public record OnlineBeatCommandSnapshot(
+        ulong Sequence,
+        int PlayerId,
+        int BeatIndex,
+        float Time,
+        bool IsSuccess,
+        BeatJudgeZone Zone,
+        GamePadButton Button,
+        Vector2 Direction);
+
     public interface IBattleOnlineSync {
         bool IsSessionHost { get; }
         bool IsReady { get; }
         Observable<BattleFlowPhaseSnapshot> OnPhaseReceived { get; }
         Observable<BattleOutcomeSnapshot> OnOutcomeReceived { get; }
+        Observable<OnlineBeatCommandSnapshot> OnBeatCommandReceived { get; }
         Observable<Unit> OnPauseRequested { get; }
         Observable<Unit> OnResumeRequested { get; }
         Observable<Unit> OnSuspendFinishRequested { get; }
@@ -43,6 +54,7 @@ namespace Alice {
         void RequestSuspendFinish();
         void RequestRoundResolution(int deadPlayerId);
         void PublishOutcome(BattleOutcomeSnapshot snapshot);
+        void PublishBeatCommand(OnlineBeatCommandSnapshot snapshot);
         Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round);
         Task<BattleOutcomeSnapshot> WaitForOutcomeAsync(BattleOutcomeKind kind, int finishedRound);
     }
@@ -55,11 +67,13 @@ namespace Alice {
         static readonly ReliableKey ResumeRequestKey = ReliableKey.FromInts(0x4253, 2, 4);
         static readonly ReliableKey SuspendFinishRequestKey = ReliableKey.FromInts(0x4253, 2, 5);
         static readonly ReliableKey RoundResolutionRequestKey = ReliableKey.FromInts(0x4253, 2, 6);
+        static readonly ReliableKey BeatCommandKey = ReliableKey.FromInts(0x4253, 2, 7);
 
         readonly INetworkRunnerProvider runnerProvider;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly ReactiveProperty<BattleFlowPhaseSnapshot> latestPhase = new(new BattleFlowPhaseSnapshot(0, BattleFlowState.NotStarted, 0));
         readonly ReactiveProperty<BattleOutcomeSnapshot> latestOutcome = new(new BattleOutcomeSnapshot(0, 0, 0, -1, -1, false, -1, false, Array.Empty<int>(), Array.Empty<int>()));
+        readonly Subject<OnlineBeatCommandSnapshot> beatCommandReceivedSubject = new();
         readonly Subject<Unit> pauseRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
         readonly Subject<Unit> suspendFinishRequestedSubject = new();
@@ -68,6 +82,7 @@ namespace Alice {
         NetworkRunner runner;
         ulong phaseSequence;
         ulong outcomeSequence;
+        ulong beatCommandSequence;
         bool callbacksRegistered;
         bool disconnected;
 
@@ -81,6 +96,7 @@ namespace Alice {
         public bool IsSessionHost => IsReady && runner.IsServer;
         public Observable<BattleFlowPhaseSnapshot> OnPhaseReceived => latestPhase.Where(snapshot => snapshot.Sequence > 0);
         public Observable<BattleOutcomeSnapshot> OnOutcomeReceived => latestOutcome.Where(snapshot => snapshot.Sequence > 0);
+        public Observable<OnlineBeatCommandSnapshot> OnBeatCommandReceived => beatCommandReceivedSubject;
         public Observable<Unit> OnPauseRequested => pauseRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<Unit> OnSuspendFinishRequested => suspendFinishRequestedSubject;
@@ -146,6 +162,26 @@ namespace Alice {
             };
             Broadcast(OutcomeKey, payload);
             Debug.Log($"{LOG_PREFIX} Published outcome. sequence={sequencedSnapshot.Sequence}, kind={sequencedSnapshot.Kind}, round={sequencedSnapshot.FinishedRound}, winner={sequencedSnapshot.RoundWinnerPlayerId}, finalWinner={sequencedSnapshot.FinalWinnerPlayerId}");
+        }
+
+        public void PublishBeatCommand(OnlineBeatCommandSnapshot snapshot) {
+            if (!IsReady) {
+                return;
+            }
+
+            beatCommandSequence += 1;
+            var sequencedSnapshot = snapshot with {
+                Sequence = beatCommandSequence,
+            };
+            var payload = BuildBeatCommandPayload(sequencedSnapshot);
+            if (runner.IsServer) {
+                Broadcast(BeatCommandKey, payload);
+            }
+            else {
+                runner.SendReliableDataToServer(BeatCommandKey, Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload)));
+            }
+
+            Debug.Log($"{LOG_PREFIX} Published beat command. sequence={sequencedSnapshot.Sequence}, player={sequencedSnapshot.PlayerId}, beat={sequencedSnapshot.BeatIndex}, success={sequencedSnapshot.IsSuccess}");
         }
 
         public async Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round) {
@@ -216,6 +252,31 @@ namespace Alice {
             runner.SendReliableDataToServer(key, Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload)));
         }
 
+        void BroadcastExcept<T>(ReliableKey key, T payload, PlayerRef excludedPlayer) {
+            var bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
+            foreach (var player in runner.ActivePlayers) {
+                if (player == runner.LocalPlayer || player == excludedPlayer) {
+                    continue;
+                }
+
+                runner.SendReliableDataToPlayer(player, key, bytes);
+            }
+        }
+
+        static BeatCommandPayload BuildBeatCommandPayload(OnlineBeatCommandSnapshot snapshot) {
+            return new BeatCommandPayload {
+                sequence = (long)snapshot.Sequence,
+                playerId = snapshot.PlayerId,
+                beatIndex = snapshot.BeatIndex,
+                time = snapshot.Time,
+                isSuccess = snapshot.IsSuccess,
+                zone = (int)snapshot.Zone,
+                button = (int)snapshot.Button,
+                directionX = snapshot.Direction.x,
+                directionY = snapshot.Direction.y,
+            };
+        }
+
         static bool IsPhaseAtLeast(BattleFlowPhaseSnapshot snapshot, BattleFlowState state, int round) {
             if (snapshot.Round != round) {
                 return snapshot.Round > round;
@@ -280,6 +341,25 @@ namespace Alice {
                 return;
             }
 
+            if (key == BeatCommandKey) {
+                var payload = JsonUtility.FromJson<BeatCommandPayload>(Decode(data));
+                var snapshot = new OnlineBeatCommandSnapshot(
+                    (ulong)payload.sequence,
+                    payload.playerId,
+                    payload.beatIndex,
+                    payload.time,
+                    payload.isSuccess,
+                    (BeatJudgeZone)payload.zone,
+                    (GamePadButton)payload.button,
+                    new Vector2(payload.directionX, payload.directionY));
+                beatCommandReceivedSubject.OnNext(snapshot);
+                Debug.Log($"{LOG_PREFIX} Received beat command. sequence={snapshot.Sequence}, player={snapshot.PlayerId}, beat={snapshot.BeatIndex}, success={snapshot.IsSuccess}");
+                if (runner.IsServer) {
+                    BroadcastExcept(BeatCommandKey, payload, player);
+                }
+                return;
+            }
+
             if (!runner.IsServer) {
                 return;
             }
@@ -329,6 +409,7 @@ namespace Alice {
 
             latestPhase.Dispose();
             latestOutcome.Dispose();
+            beatCommandReceivedSubject.Dispose();
             pauseRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();
             suspendFinishRequestedSubject.Dispose();
@@ -385,6 +466,19 @@ namespace Alice {
         [Serializable]
         class RoundResolutionRequestPayload {
             public int deadPlayerId;
+        }
+
+        [Serializable]
+        class BeatCommandPayload {
+            public long sequence;
+            public int playerId;
+            public int beatIndex;
+            public float time;
+            public bool isSuccess;
+            public int zone;
+            public int button;
+            public float directionX;
+            public float directionY;
         }
     }
 }

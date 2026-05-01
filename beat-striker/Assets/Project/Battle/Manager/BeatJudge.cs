@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
  
 using App;
 using R3;
@@ -29,16 +30,25 @@ namespace Alice {
     }
 
     public class BeatJudge : IBeatjudge, IDisposable {
-        readonly IMusicPlayer musicPlayer;
+        const int PLAYER_COUNT = 2;
+        const float ONLINE_BEAT_DEADLINE_SECONDS = 0.1f;
+
         readonly IAudioSetting audioSetting;
+        readonly IAppNetworkSetting appNetworkSetting;
+        readonly IBattleOnlineSync battleOnlineSync;
+        readonly BeatOnlineCommandBuffer onlineCommandBuffer;
         readonly List<IDisposable> subscriptions = new();
-        BeatPlayer[] beatPlayer = new BeatPlayer[2];
+        BeatPlayer[] beatPlayer = new BeatPlayer[PLAYER_COUNT];
         float lastCommandPlaybackTime = -1f;
+        int lastOnlineBeatIndex = -1;
+        int onlineCommandGeneration;
         bool isPaused;
 
-        public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting) {
-            this.musicPlayer = musicPlayer;
+        public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync, BeatOnlineCommandBuffer onlineCommandBuffer) {
             this.audioSetting = audioSetting;
+            this.appNetworkSetting = appNetworkSetting;
+            this.battleOnlineSync = battleOnlineSync;
+            this.onlineCommandBuffer = onlineCommandBuffer;
             
 
             for(int i = 0; i < beatPlayer.Length; i++) {
@@ -72,6 +82,7 @@ namespace Alice {
                         for (var j = 0; j < beatPlayer.Length; j++) {
                             beatPlayer[j].ResetForLoop();
                         }
+                        ResetOnlineCommandState();
                     }
                     lastCommandPlaybackTime = time;
 
@@ -88,19 +99,27 @@ namespace Alice {
                         player.LockInputUntilBeat(result.BeatIndex);
                     }
                     var requestZone = isGood ? result.Zone : BeatJudgeZone.Miss;
-                    player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(result.BeatIndex, time, isGood, requestZone, button, player.CurrentInputDirection, player.ComboCount.CurrentValue));
+                    var beatResult = new IBeatPlayer.BeatResult(result.BeatIndex, time, isGood, requestZone, button, player.CurrentInputDirection, player.ComboCount.CurrentValue);
+                    player.onBeatCommandRequested.OnNext(beatResult);
+                    SubmitLocalOnlineCommandIfNeeded(playerIndex, beatResult);
                     // Record that player attempted this beat so it's not considered a pass later
                     player.RecordAttempt(result.BeatIndex);
                 });
                 subscriptions.Add(subscription);
             }
 
+            subscriptions.Add(battleOnlineSync.OnBeatCommandReceived.Subscribe(ApplyOnlineBeatCommand));
+
             subscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
                 if (isPaused) {
                     return;
                 }
 
-                
+                if (IsOnlineBattle()) {
+                    _ = ProcessOnlineBeatAsync(signal);
+                    return;
+                }
+
                 for (var playerIndex = 0; playerIndex < beatPlayer.Length; playerIndex++) {
                     if (!beatPlayer[playerIndex].TryConsumePendingCommand(signal.BeatIndex, out var zone, out var button, out var direction)) {
                         // If player attempted this beat (but it wasn't saved as pending), it's a miss rather than a pass
@@ -134,6 +153,139 @@ namespace Alice {
             }));
         }
 
+        void SubmitLocalOnlineCommandIfNeeded(int playerId, IBeatPlayer.BeatResult result) {
+            if (!IsOnlineBattle() || playerId != appNetworkSetting.LocalOnlinePlayerId || result.BeatIndex < 0) {
+                return;
+            }
+
+            var command = new OnlineBeatCommandSnapshot(
+                0,
+                playerId,
+                result.BeatIndex,
+                result.Time,
+                result.IsSuccess,
+                result.Zone,
+                result.Button,
+                result.Direction);
+            if (onlineCommandBuffer.TrySubmit(command)) {
+                battleOnlineSync.PublishBeatCommand(command);
+            }
+        }
+
+        void ApplyOnlineBeatCommand(OnlineBeatCommandSnapshot command) {
+            if (!IsOnlineBattle()
+                || command.PlayerId == appNetworkSetting.LocalOnlinePlayerId
+                || command.PlayerId < 0
+                || command.PlayerId >= beatPlayer.Length) {
+                return;
+            }
+
+            if (!onlineCommandBuffer.TrySubmit(command)) {
+                return;
+            }
+
+            var player = beatPlayer[command.PlayerId];
+            player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
+                command.BeatIndex,
+                command.Time,
+                command.IsSuccess,
+                command.Zone,
+                command.Button,
+                command.Direction,
+                player.ComboCount.CurrentValue));
+        }
+
+        async Task ProcessOnlineBeatAsync(IMusicPlayer.BeatSignal signal) {
+            if (lastOnlineBeatIndex >= 0 && signal.BeatIndex < lastOnlineBeatIndex) {
+                ResetOnlineCommandState();
+            }
+            lastOnlineBeatIndex = signal.BeatIndex;
+            var generation = onlineCommandGeneration;
+
+            SubmitLocalOnlineMissIfNeeded(signal);
+            var deadline = Time.realtimeSinceStartup + ONLINE_BEAT_DEADLINE_SECONDS;
+            while (!isPaused
+                && IsOnlineBattle()
+                && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)
+                && Time.realtimeSinceStartup < deadline) {
+                await Task.Yield();
+            }
+
+            if (isPaused || !IsOnlineBattle() || generation != onlineCommandGeneration) {
+                return;
+            }
+
+            for (var playerId = 0; playerId < PLAYER_COUNT; playerId++) {
+                if (!onlineCommandBuffer.HasSubmission(signal.BeatIndex, playerId)) {
+                    onlineCommandBuffer.TrySubmit(CreateMissCommand(playerId, signal));
+                }
+            }
+
+            for (var playerId = 0; playerId < PLAYER_COUNT; playerId++) {
+                if (onlineCommandBuffer.TryGetCommand(signal.BeatIndex, playerId, out var command)) {
+                    ExecuteOnlineCommand(playerId, command, signal);
+                }
+            }
+
+            onlineCommandBuffer.CloseBeat(signal.BeatIndex);
+        }
+
+        void SubmitLocalOnlineMissIfNeeded(IMusicPlayer.BeatSignal signal) {
+            var localPlayerId = appNetworkSetting.LocalOnlinePlayerId;
+            if (onlineCommandBuffer.HasSubmission(signal.BeatIndex, localPlayerId)) {
+                return;
+            }
+
+            var command = CreateMissCommand(localPlayerId, signal);
+            if (onlineCommandBuffer.TrySubmit(command)) {
+                battleOnlineSync.PublishBeatCommand(command);
+            }
+        }
+
+        OnlineBeatCommandSnapshot CreateMissCommand(int playerId, IMusicPlayer.BeatSignal signal) {
+            return new OnlineBeatCommandSnapshot(
+                0,
+                playerId,
+                signal.BeatIndex,
+                signal.BeatTime,
+                false,
+                BeatJudgeZone.Miss,
+                default,
+                beatPlayer[playerId].CurrentInputDirection);
+        }
+
+        void ExecuteOnlineCommand(int playerId, OnlineBeatCommandSnapshot command, IMusicPlayer.BeatSignal signal) {
+            var player = beatPlayer[playerId];
+            player.ClearSubmittedCommand(signal.BeatIndex);
+            if (!command.IsSuccess) {
+                player.ResetCombo();
+                player.IncrementMiss();
+                player.onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false, BeatJudgeZone.Miss, command.Button, command.Direction, player.ComboCount.CurrentValue));
+                return;
+            }
+
+            player.IncrementCombo();
+            if (command.Zone == BeatJudgeZone.Excellent) {
+                player.IncrementExcellent();
+            }
+            else if (command.Zone == BeatJudgeZone.Good) {
+                player.IncrementGood();
+            }
+
+            player.AddScore(CalculateScore(command.Zone));
+            player.onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, true, command.Zone, command.Button, command.Direction, player.ComboCount.CurrentValue));
+        }
+
+        bool IsOnlineBattle() {
+            return appNetworkSetting.IsOnline.CurrentValue && battleOnlineSync.IsReady;
+        }
+
+        void ResetOnlineCommandState() {
+            onlineCommandBuffer.Clear();
+            lastOnlineBeatIndex = -1;
+            onlineCommandGeneration += 1;
+        }
+
         int CalculateScore(BeatJudgeZone zone) {
             var multiplier = zone == BeatJudgeZone.Excellent
                 ? Mathf.Max(0f, audioSetting.ExcellentScoreMultiplier.CurrentValue)
@@ -152,6 +304,7 @@ namespace Alice {
 
         public void ResetBattleState() {
             lastCommandPlaybackTime = -1f;
+            ResetOnlineCommandState();
             for (var playerId = 0; playerId < beatPlayer.Length; playerId++) {
                 beatPlayer[playerId].ResetBattleState();
             }
@@ -159,6 +312,7 @@ namespace Alice {
 
         public void ResetRoundState() {
             lastCommandPlaybackTime = -1f;
+            ResetOnlineCommandState();
             for (var i = 0; i < beatPlayer.Length; i++) {
                 beatPlayer[i].ResetForLoop();
             }
@@ -286,6 +440,12 @@ namespace Alice {
                 direction = command.Direction;
                 
                 return true;
+            }
+
+            public void ClearSubmittedCommand(int beatIndex) {
+                pendingCommands.Remove(beatIndex);
+                attemptedCommands.Remove(beatIndex);
+                UnlockInputIfBeatMatched(beatIndex);
             }
 
             public void ResetForLoop() {

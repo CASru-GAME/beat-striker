@@ -36,6 +36,7 @@ namespace Alice {
             builder.RegisterInstance(resultScene);
             builder.Register<ResultScene>(Lifetime.Singleton);
             builder.Register<IBattleOnlineSync, BattleOnlineSync>(Lifetime.Singleton);
+            builder.Register<BeatOnlineCommandBuffer>(Lifetime.Singleton);
             builder.Register<BattleFlow>(Lifetime.Singleton);
             builder.Register<IBeatjudge, BeatJudge>(Lifetime.Singleton);
             builder.Register<IMusicPlayer, MusicPlayer>(Lifetime.Singleton);
