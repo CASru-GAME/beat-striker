@@ -40,7 +40,7 @@ namespace Alice {
         float lastCommandPlaybackTime = -1f;
         int lastOnlineBeatIndex = -1;
         bool isOnlineBeatDrainRunning;
-        bool isWaitingForRemoteOnlineBeat;
+        bool isMusicPausedForRemoteOnlineBeat;
         bool isPaused;
 
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting,
@@ -72,7 +72,7 @@ namespace Alice {
                 }));
 
                 var subscription = gamePad.OnButtonDown.Subscribe(button => {
-                    if (isPaused || isWaitingForRemoteOnlineBeat) {
+                    if (isPaused || isMusicPausedForRemoteOnlineBeat) {
                         return;
                     }
 
@@ -249,7 +249,7 @@ namespace Alice {
                 && !onlineCommandBuffer.HasSubmission(signal.BeatIndex, ResolveRemoteOnlinePlayerId())) {
                 Debug.Log(
                     $"{LOG_PREFIX} Waiting online beat. beat={signal.BeatIndex}, localPlayer={ResolveLocalOnlinePlayerId()}, isHost={battleOnlineSync.IsSessionHost}");
-                if (!await PauseMusicUntilRemoteBeatCommandArrivesAsync(signal)) {
+                if (!await WaitForRemoteBeatCommandAsync(signal)) {
                     return;
                 }
             }
@@ -467,31 +467,43 @@ namespace Alice {
                 command.Zone, command.Button, command.Direction, player.ComboCount.CurrentValue));
         }
 
-        async Task<bool> PauseMusicUntilRemoteBeatCommandArrivesAsync(IMusicPlayer.BeatSignal signal) {
+        async Task<bool> WaitForRemoteBeatCommandAsync(IMusicPlayer.BeatSignal signal) {
             var remotePlayerId = ResolveRemoteOnlinePlayerId();
             if (onlineCommandBuffer.HasSubmission(signal.BeatIndex, remotePlayerId)) {
                 return true;
             }
 
-            isWaitingForRemoteOnlineBeat = true;
-            musicPlayer.Pause();
-            while (!isPaused
-                   && IsOnlineBattle()
-                   && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
-                await Task.Yield();
+            var controlsMusic = battleOnlineSync.IsSessionHost;
+            if (controlsMusic) {
+                isMusicPausedForRemoteOnlineBeat = true;
+                musicPlayer.Pause();
             }
 
-            isWaitingForRemoteOnlineBeat = false;
-            if (isPaused || !IsOnlineBattle()) {
-                return false;
-            }
+            try {
+                while (!isPaused
+                       && IsOnlineBattle()
+                       && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                    await Task.Yield();
+                }
 
-            if (onlineCommandBuffer.TryGetCommand(signal.BeatIndex, remotePlayerId, out var remoteCommand)) {
-                musicPlayer.SyncPlaybackTime(EstimateRemotePlaybackTime(remoteCommand));
-            }
+                if (isPaused || !IsOnlineBattle()) {
+                    return false;
+                }
 
-            musicPlayer.Resume();
-            return true;
+                if (onlineCommandBuffer.TryGetCommand(signal.BeatIndex, remotePlayerId, out var remoteCommand)) {
+                    musicPlayer.SyncPlaybackTime(EstimateRemotePlaybackTime(remoteCommand));
+                }
+
+                return true;
+            }
+            finally {
+                if (controlsMusic) {
+                    if (!isPaused && IsOnlineBattle()) {
+                        musicPlayer.Resume();
+                    }
+                    isMusicPausedForRemoteOnlineBeat = false;
+                }
+            }
         }
 
         float EstimateRemotePlaybackTime(OnlineBeatCommandSnapshot remoteCommand) {
@@ -515,7 +527,7 @@ namespace Alice {
             onlineCommandBuffer.Clear();
             pendingOnlineBeatSignals.Clear();
             activePreCommandSnapshotPublishBeats.Clear();
-            isWaitingForRemoteOnlineBeat = false;
+            isMusicPausedForRemoteOnlineBeat = false;
             battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(int.MaxValue);
             lastOnlineBeatIndex = -1;
             for (var i = 0; i < lastReceivedOnlineBeatIndexByPlayer.Length; i++) {
@@ -528,7 +540,7 @@ namespace Alice {
             onlineCommandBuffer.ClearBeforeBeat(preserveFromBeatIndex);
             pendingOnlineBeatSignals.Clear();
             activePreCommandSnapshotPublishBeats.Clear();
-            isWaitingForRemoteOnlineBeat = false;
+            isMusicPausedForRemoteOnlineBeat = false;
             battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(preserveFromBeatIndex);
             lastOnlineBeatIndex = preserveFromBeatIndex - 1;
             for (var i = 0; i < lastReceivedOnlineBeatIndexByPlayer.Length; i++) {
