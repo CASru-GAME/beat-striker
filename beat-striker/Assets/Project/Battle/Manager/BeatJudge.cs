@@ -456,7 +456,7 @@ namespace Alice {
         int ResolveRoundResumePreserveBeatIndex() {
             var beatTimeline = musicPlayer.CurrentBeatTimeline;
             if (beatTimeline.Length == 0) {
-                return int.MaxValue;
+                return 0;
             }
 
             var preserveFromTime = musicPlayer.CurrentPlaybackTime - Mathf.Max(0f, audioSetting.GoodWindow.CurrentValue);
@@ -466,7 +466,7 @@ namespace Alice {
                 }
             }
 
-            return int.MaxValue;
+            return beatTimeline.Length;
         }
 
         int CalculateScore(BeatJudgeZone zone) {
