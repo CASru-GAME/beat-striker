@@ -39,6 +39,8 @@ namespace Alice {
 
     public record OnlineRoundStartSnapshot(ulong Sequence, int Round, float StartNetworkTime);
 
+    public record OnlineBeatSyncResumeSnapshot(ulong Sequence, int BeatIndex, float ResumeNetworkTime);
+
     public interface IBattleOnlineSync {
         bool IsSessionHost { get; }
         bool IsReady { get; }
@@ -60,10 +62,12 @@ namespace Alice {
         void PublishBeatCommand(OnlineBeatCommandSnapshot snapshot);
         void RequestRoundStartReady(int round);
         void PublishRoundStartSchedule(int round, float startNetworkTime);
+        void PublishBeatSyncResume(int beatIndex, float resumeNetworkTime);
         Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round);
         Task<BattleOutcomeSnapshot> WaitForOutcomeAsync(BattleOutcomeKind kind, int finishedRound);
         Task WaitForRoundStartReadyAsync(int round);
         Task<OnlineRoundStartSnapshot> WaitForRoundStartScheduleAsync(int round);
+        Task<OnlineBeatSyncResumeSnapshot> WaitForBeatSyncResumeAsync(int beatIndex);
     }
 
     public class BattleOnlineSync : IBattleOnlineSync, INetworkRunnerCallbacks, IDisposable {
@@ -77,12 +81,14 @@ namespace Alice {
         static readonly ReliableKey BeatCommandKey = ReliableKey.FromInts(0x4253, 2, 7);
         static readonly ReliableKey RoundStartReadyKey = ReliableKey.FromInts(0x4253, 2, 8);
         static readonly ReliableKey RoundStartScheduleKey = ReliableKey.FromInts(0x4253, 2, 9);
+        static readonly ReliableKey BeatSyncResumeKey = ReliableKey.FromInts(0x4253, 2, 10);
 
         readonly INetworkRunnerProvider runnerProvider;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly ReactiveProperty<BattleFlowPhaseSnapshot> latestPhase = new(new BattleFlowPhaseSnapshot(0, BattleFlowState.NotStarted, 0));
         readonly ReactiveProperty<BattleOutcomeSnapshot> latestOutcome = new(new BattleOutcomeSnapshot(0, 0, 0, -1, -1, false, -1, false, Array.Empty<int>(), Array.Empty<int>()));
         readonly ReactiveProperty<OnlineRoundStartSnapshot> latestRoundStart = new(new OnlineRoundStartSnapshot(0, 0, 0));
+        readonly ReactiveProperty<OnlineBeatSyncResumeSnapshot> latestBeatSyncResume = new(new OnlineBeatSyncResumeSnapshot(0, -1, 0));
         readonly Subject<OnlineBeatCommandSnapshot> beatCommandReceivedSubject = new();
         readonly Subject<Unit> pauseRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
@@ -94,6 +100,7 @@ namespace Alice {
         ulong outcomeSequence;
         ulong beatCommandSequence;
         ulong roundStartSequence;
+        ulong beatSyncResumeSequence;
         int latestRoundStartReadyRound;
         bool callbacksRegistered;
         bool disconnected;
@@ -220,6 +227,23 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Published round start schedule. sequence={snapshot.Sequence}, round={round}, start={startNetworkTime:0.000}");
         }
 
+        public void PublishBeatSyncResume(int beatIndex, float resumeNetworkTime) {
+            if (!IsSessionHost) {
+                return;
+            }
+
+            beatSyncResumeSequence += 1;
+            var snapshot = new OnlineBeatSyncResumeSnapshot(beatSyncResumeSequence, beatIndex, resumeNetworkTime);
+            latestBeatSyncResume.Value = snapshot;
+            var payload = new BeatSyncResumePayload {
+                sequence = (long)snapshot.Sequence,
+                beatIndex = snapshot.BeatIndex,
+                resumeNetworkTime = snapshot.ResumeNetworkTime,
+            };
+            Broadcast(BeatSyncResumeKey, payload);
+            Debug.Log($"{LOG_PREFIX} Published beat sync resume. sequence={snapshot.Sequence}, beat={beatIndex}, resume={resumeNetworkTime:0.000}");
+        }
+
         public async Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round) {
             if (!IsReady || IsSessionHost) {
                 return;
@@ -271,6 +295,19 @@ namespace Alice {
             }
 
             throw new InvalidOperationException("Online battle sync disconnected while waiting for round start schedule.");
+        }
+
+        public async Task<OnlineBeatSyncResumeSnapshot> WaitForBeatSyncResumeAsync(int beatIndex) {
+            while (!disconnected) {
+                var snapshot = latestBeatSyncResume.CurrentValue;
+                if (snapshot.Sequence > 0 && snapshot.BeatIndex == beatIndex) {
+                    return snapshot;
+                }
+
+                await Task.Yield();
+            }
+
+            throw new InvalidOperationException("Online battle sync disconnected while waiting for beat sync resume.");
         }
 
         bool TryRegisterCallbacks() {
@@ -432,6 +469,19 @@ namespace Alice {
                 return;
             }
 
+            if (key == BeatSyncResumeKey && !runner.IsServer) {
+                var payload = JsonUtility.FromJson<BeatSyncResumePayload>(Decode(data));
+                var snapshot = new OnlineBeatSyncResumeSnapshot(
+                    (ulong)payload.sequence,
+                    payload.beatIndex,
+                    payload.resumeNetworkTime);
+                if (snapshot.Sequence > latestBeatSyncResume.CurrentValue.Sequence) {
+                    latestBeatSyncResume.Value = snapshot;
+                    Debug.Log($"{LOG_PREFIX} Received beat sync resume. sequence={snapshot.Sequence}, beat={snapshot.BeatIndex}, resume={snapshot.ResumeNetworkTime:0.000}");
+                }
+                return;
+            }
+
             if (!runner.IsServer) {
                 return;
             }
@@ -491,6 +541,7 @@ namespace Alice {
             latestPhase.Dispose();
             latestOutcome.Dispose();
             latestRoundStart.Dispose();
+            latestBeatSyncResume.Dispose();
             beatCommandReceivedSubject.Dispose();
             pauseRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();
@@ -573,6 +624,13 @@ namespace Alice {
             public long sequence;
             public int round;
             public float startNetworkTime;
+        }
+
+        [Serializable]
+        class BeatSyncResumePayload {
+            public long sequence;
+            public int beatIndex;
+            public float resumeNetworkTime;
         }
     }
 }

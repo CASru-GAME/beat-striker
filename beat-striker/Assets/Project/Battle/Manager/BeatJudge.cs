@@ -31,8 +31,9 @@ namespace Alice {
 
     public class BeatJudge : IBeatjudge, IDisposable {
         const int PLAYER_COUNT = 2;
-        const float ONLINE_BEAT_DEADLINE_SECONDS = 0.1f;
+        const float ONLINE_BEAT_RESUME_LEAD_SECONDS = 0.15f;
 
+        readonly IMusicPlayer musicPlayer;
         readonly IAudioSetting audioSetting;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly IBattleOnlineSync battleOnlineSync;
@@ -45,6 +46,7 @@ namespace Alice {
         bool isPaused;
 
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync, BeatOnlineCommandBuffer onlineCommandBuffer) {
+            this.musicPlayer = musicPlayer;
             this.audioSetting = audioSetting;
             this.appNetworkSetting = appNetworkSetting;
             this.battleOnlineSync = battleOnlineSync;
@@ -203,13 +205,39 @@ namespace Alice {
             var generation = onlineCommandGeneration;
 
             SubmitLocalOnlineMissIfNeeded(signal);
-            var deadline = Time.realtimeSinceStartup + ONLINE_BEAT_DEADLINE_SECONDS;
+            musicPlayer.Pause();
+
+            OnlineBeatSyncResumeSnapshot resumeSnapshot;
+            if (battleOnlineSync.IsSessionHost) {
+                while (!isPaused
+                    && IsOnlineBattle()
+                    && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                    await Task.Yield();
+                }
+
+                if (isPaused || !IsOnlineBattle() || generation != onlineCommandGeneration) {
+                    return;
+                }
+
+                var resumeNetworkTime = battleOnlineSync.NetworkTime + ONLINE_BEAT_RESUME_LEAD_SECONDS;
+                battleOnlineSync.PublishBeatSyncResume(signal.BeatIndex, resumeNetworkTime);
+                resumeSnapshot = new OnlineBeatSyncResumeSnapshot(0, signal.BeatIndex, resumeNetworkTime);
+            }
+            else {
+                resumeSnapshot = await battleOnlineSync.WaitForBeatSyncResumeAsync(signal.BeatIndex);
+            }
+
+            if (isPaused || !IsOnlineBattle() || generation != onlineCommandGeneration) {
+                return;
+            }
+
             while (!isPaused
                 && IsOnlineBattle()
-                && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)
-                && Time.realtimeSinceStartup < deadline) {
+                && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
                 await Task.Yield();
             }
+
+            await WaitForNetworkTimeAsync(resumeSnapshot.ResumeNetworkTime);
 
             if (isPaused || !IsOnlineBattle() || generation != onlineCommandGeneration) {
                 return;
@@ -228,6 +256,7 @@ namespace Alice {
             }
 
             onlineCommandBuffer.CloseBeat(signal.BeatIndex);
+            musicPlayer.Resume();
         }
 
         void SubmitLocalOnlineMissIfNeeded(IMusicPlayer.BeatSignal signal) {
@@ -278,6 +307,12 @@ namespace Alice {
 
         bool IsOnlineBattle() {
             return appNetworkSetting.IsOnline.CurrentValue && battleOnlineSync.IsReady;
+        }
+
+        async Task WaitForNetworkTimeAsync(float networkTime) {
+            while (!isPaused && IsOnlineBattle() && battleOnlineSync.NetworkTime < networkTime) {
+                await Task.Yield();
+            }
         }
 
         void ResetOnlineCommandState() {
