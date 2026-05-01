@@ -41,6 +41,8 @@ nullチェック嫌いだから、nullがそうそう代入されなそうなフ
 
 - ストライカーの前方向はローカルでは+z軸方向、ワールドではキャラの向きによるけど +xか-xが前ってことに注意すること。
 
-- 効果音の再生は、AudioSource のインスタンスを使わずに、基本的に AudioSource.PlayClipAtPoint を使うこと。SEの SoundVolume も基本的に音源で調節するから、スクリプトやインスタンスで調整する必要は無い。
+- 効果音の再生は、AudioSource のインスタンスを使わずに、基本的に audioClip.PlayAtApp を使うこと。SEの SoundVolume も基本的に音源で調節するから、スクリプトやインスタンスで調整する必要は無い。
+
+- WebGL でも動くように、WaitForSeconds のようなものは使わないこと。
 
 - このmdを読んだら、文頭に Yes, your highness! と言ってください。

@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 # General Instructions
 
 インスペクタで指摘可能なフィールドに関して、基本nullが入ることがない前提でnullチェックを入れないこと。
