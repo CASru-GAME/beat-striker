@@ -31,6 +31,7 @@ namespace Alice {
     }
 
     public class BeatJudge : IBeatjudge, IDisposable {
+        const string LOG_PREFIX = "[BeatJudge]";
         const int PLAYER_COUNT = 2;
         const float ONLINE_BEAT_RESUME_LEAD_SECONDS = 0.15f;
 
@@ -185,6 +186,7 @@ namespace Alice {
                 return;
             }
 
+            Debug.Log($"{LOG_PREFIX} Applied remote online command. player={command.PlayerId}, beat={command.BeatIndex}, success={command.IsSuccess}, ready={onlineCommandBuffer.IsReady(command.BeatIndex, PLAYER_COUNT)}");
             var player = beatPlayer[command.PlayerId];
             if (command.IsSuccess) {
                 player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
@@ -210,6 +212,7 @@ namespace Alice {
             }
 
             if (!onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                Debug.Log($"{LOG_PREFIX} Waiting online beat. beat={signal.BeatIndex}, localPlayer={ResolveLocalOnlinePlayerId()}, isHost={battleOnlineSync.IsSessionHost}");
                 await WaitForOnlineBeatReadyAsync(signal);
                 if (isPaused || !IsOnlineBattle()) {
                     return;
@@ -229,6 +232,7 @@ namespace Alice {
             }
 
             onlineCommandBuffer.CloseBeat(signal.BeatIndex);
+            Debug.Log($"{LOG_PREFIX} Completed online beat. beat={signal.BeatIndex}");
         }
 
         async Task WaitForOnlineBeatReadyAsync(IMusicPlayer.BeatSignal signal) {
@@ -249,9 +253,11 @@ namespace Alice {
                 var hostPlaybackTime = musicPlayer.CurrentPlaybackTime;
                 battleOnlineSync.PublishBeatSyncResume(signal.BeatIndex, resumeNetworkTime, hostPlaybackTime);
                 resumeSnapshot = new OnlineBeatSyncResumeSnapshot(0, signal.BeatIndex, resumeNetworkTime, hostPlaybackTime);
+                Debug.Log($"{LOG_PREFIX} Host online beat ready. beat={signal.BeatIndex}, resume={resumeNetworkTime:0.000}, playback={hostPlaybackTime:0.000}");
             }
             else {
                 resumeSnapshot = await battleOnlineSync.WaitForBeatSyncResumeAsync(signal.BeatIndex);
+                Debug.Log($"{LOG_PREFIX} Client received online beat resume. beat={signal.BeatIndex}, resume={resumeSnapshot.ResumeNetworkTime:0.000}, playback={resumeSnapshot.HostPlaybackTime:0.000}");
             }
 
             while (!isPaused
@@ -264,6 +270,7 @@ namespace Alice {
                 return;
             }
 
+            Debug.Log($"{LOG_PREFIX} Online beat wait released. beat={signal.BeatIndex}");
             SyncPlaybackTime(resumeSnapshot.HostPlaybackTime);
             while (!isPaused && IsOnlineBattle() && battleOnlineSync.NetworkTime < resumeSnapshot.ResumeNetworkTime) {
                 await Task.Yield();
@@ -282,6 +289,7 @@ namespace Alice {
 
             var command = CreateMissCommand(localPlayerId, signal);
             if (onlineCommandBuffer.TrySubmit(command)) {
+                Debug.Log($"{LOG_PREFIX} Submitted local online miss. player={localPlayerId}, beat={signal.BeatIndex}, ready={onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)}");
                 battleOnlineSync.PublishBeatCommand(command);
             }
         }
