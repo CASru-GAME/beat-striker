@@ -32,7 +32,6 @@ namespace Alice {
         int PlayerId,
         int BeatIndex,
         float Time,
-        float SentNetworkTime,
         bool IsSuccess,
         BeatJudgeZone Zone,
         GamePadButton Button,
@@ -437,7 +436,6 @@ namespace Alice {
                 playerId = snapshot.PlayerId,
                 beatIndex = snapshot.BeatIndex,
                 time = snapshot.Time,
-                sentNetworkTime = snapshot.SentNetworkTime,
                 isSuccess = snapshot.IsSuccess,
                 zone = (int)snapshot.Zone,
                 button = (int)snapshot.Button,
@@ -532,7 +530,6 @@ namespace Alice {
                     payload.playerId,
                     payload.beatIndex,
                     payload.time,
-                    payload.sentNetworkTime,
                     payload.isSuccess,
                     (BeatJudgeZone)payload.zone,
                     (GamePadButton)payload.button,
@@ -728,7 +725,6 @@ namespace Alice {
             public int playerId;
             public int beatIndex;
             public float time;
-            public float sentNetworkTime;
             public bool isSuccess;
             public int zone;
             public int button;
