@@ -203,7 +203,9 @@ namespace Alice {
                 view.StartButtonAnimation.SetOnlineWaitingPopupVisible(true);
                 isOnlineMatchmakingInProgress = true;
                 try {
+                    Debug.Log($"{LOG_PREFIX} Online match start. stage={battleSelectSetting.SelectedStage.CurrentValue}, musicId={battleSelectSetting.SelectedMusicId.CurrentValue}");
                     await MatchOnlineAsync();
+                    Debug.Log($"{LOG_PREFIX} Online match completed.");
                 }
                 catch (OperationCanceledException) {
                     Debug.Log($"{LOG_PREFIX} Online match canceled by player");
@@ -219,6 +221,7 @@ namespace Alice {
                 finally {
                     isOnlineMatchmakingInProgress = false;
                     view.StartButtonAnimation.SetOnlineWaitingPopupVisible(false);
+                    Debug.Log($"{LOG_PREFIX} Online match cleanup. popupHidden=true");
                 }
             }
 
