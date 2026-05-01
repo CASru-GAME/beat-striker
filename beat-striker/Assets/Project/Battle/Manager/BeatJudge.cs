@@ -31,6 +31,7 @@ namespace Alice {
         readonly IBattleOnlineSync battleOnlineSync;
         readonly BeatOnlineCommandBuffer onlineCommandBuffer;
         readonly IStrikerRegistry strikerRegistry;
+        readonly IMusicPlayer musicPlayer;
         readonly List<IDisposable> subscriptions = new();
         readonly Queue<IMusicPlayer.BeatSignal> pendingOnlineBeatSignals = new();
         readonly HashSet<int> activePreCommandSnapshotPublishBeats = new();
@@ -48,6 +49,7 @@ namespace Alice {
             this.battleOnlineSync = battleOnlineSync;
             this.onlineCommandBuffer = onlineCommandBuffer;
             this.strikerRegistry = strikerRegistry;
+            this.musicPlayer = musicPlayer;
 
 
             for (int i = 0; i < beatPlayer.Length; i++) {
@@ -105,10 +107,8 @@ namespace Alice {
                         return;
                     }
 
-                    var isGood = isTimingSuccess && player.TrySavePendingCommand(result.BeatIndex, result.Zone, button,
+                    var isGood = player.TrySavePendingCommand(result.BeatIndex, result.Zone, button,
                         player.CurrentInputDirection);
-                    if (isTimingSuccess && !isGood) {
-                    }
 
                     if (isGood) {
                         player.LockInputUntilBeat(result.BeatIndex);
@@ -443,6 +443,32 @@ namespace Alice {
             lastOnlineBeatIndex = -1;
         }
 
+        void ResetOnlineCommandStateForRoundResume() {
+            var preserveFromBeatIndex = ResolveRoundResumePreserveBeatIndex();
+            onlineCommandBuffer.ClearBeforeBeat(preserveFromBeatIndex);
+            pendingOnlineBeatSignals.Clear();
+            activePreCommandSnapshotPublishBeats.Clear();
+            battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(preserveFromBeatIndex);
+            lastOnlineBeatIndex = preserveFromBeatIndex - 1;
+            Debug.Log($"{LOG_PREFIX} Reset online command state for round resume. preserveFromBeat={preserveFromBeatIndex}");
+        }
+
+        int ResolveRoundResumePreserveBeatIndex() {
+            var beatTimeline = musicPlayer.CurrentBeatTimeline;
+            if (beatTimeline.Length == 0) {
+                return int.MaxValue;
+            }
+
+            var preserveFromTime = musicPlayer.CurrentPlaybackTime - Mathf.Max(0f, audioSetting.GoodWindow.CurrentValue);
+            for (var i = 0; i < beatTimeline.Length; i++) {
+                if (beatTimeline[i] >= preserveFromTime) {
+                    return i;
+                }
+            }
+
+            return int.MaxValue;
+        }
+
         int CalculateScore(BeatJudgeZone zone) {
             var multiplier = zone == BeatJudgeZone.Excellent
                 ? Mathf.Max(0f, audioSetting.ExcellentScoreMultiplier.CurrentValue)
@@ -471,7 +497,11 @@ namespace Alice {
 
         public void ResetRoundState() {
             lastCommandPlaybackTime = -1f;
-            ResetOnlineCommandState();
+            if (IsOnlineBattle()) {
+                ResetOnlineCommandStateForRoundResume();
+            } else {
+                ResetOnlineCommandState();
+            }
             for (var i = 0; i < beatPlayer.Length; i++) {
                 beatPlayer[i].ResetForLoop();
             }

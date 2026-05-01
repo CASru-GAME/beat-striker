@@ -48,6 +48,21 @@ namespace Alice {
             commandsByBeat.Remove(beatIndex);
         }
 
+        public void ClearBeforeBeat(int beatIndex) {
+            var removeBeatIndexes = new List<int>();
+            foreach (var pair in commandsByBeat) {
+                if (pair.Key < beatIndex) {
+                    removeBeatIndexes.Add(pair.Key);
+                }
+            }
+
+            foreach (var removeBeatIndex in removeBeatIndexes) {
+                commandsByBeat.Remove(removeBeatIndex);
+            }
+
+            closedBeatIndexes.RemoveWhere(closedBeatIndex => closedBeatIndex < beatIndex);
+        }
+
         public void Clear() {
             commandsByBeat.Clear();
             closedBeatIndexes.Clear();
