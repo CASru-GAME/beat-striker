@@ -68,6 +68,7 @@ namespace Alice {
         readonly IBattlePresenter battlePresenter;
         readonly List<DeployedStriker> deployedStrikers = new();
         readonly List<IDisposable> roundSubscriptions = new();
+        readonly HashSet<int> pendingPauseBeatIndexes = new();
         bool isRoundPaused;
         readonly Dictionary<int, float> opponentEmaScales = new();
         int lastSelectedOpponentIndex = -1;
@@ -329,6 +330,7 @@ namespace Alice {
         public void ConnectRoundInputs() {
             DisconnectRoundInputs();
             isRoundPaused = false;
+            pendingPauseBeatIndexes.Clear();
 
             foreach (var deployed in deployedStrikers) {
                 var playerId = deployed.PlayerId;
@@ -377,18 +379,15 @@ namespace Alice {
                     }));
                 }
 
-                roundSubscriptions.Add(gamePad.OnButtonDown.Subscribe(button => {
-                    if (button != GamePadButton.Start) {
-                        return;
-                    }
-
-                    RequestSpecial(instance);
-                }));
-
                 var beatPlayer = beatJudge.GetBeatPlayer(playerId);
 
                 roundSubscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
                     if (!beatResult.IsSuccess) {
+                        return;
+                    }
+
+                    if (beatResult.Button == GamePadButton.Select) {
+                        pendingPauseBeatIndexes.Add(beatResult.BeatIndex);
                         return;
                     }
 
@@ -409,6 +408,9 @@ namespace Alice {
                     instance.AddSpecialPoint(specialPointGain);
 
                     switch (beatResult.Button) {
+                        case GamePadButton.Start:
+                            RequestSpecial(instance);
+                            break;
                         case GamePadButton.East:
                             instance.Attack();
                             break;
@@ -424,6 +426,14 @@ namespace Alice {
                             instance.Guard();
                             break;
                     }
+                }));
+
+                roundSubscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
+                    if (!pendingPauseBeatIndexes.Remove(signal.BeatIndex)) {
+                        return;
+                    }
+
+                    battlePresenter.RequestPauseMenu();
                 }));
 
                 roundSubscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(beatResult => {
@@ -452,6 +462,7 @@ namespace Alice {
                 subscription.Dispose();
             }
             roundSubscriptions.Clear();
+            pendingPauseBeatIndexes.Clear();
         }
 
         public void PauseRound() {

@@ -19,6 +19,7 @@ namespace Alice {
         Task PlayBattleFinishFadeInAsync();
         void PlayInpact(StrikerImpact command);
         void RequestAttention(int playerId, AttentionRequest request);
+        void RequestPauseMenu();
         Observable<Unit> OnPauseMenuRequested { get; }
         Observable<Unit> OnSuspendRequested { get; }
         Observable<Unit> OnResumeRequested { get; }
@@ -226,6 +227,10 @@ namespace Alice {
             _ = HideAttentionTextBeforeLooseAsync(sequence, request.DurationSeconds);
         }
 
+        public void RequestPauseMenu() {
+            pauseMenuRequestedSubject.OnNext(Unit.Default);
+        }
+
         public void OpenSuspendMenu() {
             suspendMenuPresenter.Show();
         }
@@ -280,18 +285,6 @@ namespace Alice {
         void SubscribePauseMenuInput() {
             pauseMenuInputSubscriptions.Dispose();
             pauseMenuInputSubscriptions = new CompositeDisposable();
-
-            for (int playerId = 0; playerId < MAX_SKIP_INPUT_PLAYER_SLOTS; playerId++) {
-                SubscribePauseMenuRequestForPlayer(playerId, pauseMenuInputSubscriptions);
-            }
-        }
-
-        void SubscribePauseMenuRequestForPlayer(int playerId, CompositeDisposable subscriptions) {
-            var playerGamePad = gamePadRegistry.Get(playerId);
-            playerGamePad.OnButtonDown
-                .Where(button => button == GamePadButton.Select)
-                .Subscribe(_ => pauseMenuRequestedSubject.OnNext(Unit.Default))
-                .AddTo(subscriptions);
         }
 
         void SubscribeSuspendMenuEvents() {
