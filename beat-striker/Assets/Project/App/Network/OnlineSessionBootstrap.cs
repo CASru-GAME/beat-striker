@@ -65,7 +65,8 @@ namespace Alice {
             matchCompletion = new TaskCompletionSource<OnlineMatchResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             EnsureRunner();
-            var projectConfig = NetworkProjectConfig.Global.Copy();
+            var projectConfig = NetworkProjectConfig.Deserialize(
+                NetworkProjectConfig.Serialize(NetworkProjectConfig.Global));
             var simulation = projectConfig.Simulation;
             simulation.Topology = Topologies.ClientServer;
             projectConfig.Simulation = simulation;
