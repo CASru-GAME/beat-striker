@@ -37,6 +37,7 @@ namespace Alice {
 
     public interface IOnlineSessionBootstrap {
         Task<OnlineMatchResult> MatchAsync(OnlineMatchRequest request);
+        void CancelMatchmaking();
     }
 
     public interface INetworkRunnerProvider {
@@ -55,6 +56,7 @@ namespace Alice {
         TaskCompletionSource<OnlineMatchResult> matchCompletion;
         OnlineMatchRequest localRequest;
         bool resultPublished;
+        bool cancellationRequested;
 
         public OnlineSessionBootstrap(IAppNetworkSetting networkSetting) {
             this.networkSetting = networkSetting;
@@ -73,16 +75,18 @@ namespace Alice {
             localRequest = request;
             requestsByPlayer.Clear();
             resultPublished = false;
+            cancellationRequested = false;
             matchCompletion = new TaskCompletionSource<OnlineMatchResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             EnsureRunner();
+            var activeRunner = runner;
             var projectConfig = NetworkProjectConfig.Deserialize(
                 NetworkProjectConfig.Serialize(NetworkProjectConfig.Global));
             var simulation = projectConfig.Simulation;
             simulation.Topology = Topologies.ClientServer;
             projectConfig.Simulation = simulation;
 
-            var startResult = await runner.StartGame(new StartGameArgs {
+            var startResult = await activeRunner.StartGame(new StartGameArgs {
                 GameMode = GameMode.AutoHostOrClient,
                 SessionName = networkSetting.SessionName,
                 PlayerCount = 2,
@@ -90,18 +94,48 @@ namespace Alice {
             });
 
             if (!startResult.Ok) {
+                if (startResult.ShutdownReason == ShutdownReason.OperationCanceled) {
+                    var canceledException = new OperationCanceledException("Online matchmaking canceled by player.");
+                    matchCompletion.TrySetException(canceledException);
+                    ReleaseRunner();
+                    throw canceledException;
+                }
+
                 var exception = new InvalidOperationException($"Fusion StartGame failed. reason={startResult.ShutdownReason}, message={startResult.ErrorMessage}");
                 matchCompletion.TrySetException(exception);
+                ReleaseRunner();
                 throw exception;
             }
 
-            requestsByPlayer[runner.LocalPlayer] = localRequest;
-            if (!runner.IsServer) {
-                runner.SendReliableDataToServer(RequestKey, SerializeRequest(localRequest));
+            if (activeRunner == null || !activeRunner.IsRunning) {
+                var exception = new OperationCanceledException("Online matchmaking canceled before runner became ready.");
+                matchCompletion.TrySetException(exception);
+                ReleaseRunner(activeRunner);
+                throw exception;
+            }
+
+            requestsByPlayer[activeRunner.LocalPlayer] = localRequest;
+            if (!activeRunner.IsServer) {
+                activeRunner.SendReliableDataToServer(RequestKey, SerializeRequest(localRequest));
             }
 
             TryPublishHostResult();
             return await WaitForMatchAsync();
+        }
+
+        public void CancelMatchmaking() {
+            if (matchCompletion == null || matchCompletion.Task.IsCompleted) {
+                return;
+            }
+
+            cancellationRequested = true;
+            matchCompletion.TrySetException(new OperationCanceledException("Online matchmaking canceled by player."));
+            if (runner != null && runner.IsRunning) {
+                runner.Shutdown();
+                return;
+            }
+
+            ReleaseRunner();
         }
 
         void EnsureRunner() {
@@ -109,10 +143,31 @@ namespace Alice {
                 return;
             }
 
+            ReleaseRunner();
             var runnerObject = new GameObject("OnlineSessionRunner");
             UnityEngine.Object.DontDestroyOnLoad(runnerObject);
             runner = runnerObject.AddComponent<NetworkRunner>();
             runner.AddCallbacks(this);
+        }
+
+        void ReleaseRunner() {
+            ReleaseRunner(runner);
+        }
+
+        void ReleaseRunner(NetworkRunner targetRunner) {
+            if (targetRunner == null) {
+                return;
+            }
+
+            if (ReferenceEquals(runner, targetRunner)) {
+                runner = null;
+            }
+
+            targetRunner.RemoveCallbacks(this);
+            var runnerObject = targetRunner.gameObject;
+            if (runnerObject != null) {
+                UnityEngine.Object.Destroy(runnerObject);
+            }
         }
 
         async Task<OnlineMatchResult> WaitForMatchAsync() {
@@ -207,10 +262,18 @@ namespace Alice {
         }
 
         public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) {
+            if (!ReferenceEquals(runner, this.runner)) {
+                return;
+            }
+
             TryPublishHostResult();
         }
 
         public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) {
+            if (!ReferenceEquals(runner, this.runner)) {
+                return;
+            }
+
             if (key == RequestKey && runner.IsServer) {
                 requestsByPlayer[player] = DeserializeRequest(data);
                 TryPublishHostResult();
@@ -223,17 +286,22 @@ namespace Alice {
         }
 
         public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) {
-            if (shutdownReason != ShutdownReason.Ok) {
+            if (shutdownReason != ShutdownReason.Ok && !cancellationRequested) {
                 matchCompletion?.TrySetException(new InvalidOperationException($"Fusion shutdown. reason={shutdownReason}"));
             }
+
+            ReleaseRunner(runner);
+            cancellationRequested = false;
         }
 
         public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) {
             matchCompletion?.TrySetException(new InvalidOperationException($"Fusion disconnected. reason={reason}"));
+            ReleaseRunner(runner);
         }
 
         public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) {
             matchCompletion?.TrySetException(new InvalidOperationException($"Fusion connection failed. reason={reason}"));
+            ReleaseRunner(runner);
         }
 
         public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }

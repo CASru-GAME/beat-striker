@@ -34,6 +34,14 @@ public class StartButtonAnimation : MonoBehaviour {
     [Range(0f, 1f)]
     public float blackImageClickSoundVolume = 1f; // 黒い画像クリック時の音量
 
+    [Header("Online Waiting Popup")]
+    [SerializeField] RectTransform onlineWaitingPopupRoot;
+    [SerializeField] CanvasGroup onlineWaitingPopupCanvasGroup;
+    [SerializeField] AudioClip onlineWaitingShownSound;
+    [SerializeField] float onlineWaitingFadeDuration = 0.2f;
+    [SerializeField] float onlineWaitingScaleDuration = 0.2f;
+    [SerializeField] Vector3 onlineWaitingHiddenScale = Vector3.zero;
+
     private Vector2 aboveStartPos;
     private Vector2 aboveEndPos;
     private Vector2 underStartPos;
@@ -44,6 +52,8 @@ public class StartButtonAnimation : MonoBehaviour {
     private bool blackImageSoundEnabled = false; // 黒い画像の音が有効かどうか
     private float lastClickTime = -999f; // 最後にクリックした時間
     private float clickDebounceTime = 0.2f; // クリック間隔（秒）
+    private bool isOnlineWaitingPopupVisible;
+    private int waitingPopupAnimationToken;
     private readonly List<Botan> runtimeBlackImageButtons = new();
     private readonly Subject<Unit> startRequested = new();
 
@@ -63,6 +73,10 @@ public class StartButtonAnimation : MonoBehaviour {
         if (backgroundBotan != null) {
             backgroundBotan.gameObject.SetActive(false); // 最初は無効
         }
+
+        onlineWaitingPopupRoot.gameObject.SetActive(false);
+        onlineWaitingPopupRoot.localScale = onlineWaitingHiddenScale;
+        onlineWaitingPopupCanvasGroup.alpha = 0f;
 
         // 初期位置を保存
         aboveEndPos = whiteLineAbove.anchoredPosition;
@@ -128,6 +142,42 @@ public class StartButtonAnimation : MonoBehaviour {
                 HideLines();
             }
         }
+    }
+
+    public void SetOnlineWaitingPopupVisible(bool visible) {
+        if (isOnlineWaitingPopupVisible == visible) {
+            return;
+        }
+
+        isOnlineWaitingPopupVisible = visible;
+        var token = ++waitingPopupAnimationToken;
+        LeanTween.cancel(onlineWaitingPopupRoot.gameObject);
+        LeanTween.cancel(onlineWaitingPopupCanvasGroup.gameObject);
+
+        if (visible) {
+            onlineWaitingPopupRoot.gameObject.SetActive(true);
+            onlineWaitingPopupRoot.localScale = onlineWaitingHiddenScale;
+            onlineWaitingPopupCanvasGroup.alpha = 0f;
+            onlineWaitingShownSound.PlayAtApp();
+
+            LeanTween.scale(onlineWaitingPopupRoot, Vector3.one, onlineWaitingScaleDuration)
+                .setEase(LeanTweenType.easeOutBack);
+            LeanTween.alphaCanvas(onlineWaitingPopupCanvasGroup, 1f, onlineWaitingFadeDuration)
+                .setEase(LeanTweenType.easeInOutQuad);
+            return;
+        }
+
+        LeanTween.scale(onlineWaitingPopupRoot, onlineWaitingHiddenScale, onlineWaitingScaleDuration)
+            .setEase(LeanTweenType.easeInBack);
+        LeanTween.alphaCanvas(onlineWaitingPopupCanvasGroup, 0f, onlineWaitingFadeDuration)
+            .setEase(LeanTweenType.easeInOutQuad)
+            .setOnComplete(() => {
+                if (token != waitingPopupAnimationToken || isOnlineWaitingPopupVisible) {
+                    return;
+                }
+
+                onlineWaitingPopupRoot.gameObject.SetActive(false);
+            });
     }
     
     void AnimateLines() {

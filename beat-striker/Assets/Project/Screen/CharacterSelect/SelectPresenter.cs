@@ -32,6 +32,7 @@ namespace Alice {
         bool disposed;
         bool startTransitionInputEnabled;
         bool eastStartConfirmationArmed;
+        bool isOnlineMatchmakingInProgress;
         bool wasReadyToStart;
         SceneInputState inputState = SceneInputState.Selecting;
 
@@ -139,13 +140,23 @@ namespace Alice {
         }
 
         void OnButtonDown(GamePadButton button) {
-            if (IsTransitioning()) {
+            if (button == GamePadButton.South) {
+                if (isOnlineMatchmakingInProgress) {
+                    Debug.Log($"{LOG_PREFIX} OnButtonDown South received. cancel online matchmaking requested");
+                    onlineSessionBootstrap.CancelMatchmaking();
+                    return;
+                }
+
+                if (IsTransitioning()) {
+                    return;
+                }
+
+                Debug.Log($"{LOG_PREFIX} OnButtonDown South received. undo selection requested");
+                UndoSelection();
                 return;
             }
 
-            if (button == GamePadButton.South) {
-                Debug.Log($"{LOG_PREFIX} OnButtonDown South received. undo selection requested");
-                UndoSelection();
+            if (IsTransitioning()) {
                 return;
             }
 
@@ -156,7 +167,7 @@ namespace Alice {
                 return;
             }
 
-            if (!IsOnline() && eastStartConfirmationArmed) {
+            if (eastStartConfirmationArmed) {
                 eastStartConfirmationArmed = false;
                 Debug.Log($"{LOG_PREFIX} OnButtonDown East consumed as first confirm press");
                 return;
@@ -189,14 +200,25 @@ namespace Alice {
             inputState = SceneInputState.TransitioningToScreen;
 
             if (IsOnline()) {
+                view.StartButtonAnimation.SetOnlineWaitingPopupVisible(true);
+                isOnlineMatchmakingInProgress = true;
                 try {
                     await MatchOnlineAsync();
+                }
+                catch (OperationCanceledException) {
+                    Debug.Log($"{LOG_PREFIX} Online match canceled by player");
+                    inputState = SceneInputState.ReadyToStart;
+                    return;
                 }
                 catch (Exception exception) {
                     Debug.LogError($"{LOG_PREFIX} Online match failed: {exception.Message}");
                     Debug.LogException(exception);
                     inputState = SceneInputState.ReadyToStart;
                     return;
+                }
+                finally {
+                    isOnlineMatchmakingInProgress = false;
+                    view.StartButtonAnimation.SetOnlineWaitingPopupVisible(false);
                 }
             }
 

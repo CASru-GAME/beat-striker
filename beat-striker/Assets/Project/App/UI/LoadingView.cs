@@ -6,6 +6,7 @@ namespace Alice {
     public class LoadingView : MonoBehaviour {
         [Header("Root")]
         [SerializeField] CanvasGroup canvasGroup;
+        [SerializeField] GameObject onlineIndicatorRoot;
 
         [Header("Characters")]
         [SerializeField] TextMeshProUGUI[] loadingCharacters;
@@ -30,6 +31,10 @@ namespace Alice {
 
         public bool IsVisible => isVisible;
         public float ShowDelaySeconds => showDelaySeconds;
+
+        public void SetOnlineIndicatorVisible(bool visible) {
+            onlineIndicatorRoot.SetActive(visible);
+        }
 
         void Awake() {
             EnsureInitialized();

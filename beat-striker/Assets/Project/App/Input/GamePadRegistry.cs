@@ -25,6 +25,7 @@ namespace Alice {
         IPlayerGamePad RequestRegisterLowPriority(int playerId, IGamePad gamePad);
         void RequestUnregister(int playerId);
         void RequestUnregister(IGamePad gamePad);
+        void RestoreOfflinePrimaryLayout(int localOnlinePlayerId);
         IPlayerGamePad Get(int playerId);
         void HandlePlayerSlotClick(int sourcePlayerId, int targetPlayerId);
         void RotateFaceButtonWiringClockwise();
@@ -99,6 +100,20 @@ namespace Alice {
             }
         }
 
+        public void RestoreOfflinePrimaryLayout(int localOnlinePlayerId) {
+            var clampedLocalPlayerId = Mathf.Clamp(localOnlinePlayerId, 0, 1);
+            if (clampedLocalPlayerId != 0) {
+                var localSlot = EnsurePlayerSlot(clampedLocalPlayerId);
+                if (localSlot.HasPrimaryGamePad && localSlot.Current.TryGetValue(out var localGamePad)) {
+                    EnsurePlayerSlot(0).SetPrimary(localGamePad.ToOption());
+                    localSlot.ClearPrimary();
+                }
+            }
+
+            RemoveRemotePrimaryIfExists(0);
+            RemoveRemotePrimaryIfExists(1);
+        }
+
         public IPlayerGamePad Get(int playerId) {
             return EnsurePlayerSlot(playerId);
         }
@@ -146,6 +161,19 @@ namespace Alice {
             var mappedButton = MapFaceButton(button);
             onAnyButtonDown.OnNext(new PlayerGamePadButtonEvent(playerId, mappedButton));
             player.EmitButtonDown(mappedButton);
+        }
+
+        void RemoveRemotePrimaryIfExists(int playerId) {
+            var slot = EnsurePlayerSlot(playerId);
+            if (!slot.HasPrimaryGamePad) {
+                return;
+            }
+
+            if (!slot.Current.TryGetValue(out var gamePad) || gamePad is not RemoteGamePad) {
+                return;
+            }
+
+            RequestUnregister(gamePad);
         }
 
         void HandleButtonUp(int playerId, GamePadButton button) {

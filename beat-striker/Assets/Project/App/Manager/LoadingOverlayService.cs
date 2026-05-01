@@ -1,4 +1,5 @@
 using System;
+using R3;
 using UnityEngine;
 
 namespace Alice {
@@ -6,18 +7,26 @@ namespace Alice {
         IDisposable Begin();
     }
 
-    public class LoadingOverlayService : ILoadingOverlayService {
+    public class LoadingOverlayService : ILoadingOverlayService, IDisposable {
         const float ContinuousHideGraceSeconds = 0.15f;
 
         readonly LoadingView loadingView;
+        readonly IDisposable onlineStateSubscription;
         int activeRequestCount;
         int stateVersion;
         bool isVisible;
         float accumulatedActiveSeconds;
         float activeSegmentStartTime = -1f;
 
-        public LoadingOverlayService(LoadingView loadingView) {
+        public LoadingOverlayService(LoadingView loadingView, IAppNetworkSetting appNetworkSetting) {
             this.loadingView = loadingView;
+            loadingView.SetOnlineIndicatorVisible(appNetworkSetting.IsOnline.CurrentValue);
+            onlineStateSubscription = appNetworkSetting.IsOnline
+                .Subscribe(isOnline => loadingView.SetOnlineIndicatorVisible(isOnline));
+        }
+
+        public void Dispose() {
+            onlineStateSubscription.Dispose();
         }
 
         public IDisposable Begin() {
