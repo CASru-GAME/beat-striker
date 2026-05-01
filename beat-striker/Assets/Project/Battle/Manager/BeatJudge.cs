@@ -88,6 +88,18 @@ namespace Alice {
 
                     var result = musicPlayer.JudgeTiming(time);
                     var isTimingSuccess = result.Zone != BeatJudgeZone.Miss && time < result.BeatTime;
+                    if (!isTimingSuccess) {
+                        player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
+                            result.BeatIndex,
+                            time,
+                            false,
+                            BeatJudgeZone.Miss,
+                            button,
+                            player.CurrentInputDirection,
+                            player.ComboCount.CurrentValue));
+                        return;
+                    }
+
                     var isGood = isTimingSuccess && player.TrySavePendingCommand(result.BeatIndex, result.Zone, button,
                         player.CurrentInputDirection);
                     if (isTimingSuccess && !isGood) {
@@ -284,14 +296,16 @@ namespace Alice {
             var command = CreateMissCommand(localPlayerId, signal);
             if (onlineCommandBuffer.TrySubmit(command)) {
                 var player = beatPlayer[localPlayerId];
-                player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
-                    command.BeatIndex,
-                    command.Time,
-                    false,
-                    BeatJudgeZone.Miss,
-                    command.Button,
-                    command.Direction,
-                    player.ComboCount.CurrentValue));
+                if (player.HasAttempt(signal.BeatIndex)) {
+                    player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
+                        command.BeatIndex,
+                        command.Time,
+                        false,
+                        BeatJudgeZone.Miss,
+                        command.Button,
+                        command.Direction,
+                        player.ComboCount.CurrentValue));
+                }
                 Debug.Log(
                     $"{LOG_PREFIX} Submitted local online miss. player={localPlayerId}, beat={signal.BeatIndex}, ready={onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)}");
                 battleOnlineSync.PublishBeatCommand(command);
