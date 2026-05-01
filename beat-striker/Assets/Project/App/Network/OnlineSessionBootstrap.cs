@@ -65,10 +65,16 @@ namespace Alice {
             matchCompletion = new TaskCompletionSource<OnlineMatchResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             EnsureRunner();
+            var projectConfig = NetworkProjectConfig.Global.Copy();
+            var simulation = projectConfig.Simulation;
+            simulation.Topology = Topologies.ClientServer;
+            projectConfig.Simulation = simulation;
+
             var startResult = await runner.StartGame(new StartGameArgs {
                 GameMode = GameMode.AutoHostOrClient,
                 SessionName = networkSetting.SessionName,
                 PlayerCount = 2,
+                Config = projectConfig,
             });
 
             if (!startResult.Ok) {

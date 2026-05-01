@@ -15,6 +15,7 @@
     "AllowClientServerModesInWebGL": false,
     "ClientsRecordFrameAndPacketTimingTraces": false,
     "Simulation": {
+        "Topology": 0,
         "InputDataWordCount": 0,
         "ReplicationFeatures": 1,
         "InputTransferMode": 0,
