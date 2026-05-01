@@ -1,10 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using R3;
 using UnityEngine;
 
 namespace Alice {
-    public class SelectPresenter : System.IDisposable {
+    public class SelectPresenter : IDisposable {
         const string LOG_PREFIX = "[SelectPresenter]";
 
         enum SceneInputState {
@@ -20,6 +21,8 @@ namespace Alice {
         readonly IBattleSelectSetting battleSelectSetting;
         readonly IPlayerSelectSetting playerSelectSetting;
         readonly IAppStrikerRegistry appStrikerRegistry;
+        readonly IAppNetworkSetting appNetworkSetting;
+        readonly IOnlineSessionBootstrap onlineSessionBootstrap;
         readonly CompositeDisposable subscriptions = new();
         readonly CharacterSelectSelectionPolicy selectionPolicy = new();
         readonly List<CharacterSelectSlotState> slotStates = new();
@@ -38,13 +41,17 @@ namespace Alice {
             IGamePadRegistry gamePadRegistry,
             IBattleSelectSetting battleSelectSetting,
             IPlayerSelectSetting playerSelectSetting,
-            IAppStrikerRegistry appStrikerRegistry) {
+            IAppStrikerRegistry appStrikerRegistry,
+            IAppNetworkSetting appNetworkSetting,
+            IOnlineSessionBootstrap onlineSessionBootstrap) {
             this.view = view;
             this.transitionService = transitionService;
             this.gamePadRegistry = gamePadRegistry;
             this.battleSelectSetting = battleSelectSetting;
             this.playerSelectSetting = playerSelectSetting;
             this.appStrikerRegistry = appStrikerRegistry;
+            this.appNetworkSetting = appNetworkSetting;
+            this.onlineSessionBootstrap = onlineSessionBootstrap;
 
             _ = InitializeAfterFrameAsync();
         }
@@ -80,7 +87,9 @@ namespace Alice {
                 .AddTo(subscriptions);
 
             view.StartButtonAnimation.OnStartRequested
-                .Subscribe(_ => RequestPlaySceneTransition(true))
+                .Subscribe(unit => {
+                    _ = RequestPlaySceneTransitionAsync(true);
+                })
                 .AddTo(subscriptions);
 
             playerSelectSetting.SelectedStrikers
@@ -116,10 +125,12 @@ namespace Alice {
                 return;
             }
 
-            var targetSlot = selectionPolicy.ResolveSelectionTargetSlot(
-                request.PlayerId,
-                GetJoinedPlayerCount(),
-                playerSelectSetting.TryGetStriker(0, out _));
+            var targetSlot = IsOnline()
+                ? 0
+                : selectionPolicy.ResolveSelectionTargetSlot(
+                    request.PlayerId,
+                    GetJoinedPlayerCount(),
+                    playerSelectSetting.TryGetStriker(0, out _));
 
             playerSelectSetting.SelectStriker(targetSlot, request.Striker);
             selectionPolicy.RecordSelection(targetSlot);
@@ -145,16 +156,16 @@ namespace Alice {
                 return;
             }
 
-            if (eastStartConfirmationArmed) {
+            if (!IsOnline() && eastStartConfirmationArmed) {
                 eastStartConfirmationArmed = false;
                 Debug.Log($"{LOG_PREFIX} OnButtonDown East consumed as first confirm press");
                 return;
             }
 
-            RequestPlaySceneTransition(false);
+            _ = RequestPlaySceneTransitionAsync(false);
         }
 
-        void RequestPlaySceneTransition(bool requireStartButtonReady) {
+        async Awaitable RequestPlaySceneTransitionAsync(bool requireStartButtonReady) {
             if (IsTransitioning()) {
                 Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition ignored because transitioning. inputState={inputState}");
                 return;
@@ -175,6 +186,20 @@ namespace Alice {
                 return;
             }
 
+            inputState = SceneInputState.TransitioningToScreen;
+
+            if (IsOnline()) {
+                try {
+                    await MatchOnlineAsync();
+                }
+                catch (Exception exception) {
+                    Debug.LogError($"{LOG_PREFIX} Online match failed: {exception.Message}");
+                    Debug.LogException(exception);
+                    inputState = SceneInputState.ReadyToStart;
+                    return;
+                }
+            }
+
             var nextScene = ResolvePlayScene();
             Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition requesting start transition. nextScene={nextScene}");
             var result = transitionService.RequestStartTransition(nextScene);
@@ -184,9 +209,11 @@ namespace Alice {
                 return;
             }
 
-            inputState = SceneInputState.TransitioningToScreen;
             Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition accepted. inputState={inputState}, nextScene={nextScene}");
-            view.ClickSound.PlayAtApp(Camera.main.transform.position);
+            var mainCamera = Camera.main;
+            if (mainCamera != null) {
+                view.ClickSound.PlayAtApp(mainCamera.transform.position);
+            }
         }
 
         AppScene ResolvePlayScene() {
@@ -227,8 +254,29 @@ namespace Alice {
             RefreshState();
         }
 
+        async Task MatchOnlineAsync() {
+            if (!playerSelectSetting.TryGetStriker(0, out var localStriker)) {
+                throw new InvalidOperationException("Online battle requires player 0 striker selection.");
+            }
+
+            var request = new OnlineMatchRequest(
+                localStriker,
+                battleSelectSetting.SelectedStage.CurrentValue,
+                battleSelectSetting.SelectedMusicId.CurrentValue);
+            var result = await onlineSessionBootstrap.MatchAsync(request);
+
+            battleSelectSetting.SelectStage(result.Stage);
+            battleSelectSetting.SelectMusic(result.MusicId);
+            playerSelectSetting.ResetSelections();
+            playerSelectSetting.SelectStriker(0, result.LocalStriker);
+            playerSelectSetting.SelectStriker(1, result.OpponentStriker);
+            selectionPolicy.RecordSelection(0);
+            selectionPolicy.RecordSelection(1);
+            Debug.Log($"{LOG_PREFIX} Online match applied. stage={result.Stage}, musicId={result.MusicId}, local={result.LocalStriker}, opponent={result.OpponentStriker}");
+        }
+
         bool TryResolveUndoSlotFallback(out int slot) {
-            var requiredSlots = selectionPolicy.GetRequiredSlotCount(GetJoinedPlayerCount());
+            var requiredSlots = GetRequiredSlotCount();
             for (var playerId = requiredSlots - 1; playerId >= 0; playerId--) {
                 if (playerSelectSetting.TryGetStriker(playerId, out _)) {
                     slot = playerId;
@@ -269,7 +317,7 @@ namespace Alice {
         }
 
         bool CanStartBattle() {
-            var requiredSlots = selectionPolicy.GetRequiredSlotCount(GetJoinedPlayerCount());
+            var requiredSlots = GetRequiredSlotCount();
             if (requiredSlots <= 0) {
                 return false;
             }
@@ -281,6 +329,16 @@ namespace Alice {
             }
 
             return true;
+        }
+
+        bool IsOnline() {
+            return appNetworkSetting.IsOnline.CurrentValue;
+        }
+
+        int GetRequiredSlotCount() {
+            return IsOnline()
+                ? 1
+                : selectionPolicy.GetRequiredSlotCount(GetJoinedPlayerCount());
         }
 
         int GetJoinedPlayerCount() {
@@ -314,7 +372,7 @@ namespace Alice {
         }
 
         void RefreshStatusView() {
-            var requiredSlots = selectionPolicy.GetRequiredSlotCount(GetJoinedPlayerCount());
+            var requiredSlots = GetRequiredSlotCount();
             slotStates.Clear();
 
             for (var i = 0; i < requiredSlots; i++) {

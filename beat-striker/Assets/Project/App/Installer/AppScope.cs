@@ -6,6 +6,7 @@ using VContainer.Unity;
 namespace Alice {
 	[RequireComponent(typeof(AIRegistry))]
 	[RequireComponent(typeof(AISetting))]
+	[RequireComponent(typeof(AppNetworkSetting))]
 	[DefaultExecutionOrder(-10000)]
 	public class AppScope : LifetimeScope {
 		const string LOG_PREFIX = "[AppScope]";
@@ -30,6 +31,7 @@ namespace Alice {
 		[SerializeField] AIRegistry aiRegistry;
 		[SerializeField] AISetting aiSetting;
 		[SerializeField] AppUISetting appUiSetting;
+		[SerializeField] AppNetworkSetting appNetworkSetting;
 		[SerializeField] VirtualTouchControllerCanvasView virtualTouchControllerCanvasView;
 		[SerializeField] LoadingView loadingView;
 
@@ -39,6 +41,7 @@ namespace Alice {
 			Debug.Log($"{LOG_PREFIX} Awake begin. scene={gameObject.scene.name}");
 			aiRegistry = GetComponent<AIRegistry>();
 			aiSetting = GetComponent<AISetting>();
+			appNetworkSetting = GetComponent<AppNetworkSetting>();
 			if (instance != null && instance != this) {
 				Debug.LogWarning($"{LOG_PREFIX} Duplicate AppScope detected. existing={instance.name}, current={name}. current instance will be destroyed");
 				Destroy(gameObject);
@@ -55,6 +58,7 @@ namespace Alice {
 			playerSelectSetting.InitializeDefaults();
 			aiSetting.InitializeDefaults();
 			appUiSetting.InitializeDefaults();
+			appNetworkSetting.InitializeDefaults();
 			base.Awake();
 			Debug.Log($"{LOG_PREFIX} Awake completed. scene={gameObject.scene.name}");
 		}
@@ -89,11 +93,13 @@ namespace Alice {
 			builder.RegisterInstance<IAIRegistry>(aiRegistry);
 			builder.RegisterInstance<IAISetting>(aiSetting);
 			builder.RegisterInstance<IAppUISetting>(appUiSetting);
+			builder.RegisterInstance<IAppNetworkSetting>(appNetworkSetting);
 			builder.RegisterInstance(virtualTouchControllerCanvasView);
 			builder.RegisterComponent(loadingView);
 			builder.Register<ILoadingOverlayService, LoadingOverlayService>(Lifetime.Singleton);
 			builder.Register<ISceneLoader, SceneLoader>(Lifetime.Singleton);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
+			builder.Register<IOnlineSessionBootstrap, OnlineSessionBootstrap>(Lifetime.Singleton);
 
 			builder.RegisterInstance(playerInputManager);
 			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
@@ -119,10 +125,12 @@ namespace Alice {
 				_ = container.Resolve<IAIRegistry>();
 				_ = container.Resolve<IAISetting>();
 				_ = container.Resolve<IAppUISetting>();
+				_ = container.Resolve<IAppNetworkSetting>();
 				_ = container.Resolve<VirtualTouchControllerCanvasView>();
 				_ = container.Resolve<ILoadingOverlayService>();
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
+				_ = container.Resolve<IOnlineSessionBootstrap>();
 				_ = container.Resolve<ICursorDeployer>();
 				Debug.Log($"{LOG_PREFIX} BuildCallback resolve completed");
 			});

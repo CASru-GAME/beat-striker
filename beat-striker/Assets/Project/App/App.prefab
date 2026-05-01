@@ -2524,8 +2524,9 @@ GameObject:
   - component: {fileID: 5619376666138620005}
   - component: {fileID: 9133904809460036572}
   - component: {fileID: 8179424678283996581}
-  - component: {fileID: 6595342875354204002}
   - component: {fileID: 8953530949465533837}
+  - component: {fileID: 7025038246402514433}
+  - component: {fileID: 6595342875354204002}
   - component: {fileID: 904021008660354504}
   - component: {fileID: 9201860890254514560}
   - component: {fileID: 906267494629859191}
@@ -2598,27 +2599,6 @@ MonoBehaviour:
     Striker: 1
   - PlayerId: 1
     Striker: 0
---- !u!114 &6595342875354204002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4430401366509071009}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d2bff9e7a72ec4ef39324d837761ecdb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.TutorialSetting
-  stage: 1
-  musicId: sento
-  playerSelections:
-  - playerId: 0
-    striker: 3
-  - playerId: 1
-    striker: 3
-  aiStrength: 0
-  isTutorialBattleRequested: 0
 --- !u!114 &8953530949465533837
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2700,6 +2680,42 @@ MonoBehaviour:
   emaSmoothing: 0.83
   emaFloorScale: 0.06
   buildPath: FighterAI.exe
+--- !u!114 &7025038246402514433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f2eae90c34145eb9a01c8de72288e01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.AppNetworkSetting
+  isOnline: 0
+  sessionName: beat-striker-minimal
+  matchTimeoutSeconds: 30
+--- !u!114 &6595342875354204002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2bff9e7a72ec4ef39324d837761ecdb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alice.TutorialSetting
+  stage: 1
+  musicId: sento
+  playerSelections:
+  - playerId: 0
+    striker: 3
+  - playerId: 1
+    striker: 3
+  aiStrength: 0
+  isTutorialBattleRequested: 0
 --- !u!114 &904021008660354504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3230,6 +3246,7 @@ MonoBehaviour:
   aiRegistry: {fileID: 904021008660354504}
   aiSetting: {fileID: 8953530949465533837}
   appUiSetting: {fileID: 4371772477456092809}
+  appNetworkSetting: {fileID: 7025038246402514433}
   virtualTouchControllerCanvasView: {fileID: 4467947455306159405}
   loadingView: {fileID: 8180704571308059706}
 --- !u!114 &6291877219211561707
