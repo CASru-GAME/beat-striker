@@ -57,6 +57,7 @@ namespace Alice {
         OnlineMatchRequest localRequest;
         bool resultPublished;
         bool cancellationRequested;
+        bool requestSentToServer;
 
         public OnlineSessionBootstrap(IAppNetworkSetting networkSetting) {
             this.networkSetting = networkSetting;
@@ -76,22 +77,28 @@ namespace Alice {
             requestsByPlayer.Clear();
             resultPublished = false;
             cancellationRequested = false;
+            requestSentToServer = false;
             matchCompletion = new TaskCompletionSource<OnlineMatchResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
+            Debug.Log($"{LOG_PREFIX} MatchAsync begin. sessionName={networkSetting.SessionName}, timeout={networkSetting.MatchTimeoutSeconds:0.#}s, localStriker={request.LocalStriker}, stage={request.CandidateStage}, musicId={request.CandidateMusicId}");
             EnsureRunner();
             var activeRunner = runner;
+            Debug.Log($"{LOG_PREFIX} MatchAsync runner ready. hasRunner={activeRunner != null}");
             var projectConfig = NetworkProjectConfig.Deserialize(
                 NetworkProjectConfig.Serialize(NetworkProjectConfig.Global));
             var simulation = projectConfig.Simulation;
             simulation.Topology = Topologies.ClientServer;
             projectConfig.Simulation = simulation;
 
+            Debug.Log($"{LOG_PREFIX} MatchAsync StartGame begin. mode=AutoHostOrClient, sessionName={networkSetting.SessionName}, playerCount=2");
             var startResult = await activeRunner.StartGame(new StartGameArgs {
                 GameMode = GameMode.AutoHostOrClient,
                 SessionName = networkSetting.SessionName,
                 PlayerCount = 2,
                 Config = projectConfig,
             });
+
+            Debug.Log($"{LOG_PREFIX} MatchAsync StartGame completed. ok={startResult.Ok}, shutdownReason={startResult.ShutdownReason}, message={startResult.ErrorMessage}");
 
             if (!startResult.Ok) {
                 if (startResult.ShutdownReason == ShutdownReason.OperationCanceled) {
@@ -114,8 +121,12 @@ namespace Alice {
                 throw exception;
             }
 
+            Debug.Log($"{LOG_PREFIX} MatchAsync runner running. isServer={activeRunner.IsServer}, localPlayer={activeRunner.LocalPlayer}");
+
             requestsByPlayer[activeRunner.LocalPlayer] = localRequest;
             if (!activeRunner.IsServer) {
+                requestSentToServer = true;
+                Debug.Log($"{LOG_PREFIX} MatchAsync sending request to server. localPlayer={activeRunner.LocalPlayer}");
                 activeRunner.SendReliableDataToServer(RequestKey, SerializeRequest(localRequest));
             }
 
@@ -131,10 +142,12 @@ namespace Alice {
             cancellationRequested = true;
             matchCompletion.TrySetException(new OperationCanceledException("Online matchmaking canceled by player."));
             if (runner != null && runner.IsRunning) {
+                Debug.Log($"{LOG_PREFIX} CancelMatchmaking shutting down runner. isServer={runner.IsServer}");
                 runner.Shutdown();
                 return;
             }
 
+            Debug.Log($"{LOG_PREFIX} CancelMatchmaking release runner without shutdown.");
             ReleaseRunner();
         }
 
@@ -148,6 +161,7 @@ namespace Alice {
             UnityEngine.Object.DontDestroyOnLoad(runnerObject);
             runner = runnerObject.AddComponent<NetworkRunner>();
             runner.AddCallbacks(this);
+            Debug.Log($"{LOG_PREFIX} EnsureRunner created new runner. instanceId={runner.GetInstanceID()}");
         }
 
         void ReleaseRunner() {
@@ -168,6 +182,7 @@ namespace Alice {
             if (runnerObject != null) {
                 UnityEngine.Object.Destroy(runnerObject);
             }
+            Debug.Log($"{LOG_PREFIX} ReleaseRunner completed. targetWasCurrent={ReferenceEquals(runner, targetRunner)}");
         }
 
         async Task<OnlineMatchResult> WaitForMatchAsync() {
@@ -176,23 +191,28 @@ namespace Alice {
             if (completedTask != matchCompletion.Task) {
                 var exception = new TimeoutException($"Online matchmaking timed out after {networkSetting.MatchTimeoutSeconds:0.#} seconds.");
                 matchCompletion.TrySetException(exception);
+                Debug.LogWarning($"{LOG_PREFIX} WaitForMatchAsync timeout. isServer={runner != null && runner.IsServer}, localPlayer={runner?.LocalPlayer}");
                 throw exception;
             }
 
+            Debug.Log($"{LOG_PREFIX} WaitForMatchAsync completed.");
             return await matchCompletion.Task;
         }
 
         void TryPublishHostResult() {
             if (resultPublished || runner == null || !runner.IsServer) {
+                Debug.Log($"{LOG_PREFIX} TryPublishHostResult skipped. published={resultPublished}, hasRunner={runner != null}, isServer={runner != null && runner.IsServer}");
                 return;
             }
 
             if (!TryGetOpponentPlayer(out var opponentPlayer)) {
+                Debug.Log($"{LOG_PREFIX} TryPublishHostResult waiting for opponent. localPlayer={runner.LocalPlayer}");
                 return;
             }
 
             if (!requestsByPlayer.TryGetValue(runner.LocalPlayer, out var hostRequest)
                 || !requestsByPlayer.TryGetValue(opponentPlayer, out var opponentRequest)) {
+                Debug.Log($"{LOG_PREFIX} TryPublishHostResult waiting for requests. hasHost={requestsByPlayer.ContainsKey(runner.LocalPlayer)}, hasOpponent={requestsByPlayer.ContainsKey(opponentPlayer)}");
                 return;
             }
 
@@ -266,6 +286,7 @@ namespace Alice {
                 return;
             }
 
+            Debug.Log($"{LOG_PREFIX} OnPlayerJoined. player={player}, isServer={runner.IsServer}, localPlayer={runner.LocalPlayer}");
             TryPublishHostResult();
         }
 
@@ -275,12 +296,14 @@ namespace Alice {
             }
 
             if (key == RequestKey && runner.IsServer) {
+                Debug.Log($"{LOG_PREFIX} OnReliableDataReceived RequestKey. fromPlayer={player}, isServer={runner.IsServer}");
                 requestsByPlayer[player] = DeserializeRequest(data);
                 TryPublishHostResult();
                 return;
             }
 
             if (key == ResultKey && !runner.IsServer) {
+                Debug.Log($"{LOG_PREFIX} OnReliableDataReceived ResultKey. fromPlayer={player}, isServer={runner.IsServer}");
                 matchCompletion?.TrySetResult(DeserializeResult(data));
             }
         }
@@ -290,17 +313,20 @@ namespace Alice {
                 matchCompletion?.TrySetException(new InvalidOperationException($"Fusion shutdown. reason={shutdownReason}"));
             }
 
+            Debug.Log($"{LOG_PREFIX} OnShutdown. reason={shutdownReason}, canceled={cancellationRequested}");
             ReleaseRunner(runner);
             cancellationRequested = false;
         }
 
         public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) {
             matchCompletion?.TrySetException(new InvalidOperationException($"Fusion disconnected. reason={reason}"));
+            Debug.LogWarning($"{LOG_PREFIX} OnDisconnectedFromServer. reason={reason}");
             ReleaseRunner(runner);
         }
 
         public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) {
             matchCompletion?.TrySetException(new InvalidOperationException($"Fusion connection failed. reason={reason}"));
+            Debug.LogWarning($"{LOG_PREFIX} OnConnectFailed. reason={reason}, remote={remoteAddress}");
             ReleaseRunner(runner);
         }
 
@@ -309,7 +335,18 @@ namespace Alice {
         public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
         public void OnInput(NetworkRunner runner, NetworkInput input) { }
         public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-        public void OnConnectedToServer(NetworkRunner runner) { }
+        public void OnConnectedToServer(NetworkRunner runner) {
+            if (!ReferenceEquals(runner, this.runner)) {
+                return;
+            }
+
+            Debug.Log($"{LOG_PREFIX} OnConnectedToServer. isServer={runner.IsServer}, localPlayer={runner.LocalPlayer}");
+            if (!runner.IsServer && !requestSentToServer && matchCompletion != null && !matchCompletion.Task.IsCompleted) {
+                requestSentToServer = true;
+                Debug.Log($"{LOG_PREFIX} OnConnectedToServer sending request to server.");
+                runner.SendReliableDataToServer(RequestKey, SerializeRequest(localRequest));
+            }
+        }
         public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
         public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
         public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
