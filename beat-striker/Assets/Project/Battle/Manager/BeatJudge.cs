@@ -40,6 +40,7 @@ namespace Alice {
         float lastCommandPlaybackTime = -1f;
         int lastOnlineBeatIndex = -1;
         bool isOnlineBeatDrainRunning;
+        bool isWaitingForRemoteOnlineBeat;
         bool isPaused;
 
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting,
@@ -71,7 +72,7 @@ namespace Alice {
                 }));
 
                 var subscription = gamePad.OnButtonDown.Subscribe(button => {
-                    if (isPaused) {
+                    if (isPaused || isWaitingForRemoteOnlineBeat) {
                         return;
                     }
 
@@ -190,6 +191,7 @@ namespace Alice {
                 playerId,
                 result.BeatIndex,
                 result.Time,
+                battleOnlineSync.NetworkTime,
                 result.IsSuccess,
                 result.Zone,
                 result.Button,
@@ -243,16 +245,11 @@ namespace Alice {
                 return;
             }
 
-            if (!onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+            if (!onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)
+                && !onlineCommandBuffer.HasSubmission(signal.BeatIndex, ResolveRemoteOnlinePlayerId())) {
                 Debug.Log(
                     $"{LOG_PREFIX} Waiting online beat. beat={signal.BeatIndex}, localPlayer={ResolveLocalOnlinePlayerId()}, isHost={battleOnlineSync.IsSessionHost}");
-                while (!isPaused
-                       && IsOnlineBattle()
-                       && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
-                    await Task.Yield();
-                }
-
-                if (isPaused || !IsOnlineBattle()) {
+                if (!await PauseMusicUntilRemoteBeatCommandArrivesAsync(signal)) {
                     return;
                 }
             }
@@ -400,6 +397,7 @@ namespace Alice {
                 playerId,
                 signal.BeatIndex,
                 signal.BeatTime,
+                battleOnlineSync.NetworkTime,
                 false,
                 BeatJudgeZone.Miss,
                 default,
@@ -416,6 +414,7 @@ namespace Alice {
                 playerId,
                 beatIndex,
                 beatTime,
+                battleOnlineSync.NetworkTime,
                 false,
                 BeatJudgeZone.Miss,
                 default,
@@ -468,6 +467,38 @@ namespace Alice {
                 command.Zone, command.Button, command.Direction, player.ComboCount.CurrentValue));
         }
 
+        async Task<bool> PauseMusicUntilRemoteBeatCommandArrivesAsync(IMusicPlayer.BeatSignal signal) {
+            var remotePlayerId = ResolveRemoteOnlinePlayerId();
+            if (onlineCommandBuffer.HasSubmission(signal.BeatIndex, remotePlayerId)) {
+                return true;
+            }
+
+            isWaitingForRemoteOnlineBeat = true;
+            musicPlayer.Pause();
+            while (!isPaused
+                   && IsOnlineBattle()
+                   && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                await Task.Yield();
+            }
+
+            isWaitingForRemoteOnlineBeat = false;
+            if (isPaused || !IsOnlineBattle()) {
+                return false;
+            }
+
+            if (onlineCommandBuffer.TryGetCommand(signal.BeatIndex, remotePlayerId, out var remoteCommand)) {
+                musicPlayer.SyncPlaybackTime(EstimateRemotePlaybackTime(remoteCommand));
+            }
+
+            musicPlayer.Resume();
+            return true;
+        }
+
+        float EstimateRemotePlaybackTime(OnlineBeatCommandSnapshot remoteCommand) {
+            var elapsedNetworkTime = Mathf.Max(0f, battleOnlineSync.NetworkTime - remoteCommand.SentNetworkTime);
+            return Mathf.Max(0f, remoteCommand.Time + elapsedNetworkTime);
+        }
+
         bool IsOnlineBattle() {
             return appNetworkSetting.IsOnline.CurrentValue && battleOnlineSync.IsReady;
         }
@@ -476,10 +507,15 @@ namespace Alice {
             return battleOnlineSync.IsSessionHost ? 0 : 1;
         }
 
+        int ResolveRemoteOnlinePlayerId() {
+            return ResolveLocalOnlinePlayerId() == 0 ? 1 : 0;
+        }
+
         void ResetOnlineCommandState() {
             onlineCommandBuffer.Clear();
             pendingOnlineBeatSignals.Clear();
             activePreCommandSnapshotPublishBeats.Clear();
+            isWaitingForRemoteOnlineBeat = false;
             battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(int.MaxValue);
             lastOnlineBeatIndex = -1;
             for (var i = 0; i < lastReceivedOnlineBeatIndexByPlayer.Length; i++) {
@@ -492,6 +528,7 @@ namespace Alice {
             onlineCommandBuffer.ClearBeforeBeat(preserveFromBeatIndex);
             pendingOnlineBeatSignals.Clear();
             activePreCommandSnapshotPublishBeats.Clear();
+            isWaitingForRemoteOnlineBeat = false;
             battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(preserveFromBeatIndex);
             lastOnlineBeatIndex = preserveFromBeatIndex - 1;
             for (var i = 0; i < lastReceivedOnlineBeatIndexByPlayer.Length; i++) {
