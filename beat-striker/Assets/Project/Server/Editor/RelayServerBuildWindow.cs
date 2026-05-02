@@ -19,6 +19,7 @@ namespace Alice.Editor {
         const string PrefTargetIndex = "Alice.RelayServerBuild.TargetIndex";
         const string PrefDedicatedServer = "Alice.RelayServerBuild.DedicatedServer";
         const string PrefMacDedicatedAttempt = "Alice.RelayServerBuild.MacDedicatedAttempt";
+        const string PrefWindowsDedicatedAttempt = "Alice.RelayServerBuild.WindowsDedicatedAttempt";
         const string PrefHighManagedStripping = "Alice.RelayServerBuild.HighManagedStripping";
 
         /// <summary>
@@ -44,6 +45,7 @@ namespace Alice.Editor {
         int relayTargetIndex;
         bool developmentBuild;
         bool dedicatedServerBuild = true;
+        bool windowsDedicatedServerAttempt = true;
         bool macDedicatedServerAttempt;
         bool relayHighManagedStripping = true;
 
@@ -73,6 +75,7 @@ namespace Alice.Editor {
             relayTargetIndex = EditorPrefs.GetInt(PrefTargetIndex, DefaultRelayTargetIndex());
             relayTargetIndex = Mathf.Clamp(relayTargetIndex, 0, RelayTargets.Length - 1);
             dedicatedServerBuild = EditorPrefs.GetInt(PrefDedicatedServer, 1) != 0;
+            windowsDedicatedServerAttempt = EditorPrefs.GetInt(PrefWindowsDedicatedAttempt, 1) != 0;
             macDedicatedServerAttempt = EditorPrefs.GetInt(PrefMacDedicatedAttempt, 0) != 0;
             relayHighManagedStripping = EditorPrefs.GetInt(PrefHighManagedStripping, 1) != 0;
         }
@@ -83,8 +86,8 @@ namespace Alice.Editor {
                 + "ビルド先 OS は下で選べます（Project の Build Settings を切り替える必要はありません）。\n"
                 + "「Dedicated Server」は Standalone の Server サブターゲット（ヘッドレス寄り・グラフィック資産の削減）。"
                 + "ビルド時に UNITY_SERVER が定義されます。\n"
-                + "※ macOS の Dedicated Server は Unity Hub の追加モジュールが無いとビルドできません。"
-                + "未チェックのままでは Player でビルドします。\n"
+                + "※ Windows / macOS は OS ごとの「Dedicated Server を使う」で Server サブターゲットに切り替えます。"
+                + "オフのときは Player でビルドします（Hub の Dedicated Server Build Support が無い環境向け）。\n"
                 + "含めるシーンは "
                 + RelayEmptyScenePath
                 + " のみ。シーン上の OnlineSessionRelayServer（Start On Awake）で起動するため、"
@@ -108,19 +111,36 @@ namespace Alice.Editor {
 
             var macOsSelected = relayTargetIndex >= 0 && relayTargetIndex < RelayTargets.Length
                 && RelayTargets[relayTargetIndex] == BuildTarget.StandaloneOSX;
-            using (new EditorGUI.DisabledScope(!macOsSelected || !dedicatedServerBuild)) {
-                macDedicatedServerAttempt = EditorGUILayout.Toggle(
-                    new GUIContent(
-                        "Mac: Dedicated Server を使う（Hub に Mac Dedicated Server モジュール必須）",
-                        "オフのときは macOS 向けは自動的に Player サブターゲットでビルドします。"),
-                    macDedicatedServerAttempt);
+            var windowsSelected = relayTargetIndex >= 0 && relayTargetIndex < RelayTargets.Length
+                && RelayTargets[relayTargetIndex] == BuildTarget.StandaloneWindows64;
+
+            if (windowsSelected) {
+                using (new EditorGUI.DisabledScope(!dedicatedServerBuild)) {
+                    windowsDedicatedServerAttempt = EditorGUILayout.Toggle(
+                        new GUIContent(
+                            "Windows: Dedicated Server を使う（Hub に Dedicated Server Build Support 必須）",
+                            "オフのときは Windows 向けは Player サブターゲットでビルドします。"),
+                        windowsDedicatedServerAttempt);
+                }
+
+                EditorPrefs.SetInt(PrefWindowsDedicatedAttempt, windowsDedicatedServerAttempt ? 1 : 0);
             }
 
-            if (macDedicatedServerAttempt) {
-                EditorPrefs.SetInt(PrefMacDedicatedAttempt, 1);
-            }
-            else {
-                EditorPrefs.DeleteKey(PrefMacDedicatedAttempt);
+            if (macOsSelected) {
+                using (new EditorGUI.DisabledScope(!dedicatedServerBuild)) {
+                    macDedicatedServerAttempt = EditorGUILayout.Toggle(
+                        new GUIContent(
+                            "Mac: Dedicated Server を使う（Hub に Mac Dedicated Server モジュール必須）",
+                            "オフのときは macOS 向けは自動的に Player サブターゲットでビルドします。"),
+                        macDedicatedServerAttempt);
+                }
+
+                if (macDedicatedServerAttempt) {
+                    EditorPrefs.SetInt(PrefMacDedicatedAttempt, 1);
+                }
+                else {
+                    EditorPrefs.DeleteKey(PrefMacDedicatedAttempt);
+                }
             }
 
             outputParentFolder = EditorGUILayout.TextField("出力親フォルダ", outputParentFolder);
@@ -169,7 +189,11 @@ namespace Alice.Editor {
                 options |= BuildOptions.Development;
             }
 
-            var subtarget = ResolveStandaloneSubtarget(target, dedicatedServerBuild, macDedicatedServerAttempt);
+            var subtarget = ResolveStandaloneSubtarget(
+                target,
+                dedicatedServerBuild,
+                windowsDedicatedServerAttempt,
+                macDedicatedServerAttempt);
 
             var previousSubtarget = EditorUserBuildSettings.standaloneBuildSubtarget;
             var previousAddressablesBuildWithPlayer =
@@ -220,8 +244,15 @@ namespace Alice.Editor {
         static StandaloneBuildSubtarget ResolveStandaloneSubtarget(
             BuildTarget target,
             bool dedicatedServerBuild,
+            bool windowsDedicatedServerAttempt,
             bool macDedicatedServerAttempt) {
             if (!dedicatedServerBuild) {
+                return StandaloneBuildSubtarget.Player;
+            }
+
+            if (target == BuildTarget.StandaloneWindows64 && !windowsDedicatedServerAttempt) {
+                Debug.Log(
+                    "[RelayServerBuild] Windows 向けは「Windows: Dedicated Server を使う」がオフのため Player サブターゲットでビルドします。");
                 return StandaloneBuildSubtarget.Player;
             }
 

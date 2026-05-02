@@ -105,7 +105,7 @@ namespace Alice {
             matchCompletion.TrySetException(new OperationCanceledException("Online matchmaking canceled by player."));
             if (runner != null && runner.IsRunning) {
                 Debug.Log($"{LOG_PREFIX} CancelMatchmaking shutting down runner. isServer={runner.IsServer}");
-                runner.Shutdown();
+                _ = runner.Shutdown();
                 return;
             }
 
@@ -151,9 +151,28 @@ namespace Alice {
             var timeout = Task.Delay(TimeSpan.FromSeconds(networkSetting.MatchTimeoutSeconds));
             var completedTask = await Task.WhenAny(matchCompletion.Task, timeout);
             if (completedTask != matchCompletion.Task) {
+                await Task.Yield();
+                if (matchCompletion.Task.Status == TaskStatus.RanToCompletion) {
+                    Debug.Log($"{LOG_PREFIX} WaitForMatchAsync completed despite timeout winning race (result arrived same frame).");
+                    return await matchCompletion.Task;
+                }
+
                 var exception = new TimeoutException($"Online matchmaking timed out after {networkSetting.MatchTimeoutSeconds:0.#} seconds.");
                 matchCompletion.TrySetException(exception);
+                if (matchCompletion.Task.IsCompletedSuccessfully) {
+                    Debug.Log($"{LOG_PREFIX} WaitForMatchAsync match result arrived during timeout handling; completing successfully.");
+                    return await matchCompletion.Task;
+                }
+
                 Debug.LogWarning($"{LOG_PREFIX} WaitForMatchAsync timeout. isServer={runner != null && runner.IsServer}, localPlayer={runner?.LocalPlayer}");
+                if (runner != null && runner.IsRunning) {
+                    Debug.Log($"{LOG_PREFIX} Matchmaking timeout; shutting down runner so the next MatchAsync can create a fresh NetworkRunner.");
+                    await runner.Shutdown();
+                }
+                else {
+                    ReleaseRunner();
+                }
+
                 throw exception;
             }
 
