@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using R3;
+using VContainer;
 
 namespace Alice {
     public class BattleTransitionPresenter : IDisposable {
@@ -9,6 +10,7 @@ namespace Alice {
         readonly IAppStrikerRegistry appStrikerRegistry;
         readonly CompositeDisposable subscriptions = new();
 
+        [Inject]
         public BattleTransitionPresenter(
             BattleTransitionView view,
             IPlayerSelectSetting playerSelectSetting,

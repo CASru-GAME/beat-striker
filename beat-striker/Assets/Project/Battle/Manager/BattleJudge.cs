@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using App;
+using VContainer;
 
 namespace Alice {
     public record PlayerRoundRank(PlayerId PlayerId, int Rank);
@@ -22,6 +23,7 @@ namespace Alice {
         readonly Dictionary<PlayerId, int> roundWins = new();
         readonly IBattleRuleSetting battleRuleSetting;
 
+        [Inject]
         public BattleJudge(IBattleRuleSetting battleRuleSetting) {
             this.battleRuleSetting = battleRuleSetting;
         }

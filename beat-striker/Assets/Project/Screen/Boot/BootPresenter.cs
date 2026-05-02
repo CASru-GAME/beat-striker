@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public class BootPresenter : IDisposable {
@@ -20,6 +21,7 @@ namespace Alice {
 
         BootInputState inputState = BootInputState.Entering;
 
+        [Inject]
         public BootPresenter(
             BootScene view,
             IAppUISetting appUISetting,

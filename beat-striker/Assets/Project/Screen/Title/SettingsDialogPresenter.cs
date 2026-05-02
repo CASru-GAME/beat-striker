@@ -1,5 +1,6 @@
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public class SettingsDialogPresenter : System.IDisposable {
@@ -9,6 +10,7 @@ namespace Alice {
         readonly IGamePadRegistry gamePadRegistry;
         readonly CompositeDisposable subscriptions = new();
 
+        [Inject]
         public SettingsDialogPresenter(
             SettingsDialog view,
             IAudioSetting audioSetting,

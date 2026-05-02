@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using App;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public interface IBattleDeployer {
@@ -67,6 +68,7 @@ namespace Alice {
         int lastSelectedOpponentIndex = -1;
         LearningCharacter lastSelectedOpponent;
 
+        [Inject]
         public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.battleSetting = battleSetting;
             this.battleSelectSetting = battleSelectSetting;

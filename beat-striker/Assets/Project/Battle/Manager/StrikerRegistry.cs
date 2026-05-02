@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using App;
 using R3;
+using VContainer;
 
 namespace Alice {
     public record StrikerRegistration(int PlayerId, IStrikerHub Hub);
@@ -25,6 +26,10 @@ namespace Alice {
 
         public Observable<StrikerRegistration> OnRegistered => registeredSubject;
         public Observable<StrikerUnregistration> OnUnregistered => unregisteredSubject;
+
+        [Inject]
+        public StrikerRegistry() {
+        }
 
         public Option<IStrikerHub> Get(int playerId) {
             if (strikerHubs.TryGetValue(playerId, out var hub)) {

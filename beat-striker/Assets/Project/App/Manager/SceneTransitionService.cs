@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using App;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using VContainer;
 
 namespace Alice {
 
@@ -38,6 +39,7 @@ namespace Alice {
             Loading,
         }
 
+        [Inject]
         public SceneTransitionService(
             ISceneLoader sceneLoader,
             IAppTransitionFactory transitionFactory,

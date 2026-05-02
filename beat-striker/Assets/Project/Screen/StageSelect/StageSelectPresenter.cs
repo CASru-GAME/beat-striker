@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public class StageselectPresenter : IDisposable {
@@ -20,6 +21,7 @@ namespace Alice {
         bool isPopupVisible;
         bool disposed;
 
+        [Inject]
         public StageselectPresenter(
             StageselectScene view,
             ISceneTransitionService transitionService,

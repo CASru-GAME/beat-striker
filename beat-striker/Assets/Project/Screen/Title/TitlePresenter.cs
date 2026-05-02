@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using R3;
 using UnityEngine;
+using VContainer;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -26,6 +27,7 @@ namespace Alice {
         bool quitRequested;
         TitleInputState inputState = TitleInputState.Ready;
 
+        [Inject]
         public TitlePresenter(
             TitleScene view,
             ISceneTransitionService sceneTransitionService,

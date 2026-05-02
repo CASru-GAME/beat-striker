@@ -1,6 +1,7 @@
 using System;
 using R3;
 using UnityEngine;
+using VContainer;
 using VContainer.Unity;
 
 namespace Alice {
@@ -14,6 +15,7 @@ namespace Alice {
         bool isRegistered;
         bool isTouchControllerEnabled;
 
+        [Inject]
         public VirtualTouchControllerPresenter(
             IAppUISetting appUISetting,
             IGamePadRegistry gamePadRegistry,

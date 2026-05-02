@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public interface IOnlineSessionBootstrap {
@@ -26,6 +27,7 @@ namespace Alice {
         bool cancellationRequested;
         bool requestSentToServer;
 
+        [Inject]
         public OnlineSessionBootstrap(IAppNetworkSetting networkSetting) {
             this.networkSetting = networkSetting;
         }

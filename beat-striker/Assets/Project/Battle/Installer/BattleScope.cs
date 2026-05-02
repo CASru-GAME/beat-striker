@@ -85,6 +85,7 @@ namespace Alice {
         sealed class BattleFlowStarter : IInitializable {
             readonly BattleFlow battleFlow;
 
+            [Inject]
             public BattleFlowStarter(BattleFlow battleFlow) {
                 this.battleFlow = battleFlow;
             }
@@ -101,6 +102,7 @@ namespace Alice {
 
             public IBattlePlayerPresenter[] Presenters { get; }
 
+            [Inject]
             public BattlePlayerPresenterCollection(BattlePlayerView[] battlePlayerViews, IStrikerRegistry strikerRegistry, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IBattlePresenter battlePresenter, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry) {
                 battlePlayerPresenters = new BattlePlayerPresenter[battlePlayerViews.Length];
                 var presenters = new IBattlePlayerPresenter[battlePlayerViews.Length];

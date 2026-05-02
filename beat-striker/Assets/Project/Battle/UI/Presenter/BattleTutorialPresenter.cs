@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using App;
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public interface IBattleTutorialSignalEmitter {
@@ -30,6 +31,7 @@ namespace Alice {
         public Observable<Unit> OnTutorialResumeRequested => tutorialResumeRequestedSubject;
         public Observable<Unit> OnTutorialEndBattleToTitleRequested => tutorialEndBattleToTitleRequestedSubject;
 
+        [Inject]
         public BattleTutorialPresenter(
             IBeatjudge beatJudge,
             IStrikerRegistry strikerRegistry,

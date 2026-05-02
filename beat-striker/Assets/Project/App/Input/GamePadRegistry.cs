@@ -6,6 +6,7 @@ using App;
 using R3;
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public record PlayerGamePadButtonEvent(int PlayerId, GamePadButton Button);
@@ -47,6 +48,10 @@ namespace Alice {
         int faceButtonRotationOffset;
 
         public Observable<PlayerGamePadButtonEvent> OnAnyButtonDown => onAnyButtonDown;
+
+        [Inject]
+        public GamePadRegistry() {
+        }
 
         public IPlayerGamePad RequestRegister(IGamePad gamePad) {
             for (int i = 0; i < registry.Count; i++) {

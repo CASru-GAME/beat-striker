@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using VContainer;
 
 namespace Alice {
     public enum AppScene {
@@ -22,6 +23,7 @@ namespace Alice {
         readonly IScreenRegistry appScreenRegistry;
         readonly ILoadingOverlayService loadingOverlayService;
 
+        [Inject]
         public SceneLoader(IScreenRegistry screenRegistry, ILoadingOverlayService loadingOverlayService) {
             appScreenRegistry = screenRegistry;
             this.loadingOverlayService = loadingOverlayService;

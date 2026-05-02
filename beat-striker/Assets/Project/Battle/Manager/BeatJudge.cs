@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using App;
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
 
@@ -42,6 +43,7 @@ namespace Alice {
         bool isOnlineBeatDrainRunning;
         bool isPaused;
 
+        [Inject]
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting,
             IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync,
             BeatOnlineCommandBuffer onlineCommandBuffer, IStrikerRegistry strikerRegistry) {

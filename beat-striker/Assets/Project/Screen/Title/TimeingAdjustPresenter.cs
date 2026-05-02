@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public class TimeingAdjustPresenter : IDisposable {
@@ -21,6 +22,7 @@ namespace Alice {
         bool isBgmStoppedForAdjust;
         double lastTapDspTime = -1;
 
+        [Inject]
         public TimeingAdjustPresenter(
             SettingsDialog settingsDialog,
             IAudioSetting audioSetting,

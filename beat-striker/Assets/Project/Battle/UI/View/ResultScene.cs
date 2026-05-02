@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using R3;
 using Alice;
 using App;
+using VContainer;
 
 public class ResultScene : System.IDisposable
 {
@@ -27,6 +28,7 @@ public class ResultScene : System.IDisposable
     int lastPhaseAdvanceFrame;
     bool canAdvancePhase;
 
+    [Inject]
     public ResultScene(ResultSceneView resultSceneView, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IGamePadRegistry gamePadRegistry)
     {
         this.resultSceneView = resultSceneView;

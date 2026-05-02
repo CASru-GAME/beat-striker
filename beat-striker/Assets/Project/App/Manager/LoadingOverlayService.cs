@@ -1,6 +1,7 @@
 using System;
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public interface ILoadingOverlayService {
@@ -18,6 +19,7 @@ namespace Alice {
         float accumulatedActiveSeconds;
         float activeSegmentStartTime = -1f;
 
+        [Inject]
         public LoadingOverlayService(LoadingView loadingView, IAppNetworkSetting appNetworkSetting) {
             this.loadingView = loadingView;
             loadingView.SetOnlineIndicatorVisible(appNetworkSetting.IsOnline.CurrentValue);

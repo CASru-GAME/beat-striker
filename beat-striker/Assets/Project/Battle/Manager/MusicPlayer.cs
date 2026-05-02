@@ -4,6 +4,7 @@ using System.Collections.Generic;
  
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public enum BeatJudgeZone {
@@ -88,6 +89,7 @@ namespace Alice {
         public float CurrentViewPlaybackTime => currentViewPlaybackTime;
         public float[] CurrentBeatTimeline => beats;
 
+        [Inject]
         public MusicPlayer(AudioSource audioSource, IMusicRegistry musicRegistry, IAudioSetting audioSetting, IBattleSelectSetting battleSelectSetting, IAISetting aiSetting) {
             this.audioSource = audioSource;
             this.musicRegistry = musicRegistry;

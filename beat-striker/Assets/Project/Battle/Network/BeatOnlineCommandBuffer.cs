@@ -1,9 +1,14 @@
 using System.Collections.Generic;
+using VContainer;
 
 namespace Alice {
     public sealed class BeatOnlineCommandBuffer {
         readonly Dictionary<int, Dictionary<int, OnlineBeatCommandSnapshot>> commandsByBeat = new();
         readonly HashSet<int> closedBeatIndexes = new();
+
+        [Inject]
+        public BeatOnlineCommandBuffer() {
+        }
 
         public bool TrySubmit(OnlineBeatCommandSnapshot command) {
             if (command.BeatIndex < 0 || closedBeatIndexes.Contains(command.BeatIndex)) {

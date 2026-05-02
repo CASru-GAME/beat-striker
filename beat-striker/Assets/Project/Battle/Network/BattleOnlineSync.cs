@@ -6,6 +6,7 @@ using Fusion;
 using Fusion.Sockets;
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public enum BattleOutcomeKind {
@@ -113,6 +114,7 @@ namespace Alice {
         bool callbacksRegistered;
         bool disconnected;
 
+        [Inject]
         public BattleOnlineSync(INetworkRunnerProvider runnerProvider, IAppNetworkSetting appNetworkSetting) {
             this.runnerProvider = runnerProvider;
             this.appNetworkSetting = appNetworkSetting;

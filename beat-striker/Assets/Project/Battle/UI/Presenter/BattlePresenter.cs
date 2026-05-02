@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using R3;
 using UnityEngine;
+using VContainer;
 using CorePlayerId = App.PlayerId;
 
 namespace Alice {
@@ -64,6 +65,7 @@ namespace Alice {
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<bool> OnAttentionActiveStateChanged => battlePresenterView.StageCamera.OnAttentionActiveStateChanged;
 
+        [Inject]
         public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IAISetting aiSetting, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
             this.strikerRegistry = strikerRegistry;
             this.gamePadRegistry = gamePadRegistry;
