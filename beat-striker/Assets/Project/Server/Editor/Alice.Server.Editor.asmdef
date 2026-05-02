@@ -1,9 +1,10 @@
 {
-    "name": "VRM10.MToon10.Editor",
-    "rootNamespace": "",
+    "name": "Alice.Server.Editor",
+    "rootNamespace": "Alice.Editor",
     "references": [
-        "GUID:1cd941934d098654fa21a13f28346412",
-        "GUID:0aaf403bd13871a44b7127aef2695ff8"
+        "Alice.Server",
+        "GUID:a7c4e8f21d9b4e5a8c3f1e6d2b9a0c7e",
+        "GUID:1baf1ffff1031e948b3b228ab3453251"
     ],
     "includePlatforms": [
         "Editor"
@@ -12,8 +13,8 @@
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": false,
-    "defineConstraints": ["!ALICE_RELAY_SERVER"],
+    "autoReferenced": true,
+    "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false
 }

@@ -1,5 +1,5 @@
 {
-    "name": "UniGLTF.UniUnlit",
+    "name": "LeanTween",
     "rootNamespace": "",
     "references": [],
     "includePlatforms": [],
@@ -7,8 +7,8 @@
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": false,
-    "defineConstraints": ["!ALICE_RELAY_SERVER"],
+    "autoReferenced": true,
+    "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false
 }

@@ -6,13 +6,6 @@ using App;
 using UnityEngine;
 
 namespace Alice {
-    public enum Striker {
-        Hero,
-        Wizard,
-        Fighter,
-        Warrior,
-    }
-
     public interface IBattleDeployer {
         Awaitable DeployAsync(BattleAddressablePreload preload = null);
         Awaitable RedeployForNextRoundAsync(BattleAddressablePreload preload = null);

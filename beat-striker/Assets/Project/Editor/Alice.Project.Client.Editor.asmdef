@@ -1,0 +1,23 @@
+{
+    "name": "Alice.Project.Client.Editor",
+    "rootNamespace": "Alice.Editor",
+    "references": [
+        "Alice.Project.Client",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "Unity.Addressables.Editor",
+        "Unity.RenderPipelines.Universal.Editor",
+        "GUID:a811bde74b26b53498b4f6d872b09b6d"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

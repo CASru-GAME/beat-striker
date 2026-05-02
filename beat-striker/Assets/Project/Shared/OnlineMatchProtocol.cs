@@ -1,0 +1,67 @@
+using System;
+using System.Text;
+using Fusion.Sockets;
+using UnityEngine;
+
+namespace Alice {
+    public static class OnlineMatchProtocol {
+        public static readonly ReliableKey RequestKey = ReliableKey.FromInts(0x4253, 1, 1);
+        public static readonly ReliableKey ResultKey = ReliableKey.FromInts(0x4253, 1, 2);
+
+        public static byte[] SerializeRequest(OnlineMatchRequest request) {
+            var payload = new MatchRequestPayload {
+                striker = (int)request.LocalStriker,
+                stage = (int)request.CandidateStage,
+                musicId = request.CandidateMusicId,
+            };
+            return Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
+        }
+
+        public static byte[] SerializeResult(OnlineMatchResult result) {
+            var payload = new MatchResultPayload {
+                localStriker = (int)result.LocalStriker,
+                opponentStriker = (int)result.OpponentStriker,
+                stage = (int)result.Stage,
+                musicId = result.MusicId,
+                localIsPlayer1 = result.LocalIsPlayer1,
+            };
+            return Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
+        }
+
+        public static OnlineMatchRequest DeserializeRequest(ArraySegment<byte> data) {
+            var json = Decode(data);
+            var payload = JsonUtility.FromJson<MatchRequestPayload>(json);
+            return new OnlineMatchRequest((Striker)payload.striker, (Stage)payload.stage, payload.musicId);
+        }
+
+        public static OnlineMatchResult DeserializeResult(ArraySegment<byte> data) {
+            var json = Decode(data);
+            var payload = JsonUtility.FromJson<MatchResultPayload>(json);
+            return new OnlineMatchResult((Striker)payload.localStriker, (Striker)payload.opponentStriker, (Stage)payload.stage, payload.musicId, payload.localIsPlayer1);
+        }
+
+        static string Decode(ArraySegment<byte> data) {
+            if (data.Array == null) {
+                throw new InvalidOperationException("Reliable data payload is empty.");
+            }
+
+            return Encoding.UTF8.GetString(data.Array, data.Offset, data.Count);
+        }
+
+        [Serializable]
+        class MatchRequestPayload {
+            public int striker;
+            public int stage;
+            public string musicId;
+        }
+
+        [Serializable]
+        class MatchResultPayload {
+            public int localStriker;
+            public int opponentStriker;
+            public int stage;
+            public string musicId;
+            public bool localIsPlayer1;
+        }
+    }
+}

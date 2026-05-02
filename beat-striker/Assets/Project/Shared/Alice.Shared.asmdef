@@ -1,14 +1,16 @@
 {
-    "name": "UniGLTF.UniUnlit",
-    "rootNamespace": "",
-    "references": [],
+    "name": "Alice.Shared",
+    "rootNamespace": "Alice",
+    "references": [
+        "GUID:1baf1ffff1031e948b3b228ab3453251"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": false,
-    "defineConstraints": ["!ALICE_RELAY_SERVER"],
+    "autoReferenced": true,
+    "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false
 }
