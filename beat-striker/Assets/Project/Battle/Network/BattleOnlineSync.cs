@@ -87,17 +87,6 @@ namespace Alice {
 
     public class BattleOnlineSync : IBattleOnlineSync, INetworkRunnerCallbacks, IDisposable {
         const string LOG_PREFIX = "[BattleOnlineSync]";
-        static readonly ReliableKey PhaseKey = ReliableKey.FromInts(0x4253, 2, 1);
-        static readonly ReliableKey OutcomeKey = ReliableKey.FromInts(0x4253, 2, 2);
-        static readonly ReliableKey PauseRequestKey = ReliableKey.FromInts(0x4253, 2, 3);
-        static readonly ReliableKey ResumeRequestKey = ReliableKey.FromInts(0x4253, 2, 4);
-        static readonly ReliableKey SuspendFinishRequestKey = ReliableKey.FromInts(0x4253, 2, 5);
-        static readonly ReliableKey RoundResolutionRequestKey = ReliableKey.FromInts(0x4253, 2, 6);
-        static readonly ReliableKey BeatCommandKey = ReliableKey.FromInts(0x4253, 2, 7);
-        static readonly ReliableKey RoundStartReadyKey = ReliableKey.FromInts(0x4253, 2, 8);
-        static readonly ReliableKey RoundStartScheduleKey = ReliableKey.FromInts(0x4253, 2, 9);
-        static readonly ReliableKey BeatSyncResumeKey = ReliableKey.FromInts(0x4253, 2, 10);
-        static readonly ReliableKey StrikerPreCommandSnapshotKey = ReliableKey.FromInts(0x4253, 2, 11);
 
         readonly INetworkRunnerProvider runnerProvider;
         readonly IAppNetworkSetting appNetworkSetting;
@@ -131,7 +120,7 @@ namespace Alice {
         }
 
         public bool IsReady => IsOnline() && TryRegisterCallbacks();
-        public bool IsSessionHost => IsReady && runner.IsServer;
+        public bool IsSessionHost => IsReady && !runner.IsServer && appNetworkSetting.LocalOnlinePlayerId == 0;
         public float NetworkTime => IsReady ? runner.SimulationTime : Time.realtimeSinceStartup;
         public Observable<BattleFlowPhaseSnapshot> OnPhaseReceived => latestPhase.Where(snapshot => snapshot.Sequence > 0);
         public Observable<BattleOutcomeSnapshot> OnOutcomeReceived => latestOutcome.Where(snapshot => snapshot.Sequence > 0);
@@ -156,24 +145,24 @@ namespace Alice {
                 phase = (int)snapshot.State,
                 round = snapshot.Round,
             };
-            Broadcast(PhaseKey, payload);
+            Broadcast(OnlineBattleProtocol.PhaseKey, payload);
             Debug.Log($"{LOG_PREFIX} Published phase. sequence={snapshot.Sequence}, state={state}, round={round}");
         }
 
         public void RequestPause() {
-            SendRequest(PauseRequestKey, new EmptyPayload());
+            SendRequest(OnlineBattleProtocol.PauseRequestKey, new EmptyPayload());
         }
 
         public void RequestResume() {
-            SendRequest(ResumeRequestKey, new EmptyPayload());
+            SendRequest(OnlineBattleProtocol.ResumeRequestKey, new EmptyPayload());
         }
 
         public void RequestSuspendFinish() {
-            SendRequest(SuspendFinishRequestKey, new EmptyPayload());
+            SendRequest(OnlineBattleProtocol.SuspendFinishRequestKey, new EmptyPayload());
         }
 
         public void RequestRoundResolution(int deadPlayerId) {
-            SendRequest(RoundResolutionRequestKey, new RoundResolutionRequestPayload {
+            SendRequest(OnlineBattleProtocol.RoundResolutionRequestKey, new RoundResolutionRequestPayload {
                 deadPlayerId = deadPlayerId,
             });
         }
@@ -200,7 +189,7 @@ namespace Alice {
                 playerIds = sequencedSnapshot.PlayerIds,
                 roundWinCounts = sequencedSnapshot.RoundWinCounts,
             };
-            Broadcast(OutcomeKey, payload);
+            Broadcast(OnlineBattleProtocol.OutcomeKey, payload);
             Debug.Log($"{LOG_PREFIX} Published outcome. sequence={sequencedSnapshot.Sequence}, kind={sequencedSnapshot.Kind}, round={sequencedSnapshot.FinishedRound}, winner={sequencedSnapshot.RoundWinnerPlayerId}, finalWinner={sequencedSnapshot.FinalWinnerPlayerId}");
         }
 
@@ -215,10 +204,10 @@ namespace Alice {
             };
             var payload = BuildBeatCommandPayload(sequencedSnapshot);
             if (runner.IsServer) {
-                Broadcast(BeatCommandKey, payload);
+                Broadcast(OnlineBattleProtocol.BeatCommandKey, payload);
             }
             else {
-                runner.SendReliableDataToServer(BeatCommandKey, Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload)));
+                runner.SendReliableDataToServer(OnlineBattleProtocol.BeatCommandKey, Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload)));
             }
 
             Debug.Log($"{LOG_PREFIX} Published beat command. sequence={sequencedSnapshot.Sequence}, player={sequencedSnapshot.PlayerId}, beat={sequencedSnapshot.BeatIndex}, success={sequencedSnapshot.IsSuccess}");
@@ -235,10 +224,10 @@ namespace Alice {
             };
             var payload = BuildStrikerPreCommandSnapshotPayload(sequencedSnapshot);
             if (runner.IsServer) {
-                Broadcast(StrikerPreCommandSnapshotKey, payload);
+                Broadcast(OnlineBattleProtocol.StrikerPreCommandSnapshotKey, payload);
             }
             else {
-                runner.SendReliableDataToServer(StrikerPreCommandSnapshotKey, Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload)));
+                runner.SendReliableDataToServer(OnlineBattleProtocol.StrikerPreCommandSnapshotKey, Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload)));
             }
 
             Debug.Log($"{LOG_PREFIX} Published striker pre-command snapshot. sequence={sequencedSnapshot.Sequence}, player={sequencedSnapshot.PlayerId}, beat={sequencedSnapshot.ApplyBeatIndex}, sent={sequencedSnapshot.SentNetworkTime:0.000}");
@@ -275,7 +264,7 @@ namespace Alice {
         }
 
         public void RequestRoundStartReady(int round) {
-            SendRequest(RoundStartReadyKey, new RoundStartReadyPayload {
+            SendRequest(OnlineBattleProtocol.RoundStartReadyKey, new RoundStartReadyPayload {
                 round = round,
             });
         }
@@ -293,7 +282,7 @@ namespace Alice {
                 round = snapshot.Round,
                 startNetworkTime = snapshot.StartNetworkTime,
             };
-            Broadcast(RoundStartScheduleKey, payload);
+            Broadcast(OnlineBattleProtocol.RoundStartScheduleKey, payload);
             Debug.Log($"{LOG_PREFIX} Published round start schedule. sequence={snapshot.Sequence}, round={round}, start={startNetworkTime:0.000}");
         }
 
@@ -311,7 +300,7 @@ namespace Alice {
                 resumeNetworkTime = snapshot.ResumeNetworkTime,
                 hostPlaybackTime = snapshot.HostPlaybackTime,
             };
-            Broadcast(BeatSyncResumeKey, payload);
+            Broadcast(OnlineBattleProtocol.BeatSyncResumeKey, payload);
             Debug.Log($"{LOG_PREFIX} Published beat sync resume. sequence={snapshot.Sequence}, beat={beatIndex}, resume={resumeNetworkTime:0.000}, hostPlayback={hostPlaybackTime:0.000}");
         }
 
@@ -402,6 +391,11 @@ namespace Alice {
 
         void Broadcast<T>(ReliableKey key, T payload) {
             var bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
+            if (!runner.IsServer) {
+                runner.SendReliableDataToServer(key, bytes);
+                return;
+            }
+
             foreach (var player in runner.ActivePlayers) {
                 if (player == runner.LocalPlayer) {
                     continue;
@@ -419,8 +413,7 @@ namespace Alice {
             runner.SendReliableDataToServer(key, Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload)));
         }
 
-        void BroadcastExcept<T>(ReliableKey key, T payload, PlayerRef excludedPlayer) {
-            var bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
+        void BroadcastBytesExcept(ReliableKey key, byte[] bytes, PlayerRef excludedPlayer) {
             foreach (var player in runner.ActivePlayers) {
                 if (player == runner.LocalPlayer || player == excludedPlayer) {
                     continue;
@@ -493,7 +486,19 @@ namespace Alice {
         }
 
         public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) {
-            if (key == PhaseKey && !runner.IsServer) {
+            if (runner.IsServer && OnlineBattleProtocol.IsRelayKey(key)) {
+                if (data.Array == null) {
+                    throw new InvalidOperationException("Reliable data payload is empty.");
+                }
+
+                var bytes = new byte[data.Count];
+                Buffer.BlockCopy(data.Array, data.Offset, bytes, 0, data.Count);
+                BroadcastBytesExcept(key, bytes, player);
+                Debug.Log($"{LOG_PREFIX} Relayed reliable data. key={key}, fromPlayer={player}, bytes={bytes.Length}");
+                return;
+            }
+
+            if (key == OnlineBattleProtocol.PhaseKey) {
                 var payload = JsonUtility.FromJson<PhasePayload>(Decode(data));
                 var snapshot = new BattleFlowPhaseSnapshot((ulong)payload.sequence, (BattleFlowState)payload.phase, payload.round);
                 if (snapshot.Sequence > latestPhase.CurrentValue.Sequence) {
@@ -503,7 +508,7 @@ namespace Alice {
                 return;
             }
 
-            if (key == OutcomeKey && !runner.IsServer) {
+            if (key == OnlineBattleProtocol.OutcomeKey) {
                 var payload = JsonUtility.FromJson<OutcomePayload>(Decode(data));
                 var snapshot = new BattleOutcomeSnapshot(
                     (ulong)payload.sequence,
@@ -523,7 +528,7 @@ namespace Alice {
                 return;
             }
 
-            if (key == BeatCommandKey) {
+            if (key == OnlineBattleProtocol.BeatCommandKey) {
                 var payload = JsonUtility.FromJson<BeatCommandPayload>(Decode(data));
                 var snapshot = new OnlineBeatCommandSnapshot(
                     (ulong)payload.sequence,
@@ -536,13 +541,10 @@ namespace Alice {
                     new Vector2(payload.directionX, payload.directionY));
                 beatCommandReceivedSubject.OnNext(snapshot);
                 Debug.Log($"{LOG_PREFIX} Received beat command. sequence={snapshot.Sequence}, player={snapshot.PlayerId}, beat={snapshot.BeatIndex}, success={snapshot.IsSuccess}");
-                if (runner.IsServer) {
-                    BroadcastExcept(BeatCommandKey, payload, player);
-                }
                 return;
             }
 
-            if (key == StrikerPreCommandSnapshotKey) {
+            if (key == OnlineBattleProtocol.StrikerPreCommandSnapshotKey) {
                 var payload = JsonUtility.FromJson<StrikerPreCommandSnapshotPayload>(Decode(data));
                 var snapshot = new OnlineStrikerPreCommandSnapshot(
                     (ulong)payload.sequence,
@@ -556,13 +558,10 @@ namespace Alice {
                 StoreStrikerPreCommandSnapshot(snapshot);
                 strikerPreCommandSnapshotReceivedSubject.OnNext(snapshot);
                 Debug.Log($"{LOG_PREFIX} Received striker pre-command snapshot. sequence={snapshot.Sequence}, player={snapshot.PlayerId}, beat={snapshot.ApplyBeatIndex}, sent={snapshot.SentNetworkTime:0.000}");
-                if (runner.IsServer) {
-                    BroadcastExcept(StrikerPreCommandSnapshotKey, payload, player);
-                }
                 return;
             }
 
-            if (key == RoundStartScheduleKey && !runner.IsServer) {
+            if (key == OnlineBattleProtocol.RoundStartScheduleKey) {
                 var payload = JsonUtility.FromJson<RoundStartSchedulePayload>(Decode(data));
                 var snapshot = new OnlineRoundStartSnapshot(
                     (ulong)payload.sequence,
@@ -575,7 +574,7 @@ namespace Alice {
                 return;
             }
 
-            if (key == BeatSyncResumeKey && !runner.IsServer) {
+            if (key == OnlineBattleProtocol.BeatSyncResumeKey) {
                 var payload = JsonUtility.FromJson<BeatSyncResumePayload>(Decode(data));
                 var snapshot = new OnlineBeatSyncResumeSnapshot(
                     (ulong)payload.sequence,
@@ -589,32 +588,28 @@ namespace Alice {
                 return;
             }
 
-            if (!runner.IsServer) {
-                return;
-            }
-
-            if (key == PauseRequestKey) {
+            if (key == OnlineBattleProtocol.PauseRequestKey) {
                 pauseRequestedSubject.OnNext(Unit.Default);
                 return;
             }
 
-            if (key == ResumeRequestKey) {
+            if (key == OnlineBattleProtocol.ResumeRequestKey) {
                 resumeRequestedSubject.OnNext(Unit.Default);
                 return;
             }
 
-            if (key == SuspendFinishRequestKey) {
+            if (key == OnlineBattleProtocol.SuspendFinishRequestKey) {
                 suspendFinishRequestedSubject.OnNext(Unit.Default);
                 return;
             }
 
-            if (key == RoundResolutionRequestKey) {
+            if (key == OnlineBattleProtocol.RoundResolutionRequestKey) {
                 var payload = JsonUtility.FromJson<RoundResolutionRequestPayload>(Decode(data));
                 roundResolutionRequestedSubject.OnNext(payload.deadPlayerId);
                 return;
             }
 
-            if (key == RoundStartReadyKey) {
+            if (key == OnlineBattleProtocol.RoundStartReadyKey) {
                 var payload = JsonUtility.FromJson<RoundStartReadyPayload>(Decode(data));
                 if (payload.round > latestRoundStartReadyRound) {
                     latestRoundStartReadyRound = payload.round;

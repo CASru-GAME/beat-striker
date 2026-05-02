@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Fusion;
 using Fusion.Sockets;
@@ -46,16 +45,12 @@ namespace Alice {
 
     public class OnlineSessionBootstrap : IOnlineSessionBootstrap, INetworkRunnerProvider, INetworkRunnerCallbacks {
         const string LOG_PREFIX = "[OnlineSessionBootstrap]";
-        static readonly ReliableKey RequestKey = ReliableKey.FromInts(0x4253, 1, 1);
-        static readonly ReliableKey ResultKey = ReliableKey.FromInts(0x4253, 1, 2);
 
         readonly IAppNetworkSetting networkSetting;
-        readonly Dictionary<PlayerRef, OnlineMatchRequest> requestsByPlayer = new();
 
         NetworkRunner runner;
         TaskCompletionSource<OnlineMatchResult> matchCompletion;
         OnlineMatchRequest localRequest;
-        bool resultPublished;
         bool cancellationRequested;
         bool requestSentToServer;
 
@@ -74,8 +69,6 @@ namespace Alice {
             }
 
             localRequest = request;
-            requestsByPlayer.Clear();
-            resultPublished = false;
             cancellationRequested = false;
             requestSentToServer = false;
             matchCompletion = new TaskCompletionSource<OnlineMatchResult>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -90,9 +83,9 @@ namespace Alice {
             simulation.Topology = Topologies.ClientServer;
             projectConfig.Simulation = simulation;
 
-            Debug.Log($"{LOG_PREFIX} MatchAsync StartGame begin. mode=AutoHostOrClient, sessionName={networkSetting.SessionName}, playerCount=2");
+            Debug.Log($"{LOG_PREFIX} MatchAsync StartGame begin. mode=Client, sessionName={networkSetting.SessionName}, playerCount=2");
             var startResult = await activeRunner.StartGame(new StartGameArgs {
-                GameMode = GameMode.AutoHostOrClient,
+                GameMode = GameMode.Client,
                 SessionName = networkSetting.SessionName,
                 PlayerCount = 2,
                 Config = projectConfig,
@@ -123,14 +116,9 @@ namespace Alice {
 
             Debug.Log($"{LOG_PREFIX} MatchAsync runner running. isServer={activeRunner.IsServer}, localPlayer={activeRunner.LocalPlayer}");
 
-            requestsByPlayer[activeRunner.LocalPlayer] = localRequest;
-            if (!activeRunner.IsServer) {
-                requestSentToServer = true;
-                Debug.Log($"{LOG_PREFIX} MatchAsync sending request to server. localPlayer={activeRunner.LocalPlayer}");
-                activeRunner.SendReliableDataToServer(RequestKey, SerializeRequest(localRequest));
-            }
-
-            TryPublishHostResult();
+            requestSentToServer = true;
+            Debug.Log($"{LOG_PREFIX} MatchAsync sending request to server. localPlayer={activeRunner.LocalPlayer}");
+            activeRunner.SendReliableDataToServer(OnlineMatchProtocol.RequestKey, OnlineMatchProtocol.SerializeRequest(localRequest));
             return await WaitForMatchAsync();
         }
 
@@ -199,95 +187,12 @@ namespace Alice {
             return await matchCompletion.Task;
         }
 
-        void TryPublishHostResult() {
-            if (resultPublished || runner == null || !runner.IsServer) {
-                Debug.Log($"{LOG_PREFIX} TryPublishHostResult skipped. published={resultPublished}, hasRunner={runner != null}, isServer={runner != null && runner.IsServer}");
-                return;
-            }
-
-            if (!TryGetOpponentPlayer(out var opponentPlayer)) {
-                Debug.Log($"{LOG_PREFIX} TryPublishHostResult waiting for opponent. localPlayer={runner.LocalPlayer}");
-                return;
-            }
-
-            if (!requestsByPlayer.TryGetValue(runner.LocalPlayer, out var hostRequest)
-                || !requestsByPlayer.TryGetValue(opponentPlayer, out var opponentRequest)) {
-                Debug.Log($"{LOG_PREFIX} TryPublishHostResult waiting for requests. hasHost={requestsByPlayer.ContainsKey(runner.LocalPlayer)}, hasOpponent={requestsByPlayer.ContainsKey(opponentPlayer)}");
-                return;
-            }
-
-            resultPublished = true;
-            var random = new System.Random(Environment.TickCount);
-            var selectedStage = random.Next(2) == 0 ? hostRequest.CandidateStage : opponentRequest.CandidateStage;
-            var selectedMusicId = random.Next(2) == 0 ? hostRequest.CandidateMusicId : opponentRequest.CandidateMusicId;
-
-            var hostResult = new OnlineMatchResult(hostRequest.LocalStriker, opponentRequest.LocalStriker, selectedStage, selectedMusicId, true);
-            var opponentResult = new OnlineMatchResult(opponentRequest.LocalStriker, hostRequest.LocalStriker, selectedStage, selectedMusicId, false);
-
-            runner.SendReliableDataToPlayer(opponentPlayer, ResultKey, SerializeResult(opponentResult));
-            matchCompletion.TrySetResult(hostResult);
-            Debug.Log($"{LOG_PREFIX} Match decided. stage={selectedStage}, musicId={selectedMusicId}");
-        }
-
-        bool TryGetOpponentPlayer(out PlayerRef opponentPlayer) {
-            foreach (var player in runner.ActivePlayers) {
-                if (player != runner.LocalPlayer) {
-                    opponentPlayer = player;
-                    return true;
-                }
-            }
-
-            opponentPlayer = default;
-            return false;
-        }
-
-        static byte[] SerializeRequest(OnlineMatchRequest request) {
-            var payload = new MatchRequestPayload {
-                striker = (int)request.LocalStriker,
-                stage = (int)request.CandidateStage,
-                musicId = request.CandidateMusicId,
-            };
-            return Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
-        }
-
-        static byte[] SerializeResult(OnlineMatchResult result) {
-            var payload = new MatchResultPayload {
-                localStriker = (int)result.LocalStriker,
-                opponentStriker = (int)result.OpponentStriker,
-                stage = (int)result.Stage,
-                musicId = result.MusicId,
-                localIsPlayer1 = result.LocalIsPlayer1,
-            };
-            return Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
-        }
-
-        static OnlineMatchRequest DeserializeRequest(ArraySegment<byte> data) {
-            var json = Decode(data);
-            var payload = JsonUtility.FromJson<MatchRequestPayload>(json);
-            return new OnlineMatchRequest((Striker)payload.striker, (Stage)payload.stage, payload.musicId);
-        }
-
-        static OnlineMatchResult DeserializeResult(ArraySegment<byte> data) {
-            var json = Decode(data);
-            var payload = JsonUtility.FromJson<MatchResultPayload>(json);
-            return new OnlineMatchResult((Striker)payload.localStriker, (Striker)payload.opponentStriker, (Stage)payload.stage, payload.musicId, payload.localIsPlayer1);
-        }
-
-        static string Decode(ArraySegment<byte> data) {
-            if (data.Array == null) {
-                throw new InvalidOperationException("Reliable data payload is empty.");
-            }
-
-            return Encoding.UTF8.GetString(data.Array, data.Offset, data.Count);
-        }
-
         public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) {
             if (!ReferenceEquals(runner, this.runner)) {
                 return;
             }
 
             Debug.Log($"{LOG_PREFIX} OnPlayerJoined. player={player}, isServer={runner.IsServer}, localPlayer={runner.LocalPlayer}");
-            TryPublishHostResult();
         }
 
         public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) {
@@ -295,16 +200,9 @@ namespace Alice {
                 return;
             }
 
-            if (key == RequestKey && runner.IsServer) {
-                Debug.Log($"{LOG_PREFIX} OnReliableDataReceived RequestKey. fromPlayer={player}, isServer={runner.IsServer}");
-                requestsByPlayer[player] = DeserializeRequest(data);
-                TryPublishHostResult();
-                return;
-            }
-
-            if (key == ResultKey && !runner.IsServer) {
+            if (key == OnlineMatchProtocol.ResultKey) {
                 Debug.Log($"{LOG_PREFIX} OnReliableDataReceived ResultKey. fromPlayer={player}, isServer={runner.IsServer}");
-                matchCompletion?.TrySetResult(DeserializeResult(data));
+                matchCompletion?.TrySetResult(OnlineMatchProtocol.DeserializeResult(data));
             }
         }
 
@@ -344,7 +242,7 @@ namespace Alice {
             if (!runner.IsServer && !requestSentToServer && matchCompletion != null && !matchCompletion.Task.IsCompleted) {
                 requestSentToServer = true;
                 Debug.Log($"{LOG_PREFIX} OnConnectedToServer sending request to server.");
-                runner.SendReliableDataToServer(RequestKey, SerializeRequest(localRequest));
+                runner.SendReliableDataToServer(OnlineMatchProtocol.RequestKey, OnlineMatchProtocol.SerializeRequest(localRequest));
             }
         }
         public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
@@ -358,20 +256,5 @@ namespace Alice {
             request.Accept();
         }
 
-        [Serializable]
-        class MatchRequestPayload {
-            public int striker;
-            public int stage;
-            public string musicId;
-        }
-
-        [Serializable]
-        class MatchResultPayload {
-            public int localStriker;
-            public int opponentStriker;
-            public int stage;
-            public string musicId;
-            public bool localIsPlayer1;
-        }
     }
 }

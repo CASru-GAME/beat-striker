@@ -473,7 +473,7 @@ namespace Alice {
         }
 
         int ResolveLocalOnlinePlayerId() {
-            return battleOnlineSync.IsSessionHost ? 0 : 1;
+            return appNetworkSetting.LocalOnlinePlayerId;
         }
 
         void ResetOnlineCommandState() {
