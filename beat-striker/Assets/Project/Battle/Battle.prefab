@@ -21481,6 +21481,7 @@ MonoBehaviour:
   outroWaitDuration: 3
   outroPostWaitDuration: 0
   maxPlayersDistanceToFitOnScreen: 20
+  minCameraDepthForFitPlayers: 1.5
   normalizedDistanceToDiagonalRatio:
     serializedVersion: 2
     m_Curve:

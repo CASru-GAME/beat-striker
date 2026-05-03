@@ -1024,7 +1024,7 @@ Transform:
   m_GameObject: {fileID: 443645455}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0.672, y: 4.98, z: 0}
+  m_LocalPosition: {x: 0.691, y: 4.98, z: 0}
   m_LocalScale: {x: 9.25, y: 0.05, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2425,7 +2425,7 @@ Transform:
   m_GameObject: {fileID: 1077987160}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -0.492, y: 4.98, z: 0}
+  m_LocalPosition: {x: -0.509, y: 4.98, z: 0}
   m_LocalScale: {x: 9.25, y: 0.05, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2691,6 +2691,14 @@ PrefabInstance:
     - target: {fileID: 5619376666138620005, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8179424678283996581, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: defaultSelections.Array.data[0].Striker
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8179424678283996581, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: defaultSelections.Array.data[1].Striker
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3621,7 +3629,7 @@ Transform:
   m_GameObject: {fileID: 1497729750}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.68, y: 0.52, z: 13.95}
+  m_LocalPosition: {x: -0.68, y: 0.5, z: 13.95}
   m_LocalScale: {x: 14.650903, y: 0.7325452, z: 7.8799887}
   m_ConstrainProportionsScale: 0
   m_Children:

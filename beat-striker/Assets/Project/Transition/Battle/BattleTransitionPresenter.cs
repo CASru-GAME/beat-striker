@@ -41,17 +41,17 @@ namespace Alice {
         }
 
         void UpdatePortraits() {
-            var leftPortrait = ResolvePortrait(0);
-            var rightPortrait = ResolvePortrait(1);
-            view.SetPortraits(leftPortrait, rightPortrait);
+            var leftThumbnail = ResolveThumbnail(0);
+            var rightThumbnail = ResolveThumbnail(1);
+            view.SetPortraits(leftThumbnail, rightThumbnail);
         }
 
-        UnityEngine.Sprite ResolvePortrait(int playerId) {
+        UnityEngine.Sprite ResolveThumbnail(int playerId) {
             if (playerSelectSetting.TryGetStriker(playerId, out var striker)) {
-                return appStrikerRegistry.GetByStriker(striker).Portrait;
+                return appStrikerRegistry.GetByStriker(striker).Thumbnail;
             }
 
-            return appStrikerRegistry.Default.Portrait;
+            return appStrikerRegistry.Default.Thumbnail;
         }
     }
 }

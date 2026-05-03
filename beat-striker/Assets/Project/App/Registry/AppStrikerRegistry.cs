@@ -48,9 +48,10 @@ namespace Alice {
         public AssetReferenceGameObject PrefabReference;
         public AssetReferenceGameObject PreviewModelReference;
         public Sprite Portrait;
+        public Sprite Thumbnail;
     }
 
-    public record StrikerInfo(string DisplayName, Striker BattleStriker, Sprite Portrait);
+    public record StrikerInfo(string DisplayName, Striker BattleStriker, Sprite Portrait, Sprite Thumbnail);
     public record PlayerStrikerSelection(int PlayerId, StrikerInfo Striker);
 
     public interface IAppStrikerRegistry {
@@ -124,7 +125,7 @@ namespace Alice {
             entryByType.Clear();
             allStrikers.Clear();
             foreach (var entry in strikerEntries) {
-                var strikerInfo = new StrikerInfo(entry.DisplayName, entry.BattleStriker, entry.Portrait);
+                var strikerInfo = new StrikerInfo(entry.DisplayName, entry.BattleStriker, entry.Portrait, entry.Thumbnail);
                 strikerByType[strikerInfo.BattleStriker] = strikerInfo;
                 entryByType[strikerInfo.BattleStriker] = entry;
                 allStrikers.Add(strikerInfo);
