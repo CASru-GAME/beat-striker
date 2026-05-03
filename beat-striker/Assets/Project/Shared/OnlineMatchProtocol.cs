@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace Alice {
     public static class OnlineMatchProtocol {
+        public const int MaxMatchPayloadLogChars = 512;
+
         public static readonly ReliableKey RequestKey = ReliableKey.FromInts(0x4253, 1, 1);
         public static readonly ReliableKey ResultKey = ReliableKey.FromInts(0x4253, 1, 2);
 
@@ -35,9 +37,47 @@ namespace Alice {
         }
 
         public static OnlineMatchResult DeserializeResult(ArraySegment<byte> data) {
-            var json = Decode(data);
-            var payload = JsonUtility.FromJson<MatchResultPayload>(json);
-            return new OnlineMatchResult((Striker)payload.localStriker, (Striker)payload.opponentStriker, (Stage)payload.stage, payload.musicId, payload.localIsPlayer1);
+            if (!TryDeserializeResult(data, out var result, out var preview, out var failure)) {
+                throw new InvalidOperationException($"DeserializeResult failed. preview={preview}, reason={failure}");
+            }
+
+            return result;
+        }
+
+        public static bool TryDeserializeResult(
+            ArraySegment<byte> data,
+            out OnlineMatchResult result,
+            out string utf8Preview,
+            out string failureMessage) {
+            result = default;
+            utf8Preview = "";
+            failureMessage = null;
+            try {
+                var json = Decode(data);
+                utf8Preview = TruncateForLog(json);
+                var payload = JsonUtility.FromJson<MatchResultPayload>(json);
+                result = new OnlineMatchResult(
+                    (Striker)payload.localStriker,
+                    (Striker)payload.opponentStriker,
+                    (Stage)payload.stage,
+                    payload.musicId ?? "",
+                    payload.localIsPlayer1);
+                return true;
+            }
+            catch (Exception exception) {
+                failureMessage = exception.Message;
+                return false;
+            }
+        }
+
+        public static string TruncateForLog(string value) {
+            if (string.IsNullOrEmpty(value)) {
+                return "";
+            }
+
+            return value.Length <= MaxMatchPayloadLogChars
+                ? value
+                : value.Substring(0, MaxMatchPayloadLogChars) + "…";
         }
 
         static string Decode(ArraySegment<byte> data) {

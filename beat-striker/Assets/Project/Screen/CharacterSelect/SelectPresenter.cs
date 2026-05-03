@@ -228,15 +228,15 @@ namespace Alice {
             }
 
             var nextScene = ResolvePlayScene();
-            Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition requesting start transition. nextScene={nextScene}");
+            Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition calling RequestStartTransition. nextScene={nextScene}, wasOnlineFlow={IsOnline()}");
             var result = transitionService.RequestStartTransition(nextScene);
             if (!result.IsSuccess) {
-                Debug.LogWarning($"{LOG_PREFIX} RequestPlaySceneTransition failed. nextScene={nextScene}");
+                Debug.LogWarning($"{LOG_PREFIX} RequestPlaySceneTransition rejected. nextScene={nextScene}, isSuccess=false. Transition service was not Idle; see [SceneTransitionService] logs for the matching START request id.");
                 inputState = SceneInputState.ReadyToStart;
                 return;
             }
 
-            Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition accepted. inputState={inputState}, nextScene={nextScene}");
+            Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition accepted. inputState={inputState}, nextScene={nextScene}, isSuccess=true");
             var mainCamera = Camera.main;
             if (mainCamera != null) {
                 view.ClickSound.PlayAtApp(mainCamera.transform.position);
@@ -291,6 +291,7 @@ namespace Alice {
                 battleSelectSetting.SelectedStage.CurrentValue,
                 battleSelectSetting.SelectedMusicId.CurrentValue);
             var result = await onlineSessionBootstrap.MatchAsync(request);
+            Debug.Log($"{LOG_PREFIX} MatchAsync returned. Applying match result to settings before battle transition.");
 
             battleSelectSetting.SelectStage(result.Stage);
             battleSelectSetting.SelectMusic(result.MusicId);
@@ -308,6 +309,7 @@ namespace Alice {
             selectionPolicy.RecordSelection(0);
             selectionPolicy.RecordSelection(1);
             Debug.Log($"{LOG_PREFIX} Online match applied. stage={result.Stage}, musicId={result.MusicId}, local={result.LocalStriker}, opponent={result.OpponentStriker}, localPlayerId={localPlayerId}");
+            Debug.Log($"{LOG_PREFIX} Online match settings applied. Proceeding to RequestStartTransition for battle scene.");
         }
 
         bool TryResolveUndoSlotFallback(out int slot) {

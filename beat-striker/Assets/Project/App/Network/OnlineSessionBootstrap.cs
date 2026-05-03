@@ -25,7 +25,6 @@ namespace Alice {
         TaskCompletionSource<OnlineMatchResult> matchCompletion;
         OnlineMatchRequest localRequest;
         bool cancellationRequested;
-        bool requestSentToServer;
 
         [Inject]
         public OnlineSessionBootstrap(IAppNetworkSetting networkSetting) {
@@ -44,7 +43,6 @@ namespace Alice {
 
             localRequest = request;
             cancellationRequested = false;
-            requestSentToServer = false;
             matchCompletion = new TaskCompletionSource<OnlineMatchResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             Debug.Log($"{LOG_PREFIX} MatchAsync begin. sessionName={networkSetting.SessionName}, timeout={networkSetting.MatchTimeoutSeconds:0.#}s, localStriker={request.LocalStriker}, stage={request.CandidateStage}, musicId={request.CandidateMusicId}");
@@ -90,9 +88,9 @@ namespace Alice {
 
             Debug.Log($"{LOG_PREFIX} MatchAsync runner running. isServer={activeRunner.IsServer}, localPlayer={activeRunner.LocalPlayer}");
 
-            requestSentToServer = true;
-            Debug.Log($"{LOG_PREFIX} MatchAsync sending request to server. localPlayer={activeRunner.LocalPlayer}");
+            Debug.Log($"{LOG_PREFIX} MatchAsync sending match request to server (single path after StartGame). localPlayer={activeRunner.LocalPlayer}");
             activeRunner.SendReliableDataToServer(OnlineMatchProtocol.RequestKey, OnlineMatchProtocol.SerializeRequest(localRequest));
+            Debug.Log($"{LOG_PREFIX} MatchAsync entering WaitForMatchAsync. timeoutSeconds={networkSetting.MatchTimeoutSeconds:0.#}");
             return await WaitForMatchAsync();
         }
 
@@ -150,6 +148,8 @@ namespace Alice {
         async Task<OnlineMatchResult> WaitForMatchAsync() {
             var timeout = Task.Delay(TimeSpan.FromSeconds(networkSetting.MatchTimeoutSeconds));
             var completedTask = await Task.WhenAny(matchCompletion.Task, timeout);
+            var matchTaskCompletedFirst = ReferenceEquals(completedTask, matchCompletion.Task);
+            Debug.Log($"{LOG_PREFIX} WaitForMatchAsync WhenAny finished. matchTaskCompletedFirst={matchTaskCompletedFirst}, matchTaskStatus={matchCompletion.Task.Status}");
             if (completedTask != matchCompletion.Task) {
                 await Task.Yield();
                 if (matchCompletion.Task.Status == TaskStatus.RanToCompletion) {
@@ -176,7 +176,7 @@ namespace Alice {
                 throw exception;
             }
 
-            Debug.Log($"{LOG_PREFIX} WaitForMatchAsync completed.");
+            Debug.Log($"{LOG_PREFIX} WaitForMatchAsync completed successfully. matchTaskStatus={matchCompletion.Task.Status}");
             return await matchCompletion.Task;
         }
 
@@ -194,8 +194,15 @@ namespace Alice {
             }
 
             if (key == OnlineMatchProtocol.ResultKey) {
-                Debug.Log($"{LOG_PREFIX} OnReliableDataReceived ResultKey. fromPlayer={player}, isServer={runner.IsServer}");
-                matchCompletion?.TrySetResult(OnlineMatchProtocol.DeserializeResult(data));
+                Debug.Log($"{LOG_PREFIX} OnReliableDataReceived ResultKey. fromPlayer={player}, isServer={runner.IsServer}, byteCount={data.Count}");
+                if (!OnlineMatchProtocol.TryDeserializeResult(data, out var parsed, out var preview, out var failure)) {
+                    Debug.LogError($"{LOG_PREFIX} Match result deserialize failed. byteCount={data.Count}, utf8Preview={preview}, reason={failure}");
+                    matchCompletion?.TrySetException(new InvalidOperationException($"Online match result deserialize failed. {failure}"));
+                    return;
+                }
+
+                Debug.Log($"{LOG_PREFIX} Match result parsed. stage={parsed.Stage}, musicId={parsed.MusicId}, local={parsed.LocalStriker}, opponent={parsed.OpponentStriker}, localIsPlayer1={parsed.LocalIsPlayer1}");
+                matchCompletion?.TrySetResult(parsed);
             }
         }
 
@@ -232,11 +239,6 @@ namespace Alice {
             }
 
             Debug.Log($"{LOG_PREFIX} OnConnectedToServer. isServer={runner.IsServer}, localPlayer={runner.LocalPlayer}");
-            if (!runner.IsServer && !requestSentToServer && matchCompletion != null && !matchCompletion.Task.IsCompleted) {
-                requestSentToServer = true;
-                Debug.Log($"{LOG_PREFIX} OnConnectedToServer sending request to server.");
-                runner.SendReliableDataToServer(OnlineMatchProtocol.RequestKey, OnlineMatchProtocol.SerializeRequest(localRequest));
-            }
         }
         public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
         public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
