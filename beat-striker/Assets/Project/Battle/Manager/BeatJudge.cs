@@ -257,8 +257,9 @@ namespace Alice {
         }
 
         async Task ProcessOnlineBeatAsync(IMusicPlayer.BeatSignal signal) {
-            if (lastOnlineBeatIndex >= 0 && signal.BeatIndex < lastOnlineBeatIndex) {
-                ResetOnlineCommandState();
+            if (lastOnlineBeatIndex >= 0 && signal.BeatIndex <= lastOnlineBeatIndex) {
+                Debug.Log($"{LOG_PREFIX} Skipped duplicate or past online beat. beat={signal.BeatIndex}, last={lastOnlineBeatIndex}");
+                return;
             }
 
             lastOnlineBeatIndex = signal.BeatIndex;
@@ -279,8 +280,9 @@ namespace Alice {
                 }
 
                 if (!onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
-                    Debug.Log($"{LOG_PREFIX} Skipped online beat because notification table is not ready. beat={signal.BeatIndex}");
-                    return;
+                    Debug.Log($"{LOG_PREFIX} Forced pass for remote player because it was not ready after wait/skip. beat={signal.BeatIndex}");
+                    var forcedPass = CreatePassNotification(remotePlayerId, signal);
+                    onlineCommandBuffer.TrySubmit(forcedPass);
                 }
             }
 

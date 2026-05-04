@@ -31,7 +31,6 @@ namespace Alice {
                    || key == RoundStartReadyKey
                    || key == RoundStartScheduleKey
                    || key == BeatSyncResumeKey
-                   || key == StrikerPreCommandSnapshotKey
                    || key == FlowGateKey
                    || key == ResumeAckKey
                    || key == SuspendMenuBeatKey;

@@ -146,6 +146,7 @@ namespace Alice {
         public BattleOnlineSync(INetworkRunnerProvider runnerProvider, IAppNetworkSetting appNetworkSetting) {
             this.runnerProvider = runnerProvider;
             this.appNetworkSetting = appNetworkSetting;
+            OnlineStrikerPreBeatStateSnapshotUnreliableRpc.OnSnapshotReceived += OnUnreliableStrikerPreBeatStateSnapshotReceived;
             TryRegisterCallbacks();
         }
 
@@ -437,15 +438,19 @@ namespace Alice {
             var sequencedSnapshot = snapshot with {
                 Sequence = strikerPreBeatStateSnapshotSequence,
             };
-            var payload = BuildStrikerPreBeatStateSnapshotPayload(sequencedSnapshot);
-            if (runner.IsServer) {
-                Broadcast(OnlineBattleProtocol.StrikerPreCommandSnapshotKey, payload);
-            }
-            else {
-                runner.SendReliableDataToServer(OnlineBattleProtocol.StrikerPreCommandSnapshotKey, Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload)));
-            }
+            OnlineStrikerPreBeatStateSnapshotUnreliableRpc.Publish(
+                runner,
+                new OnlineStrikerPreBeatStateSnapshotMessage(
+                    (long)sequencedSnapshot.Sequence,
+                    sequencedSnapshot.ApplyBeatIndex,
+                    sequencedSnapshot.PlayerId,
+                    sequencedSnapshot.HitPoint,
+                    sequencedSnapshot.SpecialPoint,
+                    sequencedSnapshot.Position,
+                    sequencedSnapshot.StatePathId,
+                    sequencedSnapshot.SentNetworkTime));
 
-            Debug.Log($"{LOG_PREFIX} Published striker pre-beat state snapshot. sequence={sequencedSnapshot.Sequence}, player={sequencedSnapshot.PlayerId}, beat={sequencedSnapshot.ApplyBeatIndex}, sent={sequencedSnapshot.SentNetworkTime:0.000}");
+            Debug.Log($"{LOG_PREFIX} Published striker pre-beat state snapshot unreliable. sequence={sequencedSnapshot.Sequence}, player={sequencedSnapshot.PlayerId}, beat={sequencedSnapshot.ApplyBeatIndex}, sent={sequencedSnapshot.SentNetworkTime:0.000}");
         }
 
         public bool TryGetLatestStrikerPreBeatStateSnapshot(int applyBeatIndex, int playerId, out OnlineStrikerPreBeatStateSnapshot snapshot) {
@@ -970,6 +975,7 @@ namespace Alice {
         }
 
         public void Dispose() {
+            OnlineStrikerPreBeatStateSnapshotUnreliableRpc.OnSnapshotReceived -= OnUnreliableStrikerPreBeatStateSnapshotReceived;
             if (callbacksRegistered && runner != null) {
                 runner.RemoveCallbacks(this);
             }
@@ -1018,6 +1024,29 @@ namespace Alice {
             }
 
             latestStrikerPreBeatStateSnapshots[key] = snapshot;
+        }
+
+        void OnUnreliableStrikerPreBeatStateSnapshotReceived(NetworkRunner callbackRunner, OnlineStrikerPreBeatStateSnapshotMessage message) {
+            if (!ReferenceEquals(callbackRunner, runner) || !IsOnline()) {
+                return;
+            }
+
+            var snapshot = new OnlineStrikerPreBeatStateSnapshot(
+                (ulong)Math.Max(0, message.Sequence),
+                message.ApplyBeatIndex,
+                message.PlayerId,
+                message.HitPoint,
+                message.SpecialPoint,
+                message.Position,
+                message.StatePathId,
+                message.SentNetworkTime);
+            if (snapshot.PlayerId == appNetworkSetting.LocalOnlinePlayerId) {
+                return;
+            }
+
+            StoreStrikerPreBeatStateSnapshot(snapshot);
+            strikerPreBeatStateSnapshotReceivedSubject.OnNext(snapshot);
+            Debug.Log($"{LOG_PREFIX} Received striker pre-beat state snapshot unreliable. sequence={snapshot.Sequence}, player={snapshot.PlayerId}, beat={snapshot.ApplyBeatIndex}, sent={snapshot.SentNetworkTime:0.000}");
         }
 
         [Serializable]
