@@ -13,6 +13,7 @@ namespace Alice {
         public const float RoundStartMinLeadSeconds = 0.05f;
         public const float ResumeLeadSeconds = 1f;
         public const float ResumeMinLeadSeconds = 0.05f;
+        public const string FlowGateSyncLoadingMessage = "通信待機中";
 
         readonly BattleFlowStateMachine stateMachine;
         readonly IAppNetworkSetting appNetworkSetting;
@@ -28,12 +29,13 @@ namespace Alice {
         readonly Func<Task> endBattleToTitleAsync;
         readonly Func<int, Task> resolveRoundAsync;
         readonly Action<int> onRoundResolutionRequested;
+        readonly ILoadingOverlayService loadingOverlayService;
         readonly IMusicPlayer musicPlayer;
         ulong lastAppliedPhaseSequence;
         ulong lastAppliedOutcomeSequence;
         bool isResumeInProgress;
 
-        public BattleFlowOnlineHandler(BattleFlowStateMachine stateMachine, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync, IBattleJudge battleJudge, IBeatjudge beatJudge, BattleFlowPauseHandler pauseHandler, Func<bool, bool> beginRoundResolution, Func<CorePlayerId, IReadOnlyDictionary<CorePlayerId, int>, bool, Task> completeBattleWithWinnerAsync, Func<int> getCurrentRound, Action onSuspendMenuPause, Action onSuspendMenuResume, Func<Task> endBattleToTitleAsync, Func<int, Task> resolveRoundAsync, Action<int> onRoundResolutionRequested, IMusicPlayer musicPlayer) {
+        public BattleFlowOnlineHandler(BattleFlowStateMachine stateMachine, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync, IBattleJudge battleJudge, IBeatjudge beatJudge, BattleFlowPauseHandler pauseHandler, Func<bool, bool> beginRoundResolution, Func<CorePlayerId, IReadOnlyDictionary<CorePlayerId, int>, bool, Task> completeBattleWithWinnerAsync, Func<int> getCurrentRound, Action onSuspendMenuPause, Action onSuspendMenuResume, Func<Task> endBattleToTitleAsync, Func<int, Task> resolveRoundAsync, Action<int> onRoundResolutionRequested, ILoadingOverlayService loadingOverlayService, IMusicPlayer musicPlayer) {
             this.stateMachine = stateMachine;
             this.appNetworkSetting = appNetworkSetting;
             this.battleOnlineSync = battleOnlineSync;
@@ -48,6 +50,7 @@ namespace Alice {
             this.endBattleToTitleAsync = endBattleToTitleAsync;
             this.resolveRoundAsync = resolveRoundAsync;
             this.onRoundResolutionRequested = onRoundResolutionRequested;
+            this.loadingOverlayService = loadingOverlayService;
             this.musicPlayer = musicPlayer;
             lastAppliedPhaseSequence = 0;
             lastAppliedOutcomeSequence = 0;
@@ -58,8 +61,14 @@ namespace Alice {
         public bool IsOnlineClient => IsOnlineBattle && !battleOnlineSync.IsSessionHost;
 
         /// <summary>オンライン時のみバリア待ち。オフラインは即完了。</summary>
-        public Task PassFlowGateAsync(BattleFlowSyncGate gate, int round, int subIndex = 0) {
-            return IsOnlineBattle ? battleOnlineSync.PassFlowGateAsync(gate, round, subIndex) : Task.CompletedTask;
+        public async Task PassFlowGateAsync(BattleFlowSyncGate gate, int round, int subIndex = 0) {
+            if (!IsOnlineBattle) {
+                return;
+            }
+
+            using (loadingOverlayService.Begin(FlowGateSyncLoadingMessage)) {
+                await battleOnlineSync.PassFlowGateAsync(gate, round, subIndex);
+            }
         }
 
         public void PublishPhase(BattleFlowState state) {

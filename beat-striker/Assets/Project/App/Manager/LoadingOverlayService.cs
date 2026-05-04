@@ -1,18 +1,18 @@
 using System;
-using R3;
+using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
 
 namespace Alice {
     public interface ILoadingOverlayService {
-        IDisposable Begin();
+        IDisposable Begin(string message = null);
     }
 
-    public class LoadingOverlayService : ILoadingOverlayService, IDisposable {
+    public class LoadingOverlayService : ILoadingOverlayService {
         const float ContinuousHideGraceSeconds = 0.15f;
 
         readonly LoadingView loadingView;
-        readonly IDisposable onlineStateSubscription;
+        readonly List<string> messageStack = new();
         int activeRequestCount;
         int stateVersion;
         bool isVisible;
@@ -20,24 +20,22 @@ namespace Alice {
         float activeSegmentStartTime = -1f;
 
         [Inject]
-        public LoadingOverlayService(LoadingView loadingView, IAppNetworkSetting appNetworkSetting) {
+        public LoadingOverlayService(LoadingView loadingView) {
             this.loadingView = loadingView;
-            loadingView.SetOnlineIndicatorVisible(appNetworkSetting.IsOnline.CurrentValue);
-            onlineStateSubscription = appNetworkSetting.IsOnline
-                .Subscribe(isOnline => loadingView.SetOnlineIndicatorVisible(isOnline));
         }
 
-        public void Dispose() {
-            onlineStateSubscription.Dispose();
-        }
-
-        public IDisposable Begin() {
+        public IDisposable Begin(string message = null) {
+            messageStack.Add(loadingView.ResolveDisplayMessage(message));
             activeRequestCount += 1;
             if (activeRequestCount == 1) {
+                loadingView.SetMessage(messageStack[^1]);
                 activeSegmentStartTime = Time.realtimeSinceStartup;
                 stateVersion += 1;
                 var beginVersion = stateVersion;
                 _ = ShowIfNeededAfterDelayAsync(beginVersion);
+            }
+            else {
+                loadingView.SetMessage(messageStack[^1]);
             }
 
             return new Scope(this);
@@ -54,6 +52,7 @@ namespace Alice {
             }
 
             isVisible = true;
+            loadingView.SetMessage(messageStack[^1]);
             await loadingView.ShowAsync();
         }
 
@@ -63,7 +62,9 @@ namespace Alice {
             }
 
             activeRequestCount -= 1;
+            messageStack.RemoveAt(messageStack.Count - 1);
             if (activeRequestCount > 0) {
+                loadingView.SetMessage(messageStack[^1]);
                 return;
             }
 

@@ -7,6 +7,7 @@ namespace Alice {
         public string DisplayName;
         public AppScene Scene;
         public bool CreateCursor = true;
+        public bool ShowAppOverlay = true;
         public AudioClip Bgm;
         public string SceneName;
     }
@@ -16,7 +17,8 @@ namespace Alice {
         string DisplayName,
         bool CreateCursor,
         AudioClip Bgm,
-        string SceneName);
+        string SceneName,
+        bool ShowAppOverlay);
 
     public interface IScreenRegistry {
         ScreenInfo Default { get; }
@@ -78,7 +80,8 @@ namespace Alice {
                     entry.DisplayName,
                     entry.CreateCursor,
                     entry.Bgm,
-                    entry.SceneName);
+                    entry.SceneName,
+                    entry.ShowAppOverlay);
                 screenByScene[screenInfo.Scene] = screenInfo;
                 screenBySceneName[screenInfo.SceneName] = screenInfo;
                 allScreens.Add(screenInfo);

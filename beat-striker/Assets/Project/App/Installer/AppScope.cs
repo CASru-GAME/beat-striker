@@ -34,6 +34,7 @@ namespace Alice {
 		[SerializeField] AppNetworkSetting appNetworkSetting;
 		[SerializeField] VirtualTouchControllerCanvasView virtualTouchControllerCanvasView;
 		[SerializeField] LoadingView loadingView;
+		[SerializeField] AppOverlayView appOverlayView;
 
 		public IAppAudioPlayer AppAudioPlayer => appAudioPlayer;
 
@@ -96,6 +97,7 @@ namespace Alice {
 			builder.RegisterInstance<IAppNetworkSetting>(appNetworkSetting);
 			builder.RegisterInstance(virtualTouchControllerCanvasView);
 			builder.RegisterComponent(loadingView);
+			builder.RegisterComponent(appOverlayView);
 			builder.Register<ILoadingOverlayService, LoadingOverlayService>(Lifetime.Singleton);
 			builder.Register<ISceneLoader, SceneLoader>(Lifetime.Singleton);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
@@ -106,6 +108,7 @@ namespace Alice {
 			builder.RegisterInstance(playerInputManager);
 			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<VirtualTouchControllerPresenter>(Lifetime.Singleton);
+			builder.RegisterEntryPoint<AppOverlayPresenter>(Lifetime.Singleton);
 
 			builder.RegisterBuildCallback(container => {
 				Debug.Log($"{LOG_PREFIX} BuildCallback begin. scene={gameObject.scene.name}");
