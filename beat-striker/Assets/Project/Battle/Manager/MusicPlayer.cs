@@ -231,11 +231,18 @@ namespace Alice {
             if (playbackClockMode != PlaybackClockMode.VirtualLoop && audioSource.clip != null) {
                 var clipLength = Mathf.Max(0f, audioSource.clip.length);
                 if (clipLength > 0f) {
-                    var audioTime = playbackClockMode == PlaybackClockMode.AudioLoop
-                        ? clampedTime % clipLength
-                        : Mathf.Min(clampedTime, clipLength);
-                    audioSource.time = audioTime;
-                    lastRawAudioTime = audioTime;
+                    if (ShouldLoopAudioPlayback(playbackClockMode)) {
+                        completedAudioLoopCount = Mathf.FloorToInt(clampedTime / clipLength);
+                        var audioTime = clampedTime % clipLength;
+                        audioSource.time = audioTime;
+                        lastRawAudioTime = audioTime;
+                    }
+                    else {
+                        var audioTime = Mathf.Min(clampedTime, clipLength);
+                        audioSource.time = audioTime;
+                        lastRawAudioTime = audioTime;
+                        completedAudioLoopCount = 0;
+                    }
                 }
             }
 

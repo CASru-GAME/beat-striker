@@ -103,7 +103,7 @@ namespace Alice {
 
                     var player = beatPlayer[playerIndex];
                     var time = musicPlayer.CurrentPlaybackTime;
-                    if (lastCommandPlaybackTime >= 0f && time < lastCommandPlaybackTime) {
+                    if (!IsOnlineBattle() && lastCommandPlaybackTime >= 0f && time < lastCommandPlaybackTime - 1.0f) {
                         for (var j = 0; j < beatPlayer.Length; j++) {
                             beatPlayer[j].ResetForLoop();
                         }
@@ -119,6 +119,10 @@ namespace Alice {
 
                     var result = musicPlayer.JudgeTiming(time);
                     var isTimingSuccess = result.Zone != BeatJudgeZone.Miss && time < result.BeatTime;
+
+                    if (IsOnlineBattle() && result.BeatIndex <= lastOnlineBeatIndex) {
+                        isTimingSuccess = false;
+                    }
                     if (!isTimingSuccess) {
                         player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
                             result.BeatIndex,
