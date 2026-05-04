@@ -53,8 +53,8 @@ namespace Alice {
         void Tick(float deltaTime);
         void TickPhysics(float deltaTime);
         void RecordRemoteReplicaHistory(float networkTime);
-        OnlineStrikerPreCommandSnapshot BuildPreCommandSnapshot(int applyBeatIndex, float sentNetworkTime);
-        void ApplyPreCommandDelta(OnlineStrikerPreCommandSnapshot snapshot);
+        OnlineStrikerPreBeatStateSnapshot BuildPreBeatStateSnapshot(int applyBeatIndex, float sentNetworkTime);
+        void ApplyPreBeatStateDelta(OnlineStrikerPreBeatStateSnapshot snapshot);
         void ChangeDirection(Vector2 direction);
         void CancelDirection();
         void Default();
@@ -284,8 +284,8 @@ namespace Alice {
             }
         }
 
-        public OnlineStrikerPreCommandSnapshot BuildPreCommandSnapshot(int applyBeatIndex, float sentNetworkTime) {
-            return new OnlineStrikerPreCommandSnapshot(
+        public OnlineStrikerPreBeatStateSnapshot BuildPreBeatStateSnapshot(int applyBeatIndex, float sentNetworkTime) {
+            return new OnlineStrikerPreBeatStateSnapshot(
                 0,
                 applyBeatIndex,
                 playerId,
@@ -296,7 +296,7 @@ namespace Alice {
                 sentNetworkTime);
         }
 
-        public void ApplyPreCommandDelta(OnlineStrikerPreCommandSnapshot snapshot) {
+        public void ApplyPreBeatStateDelta(OnlineStrikerPreBeatStateSnapshot snapshot) {
             if (!initialized || stateMachine == null || !TryGetNearestHistory(snapshot.SentNetworkTime, out var history)) {
                 return;
             }
@@ -304,7 +304,7 @@ namespace Alice {
             ApplyHitPointDelta(snapshot.HitPoint - history.HitPoint);
             ApplySpecialPointDelta(snapshot.SpecialPoint - history.SpecialPoint);
             ApplyPositionDelta(snapshot.Position - history.Position);
-            ApplyStateCorrectionIfNeeded(history.StatePathId, snapshot.StatePathId);
+            ApplyStateCorrectionIfNeeded(snapshot.StatePathId);
         }
 
         public void SetPlayerId(int playerId) {
@@ -404,8 +404,8 @@ namespace Alice {
             centerPositionSubject.OnNext(centerPositionTransform.position);
         }
 
-        void ApplyStateCorrectionIfNeeded(string historyStatePathId, string ownerStatePathId) {
-            if (historyStatePathId == ownerStatePathId || GetCurrentStatePathId() == ownerStatePathId) {
+        void ApplyStateCorrectionIfNeeded(string ownerStatePathId) {
+            if (GetCurrentStatePathId() == ownerStatePathId) {
                 return;
             }
 
