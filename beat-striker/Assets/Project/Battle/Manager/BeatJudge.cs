@@ -55,7 +55,7 @@ namespace Alice {
         int lastOnlineBeatIndex = -1;
         bool isOnlineBeatDrainRunning;
         bool isPaused;
-        // オンライン専用: 同一拍で双方のサスペンド要求が揃ったときに BattleFlow 側へ通知（ポーズ＋FlowGate SuspendMenuBeatBarrier）。
+        // オンライン専用: 指定拍にサスペンド要求が届いたら BattleFlow 側へ通知（ポーズ＋FlowGate SuspendMenuBeatBarrier）。
         Action<int> onlineDualSuspendMenuPauseHandler;
 
         [Inject]
@@ -288,10 +288,10 @@ namespace Alice {
                 }
             }
 
-            // 打鍵コマンド適用の直後・CloseBeat の直前: この拍のデュアルサスペンドが成立していれば一度だけポーズ＋ゲートへ進める。
+            // 打鍵コマンド適用の直後・CloseBeat の直前: この拍のサスペンド要求があれば一度だけポーズ＋ゲートへ進める。
             if (IsOnlineBattle()
                 && onlineDualSuspendMenuPauseHandler != null
-                && battleOnlineSync.TryConsumeDualSuspendMenuRequests(signal.BeatIndex)) {
+                && battleOnlineSync.TryConsumeSuspendMenuRequest(signal.BeatIndex)) {
                 onlineDualSuspendMenuPauseHandler(signal.BeatIndex);
             }
 

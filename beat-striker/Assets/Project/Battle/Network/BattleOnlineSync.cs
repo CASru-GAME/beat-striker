@@ -92,7 +92,7 @@ namespace Alice {
         Task<OnlineRoundStartSnapshot> WaitForRoundStartScheduleAsync(int round);
         Task<OnlineBeatSyncResumeSnapshot> WaitForBeatSyncResumeAsync(int beatIndex);
         void PublishSuspendMenuBeatRequest(int applyBeatIndex);
-        bool TryConsumeDualSuspendMenuRequests(int applyBeatIndex);
+        bool TryConsumeSuspendMenuRequest(int applyBeatIndex);
         void PublishResumeAck(float ackNetworkTime);
         Task<float> WaitSymmetricResumeNetworkTimeAsync(float resumeLeadSeconds, float minLeadSeconds);
         void ClearResumeAckState();
@@ -284,9 +284,9 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Published suspend menu beat request. beat={applyBeatIndex}, player={localId}");
         }
 
-        // 指定拍について双方のサスペンド要求が揃っているときだけ true を返し、マスクを消費する（二重適用防止）。
-        public bool TryConsumeDualSuspendMenuRequests(int applyBeatIndex) {
-            if (!suspendMenuBeatMaskByBeat.TryGetValue(applyBeatIndex, out var mask) || mask != 0b11) {
+        // 指定拍についてサスペンド要求があれば true を返し、マスクを消費する（二重適用防止）。
+        public bool TryConsumeSuspendMenuRequest(int applyBeatIndex) {
+            if (!suspendMenuBeatMaskByBeat.TryGetValue(applyBeatIndex, out var mask) || mask == 0) {
                 return false;
             }
 

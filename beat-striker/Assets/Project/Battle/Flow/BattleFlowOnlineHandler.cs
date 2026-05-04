@@ -31,6 +31,7 @@ namespace Alice {
         readonly IMusicPlayer musicPlayer;
         ulong lastAppliedPhaseSequence;
         ulong lastAppliedOutcomeSequence;
+        bool isResumeInProgress;
 
         public BattleFlowOnlineHandler(BattleFlowStateMachine stateMachine, IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync, IBattleJudge battleJudge, IBeatjudge beatJudge, BattleFlowPauseHandler pauseHandler, Func<bool, bool> beginRoundResolution, Func<CorePlayerId, IReadOnlyDictionary<CorePlayerId, int>, bool, Task> completeBattleWithWinnerAsync, Func<int> getCurrentRound, Action onSuspendMenuPause, Action onSuspendMenuResume, Func<Task> endBattleToTitleAsync, Func<int, Task> resolveRoundAsync, Action<int> onRoundResolutionRequested, IMusicPlayer musicPlayer) {
             this.stateMachine = stateMachine;
@@ -160,18 +161,27 @@ namespace Alice {
                 return;
             }
 
-            battleOnlineSync.ClearResumeAckState();
-            battleOnlineSync.PublishResumeAck(battleOnlineSync.NetworkTime);
-            var resumeNetworkTime = await battleOnlineSync.WaitSymmetricResumeNetworkTimeAsync(ResumeLeadSeconds, ResumeMinLeadSeconds);
-            while (battleOnlineSync.NetworkTime < resumeNetworkTime) {
-                await Task.Yield();
+            if (isResumeInProgress) {
+                return;
             }
 
-            var judged = musicPlayer.JudgeTiming(musicPlayer.CurrentPlaybackTime);
-            battleOnlineSync.PublishBeatSyncResume(judged.BeatIndex, resumeNetworkTime, musicPlayer.CurrentPlaybackTime);
-            battleOnlineSync.ClearResumeAckState();
-            onSuspendMenuResume();
-            await PassFlowGateAsync(BattleFlowSyncGate.SuspendMenuResumeClear, getCurrentRound(), judged.BeatIndex);
+            isResumeInProgress = true;
+            try {
+                battleOnlineSync.PublishResumeAck(battleOnlineSync.NetworkTime);
+                var resumeNetworkTime = await battleOnlineSync.WaitSymmetricResumeNetworkTimeAsync(ResumeLeadSeconds, ResumeMinLeadSeconds);
+                while (battleOnlineSync.NetworkTime < resumeNetworkTime) {
+                    await Task.Yield();
+                }
+
+                var judged = musicPlayer.JudgeTiming(musicPlayer.CurrentPlaybackTime);
+                battleOnlineSync.PublishBeatSyncResume(judged.BeatIndex, resumeNetworkTime, musicPlayer.CurrentPlaybackTime);
+                battleOnlineSync.ClearResumeAckState();
+                onSuspendMenuResume();
+                await PassFlowGateAsync(BattleFlowSyncGate.SuspendMenuResumeClear, getCurrentRound(), judged.BeatIndex);
+            }
+            finally {
+                isResumeInProgress = false;
+            }
         }
 
         public void ApplyOnlineSuspendFinishRequest(Func<Task> completeBattleBySuspendMenuAsync) {

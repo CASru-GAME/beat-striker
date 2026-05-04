@@ -105,6 +105,7 @@ namespace Alice {
             gamePadRegistry.RestoreOfflinePrimaryLayout(appNetworkSetting.LocalOnlinePlayerId);
             await onlineSessionBootstrap.TeardownOnlineRunnerAsync();
             appNetworkSetting.SetIsOnline(false);
+            appNetworkSetting.SetLocalOnlinePlayerId(0);
             tutorialSetting.ClearTutorialBattleRequest();
             Debug.Log($"{LOG_PREFIX} EnterTitleAsync end transition completed. isSuccess={result.IsSuccess}");
         }
