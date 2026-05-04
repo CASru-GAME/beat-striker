@@ -162,6 +162,11 @@ namespace Alice {
                 roundHandler.SubscribeStrikerDeadEvents();
                 Debug.Log($"{LOG_PREFIX} StartBattle subscribe flow events");
                 SubscribeFlowEvents();
+                // オンライン: 双方がアセット読み込み・初期化を終え遷移開始できる状態になるまで待ち、同時に暗転明けを開始する。
+                if (onlineHandler.IsOnlineBattle) {
+                    await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.SceneTransitionEnd, 0);
+                }
+
                 var endResult = await sceneTransitionService.RequestEndTransitionAsync(ResolveCurrentBattleScene());
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync transition end completed. isSuccess={endResult.IsSuccess}");
                 await battlePresenter.PlayBattleOpeningAsync();
@@ -169,10 +174,6 @@ namespace Alice {
                 await System.Threading.Tasks.Task.WhenAll(battlePlayerPresenters.Select(battlePlayerPresenter => battlePlayerPresenter.PlayOpeningHpFillAsync()));
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync battle player HP opening animation completed");
 
-                // オープニング・HP 演出まで揃えたうえで初回ラウンドへ。オンラインでは双方がここに来るまで次に進まない。
-                if (onlineHandler.IsOnlineBattle) {
-                    await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.SceneReady, 0);
-                }
 
                 await roundHandler.StartRoundPlayableAsync();
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync completed first round playable start");
