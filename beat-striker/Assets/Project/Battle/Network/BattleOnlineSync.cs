@@ -585,17 +585,28 @@ namespace Alice {
         }
 
         bool TryRegisterCallbacks() {
-            if (callbacksRegistered && runner != null && runner.IsRunning) {
-                return true;
-            }
+            if (!runnerProvider.TryGetRunner(out var fromProvider) || fromProvider == null || !fromProvider.IsRunning) {
+                if (callbacksRegistered && runner != null) {
+                    runner.RemoveCallbacks(this);
+                    callbacksRegistered = false;
+                }
 
-            if (!runnerProvider.TryGetRunner(out runner)) {
+                runner = null;
                 return false;
             }
 
-            runner.AddCallbacks(this);
-            callbacksRegistered = true;
-            Debug.Log($"{LOG_PREFIX} Registered runner callbacks. isServer={runner.IsServer}");
+            if (callbacksRegistered && runner != null && (!ReferenceEquals(runner, fromProvider) || !runner.IsRunning)) {
+                runner.RemoveCallbacks(this);
+                callbacksRegistered = false;
+            }
+
+            runner = fromProvider;
+            if (!callbacksRegistered) {
+                runner.AddCallbacks(this);
+                callbacksRegistered = true;
+                Debug.Log($"{LOG_PREFIX} Registered runner callbacks. isServer={runner.IsServer}");
+            }
+
             return true;
         }
 

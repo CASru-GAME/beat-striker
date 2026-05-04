@@ -10,6 +10,7 @@ namespace Alice {
     public interface IOnlineSessionBootstrap {
         Task<OnlineMatchResult> MatchAsync(OnlineMatchRequest request);
         void CancelMatchmaking();
+        Task TeardownOnlineRunnerAsync();
     }
 
     public interface INetworkRunnerProvider {
@@ -19,6 +20,7 @@ namespace Alice {
     public class OnlineSessionBootstrap : IOnlineSessionBootstrap, INetworkRunnerProvider, INetworkRunnerCallbacks {
         const string LOG_PREFIX = "[OnlineSessionBootstrap]";
         const float WaitHeartbeatIntervalSeconds = 1f;
+        const float RunnerReleaseWaitTimeoutSeconds = 30f;
 
         readonly IAppNetworkSetting networkSetting;
 
@@ -45,6 +47,8 @@ namespace Alice {
                 Debug.LogError($"{LOG_PREFIX} [match#?] MatchAsync rejected: matchmaking already in progress. existingTaskStatus={matchCompletion.Task.Status}");
                 throw new InvalidOperationException("Online matchmaking is already running.");
             }
+
+            await ShutdownRunningRunnerForFreshMatchAsync("MatchAsync before new match search");
 
             matchLogSequence++;
             currentMatchLogId = matchLogSequence;
@@ -107,6 +111,55 @@ namespace Alice {
             var result = await WaitForMatchAsync(mid);
             Debug.Log($"{LOG_PREFIX} [match#{mid}] MatchAsync WaitForMatchAsync returned. stage={result.Stage}, musicId={result.MusicId}, localIsP1={result.LocalIsPlayer1}");
             return result;
+        }
+
+        public async Task TeardownOnlineRunnerAsync() {
+            if (matchCompletion != null && !matchCompletion.Task.IsCompleted) {
+                Debug.Log($"{LOG_PREFIX} TeardownOnlineRunnerAsync: matchmaking in progress; canceling first.");
+                CancelMatchmaking();
+                await WaitUntilRunnerReleasedAsync("TeardownOnlineRunnerAsync after cancel");
+                return;
+            }
+
+            await ShutdownRunningRunnerForFreshMatchAsync("TeardownOnlineRunnerAsync");
+        }
+
+        async Task ShutdownRunningRunnerForFreshMatchAsync(string context) {
+            if (runner == null || !runner.IsRunning) {
+                if (runner != null) {
+                    Debug.Log($"{LOG_PREFIX} ShutdownRunningRunnerForFreshMatchAsync: non-running runner remains; releasing. context={context}");
+                    ReleaseRunner(runner, context);
+                }
+
+                return;
+            }
+
+            Debug.Log($"{LOG_PREFIX} ShutdownRunningRunnerForFreshMatchAsync: shutting down running runner. context={context}, runnerInstanceId={runner.GetInstanceID()}");
+            await runner.Shutdown();
+            await WaitUntilRunnerReleasedAsync(context);
+        }
+
+        async Task WaitUntilRunnerReleasedAsync(string context) {
+            var deadline = Time.realtimeSinceStartup + RunnerReleaseWaitTimeoutSeconds;
+            while (Time.realtimeSinceStartup < deadline) {
+                if (runner == null) {
+                    Debug.Log($"{LOG_PREFIX} WaitUntilRunnerReleasedAsync completed (runner null). context={context}");
+                    return;
+                }
+
+                if (!runner.IsRunning) {
+                    Debug.Log($"{LOG_PREFIX} WaitUntilRunnerReleasedAsync: runner not running but ref exists; releasing. context={context}");
+                    ReleaseRunner(runner, context);
+                    return;
+                }
+
+                await Awaitable.NextFrameAsync();
+            }
+
+            Debug.LogWarning($"{LOG_PREFIX} WaitUntilRunnerReleasedAsync timed out after {RunnerReleaseWaitTimeoutSeconds:0.#}s. context={context}, runnerNull={runner == null}");
+            if (runner != null) {
+                ReleaseRunner(runner, $"{context} WaitUntilRunnerReleasedAsync timeout");
+            }
         }
 
         public void CancelMatchmaking() {

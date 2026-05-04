@@ -117,6 +117,8 @@ namespace Alice {
 
             runner.SendReliableDataToPlayer(player1, OnlineMatchProtocol.ResultKey, OnlineMatchProtocol.SerializeResult(player1Result));
             runner.SendReliableDataToPlayer(player2, OnlineMatchProtocol.ResultKey, OnlineMatchProtocol.SerializeResult(player2Result));
+            requestsByPlayer.Remove(player1);
+            requestsByPlayer.Remove(player2);
             Debug.Log($"{LOG_PREFIX} Match decided. player1={player1}, player2={player2}, stage={selectedStage}, musicId={selectedMusicId}");
         }
 

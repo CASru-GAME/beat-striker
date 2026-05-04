@@ -23,6 +23,7 @@ namespace Alice {
         readonly IBattleSelectSetting battleSelectSetting;
         readonly ITutorialSetting tutorialSetting;
         readonly IAppNetworkSetting appNetworkSetting;
+        readonly IOnlineSessionBootstrap onlineSessionBootstrap;
         readonly CompositeDisposable subscriptions = new();
         bool quitRequested;
         TitleInputState inputState = TitleInputState.Ready;
@@ -35,7 +36,8 @@ namespace Alice {
             IPlayerSelectSetting playerSelectSetting,
             IBattleSelectSetting battleSelectSetting,
             ITutorialSetting tutorialSetting,
-            IAppNetworkSetting appNetworkSetting) {
+            IAppNetworkSetting appNetworkSetting,
+            IOnlineSessionBootstrap onlineSessionBootstrap) {
             this.view = view;
             this.sceneTransitionService = sceneTransitionService;
             this.gamePadRegistry = gamePadRegistry;
@@ -43,6 +45,7 @@ namespace Alice {
             this.battleSelectSetting = battleSelectSetting;
             this.tutorialSetting = tutorialSetting;
             this.appNetworkSetting = appNetworkSetting;
+            this.onlineSessionBootstrap = onlineSessionBootstrap;
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.gamePadRegistry.OnAnyButtonDown
@@ -100,6 +103,7 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} EnterTitleAsync requesting end transition. scene={AppScene.Title}");
             var result = await sceneTransitionService.RequestEndTransitionAsync(AppScene.Title);
             gamePadRegistry.RestoreOfflinePrimaryLayout(appNetworkSetting.LocalOnlinePlayerId);
+            await onlineSessionBootstrap.TeardownOnlineRunnerAsync();
             appNetworkSetting.SetIsOnline(false);
             tutorialSetting.ClearTutorialBattleRequest();
             Debug.Log($"{LOG_PREFIX} EnterTitleAsync end transition completed. isSuccess={result.IsSuccess}");
