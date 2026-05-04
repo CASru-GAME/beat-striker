@@ -19,9 +19,22 @@ namespace Alice {
         void ResetRoundState();
         void Pause();
         void Resume();
+        /// <summary>オンライン: 双方のサスペンド要求が揃った拍で呼ばれる（引数は適用ビートインデックス）。</summary>
+        void SetOnlineDualSuspendMenuPauseHandler(Action<int> handler);
     }
 
     public partial class BeatJudge : IBeatjudge, IDisposable {
+        public void SetOnlineDualSuspendMenuPauseHandler(Action<int> handler) {
+            onlineDualSuspendMenuPauseHandler = handler;
+        }
+
+        // ポーズ要求を送る「次のオンライン適用拍」。オンライン処理中は lastOnlineBeatIndex 基準、未開始は再生位置から算出。
+        public int GetSuspendMenuApplyBeatIndex() {
+            return lastOnlineBeatIndex >= 0
+                ? lastOnlineBeatIndex + 1
+                : musicPlayer.JudgeTiming(musicPlayer.CurrentPlaybackTime).BeatIndex;
+        }
+
         const string LOG_PREFIX = "[BeatJudge]";
         const int PLAYER_COUNT = 2;
         const float PRE_COMMAND_SNAPSHOT_INTERVAL_SECONDS = 0.05f;
@@ -42,6 +55,8 @@ namespace Alice {
         int lastOnlineBeatIndex = -1;
         bool isOnlineBeatDrainRunning;
         bool isPaused;
+        // オンライン専用: 同一拍で双方のサスペンド要求が揃ったときに BattleFlow 側へ通知（ポーズ＋FlowGate SuspendMenuBeatBarrier）。
+        Action<int> onlineDualSuspendMenuPauseHandler;
 
         [Inject]
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting,
@@ -271,6 +286,13 @@ namespace Alice {
                 if (onlineCommandBuffer.TryGetCommand(signal.BeatIndex, playerId, out var command)) {
                     ExecuteOnlineCommand(playerId, command, signal);
                 }
+            }
+
+            // 打鍵コマンド適用の直後・CloseBeat の直前: この拍のデュアルサスペンドが成立していれば一度だけポーズ＋ゲートへ進める。
+            if (IsOnlineBattle()
+                && onlineDualSuspendMenuPauseHandler != null
+                && battleOnlineSync.TryConsumeDualSuspendMenuRequests(signal.BeatIndex)) {
+                onlineDualSuspendMenuPauseHandler(signal.BeatIndex);
             }
 
             onlineCommandBuffer.CloseBeat(signal.BeatIndex);

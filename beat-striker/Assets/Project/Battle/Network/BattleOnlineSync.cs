@@ -52,6 +52,8 @@ namespace Alice {
 
     public record OnlineBeatSyncResumeSnapshot(ulong Sequence, int BeatIndex, float ResumeNetworkTime, float HostPlaybackTime);
 
+    public record OnlineSuspendMenuBeatSnapshot(int ApplyBeatIndex, int PlayerId);
+
     public interface IBattleOnlineSync {
         bool IsSessionHost { get; }
         bool IsReady { get; }
@@ -65,6 +67,11 @@ namespace Alice {
         Observable<Unit> OnSuspendFinishRequested { get; }
         Observable<int> OnRoundResolutionRequested { get; }
         Observable<Unit> OnDisconnected { get; }
+        Observable<OnlineSuspendMenuBeatSnapshot> OnSuspendMenuBeatReceived { get; }
+        void ResetOnlineBattleFlowSyncState();
+        Task PassFlowGateAsync(BattleFlowSyncGate gate, int round, int subIndex = 0);
+        void PublishRoundStartReadyWithTime(int round, float readyNetworkTime);
+        Task<float> WaitSymmetricRoundStartNetworkTimeAsync(int round, float leadSeconds, float minLeadSeconds);
         void PublishPhase(BattleFlowState state, int round);
         void RequestPause();
         void RequestResume();
@@ -84,10 +91,16 @@ namespace Alice {
         Task WaitForRoundStartReadyAsync(int round);
         Task<OnlineRoundStartSnapshot> WaitForRoundStartScheduleAsync(int round);
         Task<OnlineBeatSyncResumeSnapshot> WaitForBeatSyncResumeAsync(int beatIndex);
+        void PublishSuspendMenuBeatRequest(int applyBeatIndex);
+        bool TryConsumeDualSuspendMenuRequests(int applyBeatIndex);
+        void PublishResumeAck(float ackNetworkTime);
+        Task<float> WaitSymmetricResumeNetworkTimeAsync(float resumeLeadSeconds, float minLeadSeconds);
+        void ClearResumeAckState();
     }
 
     public class BattleOnlineSync : IBattleOnlineSync, INetworkRunnerCallbacks, IDisposable {
         const string LOG_PREFIX = "[BattleOnlineSync]";
+        public const float DefaultFlowGateTimeoutSeconds = 90f;
 
         readonly INetworkRunnerProvider runnerProvider;
         readonly IAppNetworkSetting appNetworkSetting;
@@ -97,15 +110,26 @@ namespace Alice {
         readonly ReactiveProperty<OnlineBeatSyncResumeSnapshot> latestBeatSyncResume = new(new OnlineBeatSyncResumeSnapshot(0, -1, 0, 0));
         readonly Subject<OnlineBeatCommandSnapshot> beatCommandReceivedSubject = new();
         readonly Subject<OnlineStrikerPreCommandSnapshot> strikerPreCommandSnapshotReceivedSubject = new();
+        readonly Subject<OnlineSuspendMenuBeatSnapshot> suspendMenuBeatReceivedSubject = new();
         readonly Dictionary<(int ApplyBeatIndex, int PlayerId), OnlineStrikerPreCommandSnapshot> latestStrikerPreCommandSnapshots = new();
         readonly Subject<Unit> pauseRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
         readonly Subject<Unit> suspendFinishRequestedSubject = new();
         readonly Subject<int> roundResolutionRequestedSubject = new();
         readonly Subject<Unit> disconnectedSubject = new();
+        readonly Dictionary<(int Gate, int Round, int Sub), int> flowGateArrivalMask = new();
+        readonly Dictionary<int, int> roundStartReadyMaskByRound = new();
+        readonly Dictionary<int, float> roundStartReadyTimePlayer0 = new();
+        readonly Dictionary<int, float> roundStartReadyTimePlayer1 = new();
+        readonly Dictionary<int, int> suspendMenuBeatMaskByBeat = new();
+        ulong flowGateEmitSequence;
+        int resumeAckMask;
+        float resumeAckTimePlayer0;
+        float resumeAckTimePlayer1;
         NetworkRunner runner;
         ulong phaseSequence;
-        ulong outcomeSequence;
+        ulong outcomeWireSequence;
+        ulong acceptedOutcomeSequence;
         ulong beatCommandSequence;
         ulong strikerPreCommandSnapshotSequence;
         ulong roundStartSequence;
@@ -128,14 +152,198 @@ namespace Alice {
         public Observable<BattleOutcomeSnapshot> OnOutcomeReceived => latestOutcome.Where(snapshot => snapshot.Sequence > 0);
         public Observable<OnlineBeatCommandSnapshot> OnBeatCommandReceived => beatCommandReceivedSubject;
         public Observable<OnlineStrikerPreCommandSnapshot> OnStrikerPreCommandSnapshotReceived => strikerPreCommandSnapshotReceivedSubject;
+        public Observable<OnlineSuspendMenuBeatSnapshot> OnSuspendMenuBeatReceived => suspendMenuBeatReceivedSubject;
         public Observable<Unit> OnPauseRequested => pauseRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<Unit> OnSuspendFinishRequested => suspendFinishRequestedSubject;
         public Observable<int> OnRoundResolutionRequested => roundResolutionRequestedSubject;
         public Observable<Unit> OnDisconnected => disconnectedSubject;
 
+        // バトル開始時にゲート・ラウンド開始 ready・サスペンド/再開の途中状態だけを捨てる（アウトカムやフェーズの履歴は別途）。
+        public void ResetOnlineBattleFlowSyncState() {
+            flowGateArrivalMask.Clear();
+            roundStartReadyMaskByRound.Clear();
+            roundStartReadyTimePlayer0.Clear();
+            roundStartReadyTimePlayer1.Clear();
+            suspendMenuBeatMaskByBeat.Clear();
+            resumeAckMask = 0;
+            resumeAckTimePlayer0 = 0f;
+            resumeAckTimePlayer1 = 0f;
+            latestRoundStartReadyRound = 0;
+        }
+
+        // 双方が同じ (gate, round, subIndex) に到達するまでブロック。先に着いた側は相手の FlowGate 受信でマスクが埋まるまで待つ。
+        // タイムアウト時は切断扱いにしてタイトル遷移など既存の OnDisconnected 経路に寄せる。
+        public async Task PassFlowGateAsync(BattleFlowSyncGate gate, int round, int subIndex = 0) {
+            if (!IsReady || !IsOnline()) {
+                return;
+            }
+
+            var key = ((int)gate, round, subIndex);
+            if (!flowGateArrivalMask.TryGetValue(key, out var mask)) {
+                mask = 0;
+            }
+
+            var localId = Mathf.Clamp(appNetworkSetting.LocalOnlinePlayerId, 0, 1);
+            mask |= 1 << localId;
+            flowGateArrivalMask[key] = mask;
+            flowGateEmitSequence += 1;
+            Broadcast(OnlineBattleProtocol.FlowGateKey, new FlowGatePayload {
+                gate = (int)gate,
+                round = round,
+                subIndex = subIndex,
+                playerId = localId,
+            });
+            var waitUntil = NetworkTime + DefaultFlowGateTimeoutSeconds;
+            while (!disconnected && NetworkTime < waitUntil) {
+                if (flowGateArrivalMask.TryGetValue(key, out var m) && m == 0b11) {
+                    return;
+                }
+
+                await Task.Yield();
+            }
+
+            if (!disconnected) {
+                disconnected = true;
+                disconnectedSubject.OnNext(Unit.Default);
+            }
+        }
+
+        // 各ピアが「このラウンドで再生開始の準備ができた時刻」を送る。PlayerId 0/1 別に保持し、揃ったら WaitSymmetric で同一式を評価する。
+        public void PublishRoundStartReadyWithTime(int round, float readyNetworkTime) {
+            if (!IsReady || !IsOnline()) {
+                return;
+            }
+
+            var localId = Mathf.Clamp(appNetworkSetting.LocalOnlinePlayerId, 0, 1);
+            if (!roundStartReadyMaskByRound.TryGetValue(round, out var mask)) {
+                mask = 0;
+            }
+
+            mask |= 1 << localId;
+            roundStartReadyMaskByRound[round] = mask;
+            if (localId == 0) {
+                roundStartReadyTimePlayer0[round] = readyNetworkTime;
+            }
+            else {
+                roundStartReadyTimePlayer1[round] = readyNetworkTime;
+            }
+
+            Broadcast(OnlineBattleProtocol.RoundStartReadyKey, new RoundStartReadyPayload {
+                round = round,
+                readyNetworkTime = readyNetworkTime,
+                playerId = localId,
+            });
+            if (round > latestRoundStartReadyRound) {
+                latestRoundStartReadyRound = round;
+            }
+
+            Debug.Log($"{LOG_PREFIX} Published round start ready. round={round}, readyTime={readyNetworkTime:0.000}, player={localId}");
+        }
+
+        // 両者の readyNetworkTime を受信済みとみなしたうえで、max(t0,t1)+lead を NetworkTime 軸の再生開始時刻とする。minLead で過去クリップし非対称を防ぐ。
+        public async Task<float> WaitSymmetricRoundStartNetworkTimeAsync(int round, float leadSeconds, float minLeadSeconds) {
+            if (!IsReady || !IsOnline()) {
+                return 0f;
+            }
+
+            var waitUntil = NetworkTime + DefaultFlowGateTimeoutSeconds;
+            while (!disconnected && NetworkTime < waitUntil) {
+                if (roundStartReadyMaskByRound.TryGetValue(round, out var mask) && mask == 0b11) {
+                    roundStartReadyTimePlayer0.TryGetValue(round, out var t0);
+                    roundStartReadyTimePlayer1.TryGetValue(round, out var t1);
+                    var agreed = Mathf.Max(t0, t1) + leadSeconds;
+                    var floor = NetworkTime + Mathf.Max(0f, minLeadSeconds);
+                    return Mathf.Max(agreed, floor);
+                }
+
+                await Task.Yield();
+            }
+
+            throw new InvalidOperationException("Online battle sync disconnected or timed out while waiting for round start readiness.");
+        }
+
+        // ローカルが「この applyBeatIndex でサスペンド要求した」ビットを立てつつ相手へ中継。相手分が揃ったら BeatJudge が同一拍でポーズを実行する。
+        public void PublishSuspendMenuBeatRequest(int applyBeatIndex) {
+            if (!IsReady || !IsOnline()) {
+                return;
+            }
+
+            var localId = Mathf.Clamp(appNetworkSetting.LocalOnlinePlayerId, 0, 1);
+            if (!suspendMenuBeatMaskByBeat.TryGetValue(applyBeatIndex, out var mask)) {
+                mask = 0;
+            }
+
+            mask |= 1 << localId;
+            suspendMenuBeatMaskByBeat[applyBeatIndex] = mask;
+            Broadcast(OnlineBattleProtocol.SuspendMenuBeatKey, new SuspendMenuBeatPayload {
+                applyBeatIndex = applyBeatIndex,
+                playerId = localId,
+            });
+            suspendMenuBeatReceivedSubject.OnNext(new OnlineSuspendMenuBeatSnapshot(applyBeatIndex, localId));
+            Debug.Log($"{LOG_PREFIX} Published suspend menu beat request. beat={applyBeatIndex}, player={localId}");
+        }
+
+        // 指定拍について双方のサスペンド要求が揃っているときだけ true を返し、マスクを消費する（二重適用防止）。
+        public bool TryConsumeDualSuspendMenuRequests(int applyBeatIndex) {
+            if (!suspendMenuBeatMaskByBeat.TryGetValue(applyBeatIndex, out var mask) || mask != 0b11) {
+                return false;
+            }
+
+            suspendMenuBeatMaskByBeat.Remove(applyBeatIndex);
+            return true;
+        }
+
+        // 解除操作を送った側が「解除 ACK」を出す。双方分の ackNetworkTime が揃うまで WaitSymmetricResumeNetworkTimeAsync で待つ。
+        public void PublishResumeAck(float ackNetworkTime) {
+            if (!IsReady || !IsOnline()) {
+                return;
+            }
+
+            var localId = Mathf.Clamp(appNetworkSetting.LocalOnlinePlayerId, 0, 1);
+            resumeAckMask |= 1 << localId;
+            if (localId == 0) {
+                resumeAckTimePlayer0 = ackNetworkTime;
+            }
+            else {
+                resumeAckTimePlayer1 = ackNetworkTime;
+            }
+
+            Broadcast(OnlineBattleProtocol.ResumeAckKey, new ResumeAckPayload {
+                playerId = localId,
+                ackNetworkTime = ackNetworkTime,
+            });
+            Debug.Log($"{LOG_PREFIX} Published resume ack. player={localId}, time={ackNetworkTime:0.000}");
+        }
+
+        public void ClearResumeAckState() {
+            resumeAckMask = 0;
+            resumeAckTimePlayer0 = 0f;
+            resumeAckTimePlayer1 = 0f;
+        }
+
+        // ラウンド開始と同様、双方の ACK 時刻の max に余裕を足した resumeNetworkTime を決定（NetworkTime のみで合意）。
+        public async Task<float> WaitSymmetricResumeNetworkTimeAsync(float resumeLeadSeconds, float minLeadSeconds) {
+            if (!IsReady || !IsOnline()) {
+                return NetworkTime + minLeadSeconds;
+            }
+
+            var waitUntil = NetworkTime + DefaultFlowGateTimeoutSeconds;
+            while (!disconnected && NetworkTime < waitUntil) {
+                if (resumeAckMask == 0b11) {
+                    var agreed = Mathf.Max(resumeAckTimePlayer0, resumeAckTimePlayer1) + resumeLeadSeconds;
+                    var floor = NetworkTime + Mathf.Max(0f, minLeadSeconds);
+                    return Mathf.Max(agreed, floor);
+                }
+
+                await Task.Yield();
+            }
+
+            throw new InvalidOperationException("Online battle sync disconnected or timed out while waiting for resume acks.");
+        }
+
         public void PublishPhase(BattleFlowState state, int round) {
-            if (!IsSessionHost) {
+            if (!IsReady || !IsOnline()) {
                 return;
             }
 
@@ -169,30 +377,31 @@ namespace Alice {
             });
         }
 
+        // 送信前にローカル権威マージを通す。先に採用済みのラウンド/内容より遅い・矛盾する送信は弾かれ、先着アウトカムを維持する。
         public void PublishOutcome(BattleOutcomeSnapshot snapshot) {
-            if (!IsSessionHost) {
+            if (!IsReady || !IsOnline()) {
                 return;
             }
 
-            outcomeSequence += 1;
-            var sequencedSnapshot = snapshot with {
-                Sequence = outcomeSequence,
-            };
-            latestOutcome.Value = sequencedSnapshot;
+            if (!TryMergeOutcomeAuthoritative(snapshot, out var merged)) {
+                return;
+            }
+
+            outcomeWireSequence += 1;
             var payload = new OutcomePayload {
-                sequence = (long)sequencedSnapshot.Sequence,
-                kind = (int)sequencedSnapshot.Kind,
-                finishedRound = sequencedSnapshot.FinishedRound,
-                deadPlayerId = sequencedSnapshot.DeadPlayerId,
-                roundWinnerPlayerId = sequencedSnapshot.RoundWinnerPlayerId,
-                continueBattle = sequencedSnapshot.ContinueBattle,
-                finalWinnerPlayerId = sequencedSnapshot.FinalWinnerPlayerId,
-                stopMusic = sequencedSnapshot.StopMusic,
-                playerIds = sequencedSnapshot.PlayerIds,
-                roundWinCounts = sequencedSnapshot.RoundWinCounts,
+                sequence = (long)outcomeWireSequence,
+                kind = (int)merged.Kind,
+                finishedRound = merged.FinishedRound,
+                deadPlayerId = merged.DeadPlayerId,
+                roundWinnerPlayerId = merged.RoundWinnerPlayerId,
+                continueBattle = merged.ContinueBattle,
+                finalWinnerPlayerId = merged.FinalWinnerPlayerId,
+                stopMusic = merged.StopMusic,
+                playerIds = merged.PlayerIds,
+                roundWinCounts = merged.RoundWinCounts,
             };
             Broadcast(OnlineBattleProtocol.OutcomeKey, payload);
-            Debug.Log($"{LOG_PREFIX} Published outcome. sequence={sequencedSnapshot.Sequence}, kind={sequencedSnapshot.Kind}, round={sequencedSnapshot.FinishedRound}, winner={sequencedSnapshot.RoundWinnerPlayerId}, finalWinner={sequencedSnapshot.FinalWinnerPlayerId}");
+            Debug.Log($"{LOG_PREFIX} Published outcome. wireSeq={outcomeWireSequence}, kind={merged.Kind}, round={merged.FinishedRound}");
         }
 
         public void PublishBeatCommand(OnlineBeatCommandSnapshot snapshot) {
@@ -266,13 +475,11 @@ namespace Alice {
         }
 
         public void RequestRoundStartReady(int round) {
-            SendRequest(OnlineBattleProtocol.RoundStartReadyKey, new RoundStartReadyPayload {
-                round = round,
-            });
+            PublishRoundStartReadyWithTime(round, NetworkTime);
         }
 
         public void PublishRoundStartSchedule(int round, float startNetworkTime) {
-            if (!IsSessionHost) {
+            if (!IsReady || !IsOnline()) {
                 return;
             }
 
@@ -289,7 +496,7 @@ namespace Alice {
         }
 
         public void PublishBeatSyncResume(int beatIndex, float resumeNetworkTime, float hostPlaybackTime) {
-            if (!IsSessionHost) {
+            if (!IsReady || !IsOnline()) {
                 return;
             }
 
@@ -307,7 +514,7 @@ namespace Alice {
         }
 
         public async Task WaitForPhaseAtLeastAsync(BattleFlowState state, int round) {
-            if (!IsReady || IsSessionHost) {
+            if (!IsReady || !IsOnline()) {
                 return;
             }
 
@@ -337,11 +544,16 @@ namespace Alice {
         }
 
         public async Task WaitForRoundStartReadyAsync(int round) {
-            if (!IsReady || !IsSessionHost) {
+            if (!IsReady || !IsOnline()) {
                 return;
             }
 
-            while (!disconnected && latestRoundStartReadyRound < round) {
+            var waitUntil = NetworkTime + DefaultFlowGateTimeoutSeconds;
+            while (!disconnected && NetworkTime < waitUntil) {
+                if (roundStartReadyMaskByRound.TryGetValue(round, out var mask) && mask == 0b11) {
+                    return;
+                }
+
                 await Task.Yield();
             }
         }
@@ -408,7 +620,7 @@ namespace Alice {
         }
 
         void SendRequest<T>(ReliableKey key, T payload) {
-            if (!IsReady || IsSessionHost) {
+            if (!IsReady || runner.IsServer) {
                 return;
             }
 
@@ -454,6 +666,59 @@ namespace Alice {
             };
         }
 
+        // 受信・送信の両方で「いま正とするアウトカム」を一本化。同一ラウンドの重複は冪等、RoundResolved から BattleFinished への更新のみ許可する。
+        bool TryMergeOutcomeAuthoritative(BattleOutcomeSnapshot incoming, out BattleOutcomeSnapshot merged) {
+            merged = incoming;
+            var cur = latestOutcome.CurrentValue;
+            if (cur.Sequence == 0) {
+                acceptedOutcomeSequence += 1;
+                merged = incoming with {
+                    Sequence = acceptedOutcomeSequence,
+                };
+                latestOutcome.Value = merged;
+                return true;
+            }
+
+            if (incoming.FinishedRound < cur.FinishedRound) {
+                return false;
+            }
+
+            if (incoming.FinishedRound == cur.FinishedRound) {
+                if (incoming.Kind == cur.Kind && OutcomesEquivalent(cur, incoming)) {
+                    return false;
+                }
+
+                if (cur.Kind == BattleOutcomeKind.RoundResolved
+                    && incoming.Kind == BattleOutcomeKind.BattleFinished) {
+                    acceptedOutcomeSequence += 1;
+                    merged = incoming with {
+                        Sequence = acceptedOutcomeSequence,
+                    };
+                    latestOutcome.Value = merged;
+                    return true;
+                }
+
+                return false;
+            }
+
+            acceptedOutcomeSequence += 1;
+            merged = incoming with {
+                Sequence = acceptedOutcomeSequence,
+            };
+            latestOutcome.Value = merged;
+            return true;
+        }
+
+        static bool OutcomesEquivalent(BattleOutcomeSnapshot a, BattleOutcomeSnapshot b) {
+            return a.Kind == b.Kind
+                && a.FinishedRound == b.FinishedRound
+                && a.DeadPlayerId == b.DeadPlayerId
+                && a.RoundWinnerPlayerId == b.RoundWinnerPlayerId
+                && a.ContinueBattle == b.ContinueBattle
+                && a.FinalWinnerPlayerId == b.FinalWinnerPlayerId
+                && a.StopMusic == b.StopMusic;
+        }
+
         static bool IsPhaseAtLeast(BattleFlowPhaseSnapshot snapshot, BattleFlowState state, int round) {
             if (snapshot.Round != round) {
                 return snapshot.Round > round;
@@ -487,6 +752,18 @@ namespace Alice {
             return Encoding.UTF8.GetString(data.Array, data.Offset, data.Count);
         }
 
+        // 相手から届いた FlowGate をローカルマスクに OR する。PassFlowGateAsync は自プレイヤー分も OR 済みなので 0b11 で解放。
+        void RecordFlowGateRemoteArrival(int gate, int round, int subIndex, int playerId) {
+            var key = (gate, round, subIndex);
+            if (!flowGateArrivalMask.TryGetValue(key, out var mask)) {
+                mask = 0;
+            }
+
+            playerId = Mathf.Clamp(playerId, 0, 1);
+            mask |= 1 << playerId;
+            flowGateArrivalMask[key] = mask;
+        }
+
         public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) {
             if (runner.IsServer && OnlineBattleProtocol.IsRelayKey(key)) {
                 if (data.Array == null) {
@@ -500,6 +777,12 @@ namespace Alice {
                 return;
             }
 
+            if (key == OnlineBattleProtocol.FlowGateKey) {
+                var payload = JsonUtility.FromJson<FlowGatePayload>(Decode(data));
+                RecordFlowGateRemoteArrival(payload.gate, payload.round, payload.subIndex, payload.playerId);
+                return;
+            }
+
             if (key == OnlineBattleProtocol.PhaseKey) {
                 var payload = JsonUtility.FromJson<PhasePayload>(Decode(data));
                 var snapshot = new BattleFlowPhaseSnapshot((ulong)payload.sequence, (BattleFlowState)payload.phase, payload.round);
@@ -507,6 +790,7 @@ namespace Alice {
                     latestPhase.Value = snapshot;
                     Debug.Log($"{LOG_PREFIX} Received phase. sequence={snapshot.Sequence}, state={snapshot.State}, round={snapshot.Round}");
                 }
+
                 return;
             }
 
@@ -523,10 +807,10 @@ namespace Alice {
                     payload.stopMusic,
                     payload.playerIds ?? Array.Empty<int>(),
                     payload.roundWinCounts ?? Array.Empty<int>());
-                if (snapshot.Sequence > latestOutcome.CurrentValue.Sequence) {
-                    latestOutcome.Value = snapshot;
-                    Debug.Log($"{LOG_PREFIX} Received outcome. sequence={snapshot.Sequence}, kind={snapshot.Kind}, round={snapshot.FinishedRound}");
+                if (TryMergeOutcomeAuthoritative(snapshot, out var merged)) {
+                    Debug.Log($"{LOG_PREFIX} Received outcome. acceptedSeq={merged.Sequence}, kind={merged.Kind}, round={merged.FinishedRound}");
                 }
+
                 return;
             }
 
@@ -573,6 +857,7 @@ namespace Alice {
                     latestRoundStart.Value = snapshot;
                     Debug.Log($"{LOG_PREFIX} Received round start schedule. sequence={snapshot.Sequence}, round={snapshot.Round}, start={snapshot.StartNetworkTime:0.000}");
                 }
+
                 return;
             }
 
@@ -587,6 +872,7 @@ namespace Alice {
                     latestBeatSyncResume.Value = snapshot;
                     Debug.Log($"{LOG_PREFIX} Received beat sync resume. sequence={snapshot.Sequence}, beat={snapshot.BeatIndex}, resume={snapshot.ResumeNetworkTime:0.000}, hostPlayback={snapshot.HostPlaybackTime:0.000}");
                 }
+
                 return;
             }
 
@@ -613,10 +899,53 @@ namespace Alice {
 
             if (key == OnlineBattleProtocol.RoundStartReadyKey) {
                 var payload = JsonUtility.FromJson<RoundStartReadyPayload>(Decode(data));
+                var pid = Mathf.Clamp(payload.playerId, 0, 1);
+                if (!roundStartReadyMaskByRound.TryGetValue(payload.round, out var mask)) {
+                    mask = 0;
+                }
+
+                mask |= 1 << pid;
+                roundStartReadyMaskByRound[payload.round] = mask;
+                if (pid == 0) {
+                    roundStartReadyTimePlayer0[payload.round] = payload.readyNetworkTime;
+                }
+                else {
+                    roundStartReadyTimePlayer1[payload.round] = payload.readyNetworkTime;
+                }
+
                 if (payload.round > latestRoundStartReadyRound) {
                     latestRoundStartReadyRound = payload.round;
                 }
-                Debug.Log($"{LOG_PREFIX} Received round start ready. round={payload.round}");
+
+                Debug.Log($"{LOG_PREFIX} Received round start ready. round={payload.round}, player={pid}, ready={payload.readyNetworkTime:0.000}");
+                return;
+            }
+
+            if (key == OnlineBattleProtocol.SuspendMenuBeatKey) {
+                var payload = JsonUtility.FromJson<SuspendMenuBeatPayload>(Decode(data));
+                var pid = Mathf.Clamp(payload.playerId, 0, 1);
+                if (!suspendMenuBeatMaskByBeat.TryGetValue(payload.applyBeatIndex, out var m)) {
+                    m = 0;
+                }
+
+                m |= 1 << pid;
+                suspendMenuBeatMaskByBeat[payload.applyBeatIndex] = m;
+                suspendMenuBeatReceivedSubject.OnNext(new OnlineSuspendMenuBeatSnapshot(payload.applyBeatIndex, pid));
+                return;
+            }
+
+            if (key == OnlineBattleProtocol.ResumeAckKey) {
+                var payload = JsonUtility.FromJson<ResumeAckPayload>(Decode(data));
+                var pid = Mathf.Clamp(payload.playerId, 0, 1);
+                resumeAckMask |= 1 << pid;
+                if (pid == 0) {
+                    resumeAckTimePlayer0 = payload.ackNetworkTime;
+                }
+                else {
+                    resumeAckTimePlayer1 = payload.ackNetworkTime;
+                }
+
+                return;
             }
         }
 
@@ -648,6 +977,7 @@ namespace Alice {
             latestBeatSyncResume.Dispose();
             beatCommandReceivedSubject.Dispose();
             strikerPreCommandSnapshotReceivedSubject.Dispose();
+            suspendMenuBeatReceivedSubject.Dispose();
             pauseRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();
             suspendFinishRequestedSubject.Dispose();
@@ -689,6 +1019,14 @@ namespace Alice {
 
         [Serializable]
         class EmptyPayload { }
+
+        [Serializable]
+        class FlowGatePayload {
+            public int gate;
+            public int round;
+            public int subIndex;
+            public int playerId;
+        }
 
         [Serializable]
         class PhasePayload {
@@ -746,6 +1084,8 @@ namespace Alice {
         [Serializable]
         class RoundStartReadyPayload {
             public int round;
+            public float readyNetworkTime;
+            public int playerId;
         }
 
         [Serializable]
@@ -761,6 +1101,18 @@ namespace Alice {
             public int beatIndex;
             public float resumeNetworkTime;
             public float hostPlaybackTime;
+        }
+
+        [Serializable]
+        class SuspendMenuBeatPayload {
+            public int applyBeatIndex;
+            public int playerId;
+        }
+
+        [Serializable]
+        class ResumeAckPayload {
+            public int playerId;
+            public float ackNetworkTime;
         }
     }
 }

@@ -13,6 +13,12 @@ namespace Alice {
         public static readonly ReliableKey RoundStartScheduleKey = ReliableKey.FromInts(0x4253, 2, 9);
         public static readonly ReliableKey BeatSyncResumeKey = ReliableKey.FromInts(0x4253, 2, 10);
         public static readonly ReliableKey StrikerPreCommandSnapshotKey = ReliableKey.FromInts(0x4253, 2, 11);
+        // バトルフロー用バリア: クライアント→リレーサーバー→相手へ転送し、双方が同じゲートに到達したか判定する。
+        public static readonly ReliableKey FlowGateKey = ReliableKey.FromInts(0x4253, 2, 12);
+        // サスペンド解除の「解除した」合図を双方向で揃え、対称な resumeNetworkTime 合意の前提にする。
+        public static readonly ReliableKey ResumeAckKey = ReliableKey.FromInts(0x4253, 2, 13);
+        // ポーズメニュー要求を「適用ビート」に紐づけ、BeatJudge のオンライン拍処理と同じ拍で両者がサスペンドに入る。
+        public static readonly ReliableKey SuspendMenuBeatKey = ReliableKey.FromInts(0x4253, 2, 14);
 
         public static bool IsRelayKey(ReliableKey key) {
             return key == PhaseKey
@@ -25,7 +31,10 @@ namespace Alice {
                    || key == RoundStartReadyKey
                    || key == RoundStartScheduleKey
                    || key == BeatSyncResumeKey
-                   || key == StrikerPreCommandSnapshotKey;
+                   || key == StrikerPreCommandSnapshotKey
+                   || key == FlowGateKey
+                   || key == ResumeAckKey
+                   || key == SuspendMenuBeatKey;
         }
     }
 }
