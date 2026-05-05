@@ -13,6 +13,7 @@ namespace Alice {
         public DuelInviteDto incomingInvite;
         public DuelPresenceDto candidate;
         public DuelReservationDto reservation;
+        public DuelPresenceDto opponentPresence;
     }
 
     [Serializable]
@@ -63,5 +64,6 @@ namespace Alice {
         public string inviteId;
         public string status;
         public string[] playerSessionIds;
+        public string expiresAt;
     }
 }

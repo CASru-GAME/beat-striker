@@ -59,7 +59,15 @@ app.post("/duel/prompts", async (req, res) => {
 
   const reservation = await findActiveReservationForSession(duelSessionId, now);
   if (reservation) {
-    return res.json({ reservation });
+    const opponentSessionId = reservation.playerSessionIds.find(id => id !== duelSessionId);
+    let opponentPresence = null;
+    if (opponentSessionId) {
+      const oppDoc = await db.collection("presence").doc(opponentSessionId).get();
+      if (oppDoc.exists && !isExpired(oppDoc.data().expiresAt, now)) {
+        opponentPresence = toPresenceDto(oppDoc);
+      }
+    }
+    return res.json({ reservation, opponentPresence });
   }
 
   const incomingInvite = await findIncomingInvite(duelSessionId, now);
@@ -356,7 +364,8 @@ function toReservationDto(doc) {
     id: doc.id,
     inviteId: value.inviteId || "",
     status: value.status || "",
-    playerSessionIds: Array.isArray(value.playerSessionIds) ? value.playerSessionIds : []
+    playerSessionIds: Array.isArray(value.playerSessionIds) ? value.playerSessionIds : [],
+    expiresAt: value.expiresAt ? (typeof value.expiresAt.toDate === "function" ? value.expiresAt.toDate().toISOString() : new Date(value.expiresAt).toISOString()) : ""
   };
 }
 

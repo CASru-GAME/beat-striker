@@ -18,6 +18,11 @@ namespace Alice {
         [SerializeField] ActionEmitter candidateDuelInviteEmitter;
         [SerializeField] ActionEmitter candidateDuelSkipEmitter;
 
+        [SerializeField] GameObject matchStatusRoot;
+        [SerializeField] TMPro.TextMeshProUGUI matchOpponentNameText;
+        [SerializeField] TMPro.TextMeshProUGUI matchTimeLimitText;
+        [SerializeField] TMPro.TextMeshProUGUI matchOpponentStatusText;
+
         public Observable<Unit> IncomingDuelAccepted => incomingDuelAccepted;
         public Observable<Unit> IncomingDuelRejected => incomingDuelRejected;
         public Observable<Unit> CandidateDuelInvited => candidateDuelInvited;
@@ -30,6 +35,7 @@ namespace Alice {
             candidateDuelSkipEmitter.OnClickEvent.Subscribe(_ => candidateDuelSkipped.OnNext(Unit.Default)).AddTo(this);
             SetIncomingDuelVisible(false);
             SetCandidateDuelVisible(false);
+            SetMatchStatusVisible(false);
         }
 
         public void SetOverlayVisible(bool visible) {
@@ -46,6 +52,24 @@ namespace Alice {
 
         public void SetCandidateDuelVisible(bool visible) {
             candidateDuelDialogRoot.SetActive(visible);
+        }
+
+        public void SetMatchStatusVisible(bool visible) {
+            if (matchStatusRoot != null) {
+                matchStatusRoot.SetActive(visible);
+            }
+        }
+
+        public void SetMatchStatus(string opponentName, string timeLimit, string opponentStatus) {
+            if (matchOpponentNameText != null) {
+                matchOpponentNameText.text = opponentName;
+            }
+            if (matchTimeLimitText != null) {
+                matchTimeLimitText.text = timeLimit;
+            }
+            if (matchOpponentStatusText != null) {
+                matchOpponentStatusText.text = opponentStatus;
+            }
         }
     }
 }
