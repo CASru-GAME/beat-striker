@@ -102,7 +102,7 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
 
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="serviceAccount:${SA_EMAIL}" \
-  --role="roles/artifactregistry.writer"
+  --role="roles/artifactregistry.admin"
 
 # --- Terraform apply に必要な追加権限 ---
 
