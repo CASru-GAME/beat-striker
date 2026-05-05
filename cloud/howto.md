@@ -104,6 +104,10 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="serviceAccount:${SA_EMAIL}" \
   --role="roles/artifactregistry.admin"
 
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/storage.admin"
+
 # --- Terraform apply に必要な追加権限 ---
 
 # API有効化 (google_project_service)
