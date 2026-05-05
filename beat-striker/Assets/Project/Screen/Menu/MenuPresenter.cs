@@ -75,6 +75,13 @@ namespace Alice {
                 })
                 .AddTo(subscriptions);
 
+            this.view.GotoRankingRequested
+                .Subscribe(_ => {
+                    Debug.Log($"{LOG_PREFIX} GotoRankingRequested received");
+                    RequestTransitionToRanking();
+                })
+                .AddTo(subscriptions);
+
             _ = EnterMenuAsync();
         }
 
@@ -109,6 +116,17 @@ namespace Alice {
             tutorialSetting.ClearTutorialBattleRequest();
             Debug.Log($"{LOG_PREFIX} GoToStageSelect requesting start transition. nextScene={AppScene.StageSelect}");
             RequestTransition(AppScene.StageSelect);
+        }
+
+        void RequestTransitionToRanking() {
+            if (inputState != MenuInputState.Ready) {
+                Debug.Log($"{LOG_PREFIX} RequestTransitionToRanking ignored because inputState={inputState}");
+                return;
+            }
+
+            tutorialSetting.ClearTutorialBattleRequest();
+            Debug.Log($"{LOG_PREFIX} RequestTransitionToRanking requesting start transition. nextScene={AppScene.Ranking}");
+            RequestTransition(AppScene.Ranking);
         }
 
         void StartTutorialBattle() {

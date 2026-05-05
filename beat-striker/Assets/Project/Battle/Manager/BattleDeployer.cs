@@ -54,6 +54,7 @@ namespace Alice {
         readonly IStrikerRegistry strikerRegistry;
         readonly IStrikerFactory strikerHubFactory;
         readonly IGamePadRegistry gamePadRegistry;
+        readonly IReplaySetting replaySetting;
         readonly IAIRegistry aiRegistry;
         readonly IAISetting aiSetting;
         readonly ITutorialSetting tutorialSetting;
@@ -69,7 +70,7 @@ namespace Alice {
         LearningCharacter lastSelectedOpponent;
 
         [Inject]
-        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
+        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IReplaySetting replaySetting, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
             this.battleSetting = battleSetting;
             this.battleSelectSetting = battleSelectSetting;
             this.battleRuleSetting = battleRuleSetting;
@@ -78,6 +79,7 @@ namespace Alice {
             this.strikerRegistry = strikerRegistry;
             this.strikerHubFactory = strikerHubFactory;
             this.gamePadRegistry = gamePadRegistry;
+            this.replaySetting = replaySetting;
             this.aiRegistry = aiRegistry;
             this.aiSetting = aiSetting;
             this.tutorialSetting = tutorialSetting;
@@ -382,7 +384,9 @@ namespace Alice {
                     }
 
                     if (beatResult.Button == GamePadButton.Select) {
-                        pendingPauseBeatIndexes.Add(beatResult.BeatIndex);
+                        if (!replaySetting.HasReplay) {
+                            pendingPauseBeatIndexes.Add(beatResult.BeatIndex);
+                        }
                         return;
                     }
 

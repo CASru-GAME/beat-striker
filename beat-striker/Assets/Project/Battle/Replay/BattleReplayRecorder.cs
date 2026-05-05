@@ -23,6 +23,7 @@ namespace Alice {
         readonly IStrikerRegistry strikerRegistry;
         readonly IBattleHistoryApiClient apiClient;
         readonly IReplaySetting replaySetting;
+        readonly IAISetting aiSetting;
         readonly List<ReplayRoundBuilder> rounds = new();
         readonly List<IDisposable> subscriptions = new();
         readonly List<IDisposable> roundSubscriptions = new();
@@ -43,7 +44,8 @@ namespace Alice {
             IMusicPlayer musicPlayer,
             IStrikerRegistry strikerRegistry,
             IBattleHistoryApiClient apiClient,
-            IReplaySetting replaySetting) {
+            IReplaySetting replaySetting,
+            IAISetting aiSetting) {
             this.battleSelectSetting = battleSelectSetting;
             this.playerSelectSetting = playerSelectSetting;
             this.stageRegistry = stageRegistry;
@@ -54,10 +56,11 @@ namespace Alice {
             this.strikerRegistry = strikerRegistry;
             this.apiClient = apiClient;
             this.replaySetting = replaySetting;
+            this.aiSetting = aiSetting;
         }
 
         public void BeginBattle() {
-            if (replaySetting.HasReplay) {
+            if (ShouldSkipHistoryRecording()) {
                 return;
             }
 
@@ -70,7 +73,7 @@ namespace Alice {
         }
 
         public void BeginRound(int roundNumber) {
-            if (!battleStarted || replaySetting.HasReplay) {
+            if (!battleStarted || ShouldSkipHistoryRecording()) {
                 return;
             }
 
@@ -86,7 +89,7 @@ namespace Alice {
         }
 
         public void FinishBattle(int winnerPlayerId, IReadOnlyDictionary<PlayerId, int> roundWins) {
-            if (!battleStarted || finished || replaySetting.HasReplay || saveRequest == null) {
+            if (!battleStarted || finished || ShouldSkipHistoryRecording() || saveRequest == null) {
                 return;
             }
 
@@ -102,9 +105,10 @@ namespace Alice {
         async Task SaveAsync(BattleHistorySaveRequest request) {
             try {
                 await apiClient.SaveAsync(request);
+                Debug.Log($"<color=cyan>{LOG_PREFIX} Battle history upload succeeded.</color>");
             }
             catch (Exception exception) {
-                Debug.LogWarning($"{LOG_PREFIX} Failed to save battle history: {exception.Message}");
+                Debug.Log($"<color=red>{LOG_PREFIX} Failed to upload battle history (continuing): {exception.Message}</color>");
             }
         }
 
@@ -213,6 +217,10 @@ namespace Alice {
                 counts[playerId] = roundWins != null && roundWins.TryGetValue(new PlayerId(playerId), out var count) ? count : 0;
             }
             return counts;
+        }
+
+        bool ShouldSkipHistoryRecording() {
+            return replaySetting.HasReplay || aiSetting.IsInfiniteRoundMode;
         }
 
         public void Dispose() {

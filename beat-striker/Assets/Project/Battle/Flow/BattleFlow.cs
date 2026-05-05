@@ -162,6 +162,9 @@ namespace Alice {
                 }
 
                 await PrepareBattleAsync();
+                if (stateMachine.IsBattleEndingOrFinished) {
+                    return;
+                }
                 Debug.Log($"{LOG_PREFIX} StartBattle reset battle state");
                 beatJudge.ResetBattleState();
                 battleReplayRecorder.BeginBattle();
@@ -178,10 +181,19 @@ namespace Alice {
                 }
 
                 var endResult = await sceneTransitionService.RequestEndTransitionAsync(ResolveCurrentBattleScene());
+                if (stateMachine.IsBattleEndingOrFinished) {
+                    return;
+                }
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync transition end completed. isSuccess={endResult.IsSuccess}");
                 await battlePresenter.PlayBattleOpeningAsync();
+                if (stateMachine.IsBattleEndingOrFinished) {
+                    return;
+                }
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync battle opening completed");
                 await System.Threading.Tasks.Task.WhenAll(battlePlayerPresenters.Select(battlePlayerPresenter => battlePlayerPresenter.PlayOpeningHpFillAsync()));
+                if (stateMachine.IsBattleEndingOrFinished) {
+                    return;
+                }
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync battle player HP opening animation completed");
 
 
@@ -262,6 +274,7 @@ namespace Alice {
             flowEventDisposables.Add(tutorialSignalEmitter.OnTutorialEndBattleToTitleRequested.Subscribe(_event => {
                 _ = EndBattleToTitleAsync();
             }));
+            SubscribeReplayViewerInterruptInput();
 
             if (onlineHandler.IsOnlineBattle) {
                 // フェーズは補助（例: 相手が先に Resolving に入ったときの追従）。メインの足並みは FlowGate と対称アウトカム側。
@@ -284,6 +297,22 @@ namespace Alice {
                 subscription.Dispose();
             }
             flowEventDisposables.Clear();
+        }
+
+        void SubscribeReplayViewerInterruptInput() {
+            if (!battleReplayDriver.IsReplay) {
+                return;
+            }
+
+            const int maxReplayViewerPlayerSlots = 8;
+            for (var playerId = 2; playerId < maxReplayViewerPlayerSlots; playerId++) {
+                var playerGamePad = gamePadRegistry.Get(playerId);
+                flowEventDisposables.Add(playerGamePad.OnButtonDown
+                    .Where(button => button == GamePadButton.Select)
+                    .Subscribe(_button => {
+                        _ = EndReplayToRankingAsync();
+                    }));
+            }
         }
 
         void OnPauseMenuRequested() {
@@ -444,6 +473,32 @@ namespace Alice {
 
             var startResult = sceneTransitionService.RequestStartTransition(AppScene.Title);
             Debug.Log($"{LOG_PREFIX} EndBattleToTitleAsync start transition result. nextScene={AppScene.Title}, isSuccess={startResult.IsSuccess}");
+        }
+
+        async Task EndReplayToRankingAsync() {
+            if (!battleReplayDriver.IsReplay || !stateMachine.CanBeginEndingToTitle) {
+                return;
+            }
+
+            if (!stateMachine.TryBeginEndingToTitle(nameof(EndReplayToRankingAsync))) {
+                return;
+            }
+
+            roundHandler.IncrementActiveRoundToken();
+            pauseHandler.PauseRoundRuntimeSystems(controlsMusic: false);
+            battlePresenter.CloseSuspendMenu();
+            musicPlayer.Stop();
+            battleMusicStarted = false;
+            battleDeployer.DisconnectRoundInputs();
+            beatJudge.ResetRoundState();
+            pauseHandler.PresentRoundPlayableFinishToPlayers();
+            battleFinishedSubject.OnNext(Unit.Default);
+
+            await battlePresenter.PlayBattleFinishFadeInAsync();
+            CompleteBattle();
+
+            var startResult = sceneTransitionService.RequestStartTransition(AppScene.Ranking);
+            Debug.Log($"{LOG_PREFIX} EndReplayToRankingAsync start transition result. nextScene={AppScene.Ranking}, isSuccess={startResult.IsSuccess}");
         }
 
     }
