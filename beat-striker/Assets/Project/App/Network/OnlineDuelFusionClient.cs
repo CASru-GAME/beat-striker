@@ -23,7 +23,9 @@ namespace Alice {
         ReadOnlyReactiveProperty<OnlineDuelUiState> State { get; }
         bool HasReservation { get; }
         string ReservationId { get; }
+        int LastSceneSyncId { get; }
         Task NotifySceneReadyAsync(AppScene scene);
+        Task NotifyPlayerStatusAsync(OnlineDuelPlayerStatus status);
         void InviteCandidate();
         void SkipCandidate();
         void AcceptInvite();
@@ -42,6 +44,7 @@ namespace Alice {
         const string LOG_PREFIX = "[OnlineDuelFusionClient]";
         const int LobbyPlayerCount = 32;
         const float WaitHeartbeatIntervalSeconds = 1f;
+        const float PresenceHeartbeatIntervalSeconds = 30f;
         const float RunnerReleaseWaitTimeoutSeconds = 30f;
 
         readonly IAppNetworkSetting networkSetting;
@@ -58,10 +61,15 @@ namespace Alice {
         int matchLogSequence;
         int currentMatchLogId;
         AppScene currentScene = AppScene.Title;
+        OnlineDuelPlayerStatus currentPlayerStatus = OnlineDuelPlayerStatus.StageSelecting;
+        int sceneSyncSequence;
+        int lastSceneSyncId;
+        float lastPresenceHeartbeatAt;
 
         public ReadOnlyReactiveProperty<OnlineDuelUiState> State => state;
         public bool HasReservation => state.CurrentValue.HasReservation;
         public string ReservationId => state.CurrentValue.ReservationId;
+        public int LastSceneSyncId => lastSceneSyncId;
 
         [Inject]
         public OnlineDuelFusionClient(IAppNetworkSetting networkSetting, IOnlineDuelIdentity identity) {
@@ -74,6 +82,7 @@ namespace Alice {
             networkSetting.IsOnline.Subscribe(__ => {
                 _ = EnsureRunnerStartedAsync("online setting changed");
             }).AddTo(disposables);
+            Observable.EveryUpdate().Subscribe(_ => TickPresenceHeartbeat()).AddTo(disposables);
             _ = EnsureRunnerStartedAsync("initialize");
         }
 
@@ -84,15 +93,33 @@ namespace Alice {
 
         public async Task NotifySceneReadyAsync(AppScene scene) {
             currentScene = scene;
+            currentPlayerStatus = ResolveInitialPlayerStatus(scene);
             if (IsBattleScene(scene)) {
                 return;
             }
 
+            sceneSyncSequence += 1;
+            lastSceneSyncId = sceneSyncSequence;
             await EnsureRunnerStartedAsync($"scene ready {scene}");
             SendCommand(new OnlineDuelCommandPayload {
                 kind = (int)OnlineDuelCommandKind.PresenceUpdate,
                 duelSessionId = identity.DuelSessionId,
                 scene = scene.ToString(),
+                sceneSyncId = lastSceneSyncId,
+            });
+        }
+
+        public async Task NotifyPlayerStatusAsync(OnlineDuelPlayerStatus status) {
+            currentPlayerStatus = status;
+            if (IsBattleScene(currentScene)) {
+                return;
+            }
+
+            await EnsureRunnerStartedAsync($"player status {status}");
+            SendCommand(new OnlineDuelCommandPayload {
+                kind = (int)OnlineDuelCommandKind.PresenceUpdate,
+                duelSessionId = identity.DuelSessionId,
+                scene = currentScene.ToString(),
             });
         }
 
@@ -168,6 +195,7 @@ namespace Alice {
                 return;
             }
 
+            currentPlayerStatus = OnlineDuelPlayerStatus.Waiting;
             SendCommand(new OnlineDuelCommandPayload {
                 kind = (int)OnlineDuelCommandKind.ReservationConsume,
                 duelSessionId = identity.DuelSessionId,
@@ -191,6 +219,17 @@ namespace Alice {
             localMatchRequest = request;
             cancellationRequested = false;
             matchCompletion = new TaskCompletionSource<OnlineMatchResult>();
+            currentPlayerStatus = OnlineDuelPlayerStatus.Waiting;
+            var deadline = Time.realtimeSinceStartup + networkSetting.MatchTimeoutSeconds;
+            var currentState = state.CurrentValue;
+            state.OnNext(currentState with {
+                Phase = OnlineDuelPhase.Matching,
+                ReservationId = request.ReservationId,
+                OpponentSessionId = string.IsNullOrWhiteSpace(currentState.OpponentSessionId)
+                    ? currentState.CandidateSessionId
+                    : currentState.OpponentSessionId,
+                MatchDeadlineRealtime = deadline,
+            });
 
             SendCommand(new OnlineDuelCommandPayload {
                 kind = (int)OnlineDuelCommandKind.MatchRequest,
@@ -202,7 +241,7 @@ namespace Alice {
             });
 
             Debug.Log($"{LOG_PREFIX} [match#{mid}] Match request sent. reservationId={request.ReservationId}, striker={request.LocalStriker}, stage={request.CandidateStage}, musicId={request.CandidateMusicId}");
-            return await WaitForMatchAsync(mid);
+            return await WaitForMatchAsync(mid, deadline);
         }
 
         public void CancelMatchmaking() {
@@ -212,7 +251,7 @@ namespace Alice {
 
             cancellationRequested = true;
             SendCommand(new OnlineDuelCommandPayload {
-                kind = (int)OnlineDuelCommandKind.InviteCancel,
+                kind = (int)OnlineDuelCommandKind.MatchCancel,
                 duelSessionId = identity.DuelSessionId,
                 reservationId = localMatchRequest.ReservationId,
             });
@@ -221,6 +260,7 @@ namespace Alice {
         }
 
         public async Task TeardownOnlineRunnerAsync() {
+            matchCompletion?.TrySetException(new OperationCanceledException("Online runner was torn down."));
             state.OnNext(OnlineDuelUiState.Idle(identity.DuelSessionId));
             if (runner == null || !runner.IsRunning) {
                 return;
@@ -302,8 +342,7 @@ namespace Alice {
             ReleaseRunner($"{context} timeout");
         }
 
-        async Task<OnlineMatchResult> WaitForMatchAsync(int mid) {
-            var deadline = Time.realtimeSinceStartup + networkSetting.MatchTimeoutSeconds;
+        async Task<OnlineMatchResult> WaitForMatchAsync(int mid, float deadline) {
             var waitStartedAt = Time.realtimeSinceStartup;
             var lastHeartbeatAt = waitStartedAt;
 
@@ -316,6 +355,7 @@ namespace Alice {
                 if (Time.realtimeSinceStartup >= deadline) {
                     var exception = new TimeoutException($"Online matchmaking timed out after {networkSetting.MatchTimeoutSeconds:0.#} seconds.");
                     matchCompletion.TrySetException(exception);
+                    state.OnNext(OnlineDuelUiState.Idle(identity.DuelSessionId));
                     throw exception;
                 }
 
@@ -335,7 +375,29 @@ namespace Alice {
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(payload.scene)) {
+                payload.scene = currentScene.ToString();
+            }
+            payload.playerStatus = currentPlayerStatus;
             runner.SendReliableDataToServer(OnlineDuelProtocol.CommandKey, OnlineDuelProtocol.SerializeCommand(payload));
+        }
+
+        void TickPresenceHeartbeat() {
+            if (runner == null || !runner.IsRunning || IsBattleScene(currentScene)) {
+                return;
+            }
+
+            var now = Time.realtimeSinceStartup;
+            if (now - lastPresenceHeartbeatAt < PresenceHeartbeatIntervalSeconds) {
+                return;
+            }
+
+            lastPresenceHeartbeatAt = now;
+            SendCommand(new OnlineDuelCommandPayload {
+                kind = (int)OnlineDuelCommandKind.PresenceUpdate,
+                duelSessionId = identity.DuelSessionId,
+                scene = currentScene.ToString(),
+            });
         }
 
         void EnqueueMainThread(Action action, string label) {
@@ -358,11 +420,13 @@ namespace Alice {
                 payload.localIsPlayer1);
 
             var nextPhase = PhaseFromEvent(kind, payload);
+            var current = state.CurrentValue;
             if (kind == OnlineDuelEventKind.MatchStatus
-                && state.CurrentValue.Phase == OnlineDuelPhase.Consumed
-                && state.CurrentValue.ReservationId == (payload.reservationId ?? "")) {
-                nextPhase = OnlineDuelPhase.Consumed;
+                && (current.Phase == OnlineDuelPhase.Consumed || current.Phase == OnlineDuelPhase.Matching)
+                && current.ReservationId == (payload.reservationId ?? "")) {
+                nextPhase = current.Phase;
             }
+            var matchDeadlineRealtime = nextPhase == OnlineDuelPhase.Matching ? current.MatchDeadlineRealtime : 0f;
 
             var next = new OnlineDuelUiState(
                 nextPhase,
@@ -374,7 +438,10 @@ namespace Alice {
                 payload.reservationId ?? "",
                 payload.opponentSessionId ?? "",
                 payload.opponentScene ?? "",
+                payload.opponentStatus,
                 payload.message ?? "",
+                matchDeadlineRealtime,
+                payload.sceneSyncId,
                 matchResult);
             state.OnNext(next);
 
@@ -382,11 +449,27 @@ namespace Alice {
                 matchCompletion.TrySetResult(matchResult);
             }
 
+            if (kind == OnlineDuelEventKind.ReservationExpired && matchCompletion != null && !matchCompletion.Task.IsCompleted) {
+                matchCompletion.TrySetException(new OperationCanceledException(payload.message ?? "Reservation expired."));
+            }
+
             if (kind == OnlineDuelEventKind.Error && matchCompletion != null && !matchCompletion.Task.IsCompleted && !cancellationRequested) {
                 matchCompletion.TrySetException(new InvalidOperationException(payload.message ?? "Online duel error."));
             }
 
             Debug.Log($"{LOG_PREFIX} Event applied. kind={kind}, phase={next.Phase}, reservationId={next.ReservationId}, opponent={next.OpponentSessionId}");
+        }
+
+        void ResetActiveDuelState(string message) {
+            if (!cancellationRequested) {
+                matchCompletion?.TrySetException(new OperationCanceledException(message));
+            }
+
+            localMatchRequest = default;
+            cancellationRequested = false;
+            state.OnNext(OnlineDuelUiState.Idle(identity.DuelSessionId) with {
+                Message = message,
+            });
         }
 
         static OnlineDuelPhase PhaseFromEvent(OnlineDuelEventKind kind, OnlineDuelEventPayload payload) {
@@ -427,6 +510,13 @@ namespace Alice {
             return scene == AppScene.Live || scene == AppScene.Street;
         }
 
+        static OnlineDuelPlayerStatus ResolveInitialPlayerStatus(AppScene scene) {
+            return scene switch {
+                AppScene.CharacterSelect => OnlineDuelPlayerStatus.CharacterSelecting,
+                _ => OnlineDuelPlayerStatus.StageSelecting,
+            };
+        }
+
         public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) {
             if (!ReferenceEquals(runner, this.runner)) {
                 return;
@@ -449,12 +539,8 @@ namespace Alice {
                 return;
             }
 
-            if (shutdownReason != ShutdownReason.Ok && !cancellationRequested) {
-                matchCompletion?.TrySetException(new InvalidOperationException($"Fusion shutdown. reason={shutdownReason}"));
-            }
-
+            ResetActiveDuelState($"Online session was shut down. reason={shutdownReason}");
             ReleaseRunner($"OnShutdown {shutdownReason}");
-            cancellationRequested = false;
         }
 
         public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) {
@@ -462,7 +548,7 @@ namespace Alice {
                 return;
             }
 
-            matchCompletion?.TrySetException(new InvalidOperationException($"Fusion disconnected. reason={reason}"));
+            ResetActiveDuelState($"Disconnected from online session. reason={reason}");
             ReleaseRunner($"OnDisconnectedFromServer {reason}");
         }
 
@@ -471,7 +557,7 @@ namespace Alice {
                 return;
             }
 
-            matchCompletion?.TrySetException(new InvalidOperationException($"Fusion connection failed. reason={reason}"));
+            ResetActiveDuelState($"Online session connection failed. reason={reason}");
             ReleaseRunner($"OnConnectFailed {reason}");
         }
 

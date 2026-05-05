@@ -38,6 +38,9 @@ namespace Alice {
         bool eastStartConfirmationArmed;
         bool isOnlineMatchmakingInProgress;
         bool wasReadyToStart;
+        bool onlineScenePresenceReady;
+        bool hasPublishedOnlineStatus;
+        OnlineDuelPlayerStatus lastPublishedOnlineStatus;
         SceneInputState inputState = SceneInputState.Selecting;
 
         [Inject]
@@ -129,10 +132,9 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} EnableStartInputAfterSceneEnterAsync requesting end transition. scene={AppScene.CharacterSelect}");
             var result = await transitionService.RequestEndTransitionAsync(AppScene.CharacterSelect);
             startTransitionInputEnabled = true;
+            onlineScenePresenceReady = true;
+            PublishOnlineCharacterSelectStatus(CanStartBattle());
             Debug.Log($"{LOG_PREFIX} EnableStartInputAfterSceneEnterAsync completed. isSuccess={result.IsSuccess}, startTransitionInputEnabled={startTransitionInputEnabled}");
-            if (result.IsSuccess) {
-                await onlineDuelCoordinator.NotifySceneReadyAsync(AppScene.CharacterSelect);
-            }
         }
 
         void OnStrikerClicked(StrikerClickRequest request) {
@@ -140,7 +142,7 @@ namespace Alice {
                 return;
             }
 
-            var targetSlot = IsOnline()
+            var targetSlot = IsOnlineSelectionFlow()
                 ? 0
                 : selectionPolicy.ResolveSelectionTargetSlot(
                     request.PlayerId,
@@ -213,7 +215,8 @@ namespace Alice {
 
             inputState = SceneInputState.TransitioningToScreen;
 
-            if (IsOnline()) {
+            if (IsOnlineSelectionFlow()) {
+                EnsureOnlineModeForDuelFlow();
                 view.StartButtonAnimation.SetOnlineWaitingPopupVisible(true);
                 isOnlineMatchmakingInProgress = true;
                 try {
@@ -240,7 +243,7 @@ namespace Alice {
             }
 
             var nextScene = ResolvePlayScene();
-            Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition calling RequestStartTransition. nextScene={nextScene}, wasOnlineFlow={IsOnline()}");
+            Debug.Log($"{LOG_PREFIX} RequestPlaySceneTransition calling RequestStartTransition. nextScene={nextScene}, wasOnlineFlow={IsOnlineSelectionFlow()}");
             var result = transitionService.RequestStartTransition(nextScene);
             if (!result.IsSuccess) {
                 Debug.LogWarning($"{LOG_PREFIX} RequestPlaySceneTransition rejected. nextScene={nextScene}, isSuccess=false. Transition service was not Idle; see [SceneTransitionService] logs for the matching START request id.");
@@ -298,6 +301,7 @@ namespace Alice {
                 throw new InvalidOperationException("Online battle requires player 0 striker selection.");
             }
 
+            await onlineDuelCoordinator.NotifyPlayerStatusAsync(OnlineDuelPlayerStatus.Waiting);
             var reservationId = onlineDuelFusionClient.ReservationId;
             if (onlineDuelFusionClient.HasReservation) {
                 onlineDuelFusionClient.ConsumeReservation();
@@ -350,6 +354,8 @@ namespace Alice {
         }
 
         void RefreshState() {
+            EnsureOnlineModeForDuelFlow();
+            EnforceSelectionModeInvariant();
             RefreshReadyState();
             RefreshStatusView();
         }
@@ -370,6 +376,25 @@ namespace Alice {
             if (!IsTransitioning()) {
                 inputState = allSelected ? SceneInputState.ReadyToStart : SceneInputState.Selecting;
             }
+            PublishOnlineCharacterSelectStatus(allSelected);
+        }
+
+        void PublishOnlineCharacterSelectStatus(bool allSelected) {
+            if (!IsOnlineSelectionFlow() || !onlineScenePresenceReady || IsTransitioning()) {
+                hasPublishedOnlineStatus = false;
+                return;
+            }
+
+            var status = allSelected
+                ? OnlineDuelPlayerStatus.Waiting
+                : OnlineDuelPlayerStatus.CharacterSelecting;
+            if (hasPublishedOnlineStatus && lastPublishedOnlineStatus == status) {
+                return;
+            }
+
+            hasPublishedOnlineStatus = true;
+            lastPublishedOnlineStatus = status;
+            _ = onlineDuelCoordinator.NotifyPlayerStatusAsync(status);
         }
 
         bool IsTransitioning() {
@@ -392,14 +417,40 @@ namespace Alice {
             return true;
         }
 
-        bool IsOnline() {
-            return appNetworkSetting.IsOnline.CurrentValue;
+        bool IsOnlineSelectionFlow() {
+            return appNetworkSetting.IsOnline.CurrentValue
+                   || IsActiveDuelSelectionState(onlineDuelFusionClient.State.CurrentValue);
         }
 
         int GetRequiredSlotCount() {
-            return IsOnline()
+            return IsOnlineSelectionFlow()
                 ? 1
                 : selectionPolicy.GetRequiredSlotCount(GetJoinedPlayerCount());
+        }
+
+        void EnsureOnlineModeForDuelFlow() {
+            if (!appNetworkSetting.IsOnline.CurrentValue
+                && IsActiveDuelSelectionState(onlineDuelFusionClient.State.CurrentValue)) {
+                appNetworkSetting.SetIsOnline(true);
+            }
+        }
+
+        void EnforceSelectionModeInvariant() {
+            if (!IsOnlineSelectionFlow() || IsTransitioning()) {
+                return;
+            }
+
+            for (var playerId = 1; playerId < CharacterSelectSelectionPolicy.MAXPLAYERS; playerId++) {
+                playerSelectSetting.DeselectStriker(playerId);
+            }
+        }
+
+        static bool IsActiveDuelSelectionState(OnlineDuelUiState state) {
+            return state.HasReservation
+                   || state.Phase == OnlineDuelPhase.Reserved
+                   || state.Phase == OnlineDuelPhase.Consumed
+                   || state.Phase == OnlineDuelPhase.Matching
+                   || state.Phase == OnlineDuelPhase.EnterBattle;
         }
 
         int GetJoinedPlayerCount() {

@@ -20,7 +20,6 @@ namespace Alice {
         readonly ITutorialSetting tutorialSetting;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly IOnlineSessionBootstrap onlineSessionBootstrap;
-        readonly IOnlineDuelCoordinator onlineDuelCoordinator;
         readonly CompositeDisposable subscriptions = new();
         MenuInputState inputState = MenuInputState.Ready;
 
@@ -33,8 +32,7 @@ namespace Alice {
             IBattleSelectSetting battleSelectSetting,
             ITutorialSetting tutorialSetting,
             IAppNetworkSetting appNetworkSetting,
-            IOnlineSessionBootstrap onlineSessionBootstrap,
-            IOnlineDuelCoordinator onlineDuelCoordinator) {
+            IOnlineSessionBootstrap onlineSessionBootstrap) {
             this.view = view;
             this.sceneTransitionService = sceneTransitionService;
             this.gamePadRegistry = gamePadRegistry;
@@ -43,7 +41,6 @@ namespace Alice {
             this.tutorialSetting = tutorialSetting;
             this.appNetworkSetting = appNetworkSetting;
             this.onlineSessionBootstrap = onlineSessionBootstrap;
-            this.onlineDuelCoordinator = onlineDuelCoordinator;
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.view.GotoTitleRequested
@@ -88,17 +85,14 @@ namespace Alice {
         }
 
         async Task EnterMenuAsync() {
-            Debug.Log($"{LOG_PREFIX} EnterMenuAsync requesting end transition. scene={AppScene.Menu}");
-            var result = await sceneTransitionService.RequestEndTransitionAsync(AppScene.Menu);
             gamePadRegistry.RestoreOfflinePrimaryLayout(appNetworkSetting.LocalOnlinePlayerId);
             await onlineSessionBootstrap.TeardownOnlineRunnerAsync();
             appNetworkSetting.SetIsOnline(false);
             appNetworkSetting.SetLocalOnlinePlayerId(0);
             tutorialSetting.ClearTutorialBattleRequest();
+            Debug.Log($"{LOG_PREFIX} EnterMenuAsync requesting end transition. scene={AppScene.Menu}");
+            var result = await sceneTransitionService.RequestEndTransitionAsync(AppScene.Menu);
             Debug.Log($"{LOG_PREFIX} EnterMenuAsync end transition completed. isSuccess={result.IsSuccess}");
-            if (result.IsSuccess) {
-                await onlineDuelCoordinator.NotifySceneReadyAsync(AppScene.Menu);
-            }
         }
 
         void RequestTransitionToTitle() {

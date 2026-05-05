@@ -15,7 +15,6 @@ namespace Alice {
         readonly IMusicRegistry musicRegistry;
         readonly IAppBGMPlayer appBgmPlayer;
         readonly ILoadingOverlayService loadingOverlayService;
-        readonly IOnlineDuelCoordinator onlineDuelCoordinator;
         readonly CompositeDisposable subscriptions = new();
         readonly Dictionary<string, MusicCardAddressableAssets> preloadedAssetsByMusicId = new();
         bool initialized;
@@ -29,15 +28,13 @@ namespace Alice {
             IBattleSelectSetting selectSetting,
             IMusicRegistry musicRegistry,
             IAppBGMPlayer appBgmPlayer,
-            ILoadingOverlayService loadingOverlayService,
-            IOnlineDuelCoordinator onlineDuelCoordinator) {
+            ILoadingOverlayService loadingOverlayService) {
             this.view = view;
             this.transitionService = transitionService;
             this.selectSetting = selectSetting;
             this.musicRegistry = musicRegistry;
             this.appBgmPlayer = appBgmPlayer;
             this.loadingOverlayService = loadingOverlayService;
-            this.onlineDuelCoordinator = onlineDuelCoordinator;
 
             _ = InitializeAsync();
         }
@@ -90,9 +87,6 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} EnterStageSelectAsync requesting end transition. scene={AppScene.StageSelect}");
             var result = await transitionService.RequestEndTransitionAsync(AppScene.StageSelect);
             Debug.Log($"{LOG_PREFIX} EnterStageSelectAsync completed. isSuccess={result.IsSuccess}");
-            if (result.IsSuccess) {
-                await onlineDuelCoordinator.NotifySceneReadyAsync(AppScene.StageSelect);
-            }
         }
 
         void OnStageSelected(Stage stage) {

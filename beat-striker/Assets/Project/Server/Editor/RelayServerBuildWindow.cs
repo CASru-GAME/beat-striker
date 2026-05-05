@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build;
@@ -176,8 +175,7 @@ namespace Alice.Editor {
 
             var scenes = new[] { RelayEmptyScenePath };
 
-            var timestamp = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
-            var outDir = Path.Combine(outputParentFolder, timestamp);
+            var outDir = outputParentFolder;
             Directory.CreateDirectory(outDir);
 
             var target = RelayTargets[relayTargetIndex];

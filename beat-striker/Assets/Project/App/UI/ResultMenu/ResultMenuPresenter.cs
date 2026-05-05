@@ -6,12 +6,10 @@ namespace Alice {
         const string LOG_PREFIX = "[ResultMenuPresenter]";
 
         readonly ISceneTransitionService sceneTransitionService;
-        readonly IOnlineDuelCoordinator onlineDuelCoordinator;
         bool initialized;
 
-        public ResultMenuPresenter(ISceneTransitionService sceneTransitionService, IOnlineDuelCoordinator onlineDuelCoordinator) {
+        public ResultMenuPresenter(ISceneTransitionService sceneTransitionService) {
             this.sceneTransitionService = sceneTransitionService;
-            this.onlineDuelCoordinator = onlineDuelCoordinator;
             Initialize();
         }
 
@@ -31,9 +29,6 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} EnterResultMenuAsync requesting end transition. scene={AppScene.ResultMenu}");
             var result = await sceneTransitionService.RequestEndTransitionAsync(AppScene.ResultMenu);
             Debug.Log($"{LOG_PREFIX} EnterResultMenuAsync completed. isSuccess={result.IsSuccess}");
-            if (result.IsSuccess) {
-                await onlineDuelCoordinator.NotifySceneReadyAsync(AppScene.ResultMenu);
-            }
         }
     }
 }

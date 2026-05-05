@@ -24,7 +24,6 @@ namespace Alice {
         readonly IBattleSelectSetting battleSelectSetting;
         readonly IPlayerSelectSetting playerSelectSetting;
         readonly IAppNetworkSetting appNetworkSetting;
-        readonly IOnlineDuelCoordinator onlineDuelCoordinator;
         readonly CompositeDisposable subscriptions = new();
         RankingInputState inputState = RankingInputState.Ready;
 
@@ -37,8 +36,7 @@ namespace Alice {
             IReplaySetting replaySetting,
             IBattleSelectSetting battleSelectSetting,
             IPlayerSelectSetting playerSelectSetting,
-            IAppNetworkSetting appNetworkSetting,
-            IOnlineDuelCoordinator onlineDuelCoordinator) {
+            IAppNetworkSetting appNetworkSetting) {
             this.view = view;
             this.historyListView = historyListView;
             this.sceneTransitionService = sceneTransitionService;
@@ -47,7 +45,6 @@ namespace Alice {
             this.battleSelectSetting = battleSelectSetting;
             this.playerSelectSetting = playerSelectSetting;
             this.appNetworkSetting = appNetworkSetting;
-            this.onlineDuelCoordinator = onlineDuelCoordinator;
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.view.BackToMenuRequested
@@ -71,9 +68,6 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} EnterRankingAsync requesting end transition. scene={AppScene.Ranking}");
             var result = await sceneTransitionService.RequestEndTransitionAsync(AppScene.Ranking);
             Debug.Log($"{LOG_PREFIX} EnterRankingAsync end transition completed. isSuccess={result.IsSuccess}");
-            if (result.IsSuccess) {
-                await onlineDuelCoordinator.NotifySceneReadyAsync(AppScene.Ranking);
-            }
             await LoadHistoryAsync();
         }
 

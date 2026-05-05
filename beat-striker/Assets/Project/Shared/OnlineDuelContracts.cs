@@ -11,8 +11,15 @@ namespace Alice {
         InviteSent,
         Reserved,
         Consumed,
+        Matching,
         EnterBattle,
         Error,
+    }
+
+    public enum OnlineDuelPlayerStatus {
+        StageSelecting,
+        CharacterSelecting,
+        Waiting,
     }
 
     public enum OnlineDuelCommandKind {
@@ -24,6 +31,7 @@ namespace Alice {
         ReservationConsume,
         MatchRequest,
         Resync,
+        MatchCancel,
     }
 
     public enum OnlineDuelEventKind {
@@ -48,7 +56,10 @@ namespace Alice {
         string ReservationId,
         string OpponentSessionId,
         string OpponentScene,
+        OnlineDuelPlayerStatus OpponentStatus,
         string Message,
+        float MatchDeadlineRealtime,
+        int SceneSyncId,
         OnlineMatchResult MatchResult) {
         public static OnlineDuelUiState Idle(string localSessionId) {
             return new OnlineDuelUiState(
@@ -61,7 +72,10 @@ namespace Alice {
                 "",
                 "",
                 "",
+                OnlineDuelPlayerStatus.StageSelecting,
                 "",
+                0f,
+                0,
                 default);
         }
 
@@ -114,6 +128,8 @@ namespace Alice {
         public int kind;
         public string duelSessionId;
         public string scene;
+        public OnlineDuelPlayerStatus playerStatus;
+        public int sceneSyncId;
         public string inviteId;
         public string targetSessionId;
         public string reservationId;
@@ -133,7 +149,9 @@ namespace Alice {
         public string reservationId;
         public string opponentSessionId;
         public string opponentScene;
+        public OnlineDuelPlayerStatus opponentStatus;
         public string message;
+        public int sceneSyncId;
         public int localStriker;
         public int opponentStriker;
         public int stage;
