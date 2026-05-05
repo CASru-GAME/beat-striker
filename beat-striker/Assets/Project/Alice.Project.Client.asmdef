@@ -29,7 +29,8 @@
         "R3",
         "ObservableCollections",
         "ObservableCollections.R3",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "RecyclableScrollRect"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

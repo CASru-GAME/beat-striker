@@ -29,6 +29,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Project/Screen/Streat/StreetScene.unity
     guid: bfaffe002fd704d9d8e9365cc58c2348
+  - enabled: 1
+    path: Assets/Project/Screen/Ranking/RankingScene.unity
+    guid: 6422285d1d699434bba65c0ed787bb1d
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 394aa84e13da4453d8a0842dc9ce268f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 3deb260f513e44decbbac50e4095346a, type: 3}

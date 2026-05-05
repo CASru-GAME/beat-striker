@@ -17,6 +17,7 @@ namespace Alice {
         ResultMenu = 5,
         Boot = 6,
         Menu = 7,
+        Ranking = 8,
     }
 
     public interface ISceneLoader {
