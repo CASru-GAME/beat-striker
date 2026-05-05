@@ -9,15 +9,18 @@ namespace Alice {
 
         readonly BackSelectSceneTextHover[] views;
         readonly ISceneTransitionService transitionService;
+        readonly IOnlineDuelCoordinator onlineDuelCoordinator;
         readonly CompositeDisposable subscriptions = new();
         bool initialized;
 
         [Inject]
         public BackScenePresenter(
             BackSelectSceneTextHover[] views,
-            ISceneTransitionService transitionService) {
+            ISceneTransitionService transitionService,
+            IOnlineDuelCoordinator onlineDuelCoordinator) {
             this.views = views;
             this.transitionService = transitionService;
+            this.onlineDuelCoordinator = onlineDuelCoordinator;
 
             Initialize();
         }
@@ -50,6 +53,9 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} EnterBackSceneAsync requesting end transition. scene={AppScene.ResultMenu}");
             var result = await transitionService.RequestEndTransitionAsync(AppScene.ResultMenu);
             Debug.Log($"{LOG_PREFIX} EnterBackSceneAsync completed. isSuccess={result.IsSuccess}");
+            if (result.IsSuccess) {
+                await onlineDuelCoordinator.NotifySceneReadyAsync(AppScene.ResultMenu);
+            }
         }
 
         public void Dispose() {

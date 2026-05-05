@@ -104,6 +104,10 @@ namespace Alice {
 			builder.Register<OnlineSessionBootstrap>(Lifetime.Singleton);
 			builder.Register<IOnlineSessionBootstrap>(resolver => resolver.Resolve<OnlineSessionBootstrap>(), Lifetime.Singleton);
 			builder.Register<INetworkRunnerProvider>(resolver => resolver.Resolve<OnlineSessionBootstrap>(), Lifetime.Singleton);
+			builder.Register<IOnlineDuelIdentity, OnlineDuelIdentity>(Lifetime.Singleton);
+			builder.Register<IOnlineDuelReservationStore, OnlineDuelReservationStore>(Lifetime.Singleton);
+			builder.Register<IOnlineDuelApiClient, OnlineDuelApiClient>(Lifetime.Singleton);
+			builder.Register<IOnlineDuelCoordinator, OnlineDuelCoordinator>(Lifetime.Singleton);
 			builder.Register<IBattleHistoryApiClient, BattleHistoryApiClient>(Lifetime.Singleton);
 			builder.Register<IReplaySetting, ReplaySetting>(Lifetime.Singleton);
 
@@ -139,6 +143,11 @@ namespace Alice {
 				_ = container.Resolve<ISceneTransitionService>();
 				_ = container.Resolve<IOnlineSessionBootstrap>();
 				_ = container.Resolve<INetworkRunnerProvider>();
+				_ = container.Resolve<IOnlineDuelIdentity>();
+				_ = container.Resolve<IOnlineDuelReservationStore>();
+				_ = container.Resolve<IOnlineDuelApiClient>();
+				_ = container.Resolve<IOnlineDuelCoordinator>();
+				_ = container.Resolve<IAppOverlayPresenter>();
 				_ = container.Resolve<IBattleHistoryApiClient>();
 				_ = container.Resolve<IReplaySetting>();
 				_ = container.Resolve<ICursorDeployer>();

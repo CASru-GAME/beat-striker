@@ -3,11 +3,23 @@ namespace Alice {
         public readonly Striker LocalStriker;
         public readonly Stage CandidateStage;
         public readonly string CandidateMusicId;
+        public readonly string ReservationId;
+        public readonly string DuelSessionId;
 
         public OnlineMatchRequest(Striker localStriker, Stage candidateStage, string candidateMusicId) {
             LocalStriker = localStriker;
             CandidateStage = candidateStage;
             CandidateMusicId = candidateMusicId;
+            ReservationId = "";
+            DuelSessionId = "";
+        }
+
+        public OnlineMatchRequest(Striker localStriker, Stage candidateStage, string candidateMusicId, string reservationId, string duelSessionId) {
+            LocalStriker = localStriker;
+            CandidateStage = candidateStage;
+            CandidateMusicId = candidateMusicId;
+            ReservationId = reservationId ?? "";
+            DuelSessionId = duelSessionId ?? "";
         }
     }
 

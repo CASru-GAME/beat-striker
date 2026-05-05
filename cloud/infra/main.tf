@@ -54,3 +54,91 @@ resource "google_firestore_database" "default" {
     google_project_service.services
   ]
 }
+
+resource "google_firestore_field" "presence_expires_at" {
+  project    = var.project_id
+  database   = google_firestore_database.default.name
+  collection = "presence"
+  field      = "expiresAt"
+
+  ttl_config {}
+}
+
+resource "google_firestore_field" "invites_expires_at" {
+  project    = var.project_id
+  database   = google_firestore_database.default.name
+  collection = "invites"
+  field      = "expiresAt"
+
+  ttl_config {}
+}
+
+resource "google_firestore_field" "reservations_expires_at" {
+  project    = var.project_id
+  database   = google_firestore_database.default.name
+  collection = "reservations"
+  field      = "expiresAt"
+
+  ttl_config {}
+}
+
+resource "google_firestore_index" "presence_available_by_expiry" {
+  project     = var.project_id
+  database    = google_firestore_database.default.name
+  collection  = "presence"
+  query_scope = "COLLECTION"
+
+  fields {
+    field_path = "state"
+    order      = "ASCENDING"
+  }
+
+  fields {
+    field_path = "expiresAt"
+    order      = "ASCENDING"
+  }
+}
+
+resource "google_firestore_index" "invites_incoming_by_expiry" {
+  project     = var.project_id
+  database    = google_firestore_database.default.name
+  collection  = "invites"
+  query_scope = "COLLECTION"
+
+  fields {
+    field_path = "toSessionId"
+    order      = "ASCENDING"
+  }
+
+  fields {
+    field_path = "status"
+    order      = "ASCENDING"
+  }
+
+  fields {
+    field_path = "expiresAt"
+    order      = "ASCENDING"
+  }
+}
+
+resource "google_firestore_index" "reservations_active_by_player" {
+  project     = var.project_id
+  database    = google_firestore_database.default.name
+  collection  = "reservations"
+  query_scope = "COLLECTION"
+
+  fields {
+    field_path   = "playerSessionIds"
+    array_config = "CONTAINS"
+  }
+
+  fields {
+    field_path = "status"
+    order      = "ASCENDING"
+  }
+
+  fields {
+    field_path = "expiresAt"
+    order      = "ASCENDING"
+  }
+}

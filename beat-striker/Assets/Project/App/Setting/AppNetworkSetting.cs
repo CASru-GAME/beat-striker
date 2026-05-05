@@ -5,6 +5,7 @@ namespace Alice {
     public interface IAppNetworkSetting {
         ReadOnlyReactiveProperty<bool> IsOnline { get; }
         string SessionName { get; }
+        string CloudApiBaseUrl { get; }
         float MatchTimeoutSeconds { get; }
         int LocalOnlinePlayerId { get; }
         void SetIsOnline(bool enabled);
@@ -14,6 +15,7 @@ namespace Alice {
     public class AppNetworkSetting : MonoBehaviour, IAppNetworkSetting {
         [SerializeField] bool isOnline;
         [SerializeField] string sessionName = "beat-striker-minimal";
+        [SerializeField] string cloudApiBaseUrl = "https://beat-striker-api-1049753443537.asia-northeast1.run.app";
         [SerializeField, Min(1f)] float matchTimeoutSeconds = 30f;
 
         readonly ReactiveProperty<bool> isOnlineProperty = new(false);
@@ -22,6 +24,9 @@ namespace Alice {
 
         public ReadOnlyReactiveProperty<bool> IsOnline => isOnlineProperty;
         public string SessionName => string.IsNullOrWhiteSpace(sessionName) ? "beat-striker-minimal" : sessionName;
+        public string CloudApiBaseUrl => string.IsNullOrWhiteSpace(cloudApiBaseUrl)
+            ? "https://beat-striker-api-1049753443537.asia-northeast1.run.app"
+            : cloudApiBaseUrl.TrimEnd('/');
         public float MatchTimeoutSeconds => Mathf.Max(1f, matchTimeoutSeconds);
         public int LocalOnlinePlayerId => localOnlinePlayerId;
 

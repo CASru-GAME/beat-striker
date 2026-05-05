@@ -24,6 +24,10 @@ namespace Alice {
         readonly IAppStrikerRegistry appStrikerRegistry;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly IOnlineSessionBootstrap onlineSessionBootstrap;
+        readonly IOnlineDuelCoordinator onlineDuelCoordinator;
+        readonly IOnlineDuelReservationStore reservationStore;
+        readonly IOnlineDuelIdentity duelIdentity;
+        readonly IOnlineDuelApiClient onlineDuelApiClient;
         readonly CompositeDisposable subscriptions = new();
         readonly CharacterSelectSelectionPolicy selectionPolicy = new();
         readonly List<CharacterSelectSlotState> slotStates = new();
@@ -46,7 +50,11 @@ namespace Alice {
             IPlayerSelectSetting playerSelectSetting,
             IAppStrikerRegistry appStrikerRegistry,
             IAppNetworkSetting appNetworkSetting,
-            IOnlineSessionBootstrap onlineSessionBootstrap) {
+            IOnlineSessionBootstrap onlineSessionBootstrap,
+            IOnlineDuelCoordinator onlineDuelCoordinator,
+            IOnlineDuelReservationStore reservationStore,
+            IOnlineDuelIdentity duelIdentity,
+            IOnlineDuelApiClient onlineDuelApiClient) {
             this.view = view;
             this.transitionService = transitionService;
             this.gamePadRegistry = gamePadRegistry;
@@ -55,6 +63,10 @@ namespace Alice {
             this.appStrikerRegistry = appStrikerRegistry;
             this.appNetworkSetting = appNetworkSetting;
             this.onlineSessionBootstrap = onlineSessionBootstrap;
+            this.onlineDuelCoordinator = onlineDuelCoordinator;
+            this.reservationStore = reservationStore;
+            this.duelIdentity = duelIdentity;
+            this.onlineDuelApiClient = onlineDuelApiClient;
 
             _ = InitializeAfterFrameAsync();
         }
@@ -121,6 +133,9 @@ namespace Alice {
             var result = await transitionService.RequestEndTransitionAsync(AppScene.CharacterSelect);
             startTransitionInputEnabled = true;
             Debug.Log($"{LOG_PREFIX} EnableStartInputAfterSceneEnterAsync completed. isSuccess={result.IsSuccess}, startTransitionInputEnabled={startTransitionInputEnabled}");
+            if (result.IsSuccess) {
+                await onlineDuelCoordinator.NotifySceneReadyAsync(AppScene.CharacterSelect);
+            }
         }
 
         void OnStrikerClicked(StrikerClickRequest request) {
@@ -286,11 +301,36 @@ namespace Alice {
                 throw new InvalidOperationException("Online battle requires player 0 striker selection.");
             }
 
-            var request = new OnlineMatchRequest(
-                localStriker,
-                battleSelectSetting.SelectedStage.CurrentValue,
-                battleSelectSetting.SelectedMusicId.CurrentValue);
+            var reservationId = reservationStore.ReservationId;
+            if (reservationStore.HasReservation) {
+                try {
+                    await onlineDuelApiClient.ConsumeReservationAsync(reservationId, new DuelReservationConsumeRequest {
+                        duelSessionId = duelIdentity.DuelSessionId,
+                    });
+                }
+                catch (Exception exception) when (exception.Message.Contains("status=404") || exception.Message.Contains("status=410")) {
+                    reservationStore.ClearReservation();
+                    appNetworkSetting.SetIsOnline(false);
+                    RefreshState();
+                    throw new InvalidOperationException("Reservation expired before battle start.", exception);
+                }
+            }
+
+            var request = reservationStore.HasReservation
+                ? new OnlineMatchRequest(
+                    localStriker,
+                    battleSelectSetting.SelectedStage.CurrentValue,
+                    battleSelectSetting.SelectedMusicId.CurrentValue,
+                    reservationId,
+                    duelIdentity.DuelSessionId)
+                : new OnlineMatchRequest(
+                    localStriker,
+                    battleSelectSetting.SelectedStage.CurrentValue,
+                    battleSelectSetting.SelectedMusicId.CurrentValue);
             var result = await onlineSessionBootstrap.MatchAsync(request);
+            if (!string.IsNullOrWhiteSpace(reservationId)) {
+                reservationStore.ClearReservation();
+            }
             Debug.Log($"{LOG_PREFIX} MatchAsync returned. Applying match result to settings before battle transition.");
 
             battleSelectSetting.SelectStage(result.Stage);

@@ -15,6 +15,8 @@ namespace Alice {
                 striker = (int)request.LocalStriker,
                 stage = (int)request.CandidateStage,
                 musicId = request.CandidateMusicId,
+                reservationId = request.ReservationId,
+                duelSessionId = request.DuelSessionId,
             };
             return Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
         }
@@ -33,7 +35,12 @@ namespace Alice {
         public static OnlineMatchRequest DeserializeRequest(ArraySegment<byte> data) {
             var json = Decode(data);
             var payload = JsonUtility.FromJson<MatchRequestPayload>(json);
-            return new OnlineMatchRequest((Striker)payload.striker, (Stage)payload.stage, payload.musicId);
+            return new OnlineMatchRequest(
+                (Striker)payload.striker,
+                (Stage)payload.stage,
+                payload.musicId,
+                payload.reservationId ?? "",
+                payload.duelSessionId ?? "");
         }
 
         public static OnlineMatchResult DeserializeResult(ArraySegment<byte> data) {
@@ -93,6 +100,8 @@ namespace Alice {
             public int striker;
             public int stage;
             public string musicId;
+            public string reservationId;
+            public string duelSessionId;
         }
 
         [Serializable]

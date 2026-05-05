@@ -17,7 +17,6 @@ namespace Alice {
 
         readonly Dictionary<PlayerRef, OnlineMatchRequest> requestsByPlayer = new();
         NetworkRunner runner;
-        bool resultPublished;
         bool serverStartRequested;
 
         static OnlineSessionRelayServer activeRelayInstance;
@@ -85,27 +84,56 @@ namespace Alice {
         int PlayerCount => Mathf.Max(2, playerCount);
 
         void TryPublishMatchResult() {
-            if (resultPublished) {
-                return;
+            TryPublishReservedMatchResults();
+            TryPublishRandomMatchResults();
+        }
+
+        void TryPublishReservedMatchResults() {
+            var playersByReservation = new Dictionary<string, List<PlayerRef>>();
+            foreach (var player in runner.ActivePlayers) {
+                if (!requestsByPlayer.TryGetValue(player, out var request) || string.IsNullOrWhiteSpace(request.ReservationId)) {
+                    continue;
+                }
+
+                if (!playersByReservation.TryGetValue(request.ReservationId, out var players)) {
+                    players = new List<PlayerRef>();
+                    playersByReservation[request.ReservationId] = players;
+                }
+
+                players.Add(player);
             }
 
+            foreach (var entry in playersByReservation) {
+                if (entry.Value.Count < 2) {
+                    Debug.Log($"{LOG_PREFIX} Waiting for reserved match requests. reservationId={entry.Key}, count={entry.Value.Count}/2");
+                    continue;
+                }
+
+                entry.Value.Sort((a, b) => a.RawEncoded.CompareTo(b.RawEncoded));
+                PublishMatchResult(entry.Value[0], entry.Value[1], entry.Key);
+            }
+        }
+
+        void TryPublishRandomMatchResults() {
             var matchedPlayers = new List<PlayerRef>();
             foreach (var player in runner.ActivePlayers) {
-                if (requestsByPlayer.ContainsKey(player)) {
-                    matchedPlayers.Add(player);
+                if (!requestsByPlayer.TryGetValue(player, out var request) || !string.IsNullOrWhiteSpace(request.ReservationId)) {
+                    continue;
                 }
+
+                matchedPlayers.Add(player);
             }
 
-            if (matchedPlayers.Count < PlayerCount) {
-                Debug.Log($"{LOG_PREFIX} Waiting for match requests. count={matchedPlayers.Count}/{PlayerCount}");
+            if (matchedPlayers.Count < 2) {
+                Debug.Log($"{LOG_PREFIX} Waiting for random match requests. count={matchedPlayers.Count}/2");
                 return;
             }
 
             matchedPlayers.Sort((a, b) => a.RawEncoded.CompareTo(b.RawEncoded));
+            PublishMatchResult(matchedPlayers[0], matchedPlayers[1], "");
+        }
 
-            resultPublished = true;
-            var player1 = matchedPlayers[0];
-            var player2 = matchedPlayers[1];
+        void PublishMatchResult(PlayerRef player1, PlayerRef player2, string reservationId) {
             var player1Request = requestsByPlayer[player1];
             var player2Request = requestsByPlayer[player2];
             var random = new System.Random(Environment.TickCount);
@@ -119,7 +147,7 @@ namespace Alice {
             runner.SendReliableDataToPlayer(player2, OnlineMatchProtocol.ResultKey, OnlineMatchProtocol.SerializeResult(player2Result));
             requestsByPlayer.Remove(player1);
             requestsByPlayer.Remove(player2);
-            Debug.Log($"{LOG_PREFIX} Match decided. player1={player1}, player2={player2}, stage={selectedStage}, musicId={selectedMusicId}");
+            Debug.Log($"{LOG_PREFIX} Match decided. player1={player1}, player2={player2}, reservationId={reservationId}, stage={selectedStage}, musicId={selectedMusicId}");
         }
 
         void RelayReliableData(ReliableKey key, PlayerRef sender, ArraySegment<byte> data) {
@@ -163,7 +191,6 @@ namespace Alice {
             }
 
             requestsByPlayer.Remove(player);
-            resultPublished = false;
             Debug.Log($"{LOG_PREFIX} Player left. player={player}");
         }
 
@@ -173,7 +200,6 @@ namespace Alice {
             }
 
             requestsByPlayer.Clear();
-            resultPublished = false;
             serverStartRequested = false;
             this.runner = null;
             Debug.Log($"{LOG_PREFIX} Shutdown. reason={shutdownReason}");

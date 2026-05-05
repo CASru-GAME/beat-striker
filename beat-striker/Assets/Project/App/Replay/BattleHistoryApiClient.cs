@@ -13,15 +13,16 @@ namespace Alice {
     }
 
     public class BattleHistoryApiClient : IBattleHistoryApiClient {
-        const string BaseUrl = "https://beat-striker-api-1049753443537.asia-northeast1.run.app";
+        readonly IAppNetworkSetting appNetworkSetting;
 
         [Inject]
-        public BattleHistoryApiClient() {
+        public BattleHistoryApiClient(IAppNetworkSetting appNetworkSetting) {
+            this.appNetworkSetting = appNetworkSetting;
         }
 
         public async Task<BattleHistoryCreateResponse> SaveAsync(BattleHistorySaveRequest request) {
             var json = JsonUtility.ToJson(request);
-            using var webRequest = new UnityWebRequest($"{BaseUrl}/battle-histories", UnityWebRequest.kHttpVerbPOST);
+            using var webRequest = new UnityWebRequest($"{appNetworkSetting.CloudApiBaseUrl}/battle-histories", UnityWebRequest.kHttpVerbPOST);
             webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
             webRequest.downloadHandler = new DownloadHandlerBuffer();
             webRequest.SetRequestHeader("Content-Type", "application/json");
@@ -30,14 +31,14 @@ namespace Alice {
         }
 
         public async Task<BattleHistorySummary[]> GetSummariesAsync(int limit) {
-            using var webRequest = UnityWebRequest.Get($"{BaseUrl}/battle-histories?limit={Mathf.Clamp(limit, 1, 100)}");
+            using var webRequest = UnityWebRequest.Get($"{appNetworkSetting.CloudApiBaseUrl}/battle-histories?limit={Mathf.Clamp(limit, 1, 100)}");
             await SendAsync(webRequest);
             var response = JsonUtility.FromJson<BattleHistoryListResponse>(webRequest.downloadHandler.text);
             return response?.items ?? Array.Empty<BattleHistorySummary>();
         }
 
         public async Task<BattleHistoryDetail> GetDetailAsync(string id) {
-            using var webRequest = UnityWebRequest.Get($"{BaseUrl}/battle-histories/{UnityWebRequest.EscapeURL(id)}");
+            using var webRequest = UnityWebRequest.Get($"{appNetworkSetting.CloudApiBaseUrl}/battle-histories/{UnityWebRequest.EscapeURL(id)}");
             await SendAsync(webRequest);
             return JsonUtility.FromJson<BattleHistoryDetail>(webRequest.downloadHandler.text);
         }

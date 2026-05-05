@@ -21,6 +21,7 @@ namespace Alice {
         readonly ITutorialSetting tutorialSetting;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly IOnlineSessionBootstrap onlineSessionBootstrap;
+        readonly IOnlineDuelCoordinator onlineDuelCoordinator;
         readonly CompositeDisposable subscriptions = new();
         bool quitRequested;
         TitleInputState inputState = TitleInputState.Ready;
@@ -32,13 +33,15 @@ namespace Alice {
             IGamePadRegistry gamePadRegistry,
             ITutorialSetting tutorialSetting,
             IAppNetworkSetting appNetworkSetting,
-            IOnlineSessionBootstrap onlineSessionBootstrap) {
+            IOnlineSessionBootstrap onlineSessionBootstrap,
+            IOnlineDuelCoordinator onlineDuelCoordinator) {
             this.view = view;
             this.sceneTransitionService = sceneTransitionService;
             this.gamePadRegistry = gamePadRegistry;
             this.tutorialSetting = tutorialSetting;
             this.appNetworkSetting = appNetworkSetting;
             this.onlineSessionBootstrap = onlineSessionBootstrap;
+            this.onlineDuelCoordinator = onlineDuelCoordinator;
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.gamePadRegistry.OnAnyButtonDown
@@ -80,6 +83,9 @@ namespace Alice {
             appNetworkSetting.SetLocalOnlinePlayerId(0);
             tutorialSetting.ClearTutorialBattleRequest();
             Debug.Log($"{LOG_PREFIX} EnterTitleAsync end transition completed. isSuccess={result.IsSuccess}");
+            if (result.IsSuccess) {
+                await onlineDuelCoordinator.NotifySceneReadyAsync(AppScene.Title);
+            }
         }
 
         void RequestTransitionToMenu() {
