@@ -38,6 +38,8 @@ namespace Alice {
             builder.Register<IBattleOnlineSync, BattleOnlineSync>(Lifetime.Singleton);
             builder.Register<BeatOnlineCommandBuffer>(Lifetime.Singleton);
             builder.Register<BattleFlow>(Lifetime.Singleton);
+            builder.Register<BattleReplayRecorder>(Lifetime.Singleton);
+            builder.Register<BattleReplayDriver>(Lifetime.Singleton);
             builder.Register<IBeatjudge, BeatJudge>(Lifetime.Singleton);
             builder.Register<IMusicPlayer, MusicPlayer>(Lifetime.Singleton);
             builder.RegisterEntryPoint<BattleFlowStarter>(Lifetime.Singleton);
@@ -57,6 +59,8 @@ namespace Alice {
                 _ = container.Resolve<IBattleOpeningBgmPlayer>();
                 _ = container.Resolve<IBattleOnlineSync>();
                 _ = container.Resolve<BattleFlow>();
+                _ = container.Resolve<BattleReplayRecorder>();
+                _ = container.Resolve<BattleReplayDriver>();
                 _ = container.Resolve<BattleTutorialView>();
                 _ = container.Resolve<IBattleTutorialSignalEmitter>();
                 _ = container.Resolve<IBattlePlayerPresenter[]>();

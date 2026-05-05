@@ -5,6 +5,9 @@
 GitHub Actions から Google Cloud に安全にデプロイするために  
 Workload Identity Federation（鍵なし認証）を設定する。
 
+最終的なURL:
+https://beat-striker-api-1049753443537.asia-northeast1.run.app
+
 ---
 
 ## 前提

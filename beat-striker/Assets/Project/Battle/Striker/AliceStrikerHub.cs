@@ -55,6 +55,7 @@ namespace Alice {
         void RecordRemoteReplicaHistory(float networkTime);
         OnlineStrikerPreBeatStateSnapshot BuildPreBeatStateSnapshot(int applyBeatIndex, float sentNetworkTime);
         void ApplyPreBeatStateDelta(OnlineStrikerPreBeatStateSnapshot snapshot);
+        void ApplyReplayAbsoluteState(ReplayPreBeatStatePayload snapshot);
         void ChangeDirection(Vector2 direction);
         void CancelDirection();
         void Default();
@@ -305,6 +306,27 @@ namespace Alice {
             ApplySpecialPointDelta(snapshot.SpecialPoint - history.SpecialPoint);
             ApplyPositionDelta(snapshot.Position - history.Position);
             ApplyStateCorrectionIfNeeded(snapshot.StatePathId);
+        }
+
+        public void ApplyReplayAbsoluteState(ReplayPreBeatStatePayload snapshot) {
+            if (!initialized || stateMachine == null) {
+                return;
+            }
+
+            currentHitPoint = Mathf.Clamp(snapshot.hitPoint, 0f, maxHitPoint);
+            currentSpecialPoint = Mathf.Clamp(snapshot.specialPoint, 0f, maxSpecialPoint);
+            rb.position = snapshot.position;
+            previousFramePosition = rb.position;
+            frameVelocity = Vector3.zero;
+            hitPointSubject.OnNext(currentHitPoint);
+            specialPointSubject.OnNext(currentSpecialPoint);
+            positionSubject.OnNext(rb.position);
+            centerPositionSubject.OnNext(centerPositionTransform.position);
+            velocitySubject.OnNext(frameVelocity);
+            ApplyStateCorrectionIfNeeded(snapshot.statePathId);
+            if (currentHitPoint <= 0f) {
+                Die();
+            }
         }
 
         public void SetPlayerId(int playerId) {

@@ -1,7 +1,8 @@
 {
     "name": "Alice.Project.Client.Tests",
     "references": [
-        "Alice.Project.Client"
+        "Alice.Project.Client",
+        "Alice.Shared"
     ],
     "includePlatforms": [
         "Editor"

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5378729597250617267}
   - component: {fileID: 5991547406361761554}
   - component: {fileID: 8785546394321502796}
+  - component: {fileID: 7103938471552084321}
   m_Layer: 0
   m_Name: RankingHistoryCellView
   m_TagString: Untagged
@@ -52,6 +53,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Alice.Project.Client::Alice.RankingHistoryCellView
   lineLabel: {fileID: 8889458383512151093}
+  replayEmitter: {fileID: 7103938471552084321}
+  replayLabel: {fileID: 0}
 --- !u!222 &5991547406361761554
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -90,6 +93,22 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7103938471552084321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3730389089449737217}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83521b14984b48cd8503a82e4ec559a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  onClickEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  clickSound: {fileID: 0}
 --- !u!1 &3926226883676270806
 GameObject:
   m_ObjectHideFlags: 0

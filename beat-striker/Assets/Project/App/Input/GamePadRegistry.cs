@@ -23,7 +23,9 @@ namespace Alice {
     public interface IGamePadRegistry {
         IPlayerGamePad RequestRegister(IGamePad gamePad);
         IPlayerGamePad RequestRegister(int playerId, IGamePad gamePad);
+        IPlayerGamePad RequestRegisterReplay(int playerId, IGamePad gamePad);
         IPlayerGamePad RequestRegisterLowPriority(int playerId, IGamePad gamePad);
+        void RestoreReplayOverrides();
         void RequestUnregister(int playerId);
         void RequestUnregister(IGamePad gamePad);
         void RestoreOfflinePrimaryLayout(int localOnlinePlayerId);
@@ -45,6 +47,7 @@ namespace Alice {
     public class GamePadRegistry : IGamePadRegistry {
         readonly List<PlayerGamePad> registry = new();
         readonly Subject<PlayerGamePadButtonEvent> onAnyButtonDown = new();
+        readonly Dictionary<int, Option<IGamePad>> replayOverridePreviousPrimaryByPlayerId = new();
         int faceButtonRotationOffset;
 
         public Observable<PlayerGamePadButtonEvent> OnAnyButtonDown => onAnyButtonDown;
@@ -76,6 +79,25 @@ namespace Alice {
             playerGamePad.SetPrimary(gamePad.ToOption());
             Debug.Log($"Registered GamePad {gamePad.DeviceName} to Player {playerId}".ToGreen());
             return playerGamePad;
+        }
+
+        public IPlayerGamePad RequestRegisterReplay(int playerId, IGamePad gamePad) {
+            var playerGamePad = EnsurePlayerSlot(playerId);
+            if (!replayOverridePreviousPrimaryByPlayerId.ContainsKey(playerId)) {
+                replayOverridePreviousPrimaryByPlayerId[playerId] = playerGamePad.Current;
+            }
+            playerGamePad.SetPrimary(gamePad.ToOption());
+            Debug.Log($"Registered Replay GamePad {gamePad.DeviceName} to Player {playerId}".ToGreen());
+            return playerGamePad;
+        }
+
+        public void RestoreReplayOverrides() {
+            foreach (var pair in replayOverridePreviousPrimaryByPlayerId) {
+                var playerGamePad = EnsurePlayerSlot(pair.Key);
+                playerGamePad.SetPrimary(pair.Value);
+            }
+
+            replayOverridePreviousPrimaryByPlayerId.Clear();
         }
 
         public IPlayerGamePad RequestRegisterLowPriority(int playerId, IGamePad gamePad) {

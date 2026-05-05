@@ -1,37 +1,29 @@
 using System.Collections.Generic;
 using PolyAndCode.UI;
+using R3;
 using UnityEngine;
 
 namespace Alice {
-    /// <summary>
-    /// 対戦履歴リストの表示専用。データはモック（本番はプレゼンター経由の差し替えを想定）。
-    /// </summary>
     [DefaultExecutionOrder(-40)]
     public class RankingHistoryListView : MonoBehaviour, IRecyclableScrollRectDataSource {
-        const int MockEntryCount = 48;
-
         [SerializeField] RecyclableScrollRect scrollRect;
 
         readonly List<RankingBattleHistoryEntry> entries = new();
+        readonly Subject<string> replayRequested = new();
+
+        public Observable<string> ReplayRequested => replayRequested;
 
         void Awake() {
-            FillMockEntries();
             scrollRect.DataSource = this;
         }
 
-        void FillMockEntries() {
+        public void SetEntries(IEnumerable<RankingBattleHistoryEntry> nextEntries) {
             entries.Clear();
-            for (var i = 0; i < MockEntryCount; i++) {
-                var index = i + 1;
-                var day = index % 28 + 1;
-                var hour = 10 + index % 12;
-                var minute = index * 7 % 60;
-                var playedAt = $"2026/05/{day:D2} {hour:D2}:{minute:D2}";
-                entries.Add(new RankingBattleHistoryEntry(
-                    $"ストライカー{index}",
-                    $"ライバル{index}",
-                    playedAt));
+            if (nextEntries != null) {
+                entries.AddRange(nextEntries);
             }
+
+            scrollRect.ReloadData();
         }
 
         public int GetItemCount() {
@@ -40,7 +32,11 @@ namespace Alice {
 
         public void SetCell(ICell cell, int index) {
             var row = (RankingHistoryCellView)cell;
-            row.ConfigureCell(entries[index]);
+            row.ConfigureCell(entries[index], replayRequested.OnNext);
+        }
+
+        void OnDestroy() {
+            replayRequested.Dispose();
         }
     }
 }

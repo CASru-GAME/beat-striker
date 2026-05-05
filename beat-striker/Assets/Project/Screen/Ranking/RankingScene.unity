@@ -279,6 +279,7 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects: []
   rankingPresenterView: {fileID: 178271147}
+  rankingHistoryListView: {fileID: 1737127769}
 --- !u!4 &178271146
 Transform:
   m_ObjectHideFlags: 0

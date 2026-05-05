@@ -104,6 +104,8 @@ namespace Alice {
 			builder.Register<OnlineSessionBootstrap>(Lifetime.Singleton);
 			builder.Register<IOnlineSessionBootstrap>(resolver => resolver.Resolve<OnlineSessionBootstrap>(), Lifetime.Singleton);
 			builder.Register<INetworkRunnerProvider>(resolver => resolver.Resolve<OnlineSessionBootstrap>(), Lifetime.Singleton);
+			builder.Register<IBattleHistoryApiClient, BattleHistoryApiClient>(Lifetime.Singleton);
+			builder.Register<IReplaySetting, ReplaySetting>(Lifetime.Singleton);
 
 			builder.RegisterInstance(playerInputManager);
 			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
@@ -137,6 +139,8 @@ namespace Alice {
 				_ = container.Resolve<ISceneTransitionService>();
 				_ = container.Resolve<IOnlineSessionBootstrap>();
 				_ = container.Resolve<INetworkRunnerProvider>();
+				_ = container.Resolve<IBattleHistoryApiClient>();
+				_ = container.Resolve<IReplaySetting>();
 				_ = container.Resolve<ICursorDeployer>();
 				Debug.Log($"{LOG_PREFIX} BuildCallback resolve completed");
 			});
