@@ -55,24 +55,6 @@ resource "google_firestore_database" "default" {
   ]
 }
 
-resource "google_firestore_field" "presence_expires_at" {
-  project    = var.project_id
-  database   = google_firestore_database.default.name
-  collection = "presence"
-  field      = "expiresAt"
-
-  ttl_config {}
-}
-
-resource "google_firestore_field" "invites_expires_at" {
-  project    = var.project_id
-  database   = google_firestore_database.default.name
-  collection = "invites"
-  field      = "expiresAt"
-
-  ttl_config {}
-}
-
 resource "google_firestore_field" "reservations_expires_at" {
   project    = var.project_id
   database   = google_firestore_database.default.name

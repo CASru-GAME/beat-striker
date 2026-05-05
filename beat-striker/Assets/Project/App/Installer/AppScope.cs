@@ -101,12 +101,7 @@ namespace Alice {
 			builder.Register<ILoadingOverlayService, LoadingOverlayService>(Lifetime.Singleton);
 			builder.Register<ISceneLoader, SceneLoader>(Lifetime.Singleton);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
-			builder.Register<OnlineSessionBootstrap>(Lifetime.Singleton);
-			builder.Register<IOnlineSessionBootstrap>(resolver => resolver.Resolve<OnlineSessionBootstrap>(), Lifetime.Singleton);
-			builder.Register<INetworkRunnerProvider>(resolver => resolver.Resolve<OnlineSessionBootstrap>(), Lifetime.Singleton);
 			builder.Register<IOnlineDuelIdentity, OnlineDuelIdentity>(Lifetime.Singleton);
-			builder.Register<IOnlineDuelReservationStore, OnlineDuelReservationStore>(Lifetime.Singleton);
-			builder.Register<IOnlineDuelApiClient, OnlineDuelApiClient>(Lifetime.Singleton);
 			builder.Register<IOnlineDuelCoordinator, OnlineDuelCoordinator>(Lifetime.Singleton);
 			builder.Register<IBattleHistoryApiClient, BattleHistoryApiClient>(Lifetime.Singleton);
 			builder.Register<IReplaySetting, ReplaySetting>(Lifetime.Singleton);
@@ -114,6 +109,7 @@ namespace Alice {
 			builder.RegisterInstance(playerInputManager);
 			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<VirtualTouchControllerPresenter>(Lifetime.Singleton);
+			builder.RegisterEntryPoint<OnlineDuelFusionClient>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<AppOverlayPresenter>(Lifetime.Singleton);
 
 			builder.RegisterBuildCallback(container => {
@@ -141,11 +137,10 @@ namespace Alice {
 				_ = container.Resolve<ILoadingOverlayService>();
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
+				_ = container.Resolve<IOnlineDuelIdentity>();
+				_ = container.Resolve<IOnlineDuelFusionClient>();
 				_ = container.Resolve<IOnlineSessionBootstrap>();
 				_ = container.Resolve<INetworkRunnerProvider>();
-				_ = container.Resolve<IOnlineDuelIdentity>();
-				_ = container.Resolve<IOnlineDuelReservationStore>();
-				_ = container.Resolve<IOnlineDuelApiClient>();
 				_ = container.Resolve<IOnlineDuelCoordinator>();
 				_ = container.Resolve<IAppOverlayPresenter>();
 				_ = container.Resolve<IBattleHistoryApiClient>();
