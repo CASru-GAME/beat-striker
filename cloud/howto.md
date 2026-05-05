@@ -41,6 +41,7 @@ gcloud config set project beat-495400
 
 ```bash
 gcloud services enable \
+  cloudresourcemanager.googleapis.com \
   run.googleapis.com \
   cloudbuild.googleapis.com \
   firestore.googleapis.com \
@@ -49,6 +50,9 @@ gcloud services enable \
   sts.googleapis.com \
   artifactregistry.googleapis.com
 ```
+
+> **注意**: `cloudresourcemanager.googleapis.com` は Terraform の Google プロバイダーが
+> Project Service の管理や IAM ポリシーの読み書きに使用するため、必ず最初に有効化すること。
 
 ---
 
@@ -120,7 +124,29 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
 
 ---
 
-## 6. プロジェクト番号取得
+## 6. Terraform state 用 GCS バケット作成
+
+Terraform のリモートバックエンド（`backend "gcs"`）用のバケットを作成する。  
+このバケットは Terraform 管理外で事前に用意する必要がある。
+
+```bash
+gsutil mb -p "$PROJECT_ID" -l asia-northeast1 gs://tf-state-beat-495400
+
+# バージョニングを有効化（state の破損防止）
+gsutil versioning set on gs://tf-state-beat-495400
+```
+
+### GitHub Actions SA に state バケットへのアクセス権限を付与
+
+```bash
+gsutil iam ch \
+  "serviceAccount:${SA_EMAIL}:roles/storage.objectAdmin" \
+  gs://tf-state-beat-495400
+```
+
+---
+
+## 7. プロジェクト番号取得
 
 ```bash
 export PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
@@ -129,7 +155,7 @@ echo $PROJECT_NUMBER
 
 ---
 
-## 7. Workload Identity Pool 作成
+## 8. Workload Identity Pool 作成
 
 ```bash
 gcloud iam workload-identity-pools create "$POOL_ID" \
@@ -140,7 +166,7 @@ gcloud iam workload-identity-pools create "$POOL_ID" \
 
 ---
 
-## 8. Provider 作成
+## 9. Provider 作成
 
 ```bash
 gcloud iam workload-identity-pools providers create-oidc "$PROVIDER_ID" \
@@ -155,7 +181,7 @@ gcloud iam workload-identity-pools providers create-oidc "$PROVIDER_ID" \
 
 ---
 
-## 9. GitHubリポジトリのアクセス許可
+## 10. GitHubリポジトリのアクセス許可
 
 ```bash
 gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
@@ -166,7 +192,23 @@ gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
 
 ---
 
-## 10. GitHubに設定する値
+## 11. Cloud Build サービスアカウントへの権限付与
+
+`gcloud run deploy --source` は内部的に Cloud Build を使用してコンテナイメージをビルドする。  
+Cloud Build のデフォルト SA に Artifact Registry への書き込み権限が必要。
+
+```bash
+# Cloud Build デフォルト SA
+export CLOUDBUILD_SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
+
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:${CLOUDBUILD_SA}" \
+  --role="roles/artifactregistry.writer"
+```
+
+---
+
+## 12. GitHubに設定する値
 
 以下を GitHub の
 
@@ -208,6 +250,7 @@ projects/1049753443537/locations/global/workloadIdentityPools/github-pool/provid
 
 * GitHub Actions から GCP に認証できる
 * JSONキー不要
+* `terraform apply` がエラーなく完了する
 * Cloud Run へデプロイ可能
 
 ---
@@ -219,6 +262,29 @@ projects/1049753443537/locations/global/workloadIdentityPools/github-pool/provid
 * GitHub Actions → GCP の安全な認証（OIDC）
 * サービスアカウントのなりすまし許可
 * 特定リポジトリのみアクセス許可
+* Terraform によるインフラ管理（API有効化・SA作成・IAMバインディング）
+
+---
+
+## トラブルシューティング
+
+### `Cloud Resource Manager API has not been used` エラー
+
+Terraform が Project Service や IAM を操作する際に `cloudresourcemanager.googleapis.com` が  
+必要。手順2で有効化されていることを確認する。
+
+```bash
+gcloud services list --enabled --filter="name:cloudresourcemanager.googleapis.com"
+```
+
+### Terraform state のロック/アクセスエラー
+
+GCS バケット `tf-state-beat-495400` が存在し、SA に適切な権限があるか確認する。
+
+```bash
+gsutil ls gs://tf-state-beat-495400
+gsutil iam get gs://tf-state-beat-495400
+```
 
 ---
 
