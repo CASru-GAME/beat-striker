@@ -31,7 +31,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
 
       - name: Terraform apply
-        working-directory: infra
+        working-directory: cloud/infra
         run: |
           terraform init
           terraform apply -auto-approve \
@@ -40,11 +40,11 @@ jobs:
 
       - name: Deploy Cloud Run from source
         run: |
-          RUNTIME_SA=$(cd infra && terraform output -raw cloud_run_service_account)
+          RUNTIME_SA=$(cd cloud/infra && terraform output -raw cloud_run_service_account)
 
           gcloud run deploy "$SERVICE_NAME" \
             --project="${{ vars.GCP_PROJECT_ID }}" \
             --region="$REGION" \
-            --source="./api" \
+            --source="./cloud/api" \
             --service-account="$RUNTIME_SA" \
             --allow-unauthenticated
