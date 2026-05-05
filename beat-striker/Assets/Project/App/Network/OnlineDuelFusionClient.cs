@@ -421,6 +421,10 @@ namespace Alice {
 
             var nextPhase = PhaseFromEvent(kind, payload);
             var current = state.CurrentValue;
+            if (cancellationRequested && (kind == OnlineDuelEventKind.MatchResult || kind == OnlineDuelEventKind.MatchStatus)) {
+                Debug.Log($"{LOG_PREFIX} Ignoring {kind} because cancellation was requested.");
+                return;
+            }
             if (kind == OnlineDuelEventKind.MatchStatus
                 && (current.Phase == OnlineDuelPhase.Consumed || current.Phase == OnlineDuelPhase.Matching)
                 && current.ReservationId == (payload.reservationId ?? "")) {

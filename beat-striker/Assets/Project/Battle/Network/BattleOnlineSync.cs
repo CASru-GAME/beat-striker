@@ -438,19 +438,10 @@ namespace Alice {
             var sequencedSnapshot = snapshot with {
                 Sequence = strikerPreBeatStateSnapshotSequence,
             };
-            OnlineStrikerPreBeatStateSnapshotUnreliableRpc.Publish(
-                runner,
-                new OnlineStrikerPreBeatStateSnapshotMessage(
-                    (long)sequencedSnapshot.Sequence,
-                    sequencedSnapshot.ApplyBeatIndex,
-                    sequencedSnapshot.PlayerId,
-                    sequencedSnapshot.HitPoint,
-                    sequencedSnapshot.SpecialPoint,
-                    sequencedSnapshot.Position,
-                    sequencedSnapshot.StatePathId,
-                    sequencedSnapshot.SentNetworkTime));
+            var payload = BuildStrikerPreBeatStateSnapshotPayload(sequencedSnapshot);
+            Broadcast(OnlineBattleProtocol.StrikerPreCommandSnapshotKey, payload);
 
-            Debug.Log($"{LOG_PREFIX} Published striker pre-beat state snapshot unreliable. sequence={sequencedSnapshot.Sequence}, player={sequencedSnapshot.PlayerId}, beat={sequencedSnapshot.ApplyBeatIndex}, sent={sequencedSnapshot.SentNetworkTime:0.000}");
+            Debug.Log($"{LOG_PREFIX} Published striker pre-beat state snapshot. sequence={sequencedSnapshot.Sequence}, player={sequencedSnapshot.PlayerId}, beat={sequencedSnapshot.ApplyBeatIndex}, sent={sequencedSnapshot.SentNetworkTime:0.000}");
         }
 
         public bool TryGetLatestStrikerPreBeatStateSnapshot(int applyBeatIndex, int playerId, out OnlineStrikerPreBeatStateSnapshot snapshot) {

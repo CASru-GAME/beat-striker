@@ -265,6 +265,12 @@ namespace Alice {
         }
 
         void RequestStageSelectTransition() {
+            if (isOnlineMatchmakingInProgress) {
+                Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition: cancel online matchmaking requested");
+                onlineSessionBootstrap.CancelMatchmaking();
+                return;
+            }
+
             if (IsTransitioning()) {
                 Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition ignored because transitioning. inputState={inputState}");
                 return;
@@ -508,6 +514,9 @@ namespace Alice {
 
         public void Dispose() {
             disposed = true;
+            if (isOnlineMatchmakingInProgress) {
+                onlineSessionBootstrap.CancelMatchmaking();
+            }
             subscriptions.Dispose();
             for (var i = 0; i < previewModelAssets.Count; i++) {
                 previewModelAssets[i].Dispose();
