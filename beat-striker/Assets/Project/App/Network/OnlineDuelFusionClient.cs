@@ -93,8 +93,8 @@ namespace Alice {
             currentScene = scene;
             currentAppOverlayEnabled = appOverlayEnabled;
             currentPlayerStatus = ResolveInitialPlayerStatus(scene);
-            if (IsBattleScene(scene)) {
-                Debug.Log($"{LOG_PREFIX} NotifySceneReadyAsync skipped because scene is battle. scene={scene}");
+            if (IsBattleScene(scene) && (runner == null || !runner.IsRunning)) {
+                Debug.Log($"{LOG_PREFIX} NotifySceneReadyAsync skipped runner start because scene is battle and runner is not running. scene={scene}");
                 return;
             }
 
@@ -445,6 +445,11 @@ namespace Alice {
 
                 lastViewSeq = payload.seq;
                 var next = MapToViewState(payload, current.MatchResult);
+                if (ShouldIgnoreEstablishedStateRegression(current, next)) {
+                    Debug.LogWarning($"{LOG_PREFIX} Ignored non-terminal ViewState regression while duel is established. seq={payload.seq}, currentMode={current.UiMode}, nextMode={next.UiMode}, currentReservation={current.ReservationId}, nextReservation={next.ReservationId}");
+                    return;
+                }
+
                 UpdateState(next);
                 if (next.UiMode == OnlineDuelUiMode.Error
                     && matchCompletion != null
@@ -492,6 +497,29 @@ namespace Alice {
             }
 
             Debug.Log($"{LOG_PREFIX} Event applied. kind={kind}, uiMode={nextState.UiMode}, reservationId={nextState.ReservationId}, opponent={nextState.OpponentSessionId}");
+        }
+
+        static bool ShouldIgnoreEstablishedStateRegression(OnlineDuelUiState current, OnlineDuelUiState next) {
+            if (!IsEstablishedMode(current.UiMode) && !current.HasReservation) {
+                return false;
+            }
+
+            if (next.HasReservation || next.UiMode == OnlineDuelUiMode.EnterBattle || next.UiMode == OnlineDuelUiMode.Error) {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(next.Message)) {
+                return false;
+            }
+
+            return next.UiMode == OnlineDuelUiMode.Idle
+                   || next.UiMode == OnlineDuelUiMode.Candidate
+                   || next.UiMode == OnlineDuelUiMode.IncomingInvite
+                   || next.UiMode == OnlineDuelUiMode.InviteSent;
+        }
+
+        static bool IsEstablishedMode(OnlineDuelUiMode mode) {
+            return mode == OnlineDuelUiMode.Matched || mode == OnlineDuelUiMode.EnterBattle;
         }
 
         void ResetActiveDuelState(string message) {

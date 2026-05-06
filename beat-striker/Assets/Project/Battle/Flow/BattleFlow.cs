@@ -154,10 +154,11 @@ namespace Alice {
         async Task StartBattleSequenceAsync() {
             try {
                 var scene = ResolveCurrentBattleScene();
-                Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync begin. targetScene={scene}");
+                Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync begin. targetScene={scene}, isOnlineBattle={onlineHandler.IsOnlineBattle}, isOnlineSetting={appNetworkSetting.IsOnline.CurrentValue}, battleSyncReady={battleOnlineSync.IsReady}, localOnlinePlayerId={appNetworkSetting.LocalOnlinePlayerId}, state={stateMachine.Current}");
                 battleReplayDriver.PrepareReplayInputs();
                 // 新バトル開始時に前セッションのゲート・ラウンド ready・サスペンド状態を残さない。
                 if (onlineHandler.IsOnlineBattle) {
+                    Debug.Log($"{LOG_PREFIX} Resetting online flow sync state before battle start");
                     battleOnlineSync.ResetOnlineBattleFlowSyncState();
                 }
 
@@ -177,6 +178,7 @@ namespace Alice {
                 SubscribeFlowEvents();
                 // オンライン: 双方がアセット読み込み・初期化を終え遷移開始できる状態になるまで待ち、同時に暗転明けを開始する。
                 if (onlineHandler.IsOnlineBattle) {
+                    Debug.Log($"{LOG_PREFIX} Waiting SceneTransitionEnd flow gate before opening scene. round={roundHandler.CurrentRound}");
                     await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.SceneTransitionEnd, 0);
                 }
 
@@ -214,6 +216,7 @@ namespace Alice {
         }
 
         void OnBattleFlowStateChanged(BattleFlowState state) {
+            Debug.Log($"{LOG_PREFIX} State changed. state={state}, isOnlineBattle={onlineHandler.IsOnlineBattle}, round={roundHandler.CurrentRound}");
             onlineHandler.PublishPhase(state);
         }
 
@@ -277,6 +280,7 @@ namespace Alice {
 
             if (onlineHandler.IsOnlineBattle) {
                 // フェーズは補助（例: 相手が先に Resolving に入ったときの追従）。メインの足並みは FlowGate と対称アウトカム側。
+                Debug.Log($"{LOG_PREFIX} Subscribing online flow events. battleSyncReady={battleOnlineSync.IsReady}, localOnlinePlayerId={appNetworkSetting.LocalOnlinePlayerId}");
                 flowEventDisposables.Add(battleOnlineSync.OnPhaseReceived.Subscribe(snapshot => onlineHandler.ApplyOnlinePhaseSnapshot(snapshot)));
                 flowEventDisposables.Add(battleOnlineSync.OnOutcomeReceived.Subscribe(outcome => onlineHandler.ApplyOnlineOutcomeSnapshot(outcome)));
                 flowEventDisposables.Add(battleOnlineSync.OnResumeRequested.Subscribe(_ => OnResumeRequested()));
@@ -286,8 +290,12 @@ namespace Alice {
                 }));
                 flowEventDisposables.Add(battleOnlineSync.OnRoundResolutionRequested.Subscribe(deadPlayerId => onlineHandler.ApplyOnlineRoundResolutionRequest(deadPlayerId)));
                 flowEventDisposables.Add(battleOnlineSync.OnDisconnected.Subscribe(unit => {
+                    Debug.LogWarning($"{LOG_PREFIX} Online sync disconnected while in battle. state={stateMachine.Current}, round={roundHandler.CurrentRound}");
                     _ = EndBattleToTitleAsync();
                 }));
+            }
+            else {
+                Debug.Log($"{LOG_PREFIX} Skipping online flow subscriptions because battle is not online. battleSyncReady={battleOnlineSync.IsReady}, isOnlineSetting={appNetworkSetting.IsOnline.CurrentValue}");
             }
         }
 
@@ -315,6 +323,7 @@ namespace Alice {
         }
 
         void OnPauseMenuRequested() {
+            Debug.Log($"{LOG_PREFIX} OnPauseMenuRequested. isOnlineBattle={onlineHandler.IsOnlineBattle}, state={stateMachine.Current}, round={roundHandler.CurrentRound}");
             // オンラインでは即ポーズせず、次の合意拍にサスペンド要求を載せる（オフラインは従来どおり即時）。
             if (onlineHandler.IsOnlineBattle) {
                 onlineHandler.PublishSuspendMenuBeatForCurrentTiming();
@@ -325,6 +334,7 @@ namespace Alice {
         }
 
         void OnSuspendRequested() {
+            Debug.Log($"{LOG_PREFIX} OnSuspendRequested. isOnlineBattle={onlineHandler.IsOnlineBattle}, state={stateMachine.Current}, round={roundHandler.CurrentRound}");
             if (onlineHandler.IsOnlineBattle) {
                 // サスペンド終了（バトル終了扱い）もネット経路で相手に伝えつつ、先着アウトカムで結果を揃える。
                 onlineHandler.RequestSuspendFinish();
@@ -409,6 +419,7 @@ namespace Alice {
         }
 
         void OnResumeRequested() {
+            Debug.Log($"{LOG_PREFIX} OnResumeRequested. isOnlineBattle={onlineHandler.IsOnlineBattle}, state={stateMachine.Current}, round={roundHandler.CurrentRound}");
             // オンライン: 双方 ACK ＋ resumeNetworkTime 合意まで待ってから Playing 相当へ戻す（ホスト専用即時再開は廃止）。
             if (onlineHandler.IsOnlineBattle) {
                 battleOnlineSync.RequestResume();

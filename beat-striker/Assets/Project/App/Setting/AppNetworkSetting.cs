@@ -53,12 +53,22 @@ namespace Alice {
 
             bindingApplied = true;
             matchingModel.IsEstablished
-                .Subscribe(value => isOnlineProperty.OnNext(value))
+                .Subscribe(value => {
+                    var previous = isOnlineProperty.CurrentValue;
+                    isOnlineProperty.OnNext(value);
+                    Debug.Log($"[AppNetworkSetting] IsOnline changed. previous={previous}, next={value}");
+                })
                 .AddTo(this);
         }
 
         public void SetLocalOnlinePlayerId(int playerId) {
-            localOnlinePlayerId = Mathf.Clamp(playerId, 0, 1);
+            var next = Mathf.Clamp(playerId, 0, 1);
+            if (localOnlinePlayerId == next) {
+                return;
+            }
+
+            Debug.Log($"[AppNetworkSetting] LocalOnlinePlayerId changed. previous={localOnlinePlayerId}, next={next}");
+            localOnlinePlayerId = next;
         }
     }
 }

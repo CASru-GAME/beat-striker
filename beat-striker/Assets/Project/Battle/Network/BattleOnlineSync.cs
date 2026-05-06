@@ -148,6 +148,7 @@ namespace Alice {
             this.appNetworkSetting = appNetworkSetting;
             OnlineStrikerPreBeatStateSnapshotUnreliableRpc.OnSnapshotReceived += OnUnreliableStrikerPreBeatStateSnapshotReceived;
             TryRegisterCallbacks();
+            Debug.Log($"{LOG_PREFIX} Constructed. isOnline={IsOnline()}, isReady={IsReady}, localOnlinePlayerId={appNetworkSetting.LocalOnlinePlayerId}");
         }
 
         public bool IsReady => IsOnline() && TryRegisterCallbacks();
@@ -175,12 +176,14 @@ namespace Alice {
             resumeAckTimePlayer0 = 0f;
             resumeAckTimePlayer1 = 0f;
             latestRoundStartReadyRound = 0;
+            Debug.Log($"{LOG_PREFIX} Reset online battle flow sync state.");
         }
 
         // 双方が同じ (gate, round, subIndex) に到達するまでブロック。先に着いた側は相手の FlowGate 受信でマスクが埋まるまで待つ。
         // タイムアウト時は切断扱いにしてタイトル遷移など既存の OnDisconnected 経路に寄せる。
         public async Task PassFlowGateAsync(BattleFlowSyncGate gate, int round, int subIndex = 0) {
             if (!IsReady || !IsOnline()) {
+                Debug.Log($"{LOG_PREFIX} PassFlowGateAsync skipped. gate={gate}, round={round}, subIndex={subIndex}, isReady={IsReady}, isOnline={IsOnline()}, disconnected={disconnected}");
                 return;
             }
 
@@ -193,6 +196,7 @@ namespace Alice {
             mask |= 1 << localId;
             flowGateArrivalMask[key] = mask;
             flowGateEmitSequence += 1;
+            Debug.Log($"{LOG_PREFIX} PassFlowGateAsync start. gate={gate}, round={round}, subIndex={subIndex}, localId={localId}, mask={Convert.ToString(mask, 2).PadLeft(2, '0')}, networkTime={NetworkTime:0.000}");
             Broadcast(OnlineBattleProtocol.FlowGateKey, new FlowGatePayload {
                 gate = (int)gate,
                 round = round,
@@ -200,8 +204,9 @@ namespace Alice {
                 playerId = localId,
             });
             var waitUntil = NetworkTime + DefaultFlowGateTimeoutSeconds;
-            while (!disconnected && NetworkTime < waitUntil) {
+        while (!disconnected && NetworkTime < waitUntil) {
                 if (flowGateArrivalMask.TryGetValue(key, out var m) && m == 0b11) {
+                    Debug.Log($"{LOG_PREFIX} PassFlowGateAsync completed. gate={gate}, round={round}, subIndex={subIndex}, elapsed={NetworkTime - (waitUntil - DefaultFlowGateTimeoutSeconds):0.000}");
                     return;
                 }
 
@@ -211,12 +216,14 @@ namespace Alice {
             if (!disconnected) {
                 disconnected = true;
                 disconnectedSubject.OnNext(Unit.Default);
+                Debug.LogWarning($"{LOG_PREFIX} PassFlowGateAsync timed out. gate={gate}, round={round}, subIndex={subIndex}, localMask={Convert.ToString(flowGateArrivalMask.TryGetValue(key, out var timeoutMask) ? timeoutMask : 0, 2).PadLeft(2, '0')}, networkTime={NetworkTime:0.000}");
             }
         }
 
         // 各ピアが「このラウンドで再生開始の準備ができた時刻」を送る。PlayerId 0/1 別に保持し、揃ったら WaitSymmetric で同一式を評価する。
         public void PublishRoundStartReadyWithTime(int round, float readyNetworkTime) {
             if (!IsReady || !IsOnline()) {
+                Debug.Log($"{LOG_PREFIX} PublishRoundStartReadyWithTime skipped. round={round}, readyTime={readyNetworkTime:0.000}, isReady={IsReady}, isOnline={IsOnline()}");
                 return;
             }
 
@@ -249,6 +256,7 @@ namespace Alice {
         // 両者の readyNetworkTime を受信済みとみなしたうえで、max(t0,t1)+lead を NetworkTime 軸の再生開始時刻とする。minLead で過去クリップし非対称を防ぐ。
         public async Task<float> WaitSymmetricRoundStartNetworkTimeAsync(int round, float leadSeconds, float minLeadSeconds) {
             if (!IsReady || !IsOnline()) {
+                Debug.Log($"{LOG_PREFIX} WaitSymmetricRoundStartNetworkTimeAsync skipped because sync is not ready. round={round}, isReady={IsReady}, isOnline={IsOnline()}");
                 return 0f;
             }
 
@@ -259,12 +267,15 @@ namespace Alice {
                     roundStartReadyTimePlayer1.TryGetValue(round, out var t1);
                     var agreed = Mathf.Max(t0, t1) + leadSeconds;
                     var floor = NetworkTime + Mathf.Max(0f, minLeadSeconds);
-                    return Mathf.Max(agreed, floor);
+                    var startTime = Mathf.Max(agreed, floor);
+                    Debug.Log($"{LOG_PREFIX} WaitSymmetricRoundStartNetworkTimeAsync resolved. round={round}, player0={t0:0.000}, player1={t1:0.000}, agreed={agreed:0.000}, floor={floor:0.000}, start={startTime:0.000}");
+                    return startTime;
                 }
 
                 await Task.Yield();
             }
 
+            Debug.LogWarning($"{LOG_PREFIX} WaitSymmetricRoundStartNetworkTimeAsync timed out. round={round}, isReady={IsReady}, isOnline={IsOnline()}, disconnected={disconnected}");
             throw new InvalidOperationException("Online battle sync disconnected or timed out while waiting for round start readiness.");
         }
 
@@ -344,11 +355,13 @@ namespace Alice {
                 await Task.Yield();
             }
 
+            Debug.LogWarning($"{LOG_PREFIX} WaitSymmetricResumeNetworkTimeAsync timed out. isReady={IsReady}, isOnline={IsOnline()}, disconnected={disconnected}");
             throw new InvalidOperationException("Online battle sync disconnected or timed out while waiting for resume acks.");
         }
 
         public void PublishPhase(BattleFlowState state, int round) {
             if (!IsReady || !IsOnline()) {
+                Debug.Log($"{LOG_PREFIX} PublishPhase skipped. state={state}, round={round}, isReady={IsReady}, isOnline={IsOnline()}");
                 return;
             }
 
@@ -365,18 +378,22 @@ namespace Alice {
         }
 
         public void RequestPause() {
+            Debug.Log($"{LOG_PREFIX} RequestPause sent.");
             SendRequest(OnlineBattleProtocol.PauseRequestKey, new EmptyPayload());
         }
 
         public void RequestResume() {
+            Debug.Log($"{LOG_PREFIX} RequestResume sent.");
             SendRequest(OnlineBattleProtocol.ResumeRequestKey, new EmptyPayload());
         }
 
         public void RequestSuspendFinish() {
+            Debug.Log($"{LOG_PREFIX} RequestSuspendFinish sent.");
             SendRequest(OnlineBattleProtocol.SuspendFinishRequestKey, new EmptyPayload());
         }
 
         public void RequestRoundResolution(int deadPlayerId) {
+            Debug.Log($"{LOG_PREFIX} RequestRoundResolution sent. deadPlayerId={deadPlayerId}");
             SendRequest(OnlineBattleProtocol.RoundResolutionRequestKey, new RoundResolutionRequestPayload {
                 deadPlayerId = deadPlayerId,
             });
@@ -385,6 +402,7 @@ namespace Alice {
         // 送信前にローカル権威マージを通す。先に採用済みのラウンド/内容より遅い・矛盾する送信は弾かれ、先着アウトカムを維持する。
         public void PublishOutcome(BattleOutcomeSnapshot snapshot) {
             if (!IsReady || !IsOnline()) {
+                Debug.Log($"{LOG_PREFIX} PublishOutcome skipped. kind={snapshot.Kind}, round={snapshot.FinishedRound}, isReady={IsReady}, isOnline={IsOnline()}");
                 return;
             }
 
@@ -411,6 +429,7 @@ namespace Alice {
 
         public void PublishBeatNotification(OnlineBeatNotificationSnapshot snapshot) {
             if (!IsReady) {
+                Debug.Log($"{LOG_PREFIX} PublishBeatNotification skipped. player={snapshot.PlayerId}, beat={snapshot.BeatIndex}, kind={snapshot.Kind}, isReady={IsReady}");
                 return;
             }
 
@@ -431,6 +450,7 @@ namespace Alice {
 
         public void PublishStrikerPreBeatStateSnapshot(OnlineStrikerPreBeatStateSnapshot snapshot) {
             if (!IsReady) {
+                Debug.Log($"{LOG_PREFIX} PublishStrikerPreBeatStateSnapshot skipped. player={snapshot.PlayerId}, beat={snapshot.ApplyBeatIndex}, isReady={IsReady}");
                 return;
             }
 
@@ -467,6 +487,7 @@ namespace Alice {
 
         public void PublishRoundStartSchedule(int round, float startNetworkTime) {
             if (!IsReady || !IsOnline()) {
+                Debug.Log($"{LOG_PREFIX} PublishRoundStartSchedule skipped. round={round}, start={startNetworkTime:0.000}, isReady={IsReady}, isOnline={IsOnline()}");
                 return;
             }
 
@@ -484,6 +505,7 @@ namespace Alice {
 
         public void PublishBeatSyncResume(int beatIndex, float resumeNetworkTime, float hostPlaybackTime) {
             if (!IsReady || !IsOnline()) {
+                Debug.Log($"{LOG_PREFIX} PublishBeatSyncResume skipped. beat={beatIndex}, resume={resumeNetworkTime:0.000}, isReady={IsReady}, isOnline={IsOnline()}");
                 return;
             }
 
@@ -574,6 +596,7 @@ namespace Alice {
         bool TryRegisterCallbacks() {
             if (!runnerProvider.TryGetRunner(out var fromProvider) || fromProvider == null || !fromProvider.IsRunning) {
                 if (callbacksRegistered && runner != null) {
+                    Debug.LogWarning($"{LOG_PREFIX} Unregistering runner callbacks because runner is unavailable. previousRunner={runner.GetInstanceID()}");
                     runner.RemoveCallbacks(this);
                     callbacksRegistered = false;
                 }
@@ -583,6 +606,7 @@ namespace Alice {
             }
 
             if (callbacksRegistered && runner != null && (!ReferenceEquals(runner, fromProvider) || !runner.IsRunning)) {
+                Debug.LogWarning($"{LOG_PREFIX} Runner changed or stopped. previousRunner={runner.GetInstanceID()}, nextRunner={fromProvider.GetInstanceID()}, previousRunning={runner.IsRunning}, nextRunning={fromProvider.IsRunning}");
                 runner.RemoveCallbacks(this);
                 callbacksRegistered = false;
             }
@@ -760,6 +784,7 @@ namespace Alice {
             playerId = Mathf.Clamp(playerId, 0, 1);
             mask |= 1 << playerId;
             flowGateArrivalMask[key] = mask;
+            Debug.Log($"{LOG_PREFIX} Flow gate arrival recorded. gate={gate}, round={round}, subIndex={subIndex}, playerId={playerId}, mask={Convert.ToString(mask, 2).PadLeft(2, '0')}");
         }
 
         public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) {
@@ -825,7 +850,7 @@ namespace Alice {
                     (GamePadButton)payload.button,
                     new Vector2(payload.directionX, payload.directionY));
                 beatNotificationReceivedSubject.OnNext(snapshot);
-                Debug.Log($"{LOG_PREFIX} Received beat notification. sequence={snapshot.Sequence}, player={snapshot.PlayerId}, beat={snapshot.BeatIndex}, kind={snapshot.Kind}");
+                Debug.Log($"{LOG_PREFIX} Received beat notification. sequence={snapshot.Sequence}, player={snapshot.PlayerId}, beat={snapshot.BeatIndex}, kind={snapshot.Kind}, runnerIsServer={runner.IsServer}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
                 return;
             }
 
@@ -930,6 +955,7 @@ namespace Alice {
                 m |= 1 << pid;
                 suspendMenuBeatMaskByBeat[payload.applyBeatIndex] = m;
                 suspendMenuBeatReceivedSubject.OnNext(new OnlineSuspendMenuBeatSnapshot(payload.applyBeatIndex, pid));
+                Debug.Log($"{LOG_PREFIX} Received suspend menu beat request. beat={payload.applyBeatIndex}, player={pid}, mask={Convert.ToString(m, 2).PadLeft(2, '0')}");
                 return;
             }
 
@@ -944,6 +970,7 @@ namespace Alice {
                     resumeAckTimePlayer1 = payload.ackNetworkTime;
                 }
 
+                Debug.Log($"{LOG_PREFIX} Received resume ack. player={pid}, time={payload.ackNetworkTime:0.000}, mask={Convert.ToString(resumeAckMask, 2).PadLeft(2, '0')}");
                 return;
             }
         }
@@ -951,6 +978,7 @@ namespace Alice {
         public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) {
             disconnected = true;
             disconnectedSubject.OnNext(Unit.Default);
+            Debug.LogWarning($"{LOG_PREFIX} OnPlayerLeft. player={player}, runnerIsServer={runner.IsServer}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
         }
 
         public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) {
@@ -958,11 +986,13 @@ namespace Alice {
                 disconnected = true;
                 disconnectedSubject.OnNext(Unit.Default);
             }
+            Debug.LogWarning($"{LOG_PREFIX} OnShutdown. reason={shutdownReason}, runnerIsServer={runner.IsServer}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
         }
 
         public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) {
             disconnected = true;
             disconnectedSubject.OnNext(Unit.Default);
+            Debug.LogWarning($"{LOG_PREFIX} OnDisconnectedFromServer. reason={reason}, runnerIsServer={runner.IsServer}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
         }
 
         public void Dispose() {
@@ -985,12 +1015,16 @@ namespace Alice {
             disconnectedSubject.Dispose();
         }
 
-        public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
+        public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) {
+            Debug.Log($"{LOG_PREFIX} OnPlayerJoined. player={player}, runnerIsServer={runner.IsServer}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
+        }
         public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
         public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
         public void OnInput(NetworkRunner runner, NetworkInput input) { }
         public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-        public void OnConnectedToServer(NetworkRunner runner) { }
+        public void OnConnectedToServer(NetworkRunner runner) {
+            Debug.Log($"{LOG_PREFIX} OnConnectedToServer. runnerIsServer={runner.IsServer}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
+        }
         public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
         public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
         public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
@@ -1001,6 +1035,7 @@ namespace Alice {
         public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) {
             disconnected = true;
             disconnectedSubject.OnNext(Unit.Default);
+            Debug.LogWarning($"{LOG_PREFIX} OnConnectFailed. reason={reason}, remoteAddress={remoteAddress}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
         }
 
         public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) {

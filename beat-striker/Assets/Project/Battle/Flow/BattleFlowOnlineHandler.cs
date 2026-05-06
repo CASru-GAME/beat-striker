@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UnityEngine;
 using CorePlayerId = App.PlayerId;
 
 namespace Alice {
@@ -63,12 +64,15 @@ namespace Alice {
         /// <summary>オンライン時のみバリア待ち。オフラインは即完了。</summary>
         public async Task PassFlowGateAsync(BattleFlowSyncGate gate, int round, int subIndex = 0) {
             if (!IsOnlineBattle) {
+                Debug.Log($"[BattleFlowOnlineHandler] PassFlowGateAsync skipped because battle is offline. gate={gate}, round={round}, subIndex={subIndex}");
                 return;
             }
 
+            Debug.Log($"[BattleFlowOnlineHandler] PassFlowGateAsync start. gate={gate}, round={round}, subIndex={subIndex}, isHost={IsOnlineHost}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}, networkTime={battleOnlineSync.NetworkTime:0.000}");
             using (loadingOverlayService.Begin(FlowGateSyncLoadingMessage)) {
                 await battleOnlineSync.PassFlowGateAsync(gate, round, subIndex);
             }
+            Debug.Log($"[BattleFlowOnlineHandler] PassFlowGateAsync completed. gate={gate}, round={round}, subIndex={subIndex}");
         }
 
         public void PublishPhase(BattleFlowState state) {
@@ -76,6 +80,7 @@ namespace Alice {
                 return;
             }
 
+            Debug.Log($"[BattleFlowOnlineHandler] PublishPhase. state={state}, round={getCurrentRound()}, isHost={IsOnlineHost}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
             battleOnlineSync.PublishPhase(state, getCurrentRound());
         }
 
@@ -98,8 +103,11 @@ namespace Alice {
                 return 0f;
             }
 
+            Debug.Log($"[BattleFlowOnlineHandler] PrepareRoundPlaybackStartAsync start. round={round}, networkTime={battleOnlineSync.NetworkTime:0.000}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
             battleOnlineSync.PublishRoundStartReadyWithTime(round, battleOnlineSync.NetworkTime);
-            return await battleOnlineSync.WaitSymmetricRoundStartNetworkTimeAsync(round, RoundStartLeadSeconds, RoundStartMinLeadSeconds);
+            var startNetworkTime = await battleOnlineSync.WaitSymmetricRoundStartNetworkTimeAsync(round, RoundStartLeadSeconds, RoundStartMinLeadSeconds);
+            Debug.Log($"[BattleFlowOnlineHandler] PrepareRoundPlaybackStartAsync completed. round={round}, startNetworkTime={startNetworkTime:0.000}");
+            return startNetworkTime;
         }
 
         // 合意した未来時刻に達するまで入力・音楽の本接続を遅らせ、先にゲートを抜けた側の不利を減らす。
@@ -118,7 +126,9 @@ namespace Alice {
                 return;
             }
 
+            Debug.Log($"[BattleFlowOnlineHandler] ApplyOnlinePhaseSnapshot received. sequence={snapshot.Sequence}, state={snapshot.State}, round={snapshot.Round}, currentState={stateMachine.Current}, currentRound={getCurrentRound()}, appliedPhaseSeq={lastAppliedPhaseSequence}");
             if (snapshot.Sequence <= lastAppliedPhaseSequence) {
+                Debug.Log($"[BattleFlowOnlineHandler] ApplyOnlinePhaseSnapshot skipped because sequence is stale. sequence={snapshot.Sequence}, lastAppliedPhaseSeq={lastAppliedPhaseSequence}");
                 return;
             }
 
@@ -128,6 +138,7 @@ namespace Alice {
                 && !stateMachine.IsRoundResolving
                 && !stateMachine.IsBattleEndingOrFinished) {
                 if (beginRoundResolution(false)) {
+                    Debug.Log($"[BattleFlowOnlineHandler] ApplyOnlinePhaseSnapshot triggered local round resolution. sequence={snapshot.Sequence}, round={snapshot.Round}");
                     beatJudge.ResetRoundState();
                     pauseHandler.PresentRoundPlayableFinishToPlayers();
                     _ = resolveRoundAsync(-1);
@@ -136,6 +147,7 @@ namespace Alice {
             }
 
             if (snapshot.State == BattleFlowState.EndingToTitle) {
+                Debug.Log($"[BattleFlowOnlineHandler] ApplyOnlinePhaseSnapshot triggered EndBattleToTitleAsync. sequence={snapshot.Sequence}, round={snapshot.Round}");
                 _ = endBattleToTitleAsync();
             }
         }
@@ -151,6 +163,7 @@ namespace Alice {
             }
 
             var beatIndex = ResolveSuspendMenuApplyBeatIndex();
+            Debug.Log($"[BattleFlowOnlineHandler] PublishSuspendMenuBeatForCurrentTiming. beatIndex={beatIndex}, currentRound={getCurrentRound()}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
             battleOnlineSync.PublishSuspendMenuBeatRequest(beatIndex);
         }
 
@@ -166,23 +179,28 @@ namespace Alice {
         // 解除: 双方の ResumeAck を揃えたうえで resumeNetworkTime を決め、NetworkTime で待ってからローカル再開＋BeatSyncResume 通知＋解除ゲート。
         public async Task CompleteOnlineResumeFromSuspendMenuAsync() {
             if (!IsOnlineBattle) {
+                Debug.Log("[BattleFlowOnlineHandler] CompleteOnlineResumeFromSuspendMenuAsync skipped because battle is offline.");
                 onSuspendMenuResume();
                 return;
             }
 
             if (isResumeInProgress) {
+                Debug.Log($"[BattleFlowOnlineHandler] CompleteOnlineResumeFromSuspendMenuAsync skipped because resume is already in progress. currentRound={getCurrentRound()}");
                 return;
             }
 
             isResumeInProgress = true;
             try {
+                Debug.Log($"[BattleFlowOnlineHandler] CompleteOnlineResumeFromSuspendMenuAsync start. localPlayerId={appNetworkSetting.LocalOnlinePlayerId}, networkTime={battleOnlineSync.NetworkTime:0.000}");
                 battleOnlineSync.PublishResumeAck(battleOnlineSync.NetworkTime);
                 var resumeNetworkTime = await battleOnlineSync.WaitSymmetricResumeNetworkTimeAsync(ResumeLeadSeconds, ResumeMinLeadSeconds);
+                Debug.Log($"[BattleFlowOnlineHandler] Resume network time agreed. resumeNetworkTime={resumeNetworkTime:0.000}");
                 while (battleOnlineSync.NetworkTime < resumeNetworkTime) {
                     await Task.Yield();
                 }
 
                 var judged = musicPlayer.JudgeTiming(musicPlayer.CurrentPlaybackTime);
+                Debug.Log($"[BattleFlowOnlineHandler] Resume reached. beat={judged.BeatIndex}, playback={musicPlayer.CurrentPlaybackTime:0.000}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
                 battleOnlineSync.PublishBeatSyncResume(judged.BeatIndex, resumeNetworkTime, musicPlayer.CurrentPlaybackTime);
                 battleOnlineSync.ClearResumeAckState();
                 onSuspendMenuResume();
@@ -206,14 +224,17 @@ namespace Alice {
                 return;
             }
 
+            Debug.Log($"[BattleFlowOnlineHandler] ApplyOnlineRoundResolutionRequest. deadPlayerId={deadPlayerId}, currentRound={getCurrentRound()}, currentState={stateMachine.Current}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
             onRoundResolutionRequested(deadPlayerId);
         }
 
         public void RequestSuspendFinish() {
+            Debug.Log($"[BattleFlowOnlineHandler] RequestSuspendFinish. localPlayerId={appNetworkSetting.LocalOnlinePlayerId}, currentRound={getCurrentRound()}");
             battleOnlineSync.RequestSuspendFinish();
         }
 
         public void RequestRoundResolution(int deadPlayerId) {
+            Debug.Log($"[BattleFlowOnlineHandler] RequestRoundResolution. deadPlayerId={deadPlayerId}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}, currentRound={getCurrentRound()}");
             battleOnlineSync.RequestRoundResolution(deadPlayerId);
         }
 

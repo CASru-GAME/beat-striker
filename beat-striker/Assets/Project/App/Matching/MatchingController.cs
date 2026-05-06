@@ -80,8 +80,10 @@ namespace Alice {
                 state.UiMode == OnlineDuelUiMode.Candidate,
                 state.Message);
             matchingModel.SetState(next);
+            Debug.Log($"{LOG_PREFIX} Duel state applied. uiMode={state.UiMode}, phase={next.Phase}, previousPhase={previous.Phase}, hasReservation={next.HasReservation}, reservationId={next.ReservationId}, opponent={next.OpponentSessionId}, localScene={currentScene}, localStatus={localPlayerStatus}");
 
             if (next.Phase == MatchingPhase.Error) {
+                Debug.LogWarning($"{LOG_PREFIX} Duel state entered Error. message={next.Message}");
                 _ = ClearMatchingAsync(next.Message);
                 return;
             }
@@ -281,6 +283,7 @@ namespace Alice {
             try {
                 currentScene = scene;
                 localPlayerStatus = ResolveInitialPlayerStatus(scene);
+                Debug.Log($"{LOG_PREFIX} NotifySceneReadyAsync. scene={scene}, appOverlayEnabled={appOverlayEnabled}, localStatus={localPlayerStatus}, currentPhase={matchingModel.State.CurrentValue.Phase}, isEstablished={matchingModel.IsEstablished.CurrentValue}");
                 await duelClient.NotifySceneReadyAsync(scene, appOverlayEnabled);
                 ApplyDuelState(duelClient.State.CurrentValue);
             }
@@ -292,6 +295,7 @@ namespace Alice {
         public async Task NotifyPlayerStatusAsync(OnlineDuelPlayerStatus status) {
             try {
                 localPlayerStatus = status;
+                Debug.Log($"{LOG_PREFIX} NotifyPlayerStatusAsync. status={status}, currentScene={currentScene}, currentPhase={matchingModel.State.CurrentValue.Phase}, isEstablished={matchingModel.IsEstablished.CurrentValue}");
                 await duelClient.NotifyPlayerStatusAsync(status);
                 ApplyDuelState(duelClient.State.CurrentValue);
             }

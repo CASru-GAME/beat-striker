@@ -547,9 +547,25 @@ namespace Alice {
         }
 
         ComputedView ComputeView(string sessionId, string message) {
-            if (!IsDuelCandidateEligible(sessionId)) {
+            if (!IsActiveDuelSession(sessionId)) {
                 candidateBySession.Remove(sessionId);
                 return ComputedView.Idle(sessionId, message);
+            }
+
+            if (TryGetBattleOpponentSessionId(sessionId, out var battleOpponentSessionId)) {
+                candidateBySession.Remove(sessionId);
+                return new ComputedView(
+                    OnlineDuelUiMode.EnterBattle,
+                    sessionId,
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    battleOpponentSessionId,
+                    TryGetScene(battleOpponentSessionId),
+                    ResolvePresenceStatus(battleOpponentSessionId),
+                    message ?? "");
             }
 
             if (TryGetActiveReservation(sessionId, out var reservation)) {
@@ -569,6 +585,11 @@ namespace Alice {
                     TryGetScene(opponentSessionId),
                     ResolveOpponentStatus(sessionId, reservation),
                     message ?? "");
+            }
+
+            if (!IsDuelCandidateEligible(sessionId)) {
+                candidateBySession.Remove(sessionId);
+                return ComputedView.Idle(sessionId, message);
             }
 
             if (TryFindPendingIncomingInvite(sessionId, out var incomingInvite)) {
@@ -776,6 +797,7 @@ namespace Alice {
             var affected = new HashSet<string>();
             CancelPendingInvitesBySession(duelSessionId, message, affected);
             CancelReservationsBySession(duelSessionId, message, affected);
+            RemoveBattleOpponentForSession(duelSessionId, affected);
 
             if (playerBySession.TryGetValue(duelSessionId, out var player)) {
                 sessionByPlayer.Remove(player);
@@ -792,6 +814,21 @@ namespace Alice {
             AppendAllActiveSessions(affected);
             DispatchAffected(affected, "RemoveSession");
             Debug.Log($"{LOG_PREFIX} Session removed. session={duelSessionId}, message={message}");
+        }
+
+        void RemoveBattleOpponentForSession(string duelSessionId, HashSet<string> affected) {
+            if (!playerBySession.TryGetValue(duelSessionId, out var player)
+                || !battleOpponentByPlayer.TryGetValue(player, out var opponent)) {
+                return;
+            }
+
+            if (sessionByPlayer.TryGetValue(opponent, out var opponentSessionId)) {
+                SetPendingMessage(opponentSessionId, "Opponent disconnected.");
+                affected.Add(opponentSessionId);
+            }
+
+            battleOpponentByPlayer.Remove(opponent);
+            battleOpponentByPlayer.Remove(player);
         }
 
         void CancelReservationsBySession(string duelSessionId, string message, HashSet<string> affected) {
@@ -873,10 +910,31 @@ namespace Alice {
         }
 
         bool IsDuelCandidateEligible(string duelSessionId) {
-            return presenceBySession.TryGetValue(duelSessionId, out var presence)
+            return IsActiveDuelSession(duelSessionId)
+                   && !TryGetBattleOpponentSessionId(duelSessionId, out _)
+                   && presenceBySession.TryGetValue(duelSessionId, out var presence)
                    && presence.AppOverlayEnabled
+                   && Time.realtimeSinceStartup < presence.ExpiresAt;
+        }
+
+        bool IsActiveDuelSession(string duelSessionId) {
+            return presenceBySession.TryGetValue(duelSessionId, out var presence)
                    && playerBySession.ContainsKey(duelSessionId)
                    && Time.realtimeSinceStartup < presence.ExpiresAt;
+        }
+
+        bool TryGetBattleOpponentSessionId(string duelSessionId, out string opponentSessionId) {
+            opponentSessionId = "";
+            if (!playerBySession.TryGetValue(duelSessionId, out var player)
+                || !battleOpponentByPlayer.TryGetValue(player, out var opponent)
+                || !sessionByPlayer.TryGetValue(opponent, out opponentSessionId)
+                || string.IsNullOrWhiteSpace(opponentSessionId)
+                || !IsActiveDuelSession(opponentSessionId)) {
+                opponentSessionId = "";
+                return false;
+            }
+
+            return true;
         }
 
         string TryGetScene(string duelSessionId) {
