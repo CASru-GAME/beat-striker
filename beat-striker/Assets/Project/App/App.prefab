@@ -3623,7 +3623,8 @@ MonoBehaviour:
   isOnline: 0
   sessionName: beat-striker-minimal
   cloudApiBaseUrl: https://beat-striker-api-1049753443537.asia-northeast1.run.app
-  matchTimeoutSeconds: 30
+  selectionTimeLimitSeconds: 180
+  duelInviteSkipCooldownSeconds: 60
 --- !u!114 &6595342875354204002
 MonoBehaviour:
   m_ObjectHideFlags: 0

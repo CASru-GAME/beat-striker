@@ -46,7 +46,6 @@ namespace Alice {
         public string DisplayName;
         public Striker BattleStriker;
         public AssetReferenceGameObject PrefabReference;
-        public AssetReferenceGameObject PreviewModelReference;
         public Sprite Portrait;
         public Sprite Thumbnail;
     }
@@ -59,7 +58,6 @@ namespace Alice {
         StrikerInfo GetByStriker(Striker striker);
         IReadOnlyList<StrikerInfo> GetAll();
         Awaitable<LoadedAsset<GameObject>> LoadBattlePrefabAsync(Striker striker);
-        Awaitable<LoadedAsset<GameObject>> LoadPreviewModelAsync(Striker striker);
     }
 
     public class AppStrikerRegistry : MonoBehaviour, IAppStrikerRegistry {
@@ -104,16 +102,6 @@ namespace Alice {
 
             using var scope = loadingOverlayService.Begin();
             return await LoadAssetAsync<GameObject>(entry.PrefabReference, debugLoadDelaySeconds);
-        }
-
-        public async Awaitable<LoadedAsset<GameObject>> LoadPreviewModelAsync(Striker striker) {
-            EnsureInitialized();
-            if (!entryByType.TryGetValue(striker, out var entry)) {
-                return LoadedAsset<GameObject>.Empty();
-            }
-
-            using var scope = loadingOverlayService.Begin();
-            return await LoadAssetAsync<GameObject>(entry.PreviewModelReference, debugLoadDelaySeconds);
         }
 
         void EnsureInitialized() {

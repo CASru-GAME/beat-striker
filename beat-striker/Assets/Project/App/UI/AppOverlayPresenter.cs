@@ -12,25 +12,15 @@ namespace Alice {
     }
 
     public class AppOverlayPresenter : IAppOverlayPresenter, IInitializable, IDisposable {
-        const int CandidateDialogSkipTransitionBlockCount = 5;
-
         readonly AppOverlayView view;
         readonly IScreenRegistry screenRegistry;
         readonly ISceneTransitionService sceneTransitionService;
-        readonly IAppNetworkSetting appNetworkSetting;
-        readonly IOnlineDuelFusionClient duelClient;
+        readonly IMatchingModel matchingModel;
+        readonly IMatchingDuelOperations duelOperations;
+        readonly IAppNetworkSetting networkSetting;
         readonly CompositeDisposable disposables = new();
         bool overlayEnabledForCurrentScreen;
-        OnlineDuelPhase lastObservedPhase;
-        string lastObservedInviteId = "";
-        string lastHandledReservationId = "";
-        int candidateDialogGateSceneSyncId;
-        bool candidateDialogGateOpen;
-        bool incomingDialogLatchedVisible;
-        bool candidateDialogLatchedVisible;
-        string latchedIncomingInviteId = "";
-        string latchedCandidateSessionId = "";
-        int candidateDialogSkipTransitionBlockRemaining;
+        float lastCandidateDialogSkippedAt = float.NegativeInfinity;
 
         public bool IsOverlayVisible => overlayEnabledForCurrentScreen;
 
@@ -39,28 +29,28 @@ namespace Alice {
             AppOverlayView view,
             IScreenRegistry screenRegistry,
             ISceneTransitionService sceneTransitionService,
-            IAppNetworkSetting appNetworkSetting,
-            IOnlineDuelFusionClient duelClient) {
+            IMatchingModel matchingModel,
+            IMatchingDuelOperations duelOperations,
+            IAppNetworkSetting networkSetting) {
             this.view = view;
             this.screenRegistry = screenRegistry;
             this.sceneTransitionService = sceneTransitionService;
-            this.appNetworkSetting = appNetworkSetting;
-            this.duelClient = duelClient;
+            this.matchingModel = matchingModel;
+            this.duelOperations = duelOperations;
+            this.networkSetting = networkSetting;
         }
 
         public void Initialize() {
+            Debug.Log($"[AppOverlayPresenter] Initialize begin. activeScene={SceneManager.GetActiveScene().name}, overlayEnabledForCurrentScreen={overlayEnabledForCurrentScreen}");
             SceneManager.sceneLoaded += OnSceneLoaded;
             ApplyScreenRule(SceneManager.GetActiveScene().name);
-            lastObservedPhase = duelClient.State.CurrentValue.Phase;
-            lastObservedInviteId = duelClient.State.CurrentValue.InviteId;
-            appNetworkSetting.IsOnline.Subscribe(_ => ApplyOnlineIndicatorFromNetwork()).AddTo(disposables);
-            duelClient.State.Subscribe(OnDuelStateChanged).AddTo(disposables);
-            sceneTransitionService.TransitioningChanged.Subscribe(OnTransitioningChanged).AddTo(disposables);
+            matchingModel.IsEstablished.Subscribe(_ => ApplyOnlineIndicatorFromModel()).AddTo(disposables);
+            matchingModel.State.Subscribe(OnMatchingStateChanged).AddTo(disposables);
             sceneTransitionService.EndTransitionCompleted.Subscribe(OnEndTransitionCompleted).AddTo(disposables);
             Observable.EveryUpdate().Subscribe(_ => RefreshDynamicMatchStatus()).AddTo(disposables);
-            view.IncomingDuelAccepted.Subscribe(_ => duelClient.AcceptInvite()).AddTo(disposables);
-            view.IncomingDuelRejected.Subscribe(_ => duelClient.RejectInvite()).AddTo(disposables);
-            view.CandidateDuelInvited.Subscribe(_ => duelClient.InviteCandidate()).AddTo(disposables);
+            view.IncomingDuelAccepted.Subscribe(_ => AcceptIncomingDuel()).AddTo(disposables);
+            view.IncomingDuelRejected.Subscribe(_ => RejectIncomingDuel()).AddTo(disposables);
+            view.CandidateDuelInvited.Subscribe(_ => InviteCandidateDuel()).AddTo(disposables);
             view.CandidateDuelSkipped.Subscribe(_ => SkipCandidateDuel()).AddTo(disposables);
         }
 
@@ -73,151 +63,80 @@ namespace Alice {
                 screenInfo = screenRegistry.Default;
             }
 
+            var wasOverlayEnabled = overlayEnabledForCurrentScreen;
             overlayEnabledForCurrentScreen = screenInfo.ShowAppOverlay;
             view.SetOverlayVisible(overlayEnabledForCurrentScreen);
             if (!overlayEnabledForCurrentScreen) {
-                HideDuelDialog();
+                HideDuelDialog(cancelActiveDuelUi: true);
+                view.SetOnlineIndicatorVisible(false);
                 view.SetMatchStatusVisible(false);
+                if (wasOverlayEnabled) {
+                    _ = duelOperations.NotifySceneReadyAsync(screenInfo.Scene, false);
+                }
+                return;
             }
-            ApplyOnlineIndicatorFromNetwork();
-            ApplyDuelState(duelClient.State.CurrentValue);
+            ApplyOnlineIndicatorFromModel();
+            ApplyDuelState(matchingModel.State.CurrentValue);
+            ApplyMatchStatusFromModel(matchingModel.State.CurrentValue);
         }
 
-        void ApplyOnlineIndicatorFromNetwork() {
+        void ApplyOnlineIndicatorFromModel() {
             if (!overlayEnabledForCurrentScreen) {
                 return;
             }
 
-            view.SetOnlineIndicatorVisible(appNetworkSetting.IsOnline.CurrentValue);
+            view.SetOnlineIndicatorVisible(matchingModel.IsEstablished.CurrentValue);
         }
 
-        void OnDuelStateChanged(OnlineDuelUiState state) {
+        void OnMatchingStateChanged(MatchingState state) {
             ApplyDuelState(state);
-            if (IsNewIncomingInvite(state)) {
-                TryShowIncomingDuelDialog(state);
-            }
-            if (state.Phase == OnlineDuelPhase.CandidateShown && !candidateDialogLatchedVisible) {
-                TryShowCandidateDuelDialog(state);
-            }
-            lastObservedPhase = state.Phase;
-            lastObservedInviteId = state.InviteId;
-        }
-
-        void OnTransitioningChanged(bool isTransitioning) {
-            if (isTransitioning) {
-                HideDuelDialog();
-            }
+            ApplyMatchStatusFromModel(state);
         }
 
         void OnEndTransitionCompleted(AppScene scene) {
+            _ = OnEndTransitionCompletedAsync(scene);
+        }
+
+        async System.Threading.Tasks.Task OnEndTransitionCompletedAsync(AppScene scene) {
             ApplyScreenRule(SceneManager.GetActiveScene().name);
-            _ = NotifySceneReadyForOverlayAsync(scene);
-            CountCandidateDialogSkippedTransition();
-            OpenCandidateDialogGate();
-            TryShowCandidateDuelDialog(duelClient.State.CurrentValue);
+            await duelOperations.NotifySceneReadyAsync(scene, overlayEnabledForCurrentScreen);
+            ApplyDuelState(matchingModel.State.CurrentValue);
         }
 
-        async System.Threading.Tasks.Task NotifySceneReadyForOverlayAsync(AppScene scene) {
-            try {
-                await duelClient.NotifySceneReadyAsync(scene);
-            }
-            catch (Exception exception) {
-                Debug.LogWarning($"[AppOverlayPresenter] Scene ready sync failed. scene={scene}, message={exception.Message}");
-            }
-        }
-
-        void ApplyDuelState(OnlineDuelUiState state) {
+        void ApplyDuelState(MatchingState state) {
             if (!overlayEnabledForCurrentScreen) {
-                HideDuelDialog();
-                view.SetMatchStatusVisible(false);
+                HideDuelDialog(cancelActiveDuelUi: true);
                 return;
             }
 
-            ApplyLatchedDialogVisibility(state);
-
-            ApplyMatchStatus(state);
-            RequestStageSelectIfReserved(state);
-        }
-
-        void TryShowIncomingDuelDialog(OnlineDuelUiState state) {
-            var visible = state.Phase == OnlineDuelPhase.IncomingInvite && CanShowDuelDialog();
-            incomingDialogLatchedVisible = visible;
-            latchedIncomingInviteId = visible ? state.InviteId : "";
-            view.SetIncomingDuelVisible(visible);
-        }
-
-        void TryShowCandidateDuelDialog(OnlineDuelUiState state) {
-            var visible = IsCandidateDialogAllowedForCurrentGate(state);
-            candidateDialogLatchedVisible = visible;
-            latchedCandidateSessionId = visible ? state.CandidateSessionId : "";
-            if (visible) {
-                candidateDialogGateOpen = false;
-            }
-            view.SetCandidateDuelVisible(visible);
+            var ctx = new OverlayCtx(overlayEnabledForCurrentScreen, IsCandidateDialogSkipCooldownActive());
+            view.SetIncomingDuelVisible(ShouldShowIncoming(state, ctx));
+            view.SetCandidateDuelVisible(ShouldShowCandidate(state, ctx));
         }
 
         void SkipCandidateDuel() {
-            candidateDialogSkipTransitionBlockRemaining = CandidateDialogSkipTransitionBlockCount;
-            candidateDialogGateOpen = false;
-            candidateDialogLatchedVisible = false;
-            latchedCandidateSessionId = "";
-            view.SetCandidateDuelVisible(false);
-            duelClient.SkipCandidate();
+            lastCandidateDialogSkippedAt = Time.realtimeSinceStartup;
+            duelOperations.SkipCandidate();
+            ApplyDuelState(matchingModel.State.CurrentValue);
         }
 
-        void CountCandidateDialogSkippedTransition() {
-            if (candidateDialogSkipTransitionBlockRemaining > 0) {
-                candidateDialogSkipTransitionBlockRemaining -= 1;
-            }
+        void InviteCandidateDuel() {
+            duelOperations.InviteCandidate();
         }
 
-        void ApplyLatchedDialogVisibility(OnlineDuelUiState state) {
-            var keepIncomingVisible = incomingDialogLatchedVisible
-                                      && state.Phase == OnlineDuelPhase.IncomingInvite
-                                      && state.InviteId == latchedIncomingInviteId
-                                      && CanShowDuelDialog();
-            view.SetIncomingDuelVisible(keepIncomingVisible);
-            if (state.Phase != OnlineDuelPhase.IncomingInvite
-                || (incomingDialogLatchedVisible && state.InviteId != latchedIncomingInviteId)) {
-                incomingDialogLatchedVisible = false;
-                latchedIncomingInviteId = "";
-            }
-
-            var keepCandidateVisible = candidateDialogLatchedVisible
-                                       && state.Phase == OnlineDuelPhase.CandidateShown
-                                       && state.CandidateSessionId == latchedCandidateSessionId
-                                       && CanShowDuelDialog();
-            view.SetCandidateDuelVisible(keepCandidateVisible);
-            if (state.Phase != OnlineDuelPhase.CandidateShown
-                || (candidateDialogLatchedVisible && state.CandidateSessionId != latchedCandidateSessionId)) {
-                candidateDialogLatchedVisible = false;
-                latchedCandidateSessionId = "";
-            }
+        void AcceptIncomingDuel() {
+            duelOperations.AcceptInvite();
         }
 
-        bool IsNewIncomingInvite(OnlineDuelUiState state) {
-            return state.Phase == OnlineDuelPhase.IncomingInvite
-                   && (lastObservedPhase != OnlineDuelPhase.IncomingInvite || state.InviteId != lastObservedInviteId);
+        void RejectIncomingDuel() {
+            duelOperations.RejectInvite();
         }
 
-        void OpenCandidateDialogGate() {
-            candidateDialogGateSceneSyncId = duelClient.LastSceneSyncId;
-            candidateDialogGateOpen = CanShowDuelDialog() && candidateDialogGateSceneSyncId > 0;
+        bool IsCandidateDialogSkipCooldownActive() {
+            return Time.realtimeSinceStartup - lastCandidateDialogSkippedAt < networkSetting.DuelInviteSkipCooldownSeconds;
         }
 
-        bool IsCandidateDialogAllowedForCurrentGate(OnlineDuelUiState state) {
-            return candidateDialogGateOpen
-                   && candidateDialogSkipTransitionBlockRemaining <= 0
-                   && state.Phase == OnlineDuelPhase.CandidateShown
-                   && state.SceneSyncId == candidateDialogGateSceneSyncId
-                   && CanShowDuelDialog();
-        }
-
-        bool CanShowDuelDialog() {
-            return overlayEnabledForCurrentScreen && !sceneTransitionService.IsTransitioning;
-        }
-
-        void ApplyMatchStatus(OnlineDuelUiState state) {
+        void ApplyMatchStatusFromModel(MatchingState state) {
             if (!overlayEnabledForCurrentScreen) {
                 view.SetMatchStatusVisible(false);
                 return;
@@ -232,55 +151,39 @@ namespace Alice {
             view.SetMatchStatus(
                 FormatPlayerName(ResolveOpponentSessionId(state)),
                 FormatMatchTimeLimit(state, Time.realtimeSinceStartup),
-                FormatOpponentStatus(state.OpponentStatus));
+                FormatMatchingPhase(state.OpponentPhase));
         }
 
         void RefreshDynamicMatchStatus() {
-            var state = duelClient.State.CurrentValue;
+            var state = matchingModel.State.CurrentValue;
             if (overlayEnabledForCurrentScreen && ShouldShowMatchStatus(state)) {
-                ApplyMatchStatus(state);
-            }
-        }
-
-        void RequestStageSelectIfReserved(OnlineDuelUiState state) {
-            if (state.Phase != OnlineDuelPhase.Reserved) {
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(state.ReservationId) || state.ReservationId == lastHandledReservationId) {
-                return;
-            }
-
-            var activeScene = SceneManager.GetActiveScene().name;
-            if (!screenRegistry.TryGetBySceneName(activeScene, out var screenInfo)) {
-                screenInfo = screenRegistry.Default;
-            }
-
-            if (screenInfo.Scene == AppScene.StageSelect
-                || screenInfo.Scene == AppScene.CharacterSelect) {
-                lastHandledReservationId = state.ReservationId;
-                return;
-            }
-
-            var result = sceneTransitionService.RequestStartTransition(AppScene.StageSelect);
-            if (result.IsSuccess) {
-                lastHandledReservationId = state.ReservationId;
-                Debug.Log($"[AppOverlayPresenter] Reserved duel accepted. Transitioning to {AppScene.StageSelect}. reservationId={state.ReservationId}");
-            }
-            else {
-                Debug.LogWarning($"[AppOverlayPresenter] Reserved duel transition to {AppScene.StageSelect} rejected. reservationId={state.ReservationId}");
+                ApplyMatchStatusFromModel(state);
             }
         }
 
         public void HideDuelDialog() {
+            HideDuelDialog(cancelActiveDuelUi: true);
+        }
+
+        void HideDuelDialog(bool cancelActiveDuelUi) {
+            if (cancelActiveDuelUi) {
+                CancelActiveDuelUi();
+            }
+
             view.SetIncomingDuelVisible(false);
             view.SetCandidateDuelVisible(false);
-            candidateDialogGateOpen = false;
-            candidateDialogGateSceneSyncId = 0;
-            incomingDialogLatchedVisible = false;
-            candidateDialogLatchedVisible = false;
-            latchedIncomingInviteId = "";
-            latchedCandidateSessionId = "";
+        }
+
+        void CancelActiveDuelUi() {
+            var state = matchingModel.State.CurrentValue;
+            if (state.HasIncomingInvite) {
+                duelOperations.RejectInvite();
+                return;
+            }
+
+            if (state.HasInviteCandidate) {
+                duelOperations.SkipCandidate();
+            }
         }
 
         static string FormatPlayerName(string sessionId) {
@@ -291,40 +194,20 @@ namespace Alice {
             return sessionId.Length > 4 ? $"Player_{sessionId.Substring(0, 4)}" : sessionId;
         }
 
-        static string ResolveOpponentSessionId(OnlineDuelUiState state) {
-            if (!string.IsNullOrWhiteSpace(state.OpponentSessionId)) {
-                return state.OpponentSessionId;
-            }
-            if (!string.IsNullOrWhiteSpace(state.CandidateSessionId)) {
-                return state.CandidateSessionId;
-            }
-            if (!string.IsNullOrWhiteSpace(state.InviteFromSessionId)) {
-                return state.InviteFromSessionId;
-            }
-            if (!string.IsNullOrWhiteSpace(state.InviteToSessionId)) {
-                return state.InviteToSessionId;
-            }
-
-            return "";
+        static string ResolveOpponentSessionId(MatchingState state) {
+            return state.OpponentSessionId;
         }
 
-        public static bool ShouldShowMatchStatus(OnlineDuelUiState state) {
-            return IsReservedDuelPhase(state.Phase) || IsActiveMatchmaking(state);
+        public static bool ShouldShowMatchStatus(MatchingState state) {
+            return state.Phase == MatchingPhase.StageSelecting
+                   || state.Phase == MatchingPhase.CharacterSelecting
+                   || state.Phase == MatchingPhase.Waiting
+                   || state.Phase == MatchingPhase.InBattle;
         }
 
-        static bool IsReservedDuelPhase(OnlineDuelPhase phase) {
-            return phase == OnlineDuelPhase.Reserved
-                   || phase == OnlineDuelPhase.Consumed
-                   || phase == OnlineDuelPhase.EnterBattle;
-        }
-
-        static bool IsActiveMatchmaking(OnlineDuelUiState state) {
-            return state.Phase == OnlineDuelPhase.Matching
-                   && state.MatchDeadlineRealtime > 0f;
-        }
-
-        public static string FormatMatchTimeLimit(OnlineDuelUiState state, float nowRealtime) {
-            if (state.Phase != OnlineDuelPhase.Matching || state.MatchDeadlineRealtime <= 0f) {
+        public static string FormatMatchTimeLimit(MatchingState state, float nowRealtime) {
+            if ((state.Phase != MatchingPhase.StageSelecting && state.Phase != MatchingPhase.CharacterSelecting)
+                || state.MatchDeadlineRealtime <= 0f) {
                 return "";
             }
 
@@ -339,6 +222,31 @@ namespace Alice {
                 _ => "ステージ選択中",
             };
         }
+
+        public static string FormatMatchingPhase(MatchingPhase phase) {
+            return phase switch {
+                MatchingPhase.InvitingOrGuidance => "宣戦布告中",
+                MatchingPhase.StageSelecting => "ステージ選択中",
+                MatchingPhase.CharacterSelecting => "キャラ選択中",
+                MatchingPhase.Waiting => "待機中",
+                MatchingPhase.InBattle => "バトル中",
+                _ => "ステージ選択中",
+            };
+        }
+
+        static bool ShouldShowIncoming(MatchingState state, OverlayCtx ctx) {
+            return state.HasIncomingInvite && ctx.OverlayEnabled;
+        }
+
+        static bool ShouldShowCandidate(MatchingState state, OverlayCtx ctx) {
+            return state.IsCandidateGuidance
+                   && !state.HasIncomingInvite
+                   && !state.HasReservation
+                   && ctx.OverlayEnabled
+                   && !ctx.SkipCooldownActive;
+        }
+
+        record OverlayCtx(bool OverlayEnabled, bool SkipCooldownActive);
 
         public void Dispose() {
             SceneManager.sceneLoaded -= OnSceneLoaded;

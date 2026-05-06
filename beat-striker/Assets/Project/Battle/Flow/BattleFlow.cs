@@ -238,15 +238,14 @@ namespace Alice {
         }
 
         async Task LeaveOnlineBattleAppStateIfNeededAsync() {
-            if (!appNetworkSetting.IsOnline.CurrentValue) {
+            if (!onlineHandler.IsOnlineBattle) {
                 return;
             }
 
             var localOnlinePlayerId = appNetworkSetting.LocalOnlinePlayerId;
             gamePadRegistry.RestoreOfflinePrimaryLayout(localOnlinePlayerId);
-            await onlineSessionBootstrap.TeardownOnlineRunnerAsync();
-            appNetworkSetting.SetIsOnline(false);
             appNetworkSetting.SetLocalOnlinePlayerId(0);
+            await onlineSessionBootstrap.TeardownOnlineRunnerAsync();
         }
 
         void DisposeBattleAddressablePreload() {

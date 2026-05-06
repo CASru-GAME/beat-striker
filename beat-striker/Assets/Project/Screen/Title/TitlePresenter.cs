@@ -20,7 +20,6 @@ namespace Alice {
         readonly IGamePadRegistry gamePadRegistry;
         readonly ITutorialSetting tutorialSetting;
         readonly IAppNetworkSetting appNetworkSetting;
-        readonly IOnlineSessionBootstrap onlineSessionBootstrap;
         readonly CompositeDisposable subscriptions = new();
         bool quitRequested;
         TitleInputState inputState = TitleInputState.Ready;
@@ -31,14 +30,12 @@ namespace Alice {
             ISceneTransitionService sceneTransitionService,
             IGamePadRegistry gamePadRegistry,
             ITutorialSetting tutorialSetting,
-            IAppNetworkSetting appNetworkSetting,
-            IOnlineSessionBootstrap onlineSessionBootstrap) {
+            IAppNetworkSetting appNetworkSetting) {
             this.view = view;
             this.sceneTransitionService = sceneTransitionService;
             this.gamePadRegistry = gamePadRegistry;
             this.tutorialSetting = tutorialSetting;
             this.appNetworkSetting = appNetworkSetting;
-            this.onlineSessionBootstrap = onlineSessionBootstrap;
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.gamePadRegistry.OnAnyButtonDown
@@ -73,8 +70,6 @@ namespace Alice {
 
         public async Task EnterTitleAsync() {
             gamePadRegistry.RestoreOfflinePrimaryLayout(appNetworkSetting.LocalOnlinePlayerId);
-            await onlineSessionBootstrap.TeardownOnlineRunnerAsync();
-            appNetworkSetting.SetIsOnline(false);
             appNetworkSetting.SetLocalOnlinePlayerId(0);
             tutorialSetting.ClearTutorialBattleRequest();
             Debug.Log($"{LOG_PREFIX} EnterTitleAsync requesting end transition. scene={AppScene.Title}");

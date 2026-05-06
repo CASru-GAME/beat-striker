@@ -9,11 +9,10 @@ namespace Alice {
     public class OnlineSessionRelayServer : MonoBehaviour, INetworkRunnerCallbacks {
         const string LOG_PREFIX = "[OnlineSessionRelayServer]";
         const string DEFAULT_SESSION_NAME = "beat-striker-minimal";
-        const string StageSelectScene = "StageSelect";
-        const string CharacterSelectScene = "CharacterSelect";
-        const float PresenceTtlSeconds = 120f;
+        const float PresenceHeartbeatIntervalSeconds = 30f;
+        const float PresenceHeartbeatGraceMultiplier = 4f;
+        const float PresenceTtlSeconds = PresenceHeartbeatIntervalSeconds * PresenceHeartbeatGraceMultiplier;
         const float InviteTtlSeconds = 60f;
-        const float ReservationTtlSeconds = 180f;
 
         [SerializeField] string sessionName = DEFAULT_SESSION_NAME;
         [SerializeField, Min(2)] int playerCount = 32;
@@ -28,6 +27,9 @@ namespace Alice {
         readonly Dictionary<string, OnlineMatchRequest> matchRequestsBySession = new();
         readonly Dictionary<PlayerRef, PlayerRef> battleOpponentByPlayer = new();
         readonly Dictionary<string, string> candidateBySession = new();
+        readonly Dictionary<string, int> viewStateSeqBySession = new();
+        readonly Dictionary<string, ComputedView> lastViewSnapshotBySession = new();
+        readonly Dictionary<string, string> pendingViewMessageBySession = new();
         NetworkRunner runner;
         bool serverStartRequested;
         int inviteSequence;
@@ -61,10 +63,12 @@ namespace Alice {
 
         async Task StartServerAsync() {
             if (runner != null && runner.IsRunning) {
+                Debug.Log($"{LOG_PREFIX} StartServerAsync skipped because runner is already running.");
                 return;
             }
 
             if (serverStartRequested) {
+                Debug.Log($"{LOG_PREFIX} StartServerAsync skipped because server start is already requested.");
                 return;
             }
 
@@ -100,273 +104,191 @@ namespace Alice {
 
         void HandleDuelCommand(PlayerRef player, OnlineDuelCommandPayload command) {
             var kind = (OnlineDuelCommandKind)command.kind;
+            Debug.Log($"{LOG_PREFIX} Received duel command. kind={kind}, player={player}, session={command.duelSessionId}");
             if (string.IsNullOrWhiteSpace(command.duelSessionId)) {
                 SendError(player, "", "duelSessionId is required.");
                 return;
             }
 
-            RegisterSession(player, command.duelSessionId, command.scene, command.playerStatus);
-            if (kind != OnlineDuelCommandKind.PresenceUpdate
-                && kind != OnlineDuelCommandKind.Resync
-                && CancelReservationIfOutsideSelection(command.duelSessionId)) {
-                PublishSnapshot(player, command.duelSessionId, command.sceneSyncId);
-                PublishCandidateFor(command.duelSessionId, command.sceneSyncId);
-                PublishCandidateRefreshForSceneUpdate(command.duelSessionId);
-                return;
-            }
-            if (kind != OnlineDuelCommandKind.PresenceUpdate
-                && kind != OnlineDuelCommandKind.Resync
-                && CancelMatchRequestIfOutsideSelection(command.duelSessionId)) {
-                PublishSnapshot(player, command.duelSessionId, command.sceneSyncId);
-                PublishCandidateFor(command.duelSessionId, command.sceneSyncId);
-                PublishCandidateRefreshForSceneUpdate(command.duelSessionId);
-                return;
-            }
+            RegisterSession(player, command.duelSessionId, command.scene, command.appOverlayEnabled, command.playerStatus, command.sceneSyncId);
+
+            var affected = new HashSet<string>();
+            affected.Add(command.duelSessionId);
 
             switch (kind) {
                 case OnlineDuelCommandKind.PresenceUpdate:
                 case OnlineDuelCommandKind.Resync:
-                    if (CancelReservationIfOutsideSelection(command.duelSessionId)) {
-                        PublishSnapshot(player, command.duelSessionId, command.sceneSyncId);
-                        PublishCandidateFor(command.duelSessionId, command.sceneSyncId);
-                        PublishCandidateRefreshForSceneUpdate(command.duelSessionId);
-                        break;
-                    }
-                    if (CancelMatchRequestIfOutsideSelection(command.duelSessionId)) {
-                        PublishSnapshot(player, command.duelSessionId, command.sceneSyncId);
-                        PublishCandidateFor(command.duelSessionId, command.sceneSyncId);
-                        PublishCandidateRefreshForSceneUpdate(command.duelSessionId);
-                        break;
-                    }
-                    PublishReservationStatusForSceneUpdate(command.duelSessionId);
-                    PublishSnapshot(player, command.duelSessionId, command.sceneSyncId);
-                    PublishCandidateFor(command.duelSessionId, command.sceneSyncId);
-                    PublishCandidateRefreshForSceneUpdate(command.duelSessionId);
+                    AppendAllActiveSessions(affected);
                     break;
                 case OnlineDuelCommandKind.InviteCreate:
-                    CreateInvite(player, command.duelSessionId, command.targetSessionId);
+                    if (!TryCreateInvite(player, command.duelSessionId, command.targetSessionId, affected)) {
+                        return;
+                    }
+                    AppendAllActiveSessions(affected);
                     break;
                 case OnlineDuelCommandKind.InviteAccept:
-                    AcceptInvite(player, command.duelSessionId, command.inviteId);
+                    if (!TryAcceptInvite(player, command.duelSessionId, command.inviteId, affected)) {
+                        return;
+                    }
+                    AppendAllActiveSessions(affected);
                     break;
                 case OnlineDuelCommandKind.InviteReject:
-                    FinishInvite(command.duelSessionId, command.inviteId, "rejected");
+                    FinishInvite(command.duelSessionId, command.inviteId, "rejected", "Invite rejected.", affected);
+                    AppendAllActiveSessions(affected);
                     break;
                 case OnlineDuelCommandKind.InviteCancel:
-                    if (!string.IsNullOrWhiteSpace(command.reservationId) && CancelReservationByIdForSession(command.duelSessionId, command.reservationId, "Reservation canceled.")) {
-                        break;
+                    if (!string.IsNullOrWhiteSpace(command.reservationId)) {
+                        CancelReservationByIdForSession(command.duelSessionId, command.reservationId, "Reservation canceled.", affected);
                     }
-                    FinishInvite(command.duelSessionId, command.inviteId, "canceled");
+                    else {
+                        FinishInvite(command.duelSessionId, command.inviteId, "canceled", "Invite canceled.", affected);
+                    }
+                    AppendAllActiveSessions(affected);
                     break;
                 case OnlineDuelCommandKind.MatchCancel:
-                    if (!string.IsNullOrWhiteSpace(command.reservationId) && CancelReservationByIdForSession(command.duelSessionId, command.reservationId, "Matchmaking canceled.")) {
-                        break;
+                    if (!string.IsNullOrWhiteSpace(command.reservationId)) {
+                        CancelReservationByIdForSession(command.duelSessionId, command.reservationId, "Matchmaking canceled.", affected);
                     }
-                    CancelMatchRequestBySession(command.duelSessionId, "Matchmaking canceled.");
+                    else {
+                        CancelMatchRequestBySession(command.duelSessionId, "Matchmaking canceled.", affected);
+                    }
+                    AppendAllActiveSessions(affected);
                     break;
                 case OnlineDuelCommandKind.ReservationConsume:
-                    ConsumeReservation(command.duelSessionId, command.reservationId);
+                    if (!TryConsumeReservation(command.duelSessionId, command.reservationId, affected)) {
+                        return;
+                    }
                     break;
                 case OnlineDuelCommandKind.MatchRequest:
-                    RegisterMatchRequest(command);
+                    if (RegisterMatchRequest(player, command, affected)) {
+                        return;
+                    }
                     break;
                 default:
                     SendError(player, command.duelSessionId, $"Unsupported duel command. kind={kind}");
-                    break;
+                    return;
             }
+
+            DispatchAffected(affected, kind.ToString());
         }
 
-        void RegisterSession(PlayerRef player, string duelSessionId, string scene, OnlineDuelPlayerStatus playerStatus) {
+        void RegisterSession(PlayerRef player, string duelSessionId, string scene, bool appOverlayEnabled, OnlineDuelPlayerStatus playerStatus, int sceneSyncId) {
             if (sessionByPlayer.TryGetValue(player, out var previousSession) && previousSession != duelSessionId) {
                 playerBySession.Remove(previousSession);
+                viewStateSeqBySession.Remove(previousSession);
+                lastViewSnapshotBySession.Remove(previousSession);
+                pendingViewMessageBySession.Remove(previousSession);
+                Debug.Log($"{LOG_PREFIX} Session remapped. player={player}, from={previousSession}, to={duelSessionId}");
             }
 
             sessionByPlayer[player] = duelSessionId;
             playerBySession[duelSessionId] = player;
+
             var resolvedScene = !string.IsNullOrWhiteSpace(scene)
                 ? scene
                 : presenceBySession.TryGetValue(duelSessionId, out var existingPresence)
                     ? existingPresence.Scene
                     : "";
+            var resolvedSceneSyncId = sceneSyncId > 0
+                ? sceneSyncId
+                : presenceBySession.TryGetValue(duelSessionId, out var existingPresenceSync)
+                    ? existingPresenceSync.SceneSyncId
+                    : 0;
+
             presenceBySession[duelSessionId] = new PresenceState {
                 SessionId = duelSessionId,
                 Player = player,
                 Scene = resolvedScene,
+                SceneSyncId = resolvedSceneSyncId,
+                AppOverlayEnabled = appOverlayEnabled,
                 Status = playerStatus,
                 ExpiresAt = Time.realtimeSinceStartup + PresenceTtlSeconds,
             };
+
+            if (!appOverlayEnabled) {
+                candidateBySession.Remove(duelSessionId);
+                RemoveCandidateReferencesTo(duelSessionId);
+            }
+
+            Debug.Log($"{LOG_PREFIX} Presence updated. session={duelSessionId}, player={player}, scene={resolvedScene}, sceneSyncId={resolvedSceneSyncId}, overlay={appOverlayEnabled}, status={playerStatus}");
         }
 
-        void PublishSnapshot(PlayerRef player, string duelSessionId, int sceneSyncId) {
-            if (TryGetActiveReservation(duelSessionId, out var reservation)) {
-                SendReservedEvent(duelSessionId, reservation, OnlineDuelEventKind.Snapshot, sceneSyncId);
-                return;
-            }
-
-            if (TryFindPendingIncomingInvite(duelSessionId, out var invite)) {
-                var opponentSessionId = invite.FromSessionId;
-                SendEvent(player, new OnlineDuelEventPayload {
-                    kind = (int)OnlineDuelEventKind.IncomingInvite,
-                    localSessionId = duelSessionId,
-                    inviteId = invite.Id,
-                    inviteFromSessionId = invite.FromSessionId,
-                    inviteToSessionId = invite.ToSessionId,
-                    opponentSessionId = opponentSessionId,
-                    opponentScene = TryGetScene(opponentSessionId),
-                    opponentStatus = ResolvePresenceStatus(opponentSessionId),
-                    sceneSyncId = sceneSyncId,
-                });
-                return;
-            }
-
-            SendEvent(player, new OnlineDuelEventPayload {
-                kind = (int)OnlineDuelEventKind.Snapshot,
-                localSessionId = duelSessionId,
-                sceneSyncId = sceneSyncId,
-            });
-        }
-
-        void PublishCandidateFor(string localSessionId, int sceneSyncId) {
-            if (!playerBySession.TryGetValue(localSessionId, out var localPlayer)
-                || TryGetActiveReservation(localSessionId, out _)
-                || TryFindPendingIncomingInvite(localSessionId, out _)) {
-                return;
-            }
-
-            foreach (var candidate in presenceBySession.Values) {
-                if (candidate.SessionId == localSessionId || !IsPresenceActive(candidate.SessionId) || TryGetActiveReservation(candidate.SessionId, out _)) {
-                    continue;
-                }
-
-                SendEvent(localPlayer, new OnlineDuelEventPayload {
-                    kind = (int)OnlineDuelEventKind.CandidateShown,
-                    localSessionId = localSessionId,
-                    candidateSessionId = candidate.SessionId,
-                    opponentSessionId = candidate.SessionId,
-                    opponentScene = candidate.Scene,
-                    opponentStatus = candidate.Status,
-                    sceneSyncId = sceneSyncId,
-                });
-                candidateBySession[localSessionId] = candidate.SessionId;
-                return;
-            }
-        }
-
-        void PublishCandidateRefreshForSceneUpdate(string changedSessionId) {
-            foreach (var pair in candidateBySession) {
-                var viewerSessionId = pair.Key;
-                var candidateSessionId = pair.Value;
-                if (candidateSessionId != changedSessionId
-                    || !playerBySession.TryGetValue(viewerSessionId, out var viewerPlayer)
-                    || !IsPresenceActive(viewerSessionId)
-                    || !IsPresenceActive(candidateSessionId)
-                    || TryGetActiveReservation(viewerSessionId, out _)
-                    || TryFindPendingIncomingInvite(viewerSessionId, out _)) {
-                    continue;
-                }
-
-                SendEvent(viewerPlayer, new OnlineDuelEventPayload {
-                    kind = (int)OnlineDuelEventKind.CandidateShown,
-                    localSessionId = viewerSessionId,
-                    candidateSessionId = candidateSessionId,
-                    opponentSessionId = candidateSessionId,
-                    opponentScene = TryGetScene(candidateSessionId),
-                    opponentStatus = ResolvePresenceStatus(candidateSessionId),
-                });
-            }
-        }
-
-        void PublishReservationStatusForSceneUpdate(string changedSessionId) {
-            if (!TryGetActiveReservation(changedSessionId, out var reservation)) {
-                return;
-            }
-
-            var opponentSessionId = reservation.Player1SessionId == changedSessionId
-                ? reservation.Player2SessionId
-                : reservation.Player1SessionId;
-            SendReservedEvent(opponentSessionId, reservation, OnlineDuelEventKind.MatchStatus);
-        }
-
-        void CreateInvite(PlayerRef player, string fromSessionId, string toSessionId) {
-            if (string.IsNullOrWhiteSpace(toSessionId) || fromSessionId == toSessionId || !playerBySession.TryGetValue(toSessionId, out var targetPlayer)) {
+        bool TryCreateInvite(PlayerRef player, string fromSessionId, string toSessionId, HashSet<string> affected) {
+            if (string.IsNullOrWhiteSpace(toSessionId) || fromSessionId == toSessionId || !playerBySession.ContainsKey(toSessionId)) {
                 SendError(player, fromSessionId, "Target player is not available.");
-                return;
+                return false;
             }
 
-            if (TryGetActiveReservation(fromSessionId, out _) || TryGetActiveReservation(toSessionId, out _)) {
-                SendError(player, fromSessionId, "Player is already reserved.");
-                return;
+            if (!IsDuelCandidateEligible(fromSessionId)
+                || !IsDuelCandidateEligible(toSessionId)
+                || TryGetActiveReservation(fromSessionId, out _)
+                || TryGetActiveReservation(toSessionId, out _)
+                || HasPendingInvite(fromSessionId)
+                || HasPendingInvite(toSessionId)) {
+                SendError(player, fromSessionId, "Target player is not available.");
+                return false;
             }
+
+            CancelActiveReservationsForOverwrite("Reservation overwritten.", new[] { fromSessionId, toSessionId }, affected);
 
             inviteSequence++;
-            var invite = new InviteState {
+            invitesById[$"invite-{inviteSequence}"] = new InviteState {
                 Id = $"invite-{inviteSequence}",
                 FromSessionId = fromSessionId,
                 ToSessionId = toSessionId,
                 Status = "pending",
                 ExpiresAt = Time.realtimeSinceStartup + InviteTtlSeconds,
             };
-            invitesById[invite.Id] = invite;
 
-            SendEvent(player, new OnlineDuelEventPayload {
-                kind = (int)OnlineDuelEventKind.InviteUpdated,
-                localSessionId = fromSessionId,
-                inviteId = invite.Id,
-                inviteFromSessionId = invite.FromSessionId,
-                inviteToSessionId = invite.ToSessionId,
-                opponentSessionId = toSessionId,
-                opponentScene = TryGetScene(toSessionId),
-                opponentStatus = ResolvePresenceStatus(toSessionId),
-            });
-            SendEvent(targetPlayer, new OnlineDuelEventPayload {
-                kind = (int)OnlineDuelEventKind.IncomingInvite,
-                localSessionId = toSessionId,
-                inviteId = invite.Id,
-                inviteFromSessionId = invite.FromSessionId,
-                inviteToSessionId = invite.ToSessionId,
-                opponentSessionId = fromSessionId,
-                opponentScene = TryGetScene(fromSessionId),
-                opponentStatus = ResolvePresenceStatus(fromSessionId),
-            });
-            Debug.Log($"{LOG_PREFIX} Invite created. inviteId={invite.Id}, from={fromSessionId}, to={toSessionId}");
+            candidateBySession.Remove(fromSessionId);
+            candidateBySession.Remove(toSessionId);
+            affected.Add(fromSessionId);
+            affected.Add(toSessionId);
+            Debug.Log($"{LOG_PREFIX} Invite created. from={fromSessionId}, to={toSessionId}");
+            return true;
         }
 
-        void AcceptInvite(PlayerRef player, string duelSessionId, string inviteId) {
+        bool TryAcceptInvite(PlayerRef player, string duelSessionId, string inviteId, HashSet<string> affected) {
             if (!invitesById.TryGetValue(inviteId, out var invite) || invite.Status != "pending") {
                 SendError(player, duelSessionId, "Invite is not pending.");
-                return;
+                return false;
             }
 
             if (invite.ToSessionId != duelSessionId) {
                 SendError(player, duelSessionId, "Only invite target can accept.");
-                return;
+                return false;
             }
 
             if (Time.realtimeSinceStartup >= invite.ExpiresAt) {
                 invite.Status = "expired";
-                SendReservationExpired(invite.FromSessionId, "");
-                SendReservationExpired(invite.ToSessionId, "");
-                return;
+                SetPendingMessage(invite.FromSessionId, "Invite expired.");
+                SetPendingMessage(invite.ToSessionId, "Invite expired.");
+                affected.Add(invite.FromSessionId);
+                affected.Add(invite.ToSessionId);
+                return true;
             }
 
             invite.Status = "accepted";
+            CancelActiveReservationsForOverwrite("Reservation overwritten.", new[] { invite.FromSessionId, invite.ToSessionId }, affected);
+
             reservationSequence++;
             var reservation = new ReservationState {
                 Id = $"reservation-{reservationSequence}",
                 InviteId = invite.Id,
                 Player1SessionId = invite.FromSessionId,
                 Player2SessionId = invite.ToSessionId,
-                ExpiresAt = Time.realtimeSinceStartup + ReservationTtlSeconds,
+                ExpiresAt = float.PositiveInfinity,
             };
             reservationsById[reservation.Id] = reservation;
             candidateBySession.Remove(invite.FromSessionId);
             candidateBySession.Remove(invite.ToSessionId);
-            SendReservedEvent(invite.FromSessionId, reservation, OnlineDuelEventKind.Reserved);
-            SendReservedEvent(invite.ToSessionId, reservation, OnlineDuelEventKind.Reserved);
+            affected.Add(invite.FromSessionId);
+            affected.Add(invite.ToSessionId);
             Debug.Log($"{LOG_PREFIX} Reservation created. reservationId={reservation.Id}, inviteId={invite.Id}, p1={reservation.Player1SessionId}, p2={reservation.Player2SessionId}");
+            return true;
         }
 
-        void FinishInvite(string duelSessionId, string inviteId, string status) {
+        void FinishInvite(string duelSessionId, string inviteId, string status, string message, HashSet<string> affected) {
             if (!invitesById.TryGetValue(inviteId, out var invite)) {
                 return;
             }
@@ -376,15 +298,18 @@ namespace Alice {
             }
 
             invite.Status = status;
-            SendIdle(invite.FromSessionId, $"Invite {status}.");
-            SendIdle(invite.ToSessionId, $"Invite {status}.");
+            SetPendingMessage(invite.FromSessionId, message);
+            SetPendingMessage(invite.ToSessionId, message);
+            affected.Add(invite.FromSessionId);
+            affected.Add(invite.ToSessionId);
             Debug.Log($"{LOG_PREFIX} Invite finished. inviteId={inviteId}, status={status}");
         }
 
-        void ConsumeReservation(string duelSessionId, string reservationId) {
+        bool TryConsumeReservation(string duelSessionId, string reservationId, HashSet<string> affected) {
             if (!TryGetReservationFor(duelSessionId, reservationId, out var reservation)) {
-                SendReservationExpired(duelSessionId, reservationId);
-                return;
+                SetPendingMessage(duelSessionId, "Reservation expired.");
+                affected.Add(duelSessionId);
+                return true;
             }
 
             if (reservation.Player1SessionId == duelSessionId) {
@@ -394,56 +319,87 @@ namespace Alice {
                 reservation.Player2Consumed = true;
             }
 
-            SendMatchStatus(reservation);
-            TryPublishReservedMatchResult(reservation);
-        }
-
-        bool CancelReservationIfOutsideSelection(string duelSessionId) {
-            if (!TryGetActiveReservation(duelSessionId, out var reservation) || IsSelectionScene(TryGetScene(duelSessionId))) {
-                return false;
-            }
-
-            CancelReservation(reservation, "Reservation canceled.");
+            affected.Add(reservation.Player1SessionId);
+            affected.Add(reservation.Player2SessionId);
             return true;
         }
 
-        bool CancelMatchRequestIfOutsideSelection(string duelSessionId) {
-            if (!matchRequestsBySession.ContainsKey(duelSessionId) || IsSelectionScene(TryGetScene(duelSessionId))) {
-                return false;
-            }
-
-            CancelMatchRequestBySession(duelSessionId, "Matchmaking canceled.");
-            return true;
-        }
-
-        bool CancelReservationByIdForSession(string duelSessionId, string reservationId, string message) {
+        bool CancelReservationByIdForSession(string duelSessionId, string reservationId, string message, HashSet<string> affected) {
             if (!TryGetReservationFor(duelSessionId, reservationId, out var reservation)) {
                 return false;
             }
 
-            CancelReservation(reservation, message);
+            CancelReservation(reservation, message, affected);
             return true;
         }
 
-        void CancelReservation(ReservationState reservation, string message) {
+        void CancelReservation(ReservationState reservation, string message, HashSet<string> affected) {
             reservationsById.Remove(reservation.Id);
             matchRequestsBySession.Remove(reservation.Player1SessionId);
             matchRequestsBySession.Remove(reservation.Player2SessionId);
-            SendReservationExpired(reservation.Player1SessionId, reservation.Id, message);
-            SendReservationExpired(reservation.Player2SessionId, reservation.Id, message);
+            SetPendingMessage(reservation.Player1SessionId, message);
+            SetPendingMessage(reservation.Player2SessionId, message);
+            affected.Add(reservation.Player1SessionId);
+            affected.Add(reservation.Player2SessionId);
             Debug.Log($"{LOG_PREFIX} Reservation canceled. reservationId={reservation.Id}, p1={reservation.Player1SessionId}, p2={reservation.Player2SessionId}, message={message}");
         }
 
-        void CancelMatchRequestBySession(string duelSessionId, string message) {
+        void CancelActiveReservationsForOverwrite(string message, string[] overwritingSessionIds, HashSet<string> affected) {
+            var reservations = new List<ReservationState>();
+            foreach (var reservation in reservationsById.Values) {
+                if (Time.realtimeSinceStartup >= reservation.ExpiresAt) {
+                    continue;
+                }
+
+                if (ContainsSession(overwritingSessionIds, reservation.Player1SessionId)
+                    || ContainsSession(overwritingSessionIds, reservation.Player2SessionId)) {
+                    reservations.Add(reservation);
+                }
+            }
+
+            for (var i = 0; i < reservations.Count; i++) {
+                CancelReservationForOverwrite(reservations[i], message, overwritingSessionIds, affected);
+            }
+        }
+
+        void CancelReservationForOverwrite(ReservationState reservation, string message, string[] overwritingSessionIds, HashSet<string> affected) {
+            reservationsById.Remove(reservation.Id);
+            matchRequestsBySession.Remove(reservation.Player1SessionId);
+            matchRequestsBySession.Remove(reservation.Player2SessionId);
+
+            if (!ContainsSession(overwritingSessionIds, reservation.Player1SessionId)) {
+                SetPendingMessage(reservation.Player1SessionId, message);
+            }
+            if (!ContainsSession(overwritingSessionIds, reservation.Player2SessionId)) {
+                SetPendingMessage(reservation.Player2SessionId, message);
+            }
+
+            affected.Add(reservation.Player1SessionId);
+            affected.Add(reservation.Player2SessionId);
+            Debug.Log($"{LOG_PREFIX} Reservation overwritten. reservationId={reservation.Id}, p1={reservation.Player1SessionId}, p2={reservation.Player2SessionId}, message={message}");
+        }
+
+        static bool ContainsSession(string[] sessionIds, string sessionId) {
+            for (var i = 0; i < sessionIds.Length; i++) {
+                if (sessionIds[i] == sessionId) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        void CancelMatchRequestBySession(string duelSessionId, string message, HashSet<string> affected) {
             if (!matchRequestsBySession.Remove(duelSessionId)) {
                 return;
             }
 
-            SendReservationExpired(duelSessionId, "", message);
+            SetPendingMessage(duelSessionId, message);
+            affected.Add(duelSessionId);
             Debug.Log($"{LOG_PREFIX} Match request canceled. session={duelSessionId}, message={message}");
         }
 
-        void CancelPendingInvitesBySession(string duelSessionId) {
+        void CancelPendingInvitesBySession(string duelSessionId, string message, HashSet<string> affected) {
             var inviteIds = new List<string>();
             foreach (var invite in invitesById.Values) {
                 if (invite.Status == "pending"
@@ -453,62 +409,62 @@ namespace Alice {
             }
 
             for (var i = 0; i < inviteIds.Count; i++) {
-                FinishInvite(duelSessionId, inviteIds[i], "canceled");
+                FinishInvite(duelSessionId, inviteIds[i], "canceled", message, affected);
             }
         }
 
-        void RegisterMatchRequest(OnlineDuelCommandPayload command) {
+        bool RegisterMatchRequest(PlayerRef player, OnlineDuelCommandPayload command, HashSet<string> affected) {
             var request = new OnlineMatchRequest(
                 (Striker)command.striker,
                 (Stage)command.stage,
                 command.musicId ?? "",
                 command.reservationId ?? "",
                 command.duelSessionId);
-            matchRequestsBySession[command.duelSessionId] = request;
-
-            if (!string.IsNullOrWhiteSpace(request.ReservationId) && TryGetReservationFor(command.duelSessionId, request.ReservationId, out var reservation)) {
-                ConsumeReservation(command.duelSessionId, request.ReservationId);
-                TryPublishReservedMatchResult(reservation);
-                return;
+            if (string.IsNullOrWhiteSpace(request.ReservationId)) {
+                SendError(player, command.duelSessionId, "reservationId is required.");
+                return true;
             }
 
-            TryPublishRandomMatchResult();
+            matchRequestsBySession[command.duelSessionId] = request;
+            Debug.Log($"{LOG_PREFIX} Match request registered. session={command.duelSessionId}, reservationId={request.ReservationId}, striker={request.LocalStriker}, stage={request.CandidateStage}, musicId={request.CandidateMusicId}");
+
+            if (!TryGetReservationFor(command.duelSessionId, request.ReservationId, out var reservation)) {
+                matchRequestsBySession.Remove(command.duelSessionId);
+                SendError(player, command.duelSessionId, "Reservation not found.");
+                return true;
+            }
+
+            TryConsumeReservation(command.duelSessionId, request.ReservationId, affected);
+            if (TryPublishReservedMatchResult(reservation)) {
+                return true;
+            }
+
+            affected.Add(reservation.Player1SessionId);
+            affected.Add(reservation.Player2SessionId);
+            return false;
         }
 
-        void TryPublishReservedMatchResult(ReservationState reservation) {
+        bool TryPublishReservedMatchResult(ReservationState reservation) {
             if (!reservation.Player1Consumed || !reservation.Player2Consumed) {
-                return;
+                return false;
             }
 
             if (!matchRequestsBySession.TryGetValue(reservation.Player1SessionId, out var p1Request)
                 || !matchRequestsBySession.TryGetValue(reservation.Player2SessionId, out var p2Request)) {
-                return;
+                return false;
             }
 
             PublishMatchResult(p1Request, p2Request, reservation.Id);
             reservationsById.Remove(reservation.Id);
-        }
-
-        void TryPublishRandomMatchResult() {
-            var candidates = new List<OnlineMatchRequest>();
-            foreach (var request in matchRequestsBySession.Values) {
-                if (string.IsNullOrWhiteSpace(request.ReservationId) && playerBySession.ContainsKey(request.DuelSessionId)) {
-                    candidates.Add(request);
-                }
-            }
-
-            if (candidates.Count < 2) {
-                return;
-            }
-
-            candidates.Sort((a, b) => string.CompareOrdinal(a.DuelSessionId, b.DuelSessionId));
-            PublishMatchResult(candidates[0], candidates[1], "");
+            matchRequestsBySession.Remove(p1Request.DuelSessionId);
+            matchRequestsBySession.Remove(p2Request.DuelSessionId);
+            return true;
         }
 
         void PublishMatchResult(OnlineMatchRequest player1Request, OnlineMatchRequest player2Request, string reservationId) {
-            var random = new System.Random(Environment.TickCount);
-            var selectedStage = random.Next(2) == 0 ? player1Request.CandidateStage : player2Request.CandidateStage;
-            var selectedMusicId = random.Next(2) == 0 ? player1Request.CandidateMusicId : player2Request.CandidateMusicId;
+            var usePlayer1Pick = string.CompareOrdinal(player1Request.DuelSessionId, player2Request.DuelSessionId) <= 0;
+            var selectedStage = usePlayer1Pick ? player1Request.CandidateStage : player2Request.CandidateStage;
+            var selectedMusicId = usePlayer1Pick ? player1Request.CandidateMusicId : player2Request.CandidateMusicId;
 
             var p1 = playerBySession[player1Request.DuelSessionId];
             var p2 = playerBySession[player2Request.DuelSessionId];
@@ -538,72 +494,218 @@ namespace Alice {
                 localIsPlayer1 = false,
             });
 
-            matchRequestsBySession.Remove(player1Request.DuelSessionId);
-            matchRequestsBySession.Remove(player2Request.DuelSessionId);
             Debug.Log($"{LOG_PREFIX} Match decided. p1={player1Request.DuelSessionId}, p2={player2Request.DuelSessionId}, reservationId={reservationId}, stage={selectedStage}, musicId={selectedMusicId}");
         }
 
-        void SendReservedEvent(string localSessionId, ReservationState reservation, OnlineDuelEventKind kind) {
-            SendReservedEvent(localSessionId, reservation, kind, 0);
+        void DispatchAffected(IEnumerable<string> sessionIds, string reason) {
+            var unique = new HashSet<string>();
+            foreach (var sessionId in sessionIds) {
+                if (!string.IsNullOrWhiteSpace(sessionId)) {
+                    unique.Add(sessionId);
+                }
+            }
+
+            foreach (var sessionId in unique) {
+                RecomputeAndDispatch(sessionId, reason);
+            }
         }
 
-        void SendReservedEvent(string localSessionId, ReservationState reservation, OnlineDuelEventKind kind, int sceneSyncId) {
-            if (!playerBySession.TryGetValue(localSessionId, out var player)) {
+        void RecomputeAndDispatch(string sessionId, string reason) {
+            if (!playerBySession.TryGetValue(sessionId, out var player)) {
                 return;
             }
 
-            var opponent = reservation.Player1SessionId == localSessionId
-                ? reservation.Player2SessionId
-                : reservation.Player1SessionId;
-            SendEvent(player, new OnlineDuelEventPayload {
-                kind = (int)kind,
-                localSessionId = localSessionId,
-                reservationId = reservation.Id,
-                inviteId = reservation.InviteId,
-                opponentSessionId = opponent,
-                opponentScene = TryGetScene(opponent),
-                opponentStatus = ResolveOpponentStatus(localSessionId, reservation),
-                sceneSyncId = sceneSyncId,
-            });
-        }
-
-        void SendMatchStatus(ReservationState reservation) {
-            SendReservedEvent(reservation.Player1SessionId, reservation, OnlineDuelEventKind.MatchStatus);
-            SendReservedEvent(reservation.Player2SessionId, reservation, OnlineDuelEventKind.MatchStatus);
-        }
-
-        void SendReservationExpired(string duelSessionId, string reservationId) {
-            SendReservationExpired(duelSessionId, reservationId, "Reservation expired.");
-        }
-
-        void SendReservationExpired(string duelSessionId, string reservationId, string message) {
-            if (!playerBySession.TryGetValue(duelSessionId, out var player)) {
+            var message = ConsumePendingMessage(sessionId);
+            var next = ComputeView(sessionId, message);
+            if (lastViewSnapshotBySession.TryGetValue(sessionId, out var previous) && previous.Equals(next)) {
                 return;
             }
 
+            var nextSeq = viewStateSeqBySession.TryGetValue(sessionId, out var previousSeq)
+                ? previousSeq + 1
+                : 1;
+            viewStateSeqBySession[sessionId] = nextSeq;
+            lastViewSnapshotBySession[sessionId] = next;
+
             SendEvent(player, new OnlineDuelEventPayload {
-                kind = (int)OnlineDuelEventKind.ReservationExpired,
-                localSessionId = duelSessionId,
-                reservationId = reservationId,
-                message = message,
+                kind = (int)OnlineDuelEventKind.ViewState,
+                seq = nextSeq,
+                uiMode = (int)next.UiMode,
+                localSessionId = next.LocalSessionId,
+                candidateSessionId = next.CandidateSessionId,
+                inviteId = next.InviteId,
+                inviteFromSessionId = next.InviteFromSessionId,
+                inviteToSessionId = next.InviteToSessionId,
+                reservationId = next.ReservationId,
+                opponentSessionId = next.OpponentSessionId,
+                opponentScene = next.OpponentScene,
+                opponentStatus = next.OpponentStatus,
+                message = next.Message,
             });
+
+            Debug.Log($"{LOG_PREFIX} ViewState dispatched. session={sessionId}, seq={nextSeq}, uiMode={next.UiMode}, reason={reason}");
         }
 
-        void SendIdle(string duelSessionId, string message) {
-            if (!playerBySession.TryGetValue(duelSessionId, out var player)) {
+        ComputedView ComputeView(string sessionId, string message) {
+            if (!IsDuelCandidateEligible(sessionId)) {
+                candidateBySession.Remove(sessionId);
+                return ComputedView.Idle(sessionId, message);
+            }
+
+            if (TryGetActiveReservation(sessionId, out var reservation)) {
+                candidateBySession.Remove(sessionId);
+                var opponentSessionId = reservation.Player1SessionId == sessionId
+                    ? reservation.Player2SessionId
+                    : reservation.Player1SessionId;
+                return new ComputedView(
+                    OnlineDuelUiMode.Matched,
+                    sessionId,
+                    "",
+                    reservation.InviteId,
+                    "",
+                    "",
+                    reservation.Id,
+                    opponentSessionId,
+                    TryGetScene(opponentSessionId),
+                    ResolveOpponentStatus(sessionId, reservation),
+                    message ?? "");
+            }
+
+            if (TryFindPendingIncomingInvite(sessionId, out var incomingInvite)) {
+                candidateBySession.Remove(sessionId);
+                return new ComputedView(
+                    OnlineDuelUiMode.IncomingInvite,
+                    sessionId,
+                    "",
+                    incomingInvite.Id,
+                    incomingInvite.FromSessionId,
+                    incomingInvite.ToSessionId,
+                    "",
+                    incomingInvite.FromSessionId,
+                    TryGetScene(incomingInvite.FromSessionId),
+                    ResolvePresenceStatus(incomingInvite.FromSessionId),
+                    message ?? "");
+            }
+
+            if (TryFindPendingOutgoingInvite(sessionId, out var outgoingInvite)) {
+                candidateBySession.Remove(sessionId);
+                return new ComputedView(
+                    OnlineDuelUiMode.InviteSent,
+                    sessionId,
+                    "",
+                    outgoingInvite.Id,
+                    outgoingInvite.FromSessionId,
+                    outgoingInvite.ToSessionId,
+                    "",
+                    outgoingInvite.ToSessionId,
+                    TryGetScene(outgoingInvite.ToSessionId),
+                    ResolvePresenceStatus(outgoingInvite.ToSessionId),
+                    message ?? "");
+            }
+
+            var candidateSessionId = ResolveCandidateSessionId(sessionId);
+            if (!string.IsNullOrWhiteSpace(candidateSessionId)) {
+                return new ComputedView(
+                    OnlineDuelUiMode.Candidate,
+                    sessionId,
+                    candidateSessionId,
+                    "",
+                    "",
+                    "",
+                    "",
+                    candidateSessionId,
+                    TryGetScene(candidateSessionId),
+                    ResolvePresenceStatus(candidateSessionId),
+                    message ?? "");
+            }
+
+            candidateBySession.Remove(sessionId);
+            return ComputedView.Idle(sessionId, message);
+        }
+
+        string ResolveCandidateSessionId(string viewerSessionId) {
+            if (!IsDuelCandidateEligible(viewerSessionId)
+                || TryGetActiveReservation(viewerSessionId, out _)
+                || HasPendingInvite(viewerSessionId)) {
+                candidateBySession.Remove(viewerSessionId);
+                return "";
+            }
+
+            if (candidateBySession.TryGetValue(viewerSessionId, out var currentCandidate)
+                && IsCandidateAvailableForViewer(viewerSessionId, currentCandidate)) {
+                return currentCandidate;
+            }
+
+            foreach (var candidate in presenceBySession.Values) {
+                if (IsCandidateAvailableForViewer(viewerSessionId, candidate.SessionId)) {
+                    candidateBySession[viewerSessionId] = candidate.SessionId;
+                    return candidate.SessionId;
+                }
+            }
+
+            candidateBySession.Remove(viewerSessionId);
+            return "";
+        }
+
+        bool IsCandidateAvailableForViewer(string viewerSessionId, string candidateSessionId) {
+            return viewerSessionId != candidateSessionId
+                   && IsDuelCandidateEligible(viewerSessionId)
+                   && IsDuelCandidateEligible(candidateSessionId)
+                   && !TryGetActiveReservation(viewerSessionId, out _)
+                   && !TryGetActiveReservation(candidateSessionId, out _)
+                   && !HasPendingInvite(viewerSessionId)
+                   && !HasPendingInvite(candidateSessionId);
+        }
+
+        void SetPendingMessage(string sessionId, string message) {
+            if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(message)) {
                 return;
             }
 
-            SendEvent(player, new OnlineDuelEventPayload {
-                kind = (int)OnlineDuelEventKind.Snapshot,
-                localSessionId = duelSessionId,
-                message = message,
-            });
+            pendingViewMessageBySession[sessionId] = message;
+        }
+
+        string ConsumePendingMessage(string sessionId) {
+            if (!pendingViewMessageBySession.TryGetValue(sessionId, out var message)) {
+                return "";
+            }
+
+            pendingViewMessageBySession.Remove(sessionId);
+            return message ?? "";
+        }
+
+        void AppendAllActiveSessions(HashSet<string> affected) {
+            foreach (var presence in presenceBySession.Values) {
+                if (Time.realtimeSinceStartup < presence.ExpiresAt) {
+                    affected.Add(presence.SessionId);
+                }
+            }
         }
 
         void SendError(PlayerRef player, string duelSessionId, string message) {
+            var nextSeq = !string.IsNullOrWhiteSpace(duelSessionId) && viewStateSeqBySession.TryGetValue(duelSessionId, out var previousSeq)
+                ? previousSeq + 1
+                : 1;
+            if (!string.IsNullOrWhiteSpace(duelSessionId)) {
+                viewStateSeqBySession[duelSessionId] = nextSeq;
+                lastViewSnapshotBySession[duelSessionId] = new ComputedView(
+                    OnlineDuelUiMode.Error,
+                    duelSessionId,
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    OnlineDuelPlayerStatus.StageSelecting,
+                    message ?? "");
+            }
+
             SendEvent(player, new OnlineDuelEventPayload {
-                kind = (int)OnlineDuelEventKind.Error,
+                kind = (int)OnlineDuelEventKind.ViewState,
+                seq = nextSeq,
+                uiMode = (int)OnlineDuelUiMode.Error,
                 localSessionId = duelSessionId,
                 message = message,
             });
@@ -631,6 +733,7 @@ namespace Alice {
 
         void ExpireServerState() {
             var now = Time.realtimeSinceStartup;
+
             var expiredInvites = new List<InviteState>();
             foreach (var invite in invitesById.Values) {
                 if (invite.Status == "pending" && now >= invite.ExpiresAt) {
@@ -638,23 +741,19 @@ namespace Alice {
                 }
             }
 
-            foreach (var invite in expiredInvites) {
-                invite.Status = "expired";
-                SendIdle(invite.FromSessionId, "Invite expired.");
-                SendIdle(invite.ToSessionId, "Invite expired.");
-            }
-
-            var expiredReservations = new List<ReservationState>();
-            foreach (var reservation in reservationsById.Values) {
-                if (now >= reservation.ExpiresAt) {
-                    expiredReservations.Add(reservation);
+            if (expiredInvites.Count > 0) {
+                var affected = new HashSet<string>();
+                for (var i = 0; i < expiredInvites.Count; i++) {
+                    var invite = expiredInvites[i];
+                    invite.Status = "expired";
+                    SetPendingMessage(invite.FromSessionId, "Invite expired.");
+                    SetPendingMessage(invite.ToSessionId, "Invite expired.");
+                    affected.Add(invite.FromSessionId);
+                    affected.Add(invite.ToSessionId);
                 }
-            }
-
-            foreach (var reservation in expiredReservations) {
-                reservationsById.Remove(reservation.Id);
-                SendReservationExpired(reservation.Player1SessionId, reservation.Id);
-                SendReservationExpired(reservation.Player2SessionId, reservation.Id);
+                AppendAllActiveSessions(affected);
+                DispatchAffected(affected, "ExpireInvite");
+                Debug.Log($"{LOG_PREFIX} Invite expired count={expiredInvites.Count}");
             }
 
             var expiredPresenceSessions = new List<string>();
@@ -665,25 +764,47 @@ namespace Alice {
             }
 
             for (var i = 0; i < expiredPresenceSessions.Count; i++) {
-                ExpirePresence(expiredPresenceSessions[i]);
+                RemoveSession(expiredPresenceSessions[i], "Presence expired.");
+            }
+
+            if (expiredPresenceSessions.Count > 0) {
+                Debug.Log($"{LOG_PREFIX} Presence expired count={expiredPresenceSessions.Count}");
             }
         }
 
-        void ExpirePresence(string duelSessionId) {
-            if (TryGetActiveReservation(duelSessionId, out var reservation)) {
-                CancelReservation(reservation, "Opponent disconnected.");
-            }
-            CancelMatchRequestBySession(duelSessionId, "Opponent disconnected.");
-            CancelPendingInvitesBySession(duelSessionId);
+        void RemoveSession(string duelSessionId, string message) {
+            var affected = new HashSet<string>();
+            CancelPendingInvitesBySession(duelSessionId, message, affected);
+            CancelReservationsBySession(duelSessionId, message, affected);
 
             if (playerBySession.TryGetValue(duelSessionId, out var player)) {
                 sessionByPlayer.Remove(player);
             }
+
             playerBySession.Remove(duelSessionId);
             presenceBySession.Remove(duelSessionId);
+            matchRequestsBySession.Remove(duelSessionId);
             candidateBySession.Remove(duelSessionId);
+            viewStateSeqBySession.Remove(duelSessionId);
+            lastViewSnapshotBySession.Remove(duelSessionId);
+            pendingViewMessageBySession.Remove(duelSessionId);
             RemoveCandidateReferencesTo(duelSessionId);
-            Debug.Log($"{LOG_PREFIX} Presence expired. session={duelSessionId}");
+            AppendAllActiveSessions(affected);
+            DispatchAffected(affected, "RemoveSession");
+            Debug.Log($"{LOG_PREFIX} Session removed. session={duelSessionId}, message={message}");
+        }
+
+        void CancelReservationsBySession(string duelSessionId, string message, HashSet<string> affected) {
+            var reservations = new List<ReservationState>();
+            foreach (var reservation in reservationsById.Values) {
+                if (reservation.Player1SessionId == duelSessionId || reservation.Player2SessionId == duelSessionId) {
+                    reservations.Add(reservation);
+                }
+            }
+
+            for (var i = 0; i < reservations.Count; i++) {
+                CancelReservation(reservations[i], message, affected);
+            }
         }
 
         bool TryGetActiveReservation(string duelSessionId, out ReservationState reservation) {
@@ -713,7 +834,9 @@ namespace Alice {
 
         bool TryFindPendingIncomingInvite(string duelSessionId, out InviteState invite) {
             foreach (var candidate in invitesById.Values) {
-                if (candidate.ToSessionId == duelSessionId && candidate.Status == "pending" && Time.realtimeSinceStartup < candidate.ExpiresAt) {
+                if (candidate.ToSessionId == duelSessionId
+                    && candidate.Status == "pending"
+                    && Time.realtimeSinceStartup < candidate.ExpiresAt) {
                     invite = candidate;
                     return true;
                 }
@@ -723,8 +846,35 @@ namespace Alice {
             return false;
         }
 
-        bool IsPresenceActive(string duelSessionId) {
+        bool TryFindPendingOutgoingInvite(string duelSessionId, out InviteState invite) {
+            foreach (var candidate in invitesById.Values) {
+                if (candidate.FromSessionId == duelSessionId
+                    && candidate.Status == "pending"
+                    && Time.realtimeSinceStartup < candidate.ExpiresAt) {
+                    invite = candidate;
+                    return true;
+                }
+            }
+
+            invite = null;
+            return false;
+        }
+
+        bool HasPendingInvite(string duelSessionId) {
+            foreach (var invite in invitesById.Values) {
+                if (invite.Status == "pending"
+                    && Time.realtimeSinceStartup < invite.ExpiresAt
+                    && (invite.FromSessionId == duelSessionId || invite.ToSessionId == duelSessionId)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        bool IsDuelCandidateEligible(string duelSessionId) {
             return presenceBySession.TryGetValue(duelSessionId, out var presence)
+                   && presence.AppOverlayEnabled
                    && playerBySession.ContainsKey(duelSessionId)
                    && Time.realtimeSinceStartup < presence.ExpiresAt;
         }
@@ -761,10 +911,6 @@ namespace Alice {
             return false;
         }
 
-        static bool IsSelectionScene(string scene) {
-            return scene == StageSelectScene || scene == CharacterSelectScene;
-        }
-
         bool IsActivePlayer(PlayerRef target) {
             foreach (var player in runner.ActivePlayers) {
                 if (player == target) {
@@ -796,17 +942,7 @@ namespace Alice {
             }
 
             if (sessionByPlayer.TryGetValue(player, out var sessionId)) {
-                if (TryGetActiveReservation(sessionId, out var reservation)) {
-                    CancelReservation(reservation, "Reservation canceled.");
-                }
-                CancelMatchRequestBySession(sessionId, "Matchmaking canceled.");
-                CancelPendingInvitesBySession(sessionId);
-                sessionByPlayer.Remove(player);
-                playerBySession.Remove(sessionId);
-                presenceBySession.Remove(sessionId);
-                matchRequestsBySession.Remove(sessionId);
-                candidateBySession.Remove(sessionId);
-                RemoveCandidateReferencesTo(sessionId);
+                RemoveSession(sessionId, "Opponent disconnected.");
             }
 
             if (battleOpponentByPlayer.TryGetValue(player, out var opponent)) {
@@ -830,6 +966,9 @@ namespace Alice {
             matchRequestsBySession.Clear();
             battleOpponentByPlayer.Clear();
             candidateBySession.Clear();
+            viewStateSeqBySession.Clear();
+            lastViewSnapshotBySession.Clear();
+            pendingViewMessageBySession.Clear();
             serverStartRequested = false;
             this.runner = null;
             Debug.Log($"{LOG_PREFIX} Shutdown. reason={shutdownReason}");
@@ -843,15 +982,8 @@ namespace Alice {
                 }
             }
 
-            foreach (var viewerSessionId in sessionsToClear) {
-                candidateBySession.Remove(viewerSessionId);
-                if (playerBySession.TryGetValue(viewerSessionId, out var viewerPlayer)) {
-                    SendEvent(viewerPlayer, new OnlineDuelEventPayload {
-                        kind = (int)OnlineDuelEventKind.Snapshot,
-                        localSessionId = viewerSessionId,
-                        message = "Candidate disconnected.",
-                    });
-                }
+            for (var i = 0; i < sessionsToClear.Count; i++) {
+                candidateBySession.Remove(sessionsToClear[i]);
             }
         }
 
@@ -859,6 +991,8 @@ namespace Alice {
             public string SessionId;
             public PlayerRef Player;
             public string Scene;
+            public int SceneSyncId;
+            public bool AppOverlayEnabled;
             public OnlineDuelPlayerStatus Status;
             public float ExpiresAt;
         }
@@ -881,7 +1015,41 @@ namespace Alice {
             public float ExpiresAt;
         }
 
-        public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
+        record ComputedView(
+            OnlineDuelUiMode UiMode,
+            string LocalSessionId,
+            string CandidateSessionId,
+            string InviteId,
+            string InviteFromSessionId,
+            string InviteToSessionId,
+            string ReservationId,
+            string OpponentSessionId,
+            string OpponentScene,
+            OnlineDuelPlayerStatus OpponentStatus,
+            string Message) {
+            public static ComputedView Idle(string localSessionId, string message) {
+                return new ComputedView(
+                    OnlineDuelUiMode.Idle,
+                    localSessionId ?? "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    OnlineDuelPlayerStatus.StageSelecting,
+                    message ?? "");
+            }
+        }
+
+        public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) {
+            if (!ReferenceEquals(runner, this.runner)) {
+                return;
+            }
+
+            Debug.Log($"{LOG_PREFIX} Player joined. player={player}");
+        }
         public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
         public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
         public void OnInput(NetworkRunner runner, NetworkInput input) { }
@@ -898,6 +1066,7 @@ namespace Alice {
         public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
 
         public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) {
+            Debug.Log($"{LOG_PREFIX} Connect request accepted.");
             request.Accept();
         }
     }

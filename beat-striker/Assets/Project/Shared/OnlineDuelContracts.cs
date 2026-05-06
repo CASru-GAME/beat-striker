@@ -4,14 +4,12 @@ using Fusion.Sockets;
 using UnityEngine;
 
 namespace Alice {
-    public enum OnlineDuelPhase {
+    public enum OnlineDuelUiMode {
         Idle,
-        CandidateShown,
+        Candidate,
         IncomingInvite,
         InviteSent,
-        Reserved,
-        Consumed,
-        Matching,
+        Matched,
         EnterBattle,
         Error,
     }
@@ -35,19 +33,12 @@ namespace Alice {
     }
 
     public enum OnlineDuelEventKind {
-        CandidateShown,
-        IncomingInvite,
-        InviteUpdated,
-        Reserved,
-        ReservationExpired,
-        MatchStatus,
+        ViewState,
         MatchResult,
-        Error,
-        Snapshot,
     }
 
     public record OnlineDuelUiState(
-        OnlineDuelPhase Phase,
+        OnlineDuelUiMode UiMode,
         string LocalSessionId,
         string CandidateSessionId,
         string InviteId,
@@ -58,12 +49,10 @@ namespace Alice {
         string OpponentScene,
         OnlineDuelPlayerStatus OpponentStatus,
         string Message,
-        float MatchDeadlineRealtime,
-        int SceneSyncId,
         OnlineMatchResult MatchResult) {
-        public static OnlineDuelUiState Idle(string localSessionId) {
+        public static OnlineDuelUiState Idle(string localSessionId, string message = "") {
             return new OnlineDuelUiState(
-                OnlineDuelPhase.Idle,
+                OnlineDuelUiMode.Idle,
                 localSessionId ?? "",
                 "",
                 "",
@@ -73,9 +62,7 @@ namespace Alice {
                 "",
                 "",
                 OnlineDuelPlayerStatus.StageSelecting,
-                "",
-                0f,
-                0,
+                message ?? "",
                 default);
         }
 
@@ -128,6 +115,7 @@ namespace Alice {
         public int kind;
         public string duelSessionId;
         public string scene;
+        public bool appOverlayEnabled;
         public OnlineDuelPlayerStatus playerStatus;
         public int sceneSyncId;
         public string inviteId;
@@ -141,6 +129,8 @@ namespace Alice {
     [Serializable]
     public class OnlineDuelEventPayload {
         public int kind;
+        public int seq;
+        public int uiMode;
         public string localSessionId;
         public string candidateSessionId;
         public string inviteId;
@@ -151,7 +141,6 @@ namespace Alice {
         public string opponentScene;
         public OnlineDuelPlayerStatus opponentStatus;
         public string message;
-        public int sceneSyncId;
         public int localStriker;
         public int opponentStriker;
         public int stage;

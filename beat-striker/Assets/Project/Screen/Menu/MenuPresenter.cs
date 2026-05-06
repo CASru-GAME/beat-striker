@@ -19,7 +19,6 @@ namespace Alice {
         readonly IBattleSelectSetting battleSelectSetting;
         readonly ITutorialSetting tutorialSetting;
         readonly IAppNetworkSetting appNetworkSetting;
-        readonly IOnlineSessionBootstrap onlineSessionBootstrap;
         readonly CompositeDisposable subscriptions = new();
         MenuInputState inputState = MenuInputState.Ready;
 
@@ -31,8 +30,7 @@ namespace Alice {
             IPlayerSelectSetting playerSelectSetting,
             IBattleSelectSetting battleSelectSetting,
             ITutorialSetting tutorialSetting,
-            IAppNetworkSetting appNetworkSetting,
-            IOnlineSessionBootstrap onlineSessionBootstrap) {
+            IAppNetworkSetting appNetworkSetting) {
             this.view = view;
             this.sceneTransitionService = sceneTransitionService;
             this.gamePadRegistry = gamePadRegistry;
@@ -40,7 +38,6 @@ namespace Alice {
             this.battleSelectSetting = battleSelectSetting;
             this.tutorialSetting = tutorialSetting;
             this.appNetworkSetting = appNetworkSetting;
-            this.onlineSessionBootstrap = onlineSessionBootstrap;
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.view.GotoTitleRequested
@@ -53,7 +50,6 @@ namespace Alice {
             this.view.GotoTutorialRequested
                 .Subscribe(_ => {
                     Debug.Log($"{LOG_PREFIX} GotoTutorialRequested received");
-                    appNetworkSetting.SetIsOnline(false);
                     StartTutorialBattle();
                 })
                 .AddTo(subscriptions);
@@ -61,16 +57,13 @@ namespace Alice {
             this.view.LocalBattleRequested
                 .Subscribe(_ => {
                     Debug.Log($"{LOG_PREFIX} LocalBattleRequested received");
-                    appNetworkSetting.SetIsOnline(false);
                     GoToStageSelect();
                 })
                 .AddTo(subscriptions);
 
             this.view.OnlineBattleRequested
                 .Subscribe(_ => {
-                    Debug.Log($"{LOG_PREFIX} OnlineBattleRequested received");
-                    appNetworkSetting.SetIsOnline(true);
-                    GoToStageSelect();
+                    Debug.Log($"{LOG_PREFIX} OnlineBattleRequested received (mock: no navigation)");
                 })
                 .AddTo(subscriptions);
 
@@ -86,8 +79,6 @@ namespace Alice {
 
         async Task EnterMenuAsync() {
             gamePadRegistry.RestoreOfflinePrimaryLayout(appNetworkSetting.LocalOnlinePlayerId);
-            await onlineSessionBootstrap.TeardownOnlineRunnerAsync();
-            appNetworkSetting.SetIsOnline(false);
             appNetworkSetting.SetLocalOnlinePlayerId(0);
             tutorialSetting.ClearTutorialBattleRequest();
             Debug.Log($"{LOG_PREFIX} EnterMenuAsync requesting end transition. scene={AppScene.Menu}");

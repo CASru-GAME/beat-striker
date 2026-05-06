@@ -23,15 +23,11 @@ namespace Alice {
         readonly IPlayerSelectSetting playerSelectSetting;
         readonly IAppStrikerRegistry appStrikerRegistry;
         readonly IAppNetworkSetting appNetworkSetting;
-        readonly IOnlineSessionBootstrap onlineSessionBootstrap;
-        readonly IOnlineDuelCoordinator onlineDuelCoordinator;
-        readonly IOnlineDuelIdentity duelIdentity;
-        readonly IOnlineDuelFusionClient onlineDuelFusionClient;
+        readonly IMatchingModel matchingModel;
+        readonly IMatchingDuelOperations duelOperations;
         readonly CompositeDisposable subscriptions = new();
         readonly CharacterSelectSelectionPolicy selectionPolicy = new();
         readonly List<CharacterSelectSlotState> slotStates = new();
-        readonly Dictionary<Striker, GameObject> strikerModelMap = new();
-        readonly List<LoadedAsset<GameObject>> previewModelAssets = new();
         bool initialized;
         bool disposed;
         bool startTransitionInputEnabled;
@@ -52,10 +48,8 @@ namespace Alice {
             IPlayerSelectSetting playerSelectSetting,
             IAppStrikerRegistry appStrikerRegistry,
             IAppNetworkSetting appNetworkSetting,
-            IOnlineSessionBootstrap onlineSessionBootstrap,
-            IOnlineDuelCoordinator onlineDuelCoordinator,
-            IOnlineDuelIdentity duelIdentity,
-            IOnlineDuelFusionClient onlineDuelFusionClient) {
+            IMatchingModel matchingModel,
+            IMatchingDuelOperations duelOperations) {
             this.view = view;
             this.transitionService = transitionService;
             this.gamePadRegistry = gamePadRegistry;
@@ -63,10 +57,8 @@ namespace Alice {
             this.playerSelectSetting = playerSelectSetting;
             this.appStrikerRegistry = appStrikerRegistry;
             this.appNetworkSetting = appNetworkSetting;
-            this.onlineSessionBootstrap = onlineSessionBootstrap;
-            this.onlineDuelCoordinator = onlineDuelCoordinator;
-            this.duelIdentity = duelIdentity;
-            this.onlineDuelFusionClient = onlineDuelFusionClient;
+            this.matchingModel = matchingModel;
+            this.duelOperations = duelOperations;
 
             _ = InitializeAfterFrameAsync();
         }
@@ -86,10 +78,6 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Initialize start. buttonCount={view.CharacterSelectButtons.Length}");
 
             selectionPolicy.Reset(playerSelectSetting);
-            await BuildStrikerModelMapAsync();
-            if (disposed) {
-                return;
-            }
 
             for (var i = 0; i < view.CharacterSelectButtons.Length; i++) {
                 view.CharacterSelectButtons[i].OnStrikerClicked
@@ -133,7 +121,7 @@ namespace Alice {
             var result = await transitionService.RequestEndTransitionAsync(AppScene.CharacterSelect);
             startTransitionInputEnabled = true;
             onlineScenePresenceReady = true;
-            PublishOnlineCharacterSelectStatus(CanStartBattle());
+            PublishOnlineCharacterSelectStatus();
             Debug.Log($"{LOG_PREFIX} EnableStartInputAfterSceneEnterAsync completed. isSuccess={result.IsSuccess}, startTransitionInputEnabled={startTransitionInputEnabled}");
         }
 
@@ -159,7 +147,7 @@ namespace Alice {
             if (button == GamePadButton.South) {
                 if (isOnlineMatchmakingInProgress) {
                     Debug.Log($"{LOG_PREFIX} OnButtonDown South received. cancel online matchmaking requested");
-                    onlineSessionBootstrap.CancelMatchmaking();
+                    duelOperations.CancelMatchmaking();
                     return;
                 }
 
@@ -216,9 +204,9 @@ namespace Alice {
             inputState = SceneInputState.TransitioningToScreen;
 
             if (IsOnlineSelectionFlow()) {
-                EnsureOnlineModeForDuelFlow();
                 view.StartButtonAnimation.SetOnlineWaitingPopupVisible(true);
                 isOnlineMatchmakingInProgress = true;
+                RefreshStatusView();
                 try {
                     Debug.Log($"{LOG_PREFIX} Online match start. stage={battleSelectSetting.SelectedStage.CurrentValue}, musicId={battleSelectSetting.SelectedMusicId.CurrentValue}");
                     await MatchOnlineAsync();
@@ -237,6 +225,7 @@ namespace Alice {
                 }
                 finally {
                     isOnlineMatchmakingInProgress = false;
+                    RefreshStatusView();
                     view.StartButtonAnimation.SetOnlineWaitingPopupVisible(false);
                     Debug.Log($"{LOG_PREFIX} Online match cleanup. popupHidden=true");
                 }
@@ -267,7 +256,7 @@ namespace Alice {
         void RequestStageSelectTransition() {
             if (isOnlineMatchmakingInProgress) {
                 Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition: cancel online matchmaking requested");
-                onlineSessionBootstrap.CancelMatchmaking();
+                duelOperations.CancelMatchmaking();
                 return;
             }
 
@@ -307,24 +296,21 @@ namespace Alice {
                 throw new InvalidOperationException("Online battle requires player 0 striker selection.");
             }
 
-            await onlineDuelCoordinator.NotifyPlayerStatusAsync(OnlineDuelPlayerStatus.Waiting);
-            var reservationId = onlineDuelFusionClient.ReservationId;
-            if (onlineDuelFusionClient.HasReservation) {
-                onlineDuelFusionClient.ConsumeReservation();
+            await duelOperations.NotifyPlayerStatusAsync(OnlineDuelPlayerStatus.Waiting);
+            var matchingState = matchingModel.State.CurrentValue;
+            var reservationId = matchingState.ReservationId;
+            if (!matchingState.HasReservation || string.IsNullOrWhiteSpace(reservationId)) {
+                throw new InvalidOperationException("Online battle requires a reservation.");
             }
 
-            var request = onlineDuelFusionClient.HasReservation
-                ? new OnlineMatchRequest(
-                    localStriker,
-                    battleSelectSetting.SelectedStage.CurrentValue,
-                    battleSelectSetting.SelectedMusicId.CurrentValue,
-                    reservationId,
-                    duelIdentity.DuelSessionId)
-                : new OnlineMatchRequest(
-                    localStriker,
-                    battleSelectSetting.SelectedStage.CurrentValue,
-                    battleSelectSetting.SelectedMusicId.CurrentValue);
-            var result = await onlineSessionBootstrap.MatchAsync(request);
+            duelOperations.ConsumeReservation();
+            var request = new OnlineMatchRequest(
+                localStriker,
+                battleSelectSetting.SelectedStage.CurrentValue,
+                battleSelectSetting.SelectedMusicId.CurrentValue,
+                reservationId,
+                matchingState.LocalSessionId);
+            var result = await duelOperations.MatchAsync(request);
             Debug.Log($"{LOG_PREFIX} MatchAsync returned. Applying match result to settings before battle transition.");
 
             battleSelectSetting.SelectStage(result.Stage);
@@ -360,7 +346,6 @@ namespace Alice {
         }
 
         void RefreshState() {
-            EnsureOnlineModeForDuelFlow();
             EnforceSelectionModeInvariant();
             RefreshReadyState();
             RefreshStatusView();
@@ -382,25 +367,23 @@ namespace Alice {
             if (!IsTransitioning()) {
                 inputState = allSelected ? SceneInputState.ReadyToStart : SceneInputState.Selecting;
             }
-            PublishOnlineCharacterSelectStatus(allSelected);
+            PublishOnlineCharacterSelectStatus();
         }
 
-        void PublishOnlineCharacterSelectStatus(bool allSelected) {
+        void PublishOnlineCharacterSelectStatus() {
             if (!IsOnlineSelectionFlow() || !onlineScenePresenceReady || IsTransitioning()) {
                 hasPublishedOnlineStatus = false;
                 return;
             }
 
-            var status = allSelected
-                ? OnlineDuelPlayerStatus.Waiting
-                : OnlineDuelPlayerStatus.CharacterSelecting;
+            var status = OnlineDuelPlayerStatus.CharacterSelecting;
             if (hasPublishedOnlineStatus && lastPublishedOnlineStatus == status) {
                 return;
             }
 
             hasPublishedOnlineStatus = true;
             lastPublishedOnlineStatus = status;
-            _ = onlineDuelCoordinator.NotifyPlayerStatusAsync(status);
+            _ = duelOperations.NotifyPlayerStatusAsync(status);
         }
 
         bool IsTransitioning() {
@@ -424,21 +407,14 @@ namespace Alice {
         }
 
         bool IsOnlineSelectionFlow() {
-            return appNetworkSetting.IsOnline.CurrentValue
-                   || IsActiveDuelSelectionState(onlineDuelFusionClient.State.CurrentValue);
+             return matchingModel.IsEstablished.CurrentValue
+                 || matchingModel.State.CurrentValue.HasReservation;
         }
 
         int GetRequiredSlotCount() {
             return IsOnlineSelectionFlow()
                 ? 1
                 : selectionPolicy.GetRequiredSlotCount(GetJoinedPlayerCount());
-        }
-
-        void EnsureOnlineModeForDuelFlow() {
-            if (!appNetworkSetting.IsOnline.CurrentValue
-                && IsActiveDuelSelectionState(onlineDuelFusionClient.State.CurrentValue)) {
-                appNetworkSetting.SetIsOnline(true);
-            }
         }
 
         void EnforceSelectionModeInvariant() {
@@ -449,14 +425,6 @@ namespace Alice {
             for (var playerId = 1; playerId < CharacterSelectSelectionPolicy.MAXPLAYERS; playerId++) {
                 playerSelectSetting.DeselectStriker(playerId);
             }
-        }
-
-        static bool IsActiveDuelSelectionState(OnlineDuelUiState state) {
-            return state.HasReservation
-                   || state.Phase == OnlineDuelPhase.Reserved
-                   || state.Phase == OnlineDuelPhase.Consumed
-                   || state.Phase == OnlineDuelPhase.Matching
-                   || state.Phase == OnlineDuelPhase.EnterBattle;
         }
 
         int GetJoinedPlayerCount() {
@@ -470,43 +438,22 @@ namespace Alice {
             return joinedPlayers;
         }
 
-        async Awaitable BuildStrikerModelMapAsync() {
-            strikerModelMap.Clear();
-            var strikers = appStrikerRegistry.GetAll();
-            for (var i = 0; i < strikers.Count; i++) {
-                var info = strikers[i];
-                var modelAsset = await appStrikerRegistry.LoadPreviewModelAsync(info.BattleStriker);
-                if (disposed) {
-                    modelAsset.Dispose();
-                    return;
-                }
-
-                previewModelAssets.Add(modelAsset);
-                var modelPrefab = modelAsset.Asset;
-                if (modelPrefab != null) {
-                    strikerModelMap[info.BattleStriker] = modelPrefab;
-                }
-            }
-        }
-
         void RefreshStatusView() {
             var requiredSlots = GetRequiredSlotCount();
             slotStates.Clear();
 
             for (var i = 0; i < requiredSlots; i++) {
                 var hasGamePad = gamePadRegistry.Get(i).HasGamePad.CurrentValue;
-                GameObject selectedModelPrefab = null;
+                Sprite selectedPortrait = null;
                 var isSelected = false;
 
-                if (playerSelectSetting.TryGetStriker(i, out var striker) && strikerModelMap.TryGetValue(striker, out var modelPrefab)) {
+                if (playerSelectSetting.TryGetStriker(i, out var striker)) {
                     isSelected = true;
-                    selectedModelPrefab = modelPrefab;
-                }
-                else if (playerSelectSetting.TryGetStriker(i, out _)) {
-                    isSelected = true;
+                    selectedPortrait = appStrikerRegistry.GetByStriker(striker).Portrait;
                 }
 
-                slotStates.Add(new CharacterSelectSlotState(i, hasGamePad, isSelected, selectedModelPrefab));
+                var isWaiting = IsOnlineSelectionFlow() && i == 0 && isOnlineMatchmakingInProgress;
+                slotStates.Add(new CharacterSelectSlotState(i, hasGamePad, isSelected, isWaiting, selectedPortrait));
             }
 
             view.StatusView.Render(slotStates);
@@ -515,13 +462,9 @@ namespace Alice {
         public void Dispose() {
             disposed = true;
             if (isOnlineMatchmakingInProgress) {
-                onlineSessionBootstrap.CancelMatchmaking();
+                duelOperations.CancelMatchmaking();
             }
             subscriptions.Dispose();
-            for (var i = 0; i < previewModelAssets.Count; i++) {
-                previewModelAssets[i].Dispose();
-            }
-            previewModelAssets.Clear();
         }
     }
 }

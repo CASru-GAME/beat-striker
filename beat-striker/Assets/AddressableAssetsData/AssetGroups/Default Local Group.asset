@@ -25,16 +25,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 37d428df5c910584396dd6cdd0df9fbd
-    m_Address: Assets/Project/Strikers/LargeWizard/Magic.bone.vrm
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 61caf16d520024b3f926c5e7ee0e8c5e
-    m_Address: Assets/Project/Strikers/LargeSatan/Warrior.vrm
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 62df61faddbdc4059b98c3473fcf6704
     m_Address: Assets/Project/BGM/FighterStreet.mp3
     m_ReadOnly: 0
@@ -47,11 +37,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 829be4a497a76e2488b2d07ea5cb28b4
     m_Address: Assets/Project/Strikers/LargeHero/Hero.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8cc39aaf813b0554da29865827638db3
-    m_Address: Assets/Project/Strikers/LargeHero/Hero.vrm
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

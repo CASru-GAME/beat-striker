@@ -98,7 +98,6 @@ namespace Alice {
                 }
 
                 replaySetting.SetReplay(detail.replayPayload);
-                appNetworkSetting.SetIsOnline(false);
                 appNetworkSetting.SetLocalOnlinePlayerId(0);
                 ApplyReplaySelections(detail.replayPayload);
                 var nextScene = ResolveBattleScene(detail.replayPayload.stage);
