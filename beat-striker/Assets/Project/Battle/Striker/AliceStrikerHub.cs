@@ -305,7 +305,12 @@ namespace Alice {
             ApplyHitPointDelta(snapshot.HitPoint - history.HitPoint);
             ApplySpecialPointDelta(snapshot.SpecialPoint - history.SpecialPoint);
             ApplyPositionDelta(snapshot.Position - history.Position);
-            ApplyStateCorrectionIfNeeded(snapshot.StatePathId);
+            // State correction must use the local state near sent time, not "current now".
+            // In this game, state can change within a single frame; comparing with current state
+            // causes false mismatches and unnecessary state rewinds.
+            if (!string.IsNullOrEmpty(snapshot.StatePathId)) {
+                ApplyStateCorrectionIfNeeded(snapshot.StatePathId, history.StatePathId);
+            }
         }
 
         public void ApplyReplayAbsoluteState(ReplayPreBeatStatePayload snapshot) {
@@ -426,7 +431,13 @@ namespace Alice {
             centerPositionSubject.OnNext(centerPositionTransform.position);
         }
 
-        void ApplyStateCorrectionIfNeeded(string ownerStatePathId) {
+        void ApplyStateCorrectionIfNeeded(string ownerStatePathId, string localHistoricalStatePathId = null) {
+            // Pre-beat delta sync should compare against the local state near sent time.
+            // If historical states already match, skip correction even when current state differs.
+            if (localHistoricalStatePathId != null && localHistoricalStatePathId == ownerStatePathId) {
+                return;
+            }
+
             if (GetCurrentStatePathId() == ownerStatePathId) {
                 return;
             }

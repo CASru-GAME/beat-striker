@@ -37,6 +37,7 @@ namespace Alice {
 
         const string LOG_PREFIX = "[BeatJudge]";
         const int PLAYER_COUNT = 2;
+        const bool ENABLE_ONLINE_STRIKER_STATE_PATH_SYNC = false;
         const float PRE_BEAT_STATE_APPLY_OFFSET_SECONDS = 0.02f;
         static readonly float[] PreBeatStatePublishOffsetsSeconds = { 0.2f, 0.15f, 0.1f, 0.05f };
 
@@ -443,8 +444,12 @@ namespace Alice {
             }
 
             var sentNetworkTime = battleOnlineSync.NetworkTime;
+            var snapshot = striker.BuildPreBeatStateSnapshot(beatIndex, sentNetworkTime);
+            if (!ENABLE_ONLINE_STRIKER_STATE_PATH_SYNC) {
+                snapshot = snapshot with { StatePathId = string.Empty };
+            }
             battleOnlineSync.PublishStrikerPreBeatStateSnapshot(
-                striker.BuildPreBeatStateSnapshot(beatIndex, sentNetworkTime));
+                snapshot);
             Debug.Log($"{LOG_PREFIX} Published local striker pre-beat state snapshot. player={localPlayerId}, beat={beatIndex}, networkTime={sentNetworkTime:0.000}, position={striker.Position.CurrentValue}, hp={striker.HitPoint.CurrentValue:0.000}, sp={striker.SpecialPoint.CurrentValue:0.000}");
         }
 
