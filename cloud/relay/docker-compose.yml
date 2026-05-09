@@ -1,0 +1,42 @@
+services:
+  relay:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: beat-striker-relay:latest
+    container_name: beat-striker-relay
+    working_dir: /app
+    init: true
+    command:
+      - /bin/bash
+      - -lc
+      # Compose が ${...} を展開するので、シェル変数は $$ でエスケープする
+      - |
+        set -euo pipefail
+        cd /app
+        relay_bin=""
+        if [[ -n "$${RELAY_EXECUTABLE:-}" && -f "$${RELAY_EXECUTABLE}" ]]; then
+          relay_bin="$${RELAY_EXECUTABLE}"
+        elif [[ -f "BeatStrikerRelayServer.x86_64" ]]; then
+          relay_bin="BeatStrikerRelayServer.x86_64"
+        elif [[ -f "BeatStrikerRelayServer" ]]; then
+          relay_bin="BeatStrikerRelayServer"
+        fi
+        if [[ -z "$${relay_bin}" ]]; then
+          echo "Relay executable not found."
+          echo "Place the Linux player binary in RelayServerLinux/ or set RELAY_EXECUTABLE (e.g. MyRelayName.x86_64)."
+          ls -la
+          exit 1
+        fi
+        echo "Starting: $${relay_bin}"
+        # ./RelayServerLinux は :ro のため chmod が失敗する。ビルド側で +x 済み想定。
+        chmod +x "./$${relay_bin}" 2>/dev/null || true
+        # -logFile - sends Unity logs to stdout (docker compose logs relay)
+        exec "./$${relay_bin}" -batchmode -nographics -logFile -
+    environment:
+      # Optional: exact filename inside RelayServerLinux/ if not one of the defaults above.
+      RELAY_EXECUTABLE: ${RELAY_EXECUTABLE:-}
+    volumes:
+      - ./RelayServerLinux:/app:ro
+    network_mode: host
+    restart: unless-stopped
