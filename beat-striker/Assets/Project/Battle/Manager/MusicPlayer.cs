@@ -4,6 +4,7 @@ using System.Collections.Generic;
  
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public enum BeatJudgeZone {
@@ -88,6 +89,7 @@ namespace Alice {
         public float CurrentViewPlaybackTime => currentViewPlaybackTime;
         public float[] CurrentBeatTimeline => beats;
 
+        [Inject]
         public MusicPlayer(AudioSource audioSource, IMusicRegistry musicRegistry, IAudioSetting audioSetting, IBattleSelectSetting battleSelectSetting, IAISetting aiSetting) {
             this.audioSource = audioSource;
             this.musicRegistry = musicRegistry;
@@ -229,11 +231,18 @@ namespace Alice {
             if (playbackClockMode != PlaybackClockMode.VirtualLoop && audioSource.clip != null) {
                 var clipLength = Mathf.Max(0f, audioSource.clip.length);
                 if (clipLength > 0f) {
-                    var audioTime = playbackClockMode == PlaybackClockMode.AudioLoop
-                        ? clampedTime % clipLength
-                        : Mathf.Min(clampedTime, clipLength);
-                    audioSource.time = audioTime;
-                    lastRawAudioTime = audioTime;
+                    if (ShouldLoopAudioPlayback(playbackClockMode)) {
+                        completedAudioLoopCount = Mathf.FloorToInt(clampedTime / clipLength);
+                        var audioTime = clampedTime % clipLength;
+                        audioSource.time = audioTime;
+                        lastRawAudioTime = audioTime;
+                    }
+                    else {
+                        var audioTime = Mathf.Min(clampedTime, clipLength);
+                        audioSource.time = audioTime;
+                        lastRawAudioTime = audioTime;
+                        completedAudioLoopCount = 0;
+                    }
                 }
             }
 

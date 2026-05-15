@@ -46,11 +46,11 @@ namespace Alice {
         public string DisplayName;
         public Striker BattleStriker;
         public AssetReferenceGameObject PrefabReference;
-        public AssetReferenceGameObject PreviewModelReference;
         public Sprite Portrait;
+        public Sprite Thumbnail;
     }
 
-    public record StrikerInfo(string DisplayName, Striker BattleStriker, Sprite Portrait);
+    public record StrikerInfo(string DisplayName, Striker BattleStriker, Sprite Portrait, Sprite Thumbnail);
     public record PlayerStrikerSelection(int PlayerId, StrikerInfo Striker);
 
     public interface IAppStrikerRegistry {
@@ -58,7 +58,6 @@ namespace Alice {
         StrikerInfo GetByStriker(Striker striker);
         IReadOnlyList<StrikerInfo> GetAll();
         Awaitable<LoadedAsset<GameObject>> LoadBattlePrefabAsync(Striker striker);
-        Awaitable<LoadedAsset<GameObject>> LoadPreviewModelAsync(Striker striker);
     }
 
     public class AppStrikerRegistry : MonoBehaviour, IAppStrikerRegistry {
@@ -105,16 +104,6 @@ namespace Alice {
             return await LoadAssetAsync<GameObject>(entry.PrefabReference, debugLoadDelaySeconds);
         }
 
-        public async Awaitable<LoadedAsset<GameObject>> LoadPreviewModelAsync(Striker striker) {
-            EnsureInitialized();
-            if (!entryByType.TryGetValue(striker, out var entry)) {
-                return LoadedAsset<GameObject>.Empty();
-            }
-
-            using var scope = loadingOverlayService.Begin();
-            return await LoadAssetAsync<GameObject>(entry.PreviewModelReference, debugLoadDelaySeconds);
-        }
-
         void EnsureInitialized() {
             if (isInitialized) {
                 return;
@@ -124,7 +113,7 @@ namespace Alice {
             entryByType.Clear();
             allStrikers.Clear();
             foreach (var entry in strikerEntries) {
-                var strikerInfo = new StrikerInfo(entry.DisplayName, entry.BattleStriker, entry.Portrait);
+                var strikerInfo = new StrikerInfo(entry.DisplayName, entry.BattleStriker, entry.Portrait, entry.Thumbnail);
                 strikerByType[strikerInfo.BattleStriker] = strikerInfo;
                 entryByType[strikerInfo.BattleStriker] = entry;
                 allStrikers.Add(strikerInfo);

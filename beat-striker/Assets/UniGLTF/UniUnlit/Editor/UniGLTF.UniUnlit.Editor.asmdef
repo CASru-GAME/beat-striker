@@ -12,7 +12,7 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": false,
-    "defineConstraints": [],
+    "defineConstraints": ["!ALICE_RELAY_SERVER"],
     "versionDefines": [],
     "noEngineReferences": false
 }

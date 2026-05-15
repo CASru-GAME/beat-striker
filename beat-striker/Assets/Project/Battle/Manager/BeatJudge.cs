@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using App;
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
 
@@ -18,13 +19,27 @@ namespace Alice {
         void ResetRoundState();
         void Pause();
         void Resume();
+        /// <summary>オンライン: 双方のサスペンド要求が揃った拍で呼ばれる（引数は適用ビートインデックス）。</summary>
+        void SetOnlineDualSuspendMenuPauseHandler(Action<int> handler);
     }
 
     public partial class BeatJudge : IBeatjudge, IDisposable {
+        public void SetOnlineDualSuspendMenuPauseHandler(Action<int> handler) {
+            onlineDualSuspendMenuPauseHandler = handler;
+        }
+
+        // ポーズ要求を送る「次のオンライン適用拍」。オンライン処理中は lastOnlineBeatIndex 基準、未開始は再生位置から算出。
+        public int GetSuspendMenuApplyBeatIndex() {
+            return lastOnlineBeatIndex >= 0
+                ? lastOnlineBeatIndex + 1
+                : musicPlayer.JudgeTiming(musicPlayer.CurrentPlaybackTime).BeatIndex;
+        }
+
         const string LOG_PREFIX = "[BeatJudge]";
         const int PLAYER_COUNT = 2;
-        const float PRE_COMMAND_SNAPSHOT_INTERVAL_SECONDS = 0.05f;
-        const float PRE_COMMAND_SNAPSHOT_WAIT_SECONDS = 0.05f;
+        const bool ENABLE_ONLINE_STRIKER_STATE_PATH_SYNC = false;
+        const float PRE_BEAT_STATE_APPLY_OFFSET_SECONDS = 0.02f;
+        static readonly float[] PreBeatStatePublishOffsetsSeconds = { 0.2f, 0.15f, 0.1f, 0.05f };
 
         readonly IAudioSetting audioSetting;
         readonly IAppNetworkSetting appNetworkSetting;
@@ -34,14 +49,22 @@ namespace Alice {
         readonly IMusicPlayer musicPlayer;
         readonly List<IDisposable> subscriptions = new();
         readonly Queue<IMusicPlayer.BeatSignal> pendingOnlineBeatSignals = new();
-        readonly HashSet<int> activePreCommandSnapshotPublishBeats = new();
+        readonly HashSet<PreBeatStatePublishKey> publishedPreBeatStateSnapshotKeys = new();
+        readonly HashSet<int> appliedPreBeatStateSnapshotBeats = new();
         readonly int[] lastReceivedOnlineBeatIndexByPlayer = new int[PLAYER_COUNT];
         BeatPlayer[] beatPlayer = new BeatPlayer[PLAYER_COUNT];
         float lastCommandPlaybackTime = -1f;
         int lastOnlineBeatIndex = -1;
         bool isOnlineBeatDrainRunning;
         bool isPaused;
+        bool isOnlineNotificationWaitPaused;
+        float timeScaleBeforeOnlineNotificationWait = 1f;
+        // オンライン専用: 指定拍にサスペンド要求が届いたら BattleFlow 側へ通知（ポーズ＋FlowGate SuspendMenuBeatBarrier）。
+        Action<int> onlineDualSuspendMenuPauseHandler;
 
+        record PreBeatStatePublishKey(int BeatIndex, int SlotIndex);
+
+        [Inject]
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting,
             IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync,
             BeatOnlineCommandBuffer onlineCommandBuffer, IStrikerRegistry strikerRegistry) {
@@ -71,7 +94,7 @@ namespace Alice {
                 }));
 
                 var subscription = gamePad.OnButtonDown.Subscribe(button => {
-                    if (isPaused) {
+                    if (isPaused || isOnlineNotificationWaitPaused) {
                         return;
                     }
 
@@ -79,11 +102,12 @@ namespace Alice {
                         return;
                     }
 
-                    var player = beatPlayer[playerIndex];
-                    var time = musicPlayer.CurrentPlaybackTime;
-                    if (lastCommandPlaybackTime >= 0f && time < lastCommandPlaybackTime) {
-                        for (var j = 0; j < beatPlayer.Length; j++) {
-                            beatPlayer[j].ResetForLoop();
+                var player = beatPlayer[playerIndex];
+                var time = musicPlayer.CurrentPlaybackTime;
+                Debug.Log($"{LOG_PREFIX} OnButtonDown received. player={playerIndex}, button={button}, time={time:0.000}, isOnline={IsOnlineBattle()}, paused={isPaused}, onlineWaitPaused={isOnlineNotificationWaitPaused}");
+                if (!IsOnlineBattle() && lastCommandPlaybackTime >= 0f && time < lastCommandPlaybackTime - 1.0f) {
+                    for (var j = 0; j < beatPlayer.Length; j++) {
+                        beatPlayer[j].ResetForLoop();
                         }
 
                         ResetOnlineCommandState();
@@ -92,12 +116,18 @@ namespace Alice {
                     lastCommandPlaybackTime = time;
 
                     if (player.IsInputLocked) {
+                        Debug.Log($"{LOG_PREFIX} OnButtonDown ignored because input is locked. player={playerIndex}, button={button}, time={time:0.000}");
                         return;
                     }
 
                     var result = musicPlayer.JudgeTiming(time);
                     var isTimingSuccess = result.Zone != BeatJudgeZone.Miss && time < result.BeatTime;
+
+                    if (IsOnlineBattle() && result.BeatIndex <= lastOnlineBeatIndex) {
+                        isTimingSuccess = false;
+                    }
                     if (!isTimingSuccess) {
+                        Debug.Log($"{LOG_PREFIX} OnButtonDown judged as miss. player={playerIndex}, button={button}, beat={result.BeatIndex}, zone={result.Zone}");
                         player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
                             result.BeatIndex,
                             time,
@@ -118,6 +148,10 @@ namespace Alice {
                             player.CurrentInputDirection, player.ComboCount.CurrentValue);
                         player.onBeatCommandRequested.OnNext(beatResult);
                         SubmitLocalOnlineCommandIfNeeded(playerIndex, beatResult);
+                        Debug.Log($"{LOG_PREFIX} OnButtonDown accepted. player={playerIndex}, button={button}, beat={beatResult.BeatIndex}, zone={beatResult.Zone}, direction={beatResult.Direction}");
+                    }
+                    else {
+                        Debug.Log($"{LOG_PREFIX} OnButtonDown timing accepted but command not saved. player={playerIndex}, button={button}, beat={result.BeatIndex}, zone={result.Zone}, inputDirection={player.CurrentInputDirection}");
                     }
 
                     // Record that player attempted this beat so it's not considered a pass later
@@ -126,7 +160,13 @@ namespace Alice {
                 subscriptions.Add(subscription);
             }
 
-            subscriptions.Add(battleOnlineSync.OnBeatCommandReceived.Subscribe(ApplyOnlineBeatCommand));
+            Debug.Log($"{LOG_PREFIX} Constructed. playerCount={beatPlayer.Length}, localOnlinePlayerId={appNetworkSetting.LocalOnlinePlayerId}, isOnline={IsOnlineBattle()}, battleSyncReady={battleOnlineSync.IsReady}");
+
+            subscriptions.Add(battleOnlineSync.OnBeatNotificationReceived.Subscribe(ApplyOnlineBeatNotification));
+
+            subscriptions.Add(Observable.EveryUpdate().Subscribe(_ => {
+                UpdateOnlinePreBeatStateSnapshots();
+            }));
 
             subscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
                 if (isPaused) {
@@ -182,98 +222,119 @@ namespace Alice {
         void SubmitLocalOnlineCommandIfNeeded(int playerId, IBeatPlayer.BeatResult result) {
             if (!IsOnlineBattle() || playerId != ResolveLocalOnlinePlayerId() || result.BeatIndex < 0 ||
                 !result.IsSuccess) {
+                Debug.Log($"{LOG_PREFIX} SubmitLocalOnlineCommandIfNeeded skipped. player={playerId}, localPlayer={ResolveLocalOnlinePlayerId()}, beat={result.BeatIndex}, success={result.IsSuccess}, isOnline={IsOnlineBattle()}");
                 return;
             }
 
-            var command = new OnlineBeatCommandSnapshot(
+            var notification = new OnlineBeatNotificationSnapshot(
                 0,
                 playerId,
                 result.BeatIndex,
                 result.Time,
-                result.IsSuccess,
+                OnlineBeatNotificationKind.Command,
                 result.Zone,
                 result.Button,
                 result.Direction);
-            if (onlineCommandBuffer.TrySubmit(command)) {
-                battleOnlineSync.PublishBeatCommand(command);
-                StartStrikerPreCommandSnapshotPublishLoop(command.BeatIndex);
+            if (onlineCommandBuffer.TrySubmit(notification)) {
+                Debug.Log($"{LOG_PREFIX} SubmitLocalOnlineCommandIfNeeded published. player={playerId}, beat={result.BeatIndex}, zone={result.Zone}, button={result.Button}, direction={result.Direction}");
+                battleOnlineSync.PublishBeatNotification(notification);
+            }
+            else {
+                Debug.LogWarning($"{LOG_PREFIX} SubmitLocalOnlineCommandIfNeeded rejected by buffer. player={playerId}, beat={result.BeatIndex}, zone={result.Zone}, button={result.Button}");
             }
         }
 
-        void ApplyOnlineBeatCommand(OnlineBeatCommandSnapshot command) {
+        void ApplyOnlineBeatNotification(OnlineBeatNotificationSnapshot notification) {
+            Debug.Log($"{LOG_PREFIX} ApplyOnlineBeatNotification received. player={notification.PlayerId}, beat={notification.BeatIndex}, kind={notification.Kind}, localPlayer={ResolveLocalOnlinePlayerId()}, isOnline={IsOnlineBattle()}");
             if (!IsOnlineBattle()
-                || command.PlayerId == ResolveLocalOnlinePlayerId()
-                || command.PlayerId < 0
-                || command.PlayerId >= beatPlayer.Length) {
+                || notification.PlayerId == ResolveLocalOnlinePlayerId()
+                || notification.PlayerId < 0
+                || notification.PlayerId >= beatPlayer.Length) {
+                Debug.Log($"{LOG_PREFIX} ApplyOnlineBeatNotification ignored. player={notification.PlayerId}, localPlayer={ResolveLocalOnlinePlayerId()}, isOnline={IsOnlineBattle()}");
                 return;
             }
 
-            FillMissingRemoteBeatCommandsIfNeeded(command.PlayerId, command.BeatIndex);
-            if (!onlineCommandBuffer.TrySubmit(command)) {
+            FillMissingRemoteBeatNotificationsIfNeeded(notification.PlayerId, notification.BeatIndex);
+            if (!onlineCommandBuffer.TrySubmit(notification)) {
+                Debug.LogWarning($"{LOG_PREFIX} ApplyOnlineBeatNotification rejected by buffer. player={notification.PlayerId}, beat={notification.BeatIndex}, kind={notification.Kind}");
                 return;
             }
 
-            lastReceivedOnlineBeatIndexByPlayer[command.PlayerId] = Mathf.Max(
-                lastReceivedOnlineBeatIndexByPlayer[command.PlayerId],
-                command.BeatIndex);
+            lastReceivedOnlineBeatIndexByPlayer[notification.PlayerId] = Mathf.Max(
+                lastReceivedOnlineBeatIndexByPlayer[notification.PlayerId],
+                notification.BeatIndex);
             Debug.Log(
-                $"{LOG_PREFIX} Applied remote online command. player={command.PlayerId}, beat={command.BeatIndex}, success={command.IsSuccess}, ready={onlineCommandBuffer.IsReady(command.BeatIndex, PLAYER_COUNT)}");
-            var player = beatPlayer[command.PlayerId];
-            if (command.IsSuccess) {
+                $"{LOG_PREFIX} Applied remote online notification. player={notification.PlayerId}, beat={notification.BeatIndex}, kind={notification.Kind}, ready={onlineCommandBuffer.IsReady(notification.BeatIndex, PLAYER_COUNT)}");
+            var player = beatPlayer[notification.PlayerId];
+            if (notification.Kind == OnlineBeatNotificationKind.Command) {
                 player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
-                    command.BeatIndex,
-                    command.Time,
+                    notification.BeatIndex,
+                    notification.Time,
                     true,
-                    command.Zone,
-                    command.Button,
-                    command.Direction,
+                    notification.Zone,
+                    notification.Button,
+                    notification.Direction,
                     player.ComboCount.CurrentValue));
+                Debug.Log($"{LOG_PREFIX} ApplyOnlineBeatNotification applied command. player={notification.PlayerId}, beat={notification.BeatIndex}, zone={notification.Zone}, button={notification.Button}, direction={notification.Direction}");
+            }
+            else {
+                Debug.Log($"{LOG_PREFIX} ApplyOnlineBeatNotification applied pass. player={notification.PlayerId}, beat={notification.BeatIndex}");
             }
         }
 
         async Task ProcessOnlineBeatAsync(IMusicPlayer.BeatSignal signal) {
-            if (lastOnlineBeatIndex >= 0 && signal.BeatIndex < lastOnlineBeatIndex) {
-                ResetOnlineCommandState();
+            if (lastOnlineBeatIndex >= 0 && signal.BeatIndex <= lastOnlineBeatIndex) {
+                Debug.Log($"{LOG_PREFIX} Skipped duplicate or past online beat. beat={signal.BeatIndex}, last={lastOnlineBeatIndex}");
+                return;
             }
 
             lastOnlineBeatIndex = signal.BeatIndex;
+            Debug.Log($"{LOG_PREFIX} ProcessOnlineBeatAsync start. beat={signal.BeatIndex}, beatTime={signal.BeatTime:0.000}, localPlayer={ResolveLocalOnlinePlayerId()}, isOnline={IsOnlineBattle()}, ready={onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)}");
 
-            SubmitLocalOnlineMissIfNeeded(signal);
+            SubmitLocalOnlinePassIfNeeded(signal);
             if (isPaused || !IsOnlineBattle()) {
+                Debug.Log($"{LOG_PREFIX} ProcessOnlineBeatAsync stopped after local pass. beat={signal.BeatIndex}, paused={isPaused}, isOnline={IsOnlineBattle()}");
                 return;
             }
 
             if (!onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
-                Debug.Log(
-                    $"{LOG_PREFIX} Waiting online beat. beat={signal.BeatIndex}, localPlayer={ResolveLocalOnlinePlayerId()}, isHost={battleOnlineSync.IsSessionHost}");
-                while (!isPaused
-                       && IsOnlineBattle()
-                       && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
-                    await Task.Yield();
+                var remotePlayerId = ResolveRemoteOnlinePlayerId();
+                Debug.Log($"{LOG_PREFIX} ProcessOnlineBeatAsync waiting remote. beat={signal.BeatIndex}, remotePlayer={remotePlayerId}, hasRemoteSubmission={onlineCommandBuffer.HasSubmissionAfter(signal.BeatIndex, remotePlayerId)}");
+                if (!onlineCommandBuffer.HasSubmissionAfter(signal.BeatIndex, remotePlayerId)) {
+                    await WaitForOnlineBeatNotificationAsync(signal);
                 }
 
                 if (isPaused || !IsOnlineBattle()) {
+                    Debug.Log($"{LOG_PREFIX} ProcessOnlineBeatAsync aborted while waiting remote. beat={signal.BeatIndex}, paused={isPaused}, isOnline={IsOnlineBattle()}");
                     return;
                 }
-            }
 
-            for (var playerId = 0; playerId < PLAYER_COUNT; playerId++) {
-                if (!onlineCommandBuffer.HasSubmission(signal.BeatIndex, playerId)) {
-                    onlineCommandBuffer.TrySubmit(CreateMissCommand(playerId, signal));
+                if (!onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                    Debug.Log($"{LOG_PREFIX} Forced pass for remote player because it was not ready after wait/skip. beat={signal.BeatIndex}");
+                    var forcedPass = CreatePassNotification(remotePlayerId, signal);
+                    onlineCommandBuffer.TrySubmit(forcedPass);
                 }
             }
 
-            await ApplyStrikerPreCommandSnapshotsAsync(signal.BeatIndex);
+            ApplyStrikerPreBeatStateSnapshotIfNeeded(signal.BeatIndex);
 
             for (var playerId = 0; playerId < PLAYER_COUNT; playerId++) {
-                if (onlineCommandBuffer.TryGetCommand(signal.BeatIndex, playerId, out var command)) {
-                    ExecuteOnlineCommand(playerId, command, signal);
+                if (onlineCommandBuffer.TryGetNotification(signal.BeatIndex, playerId, out var notification)) {
+                    Debug.Log($"{LOG_PREFIX} ProcessOnlineBeatAsync executing notification. beat={signal.BeatIndex}, player={playerId}, kind={notification.Kind}");
+                    ExecuteOnlineNotification(playerId, notification, signal);
                 }
+            }
+
+            // 打鍵コマンド適用の直後・CloseBeat の直前: この拍のサスペンド要求があれば一度だけポーズ＋ゲートへ進める。
+            if (IsOnlineBattle()
+                && onlineDualSuspendMenuPauseHandler != null
+                && battleOnlineSync.TryConsumeSuspendMenuRequest(signal.BeatIndex)) {
+                onlineDualSuspendMenuPauseHandler(signal.BeatIndex);
             }
 
             onlineCommandBuffer.CloseBeat(signal.BeatIndex);
-            activePreCommandSnapshotPublishBeats.Remove(signal.BeatIndex);
-            battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(signal.BeatIndex);
+            CleanupPreBeatStateTrackingBefore(signal.BeatIndex + 1);
+            battleOnlineSync.ClearStrikerPreBeatStateSnapshotsBefore(signal.BeatIndex + 1);
             Debug.Log($"{LOG_PREFIX} Completed online beat. beat={signal.BeatIndex}");
         }
 
@@ -303,126 +364,149 @@ namespace Alice {
             }
         }
 
-        void SubmitLocalOnlineMissIfNeeded(IMusicPlayer.BeatSignal signal) {
+        async Task WaitForOnlineBeatNotificationAsync(IMusicPlayer.BeatSignal signal) {
+            Debug.Log(
+                $"{LOG_PREFIX} Waiting online beat notification. beat={signal.BeatIndex}, localPlayer={ResolveLocalOnlinePlayerId()}, isHost={battleOnlineSync.IsSessionHost}");
+            isOnlineNotificationWaitPaused = true;
+            timeScaleBeforeOnlineNotificationWait = Time.timeScale;
+            musicPlayer.Pause();
+            Time.timeScale = 0f;
+            try {
+                while (!isPaused
+                       && IsOnlineBattle()
+                       && !onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                    await Task.Yield();
+                }
+            }
+            finally {
+                Time.timeScale = timeScaleBeforeOnlineNotificationWait;
+                isOnlineNotificationWaitPaused = false;
+                if (!isPaused && IsOnlineBattle() && onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)) {
+                    musicPlayer.SyncPlaybackTime(signal.BeatTime);
+                    musicPlayer.Resume();
+                    Debug.Log($"{LOG_PREFIX} Online beat notification wait completed. beat={signal.BeatIndex}, resumedPlayback={signal.BeatTime:0.000}");
+                }
+            }
+        }
+
+        void SubmitLocalOnlinePassIfNeeded(IMusicPlayer.BeatSignal signal) {
             var localPlayerId = ResolveLocalOnlinePlayerId();
             if (onlineCommandBuffer.HasSubmission(signal.BeatIndex, localPlayerId)) {
                 return;
             }
 
-            var command = CreateMissCommand(localPlayerId, signal);
-            if (onlineCommandBuffer.TrySubmit(command)) {
-                var player = beatPlayer[localPlayerId];
-                if (player.HasAttempt(signal.BeatIndex)) {
-                    player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
-                        command.BeatIndex,
-                        command.Time,
-                        false,
-                        BeatJudgeZone.Miss,
-                        command.Button,
-                        command.Direction,
-                        player.ComboCount.CurrentValue));
-                }
+            var notification = CreatePassNotification(localPlayerId, signal);
+            if (onlineCommandBuffer.TrySubmit(notification)) {
                 Debug.Log(
-                    $"{LOG_PREFIX} Submitted local online miss. player={localPlayerId}, beat={signal.BeatIndex}, ready={onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)}");
-                battleOnlineSync.PublishBeatCommand(command);
-                StartStrikerPreCommandSnapshotPublishLoop(command.BeatIndex);
+                    $"{LOG_PREFIX} Submitted local online pass. player={localPlayerId}, beat={signal.BeatIndex}, ready={onlineCommandBuffer.IsReady(signal.BeatIndex, PLAYER_COUNT)}");
+                battleOnlineSync.PublishBeatNotification(notification);
+            }
+            else {
+                Debug.LogWarning($"{LOG_PREFIX} Local online pass rejected by buffer. player={localPlayerId}, beat={signal.BeatIndex}");
             }
         }
 
-        void StartStrikerPreCommandSnapshotPublishLoop(int beatIndex) {
-            if (!IsOnlineBattle() || !activePreCommandSnapshotPublishBeats.Add(beatIndex)) {
+        void UpdateOnlinePreBeatStateSnapshots() {
+            if (isPaused || !IsOnlineBattle()) {
                 return;
             }
 
-            _ = PublishStrikerPreCommandSnapshotsUntilBeatExecutesAsync(beatIndex);
-        }
+            var playbackTime = musicPlayer.CurrentPlaybackTime;
+            var beatTimeline = musicPlayer.CurrentBeatTimeline;
+            for (var beatIndex = 0; beatIndex < beatTimeline.Length; beatIndex++) {
+                var beatTime = beatTimeline[beatIndex];
+                if (beatTime + 0.001f < playbackTime) {
+                    continue;
+                }
 
-        async Task PublishStrikerPreCommandSnapshotsUntilBeatExecutesAsync(int beatIndex) {
-            try {
-                while (!isPaused && IsOnlineBattle() && activePreCommandSnapshotPublishBeats.Contains(beatIndex)) {
-                    PublishLocalStrikerPreCommandSnapshot(beatIndex);
-                    var nextPublishTime = battleOnlineSync.NetworkTime + PRE_COMMAND_SNAPSHOT_INTERVAL_SECONDS;
-                    while (!isPaused
-                           && IsOnlineBattle()
-                           && activePreCommandSnapshotPublishBeats.Contains(beatIndex)
-                           && battleOnlineSync.NetworkTime < nextPublishTime) {
-                        await Task.Yield();
+                for (var slotIndex = 0; slotIndex < PreBeatStatePublishOffsetsSeconds.Length; slotIndex++) {
+                    var publishTime = beatTime - PreBeatStatePublishOffsetsSeconds[slotIndex];
+                    var key = new PreBeatStatePublishKey(beatIndex, slotIndex);
+                    if (playbackTime >= publishTime && publishedPreBeatStateSnapshotKeys.Add(key)) {
+                        PublishLocalStrikerPreBeatStateSnapshot(beatIndex);
                     }
                 }
-            }
-            finally {
-                activePreCommandSnapshotPublishBeats.Remove(beatIndex);
+
+                if (playbackTime >= beatTime - PRE_BEAT_STATE_APPLY_OFFSET_SECONDS) {
+                    ApplyStrikerPreBeatStateSnapshotIfNeeded(beatIndex);
+                }
+
+                if (beatTime - PreBeatStatePublishOffsetsSeconds[0] > playbackTime + 0.25f) {
+                    break;
+                }
             }
         }
 
-        void PublishLocalStrikerPreCommandSnapshot(int beatIndex) {
+        void PublishLocalStrikerPreBeatStateSnapshot(int beatIndex) {
             var localPlayerId = ResolveLocalOnlinePlayerId();
             if (!strikerRegistry.Get(localPlayerId).TryGetValue(out var striker)) {
                 return;
             }
 
             var sentNetworkTime = battleOnlineSync.NetworkTime;
-            battleOnlineSync.PublishStrikerPreCommandSnapshot(
-                striker.BuildPreCommandSnapshot(beatIndex, sentNetworkTime));
+            var snapshot = striker.BuildPreBeatStateSnapshot(beatIndex, sentNetworkTime);
+            if (!ENABLE_ONLINE_STRIKER_STATE_PATH_SYNC) {
+                snapshot = snapshot with { StatePathId = string.Empty };
+            }
+            battleOnlineSync.PublishStrikerPreBeatStateSnapshot(
+                snapshot);
+            Debug.Log($"{LOG_PREFIX} Published local striker pre-beat state snapshot. player={localPlayerId}, beat={beatIndex}, networkTime={sentNetworkTime:0.000}, position={striker.Position.CurrentValue}, hp={striker.HitPoint.CurrentValue:0.000}, sp={striker.SpecialPoint.CurrentValue:0.000}");
         }
 
-        async Task ApplyStrikerPreCommandSnapshotsAsync(int beatIndex) {
+        void ApplyStrikerPreBeatStateSnapshotIfNeeded(int beatIndex) {
+            if (!appliedPreBeatStateSnapshotBeats.Add(beatIndex)) {
+                return;
+            }
+
             var localPlayerId = ResolveLocalOnlinePlayerId();
             for (var playerId = 0; playerId < PLAYER_COUNT; playerId++) {
                 if (playerId == localPlayerId) {
                     continue;
                 }
 
-                if (!battleOnlineSync.TryGetLatestStrikerPreCommandSnapshot(beatIndex, playerId, out var snapshot)) {
-                    try {
-                        snapshot = await battleOnlineSync.WaitForStrikerPreCommandSnapshotAsync(
-                            beatIndex,
-                            playerId,
-                            PRE_COMMAND_SNAPSHOT_WAIT_SECONDS);
-                    }
-                    catch (TimeoutException) {
-                        Debug.Log($"{LOG_PREFIX} Missing striker pre-command snapshot. player={playerId}, beat={beatIndex}");
-                        continue;
-                    }
+                if (!battleOnlineSync.TryGetLatestStrikerPreBeatStateSnapshot(beatIndex, playerId, out var snapshot)) {
+                    Debug.Log($"{LOG_PREFIX} Missing striker pre-beat state snapshot. player={playerId}, beat={beatIndex}");
+                    continue;
                 }
 
                 if (!strikerRegistry.Get(playerId).TryGetValue(out var striker)) {
                     continue;
                 }
 
-                striker.ApplyPreCommandDelta(snapshot);
+                striker.ApplyPreBeatStateDelta(snapshot);
+                Debug.Log($"{LOG_PREFIX} Applied striker pre-beat state snapshot. player={playerId}, beat={beatIndex}, sent={snapshot.SentNetworkTime:0.000}, position={snapshot.Position}, hp={snapshot.HitPoint:0.000}, sp={snapshot.SpecialPoint:0.000}");
             }
         }
 
-        OnlineBeatCommandSnapshot CreateMissCommand(int playerId, IMusicPlayer.BeatSignal signal) {
-            return new OnlineBeatCommandSnapshot(
+        OnlineBeatNotificationSnapshot CreatePassNotification(int playerId, IMusicPlayer.BeatSignal signal) {
+            return new OnlineBeatNotificationSnapshot(
                 0,
                 playerId,
                 signal.BeatIndex,
                 signal.BeatTime,
-                false,
+                OnlineBeatNotificationKind.Pass,
                 BeatJudgeZone.Miss,
                 default,
-                beatPlayer[playerId].CurrentInputDirection);
+                Vector2.zero);
         }
 
-        OnlineBeatCommandSnapshot CreateMissCommand(int playerId, int beatIndex) {
+        OnlineBeatNotificationSnapshot CreatePassNotification(int playerId, int beatIndex) {
             var beatTimeline = musicPlayer.CurrentBeatTimeline;
             var beatTime = beatIndex >= 0 && beatIndex < beatTimeline.Length
                 ? beatTimeline[beatIndex]
                 : musicPlayer.CurrentPlaybackTime;
-            return new OnlineBeatCommandSnapshot(
+            return new OnlineBeatNotificationSnapshot(
                 0,
                 playerId,
                 beatIndex,
                 beatTime,
-                false,
+                OnlineBeatNotificationKind.Pass,
                 BeatJudgeZone.Miss,
                 default,
-                beatPlayer[playerId].CurrentInputDirection);
+                Vector2.zero);
         }
 
-        void FillMissingRemoteBeatCommandsIfNeeded(int playerId, int incomingBeatIndex) {
+        void FillMissingRemoteBeatNotificationsIfNeeded(int playerId, int incomingBeatIndex) {
             if (incomingBeatIndex < 0) {
                 return;
             }
@@ -432,40 +516,40 @@ namespace Alice {
                 return;
             }
 
-            for (var beatIndex = expectedBeatIndex; beatIndex < incomingBeatIndex; beatIndex++) {
-                if (onlineCommandBuffer.HasSubmission(beatIndex, playerId)) {
-                    continue;
-                }
-                onlineCommandBuffer.TrySubmit(CreateMissCommand(playerId, beatIndex));
-                Debug.Log($"{LOG_PREFIX} Filled missing remote beat as miss. player={playerId}, beat={beatIndex}");
+            var filledCount = onlineCommandBuffer.FillMissingSubmissions(
+                playerId,
+                expectedBeatIndex,
+                incomingBeatIndex,
+                beatIndex => CreatePassNotification(playerId, beatIndex));
+            if (filledCount > 0) {
+                Debug.Log($"{LOG_PREFIX} Filled missing remote beats as pass. player={playerId}, start={expectedBeatIndex}, end={incomingBeatIndex}, count={filledCount}");
             }
         }
 
-        void ExecuteOnlineCommand(int playerId, OnlineBeatCommandSnapshot command, IMusicPlayer.BeatSignal signal) {
+        void ExecuteOnlineNotification(int playerId, OnlineBeatNotificationSnapshot notification, IMusicPlayer.BeatSignal signal) {
             var player = beatPlayer[playerId];
             player.ClearSubmittedCommand(signal.BeatIndex);
-            if (!command.IsSuccess) {
+            if (notification.Kind != OnlineBeatNotificationKind.Command) {
                 player.ResetCombo();
                 player.IncrementMiss();
-                player.onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false,
-                    BeatJudgeZone.Miss, command.Button, command.Direction, player.ComboCount.CurrentValue));
-                // Keep direction state in sync with offline flow where pass updates direction each beat.
                 player.onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false,
-                    BeatJudgeZone.Miss, command.Button, command.Direction, player.ComboCount.CurrentValue));
+                    BeatJudgeZone.Miss, notification.Button, notification.Direction, player.ComboCount.CurrentValue));
+                Debug.Log($"{LOG_PREFIX} ExecuteOnlineNotification pass. player={playerId}, beat={signal.BeatIndex}, kind={notification.Kind}");
                 return;
             }
 
             player.IncrementCombo();
-            if (command.Zone == BeatJudgeZone.Excellent) {
+            if (notification.Zone == BeatJudgeZone.Excellent) {
                 player.IncrementExcellent();
             }
-            else if (command.Zone == BeatJudgeZone.Good) {
+            else if (notification.Zone == BeatJudgeZone.Good) {
                 player.IncrementGood();
             }
 
-            player.AddScore(CalculateScore(command.Zone));
+            player.AddScore(CalculateScore(notification.Zone));
             player.onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, true,
-                command.Zone, command.Button, command.Direction, player.ComboCount.CurrentValue));
+                notification.Zone, notification.Button, notification.Direction, player.ComboCount.CurrentValue));
+            Debug.Log($"{LOG_PREFIX} ExecuteOnlineNotification command. player={playerId}, beat={signal.BeatIndex}, zone={notification.Zone}, button={notification.Button}, direction={notification.Direction}, combo={player.ComboCount.CurrentValue}");
         }
 
         bool IsOnlineBattle() {
@@ -473,26 +557,37 @@ namespace Alice {
         }
 
         int ResolveLocalOnlinePlayerId() {
-            return battleOnlineSync.IsSessionHost ? 0 : 1;
+            return appNetworkSetting.LocalOnlinePlayerId;
+        }
+
+        int ResolveRemoteOnlinePlayerId() {
+            return ResolveLocalOnlinePlayerId() == 0 ? 1 : 0;
+        }
+
+        void CleanupPreBeatStateTrackingBefore(int beatIndex) {
+            publishedPreBeatStateSnapshotKeys.RemoveWhere(key => key.BeatIndex < beatIndex);
+            appliedPreBeatStateSnapshotBeats.RemoveWhere(appliedBeatIndex => appliedBeatIndex < beatIndex);
         }
 
         void ResetOnlineCommandState() {
             onlineCommandBuffer.Clear();
             pendingOnlineBeatSignals.Clear();
-            activePreCommandSnapshotPublishBeats.Clear();
-            battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(int.MaxValue);
+            publishedPreBeatStateSnapshotKeys.Clear();
+            appliedPreBeatStateSnapshotBeats.Clear();
+            battleOnlineSync.ClearStrikerPreBeatStateSnapshotsBefore(int.MaxValue);
             lastOnlineBeatIndex = -1;
             for (var i = 0; i < lastReceivedOnlineBeatIndexByPlayer.Length; i++) {
                 lastReceivedOnlineBeatIndexByPlayer[i] = -1;
             }
+            Debug.Log($"{LOG_PREFIX} Reset online command state.");
         }
 
         void ResetOnlineCommandStateForRoundResume() {
             var preserveFromBeatIndex = ResolveRoundResumePreserveBeatIndex();
             onlineCommandBuffer.ClearBeforeBeat(preserveFromBeatIndex);
             pendingOnlineBeatSignals.Clear();
-            activePreCommandSnapshotPublishBeats.Clear();
-            battleOnlineSync.ClearStrikerPreCommandSnapshotsBefore(preserveFromBeatIndex);
+            CleanupPreBeatStateTrackingBefore(preserveFromBeatIndex);
+            battleOnlineSync.ClearStrikerPreBeatStateSnapshotsBefore(preserveFromBeatIndex);
             lastOnlineBeatIndex = preserveFromBeatIndex - 1;
             for (var i = 0; i < lastReceivedOnlineBeatIndexByPlayer.Length; i++) {
                 if (i == ResolveLocalOnlinePlayerId()) {

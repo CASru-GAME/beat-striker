@@ -34,6 +34,7 @@ namespace Alice {
 		[SerializeField] AppNetworkSetting appNetworkSetting;
 		[SerializeField] VirtualTouchControllerCanvasView virtualTouchControllerCanvasView;
 		[SerializeField] LoadingView loadingView;
+		[SerializeField] AppOverlayView appOverlayView;
 
 		public IAppAudioPlayer AppAudioPlayer => appAudioPlayer;
 
@@ -43,7 +44,7 @@ namespace Alice {
 			aiSetting = GetComponent<AISetting>();
 			appNetworkSetting = GetComponent<AppNetworkSetting>();
 			if (instance != null && instance != this) {
-				Debug.LogWarning($"{LOG_PREFIX} Duplicate AppScope detected. existing={instance.name}, current={name}. current instance will be destroyed");
+				Debug.LogWarning($"{LOG_PREFIX} Duplicate AppScope detected. existing={instance.name}, current={name}. current instance will be destroyed. Remove the extra App/LifetimeScope root from the loaded scene so only the DontDestroyOnLoad App remains.");
 				Destroy(gameObject);
 				return;
 			}
@@ -94,18 +95,23 @@ namespace Alice {
 			builder.RegisterInstance<IAISetting>(aiSetting);
 			builder.RegisterInstance<IAppUISetting>(appUiSetting);
 			builder.RegisterInstance<IAppNetworkSetting>(appNetworkSetting);
+			builder.Register<MatchingModel>(Lifetime.Singleton).As<IMatchingModel>().As<IMutableMatchingModel>();
 			builder.RegisterInstance(virtualTouchControllerCanvasView);
 			builder.RegisterComponent(loadingView);
+			builder.RegisterComponent(appOverlayView);
 			builder.Register<ILoadingOverlayService, LoadingOverlayService>(Lifetime.Singleton);
 			builder.Register<ISceneLoader, SceneLoader>(Lifetime.Singleton);
 			builder.Register<ISceneTransitionService, SceneTransitionService>(Lifetime.Singleton);
-			builder.Register<OnlineSessionBootstrap>(Lifetime.Singleton);
-			builder.Register<IOnlineSessionBootstrap>(resolver => resolver.Resolve<OnlineSessionBootstrap>(), Lifetime.Singleton);
-			builder.Register<INetworkRunnerProvider>(resolver => resolver.Resolve<OnlineSessionBootstrap>(), Lifetime.Singleton);
+			builder.Register<IOnlineDuelIdentity, OnlineDuelIdentity>(Lifetime.Singleton);
+			builder.Register<IBattleHistoryApiClient, BattleHistoryApiClient>(Lifetime.Singleton);
+			builder.Register<IReplaySetting, ReplaySetting>(Lifetime.Singleton);
 
 			builder.RegisterInstance(playerInputManager);
 			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<VirtualTouchControllerPresenter>(Lifetime.Singleton);
+			builder.RegisterEntryPoint<OnlineDuelFusionClient>(Lifetime.Singleton);
+			builder.RegisterEntryPoint<MatchingController>(Lifetime.Singleton).AsSelf().As<IMatchingDuelOperations>();
+			builder.RegisterEntryPoint<AppOverlayPresenter>(Lifetime.Singleton);
 
 			builder.RegisterBuildCallback(container => {
 				Debug.Log($"{LOG_PREFIX} BuildCallback begin. scene={gameObject.scene.name}");
@@ -128,12 +134,20 @@ namespace Alice {
 				_ = container.Resolve<IAISetting>();
 				_ = container.Resolve<IAppUISetting>();
 				_ = container.Resolve<IAppNetworkSetting>();
+				container.Resolve<IAppNetworkSetting>().BindMatching(container.Resolve<IMatchingModel>());
 				_ = container.Resolve<VirtualTouchControllerCanvasView>();
 				_ = container.Resolve<ILoadingOverlayService>();
 				_ = container.Resolve<ISceneLoader>();
 				_ = container.Resolve<ISceneTransitionService>();
+				_ = container.Resolve<IOnlineDuelIdentity>();
+				_ = container.Resolve<IOnlineDuelFusionClient>();
 				_ = container.Resolve<IOnlineSessionBootstrap>();
 				_ = container.Resolve<INetworkRunnerProvider>();
+				_ = container.Resolve<IMatchingModel>();
+				_ = container.Resolve<IMatchingDuelOperations>();
+				_ = container.Resolve<IAppOverlayPresenter>();
+				_ = container.Resolve<IBattleHistoryApiClient>();
+				_ = container.Resolve<IReplaySetting>();
 				_ = container.Resolve<ICursorDeployer>();
 				Debug.Log($"{LOG_PREFIX} BuildCallback resolve completed");
 			});

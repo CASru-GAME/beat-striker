@@ -1,5 +1,8 @@
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
 
 public static class RemoveUIButtonMenu {
@@ -42,7 +45,7 @@ public static class RemoveUIButtonMenu {
             return;
         }
 
-        GameObject instance = Object.Instantiate(prefab);
+        GameObject instance = UnityEngine.Object.Instantiate(prefab);
         instance.name = prefab.name;
         GameObjectUtility.SetParentAndAlign(instance, menuCommand.context as GameObject);
         Undo.RegisterCreatedObjectUndo(instance, "Create " + instance.name);
@@ -58,7 +61,7 @@ public static class RemoveUIButtonMenu {
         var effectPlayerType = effectPlayerScript != null ? effectPlayerScript.GetClass() : null;
 
         if (effectPlayerType == null || !typeof(Component).IsAssignableFrom(effectPlayerType)) {
-            Object.DestroyImmediate(gameObject);
+            UnityEngine.Object.DestroyImmediate(gameObject);
             Debug.LogError("EffectPlayer script type could not be resolved.");
             return;
         }
@@ -87,7 +90,7 @@ public class VRMTextureCompressor {
     // --- 処理本体 ---
     private static void ResizeSelectedTextures(int maxSize) {
         // 選択されたアセットの中からテクスチャのみを抽出（フォルダ選択にも対応）
-        Object[] textures = Selection.GetFiltered(typeof(Texture2D), SelectionMode.DeepAssets);
+        UnityEngine.Object[] textures = Selection.GetFiltered(typeof(Texture2D), SelectionMode.DeepAssets);
 
         if (textures.Length == 0) {
             Debug.LogWarning("対象となるテクスチャファイルが見つかりませんでした。抽出済みの画像ファイルを選択してください。");
@@ -96,7 +99,7 @@ public class VRMTextureCompressor {
 
         int count = 0;
 
-        foreach (Object tex in textures) {
+        foreach (UnityEngine.Object tex in textures) {
             string path = AssetDatabase.GetAssetPath(tex);
             TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
 
@@ -114,6 +117,42 @@ public class VRMTextureCompressor {
         }
 
         Debug.Log($"完了：{count}枚のテクスチャを最大 {maxSize}px (長辺基準) に圧縮しました。");
+    }
+}
+
+
+public static class AddressablesFix
+{
+    [MenuItem("Tools/Addressables - Enable UWR for Local")]
+    public static void EnableUWR()
+    {
+        var settings = AddressableAssetSettingsDefaultObject.Settings;
+        if (settings == null)
+        {
+            Debug.LogError("Addressables Settingsが見つかりません");
+            return;
+        }
+
+        var updatedCount = 0;
+        foreach (var group in settings.groups)
+        {
+            if (group == null || !group.Name.Contains("Local")) continue;
+
+            var schema = group.GetSchema<BundledAssetGroupSchema>();
+            if (schema == null) continue;
+
+            schema.UseUnityWebRequestForLocalBundles = true;
+            EditorUtility.SetDirty(schema);
+            EditorUtility.SetDirty(group);
+
+            updatedCount++;
+            Debug.Log($"✅ {group.Name} の UseUnityWebRequestForLocalBundles を ON にしました");
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log(updatedCount > 0
+            ? "完了！ AddressablesをRebuildしてください"
+            : "対象のLocalグループが見つかりませんでした。");
     }
 }
 

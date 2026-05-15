@@ -1,0 +1,17 @@
+{
+    "name": "Alice.Server",
+    "rootNamespace": "Alice",
+    "references": [
+        "GUID:a7c4e8f21d9b4e5a8c3f1e6d2b9a0c7e",
+        "GUID:1baf1ffff1031e948b3b228ab3453251"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

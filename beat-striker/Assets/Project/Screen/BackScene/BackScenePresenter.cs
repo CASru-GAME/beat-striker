@@ -1,6 +1,7 @@
 using R3;
 using System.Threading.Tasks;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public class BackScenePresenter : System.IDisposable {
@@ -11,6 +12,7 @@ namespace Alice {
         readonly CompositeDisposable subscriptions = new();
         bool initialized;
 
+        [Inject]
         public BackScenePresenter(
             BackSelectSceneTextHover[] views,
             ISceneTransitionService transitionService) {

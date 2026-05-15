@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using R3;
+using VContainer;
 using VContainer.Unity;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -26,6 +27,7 @@ namespace Alice {
 
         bool IsDeploymentEnabled => isCursorEnabled || forceEnabled;
 
+        [Inject]
         public CursorDeployer(
             IGamePadRegistry gamePadRegistry,
             ICursorFactory cursorFactory,

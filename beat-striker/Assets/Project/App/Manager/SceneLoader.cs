@@ -2,16 +2,22 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using VContainer;
 
 namespace Alice {
+    /// <summary>
+    /// 列挙子の整数値はインスペクタ等に保存されるため、Menu 追加以前の値 (0〜6) を変えないこと。
+    /// </summary>
     public enum AppScene {
-        Title,
-        CharacterSelect,
-        StageSelect,
-        Live,
-        Street,
-        ResultMenu,
-        Boot,
+        Title = 0,
+        CharacterSelect = 1,
+        StageSelect = 2,
+        Live = 3,
+        Street = 4,
+        ResultMenu = 5,
+        Boot = 6,
+        Menu = 7,
+        Ranking = 8,
     }
 
     public interface ISceneLoader {
@@ -22,6 +28,7 @@ namespace Alice {
         readonly IScreenRegistry appScreenRegistry;
         readonly ILoadingOverlayService loadingOverlayService;
 
+        [Inject]
         public SceneLoader(IScreenRegistry screenRegistry, ILoadingOverlayService loadingOverlayService) {
             appScreenRegistry = screenRegistry;
             this.loadingOverlayService = loadingOverlayService;

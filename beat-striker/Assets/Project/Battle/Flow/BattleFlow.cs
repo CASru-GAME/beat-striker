@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
+using VContainer;
 using CorePlayerId = App.PlayerId;
 
 namespace Alice {
@@ -20,6 +21,8 @@ namespace Alice {
         readonly IMusicRegistry musicRegistry;
         readonly IAISetting aiSetting;
         readonly IAppNetworkSetting appNetworkSetting;
+        readonly IGamePadRegistry gamePadRegistry;
+        readonly IOnlineSessionBootstrap onlineSessionBootstrap;
         readonly IBattleSelectSetting battleSelectSetting;
         readonly ITutorialSetting tutorialSetting;
         readonly ISceneTransitionService sceneTransitionService;
@@ -27,6 +30,8 @@ namespace Alice {
         readonly IBattlePresenter battlePresenter;
         readonly IBattleTutorialSignalEmitter tutorialSignalEmitter;
         readonly IBattleOnlineSync battleOnlineSync;
+        readonly BattleReplayRecorder battleReplayRecorder;
+        readonly BattleReplayDriver battleReplayDriver;
         readonly ResultScene resultScene;
         readonly IBattlePlayerPresenter[] battlePlayerPresenters;
         readonly BattleFlowStateMachine stateMachine = new();
@@ -47,7 +52,8 @@ namespace Alice {
         readonly Subject<CorePlayerId> outroStartedSubject = new();
         public Observable<Unit> OnRoundPlayableStarted => roundPlayableStartedSubject;
 
-        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IAppStrikerRegistry appStrikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IMusicRegistry musicRegistry, IAISetting aiSetting, IAppNetworkSetting appNetworkSetting, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, ILoadingOverlayService loadingOverlayService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, IBattleOnlineSync battleOnlineSync, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters) {
+        [Inject]
+        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IAppStrikerRegistry appStrikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IMusicRegistry musicRegistry, IAISetting aiSetting, IAppNetworkSetting appNetworkSetting, IGamePadRegistry gamePadRegistry, IOnlineSessionBootstrap onlineSessionBootstrap, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, ILoadingOverlayService loadingOverlayService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, IBattleOnlineSync battleOnlineSync, BattleReplayRecorder battleReplayRecorder, BattleReplayDriver battleReplayDriver, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters) {
             this.battleSetting = battleSetting;
             this.battleDeployer = battleDeployer;
             this.strikerRegistry = strikerRegistry;
@@ -58,6 +64,8 @@ namespace Alice {
             this.musicRegistry = musicRegistry;
             this.aiSetting = aiSetting;
             this.appNetworkSetting = appNetworkSetting;
+            this.gamePadRegistry = gamePadRegistry;
+            this.onlineSessionBootstrap = onlineSessionBootstrap;
             this.battleSelectSetting = battleSelectSetting;
             this.tutorialSetting = tutorialSetting;
             this.sceneTransitionService = sceneTransitionService;
@@ -65,6 +73,8 @@ namespace Alice {
             this.battlePresenter = battlePresenter;
             this.tutorialSignalEmitter = tutorialSignalEmitter;
             this.battleOnlineSync = battleOnlineSync;
+            this.battleReplayRecorder = battleReplayRecorder;
+            this.battleReplayDriver = battleReplayDriver;
             this.resultScene = resultScene;
             this.battlePlayerPresenters = battlePlayerPresenters;
             battlePrepared = false;
@@ -72,10 +82,23 @@ namespace Alice {
             battleMusicStarted = false;
             stateMachine.OnStateChanged.Subscribe(OnBattleFlowStateChanged);
             pauseHandler = new BattleFlowPauseHandler(stateMachine, beatJudge, musicPlayer, battleDeployer, battlePresenter, battlePlayerPresenters, CompleteBattleByPendingMusicEndIfNeeded);
-            musicEndHandler = new BattleFlowMusicEndHandler(stateMachine, aiSetting, battleJudge, beatJudge, battleOnlineSync, pauseHandler, BeginRoundResolution, () => roundHandler.CurrentRound, CompleteBattleWithWinnerAsync, () => roundHandler.ResolveTopHitPointPlayerId(), PublishRoundOutcome, () => onlineHandler.IsOnlineClient);
-            onlineHandler = new BattleFlowOnlineHandler(stateMachine, appNetworkSetting, battleOnlineSync, battleJudge, beatJudge, pauseHandler, BeginRoundResolution, CompleteBattleWithWinnerAsync, () => roundHandler.CurrentRound, ApplySuspendMenuPause, ApplySuspendMenuResume, EndBattleToTitleAsync, deadPlayerId => roundHandler.ResolveRoundAsync(deadPlayerId), deadPlayerId => roundHandler.OnStrikerDead(deadPlayerId));
+            musicEndHandler = new BattleFlowMusicEndHandler(stateMachine, aiSetting, battleJudge, beatJudge, battleOnlineSync, pauseHandler, BeginRoundResolution, () => roundHandler.CurrentRound, CompleteBattleWithWinnerAsync, () => roundHandler.ResolveTopHitPointPlayerId(), PublishRoundOutcome);
+            onlineHandler = new BattleFlowOnlineHandler(stateMachine, appNetworkSetting, battleOnlineSync, battleJudge, beatJudge, pauseHandler, BeginRoundResolution, CompleteBattleWithWinnerAsync, () => roundHandler.CurrentRound, ApplySuspendMenuPause, ApplySuspendMenuResume, EndBattleToTitleAsync, deadPlayerId => roundHandler.ResolveRoundAsync(deadPlayerId), deadPlayerId => roundHandler.OnStrikerDead(deadPlayerId), loadingOverlayService, musicPlayer);
             var roundSceneSpawnTracker = new RoundSceneSpawnTracker();
-            roundHandler = new BattleFlowRoundHandler(stateMachine, strikerRegistry, battleJudge, beatJudge, battleDeployer, battlePresenter, battlePlayerPresenters, aiSetting, tutorialSetting, musicPlayer, pauseHandler, musicEndHandler, onlineHandler, roundSceneSpawnTracker, () => battleAddressablePreload, () => battleMusicStarted, value => battleMusicStarted = value, BeginRoundResolution, EndBattleToTitleAsync, CompleteBattleWithWinnerAsync, roundWins => musicEndHandler.ResolveMusicEndWinner(roundWins), () => musicEndHandler.ShouldCompleteBattleByMusicEnd, roundStartedSubject.OnNext, () => roundPlayableStartedSubject.OnNext(Unit.Default), () => roundFinishedSubject.OnNext(Unit.Default));
+            // roundHandler を onlineHandler より後に生成（online の getCurrentRound は呼び出し時まで遅延評価される）。BeatJudge のコールバックは CurrentRound が必要なのでこの直後に登録する。
+            roundHandler = new BattleFlowRoundHandler(stateMachine, strikerRegistry, battleJudge, beatJudge, battleDeployer, battlePresenter, battlePlayerPresenters, aiSetting, tutorialSetting, musicPlayer, pauseHandler, musicEndHandler, onlineHandler, roundSceneSpawnTracker, () => battleAddressablePreload, () => battleMusicStarted, value => battleMusicStarted = value, BeginRoundResolution, EndBattleToTitleAsync, CompleteBattleWithWinnerAsync, roundWins => musicEndHandler.ResolveMusicEndWinner(roundWins), () => musicEndHandler.ShouldCompleteBattleByMusicEnd, round => {
+                roundStartedSubject.OnNext(round);
+                battleReplayRecorder.BeginRound(round);
+                battleReplayDriver.BeginRound(round);
+            }, () => roundPlayableStartedSubject.OnNext(Unit.Default), () => roundFinishedSubject.OnNext(Unit.Default));
+            // オンライン: サスペンド要求が同一拍に乗った瞬間にポーズし、その直後に SuspendMenuBeatBarrier ゲートでフロー上の相互到達を取る。
+            if (beatJudge is BeatJudge concreteBeatJudge) {
+                concreteBeatJudge.SetOnlineDualSuspendMenuPauseHandler(applyBeatIndex => {
+                    ApplySuspendMenuPause();
+                    _ = onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.SuspendMenuBeatBarrier, roundHandler.CurrentRound, applyBeatIndex);
+                });
+            }
+
             Debug.Log($"{LOG_PREFIX} Constructed. initialRound={roundHandler.CurrentRound}, playerPresenterCount={battlePlayerPresenters.Length}");
         }
 
@@ -131,10 +154,21 @@ namespace Alice {
         async Task StartBattleSequenceAsync() {
             try {
                 var scene = ResolveCurrentBattleScene();
-                Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync begin. targetScene={scene}");
+                Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync begin. targetScene={scene}, isOnlineBattle={onlineHandler.IsOnlineBattle}, isOnlineSetting={appNetworkSetting.IsOnline.CurrentValue}, battleSyncReady={battleOnlineSync.IsReady}, localOnlinePlayerId={appNetworkSetting.LocalOnlinePlayerId}, state={stateMachine.Current}");
+                battleReplayDriver.PrepareReplayInputs();
+                // 新バトル開始時に前セッションのゲート・ラウンド ready・サスペンド状態を残さない。
+                if (onlineHandler.IsOnlineBattle) {
+                    Debug.Log($"{LOG_PREFIX} Resetting online flow sync state before battle start");
+                    battleOnlineSync.ResetOnlineBattleFlowSyncState();
+                }
+
                 await PrepareBattleAsync();
+                if (stateMachine.IsBattleEndingOrFinished) {
+                    return;
+                }
                 Debug.Log($"{LOG_PREFIX} StartBattle reset battle state");
                 beatJudge.ResetBattleState();
+                battleReplayRecorder.BeginBattle();
                 battlePresenter.HandleBattleStarted();
                 battleMusicStarted = false;
                 musicEndHandler.Reset();
@@ -142,12 +176,28 @@ namespace Alice {
                 roundHandler.SubscribeStrikerDeadEvents();
                 Debug.Log($"{LOG_PREFIX} StartBattle subscribe flow events");
                 SubscribeFlowEvents();
+                // オンライン: 双方がアセット読み込み・初期化を終え遷移開始できる状態になるまで待ち、同時に暗転明けを開始する。
+                if (onlineHandler.IsOnlineBattle) {
+                    Debug.Log($"{LOG_PREFIX} Waiting SceneTransitionEnd flow gate before opening scene. round={roundHandler.CurrentRound}");
+                    await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.SceneTransitionEnd, 0);
+                }
+
                 var endResult = await sceneTransitionService.RequestEndTransitionAsync(ResolveCurrentBattleScene());
+                if (stateMachine.IsBattleEndingOrFinished) {
+                    return;
+                }
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync transition end completed. isSuccess={endResult.IsSuccess}");
                 await battlePresenter.PlayBattleOpeningAsync();
+                if (stateMachine.IsBattleEndingOrFinished) {
+                    return;
+                }
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync battle opening completed");
                 await System.Threading.Tasks.Task.WhenAll(battlePlayerPresenters.Select(battlePlayerPresenter => battlePlayerPresenter.PlayOpeningHpFillAsync()));
+                if (stateMachine.IsBattleEndingOrFinished) {
+                    return;
+                }
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync battle player HP opening animation completed");
+
 
                 await roundHandler.StartRoundPlayableAsync();
                 Debug.Log($"{LOG_PREFIX} StartBattleSequenceAsync completed first round playable start");
@@ -166,6 +216,7 @@ namespace Alice {
         }
 
         void OnBattleFlowStateChanged(BattleFlowState state) {
+            Debug.Log($"{LOG_PREFIX} State changed. state={state}, isOnlineBattle={onlineHandler.IsOnlineBattle}, round={roundHandler.CurrentRound}");
             onlineHandler.PublishPhase(state);
         }
 
@@ -186,6 +237,18 @@ namespace Alice {
             DisposeFlowEventSubscriptions();
             battleDeployer.Undeploy();
             DisposeBattleAddressablePreload();
+            battleReplayDriver.FinishReplay();
+        }
+
+        async Task LeaveOnlineBattleAppStateIfNeededAsync() {
+            if (!onlineHandler.IsOnlineBattle) {
+                return;
+            }
+
+            var localOnlinePlayerId = appNetworkSetting.LocalOnlinePlayerId;
+            gamePadRegistry.RestoreOfflinePrimaryLayout(localOnlinePlayerId);
+            appNetworkSetting.SetLocalOnlinePlayerId(0);
+            await onlineSessionBootstrap.TeardownOnlineRunnerAsync();
         }
 
         void DisposeBattleAddressablePreload() {
@@ -213,17 +276,26 @@ namespace Alice {
             flowEventDisposables.Add(tutorialSignalEmitter.OnTutorialEndBattleToTitleRequested.Subscribe(_event => {
                 _ = EndBattleToTitleAsync();
             }));
+            SubscribeReplayViewerInterruptInput();
 
             if (onlineHandler.IsOnlineBattle) {
+                // フェーズは補助（例: 相手が先に Resolving に入ったときの追従）。メインの足並みは FlowGate と対称アウトカム側。
+                Debug.Log($"{LOG_PREFIX} Subscribing online flow events. battleSyncReady={battleOnlineSync.IsReady}, localOnlinePlayerId={appNetworkSetting.LocalOnlinePlayerId}");
                 flowEventDisposables.Add(battleOnlineSync.OnPhaseReceived.Subscribe(snapshot => onlineHandler.ApplyOnlinePhaseSnapshot(snapshot)));
                 flowEventDisposables.Add(battleOnlineSync.OnOutcomeReceived.Subscribe(outcome => onlineHandler.ApplyOnlineOutcomeSnapshot(outcome)));
-                flowEventDisposables.Add(battleOnlineSync.OnPauseRequested.Subscribe(_ => onlineHandler.ApplyOnlinePauseRequest()));
-                flowEventDisposables.Add(battleOnlineSync.OnResumeRequested.Subscribe(_ => onlineHandler.ApplyOnlineResumeRequest()));
-                flowEventDisposables.Add(battleOnlineSync.OnSuspendFinishRequested.Subscribe(_ => onlineHandler.ApplyOnlineSuspendFinishRequest(musicEndHandler.CompleteBattleBySuspendMenuAsync)));
+                flowEventDisposables.Add(battleOnlineSync.OnResumeRequested.Subscribe(_ => OnResumeRequested()));
+                // パラメータ名を _unit にしているのは、ラムダ内で _ = Task... と書くと「捨て変数」と Unit 引数が衝突するため。
+                flowEventDisposables.Add(battleOnlineSync.OnSuspendFinishRequested.Subscribe(_unit => {
+                    _ = musicEndHandler.CompleteBattleBySuspendMenuAsync();
+                }));
                 flowEventDisposables.Add(battleOnlineSync.OnRoundResolutionRequested.Subscribe(deadPlayerId => onlineHandler.ApplyOnlineRoundResolutionRequest(deadPlayerId)));
                 flowEventDisposables.Add(battleOnlineSync.OnDisconnected.Subscribe(unit => {
+                    Debug.LogWarning($"{LOG_PREFIX} Online sync disconnected while in battle. state={stateMachine.Current}, round={roundHandler.CurrentRound}");
                     _ = EndBattleToTitleAsync();
                 }));
+            }
+            else {
+                Debug.Log($"{LOG_PREFIX} Skipping online flow subscriptions because battle is not online. battleSyncReady={battleOnlineSync.IsReady}, isOnlineSetting={appNetworkSetting.IsOnline.CurrentValue}");
             }
         }
 
@@ -234,14 +306,27 @@ namespace Alice {
             flowEventDisposables.Clear();
         }
 
-        void OnPauseMenuRequested() {
-            if (onlineHandler.IsOnlineClient) {
-                onlineHandler.RequestPause();
+        void SubscribeReplayViewerInterruptInput() {
+            if (!battleReplayDriver.IsReplay) {
                 return;
             }
 
-            if (onlineHandler.IsOnlineHost) {
-                ApplySuspendMenuPause();
+            const int maxReplayViewerPlayerSlots = 8;
+            for (var playerId = 2; playerId < maxReplayViewerPlayerSlots; playerId++) {
+                var playerGamePad = gamePadRegistry.Get(playerId);
+                flowEventDisposables.Add(playerGamePad.OnButtonDown
+                    .Where(button => button == GamePadButton.Select)
+                    .Subscribe(_button => {
+                        _ = EndReplayToRankingAsync();
+                    }));
+            }
+        }
+
+        void OnPauseMenuRequested() {
+            Debug.Log($"{LOG_PREFIX} OnPauseMenuRequested. isOnlineBattle={onlineHandler.IsOnlineBattle}, state={stateMachine.Current}, round={roundHandler.CurrentRound}");
+            // オンラインでは即ポーズせず、次の合意拍にサスペンド要求を載せる（オフラインは従来どおり即時）。
+            if (onlineHandler.IsOnlineBattle) {
+                onlineHandler.PublishSuspendMenuBeatForCurrentTiming();
                 return;
             }
 
@@ -249,13 +334,11 @@ namespace Alice {
         }
 
         void OnSuspendRequested() {
-            if (onlineHandler.IsOnlineClient) {
+            Debug.Log($"{LOG_PREFIX} OnSuspendRequested. isOnlineBattle={onlineHandler.IsOnlineBattle}, state={stateMachine.Current}, round={roundHandler.CurrentRound}");
+            if (onlineHandler.IsOnlineBattle) {
+                // サスペンド終了（バトル終了扱い）もネット経路で相手に伝えつつ、先着アウトカムで結果を揃える。
                 onlineHandler.RequestSuspendFinish();
-                return;
-            }
-
-            if (onlineHandler.IsOnlineHost) {
-                onlineHandler.ApplyOnlineSuspendFinishRequest(musicEndHandler.CompleteBattleBySuspendMenuAsync);
+                _ = musicEndHandler.CompleteBattleBySuspendMenuAsync();
                 return;
             }
 
@@ -296,12 +379,20 @@ namespace Alice {
 
             battleFinishedSubject.OnNext(Unit.Default);
             outroStartedSubject.OnNext(winner);
+            battleReplayRecorder.FinishBattle(winner.Value, roundWins);
+            // 結果画面へ進む前に双方で「終了情報の取り込み完了」を揃える（タイトル戻り EndBattleToTitleAsync も同一ゲート ID）。
+            if (onlineHandler.IsOnlineBattle) {
+                await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.BattleEndOutcomeSynced, 0);
+            }
+
             await battlePresenter.PlayBattleEndingAsync(winner);
             var battleResults = beatJudge.GetBattleResults();
             resultScene.ShowResult(battleResults, roundWins);
+            battleReplayDriver.FinishReplay();
             await resultScene.WaitForBattleEndInputAsync();
             await battlePresenter.PlayBattleFinishFadeInAsync();
             CompleteBattle();
+            await LeaveOnlineBattleAppStateIfNeededAsync();
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync completed. requesting start transition to ResultMenu");
             var startResult = sceneTransitionService.RequestStartTransition(AppScene.ResultMenu);
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync start transition result. nextScene={AppScene.ResultMenu}, isSuccess={startResult.IsSuccess}");
@@ -328,13 +419,11 @@ namespace Alice {
         }
 
         void OnResumeRequested() {
-            if (onlineHandler.IsOnlineClient) {
-                onlineHandler.RequestResume();
-                return;
-            }
-
-            if (onlineHandler.IsOnlineHost) {
-                ApplySuspendMenuResume();
+            Debug.Log($"{LOG_PREFIX} OnResumeRequested. isOnlineBattle={onlineHandler.IsOnlineBattle}, state={stateMachine.Current}, round={roundHandler.CurrentRound}");
+            // オンライン: 双方 ACK ＋ resumeNetworkTime 合意まで待ってから Playing 相当へ戻す（ホスト専用即時再開は廃止）。
+            if (onlineHandler.IsOnlineBattle) {
+                battleOnlineSync.RequestResume();
+                _ = onlineHandler.CompleteOnlineResumeFromSuspendMenuAsync();
                 return;
             }
 
@@ -342,6 +431,9 @@ namespace Alice {
         }
 
         void ApplySuspendMenuPause() {
+            if (onlineHandler.IsOnlineBattle) {
+                battleOnlineSync.ClearResumeAckState();
+            }
             pauseHandler.ApplySuspendMenuPause();
         }
 
@@ -370,6 +462,38 @@ namespace Alice {
                 return;
             }
 
+            // CompleteBattleWithWinnerAsync と同じ BattleEndOutcomeSynced で、結果画面を経ない終了でもセッション終了の足並みを揃える。
+            if (onlineHandler.IsOnlineBattle) {
+                await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.BattleEndOutcomeSynced, 0);
+            }
+
+            roundHandler.IncrementActiveRoundToken();
+            pauseHandler.PauseRoundRuntimeSystems(controlsMusic: false);
+            battlePresenter.CloseSuspendMenu();
+            musicPlayer.Stop();
+            battleMusicStarted = false;
+            battleDeployer.DisconnectRoundInputs();
+            beatJudge.ResetRoundState();
+            pauseHandler.PresentRoundPlayableFinishToPlayers();
+            battleFinishedSubject.OnNext(Unit.Default);
+
+            await battlePresenter.PlayBattleFinishFadeInAsync();
+            CompleteBattle();
+            await LeaveOnlineBattleAppStateIfNeededAsync();
+
+            var startResult = sceneTransitionService.RequestStartTransition(AppScene.Title);
+            Debug.Log($"{LOG_PREFIX} EndBattleToTitleAsync start transition result. nextScene={AppScene.Title}, isSuccess={startResult.IsSuccess}");
+        }
+
+        async Task EndReplayToRankingAsync() {
+            if (!battleReplayDriver.IsReplay || !stateMachine.CanBeginEndingToTitle) {
+                return;
+            }
+
+            if (!stateMachine.TryBeginEndingToTitle(nameof(EndReplayToRankingAsync))) {
+                return;
+            }
+
             roundHandler.IncrementActiveRoundToken();
             pauseHandler.PauseRoundRuntimeSystems(controlsMusic: false);
             battlePresenter.CloseSuspendMenu();
@@ -383,8 +507,8 @@ namespace Alice {
             await battlePresenter.PlayBattleFinishFadeInAsync();
             CompleteBattle();
 
-            var startResult = sceneTransitionService.RequestStartTransition(AppScene.Title);
-            Debug.Log($"{LOG_PREFIX} EndBattleToTitleAsync start transition result. nextScene={AppScene.Title}, isSuccess={startResult.IsSuccess}");
+            var startResult = sceneTransitionService.RequestStartTransition(AppScene.Ranking);
+            Debug.Log($"{LOG_PREFIX} EndReplayToRankingAsync start transition result. nextScene={AppScene.Ranking}, isSuccess={startResult.IsSuccess}");
         }
 
     }

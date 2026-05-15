@@ -21,6 +21,7 @@ namespace Alice {
         [SerializeField] private float outroWaitDuration = 3f;
         [SerializeField] private float outroPostWaitDuration = 0f;
         [SerializeField] private float maxPlayersDistanceToFitOnScreen = 12f;
+        [SerializeField] private float minCameraDepthForFitPlayers = 0f;
         [SerializeField] private AnimationCurve normalizedDistanceToDiagonalRatio = new AnimationCurve(
             new Keyframe(0f, 0.28f),
             new Keyframe(1f, 0.4f));
@@ -718,7 +719,7 @@ namespace Alice {
             float halfVerticalSpan = Mathf.Abs(playersDeltaInCameraPlane.y) * 0.5f;
             float horizontalDepth = halfHorizontalSpan / (tanHalfVertical * stageCamera.aspect * diagonalDistanceRatio);
             float verticalDepth = halfVerticalSpan / (tanHalfVertical * diagonalDistanceRatio);
-            return Mathf.Max(horizontalDepth, verticalDepth);
+            return Mathf.Max(horizontalDepth, verticalDepth, minCameraDepthForFitPlayers);
         }
 
         private Vector3 GetPlayersLineOnPlane() {

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using R3;
 using UnityEngine;
+using VContainer;
 using CorePlayerId = App.PlayerId;
 
 namespace Alice {
@@ -34,6 +35,7 @@ namespace Alice {
 
         readonly IStrikerRegistry strikerRegistry;
         readonly IGamePadRegistry gamePadRegistry;
+        readonly IReplaySetting replaySetting;
         readonly IMusicPlayer musicPlayer;
         readonly IBeatjudge beatJudge;
         readonly IAISetting aiSetting;
@@ -64,9 +66,11 @@ namespace Alice {
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<bool> OnAttentionActiveStateChanged => battlePresenterView.StageCamera.OnAttentionActiveStateChanged;
 
-        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IAISetting aiSetting, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
+        [Inject]
+        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IReplaySetting replaySetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IAISetting aiSetting, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
             this.strikerRegistry = strikerRegistry;
             this.gamePadRegistry = gamePadRegistry;
+            this.replaySetting = replaySetting;
             this.musicPlayer = musicPlayer;
             this.beatJudge = beatJudge;
             this.aiSetting = aiSetting;
@@ -273,13 +277,21 @@ namespace Alice {
             playerGamePad.OnButtonDown
                 .Where(button => button == GamePadButton.East)
                 .Subscribe(_ => {
-                    if (!isCinematicSkipEnabled) {
+                    if (!isCinematicSkipEnabled || !CanSkipCinematicFromPlayer(playerId)) {
                         return;
                     }
 
                     battlePresenterView.StageCamera.RequestSequenceSkip();
                 })
                 .AddTo(subscriptions);
+        }
+
+        bool CanSkipCinematicFromPlayer(int playerId) {
+            if (!replaySetting.HasReplay) {
+                return true;
+            }
+
+            return playerId >= BATTLE_PLAYER_COUNT;
         }
 
         void SubscribePauseMenuInput() {

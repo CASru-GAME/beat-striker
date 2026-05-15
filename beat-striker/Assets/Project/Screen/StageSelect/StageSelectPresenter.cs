@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public class StageselectPresenter : IDisposable {
@@ -20,6 +21,7 @@ namespace Alice {
         bool isPopupVisible;
         bool disposed;
 
+        [Inject]
         public StageselectPresenter(
             StageselectScene view,
             ISceneTransitionService transitionService,
@@ -71,9 +73,9 @@ namespace Alice {
             }
 
             view.BackButton.OnBackPressed.Subscribe(_ => {
-                Debug.Log($"{LOG_PREFIX} BackButton pressed. requesting start transition to {AppScene.Title}");
+                Debug.Log($"{LOG_PREFIX} BackButton pressed. requesting start transition to {AppScene.Menu}");
                 appBgmPlayer.Resume();
-                var result = transitionService.RequestStartTransition(AppScene.Title);
+                var result = transitionService.RequestStartTransition(AppScene.Menu);
                 Debug.Log($"{LOG_PREFIX} BackButton transition request result. isSuccess={result.IsSuccess}");
             }).AddTo(subscriptions);
 

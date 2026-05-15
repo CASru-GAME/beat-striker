@@ -15,18 +15,18 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
   m_Fog: 1
-  m_FogColor: {r: 0.047169805, g: 0.10377359, b: 0.18867922, a: 0.21960784}
-  m_FogMode: 3
-  m_FogDensity: 0.047
+  m_FogColor: {r: 0.06430225, g: 0.10220346, b: 0.16037738, a: 0.21960784}
+  m_FogMode: 2
+  m_FogDensity: 0.03
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
-  m_AmbientIntensity: 1.22
+  m_AmbientIntensity: 1.03
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0, g: 0, b: 0, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: d6b534e4a88689d499df389f744ce346, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: d11c7863bc126407dabf3c8d83dd3489, type: 2}
   m_HaloStrength: 0.385
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -176,8 +176,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 0.8862745, g: 0.661923, b: 0.3960784, a: 1}
-  m_Intensity: 0.5
+  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Intensity: 1.5
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 1
@@ -381,8 +381,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 9.325905, y: 4.2610903, z: 1}
-  m_Center: {x: 3.2453952, y: -1.6306177, z: 0}
+  m_Size: {x: 22.503248, y: 4.2610903, z: 1}
+  m_Center: {x: 9.834089, y: -1.6307616, z: 0}
 --- !u!1 &1743992247
 GameObject:
   m_ObjectHideFlags: 0
@@ -449,8 +449,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 9.000677, y: 4.1931515, z: 1}
-  m_Center: {x: 3.3760378, y: 1.5965041, z: 0}
+  m_Size: {x: 21.646162, y: 4.1931515, z: 1}
+  m_Center: {x: 9.6987915, y: 1.596366, z: 0}
 --- !u!1 &96793034939118959
 GameObject:
   m_ObjectHideFlags: 0
@@ -610,8 +610,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.9376986, y: 4.1931515, z: 1}
-  m_Center: {x: 0.84454376, y: 1.5965594, z: 0}
+  m_Size: {x: 3.8502963, y: 7.5958657, z: 0.95347613}
+  m_Center: {x: 0.8008429, y: 3.2979207, z: 0.023262063}
 --- !u!1 &2155677181382650660
 GameObject:
   m_ObjectHideFlags: 0
@@ -736,11 +736,11 @@ MonoBehaviour:
     reflectionIntensity: 1
     reflectionBounces: 1
     fog: 1
-    fogColor: {r: 0.043120332, g: 0.09002316, b: 0.16037738, a: 0.21960784}
-    fogMode: 3
-    fogDensity: 0.047
-    fogStartDistance: 0
-    fogEndDistance: 300
+    fogColor: {r: 0.043120332, g: 0.09002316, b: 0.16037738, a: 0.043137256}
+    fogMode: 1
+    fogDensity: 0.1
+    fogStartDistance: -100
+    fogEndDistance: 130
   - name: Captured Lighting 2026-04-25 19:22:22
     skyboxMaterial: {fileID: 2100000, guid: 0f3ba9a6813349ad806fa2aaaa9eb8a1, type: 2}
     sunSource: {fileID: 82797464}
@@ -774,11 +774,11 @@ MonoBehaviour:
     reflectionIntensity: 1
     reflectionBounces: 1
     fog: 1
-    fogColor: {r: 0.047169805, g: 0.10377359, b: 0.18867922, a: 0.21960784}
-    fogMode: 3
-    fogDensity: 0.047
-    fogStartDistance: 0
-    fogEndDistance: 300
+    fogColor: {r: 0.21026166, g: 0.3695135, b: 0.5943396, a: 0.21960784}
+    fogMode: 1
+    fogDensity: 0.03
+    fogStartDistance: 10
+    fogEndDistance: 200
   - name: Captured Lighting 2026-04-25 19:28:04
     skyboxMaterial: {fileID: 2100000, guid: d6b534e4a88689d499df389f744ce346, type: 2}
     sunSource: {fileID: 82797464}
@@ -786,7 +786,7 @@ MonoBehaviour:
     sunLightEnabled: 1
     sunLightType: 1
     sunLightColor: {r: 0.8862745, g: 0.661923, b: 0.3960784, a: 1}
-    sunLightIntensity: 0.5
+    sunLightIntensity: 1.2
     sunLightBounceIntensity: 1
     sunLightRange: 10
     sunLightSpotAngle: 30
@@ -812,19 +812,19 @@ MonoBehaviour:
     reflectionIntensity: 1
     reflectionBounces: 1
     fog: 1
-    fogColor: {r: 0.047169805, g: 0.10377359, b: 0.18867922, a: 0.21960784}
-    fogMode: 3
-    fogDensity: 0.047
-    fogStartDistance: 0
-    fogEndDistance: 300
-  - name: Captured Lighting 2026-04-25 19:37:07
-    skyboxMaterial: {fileID: 2100000, guid: 0f3ba9a6813349ad806fa2aaaa9eb8a1, type: 2}
+    fogColor: {r: 0.16767533, g: 0.17835529, b: 0.2264151, a: 0.02745098}
+    fogMode: 2
+    fogDensity: 0.027
+    fogStartDistance: -10
+    fogEndDistance: 200
+  - name: Captured Lighting 2026-05-03 08:53:59
+    skyboxMaterial: {fileID: 2100000, guid: d11c7863bc126407dabf3c8d83dd3489, type: 2}
     sunSource: {fileID: 82797464}
     shadowColor: {r: 0, g: 0, b: 0, a: 1}
     sunLightEnabled: 1
     sunLightType: 1
-    sunLightColor: {r: 0.5330188, g: 0.7877358, b: 1, a: 1}
-    sunLightIntensity: 0.2
+    sunLightColor: {r: 1, g: 0, b: 0, a: 1}
+    sunLightIntensity: 1.5
     sunLightBounceIntensity: 1
     sunLightRange: 10
     sunLightSpotAngle: 30
@@ -843,16 +843,16 @@ MonoBehaviour:
     ambientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
     ambientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
     ambientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
-    ambientIntensity: 1.22
+    ambientIntensity: 1.03
     reflectionMode: 0
     reflectionResolution: 128
     customReflection: {fileID: 0}
     reflectionIntensity: 1
     reflectionBounces: 1
     fog: 1
-    fogColor: {r: 0.047169805, g: 0.10377359, b: 0.18867922, a: 0.21960784}
-    fogMode: 3
-    fogDensity: 0.047
+    fogColor: {r: 0.06430225, g: 0.10220346, b: 0.16037738, a: 0.21960784}
+    fogMode: 2
+    fogDensity: 0.03
     fogStartDistance: 0
     fogEndDistance: 300
 --- !u!4 &2978891558492419286
@@ -889,8 +889,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.2717857, y: 4.2610903, z: 1}
-  m_Center: {x: 0.71833515, y: -1.6305625, z: 0}
+  m_Size: {x: 4.136378, y: 7.3900585, z: 1}
+  m_Center: {x: 0.6506327, y: -3.1950457, z: 0}
 --- !u!114 &4240547525843058191
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -964,6 +964,10 @@ PrefabInstance:
       propertyPath: camTransform0
       value: 
       objectReference: {fileID: 2978891558492419286}
+    - target: {fileID: 201953975555647493, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: forwardDistance
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 1619890639852673609, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: m_LocalScale.x
       value: 0
@@ -975,6 +979,14 @@ PrefabInstance:
     - target: {fileID: 1619890639852673609, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: m_LocalScale.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4594181507648077384, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4594181507648077384, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -9
       objectReference: {fileID: 0}
     - target: {fileID: 5975064987565033899, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: m_LocalScale.x
@@ -1085,7 +1097,7 @@ Transform:
   m_GameObject: {fileID: 1782182018831772526}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0.796, y: 47.7, z: 0}
+  m_LocalPosition: {x: 0.796, y: 121.2, z: 0}
   m_LocalScale: {x: 9.25, y: 0.05, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

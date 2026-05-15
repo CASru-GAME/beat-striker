@@ -18,13 +18,12 @@ namespace Alice {
         readonly Func<CorePlayerId, IReadOnlyDictionary<CorePlayerId, int>, bool, Task> completeBattleWithWinnerAsync;
         readonly Func<int> resolveTopHitPointPlayerId;
         readonly Action<int, int, int, bool, int, bool, IReadOnlyDictionary<CorePlayerId, int>> publishRoundOutcome;
-        readonly Func<bool> isOnlineClient;
         bool musicEndBattleRequested;
 
         public bool IsMusicEndBattleRequested => musicEndBattleRequested;
         public bool ShouldCompleteBattleByMusicEnd => musicEndBattleRequested && !WantsInfiniteRounds() && !stateMachine.IsBattleEndingOrFinished;
 
-        public BattleFlowMusicEndHandler(BattleFlowStateMachine stateMachine, IAISetting aiSetting, IBattleJudge battleJudge, IBeatjudge beatJudge, IBattleOnlineSync battleOnlineSync, BattleFlowPauseHandler pauseHandler, Func<bool, bool> beginRoundResolution, Func<int> getCurrentRound, Func<CorePlayerId, IReadOnlyDictionary<CorePlayerId, int>, bool, Task> completeBattleWithWinnerAsync, Func<int> resolveTopHitPointPlayerId, Action<int, int, int, bool, int, bool, IReadOnlyDictionary<CorePlayerId, int>> publishRoundOutcome, Func<bool> isOnlineClient) {
+        public BattleFlowMusicEndHandler(BattleFlowStateMachine stateMachine, IAISetting aiSetting, IBattleJudge battleJudge, IBeatjudge beatJudge, IBattleOnlineSync battleOnlineSync, BattleFlowPauseHandler pauseHandler, Func<bool, bool> beginRoundResolution, Func<int> getCurrentRound, Func<CorePlayerId, IReadOnlyDictionary<CorePlayerId, int>, bool, Task> completeBattleWithWinnerAsync, Func<int> resolveTopHitPointPlayerId, Action<int, int, int, bool, int, bool, IReadOnlyDictionary<CorePlayerId, int>> publishRoundOutcome) {
             this.stateMachine = stateMachine;
             this.aiSetting = aiSetting;
             this.battleJudge = battleJudge;
@@ -36,7 +35,6 @@ namespace Alice {
             this.completeBattleWithWinnerAsync = completeBattleWithWinnerAsync;
             this.resolveTopHitPointPlayerId = resolveTopHitPointPlayerId;
             this.publishRoundOutcome = publishRoundOutcome;
-            this.isOnlineClient = isOnlineClient;
         }
 
         public void Reset() {
@@ -68,10 +66,6 @@ namespace Alice {
 
         public async Task CompleteBattleByMusicEndAsync() {
             try {
-                if (isOnlineClient()) {
-                    return;
-                }
-
                 if (!beginRoundResolution(false)) {
                     return;
                 }
@@ -81,6 +75,7 @@ namespace Alice {
 
                 var roundWins = battleJudge.GetRoundWins();
                 var winner = ResolveMusicEndWinner(roundWins);
+                // オンラインでも両ピアが publish を試み、BattleOnlineSync 側のマージで先着アウトカムに収束する。
                 publishRoundOutcome(Math.Max(1, getCurrentRound()), -1, winner.Value, false, winner.Value, false, roundWins);
                 await completeBattleWithWinnerAsync(winner, roundWins, false);
             }
@@ -91,11 +86,6 @@ namespace Alice {
 
         public async Task CompleteBattleBySuspendMenuAsync() {
             try {
-                if (isOnlineClient()) {
-                    battleOnlineSync.RequestSuspendFinish();
-                    return;
-                }
-
                 if (!beginRoundResolution(true)) {
                     return;
                 }
@@ -105,6 +95,7 @@ namespace Alice {
 
                 var winnerPlayerId = resolveTopHitPointPlayerId();
                 var roundWins = battleJudge.GetRoundWins();
+                // サスペンド終了によるバトル終了も同様に対称送信（重複はマージで吸収）。
                 publishRoundOutcome(Math.Max(1, getCurrentRound()), -1, winnerPlayerId, false, winnerPlayerId, true, roundWins);
                 await completeBattleWithWinnerAsync(new CorePlayerId(winnerPlayerId), roundWins, true);
             }

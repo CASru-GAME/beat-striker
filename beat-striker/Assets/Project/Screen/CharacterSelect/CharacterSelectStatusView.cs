@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public record CharacterSelectSlotState(int SlotIndex, bool HasGamePad, bool IsSelected, GameObject SelectedModelPrefab);
+public record CharacterSelectSlotState(int SlotIndex, bool HasGamePad, bool IsSelected, bool IsWaiting, Sprite SelectedPortrait);
 
 public class CharacterSelectStatusView : MonoBehaviour
 {

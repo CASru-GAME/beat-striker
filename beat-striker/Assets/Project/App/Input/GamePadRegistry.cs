@@ -6,6 +6,7 @@ using App;
 using R3;
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public record PlayerGamePadButtonEvent(int PlayerId, GamePadButton Button);
@@ -22,7 +23,9 @@ namespace Alice {
     public interface IGamePadRegistry {
         IPlayerGamePad RequestRegister(IGamePad gamePad);
         IPlayerGamePad RequestRegister(int playerId, IGamePad gamePad);
+        IPlayerGamePad RequestRegisterReplay(int playerId, IGamePad gamePad);
         IPlayerGamePad RequestRegisterLowPriority(int playerId, IGamePad gamePad);
+        void RestoreReplayOverrides();
         void RequestUnregister(int playerId);
         void RequestUnregister(IGamePad gamePad);
         void RestoreOfflinePrimaryLayout(int localOnlinePlayerId);
@@ -44,9 +47,15 @@ namespace Alice {
     public class GamePadRegistry : IGamePadRegistry {
         readonly List<PlayerGamePad> registry = new();
         readonly Subject<PlayerGamePadButtonEvent> onAnyButtonDown = new();
+        readonly Dictionary<int, Option<IGamePad>> replayOverridePreviousPrimaryByPlayerId = new();
+        readonly Dictionary<int, IGamePad> replayViewerGamePadsByPlayerId = new();
         int faceButtonRotationOffset;
 
         public Observable<PlayerGamePadButtonEvent> OnAnyButtonDown => onAnyButtonDown;
+
+        [Inject]
+        public GamePadRegistry() {
+        }
 
         public IPlayerGamePad RequestRegister(IGamePad gamePad) {
             for (int i = 0; i < registry.Count; i++) {
@@ -71,6 +80,33 @@ namespace Alice {
             playerGamePad.SetPrimary(gamePad.ToOption());
             Debug.Log($"Registered GamePad {gamePad.DeviceName} to Player {playerId}".ToGreen());
             return playerGamePad;
+        }
+
+        public IPlayerGamePad RequestRegisterReplay(int playerId, IGamePad gamePad) {
+            var playerGamePad = EnsurePlayerSlot(playerId);
+            if (!replayOverridePreviousPrimaryByPlayerId.ContainsKey(playerId)) {
+                replayOverridePreviousPrimaryByPlayerId[playerId] = playerGamePad.Current;
+                RegisterReplayViewerIfNeeded(playerGamePad.Current);
+            }
+            playerGamePad.SetPrimary(gamePad.ToOption());
+            Debug.Log($"Registered Replay GamePad {gamePad.DeviceName} to Player {playerId}".ToGreen());
+            return playerGamePad;
+        }
+
+        public void RestoreReplayOverrides() {
+            foreach (var pair in replayOverridePreviousPrimaryByPlayerId) {
+                var playerGamePad = EnsurePlayerSlot(pair.Key);
+                playerGamePad.SetPrimary(pair.Value);
+            }
+
+            replayOverridePreviousPrimaryByPlayerId.Clear();
+            foreach (var pair in replayViewerGamePadsByPlayerId) {
+                var playerGamePad = EnsurePlayerSlot(pair.Key);
+                if (playerGamePad.Current.GetValue(null) == pair.Value) {
+                    playerGamePad.ClearCurrent();
+                }
+            }
+            replayViewerGamePadsByPlayerId.Clear();
         }
 
         public IPlayerGamePad RequestRegisterLowPriority(int playerId, IGamePad gamePad) {
@@ -154,6 +190,35 @@ namespace Alice {
                 registry.Add(new PlayerGamePad(registry.Count, null, false, HandleButtonDown, HandleButtonUp));
             }
             return registry[playerId];
+        }
+
+        void RegisterReplayViewerIfNeeded(Option<IGamePad> gamePadOption) {
+            if (!gamePadOption.TryGetValue(out var gamePad)) {
+                return;
+            }
+
+            foreach (var pair in replayViewerGamePadsByPlayerId) {
+                if (pair.Value == gamePad) {
+                    return;
+                }
+            }
+
+            var playerGamePad = FindReplayViewerSlot();
+            playerGamePad.SetPrimary(gamePad.ToOption());
+            replayViewerGamePadsByPlayerId[playerGamePad.PlayerId] = gamePad;
+            Debug.Log($"Registered Replay Viewer GamePad {gamePad.DeviceName} to Player {playerGamePad.PlayerId}".ToGreen());
+        }
+
+        PlayerGamePad FindReplayViewerSlot() {
+            const int firstReplayViewerPlayerId = 2;
+            var playerId = firstReplayViewerPlayerId;
+            while (true) {
+                var playerGamePad = EnsurePlayerSlot(playerId);
+                if (!playerGamePad.Current.TryGetValue(out _)) {
+                    return playerGamePad;
+                }
+                playerId += 1;
+            }
         }
 
         void HandleButtonDown(int playerId, GamePadButton button) {

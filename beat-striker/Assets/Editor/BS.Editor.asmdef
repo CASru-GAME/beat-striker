@@ -2,7 +2,8 @@
     "name": "BS.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:148597ecdec2f442b8070cf998358dc0"
+        "GUID:148597ecdec2f442b8070cf998358dc0",
+        "Unity.Addressables.Editor"
     ],
     "includePlatforms": [
         "Editor"

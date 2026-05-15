@@ -2,11 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Alice {
-    public enum Stage {
-        Live,
-        Street,
-    }
-
     [System.Serializable]
     public class AppStageEntry {
         public string DisplayName;

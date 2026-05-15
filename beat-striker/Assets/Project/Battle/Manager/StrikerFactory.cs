@@ -12,6 +12,7 @@ namespace Alice {
         readonly IStrikerRegistry strikerRegistry;
         readonly IBattleOnlineSync battleOnlineSync;
 
+        [Inject]
         public StrikerHubFactory(IStrikerRegistry strikerRegistry, IBattleOnlineSync battleOnlineSync) {
             this.strikerRegistry = strikerRegistry;
             this.battleOnlineSync = battleOnlineSync;

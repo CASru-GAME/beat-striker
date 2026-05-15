@@ -43,8 +43,8 @@ public class CharacterSelectStatusSlotView : MonoBehaviour
 
         playerLabel.text = state.HasGamePad ? $"{state.SlotIndex + 1}P" : "CPU";
         playerLabel.color = state.HasGamePad ? playerLabelColors[state.SlotIndex % playerLabelColors.Length] : cpuLabelColor;
-        modelIcon.SetModel(state.SelectedModelPrefab);
-        unselectedLabel.text = isSelected ? "選択済" : "未選択";
+        modelIcon.SetPortrait(state.SelectedPortrait);
+        unselectedLabel.text = state.IsWaiting ? "待機中" : isSelected ? "選択済" : "未選択";
 
         if (!hasRendered) {
             ApplyBlinkState(isSelected);

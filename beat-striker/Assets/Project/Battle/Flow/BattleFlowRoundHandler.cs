@@ -81,7 +81,18 @@ namespace Alice {
                 return;
             }
 
-            await onlineHandler.WaitForHostPhaseAsync(BattleFlowState.RoundStarting, currentRound);
+            // ラウンド1のみ: 開始合図アニメの手前で双方到達を取る（ゲート2）。
+            if (onlineHandler.IsOnlineBattle && currentRound == 1) {
+                await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.Round1BeforeStartCue, currentRound, 0);
+            }
+
+            // オンライン: RoundStart の前半（アニメ前）。オフラインは従来のフェーズ待ち相当（実質即時）。
+            if (onlineHandler.IsOnlineBattle) {
+                await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.RoundStart, currentRound, 0);
+            }
+            else {
+                await onlineHandler.WaitForHostPhaseAsync(BattleFlowState.RoundStarting, currentRound);
+            }
 
             battlePresenter.CloseSuspendMenu();
             Debug.Log($"{LOG_PREFIX} StartRoundPlayableAsync closed suspend menu");
@@ -99,7 +110,14 @@ namespace Alice {
                 return;
             }
 
-            await onlineHandler.WaitForHostPhaseAsync(BattleFlowState.Playing, currentRound);
+            // オンライン: RoundStart の後半（再生直前）。その後に対称な startNetworkTime まで待つ。
+            if (onlineHandler.IsOnlineBattle) {
+                await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.RoundStart, currentRound, 1);
+            }
+            else {
+                await onlineHandler.WaitForHostPhaseAsync(BattleFlowState.Playing, currentRound);
+            }
+
             await onlineHandler.WaitForRoundPlaybackStartAsync(playbackStartNetworkTime);
 
             beatJudge.ResetRoundState();
@@ -184,7 +202,8 @@ namespace Alice {
                 var winnerRoundWinCount = judgeResult.RoundWins.TryGetValue(new CorePlayerId(winnerPlayerId), out var roundWinCount)
                     ? roundWinCount
                     : 0;
-                if (onlineHandler.IsOnlineHost) {
+                // オンラインではホスト限定にせず送信。先にマージされた内容が権威（遅延側の二重送信は BattleOnlineSync で弾かれる）。
+                if (onlineHandler.IsOnlineBattle) {
                     var finalWinnerPlayerId = continueBattle
                         ? -1
                         : resolveMusicEndWinner(judgeResult.RoundWins).Value;
@@ -222,6 +241,11 @@ namespace Alice {
                         return;
                     }
 
+                    // 次ラウンドの playable 開始に入る直前に、ホスト側もここでラウンド境界のバリアを取る（ゲート4）。
+                    if (onlineHandler.IsOnlineBattle) {
+                        await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.RoundEndToNextRound, finishedRound, 0);
+                    }
+
                     await StartRoundPlayableAsync();
                     if (shouldCompleteBattleByMusicEnd()) {
                         Debug.Log($"{LOG_PREFIX} ResolveRoundAsync music ended during next round start. winner={winnerIfMusicEndsBeforeNextRound}");
@@ -243,6 +267,7 @@ namespace Alice {
             }
         }
 
+        // オンラインで「判定ホスト」ではない側: 先にネットへ出たアウトカムを待ち、ローカル判定は行わず追従する。
         async Task ResolveRoundFromHostOutcomeAsync(int finishedRound) {
             var outcome = await onlineHandler.WaitForOutcomeAsync(BattleOutcomeKind.RoundResolved, finishedRound);
             if (outcome.Kind == BattleOutcomeKind.BattleFinished) {
@@ -278,6 +303,11 @@ namespace Alice {
             SubscribeStrikerDeadEvents();
             SetAllStrikersDefault();
             await battlePresenter.PlayRoundResumeTransitionAsync();
+            // ホストの ResolveRoundAsync と同じゲートを通し、次ラウンド開始のタイミングを揃える。
+            if (onlineHandler.IsOnlineBattle) {
+                await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.RoundEndToNextRound, finishedRound, 0);
+            }
+
             await StartRoundPlayableAsync();
             Debug.Log($"{LOG_PREFIX} ResolveRoundFromHostOutcomeAsync next round started. currentRound={currentRound}");
         }

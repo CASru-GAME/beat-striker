@@ -6,7 +6,9 @@ namespace Alice {
     public class LoadingView : MonoBehaviour {
         [Header("Root")]
         [SerializeField] CanvasGroup canvasGroup;
-        [SerializeField] GameObject onlineIndicatorRoot;
+
+        [Header("Message")]
+        [SerializeField] string defaultMessage = "データ読み込み中";
 
         [Header("Characters")]
         [SerializeField] TextMeshProUGUI[] loadingCharacters;
@@ -24,6 +26,7 @@ namespace Alice {
 
         readonly TaskCompletionSource<bool> completedTaskSource = new();
         Vector3[] basePositions;
+        int activeLoadingCharacterCount;
         int loopTweenId = -1;
         int fadeTweenId = -1;
         bool isVisible;
@@ -32,8 +35,13 @@ namespace Alice {
         public bool IsVisible => isVisible;
         public float ShowDelaySeconds => showDelaySeconds;
 
-        public void SetOnlineIndicatorVisible(bool visible) {
-            onlineIndicatorRoot.SetActive(visible);
+        public string ResolveDisplayMessage(string message) {
+            return string.IsNullOrEmpty(message) ? defaultMessage : message;
+        }
+
+        public void SetMessage(string message) {
+            EnsureInitialized();
+            ApplyMessageToCharacters(ResolveDisplayMessage(message));
         }
 
         void Awake() {
@@ -102,6 +110,7 @@ namespace Alice {
             }
 
             CacheBasePositions();
+            ApplyMessageToCharacters(defaultMessage);
             ApplyHiddenImmediately();
             initialized = true;
         }
@@ -118,14 +127,44 @@ namespace Alice {
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
             canvasGroup.gameObject.SetActive(false);
-            for (var i = 0; i < loadingCharacters.Length; i++) {
+            for (var i = 0; i < activeLoadingCharacterCount; i++) {
+                loadingCharacters[i].rectTransform.localPosition = basePositions[i];
+            }
+        }
+
+        void ApplyMessageToCharacters(string message) {
+            var maxSlots = loadingCharacters.Length;
+            var textIndex = 0;
+            var elementIndex = 0;
+            while (textIndex < message.Length && elementIndex < maxSlots) {
+                if (char.IsHighSurrogate(message, textIndex) && textIndex + 1 < message.Length && char.IsLowSurrogate(message, textIndex + 1)) {
+                    loadingCharacters[elementIndex].gameObject.SetActive(true);
+                    loadingCharacters[elementIndex].text = message.Substring(textIndex, 2);
+                    textIndex += 2;
+                }
+                else {
+                    loadingCharacters[elementIndex].gameObject.SetActive(true);
+                    loadingCharacters[elementIndex].text = message[textIndex].ToString();
+                    textIndex += 1;
+                }
+
+                elementIndex += 1;
+            }
+
+            activeLoadingCharacterCount = Mathf.Max(1, elementIndex);
+            for (var i = elementIndex; i < maxSlots; i++) {
+                loadingCharacters[i].text = "";
+                loadingCharacters[i].gameObject.SetActive(false);
+            }
+
+            for (var i = 0; i < elementIndex; i++) {
                 loadingCharacters[i].rectTransform.localPosition = basePositions[i];
             }
         }
 
         void StartBounceLoop() {
             StopBounceLoop();
-            for (var i = 0; i < loadingCharacters.Length; i++) {
+            for (var i = 0; i < activeLoadingCharacterCount; i++) {
                 ScheduleCharacterBounce(i);
             }
         }
@@ -162,7 +201,7 @@ namespace Alice {
                                 return;
                             }
 
-                            if (index == loadingCharacters.Length - 1) {
+                            if (index == activeLoadingCharacterCount - 1) {
                                 loopTweenId = LeanTween.delayedCall(gameObject, loopDelay, StartBounceLoop).id;
                             }
                         });
@@ -180,7 +219,7 @@ namespace Alice {
                 return;
             }
 
-            for (var i = 0; i < loadingCharacters.Length; i++) {
+            for (var i = 0; i < activeLoadingCharacterCount; i++) {
                 loadingCharacters[i].rectTransform.localPosition = basePositions[i];
             }
         }

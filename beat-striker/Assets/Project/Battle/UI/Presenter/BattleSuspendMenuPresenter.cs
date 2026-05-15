@@ -2,6 +2,7 @@ using Core;
 using System;
 using R3;
 using UnityEngine;
+using VContainer;
 
 namespace Alice {
     public class BattleSuspendMenuPresenter : IDisposable {
@@ -16,6 +17,7 @@ namespace Alice {
         public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
 
+        [Inject]
         public BattleSuspendMenuPresenter(ICursorDeployer cursorDeployer, BattleSuspendMenuView suspendMenuView) {
             this.cursorDeployer = cursorDeployer;
             this.suspendMenuView = suspendMenuView;

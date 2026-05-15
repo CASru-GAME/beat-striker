@@ -53,8 +53,9 @@ namespace Alice {
         void Tick(float deltaTime);
         void TickPhysics(float deltaTime);
         void RecordRemoteReplicaHistory(float networkTime);
-        OnlineStrikerPreCommandSnapshot BuildPreCommandSnapshot(int applyBeatIndex, float sentNetworkTime);
-        void ApplyPreCommandDelta(OnlineStrikerPreCommandSnapshot snapshot);
+        OnlineStrikerPreBeatStateSnapshot BuildPreBeatStateSnapshot(int applyBeatIndex, float sentNetworkTime);
+        void ApplyPreBeatStateDelta(OnlineStrikerPreBeatStateSnapshot snapshot);
+        void ApplyReplayAbsoluteState(ReplayPreBeatStatePayload snapshot);
         void ChangeDirection(Vector2 direction);
         void CancelDirection();
         void Default();
@@ -284,8 +285,8 @@ namespace Alice {
             }
         }
 
-        public OnlineStrikerPreCommandSnapshot BuildPreCommandSnapshot(int applyBeatIndex, float sentNetworkTime) {
-            return new OnlineStrikerPreCommandSnapshot(
+        public OnlineStrikerPreBeatStateSnapshot BuildPreBeatStateSnapshot(int applyBeatIndex, float sentNetworkTime) {
+            return new OnlineStrikerPreBeatStateSnapshot(
                 0,
                 applyBeatIndex,
                 playerId,
@@ -296,7 +297,7 @@ namespace Alice {
                 sentNetworkTime);
         }
 
-        public void ApplyPreCommandDelta(OnlineStrikerPreCommandSnapshot snapshot) {
+        public void ApplyPreBeatStateDelta(OnlineStrikerPreBeatStateSnapshot snapshot) {
             if (!initialized || stateMachine == null || !TryGetNearestHistory(snapshot.SentNetworkTime, out var history)) {
                 return;
             }
@@ -304,7 +305,33 @@ namespace Alice {
             ApplyHitPointDelta(snapshot.HitPoint - history.HitPoint);
             ApplySpecialPointDelta(snapshot.SpecialPoint - history.SpecialPoint);
             ApplyPositionDelta(snapshot.Position - history.Position);
-            ApplyStateCorrectionIfNeeded(history.StatePathId, snapshot.StatePathId);
+            // State correction must use the local state near sent time, not "current now".
+            // In this game, state can change within a single frame; comparing with current state
+            // causes false mismatches and unnecessary state rewinds.
+            if (!string.IsNullOrEmpty(snapshot.StatePathId)) {
+                ApplyStateCorrectionIfNeeded(snapshot.StatePathId, history.StatePathId);
+            }
+        }
+
+        public void ApplyReplayAbsoluteState(ReplayPreBeatStatePayload snapshot) {
+            if (!initialized || stateMachine == null) {
+                return;
+            }
+
+            currentHitPoint = Mathf.Clamp(snapshot.hitPoint, 0f, maxHitPoint);
+            currentSpecialPoint = Mathf.Clamp(snapshot.specialPoint, 0f, maxSpecialPoint);
+            rb.position = snapshot.position;
+            previousFramePosition = rb.position;
+            frameVelocity = Vector3.zero;
+            hitPointSubject.OnNext(currentHitPoint);
+            specialPointSubject.OnNext(currentSpecialPoint);
+            positionSubject.OnNext(rb.position);
+            centerPositionSubject.OnNext(centerPositionTransform.position);
+            velocitySubject.OnNext(frameVelocity);
+            ApplyStateCorrectionIfNeeded(snapshot.statePathId);
+            if (currentHitPoint <= 0f) {
+                Die();
+            }
         }
 
         public void SetPlayerId(int playerId) {
@@ -404,8 +431,14 @@ namespace Alice {
             centerPositionSubject.OnNext(centerPositionTransform.position);
         }
 
-        void ApplyStateCorrectionIfNeeded(string historyStatePathId, string ownerStatePathId) {
-            if (historyStatePathId == ownerStatePathId || GetCurrentStatePathId() == ownerStatePathId) {
+        void ApplyStateCorrectionIfNeeded(string ownerStatePathId, string localHistoricalStatePathId = null) {
+            // Pre-beat delta sync should compare against the local state near sent time.
+            // If historical states already match, skip correction even when current state differs.
+            if (localHistoricalStatePathId != null && localHistoricalStatePathId == ownerStatePathId) {
+                return;
+            }
+
+            if (GetCurrentStatePathId() == ownerStatePathId) {
                 return;
             }
 

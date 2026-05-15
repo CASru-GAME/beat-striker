@@ -1,70 +1,101 @@
+using System;
 using System.Collections.Generic;
+using VContainer;
 
 namespace Alice {
     public sealed class BeatOnlineCommandBuffer {
-        readonly Dictionary<int, Dictionary<int, OnlineBeatCommandSnapshot>> commandsByBeat = new();
+        readonly Dictionary<int, Dictionary<int, OnlineBeatNotificationSnapshot>> notificationsByBeat = new();
         readonly HashSet<int> closedBeatIndexes = new();
 
-        public bool TrySubmit(OnlineBeatCommandSnapshot command) {
-            if (command.BeatIndex < 0 || closedBeatIndexes.Contains(command.BeatIndex)) {
+        [Inject]
+        public BeatOnlineCommandBuffer() {
+        }
+
+        public bool TrySubmit(OnlineBeatNotificationSnapshot notification) {
+            if (notification.BeatIndex < 0 || closedBeatIndexes.Contains(notification.BeatIndex)) {
                 return false;
             }
 
-            if (!commandsByBeat.TryGetValue(command.BeatIndex, out var commandsByPlayer)) {
-                commandsByPlayer = new Dictionary<int, OnlineBeatCommandSnapshot>();
-                commandsByBeat[command.BeatIndex] = commandsByPlayer;
+            if (!notificationsByBeat.TryGetValue(notification.BeatIndex, out var notificationsByPlayer)) {
+                notificationsByPlayer = new Dictionary<int, OnlineBeatNotificationSnapshot>();
+                notificationsByBeat[notification.BeatIndex] = notificationsByPlayer;
             }
 
-            if (commandsByPlayer.ContainsKey(command.PlayerId)) {
+            if (notificationsByPlayer.ContainsKey(notification.PlayerId)) {
                 return false;
             }
 
-            commandsByPlayer[command.PlayerId] = command;
+            notificationsByPlayer[notification.PlayerId] = notification;
             return true;
         }
 
         public bool HasSubmission(int beatIndex, int playerId) {
-            return commandsByBeat.TryGetValue(beatIndex, out var commandsByPlayer)
-                && commandsByPlayer.ContainsKey(playerId);
+            return notificationsByBeat.TryGetValue(beatIndex, out var notificationsByPlayer)
+                && notificationsByPlayer.ContainsKey(playerId);
         }
 
         public bool IsReady(int beatIndex, int playerCount) {
-            return commandsByBeat.TryGetValue(beatIndex, out var commandsByPlayer)
-                && commandsByPlayer.Count >= playerCount;
+            return notificationsByBeat.TryGetValue(beatIndex, out var notificationsByPlayer)
+                && notificationsByPlayer.Count >= playerCount;
         }
 
-        public bool TryGetCommand(int beatIndex, int playerId, out OnlineBeatCommandSnapshot command) {
-            if (commandsByBeat.TryGetValue(beatIndex, out var commandsByPlayer)
-                && commandsByPlayer.TryGetValue(playerId, out command)) {
+        public bool TryGetNotification(int beatIndex, int playerId, out OnlineBeatNotificationSnapshot notification) {
+            if (notificationsByBeat.TryGetValue(beatIndex, out var notificationsByPlayer)
+                && notificationsByPlayer.TryGetValue(playerId, out notification)) {
                 return true;
             }
 
-            command = null;
+            notification = null;
             return false;
+        }
+
+        public bool HasSubmissionAfter(int beatIndex, int playerId) {
+            foreach (var pair in notificationsByBeat) {
+                if (pair.Key > beatIndex && pair.Value.ContainsKey(playerId)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public int FillMissingSubmissions(int playerId, int startBeatIndexInclusive, int endBeatIndexExclusive, Func<int, OnlineBeatNotificationSnapshot> createNotification) {
+            var submittedCount = 0;
+            for (var beatIndex = startBeatIndexInclusive; beatIndex < endBeatIndexExclusive; beatIndex++) {
+                if (HasSubmission(beatIndex, playerId)) {
+                    continue;
+                }
+
+                if (TrySubmit(createNotification(beatIndex))) {
+                    submittedCount += 1;
+                }
+            }
+
+            return submittedCount;
         }
 
         public void CloseBeat(int beatIndex) {
             closedBeatIndexes.Add(beatIndex);
-            commandsByBeat.Remove(beatIndex);
+            notificationsByBeat.Remove(beatIndex);
         }
 
         public void ClearBeforeBeat(int beatIndex) {
             var removeBeatIndexes = new List<int>();
-            foreach (var pair in commandsByBeat) {
+            foreach (var pair in notificationsByBeat) {
                 if (pair.Key < beatIndex) {
                     removeBeatIndexes.Add(pair.Key);
                 }
             }
 
             foreach (var removeBeatIndex in removeBeatIndexes) {
-                commandsByBeat.Remove(removeBeatIndex);
+                notificationsByBeat.Remove(removeBeatIndex);
             }
 
             closedBeatIndexes.RemoveWhere(closedBeatIndex => closedBeatIndex < beatIndex);
         }
 
         public void Clear() {
-            commandsByBeat.Clear();
+            notificationsByBeat.Clear();
             closedBeatIndexes.Clear();
         }
     }

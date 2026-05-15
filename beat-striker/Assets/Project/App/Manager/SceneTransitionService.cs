@@ -2,12 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using App;
+using R3;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using VContainer;
 
 namespace Alice {
 
     public interface ISceneTransitionService {
+        bool IsTransitioning { get; }
+        Observable<bool> TransitioningChanged { get; }
+        Observable<AppScene> EndTransitionCompleted { get; }
         StartResult RequestStartTransition(AppScene nextScene);
         Task<ExitResult> RequestEndTransitionAsync(AppScene currentScene);
 
@@ -22,6 +27,8 @@ namespace Alice {
         readonly IAppTransitionFactory transitionFactory;
         readonly IScreenRegistry screenRegistry;
         readonly IAppBGMPlayer appBgmPlayer;
+        readonly Subject<bool> transitioningChanged = new();
+        readonly Subject<AppScene> endTransitionCompleted = new();
 
         TransitionState currentState = TransitionState.Idle;
         AppScene currentScene;
@@ -38,6 +45,11 @@ namespace Alice {
             Loading,
         }
 
+        public bool IsTransitioning => currentState != TransitionState.Idle;
+        public Observable<bool> TransitioningChanged => transitioningChanged;
+        public Observable<AppScene> EndTransitionCompleted => endTransitionCompleted;
+
+        [Inject]
         public SceneTransitionService(
             ISceneLoader sceneLoader,
             IAppTransitionFactory transitionFactory,
@@ -74,7 +86,7 @@ namespace Alice {
             activeTransitionId = requestId;
             Debug.Log($"{LOG_PREFIX} [START#{requestId}] Transition presenter created. hasPresenter={currentTransition != null}");
 
-            currentState = TransitionState.Exiting;
+            SetTransitionState(TransitionState.Exiting);
             Debug.Log($"{LOG_PREFIX} [START#{requestId}] State changed to {currentState}");
             _ = RunStartTransitionAsync(nextScene, requestId);
 
@@ -88,7 +100,7 @@ namespace Alice {
                 Debug.Log($"{LOG_PREFIX} [START#{requestId}] TransitionOut completed. nextScene={nextScene}");
 
 
-                currentState = TransitionState.Loading;
+                SetTransitionState(TransitionState.Loading);
                 Debug.Log($"{LOG_PREFIX} [START#{requestId}] State changed to {currentState}");
                 await sceneLoader.LoadAsync(nextScene);
                 Debug.Log($"{LOG_PREFIX} [START#{requestId}] Scene loaded. nextScene={nextScene}".ToCyan());
@@ -96,7 +108,7 @@ namespace Alice {
                 currentScene = nextScene;
                 appBgmPlayer.Play(screenRegistry.GetByScene(nextScene).Bgm);
                 
-                currentState = TransitionState.Ready;
+                SetTransitionState(TransitionState.Ready);
                 Debug.Log($"{LOG_PREFIX} [START#{requestId}] RunStartTransitionAsync completed. currentScene={currentScene}, state={currentState}");
             }
             catch (Exception ex) {
@@ -104,7 +116,7 @@ namespace Alice {
                 Debug.LogException(ex);
                 currentTransition?.DestroyGameObject();
                 currentTransition = null;
-                currentState = TransitionState.Idle;
+                SetTransitionState(TransitionState.Idle);
                 Debug.Log($"{LOG_PREFIX} [START#{requestId}] RunStartTransitionAsync fallback to state={currentState}");
             }
         }
@@ -119,6 +131,7 @@ namespace Alice {
 
             if (currentState == TransitionState.Idle) {
                 Debug.Log($"{LOG_PREFIX} [END#{requestId}] RequestEndTransitionAsync skipped because state is Idle");
+                endTransitionCompleted.OnNext(scene);
                 return new ISceneTransitionService.ExitResult(true);
             }
 
@@ -129,12 +142,13 @@ namespace Alice {
 
             if (currentTransition == null) {
                 Debug.LogWarning($"{LOG_PREFIX} [END#{requestId}] No transition presenter. requestedScene={scene}. forcing idle");
-                currentState = TransitionState.Idle;
+                SetTransitionState(TransitionState.Idle);
+                endTransitionCompleted.OnNext(scene);
                 return new ISceneTransitionService.ExitResult(true);
             }
             
             try {
-                currentState = TransitionState.Entering;
+                SetTransitionState(TransitionState.Entering);
                 Debug.Log($"{LOG_PREFIX} [END#{requestId}] State changed to {currentState}. PresentTransitionIn begin");
                 await currentTransition.PresentTransitionIn(new TransitionContext());
                 Debug.Log($"{LOG_PREFIX} [END#{requestId}] PresentTransitionIn completed. destroying transition presenter");
@@ -142,18 +156,28 @@ namespace Alice {
                 currentTransition.DestroyGameObject();
                 currentTransition = null;
 
-                currentState = TransitionState.Idle;
+                SetTransitionState(TransitionState.Idle);
                 activeTransitionId = 0;
                 Debug.Log($"{LOG_PREFIX} [END#{requestId}] RequestEndTransitionAsync completed successfully. state={currentState}");
+                endTransitionCompleted.OnNext(scene);
 
                 return new ISceneTransitionService.ExitResult(true);
             }
             catch (Exception ex) {
                 Debug.LogError($"{LOG_PREFIX} [END#{requestId}] RequestEndTransitionAsync failed: {ex.Message}");
                 Debug.LogException(ex);
-                currentState = TransitionState.Idle;
+                SetTransitionState(TransitionState.Idle);
                 Debug.Log($"{LOG_PREFIX} [END#{requestId}] RequestEndTransitionAsync fallback to state={currentState}");
                 return new ISceneTransitionService.ExitResult(false);
+            }
+        }
+
+        void SetTransitionState(TransitionState nextState) {
+            var wasTransitioning = IsTransitioning;
+            currentState = nextState;
+            var isTransitioning = IsTransitioning;
+            if (wasTransitioning != isTransitioning) {
+                transitioningChanged.OnNext(isTransitioning);
             }
         }
 
