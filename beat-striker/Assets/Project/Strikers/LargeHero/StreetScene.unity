@@ -255,6 +255,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 3568961321467451832, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: bgmVolume
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3568961321467451832, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: beatTimeOffset
       value: 0.2
       objectReference: {fileID: 0}
@@ -312,7 +316,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8179424678283996581, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: defaultSelections.Array.data[1].Striker
-      value: 0
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953530949465533837, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: testOpponentSequence.SequenceItems.Array.data[0].Button
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
