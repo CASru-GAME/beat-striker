@@ -71,7 +71,8 @@ class SakuraApiTests(unittest.TestCase):
 
     def start_server(self):
         self.server = subprocess.Popen(
-            PHP + ["-S", f"127.0.0.1:{self.port}", "-t", str(self.public)],
+            PHP + ["-d", "post_max_size=32M", "-d", "memory_limit=256M",
+                   "-S", f"127.0.0.1:{self.port}", "-t", str(self.public)],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
         for _ in range(100):
