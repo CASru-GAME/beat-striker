@@ -30,9 +30,16 @@ public class TutorialDemonTests {
             var hub = fighter.GetComponent<StrikerHub>();
             Assert.That(hub.InspectorStriker, Is.EqualTo(Striker.TutorialDemon));
             Assert.That(hub.MaxHitPoint, Is.EqualTo(500f));
-            Assert.That(fighter.transform.Find("Mock Demon/Head"), Is.Not.Null);
-            Assert.That(fighter.transform.Find("Mock Demon/Left horn"), Is.Not.Null);
-            Assert.That(fighter.transform.Find("Mock Demon/Head").GetComponent<Collider>(), Is.Null);
+            var visual = fighter.transform.Find("DemonKing Visual");
+            Assert.That(visual, Is.Not.Null);
+            Assert.That(fighter.GetComponent<TutorialDemonVisual>(), Is.Null);
+            var animator = visual.GetComponent<Animator>();
+            Assert.That(animator.avatar.isValid && animator.avatar.isHuman, Is.True);
+            Assert.That(animator.humanScale, Is.InRange(.5f, 3f), "Humanoid units must match the fighter's gameplay scale.");
+            Assert.That(visual.GetComponentsInChildren<SkinnedMeshRenderer>().Length, Is.GreaterThan(0));
+            Assert.That(fighter.GetComponentsInChildren<MonoBehaviour>(true)
+                .Where(component => component != null)
+                .Any(component => component.GetType().Namespace == "Core.LargeSatan"), Is.False);
         }
         finally {
             Object.Destroy(fighter);

@@ -553,11 +553,14 @@ scene.frame_set(1)
 bpy.ops.object.select_all(action='DESELECT')
 rig.select_set(True)
 for ob in parts:
+    if ob.type == 'MESH' and not ob.name.startswith('Mesh_'):
+        ob.name = 'Mesh_' + ob.name
     ob.select_set(True)
 bpy.context.view_layer.objects.active=rig
 export_fbx(filepath=str(OUT/'DemonKing.fbx'), use_selection=True,
     object_types={'ARMATURE','MESH'}, add_leaf_bones=False, bake_anim=False,
-    apply_unit_scale=True, axis_forward='-Z', axis_up='Y', path_mode='AUTO')
+    apply_unit_scale=True, apply_scale_options='FBX_SCALE_ALL',
+    axis_forward='-Z', axis_up='Y', path_mode='AUTO')
 bpy.ops.export_scene.gltf(filepath=str(OUT/'DemonKing.glb'), export_format='GLB',
     use_selection=True, export_animations=False)
 

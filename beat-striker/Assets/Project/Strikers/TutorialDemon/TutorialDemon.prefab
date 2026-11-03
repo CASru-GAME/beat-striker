@@ -42,9 +42,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 91005293956199816}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c9e44dc799b5d40d6bab8ae00f69d2e2, type: 3}
+  m_Script: {fileID: 11500000, guid: 8903434ccceb4e6c9db2ba9d03cab0d3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.StunState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.StunState
   parents:
   - {fileID: 4606742735444205910}
   - {fileID: 1412494263704707963}
@@ -100,9 +100,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 435555698397086629}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec6e22e003a4c4349a57858644f6d0a2, type: 3}
+  m_Script: {fileID: 11500000, guid: 04e5ac3c12794eea84ddf1ca7d0c5f0b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LocomotionNode
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.LocomotionNode
   idleState: {fileID: 7361062579276817940}
   walkState: {fileID: 677403353491726897}
   walkBackwardState: {fileID: 6222265281564292802}
@@ -5000,9 +5000,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 717249039754695406}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6082cce3fb57341c38a983a6e79e8c5c, type: 3}
+  m_Script: {fileID: 11500000, guid: 164b5567390c43708b73729e5b68cb59, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AttackNode
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.AttackNode
   attackState: {fileID: 6465224874055907323}
   airDownState: {fileID: 7291318754253883330}
   airAttackState: {fileID: 6561768440724477702}
@@ -5048,9 +5048,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 935480985197784640}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d66de6d22a954222ac165bde81ee2b9, type: 3}
+  m_Script: {fileID: 11500000, guid: 86eb2e354ede450ca7e7017fd628a9c1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.TurnableGroup
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.TurnableGroup
   turnState: {fileID: 4687454295992426782}
 --- !u!1 &941579253321292430
 GameObject:
@@ -5093,9 +5093,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 941579253321292430}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c18b781877e134d9eb5ad3166b220617, type: 3}
+  m_Script: {fileID: 11500000, guid: 2801023ecb6b4aa8afabcda35b3fee81, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AnimationState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.AnimationState
   parents: []
   animationClip:
     clip: {fileID: 7400000, guid: 50f4d40bd06e44171819f13a0fea89f2, type: 2}
@@ -5236,9 +5236,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1516419187170184297}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 513e4f239b53240279fab978e5f60495, type: 3}
+  m_Script: {fileID: 11500000, guid: 5be98d0c1a984b8781e57ee01d7aadbb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.FallState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.FallState
   parents:
   - {fileID: 1412494263704707963}
   - {fileID: 7044323320413908586}
@@ -5264,7 +5264,6 @@ GameObject:
   - component: {fileID: 8716767000433258826}
   - component: {fileID: 8515823221661986454}
   - component: {fileID: 4310568605961233167}
-  - component: {fileID: 909090909090909090}
   m_Layer: 3
   m_Name: TutorialDemon
   m_TagString: Untagged
@@ -5288,6 +5287,7 @@ Transform:
   - {fileID: 8282958136129571518}
   - {fileID: 7201851954051567416}
   - {fileID: 2491027056567117565}
+  - {fileID: 6597949896795681816}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4726074325913578082
@@ -5299,9 +5299,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1517210810096820132}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b941191e3ad474c41b38e2c8f2339313, type: 3}
+  m_Script: {fileID: 11500000, guid: 17168c0cdd264495bda27acc77168c5d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.GroundChecker
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.GroundChecker
 --- !u!114 &1367031812415324009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5311,9 +5311,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1517210810096820132}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2e0a826197b54c51a683137c8c0cf45, type: 3}
+  m_Script: {fileID: 11500000, guid: 5bdeae6855d642b09ea2189e95f0b31a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.EnergyStorage
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.EnergyStorage
 --- !u!54 &8937601008905073280
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -5397,7 +5397,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5047db66322504bd5b9bb23dd4877cb3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.AnimationPlayer
-  animator: {fileID: 0}
+  animator: {fileID: 968428597782589026}
   rotationPivot: {fileID: 5806780608173844821}
 --- !u!114 &4310568605961233167
 MonoBehaviour:
@@ -5504,9 +5504,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1863899945261721977}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 18b16e37472b64985b0a54068a3bedf1, type: 3}
+  m_Script: {fileID: 11500000, guid: 87253e46e01a40358a2a3b69b5b64523, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.JumpBackwardState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.JumpBackwardState
   parents:
   - {fileID: 1412494263704707963}
   fowardClip:
@@ -5568,9 +5568,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2088919174887837049}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aac56f22eac514e41a244e7dce151b9b, type: 3}
+  m_Script: {fileID: 11500000, guid: 88484a84c3da4bfc95c812477b7fd266, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LargeSatanState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.LargeSatanState
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
@@ -5680,9 +5680,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2380628934714901793}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d37afaa3a000d4ffa9daf9005b280c7e, type: 3}
+  m_Script: {fileID: 11500000, guid: 6b1a0d03c4f94717a454ebc56d5fe37b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.SpecialState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.SpecialState
   parents: []
   animationClip:
     clip: {fileID: -4408316576235594799, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
@@ -5731,9 +5731,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2433935694402992007}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: daa30f507bde245eaa202f0601ba8274, type: 3}
+  m_Script: {fileID: 11500000, guid: ac3295a5023e49beab4a976c1d89b084, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AttackState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.AttackState
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
@@ -5791,9 +5791,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2474257301770036979}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbf4b194259a64f158dbb374f673541d, type: 3}
+  m_Script: {fileID: 11500000, guid: 5f57be1494df4eca999352909b1ccd77, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.EmitState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.EmitState
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
@@ -5901,9 +5901,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2485643925861171987}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 98bd31938186045c5b83e18eff2c6043, type: 3}
+  m_Script: {fileID: 11500000, guid: 85dbcd3d1e0345819a4caf49eea73a8c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.DashState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.DashState
   parents:
   - {fileID: 1412494263704707963}
   fowardClip:
@@ -5985,9 +5985,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2488664861138987599}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0e0d90a4174924978bae6b75c17a5716, type: 3}
+  m_Script: {fileID: 11500000, guid: 2a8df5cd715b4950b7cfcaa046228cb1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LargeSatanState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.LargeSatanState
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
@@ -6047,9 +6047,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2504965006604635356}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ba38425753af84b63af69752dc5c031e, type: 3}
+  m_Script: {fileID: 11500000, guid: 63ec35dd14ba4534b90bacc54edfc579, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.LocomotionState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.LocomotionState
   parents:
   - {fileID: 1412494263704707963}
   - {fileID: 7044323320413908586}
@@ -6100,9 +6100,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2580775139249287558}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0178b7bf307674df792e7783b57ac9e2, type: 3}
+  m_Script: {fileID: 11500000, guid: aa2a2cadf2d9493385d639990efdfaa0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.WalkBackwardState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.WalkBackwardState
   parents:
   - {fileID: 1412494263704707963}
   - {fileID: 7044323320413908586}
@@ -6154,9 +6154,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2888504918552449291}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9be17426b6ab24d9ca92eff68422d66c, type: 3}
+  m_Script: {fileID: 11500000, guid: c5dd4b5380df4bbd8b419be7d3ee261a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.StunCancelState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.StunCancelState
   parents:
   - {fileID: 4606742735444205910}
   - {fileID: 1412494263704707963}
@@ -6205,9 +6205,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2922508591368338493}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb4bd2e5da3a94f01b75722900bb5972, type: 3}
+  m_Script: {fileID: 11500000, guid: 84421830a6c248b99f5e425876e2ec65, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.Attack1State
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.Attack1State
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
@@ -6267,9 +6267,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3170311701473266641}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47c2fdb4babc44d28b09b84e1c430f96, type: 3}
+  m_Script: {fileID: 11500000, guid: fb38673bbe754da0bf1bc2be7b6468d5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AirJumpState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.AirJumpState
   parents:
   - {fileID: 1412494263704707963}
   fowardClip:
@@ -11284,9 +11284,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3344641484141464587}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1131a6cc23914c46ba94eec41c81e81, type: 3}
+  m_Script: {fileID: 11500000, guid: b76d4ace678e424fac67e7abfe5240c3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.WalkState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.WalkState
   parents:
   - {fileID: 1412494263704707963}
   - {fileID: 7044323320413908586}
@@ -11431,9 +11431,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3488569882633554495}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c18b781877e134d9eb5ad3166b220617, type: 3}
+  m_Script: {fileID: 11500000, guid: 2801023ecb6b4aa8afabcda35b3fee81, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AnimationState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.AnimationState
   parents: []
   animationClip:
     clip: {fileID: 7400000, guid: c77cf359840404cc0856cbf4601dc1f6, type: 2}
@@ -11480,9 +11480,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3499957873755132651}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a863392e173d4704bf96694bbbb165e, type: 3}
+  m_Script: {fileID: 11500000, guid: f5a9f10100ea4e49b8414aad6e4718be, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.DiveState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.DiveState
   parents:
   - {fileID: 1412494263704707963}
   clip:
@@ -11635,9 +11635,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4035298037334214422}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 08fe94b1dcd8845fbb3847fc6d291c3c, type: 3}
+  m_Script: {fileID: 11500000, guid: 5a003eca4f494f92acb12faf7b2d87e9, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AirDownAttackState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.AirDownAttackState
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
@@ -11802,9 +11802,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4253945209429252678}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01674f6c9417a43a4a441946b10a0071, type: 3}
+  m_Script: {fileID: 11500000, guid: b43b6822552643a8932da232b5208f83, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.DashNode
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.DashNode
   jumpNode: {fileID: 361391877649379335}
   dashNode: {fileID: 2890204996219143338}
   airJumpNode: {fileID: 723661110471405025}
@@ -11862,7 +11862,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1d913a347dec4ac7aad398590a7dac4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tracker
-  target: {fileID: 3909324073684444791}
+  target: {fileID: 909090909090909091}
   enableRigidMove: 0
   targetTransitionDuration: 0.1
 --- !u!114 &2337027737897239750
@@ -11874,10 +11874,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 4261508237597064991}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6f440b33a08ba423bbad38db9b435e57, type: 3}
+  m_Script: {fileID: 11500000, guid: 84b256f0b9a040969acd3b37c45066f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoleArm
-  hand: {fileID: 3909324073684444791}
+  hand: {fileID: 909090909090909091}
   characterCenter: {fileID: 8056188703651194701}
   hitRadius: 0.2
   hitMask:
@@ -21956,9 +21956,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6363562145227742488}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b605bfcf1fa76472d9bc27edc6df6566, type: 3}
+  m_Script: {fileID: 11500000, guid: 0005801c13264817a978613c75f8bb26, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AirAttackState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.AirAttackState
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
@@ -22018,9 +22018,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6923162487544301966}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3daeabe2f7c6644f88aee75c56606fa9, type: 3}
+  m_Script: {fileID: 11500000, guid: 1209d499d7fb481db45205c97da0465b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.StunGroup
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.StunGroup
   normalAnimationClip:
     clip: {fileID: -8383291447602235193, guid: 7d711dbe35c4642f7a64ac1b82b52261, type: 3}
     fadeTime: 0.1
@@ -22074,9 +22074,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 7080818379444526102}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8474815124dac4e96aa70e6f780f3dfc, type: 3}
+  m_Script: {fileID: 11500000, guid: 148705258ef340deb8996daf58d9ace0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.IdleState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.IdleState
   parents:
   - {fileID: 1412494263704707963}
   - {fileID: 7044323320413908586}
@@ -27030,9 +27030,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 7972368635136924953}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 264a4b30b74a644da9767bf1c8c82692, type: 3}
+  m_Script: {fileID: 11500000, guid: c5025182ae63411fbd1c01d625f92b5c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AirSuperJumpState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.AirSuperJumpState
   parents:
   - {fileID: 1412494263704707963}
   clip:
@@ -27179,9 +27179,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 8335504583372205754}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 19276ea58dc404224b3f5d27fd7de881, type: 3}
+  m_Script: {fileID: 11500000, guid: ae11fee745914ba4ac2570cb07360308, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.NormalGroup
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.NormalGroup
   dashNode: {fileID: 6544772151032152558}
   attackNode: {fileID: 9214202796625303400}
   stunState: {fileID: 3199232662557460761}
@@ -27229,9 +27229,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 8562694478238975578}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c18b781877e134d9eb5ad3166b220617, type: 3}
+  m_Script: {fileID: 11500000, guid: 2801023ecb6b4aa8afabcda35b3fee81, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.AnimationState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.AnimationState
   parents: []
   animationClip:
     clip: {fileID: 7400000, guid: 814b130d40ac549a3a2653d3aa2b3995, type: 2}
@@ -27278,9 +27278,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 8575319029017450326}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f069e78f2a15d4876949084bb1b4cc77, type: 3}
+  m_Script: {fileID: 11500000, guid: 3c821c8091d84617ac2efa68f0ad551f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.Attack2State
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.Attack2State
   parents:
   - {fileID: 1412494263704707963}
   animationClip:
@@ -27337,9 +27337,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 8870356801843961656}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b8491a66994b4d09a08e06f3a832e54, type: 3}
+  m_Script: {fileID: 11500000, guid: 7fe43d6f49cf41829fca644230607695, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeSatan.TurnState
+  m_EditorClassIdentifier: Assembly-CSharp::Core.DarkSatan.TurnState
   parents:
   - {fileID: 1412494263704707963}
   nextNode: {fileID: 3444350880286515863}
@@ -27352,6 +27352,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8056188703651194701}
     m_Modifications:
+    - target: {fileID: -5694092435888646316, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: -5694092435888646316, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
       propertyPath: m_DirtyAABB
       value: 0
@@ -27379,6 +27383,10 @@ PrefabInstance:
     - target: {fileID: -1728013695380148634, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
       propertyPath: m_Name
       value: Warrior
+      objectReference: {fileID: 0}
+    - target: {fileID: 2953604236389334553, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2953604236389334553, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
       propertyPath: m_DirtyAABB
@@ -27465,6 +27473,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7140606858727328969, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7140606858727328969, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
       propertyPath: m_DirtyAABB
       value: 0
       objectReference: {fileID: 0}
@@ -27516,6 +27528,93 @@ GameObject:
 Transform:
   m_CorrespondingSourceObject: {fileID: 5159078012444724336, guid: 61caf16d520024b3f926c5e7ee0e8c5e, type: 3}
   m_PrefabInstance: {fileID: 3848959838040393422}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6636644506842797043
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8056188703651194701}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5306908
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5306908
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.5306908
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.059433874
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_Name
+      value: DemonKing Visual
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_CullingMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+--- !u!95 &968428597782589026 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+  m_PrefabInstance: {fileID: 6636644506842797043}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &6597949896795681816 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+  m_PrefabInstance: {fileID: 6636644506842797043}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8085498297990797931
 PrefabInstance:
@@ -27577,6 +27676,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: f738644f1a23c48b28ddd6ebe7abd819, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: f738644f1a23c48b28ddd6ebe7abd819, type: 3}
       propertyPath: m_Name
       value: Polearm
@@ -27591,16 +27694,8 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f738644f1a23c48b28ddd6ebe7abd819, type: 3}
   m_PrefabInstance: {fileID: 8085498297990797931}
   m_PrefabAsset: {fileID: 0}
-
---- !u!114 &909090909090909090
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+--- !u!4 &909090909090909091 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2544964622302351081, guid: a2d178f908c0f9f4e838801461bc5b46, type: 3}
+  m_PrefabInstance: {fileID: 6636644506842797043}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1517210810096820132}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 72f440a505a04746b732e3947eeb253f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Alice.TutorialDemonVisual
