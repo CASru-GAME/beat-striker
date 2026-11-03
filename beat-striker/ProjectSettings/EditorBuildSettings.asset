@@ -32,6 +32,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Project/Screen/Ranking/RankingScene.unity
     guid: 6422285d1d699434bba65c0ed787bb1d
+  - enabled: 1
+    path: Assets/Project/Screen/OnlineRoom/OnlineRoomScene.unity
+    guid: b1c961dc867345c59af19ffc9a8eb07e
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 394aa84e13da4453d8a0842dc9ce268f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 3deb260f513e44decbbac50e4095346a, type: 3}

@@ -34,6 +34,7 @@ namespace Alice {
         bool serverStartRequested;
         int inviteSequence;
         int reservationSequence;
+        int rosterSequence;
 
         static OnlineSessionRelayServer activeRelayInstance;
 
@@ -508,6 +509,40 @@ namespace Alice {
             foreach (var sessionId in unique) {
                 RecomputeAndDispatch(sessionId, reason);
             }
+            DispatchRoomRosters();
+        }
+
+        OnlineRoomPlayer[] BuildRoomRoster(string viewerSessionId) {
+            var players = new List<OnlineRoomPlayer>();
+            foreach (var presence in presenceBySession.Values) {
+                if (presence.SessionId == viewerSessionId || !IsActiveDuelSession(presence.SessionId)) continue;
+                players.Add(new OnlineRoomPlayer {
+                    sessionId = presence.SessionId,
+                    scene = presence.Scene,
+                    status = presence.Status,
+                    canInvite = IsDuelCandidateEligible(presence.SessionId)
+                        && !TryGetActiveReservation(presence.SessionId, out _)
+                        && !HasPendingInvite(presence.SessionId),
+                });
+            }
+            players.Sort((a, b) => {
+                var availability = b.canInvite.CompareTo(a.canInvite);
+                return availability != 0 ? availability : string.CompareOrdinal(a.sessionId, b.sessionId);
+            });
+            return players.ToArray();
+        }
+
+        void DispatchRoomRosters() {
+            rosterSequence++;
+            foreach (var presence in presenceBySession.Values) {
+                if (presence.Scene != OnlineDuelProtocol.OnlineRoomScene || !IsActiveDuelSession(presence.SessionId)) continue;
+                SendEvent(presence.Player, new OnlineDuelEventPayload {
+                    kind = (int)OnlineDuelEventKind.RoomRoster,
+                    seq = rosterSequence,
+                    localSessionId = presence.SessionId,
+                    roomPlayers = BuildRoomRoster(presence.SessionId),
+                });
+            }
         }
 
         void RecomputeAndDispatch(string sessionId, string reason) {
@@ -733,6 +768,7 @@ namespace Alice {
         }
 
         void SendEvent(PlayerRef player, OnlineDuelEventPayload payload) {
+            if (runner == null || !runner.IsRunning) return;
             runner.SendReliableDataToPlayer(player, OnlineDuelProtocol.EventKey, OnlineDuelProtocol.SerializeEvent(payload));
         }
 

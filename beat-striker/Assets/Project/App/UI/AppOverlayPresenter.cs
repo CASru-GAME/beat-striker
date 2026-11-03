@@ -20,9 +20,10 @@ namespace Alice {
         readonly IAppNetworkSetting networkSetting;
         readonly CompositeDisposable disposables = new();
         bool overlayEnabledForCurrentScreen;
+        bool roomScreen;
         float lastCandidateDialogSkippedAt = float.NegativeInfinity;
 
-        public bool IsOverlayVisible => overlayEnabledForCurrentScreen;
+        public bool IsOverlayVisible => overlayEnabledForCurrentScreen && !roomScreen;
 
         [Inject]
         public AppOverlayPresenter(
@@ -65,7 +66,8 @@ namespace Alice {
 
             var wasOverlayEnabled = overlayEnabledForCurrentScreen;
             overlayEnabledForCurrentScreen = screenInfo.ShowAppOverlay;
-            view.SetOverlayVisible(overlayEnabledForCurrentScreen);
+            roomScreen = screenInfo.Scene == AppScene.OnlineRoom;
+            view.SetOverlayVisible(overlayEnabledForCurrentScreen && !roomScreen);
             if (!overlayEnabledForCurrentScreen) {
                 HideDuelDialog(cancelActiveDuelUi: true);
                 view.SetOnlineIndicatorVisible(false);
@@ -104,6 +106,12 @@ namespace Alice {
         }
 
         void ApplyDuelState(MatchingState state) {
+            // OnlineRoom owns player selection and its incoming/outgoing challenge UI.
+            if (roomScreen) {
+                view.SetIncomingDuelVisible(false);
+                view.SetCandidateDuelVisible(false);
+                return;
+            }
             if (!overlayEnabledForCurrentScreen) {
                 HideDuelDialog(cancelActiveDuelUi: true);
                 return;

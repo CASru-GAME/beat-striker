@@ -35,6 +35,15 @@ namespace Alice {
     public enum OnlineDuelEventKind {
         ViewState,
         MatchResult,
+        RoomRoster,
+    }
+
+    [Serializable]
+    public class OnlineRoomPlayer {
+        public string sessionId;
+        public string scene;
+        public OnlineDuelPlayerStatus status;
+        public bool canInvite;
     }
 
     public record OnlineDuelUiState(
@@ -71,6 +80,7 @@ namespace Alice {
 
     public static class OnlineDuelProtocol {
         public const int MaxDuelPayloadLogChars = 512;
+        public const string OnlineRoomScene = "OnlineRoom";
 
         public static readonly ReliableKey CommandKey = ReliableKey.FromInts(0x4253, 3, 1);
         public static readonly ReliableKey EventKey = ReliableKey.FromInts(0x4253, 3, 2);
@@ -146,5 +156,6 @@ namespace Alice {
         public int stage;
         public string musicId;
         public bool localIsPlayer1;
+        public OnlineRoomPlayer[] roomPlayers;
     }
 }

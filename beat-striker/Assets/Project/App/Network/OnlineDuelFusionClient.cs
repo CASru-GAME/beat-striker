@@ -34,6 +34,7 @@ namespace Alice {
 
     public class OnlineDuelFusionClient :
         IOnlineDuelFusionClient,
+        IOnlineRoomClient,
         IOnlineSessionBootstrap,
         INetworkRunnerProvider,
         INetworkRunnerCallbacks,
@@ -49,6 +50,8 @@ namespace Alice {
         readonly IOnlineDuelIdentity identity;
         readonly ReactiveProperty<OnlineDuelUiState> state;
         readonly CompositeDisposable disposables = new();
+        readonly ReactiveProperty<OnlineRoomRoster> roster = new(OnlineRoomRoster.Disconnected);
+        int lastRosterSeq;
 
         NetworkRunner runner;
         OnlineSessionMainThreadQueue mainThreadQueue;
@@ -69,6 +72,37 @@ namespace Alice {
 
         public ReadOnlyReactiveProperty<OnlineDuelUiState> State => state;
         public int LastSceneSyncId => lastSceneSyncId;
+        public ReadOnlyReactiveProperty<OnlineRoomRoster> Roster => roster;
+
+        public async Task RefreshRoomAsync() {
+            await NotifySceneReadyAsync(AppScene.OnlineRoom, true);
+            SendCommand(new OnlineDuelCommandPayload {
+                kind = (int)OnlineDuelCommandKind.Resync,
+                duelSessionId = identity.DuelSessionId,
+            });
+        }
+
+        public async Task<bool> InvitePlayerAsync(string sessionId) {
+            if (currentScene != AppScene.OnlineRoom || !CanInviteRoomPlayer(sessionId)) return false;
+            await EnsureRunnerStartedAsync("room challenge");
+            if (currentScene != AppScene.OnlineRoom || !CanInviteRoomPlayer(sessionId)
+                || runner == null || !runner.IsRunning || commandSendSuspended) return false;
+            SendCommand(new OnlineDuelCommandPayload {
+                kind = (int)OnlineDuelCommandKind.InviteCreate,
+                duelSessionId = identity.DuelSessionId,
+                targetSessionId = sessionId,
+            });
+            return true;
+        }
+
+        bool CanInviteRoomPlayer(string sessionId) {
+            var current = state.CurrentValue;
+            if (string.IsNullOrWhiteSpace(sessionId) || sessionId == identity.DuelSessionId
+                || !roster.CurrentValue.IsConnected || current.HasReservation
+                || current.UiMode == OnlineDuelUiMode.IncomingInvite
+                || current.UiMode == OnlineDuelUiMode.InviteSent) return false;
+            return Array.Exists(roster.CurrentValue.Players, p => p.sessionId == sessionId && p.canInvite);
+        }
 
         [Inject]
         public OnlineDuelFusionClient(IAppNetworkSetting networkSetting, IOnlineDuelIdentity identity) {
@@ -436,6 +470,12 @@ namespace Alice {
         void ApplyDuelEvent(byte[] dataCopy) {
             var payload = OnlineDuelProtocol.DeserializeEvent(new ArraySegment<byte>(dataCopy));
             var kind = (OnlineDuelEventKind)payload.kind;
+            if (kind == OnlineDuelEventKind.RoomRoster) {
+                if (payload.seq <= lastRosterSeq) return;
+                lastRosterSeq = payload.seq;
+                roster.OnNext(new OnlineRoomRoster(true, payload.roomPlayers ?? Array.Empty<OnlineRoomPlayer>()));
+                return;
+            }
             var current = state.CurrentValue;
             if (kind == OnlineDuelEventKind.ViewState) {
                 if (payload.seq <= lastViewSeq) {
@@ -530,6 +570,8 @@ namespace Alice {
             localMatchRequest = default;
             cancellationRequested = false;
             lastViewSeq = 0;
+            lastRosterSeq = 0;
+            roster.OnNext(OnlineRoomRoster.Disconnected);
             UpdateState(OnlineDuelUiState.Idle(identity.DuelSessionId, message));
         }
 

@@ -146,7 +146,8 @@ namespace Alice {
         }
 
         static bool IsAllowedScene(AppScene scene) {
-            return scene == AppScene.StageSelect
+            return scene == AppScene.OnlineRoom
+                || scene == AppScene.StageSelect
                 || scene == AppScene.CharacterSelect
                 || scene == AppScene.Live
                 || scene == AppScene.Street;

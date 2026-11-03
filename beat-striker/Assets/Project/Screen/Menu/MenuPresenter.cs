@@ -63,7 +63,9 @@ namespace Alice {
 
             this.view.OnlineBattleRequested
                 .Subscribe(_ => {
-                    Debug.Log($"{LOG_PREFIX} OnlineBattleRequested received (mock: no navigation)");
+                    if (inputState != MenuInputState.Ready) return;
+                    tutorialSetting.ClearTutorialBattleRequest();
+                    RequestTransition(AppScene.OnlineRoom);
                 })
                 .AddTo(subscriptions);
 

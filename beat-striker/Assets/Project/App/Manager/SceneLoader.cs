@@ -18,6 +18,7 @@ namespace Alice {
         Boot = 6,
         Menu = 7,
         Ranking = 8,
+        OnlineRoom = 9,
     }
 
     public interface ISceneLoader {
