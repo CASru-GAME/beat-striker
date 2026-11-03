@@ -214,16 +214,13 @@ namespace Alice {
 
             inputState = SceneInputState.TransitioningToScreen;
 
-            showingCharacterIntro = true;
-            var shownStrikers = new HashSet<Striker>();
-            for (var playerId = 0; playerId < GetRequiredSlotCount(); playerId++) {
-                if (playerSelectSetting.TryGetStriker(playerId, out var striker) && shownStrikers.Add(striker)) {
-                    if (!await view.CharacterIntroSlideshow.PlayAsync(striker) || disposed) return;
-                }
-            }
-            showingCharacterIntro = false;
-
             if (tutorialSetting.IsTutorialBattleRequested) {
+                if (playerSelectSetting.TryGetStriker(0, out var striker)) {
+                    showingCharacterIntro = true;
+                    if (!await view.CharacterIntroSlideshow.PlayAsync(striker) || disposed) return;
+                    showingCharacterIntro = false;
+                }
+
                 foreach (var selection in tutorialSetting.BattleSelection.PlayerSelections) {
                     if (selection.PlayerId != 0) {
                         playerSelectSetting.SelectStriker(selection.PlayerId, selection.Striker);

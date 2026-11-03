@@ -55,6 +55,7 @@ ExportedObj/
 *.tmp
 *.user
 *.userprefs
+.env.local
 *.pidb
 *.booproj
 *.svd
