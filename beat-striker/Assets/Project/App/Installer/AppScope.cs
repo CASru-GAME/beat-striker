@@ -107,6 +107,7 @@ namespace Alice {
 			builder.Register<IReplaySetting, ReplaySetting>(Lifetime.Singleton);
 
 			builder.RegisterInstance(playerInputManager);
+			builder.RegisterEntryPoint<InputGuidePresenter>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<CursorDeployer>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<VirtualTouchControllerPresenter>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<OnlineDuelFusionClient>(Lifetime.Singleton);

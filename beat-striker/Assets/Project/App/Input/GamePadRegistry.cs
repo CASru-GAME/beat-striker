@@ -32,11 +32,13 @@ namespace Alice {
         IPlayerGamePad Get(int playerId);
         void HandlePlayerSlotClick(int sourcePlayerId, int targetPlayerId);
         void RotateFaceButtonWiringClockwise();
+        GamePadButton GetPhysicalFaceButton(GamePadButton button);
         Observable<PlayerGamePadButtonEvent> OnAnyButtonDown { get; }
     }
 
     public interface IPlayerGamePad {
         public int PlayerId { get; }
+        public string DeviceName { get; }
         public ReadOnlyReactiveProperty<bool> HasGamePad { get; }
         public Observable<Vector2> OnDirection { get; }
         public Observable<Unit> OnDirectionCanceled { get; }
@@ -246,6 +248,20 @@ namespace Alice {
             player.EmitButtonUp(MapFaceButton(button));
         }
 
+        public GamePadButton GetPhysicalFaceButton(GamePadButton button) {
+            if (button is not (GamePadButton.North or GamePadButton.East or GamePadButton.South or GamePadButton.West)) {
+                return button;
+            }
+            var index = button switch {
+                GamePadButton.North => 0, GamePadButton.East => 1,
+                GamePadButton.South => 2, _ => 3,
+            };
+            return ((index - faceButtonRotationOffset + 4) % 4) switch {
+                0 => GamePadButton.North, 1 => GamePadButton.East,
+                2 => GamePadButton.South, _ => GamePadButton.West,
+            };
+        }
+
         GamePadButton MapFaceButton(GamePadButton button) {
             if (faceButtonRotationOffset == 0) {
                 return button;
@@ -289,6 +305,7 @@ namespace Alice {
             }
 
             public bool HasPrimaryGamePad => isPrimaryInput;
+            public string DeviceName => current.TryGetValue(out var gamePad) ? gamePad.DeviceName : null;
 
             public ReadOnlyReactiveProperty<bool> HasGamePad => hasGamePad;
             public Observable<Vector2> OnDirection => onDirection;
