@@ -312,6 +312,8 @@ MonoBehaviour:
   battleHistoryScrollDownHoverBotan: {fileID: 501797563}
   battleHistoryScrollRect: {fileID: 1605475193}
   battleHistoryScrollNormalizedSpeed: 1.5
+  displayFont: {fileID: 11400000, guid: d6f18265e1bd548b294d4ebd8d18de15, type: 2}
+  trophy: {fileID: 21300000, guid: 78fb5a0efaec34e538bbf5cbe93ded2d, type: 3}
 --- !u!1 &501797561
 GameObject:
   m_ObjectHideFlags: 0

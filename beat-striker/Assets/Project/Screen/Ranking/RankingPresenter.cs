@@ -78,9 +78,8 @@ namespace Alice {
             }
             catch (Exception exception) {
                 Debug.LogWarning($"{LOG_PREFIX} Failed to load battle histories: {exception.Message}");
-                historyListView.SetEntries(new[] {
-                    new RankingBattleHistoryEntry(string.Empty, "履歴取得失敗", "", "", "", "しばらくしてから再度開いてください", false)
-                });
+                historyListView.SetEntries(Array.Empty<RankingBattleHistoryEntry>());
+                historyListView.ShowStatus("通信できませんでした", "しばらくしてから再度開いてください");
             }
         }
 
