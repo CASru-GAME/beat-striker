@@ -26,6 +26,7 @@ namespace Alice {
         readonly IAppNetworkSetting appNetworkSetting;
         readonly CompositeDisposable subscriptions = new();
         RankingInputState inputState = RankingInputState.Ready;
+        bool disposed;
 
         [Inject]
         public RankingPresenter(
@@ -67,6 +68,7 @@ namespace Alice {
         async Task EnterRankingAsync() {
             Debug.Log($"{LOG_PREFIX} EnterRankingAsync requesting end transition. scene={AppScene.Ranking}");
             var result = await sceneTransitionService.RequestEndTransitionAsync(AppScene.Ranking);
+            if (disposed) return;
             Debug.Log($"{LOG_PREFIX} EnterRankingAsync end transition completed. isSuccess={result.IsSuccess}");
             await LoadHistoryAsync();
         }
@@ -74,9 +76,11 @@ namespace Alice {
         async Task LoadHistoryAsync() {
             try {
                 var summaries = await battleHistoryApiClient.GetSummariesAsync(50);
+                if (disposed) return;
                 historyListView.SetEntries(summaries.Select(ToEntry));
             }
             catch (Exception exception) {
+                if (disposed) return;
                 Debug.LogWarning($"{LOG_PREFIX} Failed to load battle histories: {exception.Message}");
                 historyListView.SetEntries(Array.Empty<RankingBattleHistoryEntry>());
                 historyListView.ShowStatus("通信できませんでした", "しばらくしてから再度開いてください");
@@ -84,13 +88,14 @@ namespace Alice {
         }
 
         async Task RequestReplayAsync(string id) {
-            if (inputState != RankingInputState.Ready || string.IsNullOrWhiteSpace(id)) {
+            if (disposed || inputState != RankingInputState.Ready || string.IsNullOrWhiteSpace(id)) {
                 return;
             }
 
             inputState = RankingInputState.Transitioning;
             try {
                 var detail = await battleHistoryApiClient.GetDetailAsync(id);
+                if (disposed) return;
                 if (detail?.replayPayload == null) {
                     inputState = RankingInputState.Ready;
                     return;
@@ -107,6 +112,7 @@ namespace Alice {
                 }
             }
             catch (Exception exception) {
+                if (disposed) return;
                 Debug.LogWarning($"{LOG_PREFIX} Failed to start replay: {exception.Message}");
                 inputState = RankingInputState.Ready;
             }
@@ -183,6 +189,7 @@ namespace Alice {
         }
 
         public void Dispose() {
+            disposed = true;
             subscriptions.Dispose();
         }
     }

@@ -16,12 +16,15 @@ namespace Alice {
         [SerializeField] ScrollRect battleHistoryScrollRect;
         [SerializeField] TMP_FontAsset displayFont;
         [SerializeField] Sprite trophy;
+        [SerializeField] TextMeshProUGUI statusLabel;
         [SerializeField, Tooltip("上/下 Botan ホバー中のスクロール速度（normalized / 秒）。")]
         float battleHistoryScrollNormalizedSpeed = 1.5f;
         public Observable<Unit> BackToMenuRequested => backToMenuRequested;
 
         void Awake() {
-            BuildScreen();
+            FindFirstObjectByType<RankingHistoryListView>().SetStatusLabel(statusLabel);
+            BindScrollHint(battleHistoryScrollUpHoverBotan);
+            BindScrollHint(battleHistoryScrollDownHoverBotan);
             backToMenuEmitter.OnClickEvent.Subscribe(_ => backToMenuRequested.OnNext(Unit.Default)).AddTo(this);
             battleHistoryScrollUpHoverBotan.OnHoverEvent.Subscribe(_ => battleHistoryScrollUpHovered.Value = true).AddTo(this);
             battleHistoryScrollUpHoverBotan.OnHoverExitEvent.Subscribe(_ => battleHistoryScrollUpHovered.Value = false).AddTo(this);
@@ -60,12 +63,18 @@ namespace Alice {
             scroll.localScale = Vector3.one;
             var scrollImage = scroll.GetComponent<Image>(); scrollImage.color = Color.clear; scrollImage.sprite = null;
             battleHistoryScrollRect.scrollSensitivity = 35;
-            var status = RankingUi.Text(canvas, "History Status", bodyFont, "", new Vector2(0.36f, 0.35f), new Vector2(0.95f, 0.68f), new Vector2(15, 0), new Vector2(-15, 0), 28, Color.white, TextAlignmentOptions.Center);
-            FindFirstObjectByType<RankingHistoryListView>().SetStatusLabel(status);
+            statusLabel = RankingUi.Text(canvas, "History Status", bodyFont, "", new Vector2(0.36f, 0.35f), new Vector2(0.95f, 0.68f), new Vector2(15, 0), new Vector2(-15, 0), 28, Color.white, TextAlignmentOptions.Center);
             ConfigureScrollHint(battleHistoryScrollUpHoverBotan, true);
             ConfigureScrollHint(battleHistoryScrollDownHoverBotan, false);
             RankingUi.Text(canvas, "Replay Help", bodyFont, "対戦を選んでリプレイ", new Vector2(0.35f, 0), new Vector2(1, 0), new Vector2(8, 4), new Vector2(-50, 40), 16, Color.white, TextAlignmentOptions.Center);
+            ConfigureBackButton();
             backToMenuEmitter.transform.SetAsLastSibling();
+        }
+
+        void ConfigureBackButton() {
+            var rect = (RectTransform)backToMenuEmitter.transform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
+            rect.anchoredPosition = new Vector2(51, -35.25f);
         }
 
         void ConfigureScrollHint(Botan botan, bool up) {
@@ -75,9 +84,13 @@ namespace Alice {
             var image = botan.GetComponent<Image>(); image.sprite = null; image.color = RankingUi.Yellow;
             var arrow = RankingUi.Band(rect, "Arrow", Vector2.zero, Vector2.one, new Vector2(9, 16), new Vector2(-9, -16), RankingUi.Ink, RankingUi.Ink);
             arrow.triangle = true; arrow.pointUp = up; arrow.SetVerticesDirty();
+            rect.SetAsLastSibling();
+        }
+
+        void BindScrollHint(Botan botan) {
+            var image = botan.GetComponent<Image>();
             botan.OnHoverEvent.Subscribe(_ => image.color = Color.white).AddTo(this);
             botan.OnHoverExitEvent.Subscribe(_ => image.color = RankingUi.Yellow).AddTo(this);
-            rect.SetAsLastSibling();
         }
 
         void Update() {

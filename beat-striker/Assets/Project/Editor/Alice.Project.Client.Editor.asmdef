@@ -3,6 +3,7 @@
     "rootNamespace": "Alice.Editor",
     "references": [
         "Alice.Project.Client",
+        "Unity.TextMeshPro",
         "Unity.Addressables",
         "Unity.ResourceManager",
         "Unity.Addressables.Editor",

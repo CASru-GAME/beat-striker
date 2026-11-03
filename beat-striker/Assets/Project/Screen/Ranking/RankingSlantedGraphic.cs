@@ -59,7 +59,7 @@ namespace Alice {
             var text = rect.gameObject.AddComponent<TextMeshProUGUI>();
             text.font = font; text.fontSharedMaterial = font.material;
             text.text = value; text.fontSize = size; text.color = color; text.alignment = alignment;
-            text.enableWordWrapping = false; text.overflowMode = TextOverflowModes.Ellipsis; text.raycastTarget = false;
+            text.textWrappingMode = TextWrappingModes.NoWrap; text.overflowMode = TextOverflowModes.Truncate; text.raycastTarget = false;
             return text;
         }
     }

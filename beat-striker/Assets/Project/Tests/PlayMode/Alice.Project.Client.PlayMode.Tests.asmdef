@@ -1,5 +1,7 @@
 {
     "name": "Alice.Project.Client.PlayMode.Tests",
-    "references": ["Alice.Project.Client", "Alice.Shared"],
+    "references": ["Alice.Project.Client", "Alice.Shared", "Unity.TextMeshPro", "UnityEngine.UI", "RecyclableScrollRect"],
+    "overrideReferences": true,
+    "precompiledReferences": ["R3.dll", "nunit.framework.dll"],
     "optionalUnityReferences": ["TestAssemblies"]
 }

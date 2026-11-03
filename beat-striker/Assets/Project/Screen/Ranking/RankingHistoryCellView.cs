@@ -9,13 +9,22 @@ namespace Alice {
         [SerializeField] TextMeshProUGUI lineLabel;
         [SerializeField] ActionEmitter replayEmitter;
         [SerializeField] TMP_FontAsset displayFont;
-        TextMeshProUGUI playerALabel, playerBLabel, resultLabel, detailLabel, dateLabel;
-        RankingSlantedGraphic replayPlate;
-        RectTransform art;
+        [SerializeField] TextMeshProUGUI playerALabel, playerBLabel, resultLabel, detailLabel, dateLabel;
+        [SerializeField] RankingSlantedGraphic replayPlate;
+        [SerializeField] RectTransform art;
         RankingBattleHistoryEntry currentEntry;
         System.Action<string> replayRequested;
 
         void Awake() {
+            if (!art) BuildCell();
+            replayEmitter.OnClickEvent.Subscribe(_ => {
+                if (currentEntry != null && currentEntry.HasReplay && !string.IsNullOrWhiteSpace(currentEntry.Id)) replayRequested?.Invoke(currentEntry.Id);
+            }).AddTo(this);
+            replayEmitter.OnHoverEvent.Subscribe(_ => SetHovered(true)).AddTo(this);
+            replayEmitter.OnHoverExitEvent.Subscribe(_ => SetHovered(false)).AddTo(this);
+        }
+
+        void BuildCell() {
             var font = lineLabel.font;
             if (!displayFont) displayFont = font;
             lineLabel.gameObject.SetActive(false);
@@ -37,11 +46,6 @@ namespace Alice {
             detailLabel = RankingUi.Text(art, "Match Detail", font, "", new Vector2(0.34f, 0.02f), new Vector2(0.81f, 0.29f), Vector2.zero, new Vector2(-5, 0), 11, Color.white);
             replayPlate = RankingUi.Band(art, "Replay Plate", new Vector2(0.81f, 0.02f), new Vector2(0.975f, 0.29f), Vector2.zero, Vector2.zero, RankingUi.Yellow, RankingUi.Yellow, 6);
             RankingUi.Text(replayPlate.transform, "Replay", displayFont, "リプレイ", Vector2.zero, Vector2.one, new Vector2(3, 0), new Vector2(-3, 0), 14, RankingUi.Ink, TextAlignmentOptions.Center);
-            replayEmitter.OnClickEvent.Subscribe(_ => {
-                if (currentEntry != null && currentEntry.HasReplay && !string.IsNullOrWhiteSpace(currentEntry.Id)) replayRequested?.Invoke(currentEntry.Id);
-            }).AddTo(this);
-            replayEmitter.OnHoverEvent.Subscribe(_ => SetHovered(true)).AddTo(this);
-            replayEmitter.OnHoverExitEvent.Subscribe(_ => SetHovered(false)).AddTo(this);
         }
 
         void SetHovered(bool value) {
