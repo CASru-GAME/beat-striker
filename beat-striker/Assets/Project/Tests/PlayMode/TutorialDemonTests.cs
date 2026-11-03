@@ -29,7 +29,7 @@ public class TutorialDemonTests {
             yield return null;
             var hub = fighter.GetComponent<StrikerHub>();
             Assert.That(hub.InspectorStriker, Is.EqualTo(Striker.TutorialDemon));
-            Assert.That(hub.MaxHitPoint, Is.EqualTo(10000f));
+            Assert.That(hub.MaxHitPoint, Is.EqualTo(500f));
             Assert.That(fighter.transform.Find("Mock Demon/Head"), Is.Not.Null);
             Assert.That(fighter.transform.Find("Mock Demon/Left horn"), Is.Not.Null);
             Assert.That(fighter.transform.Find("Mock Demon/Head").GetComponent<Collider>(), Is.Null);

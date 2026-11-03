@@ -5377,7 +5377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.StrikerHub
   striker: 4
-  maxHitPoint: 10000
+  maxHitPoint: 500
   maxSpecialPoint: 100
   deathHeightY: -10
   defaultState: {fileID: 7361062579276817940}

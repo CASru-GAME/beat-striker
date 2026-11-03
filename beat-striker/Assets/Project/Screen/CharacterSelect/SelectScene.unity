@@ -4719,7 +4719,7 @@ MonoBehaviour:
   image2: {fileID: 772466484}
   text: {fileID: 1738114149}
   hoverSound: {fileID: 8300000, guid: 0f3941ec304286b43ab29c66d26d690d, type: 3}
-  striker: 0
+  striker: 4
 --- !u!114 &1769269050
 MonoBehaviour:
   m_ObjectHideFlags: 0
