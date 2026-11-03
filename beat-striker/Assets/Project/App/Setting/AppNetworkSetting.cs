@@ -15,7 +15,8 @@ namespace Alice {
 
     public class AppNetworkSetting : MonoBehaviour, IAppNetworkSetting {
         [SerializeField] string sessionName = "beat-striker-minimal";
-        [SerializeField] string cloudApiBaseUrl = "https://beat-striker-api-1049753443537.asia-northeast1.run.app";
+        [Tooltip("対戦履歴PHP APIの設置フォルダURL（index.phpは不要）")]
+        [SerializeField] string cloudApiBaseUrl = "https://rintify.sakura.ne.jp/beat-striker";
         [SerializeField, Min(1f)] float selectionTimeLimitSeconds = 180f;
         [SerializeField, Min(0f)] float duelInviteSkipCooldownSeconds = 60f;
 
@@ -27,8 +28,8 @@ namespace Alice {
         public ReadOnlyReactiveProperty<bool> IsOnline => isOnlineProperty;
         public string SessionName => string.IsNullOrWhiteSpace(sessionName) ? "beat-striker-minimal" : sessionName;
         public string CloudApiBaseUrl => string.IsNullOrWhiteSpace(cloudApiBaseUrl)
-            ? "https://beat-striker-api-1049753443537.asia-northeast1.run.app"
-            : cloudApiBaseUrl.TrimEnd('/');
+            ? "https://rintify.sakura.ne.jp/beat-striker"
+            : cloudApiBaseUrl.Trim().TrimEnd('/');
         public float SelectionTimeLimitSeconds => Mathf.Max(1f, selectionTimeLimitSeconds);
         public float DuelInviteSkipCooldownSeconds => Mathf.Max(0f, duelInviteSkipCooldownSeconds);
         public int LocalOnlinePlayerId => localOnlinePlayerId;

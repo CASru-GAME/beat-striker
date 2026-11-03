@@ -3621,7 +3621,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AppNetworkSetting
   sessionName: beat-striker-minimal
-  cloudApiBaseUrl: https://beat-striker-api-1049753443537.asia-northeast1.run.app
+  cloudApiBaseUrl: https://rintify.sakura.ne.jp/beat-striker
   selectionTimeLimitSeconds: 180
   duelInviteSkipCooldownSeconds: 60
 --- !u!114 &6595342875354204002

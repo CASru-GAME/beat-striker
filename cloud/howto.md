@@ -1,5 +1,9 @@
 # GCP + GitHub Actions セットアップ手順（Cloud Run デプロイ用）
 
+> 旧Cloud Run環境の保守用手順です。現在の対戦履歴APIは
+> [さくらのレンタルサーバーへの設置手順](sakura/README.md)を使用します。
+> GitHub Actionsのデプロイ先はさくらへ変更済みです。Cloud Runへのデプロイは実行しません。
+
 ## 概要
 
 GitHub Actions から Google Cloud に安全にデプロイするために  
