@@ -315,13 +315,13 @@ namespace Alice {
             }
 
             var hasLeftTargetState = striker.CurrentStateCategory.CurrentValue != targetCategory;
-            var tcs = new TaskCompletionSource<bool>();
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             IDisposable subscription = null;
             subscription = striker.CurrentStateCategory
                 .Subscribe(category => {
                     if (!tutorialSetting.IsTutorialBattleRequested) {
-                        subscription.Dispose();
+                        subscription?.Dispose();
                         tcs.TrySetResult(true);
                         return;
                     }
@@ -335,10 +335,12 @@ namespace Alice {
                         return;
                     }
 
-                    subscription.Dispose();
+                    subscription?.Dispose();
                     tcs.TrySetResult(true);
                 });
 
+            // ReactiveProperty emits synchronously during Subscribe, before assignment.
+            if (tcs.Task.IsCompleted) subscription.Dispose();
             return tcs.Task;
         }
 

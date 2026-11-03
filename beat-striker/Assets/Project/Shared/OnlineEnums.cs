@@ -4,6 +4,7 @@ namespace Alice {
         Wizard,
         Fighter,
         Warrior,
+        TutorialDemon,
     }
 
     public enum Stage {

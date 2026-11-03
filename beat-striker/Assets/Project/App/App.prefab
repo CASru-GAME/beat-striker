@@ -3642,7 +3642,7 @@ MonoBehaviour:
   - playerId: 0
     striker: 3
   - playerId: 1
-    striker: 3
+    striker: 4
   aiStrength: 0
   isTutorialBattleRequested: 0
 --- !u!114 &904021008660354504
@@ -3743,6 +3743,16 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
     Portrait: {fileID: 21300000, guid: 0fb634e71de14479ba7d52195a7c47e6, type: 3}
     Thumbnail: {fileID: 21300000, guid: 0fb634e71de14479ba7d52195a7c47e6, type: 3}
+  - DisplayName: "\u9B54\u738B"
+    BattleStriker: 4
+    PrefabReference:
+      m_AssetGUID: 8e548b90ae674764a22ac93f6c005512
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+    Portrait: {fileID: 21300000, guid: 72982d4b657d4a8caafa3cd233a558e3, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 72982d4b657d4a8caafa3cd233a558e3, type: 3}
   debugLoadDelaySeconds: 0
 --- !u!114 &7111598241528783917
 MonoBehaviour:

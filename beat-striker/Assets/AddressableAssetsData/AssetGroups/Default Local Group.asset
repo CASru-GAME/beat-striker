@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 67d9f17718069420b876466f73243380
   m_SerializeEntries:
+  - m_GUID: 8e548b90ae674764a22ac93f6c005512
+    m_Address: Assets/Project/Strikers/TutorialDemon/TutorialDemon.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0ac05c6cbb7924775a3f51a772c44cff
     m_Address: Assets/Project/Strikers/LargeSatan/MLSatan.prefab
     m_ReadOnly: 0
