@@ -1,21 +1,23 @@
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Alice {
-    public class BootIntroSlideshow : MonoBehaviour {
-        [SerializeField] Sprite[] slides;
+    public class CharacterIntroSlideshow : MonoBehaviour {
+        [SerializeField] Sprite[] heroSlides;
+        [SerializeField] Sprite[] wizardSlides;
+
+        Sprite[] slides;
+        TaskCompletionSource<bool> completion;
 
         GameObject overlayRoot;
         RectTransform slideRectTransform;
         Image slideImage;
         int currentIndex;
+        int lastAdvanceFrame;
         int lastScreenWidth;
         int lastScreenHeight;
         bool completed;
-
-        void Start() {
-            Play();
-        }
 
         void Update() {
             if (overlayRoot == null || !overlayRoot.activeSelf) {
@@ -28,31 +30,41 @@ namespace Alice {
         }
 
         void OnDestroy() {
+            completion?.TrySetResult(false);
             if (overlayRoot != null) {
                 Destroy(overlayRoot);
             }
         }
 
-        public void Play() {
+        public Task<bool> PlayAsync(Striker striker) {
+            slides = striker switch {
+                Striker.Hero => heroSlides,
+                Striker.Wizard => wizardSlides,
+                _ => null,
+            };
+            completion = new TaskCompletionSource<bool>();
             currentIndex = 0;
+            lastAdvanceFrame = Time.frameCount;
             completed = false;
 
             if (slides == null || slides.Length == 0) {
                 Complete();
-                return;
+                return completion.Task;
             }
 
             EnsureOverlay();
             overlayRoot.SetActive(true);
             overlayRoot.transform.SetAsLastSibling();
             ShowCurrentSlide();
+            return completion.Task;
         }
 
         public void Advance() {
-            if (completed) {
+            if (completed || Time.frameCount == lastAdvanceFrame) {
                 return;
             }
 
+            lastAdvanceFrame = Time.frameCount;
             currentIndex++;
 
             if (currentIndex >= slides.Length) {
@@ -74,7 +86,7 @@ namespace Alice {
                 return;
             }
 
-            overlayRoot = new GameObject($"{nameof(BootIntroSlideshow)} Overlay", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            overlayRoot = new GameObject($"{nameof(CharacterIntroSlideshow)} Overlay", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
 
             var canvas = overlayRoot.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -142,10 +154,11 @@ namespace Alice {
             }
 
             completed = true;
-
             if (overlayRoot != null) {
                 overlayRoot.SetActive(false);
             }
+
+            completion?.TrySetResult(true);
         }
     }
 }

@@ -1,0 +1,5 @@
+{
+    "name": "Alice.Project.Client.PlayMode.Tests",
+    "references": ["Alice.Project.Client", "Alice.Shared"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}

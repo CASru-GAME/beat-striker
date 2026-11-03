@@ -130,25 +130,7 @@ namespace Alice {
             battleSelectSetting.SelectStage(tutorialSelection.Stage);
             battleSelectSetting.SelectMusic(tutorialSelection.MusicId);
 
-            playerSelectSetting.ResetSelections();
-            playerSelectSetting.SelectStriker(0, Striker.Warrior);
-            for (var i = 0; i < tutorialSelection.PlayerSelections.Count; i++) {
-                var selection = tutorialSelection.PlayerSelections[i];
-                if (selection.PlayerId == 0) {
-                    continue;
-                }
-
-                playerSelectSetting.SelectStriker(selection.PlayerId, selection.Striker);
-            }
-
-            var nextScene = ResolveBattleScene(tutorialSelection.Stage);
-            RequestTransition(nextScene);
-        }
-
-        AppScene ResolveBattleScene(Stage stage) {
-            return stage == Stage.Street
-                ? AppScene.Street
-                : AppScene.Live;
+            RequestTransition(AppScene.CharacterSelect);
         }
 
         void RequestTransition(AppScene nextScene) {

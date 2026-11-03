@@ -23,11 +23,13 @@ namespace Alice {
         readonly IPlayerSelectSetting playerSelectSetting;
         readonly IAppStrikerRegistry appStrikerRegistry;
         readonly IAppNetworkSetting appNetworkSetting;
+        readonly ITutorialSetting tutorialSetting;
         readonly IMatchingModel matchingModel;
         readonly IMatchingDuelOperations duelOperations;
         readonly CompositeDisposable subscriptions = new();
         readonly CharacterSelectSelectionPolicy selectionPolicy = new();
         readonly List<CharacterSelectSlotState> slotStates = new();
+        bool showingCharacterIntro;
         bool initialized;
         bool disposed;
         bool startTransitionInputEnabled;
@@ -48,6 +50,7 @@ namespace Alice {
             IPlayerSelectSetting playerSelectSetting,
             IAppStrikerRegistry appStrikerRegistry,
             IAppNetworkSetting appNetworkSetting,
+            ITutorialSetting tutorialSetting,
             IMatchingModel matchingModel,
             IMatchingDuelOperations duelOperations) {
             this.view = view;
@@ -57,6 +60,7 @@ namespace Alice {
             this.playerSelectSetting = playerSelectSetting;
             this.appStrikerRegistry = appStrikerRegistry;
             this.appNetworkSetting = appNetworkSetting;
+            this.tutorialSetting = tutorialSetting;
             this.matchingModel = matchingModel;
             this.duelOperations = duelOperations;
 
@@ -130,7 +134,7 @@ namespace Alice {
                 return;
             }
 
-            var targetSlot = IsOnlineSelectionFlow()
+            var targetSlot = tutorialSetting.IsTutorialBattleRequested || IsOnlineSelectionFlow()
                 ? 0
                 : selectionPolicy.ResolveSelectionTargetSlot(
                     request.PlayerId,
@@ -144,6 +148,13 @@ namespace Alice {
         }
 
         void OnButtonDown(GamePadButton button) {
+            if (showingCharacterIntro) {
+                if (button == GamePadButton.East) {
+                    view.CharacterIntroSlideshow.Advance();
+                }
+                return;
+            }
+
             if (button == GamePadButton.South) {
                 if (isOnlineMatchmakingInProgress) {
                     Debug.Log($"{LOG_PREFIX} OnButtonDown South received. cancel online matchmaking requested");
@@ -202,6 +213,23 @@ namespace Alice {
             }
 
             inputState = SceneInputState.TransitioningToScreen;
+
+            showingCharacterIntro = true;
+            var shownStrikers = new HashSet<Striker>();
+            for (var playerId = 0; playerId < GetRequiredSlotCount(); playerId++) {
+                if (playerSelectSetting.TryGetStriker(playerId, out var striker) && shownStrikers.Add(striker)) {
+                    if (!await view.CharacterIntroSlideshow.PlayAsync(striker) || disposed) return;
+                }
+            }
+            showingCharacterIntro = false;
+
+            if (tutorialSetting.IsTutorialBattleRequested) {
+                foreach (var selection in tutorialSetting.BattleSelection.PlayerSelections) {
+                    if (selection.PlayerId != 0) {
+                        playerSelectSetting.SelectStriker(selection.PlayerId, selection.Striker);
+                    }
+                }
+            }
 
             if (IsOnlineSelectionFlow()) {
                 view.StartButtonAnimation.SetOnlineWaitingPopupVisible(true);
@@ -265,13 +293,15 @@ namespace Alice {
                 return;
             }
 
-            Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition requesting start transition. nextScene={AppScene.StageSelect}");
-            var result = transitionService.RequestStartTransition(AppScene.StageSelect);
+            var nextScene = tutorialSetting.IsTutorialBattleRequested ? AppScene.Menu : AppScene.StageSelect;
+            Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition requesting start transition. nextScene={nextScene}");
+            var result = transitionService.RequestStartTransition(nextScene);
             if (!result.IsSuccess) {
                 Debug.LogWarning($"{LOG_PREFIX} RequestStageSelectTransition failed. nextScene={AppScene.StageSelect}");
                 return;
             }
 
+            if (tutorialSetting.IsTutorialBattleRequested) tutorialSetting.ClearTutorialBattleRequest();
             inputState = SceneInputState.TransitioningToStageSelect;
             Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition accepted. inputState={inputState}");
         }
@@ -412,7 +442,7 @@ namespace Alice {
         }
 
         int GetRequiredSlotCount() {
-            return IsOnlineSelectionFlow()
+            return tutorialSetting.IsTutorialBattleRequested || IsOnlineSelectionFlow()
                 ? 1
                 : selectionPolicy.GetRequiredSlotCount(GetJoinedPlayerCount());
         }

@@ -3718,6 +3718,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1486525827}
   - component: {fileID: 1486525829}
+  - component: {fileID: 1486525832}
   - component: {fileID: 1486525830}
   - component: {fileID: 1486525831}
   m_Layer: 0
@@ -3763,6 +3764,24 @@ MonoBehaviour:
   statusView: {fileID: 1486525830}
   backbutton: {fileID: 1761082703}
   clickSound: {fileID: 8300000, guid: 9a1d28e383d59ed469a73f14fd1f5099, type: 3}
+  characterIntroSlideshow: {fileID: 1486525832}
+--- !u!114 &1486525832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486525825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f8a5d9df68c4d958a1a9346a384a9a3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.CharacterIntroSlideshow
+  heroSlides:
+  - {fileID: 21300000, guid: 57077f26836b44b469c8da69d7c592ed, type: 3}
+  wizardSlides:
+  - {fileID: 21300000, guid: fd4a085b30481cc47ae6ddead2183acc, type: 3}
+  - {fileID: 21300000, guid: 9ce916292fa598d45b81addf7d18e634, type: 3}
 --- !u!114 &1486525830
 MonoBehaviour:
   m_ObjectHideFlags: 0
