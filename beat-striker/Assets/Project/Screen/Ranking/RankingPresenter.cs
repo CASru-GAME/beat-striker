@@ -24,6 +24,8 @@ namespace Alice {
         readonly IBattleSelectSetting battleSelectSetting;
         readonly IPlayerSelectSetting playerSelectSetting;
         readonly IAppNetworkSetting appNetworkSetting;
+        readonly IMusicRegistry musicRegistry;
+        readonly IAppStrikerRegistry strikerRegistry;
         readonly CompositeDisposable subscriptions = new();
         RankingInputState inputState = RankingInputState.Ready;
         bool disposed;
@@ -37,7 +39,9 @@ namespace Alice {
             IReplaySetting replaySetting,
             IBattleSelectSetting battleSelectSetting,
             IPlayerSelectSetting playerSelectSetting,
-            IAppNetworkSetting appNetworkSetting) {
+            IAppNetworkSetting appNetworkSetting,
+            IMusicRegistry musicRegistry,
+            IAppStrikerRegistry strikerRegistry) {
             this.view = view;
             this.historyListView = historyListView;
             this.sceneTransitionService = sceneTransitionService;
@@ -46,6 +50,8 @@ namespace Alice {
             this.battleSelectSetting = battleSelectSetting;
             this.playerSelectSetting = playerSelectSetting;
             this.appNetworkSetting = appNetworkSetting;
+            this.musicRegistry = musicRegistry;
+            this.strikerRegistry = strikerRegistry;
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.view.BackToMenuRequested
@@ -96,7 +102,8 @@ namespace Alice {
             try {
                 var detail = await battleHistoryApiClient.GetDetailAsync(id);
                 if (disposed) return;
-                if (detail?.replayPayload == null) {
+                if (!CanPlayReplay(detail?.replayPayload)) {
+                    Debug.LogWarning($"{LOG_PREFIX} Replay is unavailable or incompatible. id={id}");
                     inputState = RankingInputState.Ready;
                     return;
                 }
@@ -108,12 +115,14 @@ namespace Alice {
                 var result = sceneTransitionService.RequestStartTransition(nextScene);
                 Debug.Log($"{LOG_PREFIX} RequestReplay transition result. nextScene={nextScene}, isSuccess={result.IsSuccess}");
                 if (!result.IsSuccess) {
+                    replaySetting.ClearReplay();
                     inputState = RankingInputState.Ready;
                 }
             }
             catch (Exception exception) {
                 if (disposed) return;
                 Debug.LogWarning($"{LOG_PREFIX} Failed to start replay: {exception.Message}");
+                replaySetting?.ClearReplay();
                 inputState = RankingInputState.Ready;
             }
         }
@@ -151,7 +160,19 @@ namespace Alice {
             }
         }
 
-        static RankingBattleHistoryEntry ToEntry(BattleHistorySummary summary) {
+        bool CanPlayReplay(ReplayPayload replay) {
+            return replay != null && replay.schemaVersion == 1
+                && Enum.TryParse<Stage>(replay.stage, out var stage) && Enum.IsDefined(typeof(Stage), stage)
+                && !string.IsNullOrWhiteSpace(replay.musicId) && musicRegistry.GetAll().Any(music => music.Id == replay.musicId)
+                && replay.strikerIds != null && replay.strikerIds.Length == 2
+                && replay.strikerIds.All(id => strikerRegistry.GetAll().Any(striker => (int)striker.BattleStriker == id))
+                && replay.rounds != null && replay.rounds.Length > 0
+                && replay.rounds.All(round => round != null
+                    && (round.beatNotifications == null || round.beatNotifications.All(item => item != null))
+                    && (round.preBeatStates == null || round.preBeatStates.All(item => item != null)));
+        }
+
+        RankingBattleHistoryEntry ToEntry(BattleHistorySummary summary) {
             var playerA = GetArrayValue(summary.playerNames, 0, "ゲスト");
             var playerB = GetArrayValue(summary.playerNames, 1, "ゲスト");
             var strikerA = GetArrayValue(summary.strikerNames, 0, "");
@@ -165,7 +186,8 @@ namespace Alice {
                 FormatDate(summary.playedAt),
                 winner,
                 battle,
-                summary.hasReplay);
+                summary.hasReplay && !string.IsNullOrWhiteSpace(summary.musicId)
+                    && musicRegistry.GetAll().Any(music => music.Id == summary.musicId));
         }
 
         static string GetArrayValue(string[] values, int index, string fallback) {

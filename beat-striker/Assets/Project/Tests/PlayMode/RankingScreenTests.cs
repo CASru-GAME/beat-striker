@@ -79,6 +79,32 @@ public class RankingScreenTests {
         yield return null;
         Assert.That(status.gameObject.activeSelf, Is.False);
         Assert.That(content.childCount, Is.GreaterThan(2));
+
+        var viewObject = new GameObject("Inactive ranking view");
+        viewObject.SetActive(false);
+        viewObject.transform.SetParent(owner.transform);
+        var view = viewObject.AddComponent<RankingPresenterView>();
+        typeof(RankingPresenterView).GetField("battleHistoryScrollRect", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(view, scroll);
+        var updateView = typeof(RankingPresenterView).GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic);
+        var cursorObject = new GameObject("Game cursor", typeof(RectTransform));
+        cursorObject.transform.SetParent(owner.transform, false);
+        cursorObject.AddComponent<Alice.Cursor>();
+        scroll.verticalNormalizedPosition = 0.5f;
+        cursorObject.transform.position = viewport.TransformPoint(new Vector3(0, viewport.rect.yMin - 30, 0));
+        yield return null;
+        var before = scroll.verticalNormalizedPosition;
+        updateView.Invoke(view, null);
+        Assert.That(scroll.verticalNormalizedPosition, Is.LessThan(before), "Holding the cursor past the bottom edge must scroll down.");
+        cursorObject.transform.position = viewport.TransformPoint(new Vector3(0, viewport.rect.yMax + 30, 0));
+        before = scroll.verticalNormalizedPosition;
+        updateView.Invoke(view, null);
+        Assert.That(scroll.verticalNormalizedPosition, Is.GreaterThan(before), "Holding the cursor past the top edge must scroll up.");
+        cursorObject.transform.position = viewport.TransformPoint(new Vector3(0, viewport.rect.center.y, 0));
+        before = scroll.verticalNormalizedPosition;
+        updateView.Invoke(view, null);
+        Assert.That(scroll.verticalNormalizedPosition, Is.EqualTo(before), "Leaving the edge must stop scrolling.");
+        cursorObject.SetActive(false);
+
         for (var i = 0; i < 80; i++) {
             scroll.verticalNormalizedPosition = 0;
             yield return null;
@@ -125,13 +151,52 @@ public class RankingScreenTests {
         var list = owner.AddComponent<RankingHistoryListView>();
         var api = new DelayedHistoryApi();
         ExpectHistoryRequestLogs();
-        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null);
+        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, null, null);
         presenter.Dispose();
         api.Histories.SetResult(new[] { new BattleHistorySummary { id = "late-record" } });
         yield return null;
         yield return null;
         Assert.That(list.GetItemCount(), Is.Zero, "A departed screen must ignore late network responses.");
         LogAssert.NoUnexpectedReceived();
+    }
+
+    [Test]
+    public void InvalidReplayIsRejectedBeforeTransition() {
+        owner = new GameObject("Inactive ranking views");
+        owner.SetActive(false);
+        var view = owner.AddComponent<RankingPresenterView>();
+        var list = owner.AddComponent<RankingHistoryListView>();
+        var api = new DelayedHistoryApi();
+        ExpectHistoryRequestLogs();
+        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, new TestMusicRegistry(), new TestStrikerRegistry());
+        var check = typeof(RankingPresenter).GetMethod("CanPlayReplay", BindingFlags.Instance | BindingFlags.NonPublic);
+        var replay = new ReplayPayload { stage = "Street", musicId = "known", strikerIds = new[] { 0, 1 }, rounds = new[] { new ReplayRoundPayload() } };
+        Assert.That(check.Invoke(presenter, new object[] { replay }), Is.True);
+        replay.musicId = "mock-display-only";
+        Assert.That(check.Invoke(presenter, new object[] { replay }), Is.False);
+        replay.musicId = "known";
+        replay.rounds = System.Array.Empty<ReplayRoundPayload>();
+        Assert.That(check.Invoke(presenter, new object[] { replay }), Is.False);
+        replay.rounds = new[] { new ReplayRoundPayload() };
+        replay.strikerIds = new[] { 0, 999 };
+        Assert.That(check.Invoke(presenter, new object[] { replay }), Is.False);
+    }
+
+    class TestMusicRegistry : IMusicRegistry {
+        public MusicInfo Default => GetAll()[0];
+        public MusicInfo GetById(string id) => throw new System.NotSupportedException();
+        public System.Collections.Generic.IReadOnlyList<MusicInfo> GetAll() => new[] { new MusicInfo("known", "", "", "", 0, 0) };
+        public Awaitable<LoadedAsset<AudioClip>> LoadAudioClipAsync(string id) => throw new System.NotSupportedException();
+        public Awaitable<LoadedAsset<AudioClip>> LoadPreviewAudioClipAsync(string id) => throw new System.NotSupportedException();
+        public Awaitable<LoadedAsset<TextAsset>> LoadSpectrumDataAsync(string id) => throw new System.NotSupportedException();
+        public Awaitable<LoadedAsset<TextAsset>> LoadBeatDataAsync(string id) => throw new System.NotSupportedException();
+    }
+
+    class TestStrikerRegistry : IAppStrikerRegistry {
+        public StrikerInfo Default => GetAll()[0];
+        public StrikerInfo GetByStriker(Striker striker) => throw new System.NotSupportedException();
+        public System.Collections.Generic.IReadOnlyList<StrikerInfo> GetAll() => new[] { new StrikerInfo("", Striker.Hero, null, null), new StrikerInfo("", Striker.Wizard, null, null) };
+        public Awaitable<LoadedAsset<GameObject>> LoadBattlePrefabAsync(Striker striker) => throw new System.NotSupportedException();
     }
 
     [UnityTest]
@@ -142,7 +207,7 @@ public class RankingScreenTests {
         var list = owner.AddComponent<RankingHistoryListView>();
         var api = new DelayedHistoryApi();
         ExpectHistoryRequestLogs();
-        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null);
+        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, null, null);
         presenter.Dispose();
         api.Histories.SetException(new System.InvalidOperationException("Delayed network failure"));
         yield return null;

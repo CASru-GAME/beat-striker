@@ -182,7 +182,7 @@ try {
                 'winnerPlayerId' => $body->winnerPlayerId,
                 'playedAt' => $body->playedAt,
                 'appVersion' => $body->appVersion,
-                'hasReplay' => true,
+                'hasReplay' => count($body->replayPayload->rounds) > 0,
             ];
             $statement = database()->prepare('INSERT INTO battle_histories (id, summary, detail) VALUES (?, ?, ?)');
             $statement->execute([$body->id, json_encode($summary, JSON_FLAGS), json_encode($body, JSON_FLAGS)]);
@@ -196,7 +196,12 @@ try {
             $statement->execute();
             $items = [];
             while ($row = $statement->fetch()) {
-                $items[] = json_decode($row['summary'], false, 128, JSON_THROW_ON_ERROR);
+                $summary = json_decode($row['summary'], false, 128, JSON_THROW_ON_ERROR);
+                // Older display-only sample records were saved with hasReplay=true.
+                if (($summary->appVersion ?? '') === 'mock-display-only') {
+                    $summary->hasReplay = false;
+                }
+                $items[] = $summary;
             }
             respond(200, ['items' => $items]);
         }

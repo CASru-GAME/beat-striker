@@ -18,6 +18,8 @@ namespace Alice {
     [RequireComponent(typeof(RectTransform))]
     public class Cursor : MonoBehaviour, ICursor {
         const string LOG_PREFIX = "[Cursor]";
+        static readonly List<Cursor> activeCursors = new();
+        public static IReadOnlyList<Cursor> ActiveCursors => activeCursors;
 
         [SerializeField] TextMeshProUGUI playerLabel;
         [SerializeField] Image spriteRenderer;
@@ -41,6 +43,10 @@ namespace Alice {
             rectTransform = GetComponent<RectTransform>();
             movableAreaRectTransform = transform.parent.GetComponent<RectTransform>();
         }
+
+        void OnEnable() => activeCursors.Add(this);
+
+        void OnDisable() => activeCursors.Remove(this);
 
         public void Construct(int playerId) {
             PlayerId = playerId;

@@ -19,6 +19,8 @@ namespace Alice {
         [SerializeField] TextMeshProUGUI statusLabel;
         [SerializeField, Tooltip("上/下 Botan ホバー中のスクロール速度（normalized / 秒）。")]
         float battleHistoryScrollNormalizedSpeed = 1.5f;
+        const float EdgeScrollZoneHeight = 48f;
+        const float EdgeScrollSpeed = 500f;
         public Observable<Unit> BackToMenuRequested => backToMenuRequested;
 
         void Awake() {
@@ -95,9 +97,30 @@ namespace Alice {
 
         void Update() {
             var scroll = battleHistoryScrollRect;
-            if (!scroll || !scroll.vertical || !scroll.isActiveAndEnabled) return;
+            if (!scroll || !scroll.vertical || !scroll.isActiveAndEnabled || !scroll.content) return;
             var direction = (battleHistoryScrollUpHovered.CurrentValue ? 1 : 0) - (battleHistoryScrollDownHovered.CurrentValue ? 1 : 0);
-            if (direction != 0) scroll.verticalNormalizedPosition = Mathf.Clamp01(scroll.verticalNormalizedPosition + direction * battleHistoryScrollNormalizedSpeed * Time.deltaTime);
+            var viewport = scroll.viewport ? scroll.viewport : (RectTransform)scroll.transform;
+            var canvas = viewport.GetComponentInParent<Canvas>();
+            var camera = canvas && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            var edgeDirection = 0;
+            foreach (var cursor in Cursor.ActiveCursors) {
+                var cursorCanvas = cursor.GetComponentInParent<Canvas>();
+                var cursorCamera = cursorCanvas && cursorCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? cursorCanvas.worldCamera : null;
+                var screenPoint = RectTransformUtility.WorldToScreenPoint(cursorCamera, cursor.transform.position);
+                if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport, screenPoint, camera, out var point) || point.x < viewport.rect.xMin || point.x > viewport.rect.xMax) continue;
+                if (point.y >= viewport.rect.yMax - EdgeScrollZoneHeight) edgeDirection++;
+                else if (point.y <= viewport.rect.yMin + EdgeScrollZoneHeight) edgeDirection--;
+            }
+            if (edgeDirection != 0) {
+                var scrollableHeight = scroll.content.rect.height - viewport.rect.height;
+                if (scrollableHeight > 0) {
+                    scroll.StopMovement();
+                    scroll.verticalNormalizedPosition = Mathf.Clamp01(scroll.verticalNormalizedPosition + Mathf.Sign(edgeDirection) * EdgeScrollSpeed * Time.deltaTime / scrollableHeight);
+                }
+            } else if (direction != 0) {
+                scroll.StopMovement();
+                scroll.verticalNormalizedPosition = Mathf.Clamp01(scroll.verticalNormalizedPosition + direction * battleHistoryScrollNormalizedSpeed * Time.deltaTime);
+            }
         }
 
         void OnDisable() {

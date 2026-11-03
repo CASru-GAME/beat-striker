@@ -149,6 +149,19 @@ class SakuraApiTests(unittest.TestCase):
         self.assertEqual(detail["id"], record_id)
         self.assertTrue(detail["createdAt"].endswith("Z"))
 
+    def test_empty_replay_is_unavailable_including_old_mock_records(self):
+        body = history()
+        body["replayPayload"]["rounds"] = []
+        body["appVersion"] = body["replayPayload"]["appVersion"] = "mock-display-only"
+        record_id = self.save(body)
+        self.assertFalse(self.request("/battle-histories")[1]["items"][0]["hasReplay"])
+        db_path = self.root / "beat-striker-data" / "history.sqlite3"
+        with sqlite3.connect(db_path) as db:
+            summary = json.loads(db.execute("SELECT summary FROM battle_histories WHERE id = ?", (record_id,)).fetchone()[0])
+            summary["hasReplay"] = True
+            db.execute("UPDATE battle_histories SET summary = ? WHERE id = ?", (json.dumps(summary), record_id))
+        self.assertFalse(self.request("/battle-histories")[1]["items"][0]["hasReplay"])
+
     def test_order_and_limit_are_by_upload_order(self):
         ids = []
         for _ in range(105):
