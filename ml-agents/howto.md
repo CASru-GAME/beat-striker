@@ -2,7 +2,7 @@
 
 このドキュメントは、Windows環境においてゼロからUnity ML-Agentsを導入し、公式サンプル（3DBall）で学習の基礎を習得したのち、最終的に自身のオリジナルプロジェクト（格闘ゲーム）へAIを組み込むまでのあらゆる手順・仕様・エラー対処法を網羅した完全版マニュアルです。
 
-チャットログの試行錯誤のプロセスをすべて反映し、**「なぜその操作が必要なのか」「エラーが出た際に裏で何が起きているのか」「どのようにリカバリーするか」** を詳細に解説しています。
+必要な操作の理由と、エラーの原因や復旧方法を解説します。
 
 ---
 
@@ -28,7 +28,7 @@ ML-Agentsはバージョン間における依存関係の要求が非常に厳�
 Python標準機能の `venv` を使用して、ML-Agents専用の独立した仮想環境を構築します。これにより、他のPythonプロジェクトとのパッケージ競合を防ぎます。
 
 ### 2-1. 公式リポジトリのクローン
-作業用のディレクトリ（例: `C:\Users\rinty\Projects\`）を開き、公式リポジトリをダウンロードします。
+任意の作業用ディレクトリを開き、公式リポジトリをダウンロードします。
 ```powershell
 git clone https://github.com/Unity-Technologies/ml-agents.git
 cd ml-agents
@@ -78,8 +78,8 @@ python -m pip install -e .\ml-agents
 
 #### ❌ エラー3: `ERROR: .\ml-agents-envs is not a valid editable requirement...`
 - **症状**: `-e .\ml-agents-envs` を指定した際に見つからないと言われる。
-- **原因**: コマンドを実行しているディレクトリが間違っています（例: `C:\Users\rinty>` の直下で実行しているなど）。
-- **解決策**: `cd C:\Users\rinty\ml-agents` のように、クローンした `ml-agents` フォルダのルートへ移動してからコマンドを実行してください。
+- **原因**: コマンドを実行しているディレクトリが間違っています。
+- **解決策**: クローンした `ml-agents` フォルダのルートへ移動してからコマンドを実行してください。
 
 ---
 
@@ -110,7 +110,7 @@ UnityプロジェクトがPython側のAIと通信するための「耳と目」�
    - `Behavior Type`: **Default** （Pythonと通信して学習を行うための設定です）
 
 ### 4-2. Pythonからの学習コマンド実行
-仮想環境が有効なコマンドプロンプトで、リポジトリルート（例:`C:\Users\rinty\ml-agents`）へ移動し、学習コマンドを打ちます。
+仮想環境が有効なコマンドプロンプトで、クローンしたリポジトリのルートへ移動し、学習コマンドを実行します。
 ```powershell
 python -m mlagents.trainers.learn .\config\ppo\3DBall.yaml --run-id=3DBallTest_01
 ```
