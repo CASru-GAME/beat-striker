@@ -842,6 +842,7 @@ GameObject:
   - component: {fileID: 984328590}
   - component: {fileID: 984328589}
   - component: {fileID: 984328593}
+  - component: {fileID: 984328594}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -944,6 +945,22 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &984328594
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 984328588}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f8a5d9df68c4d958a1a9346a384a9a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.BootIntroSlideshow
+  slides:
+  - {fileID: 21300000, guid: 57077f26836b44b469c8da69d7c592ed, type: 3}
+  - {fileID: 21300000, guid: fd4a085b30481cc47ae6ddead2183acc, type: 3}
+  - {fileID: 21300000, guid: 9ce916292fa598d45b81addf7d18e634, type: 3}
 --- !u!1 &1031129584
 GameObject:
   m_ObjectHideFlags: 0
@@ -2328,6 +2345,14 @@ PrefabInstance:
     - target: {fileID: 5619376666138620005, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8179424678283996581, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: defaultSelections.Array.data[0].Striker
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8179424678283996581, guid: 953ac255fb42b4e57ab6a84a420dd4ea, type: 3}
+      propertyPath: defaultSelections.Array.data[1].Striker
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

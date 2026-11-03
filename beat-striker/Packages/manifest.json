@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.emeryporter.unitymcp": "file:com.emeryporter.unitymcp",
     "com.boxqkrtm.ide.cursor": "https://github.com/boxqkrtm/com.unity.ide.cursor.git",
     "com.coffee.ui-particle": "https://github.com/mob-sakai/ParticleEffectForUGUI.git",
     "com.coffee.unmask": "http://github.com/mob-sakai/UnmaskForUGUI.git",
