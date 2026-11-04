@@ -5,7 +5,7 @@ using R3;
 using UnityEngine;
 
 public record StrikerImpact(Vector3 DirectionAndMagnitude);
-public record AttentionRequest(float DurationSeconds, string TechniqueText = "");
+public record AttentionRequest(float DurationSeconds, string TechniqueText = "", Action OnReturnCompleted = null, float? ZoomSmoothTime = null, Action OnReturnStarted = null, float? ZoomDistance = null, bool ResumeOnReturnStarted = false);
 
 public interface IStrikerContext {
     Rigidbody Rigidbody { get; }

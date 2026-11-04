@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Alice {
     // Temporary visuals for the tutorial opponent. The underlying fighter keeps its
     // existing collision, states, effects and animations until a final model is made.
-    public sealed class TutorialDemonVisual : MonoBehaviour {
+    public sealed class DemonKingVisual : MonoBehaviour {
         Material bodyMaterial;
         Material hornMaterial;
         Material eyeMaterial;

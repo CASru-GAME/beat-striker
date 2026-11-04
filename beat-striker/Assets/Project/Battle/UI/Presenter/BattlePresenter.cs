@@ -227,7 +227,7 @@ namespace Alice {
             attentionRequestSequence += 1;
             var sequence = attentionRequestSequence;
             battlePresenterView.AttentionTextView.Hide();
-            battlePresenterView.StageCamera.RequestAttention(playerId, request.DurationSeconds);
+            battlePresenterView.StageCamera.RequestAttention(playerId, request.DurationSeconds, request.OnReturnCompleted, request.ZoomSmoothTime, request.OnReturnStarted, request.ZoomDistance, request.ResumeOnReturnStarted);
             _ = HideAttentionTextBeforeLooseAsync(sequence, request.DurationSeconds);
         }
 

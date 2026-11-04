@@ -19,6 +19,8 @@ public class AnimationPlayer : MonoBehaviour {
     private Vector3 rotationPivotLocalPosition;
     private Vector3 currentPositionOffset;
     private Quaternion currentRotationOffset = Quaternion.identity;
+    Avatar humanoidAvatar;
+    bool usingSkeletonCurves;
 
     void Awake() {
         // アニメータが設定されていない場合、自分を含む子オブジェクトからAnimatorを探して設定
@@ -30,6 +32,7 @@ public class AnimationPlayer : MonoBehaviour {
         }
 
         defaultLocalPosition = animator.transform.localPosition;
+        humanoidAvatar = animator.avatar;
         defaultLocalRotation = animator.transform.localRotation;
         rotationPivotLocalPosition = rotationPivot != null ? rotationPivot.localPosition : Vector3.zero;
 
@@ -65,10 +68,20 @@ public class AnimationPlayer : MonoBehaviour {
             currentAnimationCoroutine = null;
         }
 
+        if (usingSkeletonCurves != animation.useSkeletonCurves) {
+            foreach (var playable in activePlayables) if (playable.IsValid()) playable.Destroy();
+            activePlayables.Clear();
+            mixer.SetInputCount(0);
+            usingSkeletonCurves = animation.useSkeletonCurves;
+            animator.avatar = usingSkeletonCurves ? null : humanoidAvatar;
+            animator.Rebind();
+        }
+
         currentAnimationCoroutine = StartCoroutine(PlayAnimationCoroutine(
             animation.clip,
             blendDuration,
             animation.speed,
+            animation.disableFootIK,
             positionOffset,
             targetRotationOffset,
             onComplete));
@@ -90,6 +103,7 @@ public class AnimationPlayer : MonoBehaviour {
         AnimationClip clip,
         float fadeTime,
         float speed,
+        bool disableFootIK,
         Vector3 targetPositionOffset,
         Quaternion targetRotationOffset,
         Action onComplete) {
@@ -114,6 +128,7 @@ public class AnimationPlayer : MonoBehaviour {
 
         // 新しいアニメーションを作成してスロット0に接続
         var newPlayable = AnimationClipPlayable.Create(playableGraph, clip);
+        if (disableFootIK) newPlayable.SetApplyFootIK(false);
         newPlayable.SetSpeed(speed);
         newPlayable.SetTime(0);
         mixer.ConnectInput(0, newPlayable, 0);

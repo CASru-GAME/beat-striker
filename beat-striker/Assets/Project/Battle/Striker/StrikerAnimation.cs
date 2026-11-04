@@ -6,4 +6,6 @@ public class StrikerAnimationClip {
     public AnimationClip clip;
     public float fadeTime = 0.3f;
     public float speed = 1;
+    public bool disableFootIK;
+    public bool useSkeletonCurves;
 }

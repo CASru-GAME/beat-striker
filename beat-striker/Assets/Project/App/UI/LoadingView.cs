@@ -24,11 +24,12 @@ namespace Alice {
         [SerializeField, Min(0f)] float characterDelay = 0.05f;
         [SerializeField, Min(0f)] float loopDelay = 0.1f;
 
-        readonly TaskCompletionSource<bool> completedTaskSource = new();
         Vector3[] basePositions;
         int activeLoadingCharacterCount;
-        int loopTweenId = -1;
+        double bounceStartTime;
         int fadeTweenId = -1;
+        TaskCompletionSource<bool> hideTaskSource;
+        string currentMessage;
         bool isVisible;
         bool initialized;
 
@@ -41,67 +42,85 @@ namespace Alice {
 
         public void SetMessage(string message) {
             EnsureInitialized();
-            ApplyMessageToCharacters(ResolveDisplayMessage(message));
+            var displayMessage = ResolveDisplayMessage(message);
+            if (currentMessage == displayMessage) {
+                return;
+            }
+
+            ApplyMessageToCharacters(displayMessage);
+            bounceStartTime = Time.realtimeSinceStartupAsDouble;
         }
 
         void Awake() {
             EnsureInitialized();
-            completedTaskSource.TrySetResult(true);
         }
 
         public Task ShowAsync() {
             EnsureInitialized();
             if (isVisible) {
-                return completedTaskSource.Task;
+                return Task.CompletedTask;
             }
 
             isVisible = true;
             canvasGroup.gameObject.SetActive(true);
             canvasGroup.interactable = true;
             canvasGroup.blocksRaycasts = true;
-            StartBounceLoop();
+            bounceStartTime = Time.realtimeSinceStartupAsDouble;
             if (fadeTweenId >= 0) {
                 LeanTween.cancel(fadeTweenId);
                 fadeTweenId = -1;
             }
             fadeTweenId = LeanTween.alphaCanvas(canvasGroup, 1f, fadeInDuration)
+                .setIgnoreTimeScale(true)
                 .setEase(LeanTweenType.easeOutQuad)
                 .id;
-            return completedTaskSource.Task;
+            CompleteHideTask(hideTaskSource);
+            return Task.CompletedTask;
         }
 
         public Task HideAsync() {
             EnsureInitialized();
             if (!isVisible) {
-                return completedTaskSource.Task;
+                return hideTaskSource?.Task ?? Task.CompletedTask;
             }
 
             isVisible = false;
-            StopBounceLoop();
+            ResetCharacterPositions();
             if (fadeTweenId >= 0) {
                 LeanTween.cancel(fadeTweenId);
                 fadeTweenId = -1;
             }
-            var tcs = new TaskCompletionSource<bool>();
+            var taskSource = new TaskCompletionSource<bool>();
+            hideTaskSource = taskSource;
             fadeTweenId = LeanTween.alphaCanvas(canvasGroup, 0f, fadeOutDuration)
+                .setIgnoreTimeScale(true)
                 .setEase(LeanTweenType.easeInQuad)
                 .setOnComplete(() => {
                     fadeTweenId = -1;
                     canvasGroup.interactable = false;
                     canvasGroup.blocksRaycasts = false;
                     canvasGroup.gameObject.SetActive(false);
-                    tcs.TrySetResult(true);
+                    CompleteHideTask(taskSource);
                 })
                 .id;
-            return tcs.Task;
+            return taskSource.Task;
         }
 
         void OnDisable() {
-            StopBounceLoop();
+            isVisible = false;
+            ResetCharacterPositions();
+            if (fadeTweenId >= 0) {
+                LeanTween.cancel(fadeTweenId);
+                fadeTweenId = -1;
+            }
+            CompleteHideTask(hideTaskSource);
         }
 
-        void OnDestroy() {
-            StopBounceLoop();
+        void CompleteHideTask(TaskCompletionSource<bool> taskSource) {
+            if (hideTaskSource == taskSource) {
+                hideTaskSource = null;
+            }
+            taskSource?.TrySetResult(true);
         }
 
         void EnsureInitialized() {
@@ -133,6 +152,7 @@ namespace Alice {
         }
 
         void ApplyMessageToCharacters(string message) {
+            currentMessage = message;
             var maxSlots = loadingCharacters.Length;
             var textIndex = 0;
             var elementIndex = 0;
@@ -151,7 +171,7 @@ namespace Alice {
                 elementIndex += 1;
             }
 
-            activeLoadingCharacterCount = Mathf.Max(1, elementIndex);
+            activeLoadingCharacterCount = elementIndex;
             for (var i = elementIndex; i < maxSlots; i++) {
                 loadingCharacters[i].text = "";
                 loadingCharacters[i].gameObject.SetActive(false);
@@ -162,63 +182,28 @@ namespace Alice {
             }
         }
 
-        void StartBounceLoop() {
-            StopBounceLoop();
-            for (var i = 0; i < activeLoadingCharacterCount; i++) {
-                ScheduleCharacterBounce(i);
-            }
-        }
-
-        void ScheduleCharacterBounce(int index) {
-            var delay = characterDelay * index;
-            loopTweenId = LeanTween.delayedCall(gameObject, delay, () => {
-                if (!isVisible) {
-                    return;
-                }
-
-                PlayBounce(index);
-            }).id;
-        }
-
-        void PlayBounce(int index) {
-            var target = loadingCharacters[index].rectTransform;
-            var basePosition = basePositions[index];
-            var peakPosition = basePosition + new Vector3(0f, bounceHeight, 0f);
-            LeanTween.value(gameObject, 0f, 1f, bounceDuration)
-                .setEase(LeanTweenType.easeOutQuad)
-                .setOnUpdate((float value) => {
-                    target.localPosition = Vector3.Lerp(basePosition, peakPosition, value);
-                })
-                .setOnComplete(() => {
-                    LeanTween.value(gameObject, 0f, 1f, bounceDuration)
-                        .setEase(LeanTweenType.easeInQuad)
-                        .setOnUpdate((float value) => {
-                            target.localPosition = Vector3.Lerp(peakPosition, basePosition, value);
-                        })
-                        .setOnComplete(() => {
-                            if (!isVisible) {
-                                target.localPosition = basePosition;
-                                return;
-                            }
-
-                            if (index == activeLoadingCharacterCount - 1) {
-                                loopTweenId = LeanTween.delayedCall(gameObject, loopDelay, StartBounceLoop).id;
-                            }
-                        });
-                });
-        }
-
-        void StopBounceLoop() {
-            if (loopTweenId >= 0) {
-                LeanTween.cancel(loopTweenId);
-                loopTweenId = -1;
-            }
-            LeanTween.cancel(gameObject);
-
-            if (basePositions == null) {
+        void Update() {
+            if (!isVisible || activeLoadingCharacterCount == 0) {
                 return;
             }
 
+            var duration = Mathf.Max(0.01f, bounceDuration);
+            var cycleDuration = duration * 2f + characterDelay * (activeLoadingCharacterCount - 1) + loopDelay;
+            // 実時間から全ての文字の位相を求め、重いフレームでも遅延を次のループへ持ち越さない。
+            var cycleTime = (Time.realtimeSinceStartupAsDouble - bounceStartTime) % cycleDuration;
+            for (var i = 0; i < activeLoadingCharacterCount; i++) {
+                var characterTime = (float)cycleTime - characterDelay * i;
+                var height = 0f;
+                if (characterTime >= 0f && characterTime < duration * 2f) {
+                    var phase = characterTime / duration - 1f;
+                    height = bounceHeight * (1f - phase * phase);
+                }
+
+                loadingCharacters[i].rectTransform.localPosition = basePositions[i] + Vector3.up * height;
+            }
+        }
+
+        void ResetCharacterPositions() {
             for (var i = 0; i < activeLoadingCharacterCount; i++) {
                 loadingCharacters[i].rectTransform.localPosition = basePositions[i];
             }

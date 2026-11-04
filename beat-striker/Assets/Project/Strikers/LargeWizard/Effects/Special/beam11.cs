@@ -8,7 +8,7 @@ public class beam11 : MonoBehaviour
 {
     [SerializeField] AudioClip audioClip;
     [SerializeField, Min(0f)] float audioPlayDelaySeconds = 0f;
-    [SerializeField, Min(0f)] float damagePerSecond = 10f;
+    [SerializeField, Min(0f)] float damagePerSecond = 13f;
     [SerializeField, Min(0f)] float knockbackPerSecond = 10f;
     [Header("Collider Settings")]
     [SerializeField, Min(0f)] float maxLength = 12f;

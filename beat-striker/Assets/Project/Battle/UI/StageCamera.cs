@@ -25,17 +25,22 @@ namespace Alice {
         [SerializeField] private AnimationCurve normalizedDistanceToDiagonalRatio = new AnimationCurve(
             new Keyframe(0f, 0.28f),
             new Keyframe(1f, 0.4f));
-        [SerializeField] private float zoomInSmoothTime = 0.4f;
-        [SerializeField] private float zoomOutSmoothTime = 0.2f;
-        [SerializeField] private float centerSmoothTime = 0.15f;
+        [SerializeField] private float zoomInSmoothTime = 0.45f;
+        [SerializeField] private float zoomOutSmoothTime = 0.3f;
+        [SerializeField] private float centerSmoothTime = 0.25f;
+        [SerializeField, Min(0f)] private float airborneVerticalMargin = .75f;
+        [SerializeField, Min(.01f)] private float airborneTrackingSmoothTime = .08f;
+        [SerializeField, Min(0f)] private float attentionFramingHoldSeconds = 1.3f;
         [SerializeField] private Vector2 centerViewportOffset = Vector2.zero;
         [SerializeField] private float shakeDamping = 18f;
         [SerializeField] private float viewBeatPulseZoomDistance = 0.16f;
         [SerializeField] private float viewBeatPulseExpandDuration = 0.05f;
         [SerializeField] private float viewBeatPulseReturnDuration = 0.12f;
-        [SerializeField] private float attentionZoomDistance = 2.2f;
-        [SerializeField] private float attentionZoomSmoothTime = 0.08f;
-        [SerializeField] private float attentionReturnSmoothTime = 0.12f;
+        [SerializeField, Min(0.01f)] private float attentionZoomDistance = 3.2f;
+        [SerializeField, Min(0.01f)] private float attentionZoomSmoothTime = 0.23333333f;
+        [SerializeField, Min(0.01f)] private float attentionReturnSmoothTime = 0.17777778f;
+        [SerializeField, Min(0.01f)] private float attentionMoveMaxSpeed = 18f;
+        [SerializeField, Min(0.01f)] private float attentionReturnMaxSpeed = 27f;
         [SerializeField] private float attentionFocusPositionThreshold = 0.03f;
         [SerializeField] private float attentionFocusRotationThresholdDeg = 1.2f;
         [SerializeField] private UnityEngine.Rendering.Volume volume;
@@ -51,6 +56,7 @@ namespace Alice {
         Vector3 previousViewBeatPulseOffset;
         float viewBeatPulseElapsedSeconds = -1f;
         private Vector2 desiredCenterViewport;
+        float attentionFramingMinimumDepth, attentionFramingExpires;
         CameraState currentState;
         Func<int, Vector3> playerCenterPositionResolver;
         Action<int> introPoseRequester;
@@ -86,20 +92,25 @@ namespace Alice {
         sealed class AttentionRuntime {
             public int TargetPlayerId;
             public float RemainingSeconds;
+            public float ZoomSmoothTime;
             public Quaternion BaseRotation;
-            public Vector3 BasePosition;
             public Vector3 BaseForward;
             public Vector3 MoveVelocity;
-            public Vector3 ReturnMoveVelocity;
             public bool IsFocused;
             public bool IsActive;
+            public Action ReturnCompleted;
+            public Action ReturnStarted;
+            public float ZoomDistance;
+            public bool ResumeOnReturnStarted;
 
             public void Reset() {
                 RemainingSeconds = 0f;
                 MoveVelocity = Vector3.zero;
-                ReturnMoveVelocity = Vector3.zero;
                 IsFocused = false;
                 IsActive = false;
+                ReturnCompleted = null;
+                ReturnStarted = null;
+                ResumeOnReturnStarted = false;
             }
         }
 
@@ -122,6 +133,8 @@ namespace Alice {
             public IdleCameraState(StageCamera owner) : base(owner) { }
 
             public override void OnEnter() {
+                owner.SetAttentionActiveState(false);
+                owner.SetAttentionFocusState(false);
                 owner.attentionRuntime.Reset();
             }
         }
@@ -132,8 +145,8 @@ namespace Alice {
             public override bool AllowsViewBeatPulse => true;
 
             public override void OnEnter() {
-                owner.attentionRuntime.Reset();
                 owner.SetAttentionActiveState(false);
+                owner.attentionRuntime.Reset();
                 owner.cameraDepthVelocity = 0f;
                 owner.centerMoveVelocity = Vector3.zero;
             }
@@ -148,21 +161,17 @@ namespace Alice {
                     return;
                 }
 
-                owner.attentionRuntime.BasePosition = owner.transform.position;
                 owner.attentionRuntime.BaseRotation = owner.transform.rotation;
                 owner.attentionRuntime.BaseForward = owner.transform.forward;
                 owner.attentionRuntime.TargetPlayerId = playerId;
                 owner.attentionRuntime.RemainingSeconds = durationSeconds;
-                owner.attentionRuntime.MoveVelocity = Vector3.zero;
-                owner.attentionRuntime.ReturnMoveVelocity = Vector3.zero;
+                owner.attentionRuntime.MoveVelocity = owner.centerMoveVelocity - owner.transform.forward * owner.cameraDepthVelocity;
                 owner.SetCameraState(owner.attentionState);
             }
         }
 
         sealed class AttentionCameraState : CameraState {
             public AttentionCameraState(StageCamera owner) : base(owner) { }
-
-            public override bool AllowsViewBeatPulse => true;
 
             public override void OnEnter() {
                 owner.SetAttentionActiveState(true);
@@ -176,13 +185,16 @@ namespace Alice {
             public override void OnUpdate() {
                 owner.attentionRuntime.RemainingSeconds -= Time.deltaTime;
                 var targetCenter = owner.GetPlayerCenterPosition(owner.attentionRuntime.TargetPlayerId);
-                var targetPosition = targetCenter - owner.attentionRuntime.BaseForward * owner.attentionZoomDistance;
+                var targetPosition = targetCenter - owner.attentionRuntime.BaseForward * owner.attentionRuntime.ZoomDistance;
                 owner.transform.position = Vector3.SmoothDamp(
                     owner.transform.position,
                     targetPosition,
                     ref owner.attentionRuntime.MoveVelocity,
-                    owner.attentionZoomSmoothTime);
-                owner.LookAt(targetCenter);
+                    owner.attentionRuntime.ZoomSmoothTime,
+                    owner.attentionMoveMaxSpeed);
+                // Keep the battle viewing direction throughout the close-up. Turning
+                // toward the striker before the dolly settles swings the background.
+                owner.transform.rotation = owner.attentionRuntime.BaseRotation;
 
                 if (!owner.attentionRuntime.IsFocused) {
                     var settled = owner.IsAttentionFocusSettled(targetCenter, targetPosition);
@@ -196,7 +208,6 @@ namespace Alice {
                 }
 
                 owner.attentionRuntime.RemainingSeconds = 0f;
-                owner.attentionRuntime.MoveVelocity = Vector3.zero;
                 owner.SetCameraState(owner.attentionReturnState);
             }
 
@@ -207,7 +218,6 @@ namespace Alice {
 
                 owner.attentionRuntime.TargetPlayerId = playerId;
                 owner.attentionRuntime.RemainingSeconds = durationSeconds;
-                owner.attentionRuntime.MoveVelocity = Vector3.zero;
                 owner.SetAttentionFocusState(false);
             }
         }
@@ -215,36 +225,36 @@ namespace Alice {
         sealed class AttentionReturnCameraState : CameraState {
             public AttentionReturnCameraState(StageCamera owner) : base(owner) { }
 
-            public override bool AllowsViewBeatPulse => true;
-
             public override void OnEnter() {
-                owner.SetAttentionActiveState(true);
-            }
-
-            public override void OnExit() {
-                owner.SetAttentionActiveState(false);
+                owner.SetAttentionActiveState(!owner.attentionRuntime.ResumeOnReturnStarted);
+                var returnStarted = owner.attentionRuntime.ReturnStarted;
+                owner.attentionRuntime.ReturnStarted = null;
+                returnStarted?.Invoke();
             }
 
             public override void OnUpdate() {
+                // Return straight to the live battle framing instead of visiting the
+                // pre-special position and then correcting again in BattleCameraState.
+                var targetPosition = owner.GetBattleFramingPosition(owner.attentionRuntime.BaseRotation);
                 owner.transform.position = Vector3.SmoothDamp(
                     owner.transform.position,
-                    owner.attentionRuntime.BasePosition,
-                    ref owner.attentionRuntime.ReturnMoveVelocity,
-                    owner.attentionReturnSmoothTime);
-                owner.transform.rotation = Quaternion.Slerp(
-                    owner.transform.rotation,
-                    owner.attentionRuntime.BaseRotation,
-                    1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.0001f, owner.attentionReturnSmoothTime)));
+                    targetPosition,
+                    ref owner.attentionRuntime.MoveVelocity,
+                    owner.attentionReturnSmoothTime,
+                    owner.attentionReturnMaxSpeed);
+                owner.transform.rotation = owner.attentionRuntime.BaseRotation;
 
-                bool reachedPosition = (owner.transform.position - owner.attentionRuntime.BasePosition).sqrMagnitude <= 0.0004f;
-                bool reachedRotation = Quaternion.Angle(owner.transform.rotation, owner.attentionRuntime.BaseRotation) <= 0.2f;
-                if (!reachedPosition || !reachedRotation) {
+                bool reachedPosition = (owner.transform.position - targetPosition).sqrMagnitude <= 0.0004f;
+                if (!reachedPosition) {
                     return;
                 }
 
-                owner.transform.SetPositionAndRotation(owner.attentionRuntime.BasePosition, owner.attentionRuntime.BaseRotation);
-                owner.attentionRuntime.ReturnMoveVelocity = Vector3.zero;
+                var moveVelocity = owner.attentionRuntime.MoveVelocity;
+                var returnCompleted = owner.attentionRuntime.ReturnCompleted;
                 owner.SetCameraState(owner.battleState);
+                owner.cameraDepthVelocity = -Vector3.Dot(moveVelocity, owner.transform.forward);
+                owner.centerMoveVelocity = Vector3.ProjectOnPlane(moveVelocity, owner.transform.forward);
+                returnCompleted?.Invoke();
             }
 
             public override void OnAttentionRequested(int playerId, float durationSeconds) {
@@ -254,8 +264,6 @@ namespace Alice {
 
                 owner.attentionRuntime.TargetPlayerId = playerId;
                 owner.attentionRuntime.RemainingSeconds = durationSeconds;
-                owner.attentionRuntime.MoveVelocity = Vector3.zero;
-                owner.attentionRuntime.ReturnMoveVelocity = Vector3.zero;
                 owner.SetCameraState(owner.attentionState);
             }
         }
@@ -269,8 +277,9 @@ namespace Alice {
             public SequenceCameraState(StageCamera owner) : base(owner) { }
 
             public override void OnEnter() {
-                owner.attentionRuntime.Reset();
                 owner.SetAttentionActiveState(false);
+                owner.SetAttentionFocusState(false);
+                owner.attentionRuntime.Reset();
                 isSkipRequested = false;
                 currentSequencePhase = CameraSequencePhase.None;
             }
@@ -438,17 +447,18 @@ namespace Alice {
             EnsureRuntimeInitialized();
         }
 
-        void Update() {
-            EnsureRuntimeInitialized();
-            currentState?.OnUpdate();
-        }
-
         void OnDestroy() {
             attentionFocusStateChangedSubject.Dispose();
             attentionActiveStateChangedSubject.Dispose();
         }
 
         void LateUpdate() {
+            EnsureRuntimeInitialized();
+            // Presentation offsets must not feed back into tracking or its velocity.
+            transform.position -= previousViewBeatPulseOffset + previousShakeOffset;
+            previousViewBeatPulseOffset = Vector3.zero;
+            previousShakeOffset = Vector3.zero;
+            currentState?.OnUpdate();
             ApplyViewBeatPulseOffset();
             ApplyShakeOffset();
         }
@@ -470,6 +480,7 @@ namespace Alice {
 
         public void ResetRoundCamera() {
             EnsureRuntimeInitialized();
+            attentionFramingMinimumDepth = attentionFramingExpires = 0f;
             StopAllCoroutines();
             SetCameraState(idleState);
             InitializeBattleStartCameraPose();
@@ -515,9 +526,22 @@ namespace Alice {
             viewBeatPulseElapsedSeconds = 0f;
         }
 
-        public void RequestAttention(int playerId, float durationSeconds) {
+        public void RequestAttention(int playerId, float durationSeconds, Action onReturnCompleted = null, float? zoomSmoothTime = null, Action onReturnStarted = null, float? zoomDistance = null, bool resumeOnReturnStarted = false) {
             EnsureRuntimeInitialized();
+            if (durationSeconds <= 0f) {
+                return;
+            }
+
             currentState?.OnAttentionRequested(playerId, durationSeconds);
+            if (currentState == attentionState || currentState == attentionReturnState) {
+                attentionRuntime.ZoomSmoothTime = Mathf.Max(attentionZoomSmoothTime, zoomSmoothTime ?? attentionZoomSmoothTime);
+                attentionRuntime.ReturnCompleted += onReturnCompleted;
+                attentionRuntime.ReturnStarted += onReturnStarted;
+                attentionRuntime.ZoomDistance = Mathf.Max(.01f, zoomDistance ?? attentionZoomDistance);
+                attentionRuntime.ResumeOnReturnStarted = resumeOnReturnStarted;
+                attentionFramingMinimumDepth = zoomDistance ?? 0f;
+                attentionFramingExpires = Time.time + durationSeconds + attentionFramingHoldSeconds;
+            }
         }
 
         void SetAttentionFocusState(bool isFocused) {
@@ -576,11 +600,12 @@ namespace Alice {
             viewBeatPulseElapsedSeconds = -1f;
             viewBeatPulseOffset = Vector3.zero;
             previousViewBeatPulseOffset = Vector3.zero;
+            if (enableVolumeOnViewBeatPulse) {
+                volume.weight = 0f;
+            }
         }
 
         void ApplyViewBeatPulseOffset() {
-            transform.position -= previousViewBeatPulseOffset;
-
             if (viewBeatPulseElapsedSeconds < 0f) {
                 previousViewBeatPulseOffset = Vector3.zero;
                 viewBeatPulseOffset = Vector3.zero;
@@ -622,8 +647,6 @@ namespace Alice {
         }
 
         void ApplyShakeOffset() {
-            transform.position -= previousShakeOffset;
-
             if (shakeVelocity.sqrMagnitude <= 0.000001f && shakeOffset.sqrMagnitude <= 0.000001f) {
                 shakeVelocity = Vector3.zero;
                 shakeOffset = Vector3.zero;
@@ -680,7 +703,7 @@ namespace Alice {
                 transform.position,
                 targetPosition,
                 ref centerMoveVelocity,
-                centerSmoothTime);
+                Mathf.Lerp(centerSmoothTime, airborneTrackingSmoothTime, Mathf.Clamp01(Mathf.Abs(moveInCameraSpace.y))));
         }
 
         private void MoveCameraForwardToFitPlayers() {
@@ -690,7 +713,8 @@ namespace Alice {
             float currentDepth = Mathf.Max(0.01f, (camSpace0.z + camSpace1.z) * 0.5f);
             float tanHalfVertical = Mathf.Max(0.0001f, Mathf.Tan(stageCamera.fieldOfView * 0.5f * Mathf.Deg2Rad));
             float targetDepth = CalculateTargetDepthToFitPlayers(camSpace0, camSpace1, tanHalfVertical);
-            float zoomSmoothTime = targetDepth < currentDepth ? zoomInSmoothTime : zoomOutSmoothTime;
+            float zoomSmoothTime = targetDepth < currentDepth ? zoomInSmoothTime
+                : Mathf.Lerp(zoomOutSmoothTime, airborneTrackingSmoothTime, Mathf.Clamp01(Mathf.Abs(camSpace1.y - camSpace0.y)));
 
             float smoothedDepth = Mathf.SmoothDamp(
                 currentDepth,
@@ -718,8 +742,10 @@ namespace Alice {
             float halfHorizontalSpan = Mathf.Abs(playersDeltaInCameraPlane.x) * 0.5f;
             float halfVerticalSpan = Mathf.Abs(playersDeltaInCameraPlane.y) * 0.5f;
             float horizontalDepth = halfHorizontalSpan / (tanHalfVertical * stageCamera.aspect * diagonalDistanceRatio);
-            float verticalDepth = halfVerticalSpan / (tanHalfVertical * diagonalDistanceRatio);
-            return Mathf.Max(horizontalDepth, verticalDepth, minCameraDepthForFitPlayers);
+            float aerialMargin = airborneVerticalMargin * Mathf.Clamp01(halfVerticalSpan);
+            float verticalDepth = (halfVerticalSpan + aerialMargin) / (tanHalfVertical * diagonalDistanceRatio);
+            float attentionMinimum = Time.time < attentionFramingExpires ? attentionFramingMinimumDepth : 0f;
+            return Mathf.Max(horizontalDepth, verticalDepth, minCameraDepthForFitPlayers, attentionMinimum);
         }
 
         private Vector3 GetPlayersLineOnPlane() {
@@ -781,28 +807,19 @@ namespace Alice {
         }
 
         private void SnapCameraToBattleFraming() {
-            Vector3 camSpace0 = transform.InverseTransformPoint(GetPlayerCenterPosition(0));
-            Vector3 camSpace1 = transform.InverseTransformPoint(GetPlayerCenterPosition(1));
-            float currentDepth = Mathf.Max(0.01f, (camSpace0.z + camSpace1.z) * 0.5f);
+            transform.position = GetBattleFramingPosition(transform.rotation);
+        }
+
+        private Vector3 GetBattleFramingPosition(Quaternion rotation) {
+            Vector3 center = GetPlayersCenter();
+            var inverseRotation = Quaternion.Inverse(rotation);
+            Vector3 camSpace0 = inverseRotation * (GetPlayerCenterPosition(0) - center);
+            Vector3 camSpace1 = inverseRotation * (GetPlayerCenterPosition(1) - center);
             float tanHalfVertical = Mathf.Max(0.0001f, Mathf.Tan(stageCamera.fieldOfView * 0.5f * Mathf.Deg2Rad));
             float targetDepth = CalculateTargetDepthToFitPlayers(camSpace0, camSpace1, tanHalfVertical);
-            float depthDelta = currentDepth - targetDepth;
-            transform.position += transform.forward * depthDelta;
-
-            Vector3 center = GetPlayersCenter();
-            Vector3 centerInCameraSpace = transform.InverseTransformPoint(center);
-            float depth = Mathf.Max(0.01f, centerInCameraSpace.z);
-            float halfVerticalFovRad = stageCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
-            float tanHalfVerticalForCenter = Mathf.Tan(halfVerticalFovRad);
-            float tanHalfHorizontal = tanHalfVerticalForCenter * stageCamera.aspect;
-            float desiredLocalX = (desiredCenterViewport.x - 0.5f) * 2f * depth * tanHalfHorizontal;
-            float desiredLocalY = (desiredCenterViewport.y - 0.5f) * 2f * depth * tanHalfVerticalForCenter;
-            Vector3 moveInCameraSpace = new Vector3(
-                centerInCameraSpace.x - desiredLocalX,
-                centerInCameraSpace.y - desiredLocalY,
-                0f);
-            Vector3 moveInWorld = transform.TransformVector(moveInCameraSpace);
-            transform.position += moveInWorld;
+            float desiredLocalX = (desiredCenterViewport.x - 0.5f) * 2f * targetDepth * tanHalfVertical * stageCamera.aspect;
+            float desiredLocalY = (desiredCenterViewport.y - 0.5f) * 2f * targetDepth * tanHalfVertical;
+            return center - rotation * new Vector3(desiredLocalX, desiredLocalY, targetDepth);
         }
 
         private Vector3 GetPlayerCenterPosition(int playerId) {

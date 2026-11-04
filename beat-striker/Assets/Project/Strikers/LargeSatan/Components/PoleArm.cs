@@ -1,5 +1,6 @@
 using UnityEngine;
 using R3;
+using Alice;
 
 [RequireComponent(typeof(Tracker))]
 public class PoleArm : MonoBehaviour {
@@ -11,7 +12,9 @@ public class PoleArm : MonoBehaviour {
     [SerializeField] public LayerMask wallMask;
     [SerializeField, Min(0f)] float wallStickDepth = 0.08f;
     [SerializeField] ParticleSystem chargeEffect, emitEffect;
-    [SerializeField] EffectPlayer hitEffectPlayer;
+    [SerializeField] GameObject hitEffectPrefab;
+    [SerializeField] AudioClip hitSound;
+    [SerializeField] TrailRenderer flightTrail;
     readonly Subject<Hurtbox> onHitHurtbox = new();
     public Observable<Hurtbox> OnHitHurtbox => onHitHurtbox;
     
@@ -102,7 +105,8 @@ public class PoleArm : MonoBehaviour {
 
     void PlayHitEffect(Vector3 position, Vector3 forwardDirection) {
         var forward = forwardDirection.sqrMagnitude > 0.000001f ? forwardDirection.normalized : Vector3.forward;
-        hitEffectPlayer.Emit(position, Quaternion.LookRotation(forward), Vector3.one);
+        Destroy(Instantiate(hitEffectPrefab, position, Quaternion.LookRotation(forward)), 2f);
+        hitSound.PlayAtApp(position);
     }
 
     class DefaultState : IState {
@@ -193,6 +197,7 @@ public class PoleArm : MonoBehaviour {
         }
 
         public void OnExit() {
+            poleArm.flightTrail.emitting = false;
             if (pauseTargetHandle != null) {
                 poleArm.tracker.RemoveTarget(pauseTargetHandle);
                 pauseTargetHandle = null;
@@ -463,10 +468,12 @@ public class PoleArm : MonoBehaviour {
                 }
             }
 
-            poleArm.emitEffect.Play();
+            poleArm.flightTrail.Clear();
+            poleArm.flightTrail.emitting = true;
         }
 
         public void OnExit() {
+            poleArm.flightTrail.emitting = false;
             if (pauseTargetHandle != null) {
                 poleArm.tracker.RemoveTarget(pauseTargetHandle);
                 pauseTargetHandle = null;
@@ -518,6 +525,8 @@ public class PoleArm : MonoBehaviour {
 
         void StickToWall(Vector3 impactPos, Vector3 wallNormal) {
             var stickDirection = emitDirection.sqrMagnitude > 0.000001f ? emitDirection.normalized : (-wallNormal).normalized;
+            if (!hasHitHurtbox) poleArm.PlayHitEffect(impactPos, stickDirection);
+            poleArm.flightTrail.emitting = false;
             poleArm.transform.position = impactPos + stickDirection * poleArm.wallStickDepth;
             poleArm.onHitWall.OnNext((poleArm.transform.position, wallNormal));
             isStopped = true;

@@ -3,6 +3,9 @@
     "rootNamespace": "Alice.Editor",
     "references": [
         "Alice.Project.Client",
+        "Alice.Shared",
+        "VContainer",
+        "R3",
         "Unity.TextMeshPro",
         "Unity.Addressables",
         "Unity.ResourceManager",

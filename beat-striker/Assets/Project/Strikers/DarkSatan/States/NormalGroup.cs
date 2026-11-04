@@ -8,7 +8,7 @@ namespace Core.DarkSatan {
         [SerializeField] StrikerNode attackNode;
         [SerializeField] StrikerNode stunState;
         [SerializeField] StrikerNode guardState;
-        [SerializeField] StrikerNode chargeState;
+        [SerializeField] DemonChargeAttackState chargeState;
         [SerializeField] StrikerNode specialState;
 
         // このグループに入った時に呼ばれる（前のステートがこのグループに所属していなかった場合）
@@ -21,7 +21,12 @@ namespace Core.DarkSatan {
 
         // 攻撃コマンドが押された時に呼ばれる
         public override void OnAttackRequested(IStrikerStateContext context) {
-            context.TryTransition(attackNode, true);
+            if (chargeState.HasVolley) {
+                chargeState.RequestLaunch();
+                context.TryTransition(chargeState, true);
+            } else {
+                context.TryTransition(attackNode, true);
+            }
         }
 
         // チャージコマンドが押された時に呼ばれる

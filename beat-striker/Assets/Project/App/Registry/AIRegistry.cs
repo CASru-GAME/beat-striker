@@ -136,7 +136,7 @@ namespace Alice {
                 AiStrikerPattern.Hero => striker == Striker.Hero,
                 AiStrikerPattern.Wizard => striker == Striker.Wizard,
                 AiStrikerPattern.Fighter => striker == Striker.Fighter,
-                AiStrikerPattern.Warrior => striker == Striker.Warrior || striker == Striker.TutorialDemon,
+                AiStrikerPattern.Warrior => striker == Striker.Warrior || striker == Striker.DemonKing,
                 _ => false,
             };
         }

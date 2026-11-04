@@ -1,7 +1,5 @@
 using UnityEngine;
 using Alice;
-using R3;
-using System;
 
 namespace Core.DarkSatan {
 
@@ -14,8 +12,8 @@ namespace Core.DarkSatan {
         [SerializeField] private StrikerNode nextNode;
 
         [SerializeField] Collider mainCollider;
-        [SerializeField] GameObject view;
-        [SerializeField] EffectPlayer effectPlayer, endEffectPlayer;
+        [SerializeField] GameObject shield;
+        [SerializeField] AudioClip shieldSound;
         [SerializeField] LayerMask wallMask = Physics.DefaultRaycastLayers;
 
         [SerializeField] float guardDuration = 0.4f;
@@ -30,8 +28,8 @@ namespace Core.DarkSatan {
             ScheduleStateEvent(guardDuration, nextContext => {
                 nextContext.TryTransition(nextNode);
             });
-            effectPlayer.Emit(effectPlayer.transform);
-            view.SetActive(false);
+            shield.SetActive(true);
+            shieldSound.PlayAtApp(context.Rigidbody.position);
             mainCollider.enabled = false;
         }
 
@@ -40,9 +38,8 @@ namespace Core.DarkSatan {
 
         public override void OnExit(IStrikerContext context) {
             context.Rigidbody.useGravity = true;
-            view.SetActive(true);
+            shield.SetActive(false);
             mainCollider.enabled = true;
-            endEffectPlayer.Emit(endEffectPlayer.transform);
         }
 
 

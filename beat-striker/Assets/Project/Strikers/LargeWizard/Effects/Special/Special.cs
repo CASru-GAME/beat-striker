@@ -6,7 +6,7 @@ namespace Core.LargeWizard {
     
     [RequireComponent(typeof(Rigidbody))]
     public class Special : MonoBehaviour {
-        [SerializeField] float damage = 10f;
+        [SerializeField] float damage = 13f;
         [SerializeField] float nockbackSpeed = 10f;
         [SerializeField] float speed = 20f;
         [SerializeField] float lifeTime = 5f;

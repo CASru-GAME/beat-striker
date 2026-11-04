@@ -16,7 +16,7 @@ MonoBehaviour:
   m_GUID: 67d9f17718069420b876466f73243380
   m_SerializeEntries:
   - m_GUID: 8e548b90ae674764a22ac93f6c005512
-    m_Address: Assets/Project/Strikers/TutorialDemon/TutorialDemon.prefab
+    m_Address: Assets/Project/Strikers/DarkSatan/DemonKing.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
