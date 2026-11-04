@@ -34,6 +34,17 @@ namespace Core.DarkSatan {
         public bool IsActive(int index) => active[index];
         public Vector3 BulletPosition(int index) => bullets[index].position;
 
+        public void CollectProjectileObservations(System.Collections.Generic.List<StrikerProjectileObservation> observations) {
+            if (context == null) return;
+            for (int i = 0; i < bullets.Length; i++) {
+                if (!active[i]) continue;
+                var delay = fired ? Mathf.Max(0f, launchDelays[i] - elapsed) : 0f;
+                var velocity = fired ? directions[i] * speed : Vector3.zero;
+                var lifetime = fired ? Mathf.Max(0f, launchDelays[i] + flightSeconds - elapsed) : flightSeconds;
+                observations.Add(new StrikerProjectileObservation(bullets[i].position, velocity, hitRadius, delay, lifetime));
+            }
+        }
+
         public void Begin(IStrikerContext strikerContext, DemonChargeAttackState attackOwner) {
             context = strikerContext;
             owner = attackOwner;

@@ -13,6 +13,7 @@ namespace Core.LargeWizard {
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] StrikerNode fallNode;
         [SerializeField] float jumpSpeed;
+        public float ObservationSpeed => jumpSpeed;
         // 縺薙・繧ケ繝・・繝医↓驕キ遘サ縺励◆逶エ蠕後↓蜻シ縺ー繧後ｋ
         public override void OnEnter(IStrikerContext context) {
             // 繧「繝九Γ繝シ繧キ繝ァ繝ウ縺ョ蜀咲函繧帝幕蟋九☆繧・

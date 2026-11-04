@@ -20,10 +20,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--engine', default='http://127.0.0.1:50021')
     parser.add_argument('--overwrite', action='store_true', help='Regenerate existing MP3s.')
+    parser.add_argument('--ids', nargs='+', help='Generate only the named clips.')
     args = parser.parse_args()
     root = Path(__file__).resolve().parent
     manifest = json.loads((root / 'voice-lines.json').read_text(encoding='utf-8'))
     for clip in manifest['Clips']:
+        if args.ids and clip['Id'] not in args.ids:
+            continue
         target = root / (clip['Id'] + '.mp3')
         if target.exists() and not args.overwrite:
             continue

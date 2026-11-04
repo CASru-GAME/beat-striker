@@ -17,6 +17,7 @@ namespace Core.LargeWizard {
         Collider hitCollider;
         Renderer[] renderers;
         bool isLaunched;
+        public Transform ObservationOwner => ownerStrikerHub != null ? ownerStrikerHub.transform : null;
 
         public void SetOwnerStrikerHub(StrikerHub strikerHub) {
             ownerStrikerHub = strikerHub;

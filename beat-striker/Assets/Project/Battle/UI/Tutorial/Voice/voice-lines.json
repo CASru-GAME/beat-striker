@@ -2,78 +2,754 @@
   "Credit": "VOICEVOX:ずんだもん",
   "Speaker": 3,
   "Clips": [
-    { "Id": "overview", "Text": "チュートリアルを始めるのだ。" },
-    { "Id": "next", "Text": "で次へ。" },
-    { "Id": "hp", "Text": "エイチピーのバーはここに表示されるのだ。" },
-    { "Id": "sp", "Text": "エスピー、必殺技ゲージはここに表示されるのだ。コンボが連続するほど溜まりやすくなるのだ。" },
-    { "Id": "walk_intro", "Text": "まずは歩き方を教えるのだ。" },
-    { "Id": "walk_end", "Text": "歩いてみよう。" },
-    { "Id": "rhythm_intro", "Text": "リズムに合わせて押さないと、コマンドは発動しないのだ！" },
-    { "Id": "rhythm_three", "Text": "のどれかを、リズムに合わせて三拍連続で成功させるのだ。" },
-    { "Id": "rhythm_retry", "Text": "ミスや押し忘れで、最初からやり直しだ。" },
-    { "Id": "rhythm_press", "Text": "リズムに合わせて、" },
-    { "Id": "dash_end", "Text": "を押すとダッシュができるのだ。" },
-    { "Id": "dash_practice", "Text": "を押して、ダッシュしてみよう。" },
-    { "Id": "attack_end", "Text": "を押すと攻撃ができるのだ。" },
-    { "Id": "attack_practice", "Text": "を押して、攻撃してみよう。" },
-    { "Id": "charge_end", "Text": "を押すとチャージができるのだ。" },
-    { "Id": "charge_practice", "Text": "を押して、チャージしてみよう。" },
-    { "Id": "charge_attack", "Text": "チャージした後に攻撃すると、強力な攻撃が出るのだ。" },
-    { "Id": "charge_then", "Text": "でチャージして、その一拍後に、" },
-    { "Id": "charge_attack_end", "Text": "で攻撃してみよう。" },
-    { "Id": "guard_end", "Text": "を押すとガードができるのだ。" },
-    { "Id": "guard_practice", "Text": "を押して、ガードしてみよう。" },
-    { "Id": "special_intro", "Text": "エスピーが溜まった後、" },
-    { "Id": "special_end", "Text": "を押すと必殺技が発動できるのだ。" },
-    { "Id": "special_practice", "Text": "を押して、発動してみよう。" },
-    { "Id": "final", "Text": "お疲れさまなのだ！" },
-    { "Id": "button_a", "Text": "エーボタン" },
-    { "Id": "button_b", "Text": "ビーボタン" },
-    { "Id": "button_x", "Text": "エックスボタン" },
-    { "Id": "button_y", "Text": "ワイボタン" },
-    { "Id": "button_start", "Text": "スタートボタン" },
-    { "Id": "key_i", "Text": "アイキー" },
-    { "Id": "key_j", "Text": "ジェーキー" },
-    { "Id": "key_k", "Text": "ケーキー" },
-    { "Id": "key_l", "Text": "エルキー" },
-    { "Id": "key_u", "Text": "ユーキー" },
-    { "Id": "walk_stick", "Text": "左スティックを、移動したい方向、左右に傾けて、" },
-    { "Id": "walk_keyboard", "Text": "エーキーかディーキーで、" },
-    { "Id": "direction_stick", "Text": "進みたい方向にスティックを倒しながら、" },
-    { "Id": "direction_keyboard", "Text": "ダブリュー、エー、エス、ディーキーで、進みたい方向を押しながら、" },
-    { "Id": "timer", "Text": "これがタイマーなのだ。曲の残り拍数を表示しているのだ。この数字がゼロになると、試合終了なのだ。" },
-    { "Id": "score", "Text": "相手を倒すと、得点のカップを一つ獲得できるのだ！まずは相手を倒して、カップを手に入れるのだ！" },
-    { "Id": "score_award", "Text": "相手を倒して、カップを一つ獲得したのだ！追加されたカップはここなのだ。これでチュートリアルは終了なのだ！" },
-    { "Id": "victory", "Text": "曲が終わったとき、カップが多い方が勝ちなのだ！同じ数なら、残りエイチピーが多い方の勝ちなのだ。" },
-    { "Id": "direction_hold_stick", "Text": "左スティックを、行きたい方向に倒したままにするのだ。" },
-    { "Id": "direction_hold_keyboard", "Text": "ダブリュー、エー、エス、ディーキーで、行きたい方向を押し続けるのだ。" },
-    { "Id": "direction_hold_command", "Text": "方向入力を続けた状態で、リズムに合わせてコマンドを押すのだ！方向入力を先に離さないようにするのだ。" }
+    {
+      "Id": "overview",
+      "Text": "チュートリアルを始めるのだ！"
+    },
+    {
+      "Id": "next",
+      "Text": "で次へ。"
+    },
+    {
+      "Id": "walk_intro",
+      "Text": "まずは歩いて、間合いをつかむのだ！"
+    },
+    {
+      "Id": "walk_end",
+      "Text": "歩いてみよう。"
+    },
+    {
+      "Id": "rhythm_three",
+      "Text": "のどれかを、リズムに合わせて三拍連続で成功させるのだ。"
+    },
+    {
+      "Id": "rhythm_retry",
+      "Text": "ミスや押し忘れで、最初からやり直しだ。"
+    },
+    {
+      "Id": "rhythm_press",
+      "Text": "リズムに合わせて、"
+    },
+    {
+      "Id": "dash_end",
+      "Text": "を押すとダッシュができるのだ。"
+    },
+    {
+      "Id": "dash_practice",
+      "Text": "を押して、ダッシュしてみよう。"
+    },
+    {
+      "Id": "attack_end",
+      "Text": "を押すと攻撃ができるのだ。"
+    },
+    {
+      "Id": "attack_practice",
+      "Text": "を押して、攻撃してみよう。"
+    },
+    {
+      "Id": "charge_end",
+      "Text": "を押すとチャージができるのだ。"
+    },
+    {
+      "Id": "charge_practice",
+      "Text": "を押して、チャージしてみよう。"
+    },
+    {
+      "Id": "charge_attack",
+      "Text": "チャージした後に攻撃すると、強力な攻撃が出るのだ。"
+    },
+    {
+      "Id": "charge_then",
+      "Text": "でチャージして、その一拍後に、"
+    },
+    {
+      "Id": "charge_attack_end",
+      "Text": "で攻撃してみよう。"
+    },
+    {
+      "Id": "guard_end",
+      "Text": "を押すとガードができるのだ。"
+    },
+    {
+      "Id": "guard_practice",
+      "Text": "を押して、ガードしてみよう。"
+    },
+    {
+      "Id": "special_intro",
+      "Text": "エスピーがたまった後、"
+    },
+    {
+      "Id": "special_end",
+      "Text": "を押すと必殺技が発動できるのだ。"
+    },
+    {
+      "Id": "special_practice",
+      "Text": "を押して、発動してみよう。"
+    },
+    {
+      "Id": "final",
+      "Text": "お疲れさまなのだ！"
+    },
+    {
+      "Id": "button_a",
+      "Text": "エーボタン"
+    },
+    {
+      "Id": "button_b",
+      "Text": "ビーボタン"
+    },
+    {
+      "Id": "button_x",
+      "Text": "エックスボタン"
+    },
+    {
+      "Id": "button_y",
+      "Text": "ワイボタン"
+    },
+    {
+      "Id": "button_start",
+      "Text": "スタートボタン"
+    },
+    {
+      "Id": "key_i",
+      "Text": "アイキー"
+    },
+    {
+      "Id": "key_j",
+      "Text": "ジェーキー"
+    },
+    {
+      "Id": "key_k",
+      "Text": "ケーキー"
+    },
+    {
+      "Id": "key_l",
+      "Text": "エルキー"
+    },
+    {
+      "Id": "key_u",
+      "Text": "ユーキー"
+    },
+    {
+      "Id": "walk_stick",
+      "Text": "左スティックを、移動したい方向、左右に傾けて、"
+    },
+    {
+      "Id": "walk_keyboard",
+      "Text": "エーキーかディーキーで、"
+    },
+    {
+      "Id": "direction_stick",
+      "Text": "進みたい方向にスティックを倒しながら、"
+    },
+    {
+      "Id": "direction_keyboard",
+      "Text": "ダブリュー、エー、エス、ディーキーで、進みたい方向を押しながら、"
+    },
+    {
+      "Id": "direction_hold_stick",
+      "Text": "左スティックを、行きたい方向に倒したままにするのだ。"
+    },
+    {
+      "Id": "direction_hold_keyboard",
+      "Text": "ダブリュー、エー、エス、ディーキーで、行きたい方向を押し続けるのだ。"
+    },
+    {
+      "Id": "direction_hold_command",
+      "Text": "方向を変えると、技も変わるのだ！"
+    },
+    {
+      "Id": "sp_page2",
+      "Text": "コンボをつなぐほど、たまりやすいのだ！"
+    },
+    {
+      "Id": "timer_page2",
+      "Text": "0になると試合終了なのだ！"
+    },
+    {
+      "Id": "score_award_page2",
+      "Text": "これでチュートリアルは終了なのだ！"
+    },
+    {
+      "Id": "script_102",
+      "Text": "まずは画面の見方を覚えるのだ"
+    },
+    {
+      "Id": "script_103",
+      "Text": "これは体力を表すHPなのだ"
+    },
+    {
+      "Id": "script_104",
+      "Text": "攻撃を受けると減っていき、0になるとダウンなので注意しよう"
+    },
+    {
+      "Id": "script_105",
+      "Text": "次は、必殺技ゲージのSPなのだ"
+    },
+    {
+      "Id": "script_106",
+      "Text": "技を成功させるとどんどん溜まるのだ"
+    },
+    {
+      "Id": "script_107",
+      "Text": "まずは歩いてみるのだ"
+    },
+    {
+      "Id": "script_108",
+      "Text": "相手との距離を調整する基本なのだ！"
+    },
+    {
+      "Id": "script_109",
+      "Text": "次は、技を出すタイミングについて教えるのだ"
+    },
+    {
+      "Id": "script_110",
+      "Text": "技はビートに合わせると出せるのだ！"
+    },
+    {
+      "Id": "script_111",
+      "Text": "タイミングがずれると不発なのだ"
+    },
+    {
+      "Id": "script_112",
+      "Text": "タイミングを合わせる練習をしてみよう"
+    },
+    {
+      "Id": "script_113",
+      "Text": "最後に、試合のルールについて説明するのだ"
+    },
+    {
+      "Id": "script_114",
+      "Text": "この数字は、曲の残り拍数なのだ"
+    },
+    {
+      "Id": "script_115",
+      "Text": "実際に 相手を倒して 勝利してみよう！"
+    },
+    {
+      "Id": "script_116",
+      "Text": "相手を倒して、勝利した証としてカップを獲得したのだ！"
+    },
+    {
+      "Id": "script_117",
+      "Text": "ここに1つ増えたのだ"
+    },
+    {
+      "Id": "script_118",
+      "Text": "覚えた技で、対戦を楽しむのだ！"
+    },
+    {
+      "Id": "script_119",
+      "Text": "曲が終わったとき、勝利したラウンド数の多い方が勝ちなのだ！"
+    },
+    {
+      "Id": "script_120",
+      "Text": "三本先取ではないので注意しよう"
+    },
+    {
+      "Id": "script_121",
+      "Text": "次はジャンプについて教えるのだ"
+    },
+    {
+      "Id": "script_122",
+      "Text": "上に跳んで、相手の攻撃をかわせるのだ！"
+    },
+    {
+      "Id": "script_123",
+      "Text": "次は、ダッシュについて教えるのだ"
+    },
+    {
+      "Id": "script_124",
+      "Text": "歩くより早く距離を詰められるのだ！"
+    },
+    {
+      "Id": "script_125",
+      "Text": "次は、通常攻撃について教えるのだ"
+    },
+    {
+      "Id": "script_126",
+      "Text": "魔法使いの攻撃は、近くの相手を杖でたたく技なのだ！"
+    },
+    {
+      "Id": "script_127",
+      "Text": "次は、チャージについて教えるのだ"
+    },
+    {
+      "Id": "script_128",
+      "Text": "チャージをすると強力な技を打てるようになるのだ"
+    },
+    {
+      "Id": "script_129",
+      "Text": "ここからは、チャージした魔力で魔法を使うのだ！"
+    },
+    {
+      "Id": "script_130",
+      "Text": "魔法使いは、ためた回数によって発動する魔法が変わるのだ！"
+    },
+    {
+      "Id": "script_131",
+      "Text": "1回目は炎、2回目は氷、3回目以上は岩"
+    },
+    {
+      "Id": "script_132",
+      "Text": "まずは チャージ一回 炎魔法 を使ってみよう"
+    },
+    {
+      "Id": "script_133",
+      "Text": "次はチャージ２回 氷魔法 を使ってみよう"
+    },
+    {
+      "Id": "script_134",
+      "Text": "次はチャージ３回 岩魔法 を使ってみよう"
+    },
+    {
+      "Id": "script_135",
+      "Text": "次は、ガードについて教えるのだ"
+    },
+    {
+      "Id": "script_136",
+      "Text": "魔法使いは、魔法のシールドを生み出せるのだ！"
+    },
+    {
+      "Id": "script_137",
+      "Text": "シールドは攻撃を受けると消えるのだ"
+    },
+    {
+      "Id": "script_138",
+      "Text": "今度は、シールドを使った攻撃なのだ"
+    },
+    {
+      "Id": "script_139",
+      "Text": "ガードを連続ですると、シールドがどんどん溜まっていくのだ！"
+    },
+    {
+      "Id": "script_140",
+      "Text": "そして ４枚以上ためると 盾が前方に放出されるのだ"
+    },
+    {
+      "Id": "script_141",
+      "Text": "最後は、必殺技なのだ！"
+    },
+    {
+      "Id": "script_142",
+      "Text": "大きな光のビームで、相手をなぎ払う技なのだ"
+    },
+    {
+      "Id": "script_143",
+      "Text": "練習用にSPを満タンにしてあるのだ！"
+    },
+    {
+      "Id": "script_144",
+      "Text": "剣を振って、近くの相手を斬る技なのだ！"
+    },
+    {
+      "Id": "script_145",
+      "Text": "次は突進攻撃なのだ"
+    },
+    {
+      "Id": "script_146",
+      "Text": "少し離れた相手にも届いてしまう強力な技なのだ"
+    },
+    {
+      "Id": "script_147",
+      "Text": "次に、ためた力で弾丸を撃ってみよう！"
+    },
+    {
+      "Id": "script_148",
+      "Text": "離れた相手にも届く強力な弾丸が発射できるのだ！"
+    },
+    {
+      "Id": "script_149",
+      "Text": "勇者は、頭に乗ってるスライムを肉壁にして攻撃を防ぐのだ！"
+    },
+    {
+      "Id": "script_150",
+      "Text": "最後は、勇者の必殺技なのだ！"
+    },
+    {
+      "Id": "script_151",
+      "Text": "相手を斬り上げ、空中で追い打ちする技なのだ"
+    },
+    {
+      "Id": "script_152",
+      "Text": "槍を振って、近くの相手を斬る技なのだ！"
+    },
+    {
+      "Id": "script_153",
+      "Text": "次は、槍投げについて教えるのだ"
+    },
+    {
+      "Id": "script_154",
+      "Text": "戦士は、槍をまっすぐ投げて 遠くの敵を攻撃することができるのだ"
+    },
+    {
+      "Id": "script_155",
+      "Text": "次は、構えた槍を 放ってみよう"
+    },
+    {
+      "Id": "script_156",
+      "Text": "戦士は、なんと投げた先へワープすることができるのだ！"
+    },
+    {
+      "Id": "script_157",
+      "Text": "次は、空中からの下攻撃について教えるのだ"
+    },
+    {
+      "Id": "script_158",
+      "Text": "下にいる相手に 空中から一気に急降下して大ダメージを与えられるのだ"
+    },
+    {
+      "Id": "script_159",
+      "Text": "戦士は、一瞬だけ異空間にワープすることで攻撃を防げるのだ！"
+    },
+    {
+      "Id": "script_160",
+      "Text": "大量の武器を召喚し、敵めがけて武器の雨を浴びせる技なのだ"
+    },
+    {
+      "Id": "script_161",
+      "Text": "近くの相手に、重いパンチを放つ技なのだ！"
+    },
+    {
+      "Id": "script_162",
+      "Text": "次は、攻撃を防ぐガードについて教えるのだ"
+    },
+    {
+      "Id": "script_163",
+      "Text": "相手の攻撃を受け止めて、反撃の機会を作るのだ！"
+    },
+    {
+      "Id": "script_164",
+      "Text": "最後は、必殺技について教えるのだ！"
+    },
+    {
+      "Id": "script_165",
+      "Text": "魔王の必殺技は 巨大化して突進する技なのだ"
+    }
   ],
   "Lines": [
-    { "Key": "Overview", "Segments": ["overview", "$East", "next"] },
-    { "Key": "HpDescription", "Segments": ["hp", "$East", "next"] },
-    { "Key": "SpDescription", "Segments": ["sp", "$East", "next"] },
-    { "Key": "WalkDescription", "Segments": ["walk_intro", "$East", "next"] },
-    { "Key": "WalkPractice", "Segments": ["$Walk", "walk_end"] },
-    { "Key": "RhythmDescription", "Segments": ["rhythm_intro", "$East", "$South", "$North", "$West", "rhythm_three", "$East", "next"] },
-    { "Key": "RhythmPractice", "Segments": ["rhythm_press", "$East", "$South", "$North", "$West", "rhythm_three", "rhythm_retry"] },
-    { "Key": "DashDescription", "Segments": ["$Direction", "rhythm_press", "$West", "dash_end", "$East", "next"] },
-    { "Key": "DashPractice", "Segments": ["$Direction", "$West", "dash_practice"] },
-    { "Key": "AttackDescription", "Segments": ["$East", "attack_end", "$East", "next"] },
-    { "Key": "AttackPractice", "Segments": ["$East", "attack_practice"] },
-    { "Key": "ChargeDescription", "Segments": ["$South", "charge_end", "$East", "next"] },
-    { "Key": "ChargePractice", "Segments": ["$South", "charge_practice"] },
-    { "Key": "ChargeAttackDescription", "Segments": ["charge_attack", "$East", "next"] },
-    { "Key": "ChargeAttackPractice", "Segments": ["$South", "charge_then", "$East", "charge_attack_end"] },
-    { "Key": "GuardDescription", "Segments": ["$North", "guard_end", "$East", "next"] },
-    { "Key": "GuardPractice", "Segments": ["$North", "guard_practice"] },
-    { "Key": "SpecialDescription", "Segments": ["special_intro", "$Start", "special_end", "$East", "next"] },
-    { "Key": "SpecialPractice", "Segments": ["$Start", "special_practice"] },
-    { "Key": "TimerDescription", "Segments": ["timer", "$East", "next"] },
-    { "Key": "ScoreDescription", "Segments": ["score", "$East", "next"] },
-    { "Key": "ScoreAwardDescription", "Segments": ["score_award", "$East", "next"] },
-    { "Key": "Final", "Segments": ["final"] },
-    { "Key": "DirectionDescription", "Segments": ["$DirectionHold", "direction_hold_command", "$East", "next"] },
-    { "Key": "VictoryDescription", "Segments": ["victory", "$East", "next"] }
-  ]
+    {
+      "Key": "Overview",
+      "Segments": [
+        "overview",
+        "script_102"
+      ],
+      "Pages": [
+        {
+          "Text": "チュートリアルを始めるのだ！",
+          "Voice": "overview"
+        },
+        {
+          "Text": "まずは画面の見方を覚えるのだ",
+          "Voice": "script_102"
+        }
+      ]
+    },
+    {
+      "Key": "HpDescription",
+      "Segments": [
+        "script_103",
+        "script_104"
+      ],
+      "Pages": [
+        {
+          "Text": "これは体力を表すHPなのだ",
+          "Voice": "script_103"
+        },
+        {
+          "Text": "攻撃を受けると減っていき、0になるとダウンなので注意しよう",
+          "Voice": "script_104"
+        }
+      ]
+    },
+    {
+      "Key": "SpDescription",
+      "Segments": [
+        "script_105",
+        "script_106",
+        "sp_page2"
+      ],
+      "Pages": [
+        {
+          "Text": "次は、必殺技ゲージのSPなのだ",
+          "Voice": "script_105"
+        },
+        {
+          "Text": "技を成功させるとどんどん溜まるのだ",
+          "Voice": "script_106"
+        },
+        {
+          "Text": "コンボをつなぐほど、たまりやすいのだ！",
+          "Voice": "sp_page2"
+        }
+      ]
+    },
+    {
+      "Key": "WalkDescription",
+      "Segments": [
+        "script_107",
+        "script_108"
+      ],
+      "Pages": [
+        {
+          "Text": "まずは歩いてみるのだ",
+          "Voice": "script_107"
+        },
+        {
+          "Text": "相手との距離を調整する基本なのだ！",
+          "Voice": "script_108"
+        }
+      ]
+    },
+    {
+      "Key": "WalkPractice",
+      "Segments": [
+        "$Walk",
+        "walk_end"
+      ]
+    },
+    {
+      "Key": "RhythmDescription",
+      "Segments": [
+        "script_109",
+        "script_110",
+        "script_111",
+        "script_112"
+      ],
+      "Pages": [
+        {
+          "Text": "次は、技を出すタイミングについて教えるのだ",
+          "Voice": "script_109"
+        },
+        {
+          "Text": "技はビートに合わせると出せるのだ！",
+          "Voice": "script_110"
+        },
+        {
+          "Text": "タイミングがずれると不発なのだ",
+          "Voice": "script_111"
+        },
+        {
+          "Text": "タイミングを合わせる練習をしてみよう",
+          "Voice": "script_112"
+        }
+      ]
+    },
+    {
+      "Key": "RhythmPractice",
+      "Segments": [
+        "rhythm_press",
+        "$East",
+        "$South",
+        "$North",
+        "$West",
+        "rhythm_three",
+        "rhythm_retry"
+      ]
+    },
+    {
+      "Key": "DashDescription",
+      "Segments": [
+        "$Direction",
+        "rhythm_press",
+        "$West",
+        "dash_end",
+        "$East",
+        "next"
+      ]
+    },
+    {
+      "Key": "DashPractice",
+      "Segments": [
+        "$Direction",
+        "$West",
+        "dash_practice"
+      ]
+    },
+    {
+      "Key": "AttackDescription",
+      "Segments": [
+        "$East",
+        "attack_end",
+        "$East",
+        "next"
+      ]
+    },
+    {
+      "Key": "AttackPractice",
+      "Segments": [
+        "$East",
+        "attack_practice"
+      ]
+    },
+    {
+      "Key": "ChargeDescription",
+      "Segments": [
+        "$South",
+        "charge_end",
+        "$East",
+        "next"
+      ]
+    },
+    {
+      "Key": "ChargePractice",
+      "Segments": [
+        "$South",
+        "charge_practice"
+      ]
+    },
+    {
+      "Key": "ChargeAttackDescription",
+      "Segments": [
+        "charge_attack",
+        "$East",
+        "next"
+      ]
+    },
+    {
+      "Key": "ChargeAttackPractice",
+      "Segments": [
+        "$South",
+        "charge_then",
+        "$East",
+        "charge_attack_end"
+      ]
+    },
+    {
+      "Key": "GuardDescription",
+      "Segments": [
+        "$North",
+        "guard_end",
+        "$East",
+        "next"
+      ]
+    },
+    {
+      "Key": "GuardPractice",
+      "Segments": [
+        "$North",
+        "guard_practice"
+      ]
+    },
+    {
+      "Key": "SpecialDescription",
+      "Segments": [
+        "special_intro",
+        "$Start",
+        "special_end",
+        "$East",
+        "next"
+      ]
+    },
+    {
+      "Key": "SpecialPractice",
+      "Segments": [
+        "$Start",
+        "special_practice"
+      ]
+    },
+    {
+      "Key": "TimerDescription",
+      "Segments": [
+        "script_113",
+        "script_114",
+        "timer_page2"
+      ],
+      "Pages": [
+        {
+          "Text": "最後に、試合のルールについて説明するのだ",
+          "Voice": "script_113"
+        },
+        {
+          "Text": "この数字は、曲の残り拍数なのだ",
+          "Voice": "script_114"
+        },
+        {
+          "Text": "0になると試合終了なのだ！",
+          "Voice": "timer_page2"
+        }
+      ]
+    },
+    {
+      "Key": "ScoreDescription",
+      "Segments": [
+        "script_115"
+      ],
+      "Pages": [
+        {
+          "Text": "実際に 相手を倒して 勝利してみよう！",
+          "Voice": "script_115"
+        }
+      ]
+    },
+    {
+      "Key": "ScoreAwardDescription",
+      "Segments": [
+        "script_116",
+        "script_117",
+        "score_award_page2"
+      ],
+      "Pages": [
+        {
+          "Text": "相手を倒して、勝利した証としてカップを獲得したのだ！",
+          "Voice": "script_116"
+        },
+        {
+          "Text": "ここに1つ増えたのだ",
+          "Voice": "script_117"
+        },
+        {
+          "Text": "これでチュートリアルは終了なのだ！",
+          "Voice": "score_award_page2"
+        }
+      ]
+    },
+    {
+      "Key": "Final",
+      "Segments": [
+        "final",
+        "script_118"
+      ],
+      "Pages": [
+        {
+          "Text": "お疲れさまなのだ！",
+          "Voice": "final"
+        },
+        {
+          "Text": "覚えた技で、対戦を楽しむのだ！",
+          "Voice": "script_118"
+        }
+      ]
+    },
+    {
+      "Key": "DirectionDescription",
+      "Segments": [
+        "direction_hold_command"
+      ],
+      "Pages": [
+        {
+          "Text": "方向を変えると、技も変わるのだ！",
+          "Voice": "direction_hold_command"
+        }
+      ]
+    },
+    {
+      "Key": "VictoryDescription",
+      "Segments": [
+        "script_119",
+        "script_120"
+      ],
+      "Pages": [
+        {
+          "Text": "曲が終わったとき、勝利したラウンド数の多い方が勝ちなのだ！",
+          "Voice": "script_119"
+        },
+        {
+          "Text": "三本先取ではないので注意しよう",
+          "Voice": "script_120"
+        }
+      ]
+    }
+  ],
+  "DisplayCharacters": " 01234HPS、あいうえおかがきぎくぐけげこさしすずせそただちっつづてでとどなにのはびへほまみむめもやよらりるれわをんアイウエカガギグゲコシジスタダチットドネパビプボミムメャュラリルワンー一三上下不与中丸乗了今以会体作使倒備先光出利前剣力功勇動勝化反取受召合向喚器回基増壁士変多大始字実対射少届岩巨常度強弾後得必急意態成戦手打払技投押拍振撃攻放教数整敵斬方早明曲最本杖枚楽構槍機次止武歩残殺気氷法注浴消減満溜炎状獲王生用画異疲発目相盾瞬空突終続練習者肉表要見覚証試詰説調距跳近追通連進遠重量間防降際離雨面領頭飛魔！１２３４"
 }

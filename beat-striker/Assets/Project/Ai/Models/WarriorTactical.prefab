@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &714152330420949822
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4613717739136041729}
+  - component: {fileID: 1718372972706777403}
+  m_Layer: 0
+  m_Name: WarriorTactical
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4613717739136041729
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 714152330420949822}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1718372972706777403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 714152330420949822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f576bd857b914d2b91be69f4f2c3240e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.WarriorAiBrain
+  tuning:
+    InitialBeatSeconds: 0.5
+    GroundClearance: 0.2
+    ProjectileObservationRadius: 45
+    PredictionMargin: 0.18
+    AttackReach: 2.2
+    AttackVerticalReach: 1.3
+    AttackSpeed: 15
+    AttackDuration: 0.3
+    ComboDuration: 0.5
+    FinisherSpeed: 40
+    AirAttackSpeed: 5
+    AirAttackDuration: 0.5
+    DiveAttackSpeed: 30
+    DashSpeed: 20
+    DashDuration: 0.3
+    JumpSpeed: 38
+    AirJumpSpeed: 14
+    AirSuperJumpSpeed: 9
+    AirJumpAcceleration: 30
+    AirJumpDuration: 0.5
+    JumpDuration: 0.4
+    DiveSpeed: 20
+    GuardSeconds: 0.65
+    GuardShift: 0.2
+    ThrowSpeed: 35
+    ThrowSeconds: 0.8
+    ThrowReleaseDelay: 0
+    ThrowMinimumDistance: 5
+    ThrowMaximumDistance: 10
+    RecoilSpeed: 12
+    RiskWeight: 32
+    DamageWeight: 1.8
+    PositionWeight: 2.4
+    SpecialScore: 35
+  versusWarrior:
+    PreferredDistance: 3.2
+    OpponentReach: 4.2
+    Pressure: 1
+    ProjectileCaution: 1.15
+    JumpPreference: 0.2
+  versusWizard:
+    PreferredDistance: 2.1
+    OpponentReach: 2.6
+    Pressure: 1.35
+    ProjectileCaution: 1.4
+    JumpPreference: 1.1
+  versusHero:
+    PreferredDistance: 3.5
+    OpponentReach: 3.5
+    Pressure: 0.95
+    ProjectileCaution: 1.15
+    JumpPreference: 0.1
+  versusDemonKing:
+    PreferredDistance: 3.8
+    OpponentReach: 3.2
+    Pressure: 0.95
+    ProjectileCaution: 1.5
+    JumpPreference: -0.3

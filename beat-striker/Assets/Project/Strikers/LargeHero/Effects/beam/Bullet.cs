@@ -16,12 +16,15 @@ namespace Core.LargeHero {
         [SerializeField] GameObject trail;
         [SerializeField] LayerMask rootSearchMask;
         public GameObject OwnerRoot { get; set; }
+        public float ObservationSpeed => speed;
+        public float ObservationDamage => damage;
 
         void Awake() {
             rb = GetComponent<Rigidbody>();
         }
 
-        void Start() {
+        void OnEnable() {
+            OwnerRoot = null;
             var backward = -rb.transform.forward;
             if (Physics.Raycast(transform.position, backward, out var hit, Mathf.Infinity, rootSearchMask)) {
                 OwnerRoot = hit.transform.root.gameObject;

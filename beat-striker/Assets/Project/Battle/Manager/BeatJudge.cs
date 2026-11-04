@@ -654,6 +654,11 @@ namespace Alice {
 
         public void Pause() {
             isPaused = true;
+            // Music can keep advancing during tutorial and attention pauses. An input
+            // queued for a skipped beat must not keep the player locked after resume.
+            if (!IsOnlineBattle()) {
+                foreach (var player in beatPlayer) player.CancelPendingCommands();
+            }
         }
 
         public void Resume() {

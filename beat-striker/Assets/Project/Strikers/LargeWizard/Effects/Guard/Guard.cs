@@ -17,6 +17,9 @@ namespace Core.LargeWizard {
         float launchedDamage;
         float launchingKnockbackSpeed;
         bool isLaunched;
+        public Transform ObservationOwner => ownerStrikerHub != null ? ownerStrikerHub.transform : null;
+        public bool IsObservationProjectile => isLaunched;
+        public float ObservationDamage => launchedDamage;
         Coroutine moveCoroutine;
         bool isVirgin, isGenerating;
 

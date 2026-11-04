@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using App;
 using R3;
@@ -17,6 +18,7 @@ namespace Alice {
         const int TUTORIAL_PLAYER_ID = 0;
 
         readonly IBeatjudge beatJudge;
+        readonly IMusicPlayer musicPlayer;
         readonly IStrikerRegistry strikerRegistry;
         readonly IGamePadRegistry gamePadRegistry;
         readonly ITutorialSetting tutorialSetting;
@@ -31,6 +33,12 @@ namespace Alice {
         bool disposed;
         readonly TaskCompletionSource<bool> disposalCompletion = new();
         const int RHYTHM_REQUIRED_SUCCESSES = 3;
+        TutorialActionLesson currentLesson;
+        int currentDescriptionPage;
+        bool showingAfterPractice;
+        TutorialActionStep currentPracticeStep;
+        int currentPracticeCount;
+        bool currentPracticeRetry;
 
         public Observable<Unit> OnTutorialPauseRequested => tutorialPauseRequestedSubject;
         public Observable<Unit> OnTutorialResumeRequested => tutorialResumeRequestedSubject;
@@ -39,6 +47,7 @@ namespace Alice {
         [Inject]
         public BattleTutorialPresenter(
             IBeatjudge beatJudge,
+            IMusicPlayer musicPlayer,
             IStrikerRegistry strikerRegistry,
             IGamePadRegistry gamePadRegistry,
             ITutorialSetting tutorialSetting,
@@ -47,6 +56,7 @@ namespace Alice {
             IBattlePresenter battlePresenter,
             BattleTutorialView tutorialView) {
             this.beatJudge = beatJudge;
+            this.musicPlayer = musicPlayer;
             this.strikerRegistry = strikerRegistry;
             this.gamePadRegistry = gamePadRegistry;
             this.tutorialSetting = tutorialSetting;
@@ -59,12 +69,13 @@ namespace Alice {
                 return;
             }
 
-            tutorialView.SetNarrationInput(ResolveVoiceInput());
+            RefreshTutorialInput();
             Observable.EveryUpdate()
                 .Select(_ => (Keyboard: gamePadRegistry.Get(TUTORIAL_PLAYER_ID).DeviceName == "Keybord",
-                    East: gamePadRegistry.GetPhysicalFaceButton(GamePadButton.East)))
+                    East: gamePadRegistry.GetPhysicalFaceButton(GamePadButton.East),
+                    FacingRight: !TryResolveTutorialStriker(out var striker) || striker.LookDirection.CurrentValue.x >= 0f))
                 .DistinctUntilChanged()
-                .Subscribe(_ => tutorialView.SetNarrationInput(ResolveVoiceInput()))
+                .Subscribe(_ => RefreshTutorialInput())
                 .AddTo(subscriptions);
             audioSetting.VolumeBalance
                 .Subscribe(balance => tutorialView.SetNarrationVolume(balance.MasterVolume * balance.SeVolume))
@@ -73,12 +84,13 @@ namespace Alice {
             var beatPlayer = beatJudge.GetBeatPlayer(TUTORIAL_PLAYER_ID);
 
             beatPlayer.OnBeatPassed
-                .Subscribe(_ => TryStartTutorialSequence())
+                .Subscribe(_ => { TryStartTutorialSequence(); tutorialView.PulseRhythmGuide(); })
                 .AddTo(subscriptions);
 
             beatPlayer.OnBeatCommandExecuted
                 .Subscribe(_event => {
                     TryStartTutorialSequence();
+                    tutorialView.PulseRhythmGuide();
                 })
                 .AddTo(subscriptions);
         }
@@ -89,11 +101,13 @@ namespace Alice {
             }
 
             started = true;
+            tutorialView.SetGuideBeatSeconds(musicPlayer.CurrentBeatTimeline[1] - musicPlayer.CurrentBeatTimeline[0]);
             _ = RunTutorialSequenceAsync();
         }
 
         TutorialVoiceInput ResolveVoiceInput() {
             var keyboard = gamePadRegistry.Get(TUTORIAL_PLAYER_ID).DeviceName == "Keybord";
+            var facingRight = !TryResolveTutorialStriker(out var striker) || striker.LookDirection.CurrentValue.x >= 0f;
             string ButtonClip(GamePadButton button) {
                 var physical = gamePadRegistry.GetPhysicalFaceButton(button);
                 return (keyboard, physical) switch {
@@ -115,7 +129,67 @@ namespace Alice {
                 keyboard ? "walk_keyboard" : "walk_stick",
                 keyboard ? "direction_keyboard" : "direction_stick",
                 keyboard ? "I / J / K / L キー" : "A / B / X / Y ボタン",
-                keyboard ? "W / A / S / D キーを押し続けたまま" : "左スティックを行きたい方向に倒したまま");
+                keyboard ? "W / A / S / D キーを押し続けたまま" : "左スティックを行きたい方向に倒したまま") {
+                Up = keyboard ? "lesson_input_up_keyboard" : "lesson_input_up_stick",
+                Down = keyboard ? "lesson_input_down_keyboard" : "lesson_input_down_stick",
+                Forward = keyboard ? (facingRight ? "lesson_input_forward_right" : "lesson_input_forward_left") : "lesson_input_forward_stick",
+            };
+        }
+
+        void RefreshTutorialInput() {
+            var input = ResolveVoiceInput();
+            tutorialView.SetNarrationInput(input);
+            tutorialView.SetInputLayout(gamePadRegistry.Get(TUTORIAL_PLAYER_ID).DeviceName == "Keybord",
+                PhysicalControl(GamePadButton.East));
+            if (currentLesson != null) {
+                var pages = showingAfterPractice ? currentLesson.AfterPracticePages : currentLesson.Pages;
+                tutorialView.SetCharacterLessonText(currentLesson.Title, pages[currentDescriptionPage].Text);
+                RefreshPracticeInput();
+            }
+        }
+
+        TutorialControl PhysicalControl(GamePadButton button) => gamePadRegistry.GetPhysicalFaceButton(button) switch {
+            GamePadButton.North => TutorialControl.North, GamePadButton.South => TutorialControl.South,
+            GamePadButton.West => TutorialControl.West, GamePadButton.East => TutorialControl.East,
+            GamePadButton.Start => TutorialControl.Start, GamePadButton.Select => TutorialControl.Select,
+            _ => TutorialControl.None,
+        };
+
+        void RefreshPracticeInput() {
+            if (currentPracticeStep == null) return;
+            var facing = !TryResolveTutorialStriker(out var striker) || striker.LookDirection.CurrentValue.x >= 0f ? 1f : -1f;
+            TutorialInputCue Cue(TutorialActionStep step) => new(PhysicalControl(step.Command), step.Direction switch {
+                TutorialDirection.Up => Vector2.up, TutorialDirection.Down => Vector2.down,
+                TutorialDirection.Forward => Vector2.right * facing,
+                TutorialDirection.ForwardUp => new Vector2(facing, 1f), _ => Vector2.zero,
+            });
+            var input = ResolveVoiceInput();
+            tutorialView.SetCharacterPracticeStep(
+                FormatLessonText(currentLesson.PracticeInstruction, input),
+                currentPracticeCount, currentPracticeStep.RequiredCount, currentPracticeRetry,
+                currentLesson.Steps.SelectMany(step => Enumerable.Repeat(Cue(step), step.RequiredCount)).ToArray());
+        }
+
+        string FormatLessonText(string text, TutorialVoiceInput input) {
+            string Label(string clip) => clip switch {
+                "key_i" => "Iキー", "key_j" => "Jキー", "key_k" => "Kキー", "key_l" => "Lキー",
+                "key_u" => "Uキー", "button_a" => "Aボタン", "button_b" => "Bボタン",
+                "button_x" => "Xボタン", "button_y" => "Yボタン", "button_start" => "スタートボタン",
+                _ => throw new ArgumentOutOfRangeException(nameof(clip), clip, "Unknown tutorial input."),
+            };
+            var keyboard = gamePadRegistry.Get(TUTORIAL_PLAYER_ID).DeviceName == "Keybord";
+            var facingRight = !TryResolveTutorialStriker(out var striker) || striker.LookDirection.CurrentValue.x >= 0f;
+            return text.Replace("{HoldUp}", keyboard ? "Wキーを押したまま" : "スティックを上に倒したまま")
+                .Replace("{HoldDown}", keyboard ? "Sキーを押したまま" : "スティックを下に倒したまま")
+                .Replace("{HoldForward}", keyboard ? (facingRight ? "Dキーを押したまま" : "Aキーを押したまま") : "スティックを前に倒したまま")
+                .Replace("{Attack}", Label(input.East)).Replace("{Charge}", Label(input.South))
+                .Replace("{Dash}", Label(input.West)).Replace("{Guard}", Label(input.North))
+                .Replace("{Jump}", Label(input.West))
+                .Replace("{Special}", Label(input.Start))
+                .Replace("{Up}", keyboard ? "Wキー" : "上方向")
+                .Replace("{Down}", keyboard ? "Sキー" : "下方向")
+                .Replace("{Forward}", keyboard ? (facingRight ? "Dキー" : "Aキー") : "前方向")
+                .Replace("{Horizontal}", keyboard ? "A / D キー" : "左右方向");
         }
 
         async Task RunTutorialSequenceAsync() {
@@ -127,9 +201,7 @@ namespace Alice {
                     return;
                 }
 
-                RequestTutorialPause();
-                await AwaitWhileActiveAsync(tutorialView.ShowAsync(TutorialUiKey.Overview));
-                await AwaitWhileActiveAsync(WaitForEastAsync());
+                await AwaitWhileActiveAsync(RunDescriptionSequenceAsync(TutorialUiKey.Overview));
                 if (!tutorialSetting.IsTutorialBattleRequested) {
                     tutorialView.HideAll();
                     return;
@@ -156,62 +228,7 @@ namespace Alice {
                     TutorialUiKey.RhythmPractice,
                     WaitForRhythmAsync));
 
-                await AwaitWhileActiveAsync(RunDescriptionSequenceAsync(TutorialUiKey.DirectionDescription));
-
-                await AwaitWhileActiveAsync(RunActionStepAsync(
-                    TutorialUiKey.DashDescription,
-                    TutorialUiKey.DashPractice,
-                    () => WaitForStateCategoryAsync(StrikerStateCategory.Dash)));
-                if (!tutorialSetting.IsTutorialBattleRequested) {
-                    tutorialView.HideAll();
-                    return;
-                }
-
-                await AwaitWhileActiveAsync(RunActionStepAsync(
-                    TutorialUiKey.AttackDescription,
-                    TutorialUiKey.AttackPractice,
-                    () => WaitForStateCategoryAsync(StrikerStateCategory.Attack)));
-                if (!tutorialSetting.IsTutorialBattleRequested) {
-                    tutorialView.HideAll();
-                    return;
-                }
-
-                await AwaitWhileActiveAsync(RunActionStepAsync(
-                    TutorialUiKey.ChargeDescription,
-                    TutorialUiKey.ChargePractice,
-                    () => WaitForStateCategoryAsync(StrikerStateCategory.Charge)));
-                if (!tutorialSetting.IsTutorialBattleRequested) {
-                    tutorialView.HideAll();
-                    return;
-                }
-
-                await AwaitWhileActiveAsync(RunActionStepAsync(
-                    TutorialUiKey.ChargeAttackDescription,
-                    TutorialUiKey.ChargeAttackPractice,
-                    WaitForChargeAttackAsync));
-                if (!tutorialSetting.IsTutorialBattleRequested) {
-                    tutorialView.HideAll();
-                    return;
-                }
-
-                await AwaitWhileActiveAsync(RunActionStepAsync(
-                    TutorialUiKey.GuardDescription,
-                    TutorialUiKey.GuardPractice,
-                    () => WaitForStateCategoryAsync(StrikerStateCategory.Guard)));
-                if (!tutorialSetting.IsTutorialBattleRequested) {
-                    tutorialView.HideAll();
-                    return;
-                }
-
-                if (!TryFillSpecialPointMax()) {
-                    tutorialView.HideAll();
-                    return;
-                }
-
-                await AwaitWhileActiveAsync(RunActionStepAsync(
-                    TutorialUiKey.SpecialDescription,
-                    TutorialUiKey.SpecialPractice,
-                    WaitForSpecialCompletionAsync));
+                await AwaitWhileActiveAsync(RunCharacterLessonsAsync());
 
                 if (!tutorialSetting.IsTutorialBattleRequested) {
                     tutorialView.HideAll();
@@ -234,9 +251,7 @@ namespace Alice {
                     return;
                 }
 
-                RequestTutorialPause();
-                await AwaitWhileActiveAsync(tutorialView.ShowAsync(TutorialUiKey.Final));
-                await AwaitWhileActiveAsync(tutorialView.HideAfterFinalDelayAsync());
+                await AwaitWhileActiveAsync(RunDescriptionSequenceAsync(TutorialUiKey.Final));
                 if (!tutorialSetting.IsTutorialBattleRequested) {
                     tutorialView.HideAll();
                     return;
@@ -257,6 +272,113 @@ namespace Alice {
             }
         }
 
+        async Task RunCharacterLessonsAsync() {
+            if (!TryResolveTutorialStriker(out var striker) || striker is not IStrikerTutorialSource source ||
+                source.TutorialLessons.Count == 0) {
+                throw new InvalidOperationException("Tutorial player has no character lessons configured.");
+            }
+
+            RequestTutorialPause();
+            source.ResetTutorialPractice(TutorialReset.All);
+            for (var i = 0; i < source.TutorialLessons.Count; i++) {
+                if (disposed || !tutorialSetting.IsTutorialBattleRequested) return;
+                var lesson = source.TutorialLessons[i];
+                currentLesson = lesson;
+                showingAfterPractice = false;
+                currentDescriptionPage = 0;
+                currentPracticeStep = lesson.Steps[0];
+                currentPracticeCount = 0;
+                currentPracticeRetry = false;
+                RefreshTutorialInput();
+                RequestTutorialPause();
+                source.ResetTutorialPractice(lesson.ResetBeforePractice);
+                if (lesson.IsSpecial && !TryFillSpecialPointMax()) return;
+                await AwaitWhileActiveAsync(RunActionStepAsync(
+                    TutorialUiKey.CharacterDescription, TutorialUiKey.CharacterPractice,
+                    () => WaitForCharacterActionAsync(source, lesson)));
+                showingAfterPractice = true;
+                for (var page = 0; page < lesson.AfterPracticePages.Length; page++) {
+                    currentDescriptionPage = page;
+                    RefreshTutorialInput();
+                    tutorialView.SetCharacterLessonNarration(new[] { lesson.AfterPracticePages[page].Voice });
+                    await AwaitWhileActiveAsync(tutorialView.ShowAsync(TutorialUiKey.CharacterDescription));
+                    await AwaitWhileActiveAsync(WaitForEastAsync());
+                }
+            }
+            currentLesson = null;
+            currentPracticeStep = null;
+        }
+
+        async Task WaitForCharacterActionAsync(IStrikerTutorialSource source, TutorialActionLesson lesson) {
+            var progress = new TutorialLessonProgress(lesson, source.CaptureTutorialCommand().Id);
+            var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using var practiceSubscriptions = new CompositeDisposable();
+            var retryPending = false;
+            void ShowProgress(bool retry = false) {
+                if (progress.IsComplete) return;
+                currentPracticeStep = progress.Step;
+                currentPracticeCount = progress.Count;
+                currentPracticeRetry = retry;
+                RefreshPracticeInput();
+            }
+            void Retry() {
+                retryPending = true;
+                ShowProgress(true);
+            }
+            ShowProgress();
+            source.OnTutorialCommandExecuted.Subscribe(command => {
+                if (retryPending || completion.Task.IsCompleted) return;
+                // Buffered repeats can arrive just after a charge completes. They do
+                // not invalidate the setup: judge the actual attack that uses it.
+                if (progress.RequiresRetryAfterCommand(command, source.ObservedState)) Retry();
+                else if (progress.IsUnexpectedCommand(command)) ShowProgress();
+            }).AddTo(practiceSubscriptions);
+            foreach (var state in lesson.Steps.SelectMany(step => step.TargetStates).Distinct()) {
+                state.OnTutorialExecution.Subscribe(execution => {
+                    if (retryPending || completion.Task.IsCompleted) return;
+                    switch (progress.Observe(execution)) {
+                        case TutorialProgressResult.Retry: Retry(); break;
+                        case TutorialProgressResult.Advanced: ShowProgress(); break;
+                        case TutorialProgressResult.Complete: completion.TrySetResult(true); break;
+                    }
+                }).AddTo(practiceSubscriptions);
+            }
+            Observable.EveryUpdate().Subscribe(_ => {
+                tutorialView.SetAttentionActive(battlePresenter.IsAttentionPresentationActive);
+                if (disposed || !tutorialSetting.IsTutorialBattleRequested) {
+                    completion.TrySetResult(false);
+                    return;
+                }
+                if (retryPending && !completion.Task.IsCompleted &&
+                    source.ObservedState.Category == StrikerStateCategory.Idle &&
+                    source.CaptureTutorialCommand().IsGrounded && !battlePresenter.IsAttentionPresentationActive) {
+                    source.ResetTutorialPractice(TutorialReset.All);
+                    progress.Reset(source.CaptureTutorialCommand().Id);
+                    if (lesson.IsSpecial) TryFillSpecialPointMax();
+                    retryPending = false;
+                    ShowProgress();
+                }
+                if (!retryPending && !progress.IsComplete && progress.StepIndex > 0 &&
+                    lesson.ResetBeforePractice == TutorialReset.None && !lesson.Steps[0].CompleteOnExit &&
+                    source.ObservedState.Category == StrikerStateCategory.Idle && source.CaptureTutorialCommand().IsGrounded) {
+                    // Landing or letting a temporary stance expire ends the setup.
+                    // Prompt for that setup again instead of waiting for an impossible follow-up.
+                    progress.Reset(source.CaptureTutorialCommand().Id);
+                    ShowProgress();
+                }
+            }).AddTo(practiceSubscriptions);
+            await AwaitWhileActiveAsync(completion.Task);
+            if (lesson.IsSpecial && !disposed && tutorialSetting.IsTutorialBattleRequested) {
+                var presentationCompleted = new TaskCompletionSource<bool>();
+                using var specialSubscription = Observable.EveryUpdate().Subscribe(_ => {
+                    if (!tutorialSetting.IsTutorialBattleRequested ||
+                        (source.ObservedState.Category != StrikerStateCategory.Special && !battlePresenter.IsAttentionPresentationActive))
+                        presentationCompleted.TrySetResult(true);
+                });
+                await AwaitWhileActiveAsync(presentationCompleted.Task);
+            }
+        }
+
         async Task RunActionStepAsync(
             TutorialUiKey descriptionKey,
             TutorialUiKey practiceKey,
@@ -266,8 +388,18 @@ namespace Alice {
             }
 
             RequestTutorialPause();
-            await AwaitWhileActiveAsync(tutorialView.ShowAsync(descriptionKey));
-            await AwaitWhileActiveAsync(WaitForEastAsync());
+            var pageCount = descriptionKey == TutorialUiKey.CharacterDescription ? currentLesson.Pages.Length : tutorialView.GetDescriptionPageCount(descriptionKey);
+            for (var page = 0; page < pageCount; page++) {
+                if (descriptionKey == TutorialUiKey.CharacterDescription) {
+                    currentDescriptionPage = page;
+                    RefreshTutorialInput();
+                    tutorialView.SetCharacterLessonNarration(new[] { currentLesson.Pages[page].Voice });
+                }
+                else tutorialView.SetDescriptionPage(descriptionKey, page);
+                await AwaitWhileActiveAsync(tutorialView.ShowAsync(descriptionKey));
+                await AwaitWhileActiveAsync(WaitForEastAsync());
+                if (!tutorialSetting.IsTutorialBattleRequested) break;
+            }
             if (!tutorialSetting.IsTutorialBattleRequested) {
                 tutorialView.HideAll();
                 return;
@@ -298,8 +430,13 @@ namespace Alice {
             RequestTutorialPause();
 
             for (var i = 0; i < descriptionKeys.Length; i++) {
-                await AwaitWhileActiveAsync(tutorialView.ShowAsync(descriptionKeys[i]));
-                await AwaitWhileActiveAsync(WaitForEastAsync());
+                for (var page = 0; page < tutorialView.GetDescriptionPageCount(descriptionKeys[i]); page++) {
+                    tutorialView.SetDescriptionPage(descriptionKeys[i], page);
+                    await AwaitWhileActiveAsync(tutorialView.ShowAsync(descriptionKeys[i]));
+                    await AwaitWhileActiveAsync(WaitForEastAsync());
+
+                    if (!tutorialSetting.IsTutorialBattleRequested) break;
+                }
 
                 if (!tutorialSetting.IsTutorialBattleRequested) {
                     tutorialView.HideAll();
@@ -379,23 +516,6 @@ namespace Alice {
             await AwaitWhileActiveAsync(completion.Task);
         }
 
-        async Task WaitForSpecialCompletionAsync() {
-            await AwaitWhileActiveAsync(WaitForStateCategoryAsync(StrikerStateCategory.Special));
-            if (!TryResolveTutorialStriker(out var striker)) {
-                throw new InvalidOperationException("Tutorial player is not deployed.");
-            }
-
-            var completion = new TaskCompletionSource<bool>();
-            using var subscription = Observable.EveryUpdate().Subscribe(_ => {
-                if (!tutorialSetting.IsTutorialBattleRequested ||
-                    (striker.CurrentStateCategory.CurrentValue != StrikerStateCategory.Special &&
-                     !battlePresenter.IsAttentionPresentationActive)) {
-                    completion.TrySetResult(true);
-                }
-            });
-            await AwaitWhileActiveAsync(completion.Task);
-        }
-
         async Task WaitForDefeatAsync() {
             if (!strikerRegistry.Get(1).TryGetValue(out var opponent)) {
                 throw new InvalidOperationException("Tutorial opponent is not deployed.");
@@ -458,47 +578,6 @@ namespace Alice {
                     tcs.TrySetResult(true);
                 });
 
-            subscription.AddTo(subscriptions);
-            return tcs.Task;
-        }
-
-        async Task WaitForChargeAttackAsync() {
-            await AwaitWhileActiveAsync(WaitForStateCategoryAsync(StrikerStateCategory.Charge));
-            await AwaitWhileActiveAsync(WaitForStateCategoryAsync(StrikerStateCategory.Attack));
-        }
-
-        Task WaitForStateCategoryAsync(StrikerStateCategory targetCategory) {
-            if (!TryResolveTutorialStriker(out var striker)) {
-                return Task.CompletedTask;
-            }
-
-            var hasLeftTargetState = striker.CurrentStateCategory.CurrentValue != targetCategory;
-            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-            IDisposable subscription = null;
-            subscription = striker.CurrentStateCategory
-                .Subscribe(category => {
-                    if (!tutorialSetting.IsTutorialBattleRequested) {
-                        subscription?.Dispose();
-                        tcs.TrySetResult(true);
-                        return;
-                    }
-
-                    if (category != targetCategory) {
-                        hasLeftTargetState = true;
-                        return;
-                    }
-
-                    if (!hasLeftTargetState) {
-                        return;
-                    }
-
-                    subscription?.Dispose();
-                    tcs.TrySetResult(true);
-                });
-
-            // ReactiveProperty emits synchronously during Subscribe, before assignment.
-            if (tcs.Task.IsCompleted) subscription.Dispose();
             subscription.AddTo(subscriptions);
             return tcs.Task;
         }

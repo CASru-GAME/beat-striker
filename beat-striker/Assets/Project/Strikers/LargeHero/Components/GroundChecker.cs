@@ -2,7 +2,7 @@ using NUnit.Framework;
 using UnityEngine;
 
 namespace Core.LargeHero　{
-    public class GroundChecker : MonoBehaviour {
+    public class GroundChecker : MonoBehaviour, Alice.ITutorialGroundSource {
         public bool IsGrounded { get; private set; }
 
         private void OnCollisionStay(Collision collision) {

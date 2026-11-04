@@ -9,6 +9,7 @@ namespace Alice {
         Wizard,
         Fighter,
         Warrior,
+        DemonKing,
     }
 
     [Serializable]
@@ -136,7 +137,8 @@ namespace Alice {
                 AiStrikerPattern.Hero => striker == Striker.Hero,
                 AiStrikerPattern.Wizard => striker == Striker.Wizard,
                 AiStrikerPattern.Fighter => striker == Striker.Fighter,
-                AiStrikerPattern.Warrior => striker == Striker.Warrior || striker == Striker.DemonKing,
+                AiStrikerPattern.Warrior => striker == Striker.Warrior,
+                AiStrikerPattern.DemonKing => striker == Striker.DemonKing,
                 _ => false,
             };
         }

@@ -1,0 +1,92 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &714152330420949822
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4613717739136041729}
+  - component: {fileID: 1718372972706777403}
+  m_Layer: 0
+  m_Name: WizardTactical
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4613717739136041729
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 714152330420949822}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1718372972706777403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 714152330420949822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5806a1118a9a4b71ae087d41a626c7b6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.WizardAi.WizardAiBrain
+  tuning:
+    InitialBeatSeconds: 0.5
+    GroundClearance: 0.2
+    ProjectileObservationRadius: 55
+    PredictionMargin: 0.18
+    WalkSpeed: 3
+    MeleeReach: 2.1
+    FireSpeed: 30
+    FireRadius: 0.73
+    FireDamage: 10
+    IceDamage: 20
+    IceHalfWidth: 0.95
+    IceHeight: 1
+    IceGrowthSeconds: 0.09
+    RockDamage: 30
+    RockRadius: 1.59
+    ShieldRadius: 1.16
+    ShieldForwardOffset: 0.393
+    ShieldHeight: 1.3
+    ShieldGenerationSeconds: 0.15
+    WarriorLungeReach: 6.5
+    WarriorWarpReach: 5
+    DamageWeight: 1.6
+    RiskWeight: 45
+    PositionWeight: 1.8
+    SpecialScore: 28
+  versusWarrior:
+    PreferredDistance: 10
+    OpponentReach: 6.5
+    Pressure: 1
+    ProjectileCaution: 1.4
+  versusWizard:
+    PreferredDistance: 8
+    OpponentReach: 2.5
+    Pressure: 1
+    ProjectileCaution: 1.5
+  versusHero:
+    PreferredDistance: 9
+    OpponentReach: 5
+    Pressure: 1
+    ProjectileCaution: 1.2
+  versusDemonKing:
+    PreferredDistance: 10
+    OpponentReach: 5.5
+    Pressure: 1
+    ProjectileCaution: 1.5

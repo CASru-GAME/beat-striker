@@ -1,7 +1,7 @@
 using UnityEngine;
 
 namespace Core.LargeWizard {
-    public class GroundChecker : MonoBehaviour{
+    public class GroundChecker : MonoBehaviour, Alice.ITutorialGroundSource {
         public bool IsGrounded { get; private set; }
 
         private void OnCollisionStay(Collision collision) {

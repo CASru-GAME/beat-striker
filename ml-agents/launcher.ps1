@@ -58,105 +58,67 @@ function Format-ArgumentForDisplay {
     return $Argument
 }
 
-function Get-WindowLayout {
-    param([Parameter(Mandatory = $true)][int]$WindowCount)
-
-    Add-Type -AssemblyName System.Windows.Forms
-
-    $area = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
-    $best = $null
-
-    for ($cols = 1; $cols -le $WindowCount; $cols++) {
-        $rows = [Math]::Ceiling($WindowCount / $cols)
-        $cellWidth = [Math]::Floor($area.Width / $cols)
-        $cellHeight = [Math]::Floor($area.Height / $rows)
-        $gridAspect = $cols / [Math]::Max(1, $rows)
-        $screenAspect = $area.Width / [Math]::Max(1, $area.Height)
-        $aspectPenalty = [Math]::Abs($gridAspect - $screenAspect)
-        $emptyCells = ($cols * $rows) - $WindowCount
-        $score = $aspectPenalty + ($emptyCells * 0.2)
-
-        if ($emptyCells -eq 0 -and $aspectPenalty -le 1.0) {
-            $score -= 100
-        }
-
-        if ($null -eq $best -or $score -lt $best.Score) {
-            $best = [PSCustomObject]@{
-                X = $area.X
-                Y = $area.Y
-                Width = $area.Width
-                Height = $area.Height
-                Rows = [int]$rows
-                Cols = [int]$cols
-                CellWidth = [int]$cellWidth
-                CellHeight = [int]$cellHeight
-                Score = $score
-            }
-        }
-    }
-
-    return $best
-}
-
 function Start-WindowArrangementJob {
     param(
         [Parameter(Mandatory = $true)][string]$ProcessName,
         [Parameter(Mandatory = $true)][int]$WindowCount,
-        [Parameter(Mandatory = $true)]$Layout,
         [Parameter(Mandatory = $true)][DateTime]$StartedAt
     )
 
-    Start-Job -Name "BeatStrikerWindowArrangement" -ArgumentList $ProcessName, $WindowCount, $Layout, $StartedAt -ScriptBlock {
-        param($processName, $windowCount, $layout, $startedAt)
+    Start-Job -Name "BeatStrikerWindowArrangement" -ArgumentList $ProcessName, $WindowCount, $StartedAt -ScriptBlock {
+        param($processName, $windowCount, $startedAt)
 
+        Add-Type -AssemblyName System.Windows.Forms
         Add-Type @"
 using System;
 using System.Runtime.InteropServices;
 
 public static class WindowTools
 {
-    [DllImport("user32.dll")]
-    public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Rect { public int Left, Top, Right, Bottom; }
 
     [DllImport("user32.dll")]
-    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    public static extern bool GetWindowRect(IntPtr hWnd, out Rect rect);
+
+    [DllImport("user32.dll")]
+    public static extern bool SetWindowPos(IntPtr hWnd, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
 }
 "@
 
+        $area = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
         $firstCompleteAt = $null
 
         for ($attempt = 0; $attempt -lt 90; $attempt++) {
             $windows = @(Get-Process -Name $processName -ErrorAction SilentlyContinue |
-                Where-Object {
-                    $_.MainWindowHandle -ne 0 -and
-                    $_.StartTime -ge $startedAt.AddSeconds(-10)
-                } |
+                Where-Object { $_.MainWindowHandle -ne 0 -and $_.StartTime -ge $startedAt.AddSeconds(-10) } |
                 Sort-Object StartTime, Id |
                 Select-Object -First $windowCount)
 
-            for ($index = 0; $index -lt $windows.Count; $index++) {
-                $window = $windows[$index]
-                $row = [Math]::Floor($index / $layout.Cols)
-                $col = $index % $layout.Cols
-                $x1 = $layout.X + [Math]::Floor(($layout.Width * $col) / $layout.Cols)
-                $x2 = $layout.X + [Math]::Floor(($layout.Width * ($col + 1)) / $layout.Cols)
-                $y1 = $layout.Y + [Math]::Floor(($layout.Height * $row) / $layout.Rows)
-                $y2 = $layout.Y + [Math]::Floor(($layout.Height * ($row + 1)) / $layout.Rows)
-                $width = $x2 - $x1
-                $height = $y2 - $y1
+            $cellWidth = 1
+            $cellHeight = 1
+            foreach ($window in $windows) {
+                $rect = New-Object WindowTools+Rect
+                if ([WindowTools]::GetWindowRect($window.MainWindowHandle, [ref]$rect)) {
+                    $cellWidth = [Math]::Max($cellWidth, $rect.Right - $rect.Left)
+                    $cellHeight = [Math]::Max($cellHeight, $rect.Bottom - $rect.Top)
+                }
+            }
 
-                [WindowTools]::ShowWindow($window.MainWindowHandle, 9) > $null
-                [WindowTools]::MoveWindow($window.MainWindowHandle, $x1, $y1, $width, $height, $true) > $null
+            $cols = [Math]::Min($windowCount, [Math]::Max(1, [Math]::Floor($area.Width / $cellWidth)))
+            for ($index = 0; $index -lt $windows.Count; $index++) {
+                $x = $area.X + ($index % $cols) * $cellWidth
+                $y = $area.Y + [Math]::Floor($index / $cols) * $cellHeight
+                # Move without resizing, changing focus, or changing window stacking order.
+                [WindowTools]::SetWindowPos($windows[$index].MainWindowHandle, [IntPtr]::Zero, $x, $y, 0, 0, 0x0015) > $null
             }
 
             if ($windows.Count -ge $windowCount -and $null -eq $firstCompleteAt) {
                 $firstCompleteAt = Get-Date
             }
-
             if ($null -ne $firstCompleteAt -and ((Get-Date) - $firstCompleteAt).TotalSeconds -ge 20) {
                 break
             }
-
             Start-Sleep -Seconds 1
         }
     } > $null
@@ -199,10 +161,7 @@ if (-not [int]::TryParse($num_envs, [ref]$numEnvCount) -or $numEnvCount -lt 1) {
     throw "num-envs must be a positive integer."
 }
 
-$layout = Get-WindowLayout -WindowCount $numEnvCount
-Write-Host "Window layout: $($layout.Cols)x$($layout.Rows), each $($layout.CellWidth)x$($layout.CellHeight)" -ForegroundColor Cyan
-
-$arguments = @($yaml_file, "--run-id=$run_id", "--num-envs=$numEnvCount", "--width=$($layout.CellWidth)", "--height=$($layout.CellHeight)")
+$arguments = @($yaml_file, "--run-id=$run_id", "--num-envs=$numEnvCount", "--width=480", "--height=270")
 
 # --- Added Section: Automatically find and use the latest executable ---
 Write-Host "-----------------------------------------"
@@ -241,7 +200,7 @@ if ($action_selection -eq "2") {
 Write-Host "========================================="
 Write-Host "Executing the following command:" -ForegroundColor Magenta
 if (-not [string]::IsNullOrWhiteSpace($exe_path)) {
-    $arguments += @("--env-args", "-popupwindow")
+    $arguments += @("--env-args", "-screen-fullscreen", "0", "-force-d3d11")
 }
 
 Write-Host "`"$mlAgentsPython`" -m mlagents.trainers.learn $((@($arguments) | ForEach-Object { Format-ArgumentForDisplay $_ }) -join ' ')" -ForegroundColor Yellow
@@ -251,7 +210,7 @@ Write-Host "========================================="
 $trainingStartedAt = Get-Date
 if (-not [string]::IsNullOrWhiteSpace($exe_path)) {
     $processName = [System.IO.Path]::GetFileNameWithoutExtension($exe_path)
-    Start-WindowArrangementJob -ProcessName $processName -WindowCount $numEnvCount -Layout $layout -StartedAt $trainingStartedAt
+    Start-WindowArrangementJob -ProcessName $processName -WindowCount $numEnvCount -StartedAt $trainingStartedAt
 }
 
 & $mlAgentsPython -m mlagents.trainers.learn @arguments

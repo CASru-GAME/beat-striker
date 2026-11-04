@@ -15,7 +15,7 @@ namespace Alice {
         readonly Dictionary<string, AsyncOperationHandle<AudioClip>> loadedClips = new();
         CancellationTokenSource playback;
         TutorialVoiceInput input;
-        TutorialUiKey currentKey;
+        string[] currentSegments;
 
         public Task Completion { get; private set; } = Task.CompletedTask;
 
@@ -25,17 +25,21 @@ namespace Alice {
             // Restart an in-progress input explanation so speech matches the visible layout.
             // Lines without input names (including Final) keep their existing completion task.
             if (playback != null && !Completion.IsCompleted &&
-                Array.Exists(library.GetSegments(currentKey), segment => segment.StartsWith("$", StringComparison.Ordinal))) {
-                Play(currentKey);
+                Array.Exists(currentSegments, segment => segment.StartsWith("$", StringComparison.Ordinal))) {
+                Play(currentSegments);
             }
         }
         public void SetVolume(float volume) => narrationSource.volume = Mathf.Clamp01(volume);
 
         public void Play(TutorialUiKey key) {
+            Play(library.GetSegments(key));
+        }
+
+        public void Play(string[] segments) {
             Stop();
-            currentKey = key;
+            currentSegments = segments;
             playback = new CancellationTokenSource();
-            Completion = PlayAsync(key, input, playback.Token);
+            Completion = PlayAsync(segments, input, playback.Token);
         }
 
         public void Stop() {
@@ -46,9 +50,8 @@ namespace Alice {
             narrationSource.clip = null;
         }
 
-        async Task PlayAsync(TutorialUiKey key, TutorialVoiceInput voiceInput, CancellationToken cancellation) {
+        async Task PlayAsync(string[] segments, TutorialVoiceInput voiceInput, CancellationToken cancellation) {
             try {
-                var segments = library.GetSegments(key);
                 var handles = new AsyncOperationHandle<AudioClip>[segments.Length];
                 // Start all loads together so inserting a button name does not introduce loading gaps.
                 for (var i = 0; i < segments.Length; i++) {
@@ -63,7 +66,7 @@ namespace Alice {
                     while (!handle.IsDone) await Awaitable.NextFrameAsync(cancellation);
                     cancellation.ThrowIfCancellationRequested();
                     if (handle.Status != AsyncOperationStatus.Succeeded) {
-                        throw new InvalidOperationException($"Unable to load tutorial narration: {key}", handle.OperationException);
+                        throw new InvalidOperationException("Unable to load tutorial narration.", handle.OperationException);
                     }
                 }
                 foreach (var handle in handles) {

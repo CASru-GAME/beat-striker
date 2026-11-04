@@ -3,7 +3,7 @@ using Alice;
 using System.Collections.Generic;
 
 namespace Core.DarkSatan {
-    public sealed class DemonChargeAttackState : StrikerState {
+    public sealed class DemonChargeAttackState : StrikerState, ITutorialActionProgress, ITutorialResourceReset {
         [SerializeField] StrikerNode nextNode;
         [SerializeField] DemonVolley volleyPrefab;
         [SerializeField] DemonAttackEffect attackEffect;
@@ -21,6 +21,17 @@ namespace Core.DarkSatan {
 
         public override StrikerStateCategory Category => StrikerStateCategory.Charge;
         public bool HasVolley => volleys.Count > 0;
+        public bool IsTutorialActionCommitted => fired;
+        public TutorialReset Resource => TutorialReset.Charge;
+        public void ResetTutorialResource() {
+            foreach (var volley in volleys.ToArray()) {
+                if (!volley) continue;
+                volley.gameObject.SetActive(false);
+                Destroy(volley.gameObject);
+            }
+            volleys.Clear();
+            launchRequested = fired = false;
+        }
 
         public void RequestLaunch() {
             launchRequested = true;

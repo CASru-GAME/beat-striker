@@ -20,6 +20,10 @@ namespace Core.LargeWizard {
         [SerializeField] AudioClip audioClip;
         [SerializeField] public Hurtbox Hurtbox;
         StrikerHub ownerStrikerHub;
+        public Transform ObservationOwner => ownerStrikerHub != null ? ownerStrikerHub.transform : null;
+        public beam11 ObservedBeam { get; private set; }
+        public float ObservationBeamRange => beamPrefab.ObservationRange;
+        public float ObservationBeamDelay => beamSpawnDelay + beamPrefab.ObservationActivationSeconds;
 
         Vector3 targetScale;
         float elapsedTime;
@@ -89,6 +93,7 @@ namespace Core.LargeWizard {
         System.Collections.IEnumerator SpawnBeamAfterDelay() {
             yield return Ex.Wait(beamSpawnDelay);
             var beamInstance = Instantiate(beamPrefab, transform.position, transform.rotation);
+            ObservedBeam = beamInstance;
             beamInstance.Hurtbox = Hurtbox;
             beamInstance.SetOwnerStrikerHub(ownerStrikerHub);
             Destroy(beamInstance, 10f);

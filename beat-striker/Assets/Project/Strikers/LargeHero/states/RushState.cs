@@ -16,6 +16,11 @@ namespace Core.LargeHero {
 
         [SerializeField] float rushSpeed = 10f;
         float initialDirection;
+        public float ObservationSpeed => rushSpeed;
+        public float ObservationDuration => Mathf.Max(animationClip.fadeTime,
+            animationClip.clip.length / Mathf.Max(.0001f, animationClip.speed * animationClip.speed));
+        public Vector3 ObservationOrigin => attackPlayer.transform.position;
+        public float? ObservationProjectileLifetimeSeconds => attackPlayer.ObservationEffectLifetimeSeconds;
 
 
         public override void OnEnter(IStrikerContext context) {

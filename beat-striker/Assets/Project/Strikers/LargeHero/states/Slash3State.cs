@@ -21,6 +21,7 @@ namespace Core.LargeHero {
 
         [SerializeField] float damage = 10;
         [SerializeField] float nockbackSpeed = 3;
+        public float ObservationDamage => damage;
 
         public override void OnEnter(IStrikerContext context) {
             context.PlayAnimation(animationClip, OnAnimationEnd);

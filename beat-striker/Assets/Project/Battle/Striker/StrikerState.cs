@@ -37,6 +37,10 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
     public abstract StrikerStateCategory Category { get; }
     public virtual IEnumerable<IStrikerGroup> Parents => parents;
     protected CompositeDisposable disposables = new();
+    readonly Subject<TutorialStateExecution> tutorialExecutions = new();
+    public Observable<TutorialStateExecution> OnTutorialExecution => tutorialExecutions;
+    TutorialCommandContext tutorialCommand;
+    int tutorialExecutionId;
 
     private readonly List<(float delay, float elapsedTime, Action<IStrikerStateContext> action)> timeActions = new();
 
@@ -247,13 +251,27 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
     void IStrikerState.OnEnter(IStrikerContext ctx) {
         disposables.Dispose();
         disposables = new CompositeDisposable();
+        tutorialCommand = ctx.GetSelf() is IStrikerTutorialSource source && source.TutorialLessons.Count > 0
+            ? source.CaptureTutorialCommand() : null;
+        tutorialExecutionId++;
         OnEnter(ctx);
+        PublishTutorialExecution(false);
     }
 
     void IStrikerState.OnExit(IStrikerContext ctx) {
         timeActions.Clear();
         OnExit(ctx);
+        PublishTutorialExecution(true);
         disposables.Dispose();
         disposables = new CompositeDisposable();
     }
+
+    void PublishTutorialExecution(bool exited) {
+        if (tutorialCommand == null) return;
+        var committed = this is not ITutorialActionProgress progress || progress.IsTutorialActionCommitted;
+        var launched = this is ITutorialGuardProgress guard && guard.HasLaunchedShield;
+        tutorialExecutions.OnNext(new TutorialStateExecution(this, tutorialExecutionId, tutorialCommand, exited, committed, launched));
+    }
+
+    protected virtual void OnDestroy() => tutorialExecutions.Dispose();
 }

@@ -1,8 +1,11 @@
 using UnityEngine;
 
 namespace Core.LargeHero {
-    public class EnergyStorage : MonoBehaviour {
+    public class EnergyStorage : MonoBehaviour, Alice.ITutorialResourceReset {
+        public Alice.TutorialReset Resource => Alice.TutorialReset.Charge;
+        public void ResetTutorialResource() => energy = 0;
         int energy = 0;
+        public int StoredEnergy => energy;
         public void StoreEnergy(int energy) {
             this.energy += energy;
         }

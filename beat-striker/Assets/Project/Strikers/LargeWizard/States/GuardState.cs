@@ -6,7 +6,7 @@ using System;
 
 namespace Core.LargeWizard {
 
-    public class GuardState : StrikerState {
+    public class GuardState : StrikerState, Alice.ITutorialResourceReset, Alice.ITutorialGuardProgress {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Guard;
 
         // このステートにいる間、再生されるアニメーションクリップ
@@ -24,13 +24,27 @@ namespace Core.LargeWizard {
         [SerializeField] Transform thirdShieldSpawnTransform;
 
         [SerializeField] Hurtbox shieldPrefab;
+        public float ObservationLaunchSpeed => launchedShieldSpeed;
+        public float ObservationLaunchDamage => launchedShieldDamage;
 
         IDisposable disposable;
         Hurtbox shieldInstance;
         bool hasShieldBeenHit;
+        readonly System.Collections.Generic.List<Core.LargeWizard.Guard> spawnedGuards = new();
+        public bool HasLaunchedShield { get; private set; }
+        public Alice.TutorialReset Resource => Alice.TutorialReset.Guard;
+        public void ResetTutorialResource() {
+            foreach (var guard in spawnedGuards) {
+                if (!guard) continue;
+                guard.gameObject.SetActive(false);
+                Destroy(guard.gameObject);
+            }
+            spawnedGuards.Clear();
+        }
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            HasLaunchedShield = false;
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
 
@@ -45,6 +59,7 @@ namespace Core.LargeWizard {
                     var guardToLaunch = TakeNearestGuard(new System.Collections.Generic.List<Core.LargeWizard.Guard>(existingGuards), thirdShieldSpawnTransform.position);
                     guardToLaunch.SetOwnerStrikerHub(ownerStrikerHub);
                     guardToLaunch.LaunchForward(context.Rigidbody.transform.forward, launchedShieldSpeed, launchedShieldDamage, launchedShieldKnockbackSpeed, launchedShieldLifetime);
+                    HasLaunchedShield = true;
 
                     audioClip2.PlayAtApp(context.Rigidbody.transform.position);
                     return;
@@ -66,6 +81,7 @@ namespace Core.LargeWizard {
             if (thirdGuard != null) {
                 thirdGuard.SetOwnerStrikerHub(ownerStrikerHub);
                 thirdGuard.LaunchForward(context.Rigidbody.transform.forward, launchedShieldSpeed, launchedShieldDamage, launchedShieldKnockbackSpeed, launchedShieldLifetime);
+                HasLaunchedShield = true;
                 audioClip2.PlayAtApp(context.Rigidbody.transform.position);
             }
 
@@ -85,6 +101,8 @@ namespace Core.LargeWizard {
         void SpawnShield(IStrikerContext context, StrikerHub ownerStrikerHub, Transform spawnTransform) {
             shieldInstance = Instantiate(shieldPrefab, context.Rigidbody.transform);
             var guard = shieldInstance.GetComponent<Core.LargeWizard.Guard>();
+            spawnedGuards.RemoveAll(item => !item);
+            spawnedGuards.Add(guard);
             guard.SetOwnerStrikerHub(ownerStrikerHub);
             guard.SpawnAtPositionThenReturn(spawnTransform.position, 0.3f);
 

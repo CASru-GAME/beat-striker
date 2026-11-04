@@ -19,6 +19,9 @@ namespace Core.LargeHero {
         bool originalUseGravity;
         bool reachedOpponent;
         bool timedOut;
+        public float ObservationActivationDistance => activationDistance;
+        public float ObservationSpeed => approachSpeed;
+        public float ObservationDuration => maxApproachDuration;
 
         public bool IsOpponentInRange(IStrikerContext context) {
             var opponent = context.GetOpponent();

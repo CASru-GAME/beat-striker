@@ -9,6 +9,7 @@ namespace Core.DarkSatan {
         [SerializeField] ParticleSystem cancelEffect;
         [SerializeField] float duration = 0.5f;
         [SerializeField] StunGroup stunGroup;
+        public float ObservationDuration => duration;
 
         public override void OnEnter(IStrikerContext context) {
             context.PlayAnimation(stunGroup.GetStunCancelAnimation());

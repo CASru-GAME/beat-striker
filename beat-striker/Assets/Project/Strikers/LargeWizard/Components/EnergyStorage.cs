@@ -1,8 +1,18 @@
 using UnityEngine;
 
 namespace Core.LargeWizard{
-    public class EnergyStorage : MonoBehaviour{
+    public class EnergyStorage : MonoBehaviour, Alice.ITutorialResourceReset {
+        public Alice.TutorialReset Resource => Alice.TutorialReset.Charge;
+        public void ResetTutorialResource() {
+            energy = 0;
+            if (chargeInstance) {
+                chargeInstance.SetActive(false);
+                Destroy(chargeInstance);
+                chargeInstance = null;
+            }
+        }
         int energy = 0;
+        public int StoredEnergy => energy;
 
         [SerializeField] GameObject charge1Prefab;
         [SerializeField] GameObject charge2Prefab;

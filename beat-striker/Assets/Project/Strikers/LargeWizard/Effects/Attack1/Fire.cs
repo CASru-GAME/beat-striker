@@ -16,6 +16,7 @@ namespace Core.LargeWizard {
         [SerializeField] GameObject trail;
         [SerializeField] public Hurtbox Hurtbox;
         StrikerHub ownerStrikerHub;
+        public Transform ObservationOwner => ownerStrikerHub != null ? ownerStrikerHub.transform : null;
 
         public void SetOwnerStrikerHub(StrikerHub strikerHub) {
             ownerStrikerHub = strikerHub;

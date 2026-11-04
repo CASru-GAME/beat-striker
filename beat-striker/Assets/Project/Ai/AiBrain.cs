@@ -105,16 +105,16 @@ namespace Alice {
         }
 
         void ApplyActionAtGoodWindow(AiAction action) {
+            // BeatJudge snapshots the current direction on button-down.
+            if (action.Direction.sqrMagnitude <= 0.000001f) {
+                CancelDirection();
+            } else {
+                EmitDirection(action.Direction.normalized);
+            }
+
             if (action.Button.HasValue) {
                 Press(action.Button.Value);
             }
-
-            if (action.Direction.sqrMagnitude <= 0.000001f) {
-                CancelDirection();
-                return;
-            }
-
-            EmitDirection(action.Direction.normalized);
         }
 
         protected abstract AiAction OnGoodWindow(AiObservation observation);

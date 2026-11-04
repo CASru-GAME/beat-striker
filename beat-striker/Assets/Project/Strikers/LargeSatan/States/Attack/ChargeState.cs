@@ -23,6 +23,9 @@ namespace Core.LargeSatan {
         Vector3 initialSpeed;
         bool isTransitioningToEmitState;
 
+        public PoleArm ObservedPoleArm => poleArm;
+        public EmitState ObservedEmitState => emitNode as EmitState;
+
         public override void OnEnter(IStrikerContext context) {
             var toOpponent = context.GetOpponent().Position.CurrentValue - context.Rigidbody.position;
             if (Vector3.Dot(context.Rigidbody.transform.forward, toOpponent) < 0) {

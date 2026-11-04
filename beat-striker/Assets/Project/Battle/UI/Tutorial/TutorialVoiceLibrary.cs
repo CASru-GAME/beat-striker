@@ -17,6 +17,9 @@ namespace Alice {
 
     public record TutorialVoiceInput(string East, string South, string West, string North,
         string Start, string Walk, string Direction, string RhythmButtons, string DirectionHoldLabel) {
+        public string Up { get; init; }
+        public string Down { get; init; }
+        public string Forward { get; init; }
         public string Resolve(string segment) => segment switch {
             "$East" => East,
             "$South" => South,
@@ -26,6 +29,9 @@ namespace Alice {
             "$Walk" => Walk,
             "$Direction" => Direction,
             "$DirectionHold" => Direction == "direction_keyboard" ? "direction_hold_keyboard" : "direction_hold_stick",
+            "$Up" => Up,
+            "$Down" => Down,
+            "$Forward" => Forward,
             _ => segment,
         };
     }

@@ -11,6 +11,7 @@ namespace Core.LargeWizard {
         [SerializeField] private StrikerAnimationClip animationClip;
         [SerializeField] float dashSpeed;
         [SerializeField] StrikerNode nextNode;
+        public float ObservationSpeed => dashSpeed;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {

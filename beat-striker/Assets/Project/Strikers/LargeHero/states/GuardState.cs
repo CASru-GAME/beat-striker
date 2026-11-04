@@ -24,6 +24,7 @@ namespace Core.LargeHero {
         IDisposable disposable;
         private Tracker.TargetHandle targetHandle;
         float lockedPositionX;
+        public float ObservationDuration => (useSecondaryAnimation ? secondaryAnimationClip.clip.length / Mathf.Max(.01f, secondaryAnimationClip.speed) : animationClip.clip.length / Mathf.Max(.01f, animationClip.speed));
 
         public override void OnEnter(IStrikerContext context) {
             Debug.Log("GuardStateに遷移");

@@ -13,6 +13,7 @@ namespace Core.LargeHero {
         [SerializeField] StrikerNode stunState;
         [SerializeField] StrikerNode guardState;
         [SerializeField] StrikerNode SpecialState;
+        public float ObservationDamping => linearDamping;
 
         public override void OnEnter(IStrikerContext context) {
             Debug.Log("AirDumpGroup: OnEnter");

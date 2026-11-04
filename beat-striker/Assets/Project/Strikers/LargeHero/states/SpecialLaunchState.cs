@@ -43,6 +43,8 @@ namespace Core.LargeHero {
 
         private readonly Collider[] overlapResults = new Collider[32];
         private bool hitInState;
+        public Vector3 ObservationHitOffset => launchHitBoxOffset;
+        public Vector3 ObservationHitHalfExtents => launchHitBoxHalfExtents;
 
         public record Hit(Vector3 hitPoint, Hurtbox hurtbox);
 
@@ -131,7 +133,10 @@ namespace Core.LargeHero {
                 }
 
                 var hurtboxRigidbody = hurtbox.GetComponentInParent<Rigidbody>();
-                if (hurtboxRigidbody == context.Rigidbody) {
+                // The sequence moves and damages a character body over several states.
+                // A shield can be destroyed on the first hit and cannot be used as that victim.
+                if (hurtbox.IsGuarding || hurtboxRigidbody == null || hurtboxRigidbody == context.Rigidbody
+                    || !hurtboxRigidbody.TryGetComponent<StrikerHub>(out _)) {
                     continue;
                 }
 

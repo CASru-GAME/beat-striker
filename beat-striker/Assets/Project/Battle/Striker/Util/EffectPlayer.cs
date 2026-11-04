@@ -31,6 +31,9 @@ public class EffectPlayer : MonoBehaviour {
     private readonly Dictionary<GameObject, ParticleSystem> particleSystemByInstance = new();
     private bool suppressParentChanges;
 
+    // Particle effects are returned when their systems finish; only non-particle effects have a fixed timeout.
+    public float? ObservationFixedLifetimeSeconds => effectPrefab.TryGetComponent<ParticleSystem>(out _) ? null : fallbackLifetimeSeconds;
+
     private void Awake() {
         var poolRootObject = new GameObject($"{name} Effect Pool Root");
         poolRootObject.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;

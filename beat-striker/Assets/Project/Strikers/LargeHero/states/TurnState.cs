@@ -6,6 +6,9 @@ namespace Core.LargeSHero {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Idle;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] float duration = 0.2f;
+        [SerializeField] Core.LargeHero.GroundChecker groundChecker;
+        [SerializeField] Core.LargeHero.AirGroup airGroup;
+        public float ObservationDuration => duration;
 
         const float COMPLETION_ANGLE_EPSILON = 0.01f;
 
@@ -14,6 +17,7 @@ namespace Core.LargeSHero {
         bool turnCompleted;
 
         public override void OnEnter(IStrikerContext context) {
+            context.Rigidbody.linearDamping = groundChecker.IsGrounded ? 0f : airGroup.ObservationDamping;
             originalConstraints = context.Rigidbody.constraints;
             context.Rigidbody.constraints = originalConstraints & ~RigidbodyConstraints.FreezeRotationY;
 
@@ -42,6 +46,7 @@ namespace Core.LargeSHero {
         }
 
         public override void OnExit(IStrikerContext context) {
+            context.Rigidbody.linearDamping = 0f;
             context.Rigidbody.rotation = targetRotation;
             context.Rigidbody.constraints = originalConstraints;
         }

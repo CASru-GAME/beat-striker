@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Core.DarkSatan {
 
-    public class GroundChecker : MonoBehaviour {
+    public class GroundChecker : MonoBehaviour, Alice.ITutorialGroundSource {
         public bool IsGrounded { get; private set; }
         public ReactiveProperty<bool> IsGroundedProperty { get; } = new ReactiveProperty<bool>();
 

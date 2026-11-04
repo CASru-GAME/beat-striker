@@ -27,8 +27,15 @@ public class AttackPlayer : MonoBehaviour {
     private readonly FuncSubject<Collider, bool> onFilterHitSubject = new();
     float episodeTime;
     bool isVirgin;
+    Collider observationCollider;
+
+    public Bounds ObservationBounds => observationCollider.bounds;
+    public float? ObservationEffectLifetimeSeconds => attackEffectPlayer != null ? attackEffectPlayer.ObservationFixedLifetimeSeconds : null;
+    public float ObservationStartDelay => Mathf.Max(0f, hitDetectionStartTime - episodeTime);
+    public float ObservationRemainingSeconds => enabled ? Mathf.Max(0f, hitDetectionStartTime + hitDetectionDuration - episodeTime) : 0f;
 
     private void Awake() {
+        observationCollider = GetComponent<Collider>();
         enabled = false;
     }
 

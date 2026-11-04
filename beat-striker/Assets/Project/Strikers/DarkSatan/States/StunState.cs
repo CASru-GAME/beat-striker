@@ -12,6 +12,8 @@ namespace Core.DarkSatan {
         [SerializeField] ParticleSystem stunEffect;
         [SerializeField] float stunDuration = 0.5f;
         [SerializeField] StunGroup stunGroup;
+        public bool ObservationAutoRecovers => stunGroup.IsCancelled;
+        public float ObservationDuration => stunDuration;
 
         public override void OnEnter(IStrikerContext context) {
             var stunInverseDirection = -context.Rigidbody.linearVelocity.normalized;

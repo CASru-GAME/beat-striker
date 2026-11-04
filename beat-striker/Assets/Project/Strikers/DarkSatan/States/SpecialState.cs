@@ -28,6 +28,14 @@ namespace Core.DarkSatan {
         Phase phase;
         CollisionDetectionMode previousCollisionMode;
         public override StrikerStateCategory Category => StrikerStateCategory.Special;
+
+        public StrikerProjectileObservation ObserveRush(Vector3 position) {
+            if (hasHit || phase == Phase.Landing || phase == Phase.Brake) return null;
+            var delay = phase == Phase.Attention && !cameraReleasing ? Mathf.Max(0f, attentionSeconds - elapsed) : 0f;
+            var remaining = phase == Phase.Sprint ? Mathf.Max(0f, rushSeconds - phaseElapsed) : pushOffSeconds + rushSeconds;
+            return new StrikerProjectileObservation(position + Vector3.up * hitHeight + direction * .4f,
+                direction * rushSpeed, hitRadius + .4f, delay, delay + remaining);
+        }
         public override void OnEnter(IStrikerContext context) {
             elapsed = phaseElapsed = 0f;
             hasHit = cameraReleasing = false;

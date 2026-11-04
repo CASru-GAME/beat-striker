@@ -68,6 +68,14 @@ namespace Core.LargeSatan {
 
         const int ShotsPerGate = 6;
         public bool AllShotsLaunched { get; private set; }
+
+        public void CollectProjectileObservations(List<StrikerProjectileObservation> observations) {
+            foreach (var projectile in projectiles) {
+                if (projectile.Embedded || projectile.Arrow == null) continue;
+                observations.Add(new StrikerProjectileObservation(projectile.Arrow.position, projectile.Direction * speed,
+                    hitRadius, 0f, Mathf.Max(0f, flightSeconds - (elapsed - projectile.StartTime))));
+            }
+        }
         float VolleyDuration => maxLaunchDelay * (ShotsPerGate - 1 + (gates.Length > 1 ? 1 : 0));
 
         public float ReadySeconds => circleOpenSeconds +

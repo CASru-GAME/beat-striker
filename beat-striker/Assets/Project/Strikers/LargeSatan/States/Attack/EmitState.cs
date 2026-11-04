@@ -34,6 +34,33 @@ namespace Core.LargeSatan {
         Vector3 emitStopPosition;
         bool hasWarped;
 
+        public PoleArm ObservedPoleArm => poleArm;
+        public float ObservationHoldSeconds => emitHoldDuration;
+        public float ObservationFlightSeconds => duration;
+
+        public float ObserveTravelDistance(float seconds) {
+            var flightTime = Mathf.Clamp(seconds - emitHoldDuration, 0f, duration);
+            var step = flightTime / 24f;
+            var distance = 0f;
+            for (var i = 0; i < 24; i++) {
+                distance += emitSpeed * emitSpeedCurve.Evaluate((i + .5f) * step / Mathf.Max(duration, .0001f)) * step;
+            }
+            return distance;
+        }
+
+        public Vector3 ObserveThrowDirection(Vector2 inputDirection, Vector3 lookDirection) {
+            return ToWorldDirection(SelectEmitAngle(inputDirection, lookDirection), lookDirection);
+        }
+
+        float SelectEmitAngle(Vector3 inputDirection, Vector3 lookDirection) {
+            var plannedAngle = poleArm.PlannedEmitAngle;
+            if (inputDirection.sqrMagnitude < .001f) return plannedAngle;
+            var chargeInputAngle = ToRelativeAngle(poleArm.ChargeInputDirection, lookDirection);
+            var inputAngle = ToRelativeAngle(inputDirection, lookDirection);
+            return Mathf.Abs(Mathf.DeltaAngle(inputAngle, chargeInputAngle)) <= aimDirectionReuseThreshold
+                ? plannedAngle : SnapAngleToNearestEightWay(inputAngle);
+        }
+
         public override void OnEnter(IStrikerContext context) {
             context.Rigidbody.useGravity = false;
 
@@ -55,21 +82,7 @@ namespace Core.LargeSatan {
             }).AddTo(disposables);
 
             var lookDirection = GetLookDirection(context);
-            var inputDirection = (Vector3)context.InputDirection;
-            var useStoredDirection = inputDirection.sqrMagnitude < 0.001f;
-
-            var plannedEmitAngle = poleArm.PlannedEmitAngle;
-            var chargeInputDirection = poleArm.ChargeInputDirection;
-            var selectedAngle = plannedEmitAngle;
-
-            if (!useStoredDirection) {
-                var chargeInputAngle = ToRelativeAngle(chargeInputDirection, lookDirection);
-                var inputAngle = ToRelativeAngle(inputDirection, lookDirection);
-                var angleDelta = Mathf.Abs(Mathf.DeltaAngle(inputAngle, chargeInputAngle));
-                selectedAngle = angleDelta <= aimDirectionReuseThreshold
-                    ? plannedEmitAngle
-                    : SnapAngleToNearestEightWay(inputAngle);
-            }
+            var selectedAngle = SelectEmitAngle(context.InputDirection, lookDirection);
 
             var isRearAngle = IsRearSnapAngle(selectedAngle);
             var animationFlipY = isRearAngle ? 180f : 0f;

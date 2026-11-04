@@ -434,6 +434,7 @@ GameObject:
   - component: {fileID: 1829485864700888609}
   - component: {fileID: 8632360735648339568}
   - component: {fileID: 8402618834828561335}
+  - component: {fileID: 7402931633847190021}
   m_Layer: 3
   m_Name: Wizard1
   m_TagString: Untagged
@@ -572,6 +573,271 @@ MonoBehaviour:
   VictoryState: {fileID: 8835043162424825438}
   IntroState: {fileID: 1109024110008071340}
   centerPositionTransform: {fileID: 0}
+  tutorialGroundSource: {fileID: 1223836351378418454}
+  tutorialResourceResetters:
+  - {fileID: 8599359020340622459}
+  - {fileID: 516385516661520776}
+  tutorialLessons:
+  - Title: "\u30b8\u30e3\u30f3\u30d7"
+    Pages:
+    - Text: "\u6b21\u306f\u30b8\u30e3\u30f3\u30d7\u306b\u3064\u3044\u3066\u6559\u3048\u308b\u306e\u3060"
+      Voice: script_121
+    - Text: "\u4e0a\u306b\u8df3\u3093\u3067\u3001\u76f8\u624b\u306e\u653b\u6483\u3092\u304b\u308f\u305b\u308b\u306e\u3060\uff01"
+      Voice: script_122
+    PracticeInstruction: "{HoldUp}{Jump}\u3092\u62bc\u3057\u3066\u98db\u3093\u3067\u307f\u3088\u3046"
+    AfterPracticePages: []
+    Steps:
+    - Label: "\u30b8\u30e3\u30f3\u30d7"
+      Instruction: "{Up} + {Jump}"
+      Command: 2
+      Direction: 2
+      Ground: 1
+      TargetStates:
+      - {fileID: 1841557291681574819}
+      RequiredCount: 1
+      CompleteOnExit: 1
+      RequiresCommittedAction: 0
+      RequiresShieldLaunch: 0
+    ResetBeforePractice: 0
+    IsSpecial: 0
+  - Title: "\u524d\u3078\u79fb\u52d5"
+    Pages:
+    - Text: "\u6b21\u306f\u3001\u30c0\u30c3\u30b7\u30e5\u306b\u3064\u3044\u3066\u6559\u3048\u308b\u306e\u3060"
+      Voice: script_123
+    - Text: "\u6b69\u304f\u3088\u308a\u65e9\u304f\u8ddd\u96e2\u3092\u8a70\u3081\u3089\u308c\u308b\u306e\u3060\uff01"
+      Voice: script_124
+    PracticeInstruction: "{HoldForward}{Jump}\u3092\u62bc\u3057\u3066\u30c0\u30c3\u30b7\u30e5\u3057\u3066\u307f\u3088\u3046"
+    AfterPracticePages: []
+    Steps:
+    - Label: "\u524d\u3078\u79fb\u52d5"
+      Instruction: "{Forward} + {Jump}"
+      Command: 2
+      Direction: 4
+      Ground: 1
+      TargetStates:
+      - {fileID: 5360974398772848802}
+      - {fileID: 1841557291681574819}
+      RequiredCount: 1
+      CompleteOnExit: 1
+      RequiresCommittedAction: 0
+      RequiresShieldLaunch: 0
+    ResetBeforePractice: 0
+    IsSpecial: 0
+  - Title: "\u901a\u5e38\u653b\u6483"
+    Pages:
+    - Text: "\u6b21\u306f\u3001\u901a\u5e38\u653b\u6483\u306b\u3064\u3044\u3066\u6559\u3048\u308b\u306e\u3060"
+      Voice: script_125
+    - Text: "\u9b54\u6cd5\u4f7f\u3044\u306e\u653b\u6483\u306f\u3001\u8fd1\u304f\u306e\u76f8\u624b\u3092\u6756\u3067\u305f\u305f\u304f\u6280\u306a\u306e\u3060\uff01"
+      Voice: script_126
+    PracticeInstruction: "{Attack}\u3092\u62bc\u3057\u3066\u3001\u6756\u3067\u653b\u6483\u3057\u3066\u307f\u3088\u3046"
+    AfterPracticePages: []
+    Steps:
+    - Label: "\u653b\u6483"
+      Instruction: "{Attack}\u3067\u653b\u6483"
+      Command: 3
+      Direction: 0
+      Ground: 1
+      TargetStates:
+      - {fileID: 1588872990873593035}
+      RequiredCount: 1
+      CompleteOnExit: 1
+      RequiresCommittedAction: 0
+      RequiresShieldLaunch: 0
+    ResetBeforePractice: 0
+    IsSpecial: 0
+  - Title: "\u30c1\u30e3\u30fc\u30b8"
+    Pages:
+    - Text: "\u6b21\u306f\u3001\u30c1\u30e3\u30fc\u30b8\u306b\u3064\u3044\u3066\u6559\u3048\u308b\u306e\u3060"
+      Voice: script_127
+    - Text: "\u30c1\u30e3\u30fc\u30b8\u3092\u3059\u308b\u3068\u5f37\u529b\u306a\u6280\u3092\u6253\u3066\u308b\u3088\u3046\u306b\u306a\u308b\u306e\u3060"
+      Voice: script_128
+    PracticeInstruction: "{Charge}\u3092\u62bc\u3057\u3066 \u9b54\u529b\u30921\u56de\u305f\u3081\u3066\u307f\u3088\u3046"
+    AfterPracticePages: []
+    Steps:
+    - Label: "\u30c1\u30e3\u30fc\u30b8"
+      Instruction: "{Charge}\u3067\u30c1\u30e3\u30fc\u30b8"
+      Command: 1
+      Direction: 0
+      Ground: 1
+      TargetStates:
+      - {fileID: 7677753745911566938}
+      RequiredCount: 1
+      CompleteOnExit: 1
+      RequiresCommittedAction: 1
+      RequiresShieldLaunch: 0
+    ResetBeforePractice: 0
+    IsSpecial: 0
+  - Title: "\u708e\u306e\u9b54\u6cd5"
+    Pages:
+    - Text: "\u3053\u3053\u304b\u3089\u306f\u3001\u30c1\u30e3\u30fc\u30b8\u3057\u305f\u9b54\u529b\u3067\u9b54\u6cd5\u3092\u4f7f\u3046\u306e\u3060\uff01"
+      Voice: script_129
+    - Text: "\u9b54\u6cd5\u4f7f\u3044\u306f\u3001\u305f\u3081\u305f\u56de\u6570\u306b\u3088\u3063\u3066\u767a\u52d5\u3059\u308b\u9b54\u6cd5\u304c\u5909\u308f\u308b\u306e\u3060\uff01"
+      Voice: script_130
+    - Text: "1\u56de\u76ee\u306f\u708e\u30012\u56de\u76ee\u306f\u6c37\u30013\u56de\u76ee\u4ee5\u4e0a\u306f\u5ca9"
+      Voice: script_131
+    - Text: "\u307e\u305a\u306f \u30c1\u30e3\u30fc\u30b8\u4e00\u56de \u708e\u9b54\u6cd5 \u3092\u4f7f\u3063\u3066\u307f\u3088\u3046"
+      Voice: script_132
+    PracticeInstruction: "{Charge}\u3092\uff11\u56de\u62bc\u3057\u3066\u3001\u6b21\u306e\u62cd\u3067{Attack}\u3092\u62bc\u3057\u3066\u307f\u3088\u3046\uff01"
+    AfterPracticePages: []
+    Steps:
+    - Label: "\u30c1\u30e3\u30fc\u30b8"
+      Instruction: "{Charge}\u3067\u30c1\u30e3\u30fc\u30b8"
+      Command: 1
+      Direction: 0
+      Ground: 1
+      TargetStates:
+      - {fileID: 7677753745911566938}
+      RequiredCount: 1
+      CompleteOnExit: 1
+      RequiresCommittedAction: 1
+      RequiresShieldLaunch: 0
+    - Label: "\u653b\u6483"
+      Instruction: "{Attack}\u3067\u653b\u6483"
+      Command: 3
+      Direction: 0
+      Ground: 1
+      TargetStates:
+      - {fileID: 4324538208326174747}
+      RequiredCount: 1
+      CompleteOnExit: 1
+      RequiresCommittedAction: 1
+      RequiresShieldLaunch: 0
+    ResetBeforePractice: 1
+    IsSpecial: 0
+  - Title: "\u6c37\u306e\u9b54\u6cd5"
+    Pages:
+    - Text: "\u6b21\u306f\u30c1\u30e3\u30fc\u30b8\uff12\u56de \u6c37\u9b54\u6cd5 \u3092\u4f7f\u3063\u3066\u307f\u3088\u3046"
+      Voice: script_133
+    PracticeInstruction: "{Charge}\u3092\uff11\u56de\u62bc\u3057\u3066\u3001\u6b21\u306e\u62cd\u3067 \u307e\u305f {Charge} \u3092\uff11\u56de\u62bc\u3057\u3066\u3001\uff13\u62cd\u76ee\u3067{Attack}\u3092\u62bc\u3057\u3066\u307f\u3088\u3046\uff01"
+    AfterPracticePages: []
+    Steps:
+    - Label: "\u30c1\u30e3\u30fc\u30b8"
+      Instruction: "{Charge}\u3067\u30c1\u30e3\u30fc\u30b8"
+      Command: 1
+      Direction: 0
+      Ground: 1
+      TargetStates:
+      - {fileID: 7677753745911566938}
+      RequiredCount: 2
+      CompleteOnExit: 1
+      RequiresCommittedAction: 1
+      RequiresShieldLaunch: 0
+    - Label: "\u653b\u6483"
+      Instruction: "{Attack}\u3067\u653b\u6483"
+      Command: 3
+      Direction: 0
+      Ground: 1
+      TargetStates:
+      - {fileID: 7010646026458285884}
+      RequiredCount: 1
+      CompleteOnExit: 1
+      RequiresCommittedAction: 1
+      RequiresShieldLaunch: 0
+    ResetBeforePractice: 1
+    IsSpecial: 0
+  - Title: "\u5ca9\u306e\u9b54\u6cd5"
+    Pages:
+    - Text: "\u6b21\u306f\u30c1\u30e3\u30fc\u30b8\uff13\u56de \u5ca9\u9b54\u6cd5 \u3092\u4f7f\u3063\u3066\u307f\u3088\u3046"
+      Voice: script_134
+    PracticeInstruction: "\u3055\u3063\u304d\u306e\u8981\u9818\u3067 {Charge}\u3092\uff13\u56de\u62bc\u3057\u3066\uff14\u62cd\u76ee\u3067{Attack}\u3092\u62bc\u3057\u3066\u307f\u3088\u3046\uff01"
+    AfterPracticePages: []
+    Steps:
+    - Label: "\u30c1\u30e3\u30fc\u30b8"
+      Instruction: "{Charge}\u3067\u30c1\u30e3\u30fc\u30b8"
+      Command: 1
+      Direction: 0
+      Ground: 1
+      TargetStates:
+      - {fileID: 7677753745911566938}
+      RequiredCount: 3
+      CompleteOnExit: 1
+      RequiresCommittedAction: 1
+      RequiresShieldLaunch: 0
+    - Label: "\u653b\u6483"
+      Instruction: "{Attack}\u3067\u653b\u6483"
+      Command: 3
+      Direction: 0
+      Ground: 1
+      TargetStates:
+      - {fileID: 6075840688452119110}
+      RequiredCount: 1
+      CompleteOnExit: 1
+      RequiresCommittedAction: 1
+      RequiresShieldLaunch: 0
+    ResetBeforePractice: 1
+    IsSpecial: 0
+  - Title: "\u30ac\u30fc\u30c9"
+    Pages:
+    - Text: "\u6b21\u306f\u3001\u30ac\u30fc\u30c9\u306b\u3064\u3044\u3066\u6559\u3048\u308b\u306e\u3060"
+      Voice: script_135
+    - Text: "\u9b54\u6cd5\u4f7f\u3044\u306f\u3001\u9b54\u6cd5\u306e\u30b7\u30fc\u30eb\u30c9\u3092\u751f\u307f\u51fa\u305b\u308b\u306e\u3060\uff01"
+      Voice: script_136
+    - Text: "\u30b7\u30fc\u30eb\u30c9\u306f\u653b\u6483\u3092\u53d7\u3051\u308b\u3068\u6d88\u3048\u308b\u306e\u3060"
+      Voice: script_137
+    PracticeInstruction: "{Guard}\u3092\u62bc\u3057\u3066 \u9b54\u6cd5\u306e\u76fe\u3092\u51fa\u3059\u306e\u3060\uff01"
+    AfterPracticePages: []
+    Steps:
+    - Label: "\u30ac\u30fc\u30c9"
+      Instruction: "{Guard}\u3067\u30ac\u30fc\u30c9"
+      Command: 0
+      Direction: 0
+      Ground: 1
+      TargetStates:
+      - {fileID: 516385516661520776}
+      RequiredCount: 1
+      CompleteOnExit: 1
+      RequiresCommittedAction: 0
+      RequiresShieldLaunch: 0
+    ResetBeforePractice: 0
+    IsSpecial: 0
+  - Title: "\u76fe\u306e\u5c04\u51fa"
+    Pages:
+    - Text: "\u4eca\u5ea6\u306f\u3001\u30b7\u30fc\u30eb\u30c9\u3092\u4f7f\u3063\u305f\u653b\u6483\u306a\u306e\u3060"
+      Voice: script_138
+    - Text: "\u30ac\u30fc\u30c9\u3092\u9023\u7d9a\u3067\u3059\u308b\u3068\u3001\u30b7\u30fc\u30eb\u30c9\u304c\u3069\u3093\u3069\u3093\u6e9c\u307e\u3063\u3066\u3044\u304f\u306e\u3060\uff01"
+      Voice: script_139
+    - Text: "\u305d\u3057\u3066 \uff14\u679a\u4ee5\u4e0a\u305f\u3081\u308b\u3068 \u76fe\u304c\u524d\u65b9\u306b\u653e\u51fa\u3055\u308c\u308b\u306e\u3060"
+      Voice: script_140
+    PracticeInstruction: "{Guard}\u30924\u56de\u62bc\u3057\u3066\u307f\u3088\u3046"
+    AfterPracticePages: []
+    Steps:
+    - Label: "\u30ac\u30fc\u30c9"
+      Instruction: "\u65b9\u5411\u5165\u529b\u306a\u3057 + {Guard}"
+      Command: 0
+      Direction: 1
+      Ground: 1
+      TargetStates:
+      - {fileID: 516385516661520776}
+      RequiredCount: 4
+      CompleteOnExit: 1
+      RequiresCommittedAction: 0
+      RequiresShieldLaunch: 1
+    ResetBeforePractice: 2
+    IsSpecial: 0
+  - Title: "\u5fc5\u6bba\u6280"
+    Pages:
+    - Text: "\u6700\u5f8c\u306f\u3001\u5fc5\u6bba\u6280\u306a\u306e\u3060\uff01"
+      Voice: script_141
+    - Text: "\u5927\u304d\u306a\u5149\u306e\u30d3\u30fc\u30e0\u3067\u3001\u76f8\u624b\u3092\u306a\u304e\u6255\u3046\u6280\u306a\u306e\u3060"
+      Voice: script_142
+    - Text: "\u7df4\u7fd2\u7528\u306bSP\u3092\u6e80\u30bf\u30f3\u306b\u3057\u3066\u3042\u308b\u306e\u3060\uff01"
+      Voice: script_143
+    PracticeInstruction: "{Special}\u3092\u62bc\u3057\u3066\u3001\u5927\u9b54\u6cd5\u3092\u653e\u3064\u306e\u3060\uff01"
+    AfterPracticePages: []
+    Steps:
+    - Label: "\u5fc5\u6bba\u6280"
+      Instruction: "{Special}\u3067\u5fc5\u6bba\u6280"
+      Command: 6
+      Direction: 0
+      Ground: 1
+      TargetStates:
+      - {fileID: 7084057613530797037}
+      RequiredCount: 1
+      CompleteOnExit: 0
+      RequiresCommittedAction: 0
+      RequiresShieldLaunch: 0
+    ResetBeforePractice: 2
+    IsSpecial: 1
 --- !u!95 &8632360735648339568
 Animator:
   serializedVersion: 7
@@ -4960,3 +5226,24 @@ MonoBehaviour:
   m_limitSpaceOffset: {x: 0, y: 0, z: 0, w: 1}
   m_pitch: 3.1415927
   m_yaw: 0
+--- !u!114 &7402931633847190021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2145360790748758675}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 640620936bea4657b048f6ff9c9cbb1c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Core.LargeWizard.WizardCombatObservation
+  energyStorage: {fileID: 8599359020340622459}
+  charge: {fileID: 7677753745911566938}
+  fire: {fileID: 4324538208326174747}
+  ice: {fileID: 7010646026458285884}
+  rock: {fileID: 6075840688452119110}
+  dash: {fileID: 5360974398772848802}
+  jump: {fileID: 1841557291681574819}
+  guard: {fileID: 516385516661520776}
+  special: {fileID: 7084057613530797037}

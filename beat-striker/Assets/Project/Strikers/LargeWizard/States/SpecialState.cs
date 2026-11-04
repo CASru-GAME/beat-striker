@@ -13,6 +13,10 @@ namespace Core.LargeWizard {
         [SerializeField] private Special specialPrefab;
         [SerializeField] private Transform spawnPoint;
         [SerializeField] Hurtbox hurtbox;
+        public Special ObservedSpecial { get; private set; }
+        public float ObservationRange => specialPrefab.ObservationBeamRange;
+        public float ObservationBeamDelay => specialPrefab.ObservationBeamDelay;
+        public Vector3 ObservationOrigin => spawnPoint.position;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -20,6 +24,7 @@ namespace Core.LargeWizard {
             context.PlayAnimation(animationClip, OnAnimationEnd);
 
             var specialInstance = Instantiate(specialPrefab, spawnPoint.position, spawnPoint.rotation);
+            ObservedSpecial = specialInstance;
             specialInstance.Hurtbox = hurtbox;
             var ownerStrikerHub = context.Rigidbody.GetComponent<StrikerHub>();
             specialInstance.SetOwnerStrikerHub(ownerStrikerHub);

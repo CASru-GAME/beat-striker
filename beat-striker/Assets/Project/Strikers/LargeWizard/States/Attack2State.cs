@@ -6,8 +6,9 @@ namespace Core.LargeWizard {
 
 
 
-    public class Attack2State : StrikerState {
+    public class Attack2State : StrikerState, Alice.ITutorialActionProgress {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
+        public bool IsTutorialActionCommitted { get; private set; }
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -21,9 +22,11 @@ namespace Core.LargeWizard {
         [SerializeField] float fireTime = 0.3f;           // 氷を生成するタイミング（秒）
         [SerializeField] Vector3 raycastStartOffset = new Vector3(0f, 0.5f, 0f); // レイキャスト開始地点のオフセット
         [SerializeField] float groundRayDistance = 50f;    // 地面探索レイの長さ
+        public float ObservationReleaseSeconds => fireTime;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            IsTutorialActionCommitted = false;
 
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
@@ -69,6 +72,7 @@ namespace Core.LargeWizard {
                 iceBehavior.SetAttackerRoot(ctx.Rigidbody.transform.root);
 
                 iceBehavior.SetOwnerStrikerHub(ctx.Rigidbody.GetComponent<StrikerHub>());
+                IsTutorialActionCommitted = true;
 
                 audioClip1.PlayAtApp(spawnPos);
                 audioClip2.PlayAtApp(spawnPos);

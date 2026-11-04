@@ -11,6 +11,7 @@ namespace Core.LargeHero {
         [SerializeField] StrikerNode fallNode;
         [SerializeField] StrikerNode attackNode;
         [SerializeField] float jumpSpeed;
+        public float ObservationSpeed => jumpSpeed;
         
         public override void OnEnter(IStrikerContext context) {
         

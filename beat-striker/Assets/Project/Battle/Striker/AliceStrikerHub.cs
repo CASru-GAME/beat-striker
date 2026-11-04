@@ -77,7 +77,7 @@ namespace Alice {
         Observable<Unit> OnSpecialRequestFailed { get; }
     }
 
-    public class AliceStrikerHub : IStrikerContext, IStrikerHub, IDisposable {
+    public class AliceStrikerHub : IStrikerContext, IStrikerHub, IStrikerTutorialSource, IDisposable {
         const float HISTORY_SECONDS = 1f;
         const float POSITION_SNAP_THRESHOLD = 0.2f;
         const float POSITION_LERP_RATE = 0.5f;
@@ -113,6 +113,9 @@ namespace Alice {
         readonly Subject<StrikerImpact> onInpactGeneratedSubject = new();
         readonly Subject<AttentionRequest> onAttentionRequestedSubject = new();
         readonly Subject<Unit> onSpecialRequestFailedSubject = new();
+        readonly Subject<TutorialCommandContext> onTutorialCommandExecuted = new();
+        int tutorialCommandId;
+        GamePadButton tutorialCommandButton;
         IDisposable stateNameSubscription;
 
         Vector2 inputDirection;
@@ -145,6 +148,35 @@ namespace Alice {
 
         public Vector2 InputDirection => inputDirection;
         public Rigidbody Rigidbody => rb;
+        public IStrikerState ObservedState => stateMachine?.CurrentState;
+        public float StateElapsedSeconds => stateMachine?.StateElapsedSeconds ?? 0f;
+        public int StateVersion => stateMachine?.StateVersion ?? 0;
+        public Bounds BodyBounds => legacyHub.BodyBounds;
+        public Bounds? MovementBounds => legacyHub.MovementBounds;
+        public Transform ObservationRoot => strikerTransform;
+        public IReadOnlyList<TutorialActionLesson> TutorialLessons => legacyHub.TutorialLessons;
+        public Observable<TutorialCommandContext> OnTutorialCommandExecuted => onTutorialCommandExecuted;
+        public TutorialCommandContext CaptureTutorialCommand() => new(tutorialCommandId, tutorialCommandButton,
+            new Vector2(inputDirection.x * Mathf.Sign(strikerTransform.forward.x), inputDirection.y),
+            legacyHub.TutorialGroundSource.IsGrounded);
+
+        TutorialCommandContext StartTutorialCommand(GamePadButton button) {
+            if (TutorialLessons.Count == 0) return null;
+            tutorialCommandId++;
+            tutorialCommandButton = button;
+            return CaptureTutorialCommand();
+        }
+
+        void CompleteTutorialCommand(TutorialCommandContext command) {
+            if (command != null) onTutorialCommandExecuted.OnNext(command);
+        }
+
+        public void ResetTutorialPractice(TutorialReset reset) {
+            Default();
+            CancelDirection();
+            rb.linearVelocity = Vector3.zero;
+            legacyHub.ResetTutorialResources(reset);
+        }
         public ReadOnlyReactiveProperty<Alice.Striker> Striker => strikerSubject;
         public ReadOnlyReactiveProperty<int> PlayerId => playerIdSubject;
         public ReadOnlyReactiveProperty<Vector3> Position => positionSubject;
@@ -395,6 +427,7 @@ namespace Alice {
             onInpactGeneratedSubject.Dispose();
             onAttentionRequestedSubject.Dispose();
             onSpecialRequestFailedSubject.Dispose();
+            onTutorialCommandExecuted.Dispose();
         }
 
         public void ApplyDamage(float damage) {
@@ -513,17 +546,23 @@ namespace Alice {
 
         public void Dash() {
             if (stateMachine == null || IsUnableToAct) return;
+            var command = StartTutorialCommand(GamePadButton.West);
             stateMachine.CurrentState.OnDashRequested(stateMachine);
+            CompleteTutorialCommand(command);
         }
 
         public void Attack() {
             if (stateMachine == null || IsUnableToAct) return;
+            var command = StartTutorialCommand(GamePadButton.East);
             stateMachine.CurrentState.OnAttackRequested(stateMachine);
+            CompleteTutorialCommand(command);
         }
 
         public void Charge() {
             if (stateMachine == null || IsUnableToAct) return;
+            var command = StartTutorialCommand(GamePadButton.South);
             stateMachine.CurrentState.OnChargeRequested(stateMachine);
+            CompleteTutorialCommand(command);
         }
 
         public void Special() {
@@ -534,14 +573,18 @@ namespace Alice {
                 return;
             }
 
+            var command = StartTutorialCommand(GamePadButton.Start);
             currentSpecialPoint = 0f;
             specialPointSubject.OnNext(currentSpecialPoint);
             stateMachine.CurrentState.OnSpecialRequested(stateMachine);
+            CompleteTutorialCommand(command);
         }
 
         public void Guard() {
             if (stateMachine == null || IsUnableToAct) return;
+            var command = StartTutorialCommand(GamePadButton.North);
             stateMachine.CurrentState.OnGuardRequested(stateMachine);
+            CompleteTutorialCommand(command);
         }
 
         public void AddSpecialPoint(float value) {

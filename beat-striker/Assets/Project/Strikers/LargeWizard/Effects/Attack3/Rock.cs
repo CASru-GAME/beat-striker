@@ -19,6 +19,8 @@ namespace Core.LargeWizard {
         Transform attackerRoot;
         StrikerHub ownerStrikerHub;
         bool hasHit;
+        public Transform ObservationOwner => ownerStrikerHub != null ? ownerStrikerHub.transform : attackerRoot;
+        public bool IsObservationThreat => !hasHit;
 
         void Awake() {
             // インスペクタで指定したオフセットを適用

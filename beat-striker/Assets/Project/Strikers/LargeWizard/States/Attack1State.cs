@@ -6,8 +6,9 @@ namespace Core.LargeWizard {
 
 
 
-    public class Attack1State : StrikerState {
+    public class Attack1State : StrikerState, Alice.ITutorialActionProgress {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
+        public bool IsTutorialActionCommitted { get; private set; }
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -17,11 +18,14 @@ namespace Core.LargeWizard {
         [SerializeField] GameObject firePrefab;
         [SerializeField] Transform firePosition;
         [SerializeField] float fireTime = 0.3f;
+        public float ObservationReleaseSeconds => fireTime;
+        public Vector3 ObservationOrigin => firePosition.position;
         [Tooltip("firePrefab を削除するまでの秒数")]
         [SerializeField, Min(0f)] float firePrefabDestroyDelaySeconds = 5f;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            IsTutorialActionCommitted = false;
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, context => {
                 context.TryTransition(nextNode);
@@ -35,6 +39,7 @@ namespace Core.LargeWizard {
                 fire.Hurtbox = context.Rigidbody.GetComponentInChildren<Hurtbox>();
                 fire.SetOwnerStrikerHub(context.Rigidbody.GetComponent<StrikerHub>());
                 Destroy(particleInstance, firePrefabDestroyDelaySeconds);
+                IsTutorialActionCommitted = true;
             });
         }
 

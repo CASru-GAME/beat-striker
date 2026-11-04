@@ -27,20 +27,6 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
-  - Id: hp
-    Audio:
-      m_AssetGUID: 1105168ed00f69b469eec4af9931bd5b
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
-  - Id: sp
-    Audio:
-      m_AssetGUID: b4a11a5737aee2c43a2f356ed92a2b64
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
   - Id: walk_intro
     Audio:
       m_AssetGUID: 0ed5eaf091a1c9c4a8e460c65eb4e554
@@ -51,13 +37,6 @@ MonoBehaviour:
   - Id: walk_end
     Audio:
       m_AssetGUID: cc564c34b82ce1d4b92d3d3c581389bb
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
-  - Id: rhythm_intro
-    Audio:
-      m_AssetGUID: 8506f2588eaebab4abd02f4e10bde9c5
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
@@ -286,34 +265,6 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
-  - Id: timer
-    Audio:
-      m_AssetGUID: 9720c0b7561c17f4389d82f985f16291
-      m_SubObjectName:
-      m_SubObjectType:
-      m_SubObjectGUID:
-      m_EditorAssetChanged: 0
-  - Id: score
-    Audio:
-      m_AssetGUID: 9863a90a809b06643a36363712c703ad
-      m_SubObjectName:
-      m_SubObjectType:
-      m_SubObjectGUID:
-      m_EditorAssetChanged: 0
-  - Id: score_award
-    Audio:
-      m_AssetGUID: 414c3e797d2aba143ad8abd03a4382b6
-      m_SubObjectName:
-      m_SubObjectType:
-      m_SubObjectGUID:
-      m_EditorAssetChanged: 0
-  - Id: victory
-    Audio:
-      m_AssetGUID: ac8ee7fe2df3c464c9e0afe74b59d85d
-      m_SubObjectName:
-      m_SubObjectType:
-      m_SubObjectGUID:
-      m_EditorAssetChanged: 0
   - Id: direction_hold_stick
     Audio:
       m_AssetGUID: 7fe5b7bc3c18bbf429fac3730ebd776e
@@ -335,41 +286,503 @@ MonoBehaviour:
       m_SubObjectType:
       m_SubObjectGUID:
       m_EditorAssetChanged: 0
+  - Id: sp_page2
+    Audio:
+      m_AssetGUID: 94a0ce6301fd39f4db4809fde81f4712
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: timer_page2
+    Audio:
+      m_AssetGUID: af5005f1c851ded488870756412705e1
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: score_award_page2
+    Audio:
+      m_AssetGUID: f38b1046dfa9049439d1f697ab99c1f7
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_102
+    Audio:
+      m_AssetGUID: fec2caf1e5921fa498cd54619ce11200
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_103
+    Audio:
+      m_AssetGUID: 1b013c6aaa2eeaa44b6e021d3cac3b1b
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_104
+    Audio:
+      m_AssetGUID: b96b58c530dc61747bed4e1bdac0177a
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_105
+    Audio:
+      m_AssetGUID: 874fcee99e67b174abbc40e565b8d5c6
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_106
+    Audio:
+      m_AssetGUID: 51ac81d358646a040864de803773a053
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_107
+    Audio:
+      m_AssetGUID: 88f3439681f31ec4b84b5dc784480431
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_108
+    Audio:
+      m_AssetGUID: ca081dec68ef74f408729f97bd9d09df
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_109
+    Audio:
+      m_AssetGUID: 7c7701daed80a9a408d6f517f046ba4d
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_110
+    Audio:
+      m_AssetGUID: b7ece07313bc69e44a38629bec37ddb7
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_111
+    Audio:
+      m_AssetGUID: 82b35a8a9ae51ee45a86dd4606c90129
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_112
+    Audio:
+      m_AssetGUID: 81f2cf480a6b652438cf49f84f11662a
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_113
+    Audio:
+      m_AssetGUID: 1a0060f54ea34a6438eff90e5a5e4506
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_114
+    Audio:
+      m_AssetGUID: be7eaee6215b15846988afa1259d3ecf
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_115
+    Audio:
+      m_AssetGUID: c86e670add313c54da329cbdf93387af
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_116
+    Audio:
+      m_AssetGUID: e4854d982b865444fa47dd366af07a59
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_117
+    Audio:
+      m_AssetGUID: e77e7cea6e3b40d49bad01f2b5f4f1c2
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_118
+    Audio:
+      m_AssetGUID: 9180eb2b7db2a3a4a95d39152a79acbb
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_119
+    Audio:
+      m_AssetGUID: a86d7572422d0f541a15bea66dbb886e
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_120
+    Audio:
+      m_AssetGUID: 3b9ee630633a9f1419247a18606b8ba7
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_121
+    Audio:
+      m_AssetGUID: b3bbf4e8982aff84d95a2a4ce1ca3447
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_122
+    Audio:
+      m_AssetGUID: 37fc9333a420af44da29d3372b645476
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_123
+    Audio:
+      m_AssetGUID: aa30ae196ae70604ebe0054f63b8b336
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_124
+    Audio:
+      m_AssetGUID: bc43c5b67a7664e4987d7996d03d8f7a
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_125
+    Audio:
+      m_AssetGUID: 4d5d7eeca897609499b422ed40a2246f
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_126
+    Audio:
+      m_AssetGUID: efc8f5f27dba4364d976ddca3e6a41cd
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_127
+    Audio:
+      m_AssetGUID: 9d7286afe9eebd945af44ee7c0986954
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_128
+    Audio:
+      m_AssetGUID: f7a9a803c6f46db44a909a62898cc299
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_129
+    Audio:
+      m_AssetGUID: 43f0e6263c540b54fa86943e20f91428
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_130
+    Audio:
+      m_AssetGUID: b40ddb09029d2944e83e7166d182428e
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_131
+    Audio:
+      m_AssetGUID: 41b525ea9fc99474f9ed60ab2d4d722a
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_132
+    Audio:
+      m_AssetGUID: b21e04aacb568484c8ffb0915904802d
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_133
+    Audio:
+      m_AssetGUID: 6a865592e4d0f4742a642d4fd88efdb9
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_134
+    Audio:
+      m_AssetGUID: 9356e8d19f1308a4e99ea0f7e6a4b058
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_135
+    Audio:
+      m_AssetGUID: 5f71e209b300c8440885b9178930e419
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_136
+    Audio:
+      m_AssetGUID: 748cd578b2b79a946a49a603d4d18983
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_137
+    Audio:
+      m_AssetGUID: 16a3eb57891aa844f9df4a6e64d0116d
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_138
+    Audio:
+      m_AssetGUID: bcebc8488f43dd041b22d1b72be10ef8
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_139
+    Audio:
+      m_AssetGUID: 78193e9518a63e046bd496a56b8fc93b
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_140
+    Audio:
+      m_AssetGUID: b1df009fca4d694459849f77d4720c9a
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_141
+    Audio:
+      m_AssetGUID: 9c051ba4e77278744b9f6f0ce177da32
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_142
+    Audio:
+      m_AssetGUID: 88e46f9afff51b24b9072c5a5def20e2
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_143
+    Audio:
+      m_AssetGUID: 3a535ad408bf19c40b2c1dcbb19502ec
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_144
+    Audio:
+      m_AssetGUID: c8d0570d574361e4fbf974a9e7912826
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_145
+    Audio:
+      m_AssetGUID: 2e8fcda8e08975a43a4ff049c5317431
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_146
+    Audio:
+      m_AssetGUID: 2ddb1c153dd8c55449c0ea14b8a3f9ce
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_147
+    Audio:
+      m_AssetGUID: 3bbdd08f3d054ef499f643153d9d13b0
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_148
+    Audio:
+      m_AssetGUID: 90548b742a61acd4bb7f06b1011f7b0d
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_149
+    Audio:
+      m_AssetGUID: 6625d5f3facf1f14da20f0710126bd1d
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_150
+    Audio:
+      m_AssetGUID: 58f0df5510b261340b42f6cf80026c95
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_151
+    Audio:
+      m_AssetGUID: 07da4168df79f7644a62710600a2bef1
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_152
+    Audio:
+      m_AssetGUID: 3a67c8f88b115b648b7e6ba4b3ef4eb2
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_153
+    Audio:
+      m_AssetGUID: 7410b7beae1a23e4098d53a1642f8a64
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_154
+    Audio:
+      m_AssetGUID: d5b04d1ac1bdabb428f9fef9865c8017
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_155
+    Audio:
+      m_AssetGUID: 095f43349210a354d8745082793bea1b
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_156
+    Audio:
+      m_AssetGUID: d7afdf9ae7a998e4ba0d00eafffc3c92
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_157
+    Audio:
+      m_AssetGUID: a62d9afdd6805744bb78b04e39f7b83b
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_158
+    Audio:
+      m_AssetGUID: 5d1477547df8a8b49aa475df9438d2b1
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_159
+    Audio:
+      m_AssetGUID: 611863d52223bb349811dd373b6ecf58
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_160
+    Audio:
+      m_AssetGUID: ff1a7b0af5a65254b8d820c659fa14e2
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_161
+    Audio:
+      m_AssetGUID: 871494e21610e754d8b0fe5ccd04e87e
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_162
+    Audio:
+      m_AssetGUID: 24c1598b8eac814438dfb01ec68d486f
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_163
+    Audio:
+      m_AssetGUID: 9bf09af2c03b46e44a5a720888e66565
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_164
+    Audio:
+      m_AssetGUID: 418164aad67146e42a2555bd51b3b1f6
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: script_165
+    Audio:
+      m_AssetGUID: ab936989bcf5cbf4f87673fbf692d032
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
   lines:
   - Key: 0
     Segments:
     - overview
-    - $East
-    - next
+    - script_102
   - Key: 13
     Segments:
-    - hp
-    - $East
-    - next
+    - script_103
+    - script_104
   - Key: 14
     Segments:
-    - sp
-    - $East
-    - next
+    - script_105
+    - script_106
+    - sp_page2
   - Key: 1
     Segments:
-    - walk_intro
-    - $East
-    - next
+    - script_107
+    - script_108
   - Key: 2
     Segments:
     - $Walk
     - walk_end
   - Key: 18
     Segments:
-    - rhythm_intro
-    - $East
-    - $South
-    - $North
-    - $West
-    - rhythm_three
-    - $East
-    - next
+    - script_109
+    - script_110
+    - script_111
+    - script_112
   - Key: 19
     Segments:
     - rhythm_press
@@ -446,30 +859,25 @@ MonoBehaviour:
     - special_practice
   - Key: 20
     Segments:
-    - timer
-    - $East
-    - next
+    - script_113
+    - script_114
+    - timer_page2
   - Key: 21
     Segments:
-    - score
-    - $East
-    - next
+    - script_115
   - Key: 23
     Segments:
-    - score_award
-    - $East
-    - next
+    - script_116
+    - script_117
+    - score_award_page2
   - Key: 17
     Segments:
     - final
+    - script_118
   - Key: 24
     Segments:
-    - $DirectionHold
     - direction_hold_command
-    - $East
-    - next
   - Key: 25
     Segments:
-    - victory
-    - $East
-    - next
+    - script_119
+    - script_120

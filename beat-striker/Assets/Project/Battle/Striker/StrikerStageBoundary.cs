@@ -7,6 +7,28 @@ public sealed class StrikerStageBoundary {
     readonly Bounds bounds;
     readonly float deployWorldZ;
 
+    public Bounds MovementBounds => bounds;
+
+    // Collider.bounds is empty while the warrior's dodge disables its collider.
+    // Calculate from the capsule and physics pose so observations stay valid then.
+    public Bounds BodyBounds {
+        get {
+            var scale = capsule.transform.lossyScale;
+            var absoluteScale = new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+            var axis = capsule.direction == 0 ? Vector3.right : capsule.direction == 2 ? Vector3.forward : Vector3.up;
+            var axisScale = capsule.direction == 0 ? absoluteScale.x : capsule.direction == 2 ? absoluteScale.z : absoluteScale.y;
+            var radiusScale = capsule.direction == 0 ? Mathf.Max(absoluteScale.y, absoluteScale.z)
+                : capsule.direction == 2 ? Mathf.Max(absoluteScale.x, absoluteScale.y) : Mathf.Max(absoluteScale.x, absoluteScale.z);
+            var radius = capsule.radius * radiusScale;
+            var halfSegment = Mathf.Max(0f, capsule.height * axisScale * 0.5f - radius);
+            var worldAxis = body.rotation * axis;
+            var extents = new Vector3(Mathf.Abs(worldAxis.x), Mathf.Abs(worldAxis.y), Mathf.Abs(worldAxis.z)) * halfSegment
+                + Vector3.one * radius;
+            var centerOffset = body.rotation * Vector3.Scale(capsule.center, scale);
+            return new Bounds(body.position + centerOffset, extents * 2f);
+        }
+    }
+
     public StrikerStageBoundary(Rigidbody body, CapsuleCollider capsule, Bounds bounds) {
         this.body = body;
         this.capsule = capsule;
@@ -17,18 +39,9 @@ public sealed class StrikerStageBoundary {
     public void Constrain() {
         // Compute from the physics pose: Collider.bounds can still reflect the old
         // transform immediately after a warp or an online position correction.
-        var scale = capsule.transform.lossyScale;
-        scale = new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
-        var axis = capsule.direction == 0 ? Vector3.right : capsule.direction == 2 ? Vector3.forward : Vector3.up;
-        var axisScale = capsule.direction == 0 ? scale.x : capsule.direction == 2 ? scale.z : scale.y;
-        var radiusScale = capsule.direction == 0 ? Mathf.Max(scale.y, scale.z)
-            : capsule.direction == 2 ? Mathf.Max(scale.x, scale.y) : Mathf.Max(scale.x, scale.z);
-        var radius = capsule.radius * radiusScale;
-        var halfSegment = Mathf.Max(0f, capsule.height * axisScale * 0.5f - radius);
-        var worldAxis = body.rotation * axis;
-        var extents = new Vector3(Mathf.Abs(worldAxis.x), Mathf.Abs(worldAxis.y), Mathf.Abs(worldAxis.z)) * halfSegment
-            + Vector3.one * radius;
-        var centerOffset = body.rotation * Vector3.Scale(capsule.center, capsule.transform.lossyScale);
+        var geometry = BodyBounds;
+        var extents = geometry.extents;
+        var centerOffset = geometry.center - body.position;
         var min = bounds.min + extents - centerOffset;
         var max = bounds.max - extents - centerOffset;
         var position = body.position;

@@ -7,6 +7,8 @@ namespace Alice.Editor
     [CustomEditor(typeof(AISetting))]
     public class AISettingEditor : UnityEditor.Editor
     {
+        const string TrainingScenePath = "Assets/Project/Ai/Training/TrainingScene.unity";
+
         SerializedProperty modeProp;
         SerializedProperty demonstrationNameProp;
         SerializedProperty learningPlayer1Prop;
@@ -67,6 +69,14 @@ namespace Alice.Editor
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Build Actions", EditorStyles.boldLabel);
+
+            EditorGUILayout.HelpBox("軽量な学習専用環境は TrainingScene を開いてから Build ML Scene でビルドします。学習キャラクターと対戦相手は専用シーンの App > AISetting で設定してください。", MessageType.Info);
+            if (GUILayout.Button("Open Training Scene")) {
+                if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) {
+                    EditorSceneManager.OpenScene(TrainingScenePath);
+                    GUIUtility.ExitGUI();
+                }
+            }
 
             if (GUILayout.Button("Build ML Scene", GUILayout.Height(30)))
             {

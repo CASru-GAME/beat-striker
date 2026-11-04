@@ -4,8 +4,9 @@ using Core.Striker;
 
 namespace Core.LargeHero {
     
-    public class BeamState : StrikerState {
+    public class BeamState : StrikerState, Alice.ITutorialActionProgress {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
+        public bool IsTutorialActionCommitted { get; private set; }
 
 
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -16,8 +17,11 @@ namespace Core.LargeHero {
         [SerializeField] float fireTime = 0.3f;
         [SerializeField] AudioClip audioClip;
         [SerializeField] AudioClip missAudioClip;
+        public float ObservationReleaseSeconds => fireTime;
+        public Vector3 ObservationOrigin => firePosition.position;
 
         public override void OnEnter(IStrikerContext context) {
+            IsTutorialActionCommitted = false;
             Debug.Log("BeamState: OnEnter");
             context.PlayAnimation(animationClip, context => {
                 context.TryTransition(nextNode);
@@ -27,6 +31,7 @@ namespace Core.LargeHero {
                 var swingAudioClip = missAudioClip ? missAudioClip : audioClip;
                 var particleInstance =
                 Instantiate(beamPrefab, firePosition.position, GetBeamRotation(context));
+                IsTutorialActionCommitted = true;
                 swingAudioClip.PlayAtApp(firePosition.position);
             });
         }

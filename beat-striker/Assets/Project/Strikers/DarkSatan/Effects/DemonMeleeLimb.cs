@@ -23,6 +23,16 @@ namespace Core.DarkSatan {
 
         public Observable<DemonMeleeContact> OnContact => onContact;
 
+        public Alice.StrikerProjectileObservation ObserveAttack() {
+            if (!attacking || hasHit || attackTime > hitEnd) return null;
+            var scale = transform.lossyScale;
+            var radius = hitCollider.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+            return new Alice.StrikerProjectileObservation(
+                transform.TransformPoint(hitCollider.center) + direction * (activeReach * .5f),
+                Vector3.zero, radius + activeReach * .5f,
+                Mathf.Max(0f, hitStart - attackTime), Mathf.Max(0f, hitEnd - attackTime));
+        }
+
         void Awake() => StopEnergy();
 
         public void PlayEnergy(Transform striker, Vector3 forward, float start, float end, float? reach = null) {

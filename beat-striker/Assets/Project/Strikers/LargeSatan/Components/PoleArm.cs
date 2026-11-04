@@ -34,6 +34,10 @@ public class PoleArm : MonoBehaviour {
     public float PlannedEmitAngle => plannedEmitAngle;
     public Vector3 ChargeInputDirection => chargeInputDirection;
 
+    public StrikerProjectileObservation ObserveProjectile() {
+        return currentState is EmittionState flight ? flight.ObserveProjectile() : null;
+    }
+
     public void Awake() {
         TryGetComponent(out tracker);
         originalParent = transform.parent;
@@ -361,6 +365,13 @@ public class PoleArm : MonoBehaviour {
         Tracker.TargetHandle pauseTargetHandle;
         bool hasHitHurtbox;
         bool isStopped;
+
+        public StrikerProjectileObservation ObserveProjectile() {
+            if (isStopped || hasHitHurtbox) return null;
+            var moveSpeed = speed * speedCurve.Evaluate(Mathf.Clamp01(elapsedTime / speedDuration));
+            return new StrikerProjectileObservation(poleArm.transform.position, emitDirection * moveSpeed,
+                poleArm.hitRadius, 0f, Mathf.Max(0f, speedDuration - elapsedTime));
+        }
 
         public EmittionState(PoleArm poleArm, Quaternion finalRotation, float speed, float speedDuration, AnimationCurve speedCurve) {
             this.poleArm = poleArm;

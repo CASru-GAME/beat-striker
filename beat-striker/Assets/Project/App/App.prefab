@@ -3666,19 +3666,24 @@ MonoBehaviour:
     Self: 0
     Opponent: 0
   - Id: He
-    BrainPrefab: {fileID: 1718372972706777403, guid: 8228e91a13561d247986769aae26816b, type: 3}
+    BrainPrefab: {fileID: 1718372972706777403, guid: 839eb3d475194f7392dfc857a80fd5dc, type: 3}
     Strength: 1
     Self: 1
     Opponent: 0
   - Id: Wi
-    BrainPrefab: {fileID: 1718372972706777403, guid: 11edb303d1603c14d81212adb4a66f13, type: 3}
+    BrainPrefab: {fileID: 1718372972706777403, guid: 714caf737be64e8e8962bf287bebd8d6, type: 3}
     Strength: 1
     Self: 2
     Opponent: 0
   - Id: Wa
-    BrainPrefab: {fileID: 1718372972706777403, guid: 1352e75daebb66f49a3225a024d5a7a8, type: 3}
+    BrainPrefab: {fileID: 1718372972706777403, guid: 78a4fa0b54d04cc0bf6fa744a64bd3d8, type: 3}
     Strength: 1
     Self: 4
+    Opponent: 0
+  - Id: DemonKing
+    BrainPrefab: {fileID: 1718372972706777403, guid: 1352e75daebb66f49a3225a024d5a7a8, type: 3}
+    Strength: 1
+    Self: 5
     Opponent: 0
 --- !u!114 &9201860890254514560
 MonoBehaviour:

@@ -16,6 +16,7 @@ namespace Alice.Editor {
         [Serializable] record Manifest {
             public Clip[] Clips;
             public Line[] Lines;
+            public string DisplayCharacters;
         }
         [Serializable] record Clip {
             public string Id;
@@ -24,11 +25,13 @@ namespace Alice.Editor {
         [Serializable] record Line {
             public string Key;
             public string[] Segments;
+            public TutorialLessonPage[] Pages;
         }
 
         [MenuItem("Tools/Battle/Configure Tutorial Narration")]
         public static void Configure() {
             var manifest = JsonUtility.FromJson<Manifest>(File.ReadAllText(ROOT + "/voice-lines.json"));
+            EnsureDisplayCharacters(manifest.DisplayCharacters);
             var settings = AddressableAssetSettingsDefaultObject.Settings;
             var missingEntries = settings.DefaultGroup.entries.Where(entry =>
                 entry.address.StartsWith(ROOT + "/", StringComparison.Ordinal) &&
@@ -97,17 +100,13 @@ namespace Alice.Editor {
 
                 var serializedView = new SerializedObject(view);
                 serializedView.FindProperty("narration").objectReferenceValue = narration;
-                var description = (GameObject)serializedView.FindProperty("rhythmDescriptionPanel").objectReferenceValue;
-                var descriptionText = description.GetComponentsInChildren<TMP_Text>(true).Single(text => text.name == "Text (TMP)");
-                serializedView.FindProperty("rhythmDescriptionText").objectReferenceValue = descriptionText;
-                serializedView.FindProperty("rhythmDescriptionFormat").stringValue =
-                    "リズムに合わせて押さないと、コマンドは発動しないのだ！\n{0} のどれかを3拍連続で成功させるのだ";
-                serializedView.FindProperty("rhythmPracticeFormat").stringValue =
-                    "{2} のどれかをリズムに合わせて押そう\n3回連続成功！ {0} / {1}（ミス・押し忘れでやり直し）";
-                var practiceText = (TMP_Text)serializedView.FindProperty("rhythmPracticeText").objectReferenceValue;
-                descriptionText.text = "リズムに合わせて押さないと、コマンドは発動しないのだ！\nA / B / X / Y ボタンのどれかを3拍連続で成功させるのだ";
-                practiceText.text = "A / B / X / Y ボタンのどれかをリズムに合わせて押そう\n3回連続成功！ 0 / 3（ミス・押し忘れでやり直し）";
-                ConfigureEndingPanels(root, serializedView);
+                serializedView.FindProperty("rhythmPracticeFormat").stringValue = "{2}のどれかを、ビートに合わせて3回連続成功させよう";
+                ConfigureEndingPanels(root, serializedView, manifest);
+                ConfigurePanel(serializedView, "overviewPanel", "hpDescriptionPanel", "Overview", FirstPage(manifest, "Overview"));
+                ConfigurePanel(serializedView, "hpDescriptionPanel", "hpDescriptionPanel", "HpDescription", FirstPage(manifest, "HpDescription"));
+                ConfigurePanel(serializedView, "spDescriptionPanel", "hpDescriptionPanel", "SpDescription", FirstPage(manifest, "SpDescription"));
+                ConfigurePanel(serializedView, "walkDescriptionPanel", "hpDescriptionPanel", "WalkDescription", FirstPage(manifest, "WalkDescription"));
+                ConfigureDescriptionPages(serializedView, manifest);
                 serializedView.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, BATTLE);
             }
@@ -119,29 +118,70 @@ namespace Alice.Editor {
             AssetDatabase.SaveAssetIfDirty(settings);
             Debug.Log($"Tutorial narration configured: {manifest.Lines.Length} pages, {manifest.Clips.Length} Addressable clips. VOICEVOX:ずんだもん");
         }
-        static void ConfigureEndingPanels(GameObject root, SerializedObject view) {
+
+        static void EnsureDisplayCharacters(string characters) {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Project/Fonts/kaiso_up/Kaisotai-Next-UP-B SDF.asset");
+            var serializedFont = new SerializedObject(font);
+            serializedFont.FindProperty("m_SourceFontFile").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Font>("Assets/Project/Fonts/kaiso_up/Kaisotai-Next-UP-B.ttf");
+            serializedFont.ApplyModifiedPropertiesWithoutUndo();
+            var population = font.atlasPopulationMode;
+            font.atlasPopulationMode = AtlasPopulationMode.Dynamic;
+            font.isMultiAtlasTexturesEnabled = true;
+            if (!font.TryAddCharacters(characters, out string missing))
+                throw new InvalidOperationException("Tutorial characters are missing from the source font: " + missing);
+            font.atlasPopulationMode = population;
+            foreach (var texture in font.atlasTextures) {
+                if (string.IsNullOrEmpty(AssetDatabase.GetAssetPath(texture))) AssetDatabase.AddObjectToAsset(texture, font);
+                EditorUtility.SetDirty(texture);
+            }
+            EditorUtility.SetDirty(font);
+            AssetDatabase.SaveAssetIfDirty(font);
+        }
+
+        static void ConfigureDescriptionPages(SerializedObject view, Manifest manifest) {
+            var groups = manifest.Lines.Where(line => line.Pages != null && line.Pages.Length > 0).ToArray();
+            var serializedGroups = view.FindProperty("descriptionPages");
+            serializedGroups.arraySize = groups.Length;
+            for (var i = 0; i < groups.Length; i++) {
+                var line = groups[i];
+                var property = char.ToLowerInvariant(line.Key[0]) + line.Key.Substring(1) + "Panel";
+                var panel = (GameObject)view.FindProperty(property).objectReferenceValue;
+                var text = panel.GetComponentsInChildren<TMP_Text>(true).Single(label => label.name == "Text (TMP)");
+                text.text = line.Pages[0].Text;
+                var group = serializedGroups.GetArrayElementAtIndex(i);
+                group.FindPropertyRelative("Key").intValue = (int)Enum.Parse<TutorialUiKey>(line.Key);
+                group.FindPropertyRelative("Text").objectReferenceValue = text;
+                var pages = group.FindPropertyRelative("Pages");
+                pages.arraySize = line.Pages.Length;
+                for (var j = 0; j < line.Pages.Length; j++) {
+                    var page = pages.GetArrayElementAtIndex(j);
+                    page.FindPropertyRelative("Text").stringValue = line.Pages[j].Text;
+                    page.FindPropertyRelative("Voice").stringValue = line.Pages[j].Voice;
+                }
+            }
+        }
+        static string FirstPage(Manifest manifest, string key) => manifest.Lines.Single(line => line.Key == key).Pages[0].Text;
+
+        static void ConfigureEndingPanels(GameObject root, SerializedObject view, Manifest manifest) {
             var battleView = root.GetComponentsInChildren<BattlePresenterView>(true).Single();
             var serializedBattleView = new SerializedObject(battleView);
             view.FindProperty("battleView").objectReferenceValue = battleView;
             var timerText = (TMP_Text)serializedBattleView.FindProperty("remainingBeatCountText").objectReferenceValue;
             view.FindProperty("timerPointerTarget").objectReferenceValue = timerText.rectTransform;
             ConfigurePanel(view, "timerDescriptionPanel", "hpDescriptionPanel", "TimerDescription",
-                "これがタイマーなのだ。曲の残り拍数を表示しているのだ\nこの数字が0になると、試合終了なのだ");
+                FirstPage(manifest, "TimerDescription"));
             var timerPanel = (GameObject)view.FindProperty("timerDescriptionPanel").objectReferenceValue;
             ((RectTransform)timerPanel.transform).anchoredPosition = new Vector2(0f, -90f);
             ConfigurePanel(view, "victoryDescriptionPanel", "hpDescriptionPanel", "VictoryDescription",
-                "曲が終わったとき、<b>カップが多い方が勝ち</b>なのだ！\n同じ数なら、残りHPが多い方の勝ちなのだ");
+                FirstPage(manifest, "VictoryDescription"));
             ConfigurePanel(view, "directionDescriptionPanel", "hpDescriptionPanel", "DirectionDescription",
-                "<b>左スティックを行きたい方向に倒したまま</b>\n<b>方向入力を続けた状態で</b>、リズムに合わせてコマンドを押すのだ！");
-            var directionPanel = (GameObject)view.FindProperty("directionDescriptionPanel").objectReferenceValue;
-            view.FindProperty("directionDescriptionText").objectReferenceValue = directionPanel.GetComponentsInChildren<TMP_Text>(true)
-                .Single(label => label.name == "Text (TMP)");
+                FirstPage(manifest, "DirectionDescription"));
             ConfigurePanel(view, "scoreDescriptionPanel", "hpDescriptionPanel", "ScoreDescription",
-                "相手を倒すと、得点のカップを1つ獲得できるのだ！\nまずは相手を倒して、カップを手に入れるのだ！");
+                FirstPage(manifest, "ScoreDescription"));
             ConfigurePanel(view, "defeatPracticePanel", "walkPracticePanel", "DefeatPractice",
-                "これまで覚えたコマンドで、相手を倒そう！");
+                "覚えた技を使って、相手を倒すのだ！");
             ConfigurePanel(view, "scoreAwardDescriptionPanel", "hpDescriptionPanel", "ScoreAwardDescription",
-                "相手を倒して、カップを1つ獲得したのだ！\n追加されたカップはここなのだ。これでチュートリアルは終了なのだ！");
+                FirstPage(manifest, "ScoreAwardDescription"));
             var pointer = (UnityEngine.UI.Image)view.FindProperty("barPointer").objectReferenceValue;
             pointer.transform.SetAsLastSibling();
         }

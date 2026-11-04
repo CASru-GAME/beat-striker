@@ -6,8 +6,9 @@ namespace Core.LargeWizard {
 
 
 
-    public class Attack3State : StrikerState {
+    public class Attack3State : StrikerState, Alice.ITutorialActionProgress {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
+        public bool IsTutorialActionCommitted { get; private set; }
 
         // このステートにいる間、再生されるアニメーションクリップ
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -19,9 +20,12 @@ namespace Core.LargeWizard {
         [SerializeField] AudioClip audioClip;             // 岩生成時の音
         [SerializeField] float fireTime = 0.3f;           // 岩を生成するタイミング（秒）
         [SerializeField] float spawnHeight = 5f;           // 相手の頭上からの生成高さ
+        public float ObservationReleaseSeconds => fireTime;
+        public float ObservationSpawnHeight => spawnHeight;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
+            IsTutorialActionCommitted = false;
             // アニメーションの再生を開始する
             context.PlayAnimation(animationClip, OnAnimationEnd);
 
@@ -36,6 +40,7 @@ namespace Core.LargeWizard {
                 rockBehavior.SetAttackerPosition(ctx.Rigidbody.transform.position);
                 rockBehavior.SetAttackerRoot(ctx.Rigidbody.transform.root);
                 rockBehavior.SetOwnerStrikerHub(ctx.Rigidbody.GetComponent<StrikerHub>());
+                IsTutorialActionCommitted = true;
                 audioClip.PlayAtApp(rockPrefab.transform.position);
             });
         }

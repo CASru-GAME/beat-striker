@@ -24,6 +24,8 @@ namespace Core.LargeWizard {
         float elapsed;
         bool grown;
         bool hasHit;
+        public Transform ObservationOwner => ownerStrikerHub != null ? ownerStrikerHub.transform : attackerRoot;
+        public bool IsObservationThreat => !hasHit;
         Collider iceCollider;
         Vector3 attackerPosition;
         Transform attackerRoot;

@@ -32,6 +32,26 @@ public class beam11 : MonoBehaviour
     bool isShrinking;
     float nextAttackJudgeTime;
 
+    public Transform ObservationOwner => ownerStrikerHub != null ? ownerStrikerHub.transform : null;
+    public float ObservationRange => maxLength * transform.localScale.z;
+    public float ObservationActivationSeconds => colliderEnableDelaySeconds;
+
+    public Alice.StrikerAreaAttackObservation ObserveAttack() {
+        var delay = Mathf.Max(0f, colliderEnableDelaySeconds - elapsed);
+        if (hitCollider.enabled) return new Alice.StrikerAreaAttackObservation(hitCollider.bounds, 0f, 2f);
+        // Forecast the authored beam volume during the visible startup, including
+        // its length even though Collider.bounds is empty before activation.
+        var size = initialColliderSize;
+        size.z = maxLength;
+        var center = initialColliderCenter + GetParticleShootDirectionLocal() * ((maxLength - initialColliderSize.z) * .5f);
+        var bounds = new Bounds(transform.TransformPoint(center), Vector3.zero);
+        for (var i = 0; i < 8; i++) {
+            var corner = new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f);
+            bounds.Encapsulate(transform.TransformPoint(center + Vector3.Scale(size * .5f, corner)));
+        }
+        return new Alice.StrikerAreaAttackObservation(bounds, delay, delay + 2f);
+    }
+
     void Awake()
     {
         beam11ParticleSystem = GetComponent<ParticleSystem>();

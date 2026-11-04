@@ -127,12 +127,16 @@ namespace Alice {
                 UnlockInputIfBeatMatched(beatIndex);
             }
 
-            public void ResetForLoop() {
+            public void CancelPendingCommands() {
                 pendingCommands.Clear();
                 attemptedCommands.Clear();
-                comboCount.OnNext(0);
                 isInputLocked = false;
                 lockedBeatIndex = -1;
+            }
+
+            public void ResetForLoop() {
+                CancelPendingCommands();
+                comboCount.OnNext(0);
             }
 
             public void ResetBattleState() {

@@ -11,6 +11,7 @@ namespace Core.LargeHero {
         [SerializeField] private StrikerAnimationClip UpAnimationClip,FrontAnimationClip,BackAnimationClip;
         [SerializeField] private float speed;
         [SerializeField] StrikerNode nextNode;
+        public float ObservationSpeed => speed;
 
         public override void OnEnter(IStrikerContext context) {
             context.Rigidbody.linearVelocity = context.InputDirection * speed;

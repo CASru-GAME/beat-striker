@@ -23,12 +23,20 @@ public class StrikerHub : MonoBehaviour {
     [SerializeField] private StrikerState deadState, VictoryState, IntroState;
     [SerializeField] private Transform centerPositionTransform;
 
+    [Header("Tutorial")]
+    [SerializeField] TutorialActionLesson[] tutorialLessons = Array.Empty<TutorialActionLesson>();
+    [SerializeField] MonoBehaviour tutorialGroundSource;
+    [SerializeField] MonoBehaviour[] tutorialResourceResetters = Array.Empty<MonoBehaviour>();
+
     private Rigidbody rb;
+    private CapsuleCollider bodyCollider;
     private StrikerStageBoundary stageBoundary;
     readonly Dictionary<string, StrikerState> stateByPathId = new();
     readonly Dictionary<StrikerState, string> pathIdByState = new();
 
     public Rigidbody Rigidbody => rb;
+    public Bounds BodyBounds => stageBoundary != null ? stageBoundary.BodyBounds : bodyCollider.bounds;
+    public Bounds? MovementBounds => stageBoundary?.MovementBounds;
     public Striker InspectorStriker => striker;
     public float MaxHitPoint => maxHitPoint;
     public float InspectorMaxHitPoint => maxHitPoint;
@@ -39,6 +47,14 @@ public class StrikerHub : MonoBehaviour {
     public StrikerState InspectorVictoryState => VictoryState;
     public StrikerState InspectorIntroState => IntroState;
     public Transform InspectorCenterPositionTransform => centerPositionTransform;
+    public IReadOnlyList<TutorialActionLesson> TutorialLessons => tutorialLessons;
+    public ITutorialGroundSource TutorialGroundSource => (ITutorialGroundSource)tutorialGroundSource;
+    public void ResetTutorialResources(TutorialReset reset) {
+        foreach (var component in tutorialResourceResetters) {
+            var resetter = (ITutorialResourceReset)component;
+            if ((resetter.Resource & reset) != 0) resetter.ResetTutorialResource();
+        }
+    }
     private Alice.IStrikerHub aliceRuntime;
 
 
@@ -46,6 +62,7 @@ public class StrikerHub : MonoBehaviour {
 
     private void Awake() {
         rb = GetComponent<Rigidbody>();
+        bodyCollider = GetComponent<CapsuleCollider>();
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
         animationPlayer = GetComponent<AnimationPlayer>();
         BuildStatePathTable();
@@ -91,7 +108,7 @@ public class StrikerHub : MonoBehaviour {
     }
 
     public void ConfigureStageBoundary(Bounds bounds) {
-        stageBoundary = new StrikerStageBoundary(rb, GetComponent<CapsuleCollider>(), bounds);
+        stageBoundary = new StrikerStageBoundary(rb, bodyCollider, bounds);
         ConstrainToStage();
     }
 
@@ -154,6 +171,9 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     readonly IStrikerContext context;
     readonly float deployWorldZ;
     public IStrikerState CurrentState => currentState;
+    float stateEnteredTime;
+    public float StateElapsedSeconds => Mathf.Max(0f, Time.time - stateEnteredTime);
+    public int StateVersion { get; private set; }
 
     public Rigidbody Rigidbody => context.Rigidbody;
     public Vector2 InputDirection => context.InputDirection;
@@ -231,6 +251,8 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
                 if (!oldParents.Contains(parent)) parent.OnEnter(context);
             }
 
+            stateEnteredTime = Time.time;
+            StateVersion++;
             newState.OnEnter(context);
             currentState = newState;
         }
