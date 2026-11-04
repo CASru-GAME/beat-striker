@@ -48,6 +48,7 @@ namespace Alice {
         readonly IAudioSetting audioSetting;
         readonly IBattleSelectSetting battleSelectSetting;
         readonly IAISetting aiSetting;
+        readonly ITutorialSetting tutorialSetting;
         readonly Subject<IMusicPlayer.BeatSignal> onGoodZoneEntered = new();
         readonly Subject<IMusicPlayer.BeatSignal> onExcellentZoneEntered = new();
         readonly Subject<IMusicPlayer.BeatSignal> onBeatTiming = new();
@@ -90,12 +91,13 @@ namespace Alice {
         public float[] CurrentBeatTimeline => beats;
 
         [Inject]
-        public MusicPlayer(AudioSource audioSource, IMusicRegistry musicRegistry, IAudioSetting audioSetting, IBattleSelectSetting battleSelectSetting, IAISetting aiSetting) {
+        public MusicPlayer(AudioSource audioSource, IMusicRegistry musicRegistry, IAudioSetting audioSetting, IBattleSelectSetting battleSelectSetting, IAISetting aiSetting, ITutorialSetting tutorialSetting) {
             this.audioSource = audioSource;
             this.musicRegistry = musicRegistry;
             this.audioSetting = audioSetting;
             this.battleSelectSetting = battleSelectSetting;
             this.aiSetting = aiSetting;
+            this.tutorialSetting = tutorialSetting;
 
             volumeSubscription = this.audioSetting.VolumeBalance.Subscribe(ApplyVolume);
         }
@@ -322,7 +324,7 @@ namespace Alice {
                 return PlaybackClockMode.VirtualLoop;
             }
 
-            if (aiSetting.IsInfiniteRoundMode) {
+            if (aiSetting.IsInfiniteRoundMode || tutorialSetting.IsTutorialBattleRequested) {
                 return PlaybackClockMode.AudioLoop;
             }
 

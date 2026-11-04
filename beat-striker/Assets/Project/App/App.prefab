@@ -3644,6 +3644,7 @@ MonoBehaviour:
   - playerId: 1
     striker: 4
   aiStrength: 0
+  opponentHitPointRecoveryRatioPerSecond: 0.5
   isTutorialBattleRequested: 0
 --- !u!114 &904021008660354504
 MonoBehaviour:

@@ -1001,6 +1001,22 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: floor
+      value:
+      objectReference: {fileID: 1854529937416979228}
+    - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: leftWall
+      value:
+      objectReference: {fileID: 2036392179016989157}
+    - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: rightWall
+      value:
+      objectReference: {fileID: 4060677357413138368}
+    - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: ceiling
+      value:
+      objectReference: {fileID: 2709266908830093379}
+    - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: 'playerTransforms.Array.data[0]'
       value: 
       objectReference: {fileID: 5364280690241190197}

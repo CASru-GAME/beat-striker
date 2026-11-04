@@ -12,6 +12,7 @@ namespace Alice {
         [SerializeField] BattleFadeView fadePresenter;
         [SerializeField] BattleResultTextView resultTextPresenter;
         [SerializeField] AttentionTextView attentionTextView;
+        [SerializeField] SpecialCommandView[] specialCommandViews;
         [SerializeField] BattleSuspendMenuView suspendMenuPresenter;
 
         [Header("Opening")]
@@ -75,10 +76,15 @@ namespace Alice {
         readonly System.Collections.Generic.HashSet<RectTransform> roundWinTrophyStackedViews = new();
         public event Action OnViewBeatTiming;
 
+        public RectTransform LatestRoundWinTrophy => roundWinTrophyViews[roundWinTrophyViews.Count - 1];
         public StageCamera StageCamera => stageCamera;
         public BattleRoundStartView RoundStartPresenter => roundStartPresenter;
         public BattleResultTextView ResultTextPresenter => resultTextPresenter;
         public AttentionTextView AttentionTextView => attentionTextView;
+        public void PlaySpecialCommand(int playerId, Sprite portrait) => specialCommandViews[playerId].Play(portrait);
+        public void HideSpecialCommand() {
+            foreach (var view in specialCommandViews) view.HideImmediately();
+        }
         public BattleFadeView FadePresenter => fadePresenter;
         public BattleSuspendMenuView SuspendMenuPresenter => suspendMenuPresenter;
         public AudioClip BeatSound => beatSound;

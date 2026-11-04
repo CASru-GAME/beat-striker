@@ -563,7 +563,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54baaaa8ee1084a0fa1270acba05a20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.StrikerHub
-  striker: 2
+  striker: 1
   maxHitPoint: 100
   maxSpecialPoint: 100
   deathHeightY: -10

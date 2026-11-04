@@ -6183,6 +6183,22 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: floor
+      value:
+      objectReference: {fileID: 1497729751}
+    - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: leftWall
+      value:
+      objectReference: {fileID: 1077987162}
+    - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: rightWall
+      value:
+      objectReference: {fileID: 443645457}
+    - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
+      propertyPath: ceiling
+      value:
+      objectReference: {fileID: 2042296368}
+    - target: {fileID: 6366252685130307861, guid: 5df9373b6a2794e33a04ab00ebf3729c, type: 3}
       propertyPath: 'playerTransforms.Array.data[0]'
       value: 
       objectReference: {fileID: 1635008634}

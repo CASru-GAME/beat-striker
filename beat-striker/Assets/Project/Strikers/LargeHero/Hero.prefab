@@ -5172,7 +5172,7 @@ MonoBehaviour:
   stunState: {fileID: 5155626942233811829}
   guardState: {fileID: 3723594526513847027}
   chargeState: {fileID: 2697159971508307948}
-  SpecialState: {fileID: 234091878709252225}
+  SpecialState: {fileID: 910000000000001003}
 --- !u!1 &366671414126284365
 GameObject:
   m_ObjectHideFlags: 0
@@ -5228,7 +5228,7 @@ MonoBehaviour:
   slashEffectPrefab: {fileID: 7409559223049453045}
   hitAudioClip: {fileID: 8300000, guid: 0c15e77961d458f4c9249d7640cec25e, type: 3}
   missAudioClip: {fileID: 0}
-  damage: 20
+  damage: 22
   hitDelay: 0.15
 --- !u!1 &405544434673036473
 GameObject:
@@ -74795,7 +74795,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54baaaa8ee1084a0fa1270acba05a20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.Striker.StrikerHub
-  striker: 2
+  striker: 0
   maxHitPoint: 100
   maxSpecialPoint: 100
   deathHeightY: -10
@@ -80268,7 +80268,7 @@ MonoBehaviour:
   slashEffectPrefab: {fileID: 7409559223049453045}
   hitAudioClip: {fileID: 8300000, guid: d34decce042c32e41bcc47e0024aeaa6, type: 3}
   missAudioClip: {fileID: 8300000, guid: d34decce042c32e41bcc47e0024aeaa6, type: 3}
-  damage: 5
+  damage: 5.5
   launchHitBoxOffset: {x: 1.35, y: 1, z: 0}
   launchHitBoxHalfExtents: {x: 1.15, y: 1, z: 1.2}
   victimLayerMask:
@@ -90330,7 +90330,7 @@ MonoBehaviour:
   locomotionNode: {fileID: 1934183999574950063}
   stunState: {fileID: 5155626942233811829}
   guardState: {fileID: 3723594526513847027}
-  SpecialState: {fileID: 234091878709252225}
+  SpecialState: {fileID: 910000000000001003}
 --- !u!1 &7277143616231701467
 GameObject:
   m_ObjectHideFlags: 0
@@ -100443,6 +100443,8 @@ Transform:
   - {fileID: 5429881596827478816}
   - {fileID: 107156162409829662}
   - {fileID: 5140089009748619109}
+  - {fileID: 910000000000001002}
+  - {fileID: 910000000000002002}
   m_Father: {fileID: 5478116573998808903}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &502528655507377888
@@ -100592,7 +100594,7 @@ MonoBehaviour:
   slashEffectPrefab: {fileID: 7409559223049453045}
   hitAudioClip: {fileID: 8300000, guid: 61ccd4f154f884d42af4e6b67eb5c8b6, type: 3}
   missAudioClip: {fileID: 0}
-  damage: 20
+  damage: 22
   hitDelay: 0.5
   chaseState2HitDelay: 0.2
 --- !u!1 &8071963136529672130
@@ -100701,7 +100703,7 @@ MonoBehaviour:
   nextNode: {fileID: 1934183999574950063}
   specialSequenceContext: {fileID: 502528655507377888}
   slashEffect: {fileID: 7409559223049453045}
-  finalDamage: 5
+  finalDamage: 5.5
   finalKnockbackSpeedX: 12
   finalKnockbackSpeedY: 4
 --- !u!1 &8297182317510090925
@@ -111141,3 +111143,105 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5159078012444724336, guid: 8cc39aaf813b0554da29865827638db3, type: 3}
   m_PrefabInstance: {fileID: 4092988356227563625}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &910000000000001001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910000000000001002}
+  - component: {fileID: 910000000000001003}
+  m_Layer: 0
+  m_Name: SpecialEntryNode
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &910000000000001002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000000000001001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6287195054836235690}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &910000000000001003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000000000001001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ec9a67a0b8743e8ba5a72114e630f32, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.SpecialEntryNode
+  approachState: {fileID: 910000000000002003}
+  launchState: {fileID: 234091878709252225}
+--- !u!1 &910000000000002001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910000000000002002}
+  - component: {fileID: 910000000000002003}
+  m_Layer: 0
+  m_Name: SpecialApproachState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &910000000000002002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000000000002001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6287195054836235690}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &910000000000002003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000000000002001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e24d16cc4d604227ae47046e9bf185d2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.SpecialApproachState
+  parents: []
+  animationClip:
+    clip: {fileID: -3972465523473770260, guid: 0653e8a0b14047744a811b32927bf0b3, type: 3}
+    fadeTime: 0.1
+    speed: 2
+  launchState: {fileID: 234091878709252225}
+  groundCancelNode: {fileID: 1934183999574950063}
+  airCancelNode: {fileID: 4019688610311916205}
+  groundChecker: {fileID: 5540710793521517555}
+  activationDistance: 1
+  approachSpeed: 10
+  maxApproachDuration: 0.5

@@ -145,14 +145,8 @@ namespace Alice {
                 return;
             }
 
-            if (!stateMachine.IsPlaying) {
-                if (!tutorialSetting.IsTutorialBattleRequested) {
-                    return;
-                }
-
-                Debug.Log($"{LOG_PREFIX} OnStrikerDead accepted during tutorial pause. deadPlayerId={deadPlayerId}");
-                tutorialSetting.ClearTutorialBattleRequest();
-                _ = endBattleToTitleAsync();
+            // Tutorial defeat and its cup presentation are controlled by the tutorial sequence.
+            if (tutorialSetting.IsTutorialBattleRequested || !stateMachine.IsPlaying) {
                 return;
             }
 

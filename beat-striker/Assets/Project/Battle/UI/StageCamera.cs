@@ -29,7 +29,7 @@ namespace Alice {
         [SerializeField] private float zoomOutSmoothTime = 0.3f;
         [SerializeField] private float centerSmoothTime = 0.25f;
         [SerializeField, Min(0f)] private float airborneVerticalMargin = .75f;
-        [SerializeField, Min(.01f)] private float airborneTrackingSmoothTime = .08f;
+        [SerializeField, Min(.01f)] private float verticalCenterSmoothTime = .6f;
         [SerializeField, Min(0f)] private float attentionFramingHoldSeconds = 1.3f;
         [SerializeField] private Vector2 centerViewportOffset = Vector2.zero;
         [SerializeField] private float shakeDamping = 18f;
@@ -78,6 +78,8 @@ namespace Alice {
 
         public Observable<bool> OnAttentionFocusStateChanged => attentionFocusStateChangedSubject;
         public Observable<bool> OnAttentionActiveStateChanged => attentionActiveStateChangedSubject;
+        public bool IsAttentionPresentationActive => currentState != null &&
+            (currentState == attentionState || currentState == attentionReturnState);
 
         enum CameraSequencePhase {
             None,
@@ -696,14 +698,11 @@ namespace Alice {
                 centerInCameraSpace.x - desiredLocalX,
                 centerInCameraSpace.y - desiredLocalY,
                 0f);
-            Vector3 moveInWorld = transform.TransformVector(moveInCameraSpace);
-            Vector3 targetPosition = transform.position + moveInWorld;
-
-            transform.position = Vector3.SmoothDamp(
-                transform.position,
-                targetPosition,
-                ref centerMoveVelocity,
-                Mathf.Lerp(centerSmoothTime, airborneTrackingSmoothTime, Mathf.Clamp01(Mathf.Abs(moveInCameraSpace.y))));
+            Vector3 localVelocity = transform.InverseTransformVector(centerMoveVelocity);
+            float moveX = Mathf.SmoothDamp(0f, moveInCameraSpace.x, ref localVelocity.x, centerSmoothTime);
+            float moveY = Mathf.SmoothDamp(0f, moveInCameraSpace.y, ref localVelocity.y, verticalCenterSmoothTime);
+            centerMoveVelocity = transform.TransformVector(localVelocity);
+            transform.position += transform.TransformVector(new Vector3(moveX, moveY, 0f));
         }
 
         private void MoveCameraForwardToFitPlayers() {
@@ -713,8 +712,7 @@ namespace Alice {
             float currentDepth = Mathf.Max(0.01f, (camSpace0.z + camSpace1.z) * 0.5f);
             float tanHalfVertical = Mathf.Max(0.0001f, Mathf.Tan(stageCamera.fieldOfView * 0.5f * Mathf.Deg2Rad));
             float targetDepth = CalculateTargetDepthToFitPlayers(camSpace0, camSpace1, tanHalfVertical);
-            float zoomSmoothTime = targetDepth < currentDepth ? zoomInSmoothTime
-                : Mathf.Lerp(zoomOutSmoothTime, airborneTrackingSmoothTime, Mathf.Clamp01(Mathf.Abs(camSpace1.y - camSpace0.y)));
+            float zoomSmoothTime = targetDepth < currentDepth ? zoomInSmoothTime : zoomOutSmoothTime;
 
             float smoothedDepth = Mathf.SmoothDamp(
                 currentDepth,
@@ -743,7 +741,10 @@ namespace Alice {
             float halfVerticalSpan = Mathf.Abs(playersDeltaInCameraPlane.y) * 0.5f;
             float horizontalDepth = halfHorizontalSpan / (tanHalfVertical * stageCamera.aspect * diagonalDistanceRatio);
             float aerialMargin = airborneVerticalMargin * Mathf.Clamp01(halfVerticalSpan);
-            float verticalDepth = (halfVerticalSpan + aerialMargin) / (tanHalfVertical * diagonalDistanceRatio);
+            // Keep both players inside the frame even when the center is shifted down.
+            float verticalRatio = Mathf.Min(diagonalDistanceRatio,
+                Mathf.Max(0.05f, 0.9f - 2f * Mathf.Abs(desiredCenterViewport.y - 0.5f)));
+            float verticalDepth = (halfVerticalSpan + aerialMargin) / (tanHalfVertical * verticalRatio);
             float attentionMinimum = Time.time < attentionFramingExpires ? attentionFramingMinimumDepth : 0f;
             return Mathf.Max(horizontalDepth, verticalDepth, minCameraDepthForFitPlayers, attentionMinimum);
         }

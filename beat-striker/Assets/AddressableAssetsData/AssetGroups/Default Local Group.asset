@@ -15,8 +15,8 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 67d9f17718069420b876466f73243380
   m_SerializeEntries:
-  - m_GUID: 8e548b90ae674764a22ac93f6c005512
-    m_Address: Assets/Project/Strikers/DarkSatan/DemonKing.prefab
+  - m_GUID: 09283718a6a8de14594ebb95f32821d7
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_press.mp3
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -25,8 +25,83 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0d00866bc333da0478944067fc43f93d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/final.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0d1dd2e1897ee3f4ba96f8657349064f
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/special_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0db3f08a147a08b429cd5b436ddf66cc
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/overview.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ed5eaf091a1c9c4a8e460c65eb4e554
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/walk_intro.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f1b8460f9b9da945a5c3db97adb3156
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/dash_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f62179fb25e65e4c85ab189b2703733
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/special_intro.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1105168ed00f69b469eec4af9931bd5b
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/hp.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 15ef01ddbd7efac41b31678879908fc5
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_three.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d63ef05f762d7446aeb7679b5733b82
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/button_y.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33a85804e42df6b4c8d6276f7328c33b
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/button_x.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3449bc14609be458280b04559c2ad3b0
     m_Address: Assets/Project/BGM
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 378ae21e111bcf144a69bf9a73e774e8
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/attack_practice.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 414c3e797d2aba143ad8abd03a4382b6
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/score_award.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 44f381d1b613618438a266d2c5a9de7e
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/next.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4be2f182285e29c49ac516531eefacd8
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/attack_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5501d4496acbfe34bbc6000896cdc1ec
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/charge_attack_end.mp3
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -35,13 +110,58 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65fff42e656172141a79cdf6ad467b12
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/direction_stick.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 66cd26a2546fdec409d89be23420bf81
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/walk_keyboard.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6dad692394f5f3249a4d86b28d15c15a
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/charge_then.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70b4b6e81c067f44cb0dbe8c4c829d50
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/charge_attack.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7ae048916dd31451c97320d14bc258bb
     m_Address: Assets/Project/BGM/BeatStrikeronStage1.mp3
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7d193f787b50fd44c9080fe1420c51d0
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/button_start.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7fe5b7bc3c18bbf429fac3730ebd776e
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/direction_hold_stick.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 829be4a497a76e2488b2d07ea5cb28b4
     m_Address: Assets/Project/Strikers/LargeHero/Hero.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8506f2588eaebab4abd02f4e10bde9c5
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_intro.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 895497bc056b4fe4d868003ddee04bc1
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/dash_practice.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8e548b90ae674764a22ac93f6c005512
+    m_Address: Assets/Project/Strikers/DarkSatan/DemonKing.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -55,8 +175,43 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9720c0b7561c17f4389d82f985f16291
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/timer.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9863a90a809b06643a36363712c703ad
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/score.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a0ec285b1e6a5814bb5969226efbf256
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/key_l.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a25562b4c4905414c95033b0c758a98f
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/charge_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a4f53f63998de1446a2d0f1d70f34bc7
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/direction_hold_keyboard.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a9f0bcf4c529b4943a076f1bf1c76272
     m_Address: Assets/Project/BGM/sento.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac8ee7fe2df3c464c9e0afe74b59d85d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/victory.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b10a24dd9597b58408b418c2bf1a4e70
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/direction_hold_command.mp3
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -65,8 +220,28 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b4a11a5737aee2c43a2f356ed92a2b64
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/sp.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bcf70a7e0b8a0445abcf445e1b0db6f6
     m_Address: Assets/Project/BGM/Tick.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be41798ea6fe2ac429b6e1a6e2c8ceed
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/charge_practice.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c00dad24e6ea3964d839f38ee7508d49
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/key_j.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c31feb1a461e4a54698aef9cb15c5acb
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/direction_keyboard.mp3
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -75,13 +250,68 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c5f944c7bd82a484abd0bd550d23ad74
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_retry.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c61fc458ee984b643a97db87f1400024
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/button_a.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c706a1a67b911d34d9b5c190acffabb4
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/key_u.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cc564c34b82ce1d4b92d3d3c581389bb
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/walk_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cdbb2ef2e825ce14a9ee904f190f1e38
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/guard_practice.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cfd3f9e691daf014ea1d4f80515b0191
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/button_b.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0f88616528c78246a9ed6a1d16d4713
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/key_k.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e82f0899cd1f14346805aed78c40b2d1
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/special_practice.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ecee9c48169c8dc428a6839126804337
     m_Address: Assets/Project/Strikers/LargeWizard/Wizard1.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eeee11d226559644ba3e88876f094657
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/key_i.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f0ccdeecb29834594aaaedff23a87e96
     m_Address: Assets/Project/BGM/CodeOnTheBeat.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f37174faa6dfc66498ccc46cfaff4129
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/walk_stick.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f6b6a271c82c65f4681e155b3c5f1b75
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/guard_end.mp3
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

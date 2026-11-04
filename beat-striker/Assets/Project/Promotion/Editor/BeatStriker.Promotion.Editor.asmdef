@@ -1,0 +1,10 @@
+{
+    "name": "BeatStriker.Promotion.Editor",
+    "rootNamespace": "Alice.Editor",
+    "references": [
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": ["Editor"],
+    "autoReferenced": true
+}

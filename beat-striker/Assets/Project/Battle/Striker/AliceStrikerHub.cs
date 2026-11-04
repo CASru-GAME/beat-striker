@@ -58,6 +58,8 @@ namespace Alice {
         void ApplyReplayAbsoluteState(ReplayPreBeatStatePayload snapshot);
         void ChangeDirection(Vector2 direction);
         void CancelDirection();
+        void ConfigureSurvival(bool preventsHitPointDeath, float hitPointRecoveryRatioPerSecond);
+        void RestoreHitPoint();
         void Default();
         void Dash();
         void Attack();
@@ -127,6 +129,12 @@ namespace Alice {
         IStrikerState observedState;
         bool hasObservedState;
         bool isDead;
+        bool preventsHitPointDeath;
+        float hitPointRecoveryRatioPerSecond;
+        const float HIT_POINT_RECOVERY_DELAY_SECONDS = 0.2f;
+        float hitPointRecoveryDelayRemaining;
+
+        bool IsUnableToAct => isDead || (currentHitPoint <= 0f && !preventsHitPointDeath);
 
         record StrikerSyncHistoryFrame(
             float NetworkTime,
@@ -191,8 +199,28 @@ namespace Alice {
             this.battleOnlineSync = battleOnlineSync;
         }
 
+        public void ConfigureSurvival(bool preventsHitPointDeath, float hitPointRecoveryRatioPerSecond) {
+            this.preventsHitPointDeath = preventsHitPointDeath;
+            this.hitPointRecoveryRatioPerSecond = Mathf.Max(0f, hitPointRecoveryRatioPerSecond);
+        }
+
+        public void RestoreHitPoint() {
+            if (isDead) return;
+            currentHitPoint = maxHitPoint;
+            hitPointSubject.OnNext(currentHitPoint);
+        }
+
         public void Tick(float deltaTime) {
             if (!initialized) return;
+
+            legacyHub.ConstrainToStage();
+
+            var recoveryDeltaTime = Mathf.Max(0f, deltaTime - hitPointRecoveryDelayRemaining);
+            hitPointRecoveryDelayRemaining = Mathf.Max(0f, hitPointRecoveryDelayRemaining - Mathf.Max(0f, deltaTime));
+            if (!isDead && currentHitPoint < maxHitPoint && hitPointRecoveryRatioPerSecond > 0f && recoveryDeltaTime > 0f) {
+                currentHitPoint = Mathf.MoveTowards(currentHitPoint, maxHitPoint, maxHitPoint * hitPointRecoveryRatioPerSecond * recoveryDeltaTime);
+                hitPointSubject.OnNext(currentHitPoint);
+            }
 
             if (stateMachine == null) {
                 stateMachine = new StrikerStateMachine(this, defaultState);
@@ -215,6 +243,7 @@ namespace Alice {
             currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
 
             stateMachine.CurrentState.OnUpdate(stateMachine);
+            legacyHub.ConstrainToStage();
             NotifyEnemyBehindOnStateChanged();
             currentStateCategorySubject.OnNext(stateMachine.CurrentState.Category);
             if (battleOnlineSync != null && battleOnlineSync.IsReady) {
@@ -248,6 +277,7 @@ namespace Alice {
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
             animationPlayer = legacy.GetAnimationPlayer();
             currentHitPoint = maxHitPoint;
+            hitPointRecoveryDelayRemaining = 0f;
             currentSpecialPoint = 0f;
             maxHitPointSubject.OnNext(maxHitPoint);
             hitPointSubject.OnNext(currentHitPoint);
@@ -318,9 +348,13 @@ namespace Alice {
                 return;
             }
 
+            if (snapshot.hitPoint < currentHitPoint) {
+                hitPointRecoveryDelayRemaining = HIT_POINT_RECOVERY_DELAY_SECONDS;
+            }
             currentHitPoint = Mathf.Clamp(snapshot.hitPoint, 0f, maxHitPoint);
             currentSpecialPoint = Mathf.Clamp(snapshot.specialPoint, 0f, maxSpecialPoint);
             rb.position = snapshot.position;
+            legacyHub.ConstrainToStage();
             previousFramePosition = rb.position;
             frameVelocity = Vector3.zero;
             hitPointSubject.OnNext(currentHitPoint);
@@ -329,7 +363,7 @@ namespace Alice {
             centerPositionSubject.OnNext(centerPositionTransform.position);
             velocitySubject.OnNext(frameVelocity);
             ApplyStateCorrectionIfNeeded(snapshot.statePathId);
-            if (currentHitPoint <= 0f) {
+            if (currentHitPoint <= 0f && !preventsHitPointDeath) {
                 Die();
             }
         }
@@ -340,7 +374,7 @@ namespace Alice {
         }
 
         public void GiveHit(HitStatus status) {
-            if (stateMachine == null || currentHitPoint <= 0f) return;
+            if (stateMachine == null || IsUnableToAct) return;
             stateMachine.CurrentState.OnHit(stateMachine, status);
         }
 
@@ -368,9 +402,12 @@ namespace Alice {
                 return;
             }
 
+            if (damage > 0f) {
+                hitPointRecoveryDelayRemaining = HIT_POINT_RECOVERY_DELAY_SECONDS;
+            }
             currentHitPoint = Mathf.Max(0f, currentHitPoint - damage);
             hitPointSubject.OnNext(currentHitPoint);
-            if (currentHitPoint <= 0f) {
+            if (currentHitPoint <= 0f && !preventsHitPointDeath) {
                 Die();
             }
         }
@@ -402,9 +439,12 @@ namespace Alice {
                 return;
             }
 
+            if (delta < 0f) {
+                hitPointRecoveryDelayRemaining = HIT_POINT_RECOVERY_DELAY_SECONDS;
+            }
             currentHitPoint = Mathf.Clamp(currentHitPoint + delta, 0f, maxHitPoint);
             hitPointSubject.OnNext(currentHitPoint);
-            if (currentHitPoint <= 0f) {
+            if (currentHitPoint <= 0f && !preventsHitPointDeath) {
                 Die();
             }
         }
@@ -427,6 +467,7 @@ namespace Alice {
             rb.position = delta.magnitude >= POSITION_SNAP_THRESHOLD
                 ? targetPosition
                 : Vector3.Lerp(rb.position, targetPosition, POSITION_LERP_RATE);
+            legacyHub.ConstrainToStage();
             positionSubject.OnNext(rb.position);
             centerPositionSubject.OnNext(centerPositionTransform.position);
         }
@@ -471,22 +512,22 @@ namespace Alice {
         }
 
         public void Dash() {
-            if (stateMachine == null || currentHitPoint <= 0f) return;
+            if (stateMachine == null || IsUnableToAct) return;
             stateMachine.CurrentState.OnDashRequested(stateMachine);
         }
 
         public void Attack() {
-            if (stateMachine == null || currentHitPoint <= 0f) return;
+            if (stateMachine == null || IsUnableToAct) return;
             stateMachine.CurrentState.OnAttackRequested(stateMachine);
         }
 
         public void Charge() {
-            if (stateMachine == null || currentHitPoint <= 0f) return;
+            if (stateMachine == null || IsUnableToAct) return;
             stateMachine.CurrentState.OnChargeRequested(stateMachine);
         }
 
         public void Special() {
-            if (stateMachine == null || currentHitPoint <= 0f) return;
+            if (stateMachine == null || IsUnableToAct) return;
 
             if (!CanUseSpecial()) {
                 onSpecialRequestFailedSubject.OnNext(Unit.Default);
@@ -499,7 +540,7 @@ namespace Alice {
         }
 
         public void Guard() {
-            if (stateMachine == null || currentHitPoint <= 0f) return;
+            if (stateMachine == null || IsUnableToAct) return;
             stateMachine.CurrentState.OnGuardRequested(stateMachine);
         }
 
@@ -511,7 +552,7 @@ namespace Alice {
         }
 
         public void Default() {
-            if (!initialized || currentHitPoint <= 0f) return;
+            if (!initialized || IsUnableToAct) return;
             if (stateMachine == null) {
                 stateMachine = new StrikerStateMachine(this, defaultState);
                 return;
@@ -530,7 +571,7 @@ namespace Alice {
         }
 
         public void ExitState() {
-            if (stateMachine == null) return;
+            if (stateMachine == null || rb == null) return;
             stateMachine.ExitCurrentState();
         }
 

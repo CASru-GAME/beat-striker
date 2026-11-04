@@ -1,0 +1,475 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5b929519f04d4439b715dacdc17ca9, type: 3}
+  m_Name: TutorialVoice
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.TutorialVoiceLibrary
+  clips:
+  - Id: overview
+    Audio:
+      m_AssetGUID: 0db3f08a147a08b429cd5b436ddf66cc
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: next
+    Audio:
+      m_AssetGUID: 44f381d1b613618438a266d2c5a9de7e
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: hp
+    Audio:
+      m_AssetGUID: 1105168ed00f69b469eec4af9931bd5b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: sp
+    Audio:
+      m_AssetGUID: b4a11a5737aee2c43a2f356ed92a2b64
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: walk_intro
+    Audio:
+      m_AssetGUID: 0ed5eaf091a1c9c4a8e460c65eb4e554
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: walk_end
+    Audio:
+      m_AssetGUID: cc564c34b82ce1d4b92d3d3c581389bb
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: rhythm_intro
+    Audio:
+      m_AssetGUID: 8506f2588eaebab4abd02f4e10bde9c5
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: rhythm_three
+    Audio:
+      m_AssetGUID: 15ef01ddbd7efac41b31678879908fc5
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: rhythm_retry
+    Audio:
+      m_AssetGUID: c5f944c7bd82a484abd0bd550d23ad74
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: rhythm_press
+    Audio:
+      m_AssetGUID: 09283718a6a8de14594ebb95f32821d7
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: dash_end
+    Audio:
+      m_AssetGUID: 0f1b8460f9b9da945a5c3db97adb3156
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: dash_practice
+    Audio:
+      m_AssetGUID: 895497bc056b4fe4d868003ddee04bc1
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: attack_end
+    Audio:
+      m_AssetGUID: 4be2f182285e29c49ac516531eefacd8
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: attack_practice
+    Audio:
+      m_AssetGUID: 378ae21e111bcf144a69bf9a73e774e8
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: charge_end
+    Audio:
+      m_AssetGUID: a25562b4c4905414c95033b0c758a98f
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: charge_practice
+    Audio:
+      m_AssetGUID: be41798ea6fe2ac429b6e1a6e2c8ceed
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: charge_attack
+    Audio:
+      m_AssetGUID: 70b4b6e81c067f44cb0dbe8c4c829d50
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: charge_then
+    Audio:
+      m_AssetGUID: 6dad692394f5f3249a4d86b28d15c15a
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: charge_attack_end
+    Audio:
+      m_AssetGUID: 5501d4496acbfe34bbc6000896cdc1ec
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: guard_end
+    Audio:
+      m_AssetGUID: f6b6a271c82c65f4681e155b3c5f1b75
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: guard_practice
+    Audio:
+      m_AssetGUID: cdbb2ef2e825ce14a9ee904f190f1e38
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: special_intro
+    Audio:
+      m_AssetGUID: 0f62179fb25e65e4c85ab189b2703733
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: special_end
+    Audio:
+      m_AssetGUID: 0d1dd2e1897ee3f4ba96f8657349064f
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: special_practice
+    Audio:
+      m_AssetGUID: e82f0899cd1f14346805aed78c40b2d1
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: final
+    Audio:
+      m_AssetGUID: 0d00866bc333da0478944067fc43f93d
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: button_a
+    Audio:
+      m_AssetGUID: c61fc458ee984b643a97db87f1400024
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: button_b
+    Audio:
+      m_AssetGUID: cfd3f9e691daf014ea1d4f80515b0191
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: button_x
+    Audio:
+      m_AssetGUID: 33a85804e42df6b4c8d6276f7328c33b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: button_y
+    Audio:
+      m_AssetGUID: 2d63ef05f762d7446aeb7679b5733b82
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: button_start
+    Audio:
+      m_AssetGUID: 7d193f787b50fd44c9080fe1420c51d0
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: key_i
+    Audio:
+      m_AssetGUID: eeee11d226559644ba3e88876f094657
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: key_j
+    Audio:
+      m_AssetGUID: c00dad24e6ea3964d839f38ee7508d49
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: key_k
+    Audio:
+      m_AssetGUID: e0f88616528c78246a9ed6a1d16d4713
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: key_l
+    Audio:
+      m_AssetGUID: a0ec285b1e6a5814bb5969226efbf256
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: key_u
+    Audio:
+      m_AssetGUID: c706a1a67b911d34d9b5c190acffabb4
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: walk_stick
+    Audio:
+      m_AssetGUID: f37174faa6dfc66498ccc46cfaff4129
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: walk_keyboard
+    Audio:
+      m_AssetGUID: 66cd26a2546fdec409d89be23420bf81
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: direction_stick
+    Audio:
+      m_AssetGUID: 65fff42e656172141a79cdf6ad467b12
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: direction_keyboard
+    Audio:
+      m_AssetGUID: c31feb1a461e4a54698aef9cb15c5acb
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Id: timer
+    Audio:
+      m_AssetGUID: 9720c0b7561c17f4389d82f985f16291
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: score
+    Audio:
+      m_AssetGUID: 9863a90a809b06643a36363712c703ad
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: score_award
+    Audio:
+      m_AssetGUID: 414c3e797d2aba143ad8abd03a4382b6
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: victory
+    Audio:
+      m_AssetGUID: ac8ee7fe2df3c464c9e0afe74b59d85d
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: direction_hold_stick
+    Audio:
+      m_AssetGUID: 7fe5b7bc3c18bbf429fac3730ebd776e
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: direction_hold_keyboard
+    Audio:
+      m_AssetGUID: a4f53f63998de1446a2d0f1d70f34bc7
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  - Id: direction_hold_command
+    Audio:
+      m_AssetGUID: b10a24dd9597b58408b418c2bf1a4e70
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
+  lines:
+  - Key: 0
+    Segments:
+    - overview
+    - $East
+    - next
+  - Key: 13
+    Segments:
+    - hp
+    - $East
+    - next
+  - Key: 14
+    Segments:
+    - sp
+    - $East
+    - next
+  - Key: 1
+    Segments:
+    - walk_intro
+    - $East
+    - next
+  - Key: 2
+    Segments:
+    - $Walk
+    - walk_end
+  - Key: 18
+    Segments:
+    - rhythm_intro
+    - $East
+    - $South
+    - $North
+    - $West
+    - rhythm_three
+    - $East
+    - next
+  - Key: 19
+    Segments:
+    - rhythm_press
+    - $East
+    - $South
+    - $North
+    - $West
+    - rhythm_three
+    - rhythm_retry
+  - Key: 3
+    Segments:
+    - $Direction
+    - rhythm_press
+    - $West
+    - dash_end
+    - $East
+    - next
+  - Key: 4
+    Segments:
+    - $Direction
+    - $West
+    - dash_practice
+  - Key: 5
+    Segments:
+    - $East
+    - attack_end
+    - $East
+    - next
+  - Key: 6
+    Segments:
+    - $East
+    - attack_practice
+  - Key: 7
+    Segments:
+    - $South
+    - charge_end
+    - $East
+    - next
+  - Key: 8
+    Segments:
+    - $South
+    - charge_practice
+  - Key: 9
+    Segments:
+    - charge_attack
+    - $East
+    - next
+  - Key: 10
+    Segments:
+    - $South
+    - charge_then
+    - $East
+    - charge_attack_end
+  - Key: 11
+    Segments:
+    - $North
+    - guard_end
+    - $East
+    - next
+  - Key: 12
+    Segments:
+    - $North
+    - guard_practice
+  - Key: 15
+    Segments:
+    - special_intro
+    - $Start
+    - special_end
+    - $East
+    - next
+  - Key: 16
+    Segments:
+    - $Start
+    - special_practice
+  - Key: 20
+    Segments:
+    - timer
+    - $East
+    - next
+  - Key: 21
+    Segments:
+    - score
+    - $East
+    - next
+  - Key: 23
+    Segments:
+    - score_award
+    - $East
+    - next
+  - Key: 17
+    Segments:
+    - final
+  - Key: 24
+    Segments:
+    - $DirectionHold
+    - direction_hold_command
+    - $East
+    - next
+  - Key: 25
+    Segments:
+    - victory
+    - $East
+    - next

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 namespace Alice {
     public enum TutorialUiKey {
@@ -22,6 +24,14 @@ namespace Alice {
         SpecialDescription,
         SpecialPractice,
         Final,
+        RhythmDescription,
+        RhythmPractice,
+        TimerDescription,
+        ScoreDescription,
+        DefeatPractice,
+        ScoreAwardDescription,
+        DirectionDescription,
+        VictoryDescription,
     }
 
     public class BattleTutorialView : MonoBehaviour {
@@ -47,6 +57,9 @@ namespace Alice {
         [SerializeField] AudioClip descriptionChangeSound;
         [SerializeField] AudioClip practiceStartSound;
 
+        [Header("Narration")]
+        [SerializeField] TutorialNarrationView narration;
+
         [Header("Hp")]
         [SerializeField] GameObject hpDescriptionPanel;
         [SerializeField] GameObject hpBarHighlightObject;
@@ -55,12 +68,35 @@ namespace Alice {
         [SerializeField] GameObject spDescriptionPanel;
         [SerializeField] GameObject spBarHighlightObject;
 
+        [Header("Bar Pointer")]
+        [SerializeField] Image barPointer;
+        [SerializeField, Min(0f)] float barPointerTravelSeconds = 0.6f;
+        [SerializeField] RectTransform hpBarPointerTarget;
+        [SerializeField] RectTransform spBarPointerTarget;
+        [SerializeField] Vector2 hpBarPointerTargetPoint = new(0.5f, 0.2f);
+        [SerializeField] Vector2 spBarPointerTargetPoint = new(0.5f, 0.1f);
+        [SerializeField] Vector2 barPointerTip = new(0.41f, 0.94f);
+
+        [Header("Rhythm")]
+        [SerializeField] GameObject rhythmDescriptionPanel;
+        [SerializeField] GameObject rhythmPracticePanel;
+        [SerializeField] TMP_Text rhythmDescriptionText;
+        [SerializeField, TextArea] string rhythmDescriptionFormat = "リズムに合わせて押さないと、コマンドは発動しないのだ！\n{0} のどれかを3拍連続で成功させるのだ";
+        [SerializeField] TMP_Text rhythmPracticeText;
+        [SerializeField, TextArea] string rhythmPracticeFormat = "{2} のどれかをリズムに合わせて押そう\n3回連続成功！ {0} / {1}（ミス・押し忘れでやり直し）";
+        [SerializeField, Min(0f)] float rhythmPracticeSuccessDisplaySeconds = 0.5f;
+
         [Header("Walk")]
         [SerializeField] GameObject walkDescriptionPanel;
         [SerializeField] GameObject walkPracticePanel;
         [SerializeField] float walkPracticeSuccessDisplaySeconds = 0.8f;
         [SerializeField] float walkVelocityThreshold = 0.2f;
         [SerializeField, Min(0f)] float walkPracticeRequiredTravelDistance = 1.5f;
+
+        [Header("Direction Input")]
+        [SerializeField] GameObject directionDescriptionPanel;
+        [SerializeField] TMP_Text directionDescriptionText;
+        [SerializeField, TextArea] string directionDescriptionFormat = "<b>{0}</b>\n<b>方向入力を続けた状態で</b>、リズムに合わせてコマンドを押すのだ！";
 
         [Header("Dash")]
         [SerializeField] GameObject dashDescriptionPanel;
@@ -92,6 +128,19 @@ namespace Alice {
         [SerializeField] GameObject specialPracticePanel;
         [SerializeField] float specialPracticeSuccessDisplaySeconds = 0.8f;
 
+        [Header("Timer and Score")]
+        [SerializeField] GameObject timerDescriptionPanel;
+        [SerializeField] GameObject victoryDescriptionPanel;
+        [SerializeField] GameObject scoreDescriptionPanel;
+        [SerializeField] GameObject defeatPracticePanel;
+        [SerializeField] GameObject scoreAwardDescriptionPanel;
+        [SerializeField] RectTransform timerPointerTarget;
+        [SerializeField] BattlePresenterView battleView;
+        [SerializeField] Vector2 timerPointerTargetPoint = new(0.5f, 0f);
+        [SerializeField] Vector2 scoreAwardPointerTargetPoint = new(0.5f, 1f);
+        [SerializeField] float scorePointerRotationDegrees = 180f;
+        [SerializeField, Min(0f)] float defeatPracticeSuccessDisplaySeconds = 0.5f;
+
         [Header("Final")]
         [SerializeField] GameObject finalPanel;
         [SerializeField] float finalPanelDisplaySeconds = 0.8f;
@@ -107,6 +156,10 @@ namespace Alice {
         int successTransitionToken;
         TaskCompletionSource<bool> successTransitionCompletionSource;
         bool successRuntimeInitialized;
+        int presentationVersion;
+        string rhythmButtons;
+        int rhythmSuccessCount;
+        int rhythmRequiredCount;
 
         public float WalkVelocityThreshold => walkVelocityThreshold;
         public float WalkPracticeRequiredTravelDistance => walkPracticeRequiredTravelDistance;
@@ -119,11 +172,13 @@ namespace Alice {
         }
 
         public Task ShowAsync(TutorialUiKey key) {
+            presentationVersion++;
             EnsureInitialized();
             EnsureSuccessRuntimeInitialized();
             var previousShownKey = hasCurrentShownKey ? currentShownKey : (TutorialUiKey?)null;
             HideAllPanels();
             UpdateHighlightObjects(key);
+            ShowBarPointer(key);
             if (panelMap.TryGetValue(key, out var panel)) {
                 panel.SetActive(true);
             }
@@ -131,31 +186,43 @@ namespace Alice {
             PlayTransitionSound(previousShownKey, key);
             currentShownKey = key;
             hasCurrentShownKey = true;
+            if (IsPracticeKey(key)) narration.Stop();
+            else narration.Play(key);
             return SetBlackVisibleAsync(IsDescriptionKey(key));
         }
 
         public async Task HideAfterClearDelayAsync(TutorialUiKey practiceKey) {
+            var version = presentationVersion;
+            narration.Stop();
             await PlaySuccessSequenceAsync();
+            if (version != presentationVersion || !isActiveAndEnabled) return;
 
             var waitSeconds = GetPracticeSuccessWaitSeconds(practiceKey);
             if (waitSeconds > 0f) {
                 await DelayAsync(waitSeconds);
             }
 
+            if (version != presentationVersion || !isActiveAndEnabled) return;
             HideAllPanels();
             await SetBlackVisibleAsync(false);
         }
 
         public async Task HideAfterFinalDelayAsync() {
+            var version = presentationVersion;
+            await narration.Completion;
+            if (version != presentationVersion || !isActiveAndEnabled) return;
             if (finalPanelDisplaySeconds > 0f) {
                 await DelayAsync(finalPanelDisplaySeconds);
             }
 
+            if (version != presentationVersion || !isActiveAndEnabled) return;
             HideAllPanels();
             await SetBlackVisibleAsync(false);
         }
 
         public void HideAll() {
+            presentationVersion++;
+            narration.Stop();
             EnsureInitialized();
             HideAllPanels();
             _ = SetBlackVisibleAsync(false);
@@ -185,6 +252,15 @@ namespace Alice {
             RegisterPanel(TutorialUiKey.SpecialDescription, specialDescriptionPanel);
             RegisterPanel(TutorialUiKey.SpecialPractice, specialPracticePanel);
             RegisterPanel(TutorialUiKey.Final, finalPanel);
+            RegisterPanel(TutorialUiKey.RhythmDescription, rhythmDescriptionPanel);
+            RegisterPanel(TutorialUiKey.RhythmPractice, rhythmPracticePanel);
+
+            RegisterPanel(TutorialUiKey.DirectionDescription, directionDescriptionPanel);
+            RegisterPanel(TutorialUiKey.VictoryDescription, victoryDescriptionPanel);
+            RegisterPanel(TutorialUiKey.TimerDescription, timerDescriptionPanel);
+            RegisterPanel(TutorialUiKey.ScoreDescription, scoreDescriptionPanel);
+            RegisterPanel(TutorialUiKey.DefeatPractice, defeatPracticePanel);
+            RegisterPanel(TutorialUiKey.ScoreAwardDescription, scoreAwardDescriptionPanel);
 
             initialized = true;
             EnsureSuccessRuntimeInitialized();
@@ -214,12 +290,85 @@ namespace Alice {
             }
 
             SetHighlightObjectsActive(false);
+            HideBarPointer();
             ResetSuccessStateImmediate();
         }
 
         void UpdateHighlightObjects(TutorialUiKey key) {
             hpBarHighlightObject.SetActive(key == TutorialUiKey.HpDescription);
             spBarHighlightObject.SetActive(key == TutorialUiKey.SpDescription || key == TutorialUiKey.SpecialDescription);
+        }
+
+        void ShowBarPointer(TutorialUiKey key) {
+            var target = key switch {
+                TutorialUiKey.TimerDescription => timerPointerTarget,
+                TutorialUiKey.ScoreAwardDescription => battleView.LatestRoundWinTrophy,
+                TutorialUiKey.HpDescription => hpBarPointerTarget,
+                TutorialUiKey.SpDescription or TutorialUiKey.SpecialDescription => spBarPointerTarget,
+                _ => null,
+            };
+            if (target == null) return;
+
+            var pointerRect = barPointer.rectTransform;
+            var parentRect = (RectTransform)pointerRect.parent;
+            barPointer.gameObject.SetActive(true);
+            pointerRect.localRotation = Quaternion.Euler(0f, 0f,
+                key == TutorialUiKey.ScoreAwardDescription ? scorePointerRotationDegrees : 0f);
+            pointerRect.anchoredPosition = Vector2.zero;
+            pointerRect.localScale = Vector3.one * 0.7f;
+            barPointer.color = new Color(1f, 1f, 1f, 0f);
+
+            void UpdatePointer(float progress) {
+                pointerRect.localScale = Vector3.one * Mathf.Lerp(0.7f, 1f, EaseOutCubic(progress));
+                var tipLocal = pointerRect.rect.min + Vector2.Scale(pointerRect.rect.size, barPointerTip);
+                var tipOffset = (Vector2)parentRect.InverseTransformVector(pointerRect.TransformVector(tipLocal));
+                var targetPoint = key switch {
+                    TutorialUiKey.HpDescription => hpBarPointerTargetPoint,
+                    TutorialUiKey.SpDescription or TutorialUiKey.SpecialDescription => spBarPointerTargetPoint,
+                    TutorialUiKey.TimerDescription => timerPointerTargetPoint,
+                    TutorialUiKey.ScoreAwardDescription => scoreAwardPointerTargetPoint,
+                    _ => new Vector2(0.5f, 0.5f),
+                };
+                var targetLocal = target.rect.min + Vector2.Scale(target.rect.size, targetPoint);
+                // Fill scales change with HP/SP. Aim at the full gauge, including when SP is empty.
+                var isGauge = key is TutorialUiKey.HpDescription or TutorialUiKey.SpDescription or TutorialUiKey.SpecialDescription;
+                var targetWorld = isGauge
+                    ? target.parent.TransformPoint(target.localPosition + target.localRotation * (Vector3)targetLocal)
+                    : target.TransformPoint(targetLocal);
+                var targetPosition = (Vector2)parentRect.InverseTransformPoint(targetWorld) - tipOffset;
+                pointerRect.anchoredPosition = Vector2.LerpUnclamped(Vector2.zero, targetPosition, EaseOutCubic(progress));
+                barPointer.color = new Color(1f, 1f, 1f, Mathf.Clamp01(progress * 5f));
+            }
+
+            if (barPointerTravelSeconds <= 0f) {
+                UpdatePointer(1f);
+                return;
+            }
+
+            LeanTween.value(barPointer.gameObject, 0f, 1f, barPointerTravelSeconds)
+                .setIgnoreTimeScale(true)
+                .setOnUpdate((float progress) => UpdatePointer(progress));
+        }
+
+        public void SetRhythmProgress(int successCount, int requiredCount) {
+            rhythmSuccessCount = successCount;
+            rhythmRequiredCount = requiredCount;
+            rhythmPracticeText.text = string.Format(rhythmPracticeFormat, successCount, requiredCount, rhythmButtons);
+        }
+
+        public void SetNarrationInput(TutorialVoiceInput input) {
+            narration.SetInput(input);
+            directionDescriptionText.text = string.Format(directionDescriptionFormat, input.DirectionHoldLabel);
+            rhythmButtons = input.RhythmButtons;
+            rhythmDescriptionText.text = string.Format(rhythmDescriptionFormat, rhythmButtons);
+            SetRhythmProgress(rhythmSuccessCount, rhythmRequiredCount);
+        }
+
+        public void SetNarrationVolume(float volume) => narration.SetVolume(volume);
+
+        void HideBarPointer() {
+            LeanTween.cancel(barPointer.gameObject);
+            barPointer.gameObject.SetActive(false);
         }
 
         void SetHighlightObjectsActive(bool isActive) {
@@ -229,6 +378,7 @@ namespace Alice {
 
         float GetPracticeSuccessWaitSeconds(TutorialUiKey practiceKey) {
             return practiceKey switch {
+                TutorialUiKey.RhythmPractice => rhythmPracticeSuccessDisplaySeconds,
                 TutorialUiKey.WalkPractice => walkPracticeSuccessDisplaySeconds,
                 TutorialUiKey.DashPractice => dashPracticeSuccessDisplaySeconds,
                 TutorialUiKey.AttackPractice => attackPracticeSuccessDisplaySeconds,
@@ -236,6 +386,7 @@ namespace Alice {
                 TutorialUiKey.ChargeAttackPractice => chargeAttackPracticeSuccessDisplaySeconds,
                 TutorialUiKey.GuardPractice => guardPracticeSuccessDisplaySeconds,
                 TutorialUiKey.SpecialPractice => specialPracticeSuccessDisplaySeconds,
+                TutorialUiKey.DefeatPractice => defeatPracticeSuccessDisplaySeconds,
                 _ => 0f,
             };
         }
@@ -417,6 +568,8 @@ namespace Alice {
         }
 
         void OnDisable() {
+            presentationVersion++;
+            HideBarPointer();
             ResetBlackStateImmediate();
         }
 
@@ -445,17 +598,25 @@ namespace Alice {
                 or TutorialUiKey.HpDescription
                 or TutorialUiKey.SpDescription
                 or TutorialUiKey.SpecialDescription
+                or TutorialUiKey.RhythmDescription
+                or TutorialUiKey.TimerDescription
+                or TutorialUiKey.VictoryDescription
+                or TutorialUiKey.DirectionDescription
+                or TutorialUiKey.ScoreDescription
+                or TutorialUiKey.ScoreAwardDescription
                 or TutorialUiKey.Overview;
         }
 
         static bool IsPracticeKey(TutorialUiKey key) {
-            return key is TutorialUiKey.WalkPractice
+            return key is TutorialUiKey.RhythmPractice
+                or TutorialUiKey.WalkPractice
                 or TutorialUiKey.DashPractice
                 or TutorialUiKey.AttackPractice
                 or TutorialUiKey.ChargePractice
                 or TutorialUiKey.ChargeAttackPractice
                 or TutorialUiKey.GuardPractice
-                or TutorialUiKey.SpecialPractice;
+                or TutorialUiKey.SpecialPractice
+                or TutorialUiKey.DefeatPractice;
         }
 
         static Task DelayAsync(float seconds) {

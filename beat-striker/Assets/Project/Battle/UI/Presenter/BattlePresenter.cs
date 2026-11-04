@@ -11,6 +11,7 @@ namespace Alice {
         Task PlayBattleOpeningAsync();
         Task PlayRoundStartAsync(int roundNumber);
         void HandleRoundResolved(int winnerPlayerId, int winnerRoundWinCount, bool continueBattle);
+        Task PresentTutorialRoundWinAsync(int winnerPlayerId, int winnerRoundWinCount);
         void HandleBattleStarted();
         void EnterRoundPlayablePhase();
         Task PlayRoundEndTransitionAsync();
@@ -25,6 +26,7 @@ namespace Alice {
         Observable<Unit> OnSuspendRequested { get; }
         Observable<Unit> OnResumeRequested { get; }
         Observable<bool> OnAttentionActiveStateChanged { get; }
+        bool IsAttentionPresentationActive { get; }
         void OpenSuspendMenu();
         void CloseSuspendMenu();
     }
@@ -34,6 +36,7 @@ namespace Alice {
         const int BATTLE_PLAYER_COUNT = 2;
 
         readonly IStrikerRegistry strikerRegistry;
+        readonly IAppStrikerRegistry appStrikerRegistry;
         readonly IGamePadRegistry gamePadRegistry;
         readonly IReplaySetting replaySetting;
         readonly IMusicPlayer musicPlayer;
@@ -48,6 +51,8 @@ namespace Alice {
         CompositeDisposable suspendMenuSubscriptions = new();
         CompositeDisposable audioSubscriptions = new();
         CompositeDisposable attentionTextSubscriptions = new();
+        readonly CompositeDisposable specialCommandSubscriptions = new();
+        readonly Dictionary<int, IDisposable> specialStateSubscriptions = new();
         readonly Subject<Unit> pauseMenuRequestedSubject = new();
         readonly Subject<Unit> suspendRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
@@ -65,10 +70,12 @@ namespace Alice {
         public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<bool> OnAttentionActiveStateChanged => battlePresenterView.StageCamera.OnAttentionActiveStateChanged;
+        public bool IsAttentionPresentationActive => battlePresenterView.StageCamera.IsAttentionPresentationActive;
 
         [Inject]
-        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IReplaySetting replaySetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IAISetting aiSetting, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter) {
+        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IReplaySetting replaySetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IAISetting aiSetting, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter, IAppStrikerRegistry appStrikerRegistry) {
             this.strikerRegistry = strikerRegistry;
+            this.appStrikerRegistry = appStrikerRegistry;
             this.gamePadRegistry = gamePadRegistry;
             this.replaySetting = replaySetting;
             this.musicPlayer = musicPlayer;
@@ -83,6 +90,7 @@ namespace Alice {
             SubscribeSuspendMenuEvents();
             SubscribeAudioEvents();
             SubscribeAttentionTextEvents();
+            SubscribeSpecialCommandEvents();
             battlePresenterView.SetBattleUiHiddenAboveImmediately();
             CloseSuspendMenu();
             battlePresenterView.AttentionTextView.HideImmediately();
@@ -99,6 +107,10 @@ namespace Alice {
             suspendMenuSubscriptions.Dispose();
             audioSubscriptions.Dispose();
             attentionTextSubscriptions.Dispose();
+            specialCommandSubscriptions.Dispose();
+            foreach (var subscription in specialStateSubscriptions.Values) subscription.Dispose();
+            specialStateSubscriptions.Clear();
+            battlePresenterView.HideSpecialCommand();
             pauseMenuRequestedSubject.Dispose();
             suspendRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();
@@ -162,6 +174,7 @@ namespace Alice {
         }
 
         public void HandleRoundResolved(int winnerPlayerId, int winnerRoundWinCount, bool continueBattle) {
+            battlePresenterView.HideSpecialCommand();
             if (aiSetting.IsInfiniteRoundMode || !continueBattle) {
                 return;
             }
@@ -171,11 +184,18 @@ namespace Alice {
             _ = battlePresenterView.PlayRoundWinTrophyAsync(winnerPlayerId, winnerRoundWinIndex);
         }
 
+        public Task PresentTutorialRoundWinAsync(int winnerPlayerId, int winnerRoundWinCount) {
+            battlePresenterView.HideSpecialCommand();
+            battlePresenterView.PlayRoundWinTrophySound();
+            return battlePresenterView.PlayRoundWinTrophyAsync(winnerPlayerId, Mathf.Max(0, winnerRoundWinCount - 1));
+        }
+
         public void HandleBattleStarted() {
             battlePresenterView.ResetRoundWinTrophies();
         }
 
         public async Task PlayRoundEndTransitionAsync() {
+            battlePresenterView.HideSpecialCommand();
             EnsureStageCameraConfigured();
             battlePresenterView.StageCamera.PresentRoundFinish();
             await battlePresenterView.WaitBeforeRoundEndFadeInAsync();
@@ -189,6 +209,7 @@ namespace Alice {
         }
 
         public async Task PlayBattleEndingAsync(CorePlayerId winner) {
+            battlePresenterView.HideSpecialCommand();
             EnsureStageCameraConfigured();
             battlePresenterView.StageCamera.PresentBattleFinish();
             await battlePresenterView.ResultTextPresenter.PresentBattleFinishAsync();
@@ -236,6 +257,7 @@ namespace Alice {
         }
 
         public void OpenSuspendMenu() {
+            battlePresenterView.HideSpecialCommand();
             suspendMenuPresenter.Show();
         }
 
@@ -404,6 +426,34 @@ namespace Alice {
             }
 
             battlePresenterView.PlayJudgeSuccessSound();
+        }
+
+        void SubscribeSpecialCommandEvents() {
+            battlePresenterView.HideSpecialCommand();
+            strikerRegistry.OnRegistered
+                .Subscribe(registration => ObserveSpecialState(registration.PlayerId, registration.Hub))
+                .AddTo(specialCommandSubscriptions);
+            strikerRegistry.OnUnregistered
+                .Subscribe(registration => {
+                    if (specialStateSubscriptions.Remove(registration.PlayerId, out var subscription)) {
+                        subscription.Dispose();
+                    }
+                })
+                .AddTo(specialCommandSubscriptions);
+            foreach (var striker in strikerRegistry.GetAllStrikers()) {
+                ObserveSpecialState(striker.PlayerId.CurrentValue, striker);
+            }
+        }
+
+        void ObserveSpecialState(int playerId, IStrikerHub striker) {
+            if (specialStateSubscriptions.Remove(playerId, out var subscription)) subscription.Dispose();
+            specialStateSubscriptions[playerId] = striker.CurrentStateCategory
+                .Select(category => category == StrikerStateCategory.Special)
+                .DistinctUntilChanged()
+                .Skip(1)
+                .Where(isSpecial => isSpecial)
+                .Subscribe(_ => battlePresenterView.PlaySpecialCommand(playerId,
+                    appStrikerRegistry.GetByStriker(striker.Striker.CurrentValue).Portrait));
         }
 
         void SubscribeAttentionTextEvents() {

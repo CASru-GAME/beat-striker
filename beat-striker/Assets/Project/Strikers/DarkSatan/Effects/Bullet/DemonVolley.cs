@@ -44,9 +44,14 @@ namespace Core.DarkSatan {
             launchDelays = new float[bullets.Length];
             var target = context.GetOpponent().CenterPosition.CurrentValue;
             for (int i = 0; i < bullets.Length; i++) {
+                var spreadPosition = GetSpreadPosition(i, spreadRadius);
+                if (IsBlockedByStage(spreadPosition)) {
+                    bullets[i].gameObject.SetActive(false);
+                    continue;
+                }
                 active[i] = true;
                 bulletVisuals[i].SelectRandom();
-                var toTarget = target - GetSpreadPosition(i, spreadRadius);
+                var toTarget = target - spreadPosition;
                 directions[i] = toTarget.sqrMagnitude > 0.000001f
                     ? toTarget.normalized : context.Rigidbody.transform.forward;
                 bullets[i].rotation = Quaternion.LookRotation(directions[i]);
@@ -79,6 +84,15 @@ namespace Core.DarkSatan {
         Vector3 GetSpreadPosition(int index, float spread) {
             float angle = 2f * Mathf.PI * index / bullets.Length;
             return origin + spread * new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
+        }
+
+        bool IsBlockedByStage(Vector3 destination) {
+            int stageMask = LayerMask.GetMask("Wall");
+            if (Physics.CheckSphere(origin, hitRadius, stageMask, QueryTriggerInteraction.Ignore)
+                || Physics.CheckSphere(destination, hitRadius, stageMask, QueryTriggerInteraction.Ignore)) return true;
+            var delta = destination - origin;
+            return delta.sqrMagnitude > 0f && Physics.SphereCast(
+                origin, hitRadius, delta.normalized, out _, delta.magnitude, stageMask, QueryTriggerInteraction.Ignore);
         }
 
         bool IsTarget(Collider collider) {

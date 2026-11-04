@@ -39,7 +39,7 @@ namespace Alice {
         public bool CanResumeFromSuspend => Current == BattleFlowState.Suspended;
         public bool CanPauseForAttention => Current == BattleFlowState.Playing;
         public bool CanResumeFromAttention => Current == BattleFlowState.AttentionSuspended;
-        public bool CanPauseForTutorial => Current == BattleFlowState.Playing;
+        public bool CanPauseForTutorial => Current == BattleFlowState.Playing || Current == BattleFlowState.AttentionSuspended;
         public bool CanResumeFromTutorial => Current == BattleFlowState.TutorialSuspended;
         public bool CanCompleteBattleByMusicEnd => Current == BattleFlowState.Playing;
         public bool CanBeginEndingToTitle => !IsBattleEndingOrFinished;
@@ -124,6 +124,7 @@ namespace Alice {
                     || next == BattleFlowState.EndingBattle
                     || next == BattleFlowState.EndingToTitle,
                 BattleFlowState.AttentionSuspended => next == BattleFlowState.Playing
+                    || next == BattleFlowState.TutorialSuspended
                     || next == BattleFlowState.ResolvingRound
                     || next == BattleFlowState.EndingBattle
                     || next == BattleFlowState.EndingToTitle,

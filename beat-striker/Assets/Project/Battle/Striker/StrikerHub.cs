@@ -24,6 +24,7 @@ public class StrikerHub : MonoBehaviour {
     [SerializeField] private Transform centerPositionTransform;
 
     private Rigidbody rb;
+    private StrikerStageBoundary stageBoundary;
     readonly Dictionary<string, StrikerState> stateByPathId = new();
     readonly Dictionary<StrikerState, string> pathIdByState = new();
 
@@ -81,7 +82,21 @@ public class StrikerHub : MonoBehaviour {
     }
 
     private void FixedUpdate() {
+        ConstrainToStage();
         aliceRuntime?.TickPhysics(Time.fixedDeltaTime);
+    }
+
+    private void LateUpdate() {
+        ConstrainToStage();
+    }
+
+    public void ConfigureStageBoundary(Bounds bounds) {
+        stageBoundary = new StrikerStageBoundary(rb, GetComponent<CapsuleCollider>(), bounds);
+        ConstrainToStage();
+    }
+
+    public void ConstrainToStage() {
+        stageBoundary?.Constrain();
     }
 
     void OnDestroy() {

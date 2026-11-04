@@ -13,6 +13,23 @@ namespace Alice {
         float pendingHpRatio = 1f;
         bool openingFillLocked;
         bool initialized;
+        bool damageBarAnimating;
+        float damageBarDelayRemaining;
+        float damageBarSpeed;
+
+        void Update() {
+            if (!damageBarAnimating || openingFillLocked) return;
+
+            var animationDeltaTime = Mathf.Max(0f, Time.deltaTime - damageBarDelayRemaining);
+            damageBarDelayRemaining = Mathf.Max(0f, damageBarDelayRemaining - Time.deltaTime);
+            if (animationDeltaTime <= 0f) return;
+
+            var ratio = damageBarDuration > 0f
+                ? Mathf.MoveTowards(damageBar.localScale.x, previousHpRatio, damageBarSpeed * animationDeltaTime)
+                : previousHpRatio;
+            damageBar.localScale = new Vector3(ratio, damageBar.localScale.y, damageBar.localScale.z);
+            if (ratio == previousHpRatio) damageBarAnimating = false;
+        }
 
         void Start() {
             hpBar.localScale = new Vector3(0f, hpBar.localScale.y, hpBar.localScale.z);
@@ -20,6 +37,7 @@ namespace Alice {
         }
 
         public void ResetToZeroImmediately() {
+            damageBarAnimating = false;
             LeanTween.cancel(hpBar.gameObject);
             LeanTween.cancel(damageBar.gameObject);
 
@@ -57,16 +75,26 @@ namespace Alice {
 
             hpBar.localScale = new Vector3(currentHpRatio, hpBar.localScale.y, hpBar.localScale.z);
 
-            damageBar.localScale = new Vector3(previousHpRatio, damageBar.localScale.y, damageBar.localScale.z);
-            LeanTween.cancel(damageBar.gameObject);
-            LeanTween.scaleX(damageBar.gameObject, currentHpRatio, damageBarDuration)
-                .setDelay(damageBarDelay)
-                .setEase(LeanTweenType.easeOutQuad);
+            var damageRatio = damageBar.localScale.x - currentHpRatio;
+            if (damageRatio <= 0f) {
+                damageBar.localScale = new Vector3(currentHpRatio, damageBar.localScale.y, damageBar.localScale.z);
+                damageBarAnimating = false;
+            } else {
+                if (!damageBarAnimating) {
+                    damageBarDelayRemaining = Mathf.Max(0f, damageBarDelay);
+                    damageBarSpeed = 0f;
+                    damageBarAnimating = true;
+                }
+                if (damageBarDuration > 0f) {
+                    damageBarSpeed = Mathf.Max(damageBarSpeed, damageRatio / damageBarDuration);
+                }
+            }
 
             previousHpRatio = currentHpRatio;
         }
 
         public Task PlayOpeningFillAsync(float durationSeconds) {
+            damageBarAnimating = false;
             var completionSource = new TaskCompletionSource<bool>();
             var targetHpRatio = pendingHpRatio;
             openingFillSound.PlayAtApp(Vector3.zero, openingFillSoundVolume);
