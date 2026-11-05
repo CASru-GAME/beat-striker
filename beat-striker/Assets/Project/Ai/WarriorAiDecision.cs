@@ -26,15 +26,13 @@ namespace Alice {
             }
 
             BuildCandidates(frame, tuning, memory);
-            WarriorAiChoice best = null;
-            foreach (var candidate in candidates) {
-                var isActive = candidate.Move != WarriorAiMove.Wait;
-                var anticipationWeight = isActive ? difficulty.AnticipationWeight : 1f;
-                var score = difficulty.AdjustScore(Score(candidate, frame, tuning, matchup, memory, anticipationWeight), isActive);
-                if (best != null && score <= best.Score) continue;
-                best = new WarriorAiChoice(new AiAction(candidate.Direction, ButtonFor(candidate.Move)), candidate.Move, score, candidate.Reason);
-            }
-            return best ?? Idle("Observe");
+            var (selected, score) = difficulty.SelectCandidate(
+                candidates,
+                static candidate => candidate.Move != WarriorAiMove.Wait,
+                static candidate => ButtonFor(candidate.Move),
+                (candidate, anticipationWeight) => Score(candidate, frame, tuning, matchup, memory, anticipationWeight));
+            if (selected == null) return Idle("Observe");
+            return new(new AiAction(selected.Direction, ButtonFor(selected.Move)), selected.Move, score, selected.Reason);
         }
 
         void BuildCandidates(WarriorAiFrame frame, WarriorAiTuning tuning, WarriorAiMemory memory) {
