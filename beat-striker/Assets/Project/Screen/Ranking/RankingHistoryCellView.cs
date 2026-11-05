@@ -12,6 +12,8 @@ namespace Alice {
         [SerializeField] TextMeshProUGUI playerALabel, playerBLabel, resultLabel, detailLabel, dateLabel;
         [SerializeField] RankingSlantedGraphic replayPlate;
         [SerializeField] RectTransform art;
+        [SerializeField] Vector3 hoverScale = new(1.015f, 1.025f, 1);
+        [SerializeField, Min(0)] float hoverDuration = 0.12f;
         RankingBattleHistoryEntry currentEntry;
         System.Action<string> replayRequested;
 
@@ -23,9 +25,12 @@ namespace Alice {
             replayEmitter.OnHoverExitEvent.Subscribe(_ => SetHovered(false)).AddTo(this);
         }
 
-        void SetHovered(bool value) {
+        void SetHovered(bool value, bool immediate = false) {
             var hovered = value && currentEntry != null && currentEntry.HasReplay;
-            art.localScale = hovered ? new Vector3(1.015f, 1.025f, 1) : Vector3.one;
+            LeanTween.cancel(art.gameObject);
+            var scale = hovered ? hoverScale : Vector3.one;
+            if (immediate) art.localScale = scale;
+            else LeanTween.scale(art.gameObject, scale, hoverDuration).setIgnoreTimeScale(true).setEaseOutCubic();
             replayPlate.color = replayPlate.endColor = hovered ? Color.white : RankingUi.Yellow;
             replayPlate.SetVerticesDirty();
         }
@@ -38,11 +43,11 @@ namespace Alice {
             detailLabel.text = entry.BattleText; detailLabel.richText = false;
             dateLabel.text = entry.PlayedAtText;
             replayPlate.gameObject.SetActive(entry.HasReplay);
-            SetHovered(false);
+            SetHovered(false, true);
         }
 
         void OnDisable() {
-            if (art) SetHovered(false);
+            if (art) SetHovered(false, true);
         }
     }
 }

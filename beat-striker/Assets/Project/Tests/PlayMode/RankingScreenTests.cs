@@ -33,6 +33,8 @@ public class RankingScreenTests {
         string replayId = null;
         cell.ConfigureCell(Entry("first", true), id => replayId = id);
         button.OnPointerEnter(null);
+        yield return null;
+        yield return null;
         Assert.That(art.localScale.x, Is.GreaterThan(1));
         button.OnPointerDown(null);
         Assert.That(replayId, Is.EqualTo("first"));
@@ -97,11 +99,19 @@ public class RankingScreenTests {
         yield return null;
         var before = scroll.verticalNormalizedPosition;
         updateView.Invoke(view, null);
-        Assert.That(scroll.verticalNormalizedPosition, Is.LessThan(before), "Holding the cursor past the bottom edge must scroll down.");
+        Assert.That(scroll.verticalNormalizedPosition, Is.LessThan(before), "Holding the cursor past the bottom edge must scroll down when no button is hovered.");
+        cursorObject.transform.position = viewport.TransformPoint(new Vector3(0, viewport.rect.yMin + 10, 0));
+        before = scroll.verticalNormalizedPosition;
+        updateView.Invoke(view, null);
+        Assert.That(scroll.verticalNormalizedPosition, Is.LessThan(before), "The bottom edge inside the viewport must scroll down.");
         cursorObject.transform.position = viewport.TransformPoint(new Vector3(0, viewport.rect.yMax + 30, 0));
         before = scroll.verticalNormalizedPosition;
         updateView.Invoke(view, null);
-        Assert.That(scroll.verticalNormalizedPosition, Is.GreaterThan(before), "Holding the cursor past the top edge must scroll up.");
+        Assert.That(scroll.verticalNormalizedPosition, Is.GreaterThan(before), "Holding the cursor past the top edge must scroll up when no button is hovered.");
+        cursorObject.transform.position = viewport.TransformPoint(new Vector3(0, viewport.rect.yMax - 10, 0));
+        before = scroll.verticalNormalizedPosition;
+        updateView.Invoke(view, null);
+        Assert.That(scroll.verticalNormalizedPosition, Is.GreaterThan(before), "The top edge inside the viewport must scroll up.");
         cursorObject.transform.position = viewport.TransformPoint(new Vector3(0, viewport.rect.center.y, 0));
         before = scroll.verticalNormalizedPosition;
         updateView.Invoke(view, null);
@@ -208,7 +218,7 @@ public class RankingScreenTests {
     }
 
     [UnityTest]
-    public IEnumerator ReplayReturnRetainsLoadedRankingPagesAndNextCursor() {
+    public IEnumerator ReplayReturnRetainsLoadedRankingPagesAndAutomaticallyResumesNextCursor() {
         var navigation = new RankingNavigationState { ListPosition = 0.37f };
         navigation.CaptureRanking(Enumerable.Range(0, 60).Select(i => new PlayerProfile { name = $"player-{i}", grade = 0 }), new[] { "page-3", "", "", "", "", "" });
         var records = new RecordsApi {
@@ -216,33 +226,30 @@ public class RankingScreenTests {
         };
         using var session = new PlayerSession();
         ExpectEnterRankingLogs();
-        using var presenter = CreatePresenter(records, navigation, session, out var view, out _, out _);
+        using var presenter = CreatePresenter(records, navigation, session, out var view, out _);
         yield return null;
         yield return null;
-        Assert.That(records.RankingRequests, Is.Empty, "Returning from a replay must retain pages already loaded instead of resetting them to page one.");
-        Assert.That(RankingRows(presenter).Count, Is.EqualTo(60));
+        Assert.That(records.RankingRequests.Single().Cursor, Is.EqualTo("page-3"), "Returning from a replay must resume unfinished pages without resetting to page one.");
+        Assert.That(RankingRows(presenter).Count, Is.EqualTo(61));
         Assert.That(RankingRows(presenter).Any(profile => profile.name == "player-59"), Is.True);
         Assert.That(view.ListPosition, Is.EqualTo(0.37f).Within(0.01f));
 
-        yield return Await(InvokeTask(presenter, "LoadGradeAsync", 0, false));
-        Assert.That(records.RankingRequests.Single().Cursor, Is.EqualTo("page-3"));
-        Assert.That(RankingRows(presenter).Count, Is.EqualTo(61));
         LogAssert.NoUnexpectedReceived();
     }
 
     [UnityTest]
-    public IEnumerator ReplayReturnCompletesOnlyPreviouslyUnfinishedGrades() {
+    public IEnumerator ReplayReturnCompletesPreviouslyUnfinishedPages() {
         var navigation = new RankingNavigationState();
         navigation.CaptureRanking(new[] { new PlayerProfile { name = "later-page-player", grade = 0 } }, new[] { "page-3", "", null, "", "", "" });
         var records = new RecordsApi();
         using var session = new PlayerSession();
         ExpectEnterRankingLogs();
-        using var presenter = CreatePresenter(records, navigation, session, out _, out _, out _);
+        using var presenter = CreatePresenter(records, navigation, session, out _, out _);
         yield return null;
         yield return null;
-        Assert.That(records.RankingRequests.Count, Is.EqualTo(1));
-        Assert.That(records.RankingRequests[0].Grade, Is.EqualTo(2));
-        Assert.That(records.RankingRequests[0].Cursor, Is.Empty);
+        Assert.That(records.RankingRequests.Count, Is.EqualTo(2));
+        Assert.That(records.RankingRequests.Single(request => request.Grade == 0).Cursor, Is.EqualTo("page-3"));
+        Assert.That(records.RankingRequests.Single(request => request.Grade == 2).Cursor, Is.Empty);
         Assert.That(RankingRows(presenter).Single().name, Is.EqualTo("later-page-player"));
         LogAssert.NoUnexpectedReceived();
     }
@@ -256,7 +263,7 @@ public class RankingScreenTests {
         records.PendingRankings.Add(2, higher.Task);
         using var session = new PlayerSession();
         ExpectEnterRankingLogs();
-        using var presenter = CreatePresenter(records, new RankingNavigationState(), session, out _, out _, out _);
+        using var presenter = CreatePresenter(records, new RankingNavigationState(), session, out _, out _);
         yield return null;
         yield return null;
         higher.SetResult(new PlayerProfilePage { items = new[] { new PlayerProfile { name = "promoted-player", grade = 2 } } });
@@ -269,22 +276,22 @@ public class RankingScreenTests {
     }
 
     [UnityTest]
-    public IEnumerator FailedInitialGradePageCanBeRetriedWithoutLeavingRanking() {
+    public IEnumerator FailedInitialGradePageRetainsCursorForRetry() {
         var records = new RecordsApi();
         records.PendingRankings.Add(2, Task.FromException<PlayerProfilePage>(new System.InvalidOperationException("Expected first page failure")));
         using var session = new PlayerSession();
         ExpectEnterRankingLogs();
         LogAssert.Expect(LogType.Log, "[Ranking] Expected first page failure");
-        using var presenter = CreatePresenter(records, new RankingNavigationState(), session, out _, out _, out _);
+        using var presenter = CreatePresenter(records, new RankingNavigationState(), session, out _, out _);
         yield return null;
         yield return null;
-        var more = (bool[])typeof(RankingPresenter).GetField("hasMore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(presenter);
-        Assert.That(more[2], Is.True, "A failed first page must expose the grade's retry button, even when no rows have loaded.");
+        var cursors = (string[])typeof(RankingPresenter).GetField("cursors", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(presenter);
+        Assert.That(cursors[2], Is.Null, "A failed first page must remain unfinished so it can be retried.");
         records.PendingRankings.Remove(2);
         yield return Await(InvokeTask(presenter, "LoadGradeAsync", 2, false));
         Assert.That(records.RankingRequests.Last().Grade, Is.EqualTo(2));
         Assert.That(records.RankingRequests.Last().Cursor, Is.Empty);
-        Assert.That(more[2], Is.False);
+        Assert.That(cursors[2], Is.Empty);
         LogAssert.NoUnexpectedReceived();
     }
 
@@ -298,21 +305,21 @@ public class RankingScreenTests {
         records.Histories.Enqueue(Task.FromResult(new BattleHistoryListResponse { items = new[] { new BattleHistorySummary { id = "second" } } }));
         using var session = new PlayerSession();
         ExpectEnterRankingLogs();
-        using var presenter = CreatePresenter(records, navigation, session, out _, out var list, out var more);
+        using var presenter = CreatePresenter(records, navigation, session, out var view, out var list);
         yield return null;
         yield return null;
         yield return Await(InvokeTask(presenter, "LoadPlayerHistoryAsync", "player", false));
         Assert.That(list.GetItemCount(), Is.EqualTo(1));
-        Assert.That(more.gameObject.activeSelf, Is.True);
+        Assert.That(view.HistoryRoot.gameObject.activeSelf, Is.True);
 
         LogAssert.Expect(LogType.Log, "[Ranking] Expected history failure");
         yield return Await(InvokeTask(presenter, "LoadPlayerHistoryAsync", "player", true));
         Assert.That(list.GetItemCount(), Is.EqualTo(1));
-        Assert.That(more.gameObject.activeSelf, Is.True, "A failed additional page must leave its retry control available.");
+        Assert.That(view.HistoryRoot.gameObject.activeSelf, Is.True, "A failed additional page must retain the history dialog and loaded rows.");
         yield return Await(InvokeTask(presenter, "LoadPlayerHistoryAsync", "player", true));
         Assert.That(records.HistoryCursors, Is.EqualTo(new[] { "", "history-page-2", "history-page-2" }));
         Assert.That(list.GetItemCount(), Is.EqualTo(2));
-        Assert.That(more.gameObject.activeSelf, Is.False);
+        Assert.That((bool)typeof(RankingPresenterView).GetField("hasMoreHistory", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view), Is.False);
         LogAssert.NoUnexpectedReceived();
     }
 
@@ -323,7 +330,7 @@ public class RankingScreenTests {
         task.GetAwaiter().GetResult();
     }
 
-    RankingPresenter CreatePresenter(RecordsApi records, RankingNavigationState navigation, PlayerSession session, out RankingPresenterView view, out RankingHistoryListView list, out Botan more) {
+    RankingPresenter CreatePresenter(RecordsApi records, RankingNavigationState navigation, PlayerSession session, out RankingPresenterView view, out RankingHistoryListView list) {
         owner = new GameObject("Inactive ranking fixture", typeof(RectTransform));
         owner.SetActive(false);
         view = owner.AddComponent<RankingPresenterView>();
@@ -340,14 +347,12 @@ public class RankingScreenTests {
         SetField(view, "gradeScroll", gradeScroll);
         SetField(view, "gradeSections", System.Array.Empty<RankingGradeSectionView>());
         SetField(view, "rankingStatus", Rect("Status", owner.transform, new Vector2(604, 100)).gameObject.AddComponent<TextMeshProUGUI>());
+        SetField(view, "rankingHelp", Rect("Help", owner.transform, new Vector2(604, 100)).gameObject.AddComponent<TextMeshProUGUI>());
         SetField(view, "historyHeading", Rect("Heading", owner.transform, new Vector2(604, 100)).gameObject.AddComponent<TextMeshProUGUI>());
         var dialog = new GameObject("History dialog");
         dialog.transform.SetParent(owner.transform);
         SetField(view, "historyDialog", dialog);
-        var moreObject = new GameObject("More history");
-        moreObject.transform.SetParent(owner.transform);
-        more = moreObject.AddComponent<Botan>();
-        SetField(view, "moreHistoryEmitter", more);
+        SetField(view, "battleHistoryScrollRect", historyScroll);
         return new RankingPresenter(view, list, new ImmediateTransition(), new DelayedHistoryApi(), null, null, null, null, new TestMusicRegistry(), new TestStrikerRegistry(), records, new Profiles(), session, navigation, new InputFocusService());
     }
 

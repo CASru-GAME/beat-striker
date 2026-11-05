@@ -540,6 +540,8 @@ MonoBehaviour:
   dateLabel: {fileID: 5246508995985989630}
   replayPlate: {fileID: 8247123757509259969}
   art: {fileID: 3364894287904349691}
+  hoverScale: {x: 1.015, y: 1.025, z: 1}
+  hoverDuration: 0.12
 --- !u!222 &5991547406361761554
 CanvasRenderer:
   m_ObjectHideFlags: 0

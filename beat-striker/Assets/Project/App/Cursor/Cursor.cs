@@ -37,6 +37,8 @@ namespace Alice {
         float movingTime;
         GameObject lastHoveredObject;
 
+        public bool IsHoveringButton => lastHoveredObject && lastHoveredObject.GetComponent<ActionEmitter>();
+
         public int PlayerId { get; private set; }
 
         void Awake() {

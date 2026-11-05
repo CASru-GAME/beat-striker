@@ -130,6 +130,10 @@ namespace Alice.Editor {
             return emitter;
         }
         static void Height(GameObject target, float value) { var element = target.AddComponent<LayoutElement>(); element.preferredHeight = value; element.minHeight = value; }
+        static void RankingHover(Botan emitter) {
+            var hover = emitter.gameObject.AddComponent<RankingButtonHover>();
+            Set(hover, "emitter", emitter); Set(hover, "target", emitter.transform);
+        }
         static VerticalLayoutGroup Vertical(GameObject target, int padding = 0) {
             var group = target.AddComponent<VerticalLayoutGroup>(); group.spacing = 8; group.padding = new RectOffset(padding,padding,padding,padding);
             group.childControlWidth = group.childControlHeight = true; group.childForceExpandHeight = false;
@@ -178,7 +182,7 @@ namespace Alice.Editor {
             var root = Rect(null,"RankingPlayerRowView",Vector2.zero,Vector2.one);
             try {
                 Plate(root, new Color32(28,34,46,255)); Height(root.gameObject,52);
-                var emitter = root.gameObject.AddComponent<Botan>(); var name = Text(root,"Name","プレイヤー",25,new Vector2(.04f,.1f),new Vector2(.65f,.9f)); name.alignment = TextAlignmentOptions.MidlineLeft;
+                var emitter = root.gameObject.AddComponent<Botan>(); RankingHover(emitter); var name = Text(root,"Name","プレイヤー",25,new Vector2(.04f,.1f),new Vector2(.65f,.9f)); name.alignment = TextAlignmentOptions.MidlineLeft;
                 var date = Text(root,"First acquisition","",14,new Vector2(.65f,.1f),new Vector2(.96f,.9f)); date.color = Cyan;
                 var view = root.gameObject.AddComponent<RankingPlayerRowView>(); Set(view,"emitter",emitter); Set(view,"nameLabel",name); Set(view,"dateLabel",date);
                 PrefabUtility.SaveAsPrefabAsset(root.gameObject,RowPath);
@@ -196,28 +200,30 @@ namespace Alice.Editor {
             var heading = Text(dialog,"Player heading","対戦履歴",30,new Vector2(.08f,.86f),new Vector2(.92f,.97f)); heading.color = Yellow;
             oldScroll.transform.SetParent(dialog,false); var rect=(RectTransform)oldScroll.transform; rect.anchorMin = new Vector2(.08f,.16f); rect.anchorMax = new Vector2(.92f,.83f); rect.offsetMin = rect.offsetMax = Vector2.zero;
             ((Component)Get(view,"statusLabel")).transform.SetParent(dialog,false);
-            foreach(var field in new[]{"battleHistoryScrollUpHoverBotan","battleHistoryScrollDownHoverBotan"}) ((Component)Get(view,field)).transform.SetParent(dialog,false);
+            foreach(var field in new[]{"battleHistoryScrollUpHoverBotan","battleHistoryScrollDownHoverBotan"}) {
+                var arrow = (Botan)Get(view,field); arrow.transform.SetParent(dialog,false); RankingHover(arrow);
+            }
             var close = Button(dialog,"Close","閉じる",new Vector2(.08f,.035f),new Vector2(.32f,.125f),Cyan);
-            var more = Button(dialog,"More histories","さらに表示",new Vector2(.60f,.035f),new Vector2(.92f,.125f),Yellow);
+            RankingHover(close);
             var gradeScroll=Scroll(canvas,"Grade list",new Vector2(.35f,.1f),new Vector2(.97f,.84f));
             var sections = new Object[6];
-            for(var grade=0;grade<6;grade++) {
+            for(var grade=5;grade>=0;grade--) {
                 var section=Rect(gradeScroll.content,$"Grade {grade}",new Vector2(0,1),Vector2.one); Vertical(section.gameObject,4);
                 var title=Text(section,"Grade title",PlayerGrades.Label((PlayerGrade)grade),27,Vector2.zero,Vector2.one); title.color=Yellow; title.alignment=TextAlignmentOptions.MidlineLeft; Height(title.gameObject,44);
                 var empty=Text(section,"Empty","まだ到達者がいません",17,Vector2.zero,Vector2.one); Height(empty.gameObject,32);
                 var rows=Rect(section,"Players",new Vector2(0,1),Vector2.one); Vertical(rows.gameObject);
-                var load=Button(section,"More players","さらに表示",Vector2.zero,Vector2.one,Cyan); Height(load.gameObject,36); load.gameObject.SetActive(false);
-                var component=section.gameObject.AddComponent<RankingGradeSectionView>(); Set(component,"heading",title); Set(component,"emptyLabel",empty.gameObject); Set(component,"rowsParent",rows); Set(component,"rowPrefab",AssetDatabase.LoadAssetAtPath<RankingPlayerRowView>(RowPath)); Set(component,"moreEmitter",load);
-                var so=new SerializedObject(component); so.FindProperty("grade").intValue=grade; so.ApplyModifiedPropertiesWithoutUndo(); sections[grade]=component;
+                var component=section.gameObject.AddComponent<RankingGradeSectionView>(); Set(component,"heading",title); Set(component,"emptyLabel",empty.gameObject); Set(component,"rowsParent",rows); Set(component,"rowPrefab",AssetDatabase.LoadAssetAtPath<RankingPlayerRowView>(RowPath));
+                var so=new SerializedObject(component); so.FindProperty("grade").intValue=grade; so.ApplyModifiedPropertiesWithoutUndo(); sections[5-grade]=component;
             }
+            TMP_Text rankingHelp = null;
             foreach(var text in canvas.GetComponentsInChildren<TMP_Text>(true)) {
                 if(text.gameObject.name=="対戦履歴") text.text="階級リスト";
                 if(text.gameObject.name=="History Limit") text.text="初回獲得順";
-                if(text.gameObject.name=="Replay Help") text.text="プレイヤーを選んで対戦履歴を表示";
+                if(text.gameObject.name=="Replay Help") { text.text="プレイヤーを選んで対戦履歴を表示"; rankingHelp = text; }
                 if(text.gameObject.name=="Replay Invitation") text.text="試練に挑み、頂点へ！";
             }
             var status=Text(canvas,"Ranking status","",16,new Vector2(.35f,.015f),new Vector2(.97f,.075f));
-            Set(view,"historyList",Object.FindFirstObjectByType<RankingHistoryListView>()); SetArray(view,"gradeSections",sections); Set(view,"historyDialog",dialog.gameObject); Set(view,"historyHeading",heading); Set(view,"rankingStatus",status); Set(view,"closeHistoryEmitter",close); Set(view,"moreHistoryEmitter",more); Set(view,"gradeScroll",gradeScroll);
+            Set(view,"historyList",Object.FindFirstObjectByType<RankingHistoryListView>()); SetArray(view,"gradeSections",sections); Set(view,"historyDialog",dialog.gameObject); Set(view,"historyHeading",heading); Set(view,"rankingStatus",status); Set(view,"rankingHelp",rankingHelp); Set(view,"closeHistoryEmitter",close); Set(view,"gradeScroll",gradeScroll);
             dialog.gameObject.SetActive(false); EditorSceneManager.SaveScene(view.gameObject.scene);
         }
         static void ConfigureHistoryModal(GameObject root) {
