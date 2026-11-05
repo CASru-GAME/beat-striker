@@ -7,6 +7,7 @@ namespace Alice {
 
     public class PlayerSession : IDisposable {
         readonly Subject<Unit> changed = new();
+        bool disposed;
         readonly Dictionary<int, string> slotNames = new();
         PlayerIdentity[] participants = Array.Empty<PlayerIdentity>();
         public BattlePlayMode Mode { get; private set; }
@@ -20,7 +21,10 @@ namespace Alice {
         public IReadOnlyList<PlayerIdentity> Participants => participants;
         public string GetName(int slot) => slotNames.TryGetValue(slot, out var name) ? name : "";
         public void SetName(int slot, string name) { slotNames[slot] = name; changed.OnNext(Unit.Default); }
-        public void SetNameInputActive(bool active) { IsNameInputActive = active; changed.OnNext(Unit.Default); }
+        public void SetNameInputActive(bool active) {
+            if (disposed) return;
+            IsNameInputActive = active; changed.OnNext(Unit.Default);
+        }
         public void SetMode(BattlePlayMode mode) {
             if (Mode != mode) {
                 participants = Array.Empty<PlayerIdentity>();
@@ -36,6 +40,11 @@ namespace Alice {
             TrialPlayerName = IsTrial ? identities[0].name : "";
             changed.OnNext(Unit.Default);
         }
-        public void Dispose() => changed.Dispose();
+        public void Dispose() {
+            if (disposed) return;
+            disposed = true;
+            IsNameInputActive = false;
+            changed.Dispose();
+        }
     }
 }

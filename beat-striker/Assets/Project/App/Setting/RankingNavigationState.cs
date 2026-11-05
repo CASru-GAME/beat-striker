@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using VContainer;
 
 namespace Alice {
     public record RankingNavigationState {
+        [Inject]
+        public RankingNavigationState() { }
+
         public string PlayerName { get; set; } = "";
         public string HistoryCursor { get; set; } = "";
         public float ListPosition { get; set; } = 1;

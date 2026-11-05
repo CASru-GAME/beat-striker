@@ -5,8 +5,30 @@ using Alice;
 using NUnit.Framework;
 using R3;
 using UnityEngine;
+using VContainer;
 
 public class PlayerProgressionTests {
+    [Test]
+    public void DialogCleanupAfterAppSessionDisposalDoesNotPublishToDisposedSubject() {
+        var appSession = new PlayerSession();
+        appSession.SetNameInputActive(true);
+        appSession.Dispose();
+        Assert.DoesNotThrow(() => appSession.SetNameInputActive(false));
+        Assert.That(appSession.IsNameInputActive, Is.False);
+        Assert.DoesNotThrow(appSession.Dispose);
+    }
+
+    [Test]
+    public void RankingNavigationStateResolvesAsSingletonWithoutInjectingItsRecordCopyConstructor() {
+        var builder = new ContainerBuilder();
+        builder.Register<RankingNavigationState>(Lifetime.Singleton);
+        using var container = builder.Build();
+        var state = container.Resolve<RankingNavigationState>();
+        state.PlayerName = "プレイヤー";
+        Assert.That(container.Resolve<RankingNavigationState>(), Is.SameAs(state));
+        Assert.That((state with { }).PlayerName, Is.EqualTo("プレイヤー"));
+    }
+
     string directory;
     PlayerSession session;
     PlayerProfileService profiles;
