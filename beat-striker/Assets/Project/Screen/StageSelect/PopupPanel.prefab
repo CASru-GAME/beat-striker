@@ -94,7 +94,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
 --- !u!82 &7023031660028847891
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1249,7 +1249,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
 --- !u!82 &5290194951464343785
 AudioSource:
   m_ObjectHideFlags: 0

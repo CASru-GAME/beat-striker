@@ -43,11 +43,11 @@ namespace Core {
 
         public void OnPointerDown(PointerEventData eventData) {
             if (!Interactable) return;
+            if (clickSound != null) {
+                clickSound.PlayAtApp();
+            }
             onClickEvent?.Invoke();
             clickSubject.OnNext(new BotanEventData(eventData));
-            if (clickSound != null) {
-                clickSound.PlayAtApp(Camera.main.transform.position);
-            }
         }
     }
 

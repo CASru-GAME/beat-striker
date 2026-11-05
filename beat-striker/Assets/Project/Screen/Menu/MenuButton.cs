@@ -12,6 +12,7 @@ namespace Alice {
         [SerializeField] AudioClip hoverSound;
         [SerializeField] Image image;
         [SerializeField] private RectTransform icon;
+        [SerializeField] GameObject description;
         [SerializeField] private float scaleAnimationDuration = 0.2f, scaleAnimationAmount = 1.1f;
         private float originalAlpha;
         private Vector3 originalIconScale;
@@ -22,21 +23,32 @@ namespace Alice {
             botan = GetComponent<Botan>();
             botan.OnHoverEvent.Subscribe(data => {
                 hoverSound.PlayAtApp();
+                description.SetActive(true);
                 var col = image.color;
                 col.a = 0f;
                 image.color = col;
                 LeanTween.cancel(icon);
                 LeanTween.scale(icon, originalIconScale, 0).setEaseOutBack();
                 LeanTween.scale(icon, icon.localScale * scaleAnimationAmount, scaleAnimationDuration).setEaseOutBack();
-            });
+            }).AddTo(this);
 
             botan.OnHoverExitEvent.Subscribe(data => {
+                description.SetActive(false);
                 var col = image.color;
                 col.a = originalAlpha;
                 image.color = col;
                 LeanTween.cancel(icon);
                 LeanTween.scale(icon, originalIconScale, scaleAnimationDuration).setEaseOutBack();
-            });
+            }).AddTo(this);
+        }
+
+        void OnDisable() {
+            description.SetActive(false);
+            var col = image.color;
+            col.a = originalAlpha;
+            image.color = col;
+            LeanTween.cancel(icon);
+            icon.localScale = originalIconScale;
         }
     }
 }

@@ -2127,7 +2127,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
 --- !u!114 &501797564
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2970,7 +2970,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
 --- !u!114 &790055339
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4971,7 +4971,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
 --- !u!114 &1268435090
 MonoBehaviour:
   m_ObjectHideFlags: 0

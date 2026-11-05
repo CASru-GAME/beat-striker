@@ -20,6 +20,7 @@ namespace Alice {
         [SerializeField] GameObject[] keyboardKeys;
         [SerializeField] TMP_Text[] keyboardKeyLabels;
         [SerializeField] RectTransform panel;
+        [SerializeField] AudioClip selectionSound;
         [SerializeField, Min(0.01f)] float openDuration = 0.22f;
         [SerializeField, Min(0.01f)] float closeDuration = 0.16f;
         [SerializeField, Min(0.01f)] float hoverDuration = 0.12f;
@@ -103,6 +104,7 @@ namespace Alice {
                 input.interactable = inputAllowed;
             });
         }
+        public void PlaySelectionSound() => selectionSound.PlayAtApp();
         public void Close(Action onClosed) {
             IsInteractable = false;
             ReleaseInputFocus();

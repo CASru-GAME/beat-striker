@@ -505,6 +505,7 @@ MonoBehaviour:
   - {fileID: 8100000000000000060}
   - {fileID: 8100000000000000072}
   panel: {fileID: 4808148422295111773}
+  selectionSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
   openDuration: 0.22
   closeDuration: 0.16
   hoverDuration: 0.12

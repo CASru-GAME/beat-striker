@@ -1272,7 +1272,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
 --- !u!1 &1275289228
 GameObject:
   m_ObjectHideFlags: 0
@@ -2003,7 +2003,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
 --- !u!1 &1722483528
 GameObject:
   m_ObjectHideFlags: 0

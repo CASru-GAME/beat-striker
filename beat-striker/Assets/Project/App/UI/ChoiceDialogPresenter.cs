@@ -49,6 +49,7 @@ namespace Alice {
             if (!focus.CanReceive(view.ModalRoot)) return;
             if (completion == null || closing || !view.IsInteractable || UnityEngine.Time.frameCount <= openedFrame) return;
             closing = true;
+            view.PlaySelectionSound();
             var pending = completion;
             InputText = view.InputText;
             view.Close(() => {

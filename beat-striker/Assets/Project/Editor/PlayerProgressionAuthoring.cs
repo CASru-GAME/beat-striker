@@ -113,6 +113,7 @@ namespace Alice.Editor {
         static Botan Button(Transform parent, string name, string text, Vector2 min, Vector2 max, Color color) {
             var rect = Rect(parent, name, min, max); Plate(rect, color);
             var emitter = rect.gameObject.AddComponent<Botan>();
+            emitter.clickSound = AssetDatabase.LoadAssetAtPath<AudioClip>(Project + "Screen/CharacterSelect/決定ボタンを押す1.mp3");
             var label = Text(rect, "Label", text, 25, new Vector2(.04f,.08f), new Vector2(.96f,.92f)); label.color = Ink;
             return emitter;
         }
@@ -154,9 +155,10 @@ namespace Alice.Editor {
                 var emitters = new Object[5]; var labels = new Object[5];
                 for (var i = 0; i < 5; i++) {
                     var emitter = Button(buttons, $"Choice {i + 1}", "決定", Vector2.zero, Vector2.one, i == 0 ? Yellow : Cyan);
+                    emitter.clickSound = null;
                     Height(emitter.gameObject, 39); emitters[i] = emitter; labels[i] = emitter.GetComponentInChildren<TMP_Text>();
                 }
-                var view = root.gameObject.AddComponent<ChoiceDialogView>(); Set(view,"dialogRoot",root.gameObject); Set(view,"heading",heading); Set(view,"description",body); Set(view,"input",input); SetArray(view,"emitters",emitters); SetArray(view,"labels",labels);
+                var view = root.gameObject.AddComponent<ChoiceDialogView>(); Set(view,"selectionSound",AssetDatabase.LoadAssetAtPath<AudioClip>(Project + "Screen/CharacterSelect/決定ボタンを押す1.mp3")); Set(view,"dialogRoot",root.gameObject); Set(view,"heading",heading); Set(view,"description",body); Set(view,"input",input); SetArray(view,"emitters",emitters); SetArray(view,"labels",labels);
                 root.gameObject.SetActive(false); PrefabUtility.SaveAsPrefabAsset(root.gameObject, DialogPath);
             } finally { Object.DestroyImmediate(root.gameObject); }
         }
@@ -169,7 +171,7 @@ namespace Alice.Editor {
             var root = Rect(null,"RankingPlayerRowView",Vector2.zero,Vector2.one);
             try {
                 Plate(root, new Color32(28,34,46,255)); Height(root.gameObject,52);
-                var emitter = root.gameObject.AddComponent<Botan>(); RankingHover(emitter); var name = Text(root,"Name","プレイヤー",25,new Vector2(.04f,.1f),new Vector2(.65f,.9f)); name.alignment = TextAlignmentOptions.MidlineLeft;
+                var emitter = root.gameObject.AddComponent<Botan>(); emitter.clickSound = AssetDatabase.LoadAssetAtPath<AudioClip>(Project + "Screen/CharacterSelect/決定ボタンを押す1.mp3"); RankingHover(emitter); var name = Text(root,"Name","プレイヤー",25,new Vector2(.04f,.1f),new Vector2(.65f,.9f)); name.alignment = TextAlignmentOptions.MidlineLeft;
                 var date = Text(root,"First acquisition","",14,new Vector2(.65f,.1f),new Vector2(.96f,.9f)); date.color = Cyan;
                 var view = root.gameObject.AddComponent<RankingPlayerRowView>(); Set(view,"emitter",emitter); Set(view,"nameLabel",name); Set(view,"dateLabel",date);
                 PrefabUtility.SaveAsPrefabAsset(root.gameObject,RowPath);

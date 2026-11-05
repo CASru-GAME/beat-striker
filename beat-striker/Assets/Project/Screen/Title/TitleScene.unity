@@ -261,7 +261,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
 --- !u!114 &462537239
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1369,7 +1369,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
 --- !u!222 &1114495323
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1680,7 +1680,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1276061093
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1942,7 +1942,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: a5795ade1c406444eb41a45d268e1c53, type: 3}
 --- !u!114 &1433791948
 MonoBehaviour:
   m_ObjectHideFlags: 0

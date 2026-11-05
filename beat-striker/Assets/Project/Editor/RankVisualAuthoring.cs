@@ -191,14 +191,18 @@ namespace Alice.Editor {
         public static void AuthorMenu(Scene scene) {
             var view = InScene<MenuPresenterView>(scene); var button = (Component)Get(view, "trialEmitter");
             var sample = ((Component)Get(view, "gotoTutorialEmitter")).GetComponentInChildren<TMP_Text>(true);
+            var localLabel = ((Component)Get(view, "localBattleEmitter")).GetComponentInChildren<TMP_Text>(true);
+            localLabel.font = sample.font; localLabel.fontSharedMaterial = sample.fontSharedMaterial;
+            localLabel.fontStyle = sample.fontStyle; localLabel.fontWeight = sample.fontWeight;
+            localLabel.enableAutoSizing = true; Dirty(localLabel);
             var label = button.GetComponentInChildren<TMP_Text>(true);
             label.font = sample.font; label.fontSharedMaterial = sample.fontSharedMaterial;
             label.fontStyle = sample.fontStyle; label.fontWeight = sample.fontWeight;
             label.fontSize = sample.fontSize; label.fontSizeMax = sample.fontSizeMax; label.fontSizeMin = sample.fontSizeMin;
             label.enableAutoSizing = true; label.text = "チャレンジ"; label.color = sample.color; Dirty(label);
             var icon = button.GetComponentsInChildren<RawImage>(true).Single(i => i.name == "Chara");
-            var source = AssetDatabase.LoadAllAssetsAtPath(Project + "Screen/Menu/Challenge.svg").OfType<Texture2D>().Single();
-            icon.texture = source; icon.uvRect = new Rect(0, 0, 1, 1); icon.color = Color.white; Dirty(icon);
+            var source = AssetDatabase.LoadAssetAtPath<Texture2D>(Project + "Screen/Menu/Challenge.png");
+            icon.texture = source; icon.uvRect = new Rect(0, 0, 1, 1); icon.color = new Color(.35f, .78f, 1f, .75f); Dirty(icon);
             var iconRect = icon.rectTransform;
             iconRect.anchorMin = iconRect.anchorMax = new Vector2(.5f, .55f); iconRect.pivot = new Vector2(.5f, .5f);
             iconRect.sizeDelta = new Vector2(210, 210); iconRect.anchoredPosition = Vector2.zero; iconRect.localScale = Vector3.one; Dirty(iconRect);
