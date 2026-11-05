@@ -19,6 +19,7 @@ namespace Alice {
         readonly TitleScene view;
         readonly ISceneTransitionService sceneTransitionService;
         readonly IGamePadRegistry gamePadRegistry;
+        readonly IInputFocusService inputFocus;
         readonly ITutorialSetting tutorialSetting;
         readonly IAppNetworkSetting appNetworkSetting;
         readonly PlayerSession playerSession;
@@ -37,19 +38,20 @@ namespace Alice {
             ITutorialSetting tutorialSetting,
             IAppNetworkSetting appNetworkSetting,
             PlayerSession playerSession,
-            IPlayerProfileService profiles) {
+            IPlayerProfileService profiles, IInputFocusService inputFocus) {
             this.view = view;
             this.sceneTransitionService = sceneTransitionService;
             this.gamePadRegistry = gamePadRegistry;
+            this.inputFocus = inputFocus;
             this.tutorialSetting = tutorialSetting;
             this.appNetworkSetting = appNetworkSetting;
             this.playerSession = playerSession; this.profiles = profiles;
-            playerDialog = new ChoiceDialogPresenter(view.PlayerDialog, playerSession, gamePadRegistry);
+            playerDialog = new ChoiceDialogPresenter(view.PlayerDialog, gamePadRegistry, inputFocus);
             view.OnlineRequested.Subscribe(ignored => { _ = ConfirmPlayersAsync(AppScene.OnlineRoom); }).AddTo(subscriptions);
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.gamePadRegistry.OnAnyButtonDown
-                .Where(e => e.Button == GamePadButton.Select)
+                .Where(e => e.Button == GamePadButton.Select && inputFocus.CanReceive(null))
                 .Subscribe(_ => RotateFaceButtonWiring())
                 .AddTo(subscriptions);
 
@@ -101,6 +103,7 @@ namespace Alice {
 
         async Task ConfirmPlayersAsync(AppScene target) {
             if (inputState != TitleInputState.Ready) return;
+            using var inputHold = inputFocus.HoldScreen();
             inputState = TitleInputState.Confirming;
             try {
                 for (var slot = 0; slot < 4; slot++) {

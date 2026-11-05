@@ -236,6 +236,8 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects: []
   view: {fileID: 80001}
+  focusRaycasters: []
+  inputFocusBoundary: {fileID: 870000000000000001}
 --- !u!1 &858904949
 GameObject:
   m_ObjectHideFlags: 0
@@ -384,6 +386,7 @@ GameObject:
   - component: {fileID: 1837010658}
   - component: {fileID: 1837010657}
   - component: {fileID: 1837010656}
+  - component: {fileID: 870000000000000001}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -518,3 +521,25 @@ SceneRoots:
   - {fileID: 1837010658}
   - {fileID: 80000}
   - {fileID: 100002}
+--- !u!114 &870000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837010655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c10828cbea43c6b4a05d7244a0a764, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.InputFocusBoundary
+  eventSystem: {fileID: 1837010657}
+  inputModule: {fileID: 1837010656}
+  scrollRects:
+  - {fileID: 870000000000000002}
+  selectables: []
+--- !u!114 &870000000000000002 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100100, guid: 27238fa0f1cf4d3e93da3afa9ce516dd, type: 3}
+  m_PrefabInstance: {fileID: 80000}
+  m_PrefabAsset: {fileID: 0}

@@ -32,6 +32,8 @@ namespace Alice {
         readonly Subject<string> playerSelected = new();
         readonly Subject<int> moreGradeRequested = new();
         readonly Subject<Unit> closeHistoryRequested = new(), moreHistoryRequested = new();
+        public Transform HistoryRoot => historyDialog.transform;
+        public bool InputAllowed { private get; set; } = true;
         public Observable<string> PlayerSelected => playerSelected;
         public Observable<int> MoreGradeRequested => moreGradeRequested;
         public Observable<Unit> CloseHistoryRequested => closeHistoryRequested;
@@ -71,6 +73,7 @@ namespace Alice {
         }
 
         void Update() {
+            if (!InputAllowed) { battleHistoryScrollUpHovered.OnNext(false); battleHistoryScrollDownHovered.OnNext(false); return; }
             var scroll = historyDialog.activeSelf ? battleHistoryScrollRect : gradeScroll;
             if (!scroll || !scroll.vertical || !scroll.isActiveAndEnabled || !scroll.content) return;
             var direction = (battleHistoryScrollUpHovered.CurrentValue ? 1 : 0) - (battleHistoryScrollDownHovered.CurrentValue ? 1 : 0);

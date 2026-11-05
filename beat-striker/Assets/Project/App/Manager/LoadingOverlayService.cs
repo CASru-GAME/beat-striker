@@ -12,6 +12,8 @@ namespace Alice {
         const float ContinuousHideGraceSeconds = 0.15f;
 
         readonly LoadingView loadingView;
+        readonly IInputFocusService focus;
+        IDisposable inputBlock;
         readonly List<Scope> activeScopes = new();
         int stateVersion;
         bool isVisible;
@@ -22,8 +24,9 @@ namespace Alice {
         bool disposed;
 
         [Inject]
-        public LoadingOverlayService(LoadingView loadingView) {
+        public LoadingOverlayService(LoadingView loadingView, IInputFocusService focus) {
             this.loadingView = loadingView;
+            this.focus = focus;
         }
 
         public IDisposable Begin(string message = null) {
@@ -34,6 +37,7 @@ namespace Alice {
             var scope = new Scope(this, loadingView.ResolveDisplayMessage(message));
             activeScopes.Add(scope);
             if (activeScopes.Count == 1) {
+                inputBlock ??= focus.Block();
                 previousLoadingPriority = Application.backgroundLoadingPriority;
                 loadingPriorityOverridden = true;
                 // 非同期ロードのメインスレッド統合を小分けにし、UIを描画する時間を確保する。
@@ -87,11 +91,13 @@ namespace Alice {
 
             accumulatedActiveSeconds = 0f;
             if (!isVisible) {
+                inputBlock?.Dispose(); inputBlock = null;
                 return;
             }
 
             isVisible = false;
             await loadingView.HideAsync();
+            if (activeScopes.Count == 0 && endVersion == stateVersion) { inputBlock?.Dispose(); inputBlock = null; }
         }
 
         public void Dispose() {
@@ -102,6 +108,7 @@ namespace Alice {
             disposed = true;
             stateVersion += 1;
             activeScopes.Clear();
+            inputBlock?.Dispose(); inputBlock = null;
             RestoreLoadingPriority();
         }
 

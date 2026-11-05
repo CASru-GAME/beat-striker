@@ -153,7 +153,7 @@ public class OnlineRoomTests {
         owner = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(CanvasPath));
         view = owner.GetComponent<OnlineRoomView>();
         var client = new FakeClient();
-        presenter = new OnlineRoomPresenter(view, client, client, client.transitions);
+        presenter = new OnlineRoomPresenter(view, client, client, client.transitions, new InputFocusService());
         return client;
     }
 

@@ -23,6 +23,8 @@ namespace Alice {
         [SerializeField] TMPro.TextMeshProUGUI matchTimeLimitText;
         [SerializeField] TMPro.TextMeshProUGUI matchOpponentStatusText;
 
+        public Transform IncomingRoot => incomingDuelDialogRoot.transform;
+        public Transform CandidateRoot => candidateDuelDialogRoot.transform;
         public Observable<Unit> IncomingDuelAccepted => incomingDuelAccepted;
         public Observable<Unit> IncomingDuelRejected => incomingDuelRejected;
         public Observable<Unit> CandidateDuelInvited => candidateDuelInvited;

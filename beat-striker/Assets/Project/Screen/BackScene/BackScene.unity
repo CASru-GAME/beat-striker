@@ -231,9 +231,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 115223677}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Script: {fileID: 11500000, guid: 4a3e2d40f70642a2b9edd88a259fcfc7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.FocusGraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
   m_BlockingMask:
@@ -1286,6 +1286,9 @@ MonoBehaviour:
   - {fileID: 253941878}
   - {fileID: 1418488864}
   - {fileID: 1762860059}
+  focusRaycasters:
+  - {fileID: 115223678}
+  inputFocusBoundary: {fileID: 870000000000000001}
 --- !u!1 &264372543
 GameObject:
   m_ObjectHideFlags: 0
@@ -4930,6 +4933,7 @@ GameObject:
   - component: {fileID: 2032273346}
   - component: {fileID: 2032273345}
   - component: {fileID: 2032273344}
+  - component: {fileID: 870000000000000001}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -5126,3 +5130,19 @@ SceneRoots:
   - {fileID: 1962248567}
   - {fileID: 115223681}
   - {fileID: 2032273346}
+--- !u!114 &870000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2032273343}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c10828cbea43c6b4a05d7244a0a764, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.InputFocusBoundary
+  eventSystem: {fileID: 2032273345}
+  inputModule: {fileID: 2032273344}
+  scrollRects: []
+  selectables: []

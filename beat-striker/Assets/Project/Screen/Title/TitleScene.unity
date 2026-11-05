@@ -938,9 +938,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 984328588}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Script: {fileID: 11500000, guid: 4a3e2d40f70642a2b9edd88a259fcfc7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.FocusGraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
   m_BlockingMask:
@@ -1004,6 +1004,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 860000000000000002}
   - {fileID: 993332030}
   - {fileID: 849010342}
   - {fileID: 1891868202}
@@ -1974,8 +1975,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TitleScene
   onlineEmitter: {fileID: 1114495321}
   playerDialog: {fileID: 609736420}
-  settingsDialogScopePrefab: {fileID: 258934228708673365, guid: 8b64609053b3949d586478668475fd7c, type: 3}
-  settingsDialogParent: {fileID: 984328592}
+  settingsDialogScope: {fileID: 860000000000000003}
   settingsEmitter: {fileID: 462537238}
   quitEmitter: {fileID: 1433791947}
 --- !u!4 &1486525827
@@ -2011,6 +2011,9 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects: []
   titleScene: {fileID: 1486525826}
+  focusRaycasters:
+  - {fileID: 984328589}
+  inputFocusBoundary: {fileID: 870000000000000001}
 --- !u!1 &1652748501
 GameObject:
   m_ObjectHideFlags: 0
@@ -2241,6 +2244,7 @@ GameObject:
   - component: {fileID: 1837010658}
   - component: {fileID: 1837010657}
   - component: {fileID: 1837010656}
+  - component: {fileID: 870000000000000001}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -3403,3 +3407,46 @@ SceneRoots:
   - {fileID: 2092323712}
   - {fileID: 984328592}
   - {fileID: 1837010658}
+--- !u!114 &870000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837010655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c10828cbea43c6b4a05d7244a0a764, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.InputFocusBoundary
+  eventSystem: {fileID: 1837010657}
+  inputModule: {fileID: 1837010656}
+  scrollRects: []
+  selectables: []
+--- !u!1001 &860000000000000001
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 984328592}
+    m_Modifications:
+    - target: {fileID: 1963108823443551292, guid: 8b64609053b3949d586478668475fd7c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8b64609053b3949d586478668475fd7c, type: 3}
+--- !u!224 &860000000000000002 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4367357163382308293, guid: 8b64609053b3949d586478668475fd7c, type: 3}
+  m_PrefabInstance: {fileID: 860000000000000001}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &860000000000000003 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 258934228708673365, guid: 8b64609053b3949d586478668475fd7c, type: 3}
+  m_PrefabInstance: {fileID: 860000000000000001}
+  m_PrefabAsset: {fileID: 0}

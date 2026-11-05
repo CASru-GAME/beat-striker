@@ -20,6 +20,7 @@ namespace Alice {
         readonly SelectScene view;
         readonly ISceneTransitionService transitionService;
         readonly IGamePadRegistry gamePadRegistry;
+        readonly IInputFocusService inputFocus;
         readonly IBattleSelectSetting battleSelectSetting;
         readonly IPlayerSelectSetting playerSelectSetting;
         readonly IAppStrikerRegistry appStrikerRegistry;
@@ -57,10 +58,11 @@ namespace Alice {
             IAppNetworkSetting appNetworkSetting,
             ITutorialSetting tutorialSetting,
             IMatchingModel matchingModel,
-            IMatchingDuelOperations duelOperations, PlayerSession playerSession, IPlayerProfileService profiles, TrialController trial) {
+            IMatchingDuelOperations duelOperations, PlayerSession playerSession, IPlayerProfileService profiles, TrialController trial, IInputFocusService inputFocus) {
             this.view = view;
             this.transitionService = transitionService;
             this.gamePadRegistry = gamePadRegistry;
+            this.inputFocus = inputFocus;
             this.battleSelectSetting = battleSelectSetting;
             this.playerSelectSetting = playerSelectSetting;
             this.appStrikerRegistry = appStrikerRegistry;
@@ -69,7 +71,11 @@ namespace Alice {
             this.matchingModel = matchingModel;
             this.duelOperations = duelOperations;
             this.playerSession = playerSession; this.profiles = profiles; this.trial = trial;
-            cpuDialog = new ChoiceDialogPresenter(view.CpuDialog, playerSession, gamePadRegistry);
+            inputFocus.RegisterModal(view.CharacterIntroSlideshow.ModalRoot).AddTo(subscriptions);
+            inputFocus.RegisterModal(view.StartButtonAnimation.WaitingRoot).AddTo(subscriptions);
+            gamePadRegistry.OnAnyButtonDown.Where(e => inputFocus.CanReceive(view.CharacterIntroSlideshow.ModalRoot, e.PlayerId) && e.Button == GamePadButton.East).Subscribe(_ => view.CharacterIntroSlideshow.Advance()).AddTo(subscriptions);
+            gamePadRegistry.OnAnyButtonDown.Where(e => inputFocus.CanReceive(view.StartButtonAnimation.WaitingRoot, e.PlayerId) && e.Button == GamePadButton.South).Subscribe(_ => duelOperations.CancelMatchmaking()).AddTo(subscriptions);
+            cpuDialog = new ChoiceDialogPresenter(view.CpuDialog, gamePadRegistry, inputFocus);
 
             _ = InitializeAfterFrameAsync();
         }
@@ -222,6 +228,7 @@ namespace Alice {
                 return;
             }
 
+            using var inputHold = inputFocus.HoldScreen();
             inputState = SceneInputState.Dialog;
             try {
                 if (playerSession.IsTrial) trial.PrepareNext();

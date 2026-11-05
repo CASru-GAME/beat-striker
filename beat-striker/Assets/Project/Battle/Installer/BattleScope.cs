@@ -18,7 +18,14 @@ namespace Alice {
 
         const string LOG_PREFIX = "[BattleScope]";
 
+        [SerializeField] FocusGraphicRaycaster[] focusRaycasters;
+        [SerializeField] InputFocusBoundary inputFocusBoundary;
         protected override void Configure(IContainerBuilder builder) {
+            builder.RegisterBuildCallback(container => {
+                var focus = container.Resolve<IInputFocusService>();
+                foreach (var raycaster in focusRaycasters) raycaster.Initialize(focus);
+            });
+            builder.RegisterComponent(inputFocusBoundary);
             builder.RegisterInstance(trialDialog);
             Debug.Log($"{LOG_PREFIX} Configure begin. scene={gameObject.scene.name}, playerPresenterCount={battlePlayerPresenters.Length}");
             builder.Register<IStrikerRegistry, StrikerRegistry>(Lifetime.Singleton);

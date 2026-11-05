@@ -41,6 +41,14 @@ namespace Alice {
         bool scrollUp;
         bool scrollDown;
 
+        [SerializeField] FocusGraphicRaycaster focusRaycaster;
+        [SerializeField] Transform duelPanel;
+        [SerializeField] FocusGraphicRaycaster duelRaycaster;
+        public bool IsDuelPending { get; private set; }
+        public Transform DuelRoot => duelPanel;
+        public FocusGraphicRaycaster InputRaycaster => focusRaycaster;
+        public FocusGraphicRaycaster DuelRaycaster => duelRaycaster;
+        public bool InputAllowed { private get; set; } = true;
         public Observable<Unit> BackRequested => back;
         public Observable<Unit> RefreshRequested => refresh;
         public Observable<Unit> ChallengeRequested => challenge;
@@ -91,6 +99,7 @@ namespace Alice {
             var incoming = state.UiMode == OnlineDuelUiMode.IncomingInvite;
             var outgoing = state.UiMode == OnlineDuelUiMode.InviteSent;
             var matched = state.HasReservation;
+            IsDuelPending = incoming || outgoing || matched || busy;
             var opponent = incoming ? state.InviteFromSessionId : outgoing || matched ? state.OpponentSessionId : chosen?.sessionId;
             opponentLabel.richText = false;
             var opponentEntry = Array.Find(roster.Players, entry => entry.sessionId == opponent);
@@ -107,6 +116,7 @@ namespace Alice {
         }
 
         void Update() {
+            if (!InputAllowed) { scrollUp = scrollDown = false; return; }
             if (!playerScroll.content || !playerScroll.viewport) return;
             var height = playerContent.rect.height - playerScroll.viewport.rect.height;
             if (height <= 0) return;

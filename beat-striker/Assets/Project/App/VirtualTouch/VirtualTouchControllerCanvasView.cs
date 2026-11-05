@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using R3;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace Alice {
         readonly Subject<Unit> directionCanceled = new();
         readonly Subject<GamePadButton> buttonDown = new();
         readonly Subject<GamePadButton> buttonUp = new();
+        readonly Dictionary<GamePadButton, HashSet<int>> pressedPointers = new();
 
         Vector2 stickRootDefaultPosition;
         bool isDragging;
@@ -33,7 +35,7 @@ namespace Alice {
             isVisible = visible;
             ApplyVisible();
             if (!visible) {
-                ResetStick();
+                CancelPointerInput();
             }
         }
 
@@ -74,13 +76,28 @@ namespace Alice {
             ResetStick();
         }
 
-        public void EmitButtonDown(GamePadButton button) {
-            buttonDown.OnNext(button);
+        public void EmitButtonDown(GamePadButton button, int pointerId) {
+            if (!pressedPointers.TryGetValue(button, out var pointers)) {
+                pointers = new HashSet<int>();
+                pressedPointers.Add(button, pointers);
+            }
+            if (pointers.Add(pointerId) && pointers.Count == 1) buttonDown.OnNext(button);
         }
 
-        public void EmitButtonUp(GamePadButton button) {
+        public void EmitButtonUp(GamePadButton button, int pointerId) {
+            if (!pressedPointers.TryGetValue(button, out var pointers) || !pointers.Remove(pointerId) || pointers.Count > 0) return;
+            pressedPointers.Remove(button);
             buttonUp.OnNext(button);
         }
+
+        public void CancelPointerInput() {
+            var released = new List<GamePadButton>(pressedPointers.Keys);
+            pressedPointers.Clear();
+            foreach (var button in released) buttonUp.OnNext(button);
+            EndDrag();
+        }
+
+        void OnDisable() => CancelPointerInput();
 
         void ScreenToStickParentWorldPoint(Vector2 screenPosition, Camera eventCamera, out Vector3 worldPoint) {
             var targetRect = stickRoot.parent as RectTransform;

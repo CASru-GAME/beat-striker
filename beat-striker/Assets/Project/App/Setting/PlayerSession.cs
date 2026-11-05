@@ -16,15 +16,10 @@ namespace Alice {
         public int TrialStartGrade { get; private set; } = -1;
         public string TrialPlayerName { get; private set; } = "";
         public bool IsTrial => Mode == BattlePlayMode.Trial;
-        public bool IsNameInputActive { get; private set; }
         public Observable<Unit> Changed => changed;
         public IReadOnlyList<PlayerIdentity> Participants => participants;
         public string GetName(int slot) => slotNames.TryGetValue(slot, out var name) ? name : "";
         public void SetName(int slot, string name) { slotNames[slot] = name; changed.OnNext(Unit.Default); }
-        public void SetNameInputActive(bool active) {
-            if (disposed) return;
-            IsNameInputActive = active; changed.OnNext(Unit.Default);
-        }
         public void SetMode(BattlePlayMode mode) {
             if (Mode != mode) {
                 participants = Array.Empty<PlayerIdentity>();
@@ -43,7 +38,6 @@ namespace Alice {
         public void Dispose() {
             if (disposed) return;
             disposed = true;
-            IsNameInputActive = false;
             changed.Dispose();
         }
     }

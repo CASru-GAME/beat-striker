@@ -31,9 +31,9 @@ public class ChoiceDialogPresenterTests {
         var eventSystem = eventSystemOwner.GetComponent<EventSystem>();
         owner = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(DialogPath));
         var view = owner.GetComponentInChildren<ChoiceDialogView>(true);
-        using var session = new PlayerSession();
         using var pads = new CountingPads();
-        using var presenter = new ChoiceDialogPresenter(view, session, pads);
+        using var focus = new InputFocusService();
+        using var presenter = new ChoiceDialogPresenter(view, pads, focus);
         var emitters = (ActionEmitter[])typeof(ChoiceDialogView).GetField("emitters", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
         for (var choice = 0; choice < 6; choice++) {
             var pending = presenter.AskAsync("CPUの強さ", "", new[] { "そのまま", "Lv1", "Lv2", "Lv3", "Lv4", "戻る" });
@@ -67,19 +67,19 @@ public class ChoiceDialogPresenterTests {
         owner = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(DialogPath));
         var view = owner.GetComponentInChildren<ChoiceDialogView>(true);
         var input = owner.GetComponentInChildren<TMP_InputField>(true);
-        using var session = new PlayerSession();
         using var pads = new CountingPads();
-        using var presenter = new ChoiceDialogPresenter(view, session, pads);
+        using var focus = new InputFocusService();
+        using var presenter = new ChoiceDialogPresenter(view, pads, focus);
         var pending = presenter.AskAsync("名前", "入力", new[] { "決定", "戻る" }, input: "");
         yield return new WaitUntil(() => view.IsInteractable);
         Assert.That(input.isFocused, Is.False);
         Assert.That(input.onFocusSelectAll, Is.False);
         eventSystem.SetSelectedGameObject(input.gameObject);
         yield return null;
-        Assert.That(session.IsNameInputActive, Is.True);
+        Assert.That(focus.HasTextFocus, Is.True);
         input.text = "テスト";
         input.OnSubmit(new BaseEventData(eventSystem));
-        Assert.That(session.IsNameInputActive, Is.False, "Enter must release keyboard control even without a separate deselect event.");
+        Assert.That(focus.HasTextFocus, Is.False, "Enter must release keyboard control even without a separate deselect event.");
         Assert.That(pending.IsCompleted, Is.False, "Ending text entry must leave the dialog available for button confirmation.");
         yield return null;
         Assert.That(input.isFocused, Is.False);
@@ -92,7 +92,7 @@ public class ChoiceDialogPresenterTests {
 
         var next = presenter.AskAsync("確認", "テスト", new[] { "OK" });
         yield return new WaitUntil(() => view.IsInteractable);
-        Assert.That(session.IsNameInputActive, Is.False);
+        Assert.That(focus.HasTextFocus, Is.False);
         ExecuteEvents.Execute(emitters[0].gameObject, new PointerEventData(eventSystem) { pointerId = 0 }, ExecuteEvents.pointerDownHandler);
         yield return new WaitUntil(() => next.IsCompleted);
         Assert.That(next.Result, Is.Zero);
@@ -102,17 +102,17 @@ public class ChoiceDialogPresenterTests {
     public IEnumerator DestroyingViewCancelsPendingDialogAndReleasesAppInputSubscriptions() {
         owner = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(DialogPath));
         var view = owner.GetComponentInChildren<ChoiceDialogView>(true);
-        using var session = new PlayerSession();
         using var pads = new CountingPads();
-        using var presenter = new ChoiceDialogPresenter(view, session, pads);
+        using var focus = new InputFocusService();
+        using var presenter = new ChoiceDialogPresenter(view, pads, focus);
         var pending = presenter.AskAsync("名前", "入力", new[] { "OK" }, input: "プレイヤー");
-        Assert.That(session.IsNameInputActive, Is.False, "Opening the dialog must not focus the name field or block keyboard buttons.");
+        Assert.That(focus.HasTextFocus, Is.False, "Opening the dialog must not focus the name field or block keyboard buttons.");
         Assert.That(pads.ActiveSubscriptions, Is.EqualTo(1));
 
         Object.Destroy(owner);
         yield return null;
         Assert.That(pending.IsCanceled, Is.True);
-        Assert.That(session.IsNameInputActive, Is.False);
+        Assert.That(focus.HasTextFocus, Is.False);
         Assert.That(pads.ActiveSubscriptions, Is.Zero, "A destroyed scene must not retain any subscriptions to the app's controller registry.");
         presenter.Dispose();
         Assert.That(pads.ActiveSubscriptions, Is.Zero, "Explicit disposal after view destruction must remain safe.");
@@ -124,15 +124,15 @@ public class ChoiceDialogPresenterTests {
     public void ShowFailureRestoresNameInputStateAndAllowsAnotherDialog() {
         owner = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(DialogPath));
         var view = owner.GetComponentInChildren<ChoiceDialogView>(true);
-        using var session = new PlayerSession();
         using var pads = new CountingPads();
-        using var presenter = new ChoiceDialogPresenter(view, session, pads);
+        using var focus = new InputFocusService();
+        using var presenter = new ChoiceDialogPresenter(view, pads, focus);
         var heading = typeof(ChoiceDialogView).GetField("heading", BindingFlags.Instance | BindingFlags.NonPublic);
         var originalHeading = heading.GetValue(view);
         heading.SetValue(view, null);
         try {
             Assert.Throws<NullReferenceException>(() => presenter.AskAsync("名前", "入力", new[] { "OK" }, input: "プレイヤー"));
-            Assert.That(session.IsNameInputActive, Is.False, "A failure while showing the dialog must restore normal keyboard input.");
+            Assert.That(focus.HasTextFocus, Is.False, "A failure while showing the dialog must restore normal keyboard input.");
         } finally {
             heading.SetValue(view, originalHeading);
         }
@@ -150,9 +150,9 @@ public class ChoiceDialogPresenterTests {
         owner = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(DialogPath));
         var view = owner.GetComponentInChildren<ChoiceDialogView>(true);
         var field = owner.GetComponentInChildren<TMP_InputField>(true);
-        using var session = new PlayerSession();
         using var pads = new CountingPads();
-        using var presenter = new ChoiceDialogPresenter(view, session, pads);
+        using var focus = new InputFocusService();
+        using var presenter = new ChoiceDialogPresenter(view, pads, focus);
         var pending = presenter.AskAsync("名前変更", "", new[] { "確定", "戻る" }, "", inputPlayerId: 0, directInput: true);
         yield return new WaitUntil(() => view.IsInteractable);
         Assert.That(((TMP_Text)field.placeholder).text, Is.EqualTo("ゲスト"));
@@ -177,9 +177,9 @@ public class ChoiceDialogPresenterTests {
     public IEnumerator KeyboardGuidesUseSquareKeysAndControllerGuidesUseSprites() {
         owner = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(DialogPath));
         var view = owner.GetComponentInChildren<ChoiceDialogView>(true);
-        using var session = new PlayerSession();
         using var pads = new CountingPads { DeviceName = "Keybord" };
-        using var presenter = new ChoiceDialogPresenter(view, session, pads);
+        using var focus = new InputFocusService();
+        using var presenter = new ChoiceDialogPresenter(view, pads, focus);
         var pending = presenter.AskAsync("名前変更", "", new[] { "確定", "戻る" }, "", directInput: true);
         yield return new WaitUntil(() => view.IsInteractable);
         var keys = (GameObject[])typeof(ChoiceDialogView).GetField("keyboardKeys", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
@@ -214,8 +214,8 @@ public class ChoiceDialogPresenterTests {
         ExecuteEvents.Execute(emitters[3].gameObject, pointer, ExecuteEvents.pointerEnterHandler);
         Assert.That(keys[0].activeSelf, Is.True, "Hover must not move the default action's key guide.");
         Assert.That(keys[3].activeSelf, Is.False);
-        pads.Press(GamePadButton.East);
         ExecuteEvents.Execute(emitters[3].gameObject, pointer, ExecuteEvents.pointerDownHandler);
+        pads.Press(GamePadButton.East);
         yield return new WaitUntil(() => pending.IsCompleted);
         Assert.That(pending.Result, Is.EqualTo(3), "A cursor click must win over the default-action shortcut from the same physical input.");
         pads.DeviceName = "Test controller";
@@ -267,6 +267,7 @@ public class ChoiceDialogPresenterTests {
             public string DeviceName => owner.DeviceName;
             public ReadOnlyReactiveProperty<bool> HasGamePad => hasGamePad;
             public Observable<Vector2> OnDirection => owner.Track<Vector2>();
+            public Observable<Vector2> OnCursorDirection => owner.Track<Vector2>();
             public Observable<Unit> OnDirectionCanceled => owner.Track<Unit>();
             public Observable<GamePadButton> OnButtonDown => Observable.Empty<GamePadButton>();
             public Observable<GamePadButton> OnButtonUp => Observable.Empty<GamePadButton>();

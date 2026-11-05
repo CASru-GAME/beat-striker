@@ -144,6 +144,8 @@ public class StartButtonAnimation : MonoBehaviour {
         }
     }
 
+    public Transform WaitingRoot => onlineWaitingPopupRoot;
+
     public void SetOnlineWaitingPopupVisible(bool visible) {
         if (isOnlineWaitingPopupVisible == visible) {
             return;

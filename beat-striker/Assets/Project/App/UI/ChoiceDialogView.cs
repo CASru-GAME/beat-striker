@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Alice {
+    [RequireComponent(typeof(FocusGraphicRaycaster))]
     public class ChoiceDialogView : MonoBehaviour {
         [SerializeField] GameObject dialogRoot;
         [SerializeField] TMP_Text heading;
@@ -23,15 +24,25 @@ namespace Alice {
         [SerializeField, Range(1f, 1.3f)] float hoverScale = 1.08f;
         readonly Subject<int> selected = new();
         readonly Subject<Unit> destroyed = new();
+        readonly Subject<Unit> disabled = new();
         readonly Subject<bool> inputFocusChanged = new();
         int shownFrame = -1;
         int inputPlayerId = -1;
         bool hasInputFocus;
+        bool inputAllowed = true;
         string[] options = System.Array.Empty<string>();
         readonly List<RaycastResult> pointerHits = new();
         public Observable<int> Selected => selected;
         public Observable<Unit> Destroyed => destroyed;
+        public Observable<Unit> Disabled => disabled;
         public Observable<bool> InputFocusChanged => inputFocusChanged;
+        public void SetInputAllowed(bool allowed) {
+            inputAllowed = allowed;
+            input.interactable = allowed && IsInteractable;
+            if (!allowed) ReleaseInputFocus();
+        }
+        public FocusGraphicRaycaster InputRaycaster => GetComponent<FocusGraphicRaycaster>();
+        public Transform ModalRoot => dialogRoot.transform;
         public int OptionCapacity => emitters.Length;
         public string InputText => input.text;
         public bool IsInteractable { get; private set; }
@@ -39,7 +50,7 @@ namespace Alice {
             for (var i = 0; i < emitters.Length; i++) {
                 var index = i;
                 emitters[i].OnClickEvent.Subscribe(data => {
-                    if (!IsInteractable || Time.frameCount <= shownFrame || inputPlayerId >= 0 && data.EventData.pointerId >= 0 && data.EventData.pointerId != inputPlayerId) return;
+                    if (!IsInteractable || Time.frameCount <= shownFrame || inputPlayerId >= 0 && data.EventData is CursorPointerEventData cursor && cursor.PlayerId != inputPlayerId) return;
                     selected.OnNext(index);
                 }).AddTo(this);
                 emitters[i].OnHoverEvent.Subscribe(_ => AnimateButton(index, true)).AddTo(this);
@@ -82,7 +93,7 @@ namespace Alice {
             panel.localScale = Vector3.zero;
             LeanTween.scale(panel.gameObject, Vector3.one, openDuration).setIgnoreTimeScale(true).setEaseOutCubic().setOnComplete(() => {
                 IsInteractable = true;
-                input.interactable = true;
+                input.interactable = inputAllowed;
             });
         }
         public void Close(Action onClosed) {
@@ -95,7 +106,7 @@ namespace Alice {
                 onClosed();
             });
         }
-        public void Hide() { IsInteractable = false; ReleaseInputFocus(); dialogRoot.SetActive(false); }
+        public void Hide() { LeanTween.cancel(panel.gameObject); IsInteractable = false; ReleaseInputFocus(); dialogRoot.SetActive(false); }
         void AnimateButton(int index, bool hovered) {
             if (!IsInteractable) return;
             var button = emitters[index].gameObject;
@@ -128,6 +139,7 @@ namespace Alice {
             inputFocusChanged.OnNext(focused);
         }
         void OnDisable() {
+            disabled.OnNext(Unit.Default);
             IsInteractable = false;
             ReleaseInputFocus();
             LeanTween.cancel(panel.gameObject);
@@ -141,7 +153,7 @@ namespace Alice {
             input.onEndEdit.RemoveListener(EndEditing);
             input.onSelect.RemoveListener(InputSelected);
             input.onDeselect.RemoveListener(InputDeselected);
-            destroyed.OnNext(Unit.Default); destroyed.Dispose(); selected.Dispose(); inputFocusChanged.Dispose();
+            destroyed.OnNext(Unit.Default); destroyed.Dispose(); disabled.Dispose(); selected.Dispose(); inputFocusChanged.Dispose();
         }
     }
 }

@@ -5,42 +5,40 @@ using R3;
 namespace Alice {
     public class ChoiceDialogPresenter : IDisposable {
         readonly ChoiceDialogView view;
-        readonly PlayerSession session;
         readonly IGamePadRegistry pads;
+        readonly IInputFocusService focus;
+        IDisposable modal;
         readonly CompositeDisposable subscriptions = new();
         TaskCompletionSource<int> completion;
         bool directInput, disposed, closing;
         int optionCount, inputPlayerId, openedFrame;
         public string InputText { get; private set; }
-        public ChoiceDialogPresenter(ChoiceDialogView view, PlayerSession session, IGamePadRegistry pads) {
-            this.view = view; this.session = session; this.pads = pads;
+        public ChoiceDialogPresenter(ChoiceDialogView view, IGamePadRegistry pads, IInputFocusService focus) {
+            this.view = view; this.pads = pads; this.focus = focus;
+            view.InputRaycaster.Initialize(focus);
+            focus.Changed.Subscribe(_ => view.SetInputAllowed(focus.CanPoint(view.ModalRoot))).AddTo(subscriptions);
             view.Selected.Subscribe(Resolve).AddTo(subscriptions);
+            view.Disabled.Subscribe(_ => { if (!closing) CancelPending(); }).AddTo(subscriptions);
             view.Destroyed.Subscribe(_ => Dispose()).AddTo(subscriptions);
-            view.InputFocusChanged.Subscribe(session.SetNameInputActive).AddTo(subscriptions);
+            view.InputFocusChanged.Subscribe(active => { focus.SetTextFocus(view.ModalRoot, active); }).AddTo(subscriptions);
             pads.OnAnyButtonDown.Subscribe(input => {
+                if (!focus.CanReceive(view.ModalRoot, input.PlayerId)) return;
                 if (completion == null || !directInput || inputPlayerId >= 0 && input.PlayerId != inputPlayerId) return;
                 UpdateButtonGuides(input.PlayerId);
-                if (input.Button == GamePadButton.East) _ = ConfirmDefaultAfterPointerAsync();
+                if (input.Button == GamePadButton.East) Resolve(0);
                 else if (input.Button == GamePadButton.South && optionCount > 1) Resolve(optionCount - 1);
             }).AddTo(subscriptions);
         }
-        async Task ConfirmDefaultAfterPointerAsync() {
-            if (closing || !view.IsInteractable || UnityEngine.Time.frameCount <= openedFrame) return;
-            var pending = completion;
-            // The same A input also clicks the cursor target. Give that explicit click
-            // priority, and use the default action only if no option handled it.
-            await UnityEngine.Awaitable.NextFrameAsync();
-            if (pending == completion && !closing && !disposed) Resolve(0);
-        }
         void Resolve(int choice) {
+            if (!focus.CanReceive(view.ModalRoot)) return;
             if (completion == null || closing || !view.IsInteractable || UnityEngine.Time.frameCount <= openedFrame) return;
             closing = true;
             var pending = completion;
             InputText = view.InputText;
             view.Close(() => {
                 completion = null;
+                modal?.Dispose(); modal = null;
                 closing = false;
-                session.SetNameInputActive(false);
                 pending.TrySetResult(choice);
             });
         }
@@ -55,12 +53,16 @@ namespace Alice {
             closing = false;
             this.directInput = directInput; this.inputPlayerId = inputPlayerId; optionCount = options.Length; openedFrame = UnityEngine.Time.frameCount;
             try {
+                modal = focus.RegisterModal(view.ModalRoot, inputPlayerId);
                 view.Show(title, body, options, input, inputPlayerId);
+                _ = focus.Version;
+                view.SetInputAllowed(focus.CanPoint(view.ModalRoot));
                 UpdateButtonGuides(inputPlayerId >= 0 ? inputPlayerId : 0);
                 return pending.Task;
             } catch {
                 completion = null;
-                session.SetNameInputActive(false);
+                modal?.Dispose(); modal = null;
+                view.Hide();
                 throw;
             }
         }
@@ -86,9 +88,10 @@ namespace Alice {
             subscriptions.Dispose(); CancelPending();
         }
         void CancelPending() {
-            if (completion != null && view != null) view.Hide();
-            session.SetNameInputActive(false);
-            completion?.TrySetCanceled(); completion = null;
+            var pending = completion; completion = null;
+            modal?.Dispose(); modal = null;
+            if (pending != null && view != null) view.Hide();
+            pending?.TrySetCanceled();
         }
     }
 }

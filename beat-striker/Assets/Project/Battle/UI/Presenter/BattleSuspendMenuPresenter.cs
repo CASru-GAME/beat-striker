@@ -7,6 +7,8 @@ using VContainer;
 namespace Alice {
     public class BattleSuspendMenuPresenter : IDisposable {
         readonly ICursorDeployer cursorDeployer;
+        readonly IDisposable focusRegistration;
+        bool opening, closing, requested;
         readonly BattleSuspendMenuView suspendMenuView;
         readonly IDisposable suspendSubscription;
         readonly IDisposable resumeSubscription;
@@ -18,8 +20,9 @@ namespace Alice {
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
 
         [Inject]
-        public BattleSuspendMenuPresenter(ICursorDeployer cursorDeployer, BattleSuspendMenuView suspendMenuView) {
+        public BattleSuspendMenuPresenter(ICursorDeployer cursorDeployer, BattleSuspendMenuView suspendMenuView, IInputFocusService focus) {
             this.cursorDeployer = cursorDeployer;
+            focusRegistration = focus.RegisterModal(suspendMenuView.Root.transform);
             this.suspendMenuView = suspendMenuView;
             suspendSubscription = suspendMenuView.SuspendButton.OnClickEvent.Subscribe(_ => RequestSuspend());
             resumeSubscription = suspendMenuView.ResumeButton.OnClickEvent.Subscribe(_ => RequestResume());
@@ -28,6 +31,7 @@ namespace Alice {
         }
 
         public void Dispose() {
+            focusRegistration.Dispose();
             suspendSubscription.Dispose();
             resumeSubscription.Dispose();
             cursorDeployer.SetForceEnabled(false);
@@ -36,15 +40,18 @@ namespace Alice {
         }
 
         public void Show() {
+            opening = true; closing = false; requested = false;
             LeanTween.cancel(suspendMenuView.Root);
             suspendMenuView.Root.transform.localScale = Vector3.one * suspendMenuView.ShowStartScale;
             suspendMenuView.Root.SetActive(true);
             LeanTween.scale(suspendMenuView.Root, Vector3.one, suspendMenuView.ShowScaleDuration)
-                .setEaseOutBack();
+                .setEaseOutBack().setOnComplete(() => opening = false);
             cursorDeployer.SetForceEnabled(true);
         }
 
         public void Hide() {
+            if (closing) return;
+            closing = true;
             if (!suspendMenuView.Root.activeSelf) {
                 return;
             }
@@ -67,10 +74,14 @@ namespace Alice {
         }
 
         void RequestSuspend() {
+            if (opening || closing || requested) return;
+            requested = true;
             suspendRequestedSubject.OnNext(Unit.Default);
         }
 
         void RequestResume() {
+            if (opening || closing || requested) return;
+            requested = true;
             resumeRequestedSubject.OnNext(Unit.Default);
         }
     }

@@ -9,16 +9,6 @@ using VContainer;
 
 public class PlayerProgressionTests {
     [Test]
-    public void DialogCleanupAfterAppSessionDisposalDoesNotPublishToDisposedSubject() {
-        var appSession = new PlayerSession();
-        appSession.SetNameInputActive(true);
-        appSession.Dispose();
-        Assert.DoesNotThrow(() => appSession.SetNameInputActive(false));
-        Assert.That(appSession.IsNameInputActive, Is.False);
-        Assert.DoesNotThrow(appSession.Dispose);
-    }
-
-    [Test]
     public void RankingNavigationStateResolvesAsSingletonWithoutInjectingItsRecordCopyConstructor() {
         var builder = new ContainerBuilder();
         builder.Register<RankingNavigationState>(Lifetime.Singleton);
@@ -90,7 +80,8 @@ public class PlayerProgressionTests {
     }
     [Test]
     public void TrialCpuDoesNotOccupyARealControllerSlotAndRestoresHumanInput() {
-        var registry = new GamePadRegistry(session);
+        using var focus = new InputFocusService();
+        using var registry = new GamePadRegistry(focus);
         var first = new TestPad(); var second = new TestPad(); var cpu = new TestPad();
         registry.RequestRegister(first);
         registry.RequestRegisterBattleOverride(1, cpu);

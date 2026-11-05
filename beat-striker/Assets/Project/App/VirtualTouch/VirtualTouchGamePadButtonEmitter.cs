@@ -7,11 +7,11 @@ namespace Alice {
         [SerializeField] GamePadButton button;
 
         public void OnPointerDown(PointerEventData eventData) {
-            view.EmitButtonDown(button);
+            view.EmitButtonDown(button, eventData.pointerId);
         }
 
         public void OnPointerUp(PointerEventData eventData) {
-            view.EmitButtonUp(button);
+            view.EmitButtonUp(button, eventData.pointerId);
         }
     }
 }

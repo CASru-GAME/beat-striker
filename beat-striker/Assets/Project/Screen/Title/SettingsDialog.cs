@@ -62,10 +62,7 @@ namespace Alice {
         [SerializeField] ValueRangeSettingEntry bgmVolumeRange = new();
 
         [Header("Timing Adjustment Placeholder")]
-        [SerializeField] GameObject timingAdjustPlaceholderRoot;
-        [SerializeField] GameObject timeingAdjustViewPrefab;
-
-        TimeingAdjustView timeingAdjustView;
+        [SerializeField] TimeingAdjustView timeingAdjustView;
 
         public Observable<Unit> Opened => opened;
         public Observable<Unit> Closed => closed;
@@ -91,11 +88,11 @@ namespace Alice {
                 var slot = playerSlots[i];
                 slot.Emitter.OnClickEvent
                     .Subscribe(data => {
-                        if (data.EventData.pointerId < 0) {
+                        if (data.EventData is not CursorPointerEventData) {
                             return;
                         }
 
-                        gamePadSlotClicked.OnNext(new GamePadSlotClickRequest(slot.PlayerId, data.EventData.pointerId));
+                        gamePadSlotClicked.OnNext(new GamePadSlotClickRequest(slot.PlayerId, ((CursorPointerEventData)data.EventData).PlayerId));
                     })
                     .AddTo(this);
             }
@@ -137,18 +134,10 @@ namespace Alice {
             }
         }
 
-        public TimeingAdjustView GetOrCreateTimeingAdjustView() {
-            if (timeingAdjustView == null) {
-                var timeingAdjustViewObject = Instantiate(timeingAdjustViewPrefab, timingAdjustPlaceholderRoot.transform);
-                timeingAdjustView = timeingAdjustViewObject.GetComponent<TimeingAdjustView>();
-                timeingAdjustView.gameObject.SetActive(false);
-            }
-
-            return timeingAdjustView;
-        }
+        public TimeingAdjustView TimingAdjustView => timeingAdjustView;
 
         public void ShowTimingAdjustPlaceholder() {
-            GetOrCreateTimeingAdjustView().gameObject.SetActive(true);
+            timeingAdjustView.gameObject.SetActive(true);
         }
 
         public void HideTimingAdjustPlaceholder() {

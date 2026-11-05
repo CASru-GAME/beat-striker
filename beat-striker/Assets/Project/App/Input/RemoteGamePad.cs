@@ -3,7 +3,7 @@ using R3;
 using UnityEngine;
 
 namespace Alice {
-    public class RemoteGamePad : IGamePad {
+    public class RemoteGamePad : IGamePad, IGamePadDataSource {
         readonly Subject<Vector2> direction = new();
         readonly Subject<Unit> directionCanceled = new();
         readonly Subject<GamePadButton> buttonDown = new();

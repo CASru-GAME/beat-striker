@@ -11,7 +11,7 @@ namespace Alice {
         void SetDirection(Vector2 direction);
         void SetSpeedScale(float speedScale);
         void StopMove();
-        void Click();
+        bool Click();
         void DestroyCursor();
     }
 
@@ -46,7 +46,12 @@ namespace Alice {
 
         void OnEnable() => activeCursors.Add(this);
 
-        void OnDisable() => activeCursors.Remove(this);
+        void OnDisable() {
+            if (lastHoveredObject && TryCreatePointerEventData(out var data)) ExecuteEvents.Execute(lastHoveredObject, data, ExecuteEvents.pointerExitHandler);
+            lastHoveredObject = null;
+            StopMove();
+            activeCursors.Remove(this);
+        }
 
         public void Construct(int playerId) {
             PlayerId = playerId;
@@ -68,23 +73,22 @@ namespace Alice {
             currentDirection = Vector2.zero;
         }
 
-        public void Click() {
-            if (!TryCreatePointerEventData(out var data)) {
-                return;
-            }
+        public bool Click() {
+            if (!TryCreatePointerEventData(out var data)) return false;
 
             clickEffect.Play();
 
             var currentHovered = GetHoveredInteractable(data);
-            if (currentHovered) {
+            if (currentHovered && !currentHovered.GetComponent<ModalInputBlocker>()) {
                 DebugBuildLog($"{LOG_PREFIX} Click target={currentHovered.name}, playerId={PlayerId}");
                 ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerDownHandler);
                 ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerUpHandler);
                 ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerClickHandler);
-                return;
+                return true;
             }
 
             DebugBuildLog($"{LOG_PREFIX} Click target not found. playerId={PlayerId}");
+            return false;
         }
 
         public void DestroyCursor() {
@@ -106,7 +110,6 @@ namespace Alice {
                     Mathf.Clamp(rectTransform.anchoredPosition.y, -movableAreaRectTransform.rect.height / 2, movableAreaRectTransform.rect.height / 2));
             } else {
                 movingTime = 0f;
-                return;
             }
 
             if (!TryCreatePointerEventData(out var data)) {
@@ -120,7 +123,7 @@ namespace Alice {
                     ExecuteEvents.Execute(lastHoveredObject, data, ExecuteEvents.pointerExitHandler);
                 }
 
-                if (currentHovered) {
+                if (currentHovered && !currentHovered.GetComponent<ModalInputBlocker>()) {
                     ExecuteEvents.Execute(currentHovered, data, ExecuteEvents.pointerEnterHandler);
                 }
 
@@ -138,7 +141,7 @@ namespace Alice {
                 return false;
             }
 
-            data = new PointerEventData(eventSystem) {
+            data = new CursorPointerEventData(eventSystem, PlayerId) {
                 position = transform.position,
                 pointerId = PlayerId,
             };

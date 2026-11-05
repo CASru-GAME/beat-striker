@@ -54,8 +54,11 @@ namespace Alice {
             IPlayerSelectSetting playerSelectSetting,
             IAppNetworkSetting appNetworkSetting,
             IMusicRegistry musicRegistry,
-            IAppStrikerRegistry strikerRegistry, IPlayerRecordsApiClient records, IPlayerProfileService profiles, PlayerSession session, RankingNavigationState navigation) {
+            IAppStrikerRegistry strikerRegistry, IPlayerRecordsApiClient records, IPlayerProfileService profiles, PlayerSession session, RankingNavigationState navigation, IInputFocusService focus) {
             this.view = view;
+            focus.RegisterModal(view.HistoryRoot).AddTo(subscriptions);
+            Observable.EveryUpdate().Subscribe(_ => view.InputAllowed = focus.CanPoint(view.HistoryRoot.gameObject.activeInHierarchy ? view.HistoryRoot : view.transform)).AddTo(subscriptions);
+            focus.Changed.Subscribe(_ => view.InputAllowed = focus.CanPoint(view.HistoryRoot.gameObject.activeInHierarchy ? view.HistoryRoot : view.transform)).AddTo(subscriptions);
             this.historyListView = historyListView;
             this.sceneTransitionService = sceneTransitionService;
             this.battleHistoryApiClient = battleHistoryApiClient;

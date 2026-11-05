@@ -58,7 +58,7 @@ namespace Alice {
         public Observable<Unit> OnRoundPlayableStarted => roundPlayableStartedSubject;
 
         [Inject]
-        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IAppStrikerRegistry appStrikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IMusicRegistry musicRegistry, IAISetting aiSetting, IAppNetworkSetting appNetworkSetting, IGamePadRegistry gamePadRegistry, IOnlineSessionBootstrap onlineSessionBootstrap, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, ILoadingOverlayService loadingOverlayService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, IBattleOnlineSync battleOnlineSync, BattleReplayRecorder battleReplayRecorder, BattleReplayDriver battleReplayDriver, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters, PlayerSession playerSession, IPlayerProfileService profiles, TrialController trial, ChoiceDialogView trialDialogView, ICursorDeployer cursorDeployer) {
+        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IAppStrikerRegistry appStrikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IMusicRegistry musicRegistry, IAISetting aiSetting, IAppNetworkSetting appNetworkSetting, IGamePadRegistry gamePadRegistry, IOnlineSessionBootstrap onlineSessionBootstrap, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, ILoadingOverlayService loadingOverlayService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, IBattleOnlineSync battleOnlineSync, BattleReplayRecorder battleReplayRecorder, BattleReplayDriver battleReplayDriver, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters, PlayerSession playerSession, IPlayerProfileService profiles, TrialController trial, ChoiceDialogView trialDialogView, ICursorDeployer cursorDeployer, IInputFocusService inputFocus) {
             this.battleSetting = battleSetting;
             this.battleDeployer = battleDeployer;
             this.strikerRegistry = strikerRegistry;
@@ -82,7 +82,7 @@ namespace Alice {
             this.battleReplayDriver = battleReplayDriver;
             this.resultScene = resultScene;
             this.playerSession = playerSession; this.profiles = profiles; this.trial = trial;
-            trialDialog = new ChoiceDialogPresenter(trialDialogView, playerSession, gamePadRegistry);
+            trialDialog = new ChoiceDialogPresenter(trialDialogView, gamePadRegistry, inputFocus);
             this.cursorDeployer = cursorDeployer;
             this.battlePlayerPresenters = battlePlayerPresenters;
             battlePrepared = false;

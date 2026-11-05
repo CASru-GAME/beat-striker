@@ -75,7 +75,12 @@ namespace Alice {
 			Debug.Log($"{LOG_PREFIX} OnDestroy completed. scene={gameObject.scene.name}");
 		}
 
-		protected override void Configure(IContainerBuilder builder) {
+		[SerializeField] FocusGraphicRaycaster[] focusRaycasters;
+        protected override void Configure(IContainerBuilder builder) {
+            builder.RegisterBuildCallback(container => {
+                var focus = container.Resolve<IInputFocusService>();
+                foreach (var raycaster in focusRaycasters) raycaster.Initialize(focus);
+            });
 			Debug.Log($"{LOG_PREFIX} Configure begin. scene={gameObject.scene.name}");
 			builder.RegisterInstance<IStageRegistry>(stageRegistry);
 			builder.RegisterInstance<IScreenRegistry>(screenRegistry);
@@ -87,7 +92,8 @@ namespace Alice {
 			builder.RegisterInstance<IAudioSetting>(audioSetting);
 			builder.Register<ICursorMoveSetting, CursorMoveSetting>(Lifetime.Singleton);
 			builder.RegisterInstance<IBattleRuleSetting>(battleRuleSetting);
-			builder.Register<IGamePadRegistry, GamePadRegistry>(Lifetime.Singleton);
+			builder.RegisterEntryPoint<InputFocusService>(Lifetime.Singleton).As<IInputFocusService>();
+            builder.Register<IGamePadRegistry, GamePadRegistry>(Lifetime.Singleton);
 			builder.RegisterInstance<IAppTransitionFactory>(appTransitionFactory);
 			builder.RegisterInstance<ICursorFactory>(cursorFactory);
 			builder.RegisterInstance<IAppBGMPlayer>(appBgmPlayer);

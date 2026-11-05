@@ -13,6 +13,12 @@ public class CharacterIntroSlideshowTests {
         var sprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), Vector2.one * 0.5f);
         try {
             var slideshow = owner.AddComponent<CharacterIntroSlideshow>();
+            var overlay = new GameObject("Overlay", typeof(RectTransform));
+            overlay.transform.SetParent(owner.transform);
+            var slide = new GameObject("Slide", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            slide.transform.SetParent(overlay.transform);
+            foreach (var item in new[] { ("overlayRoot", (object)overlay), ("slideRectTransform", (object)slide.GetComponent<RectTransform>()), ("slideImage", (object)slide.GetComponent<UnityEngine.UI.Image>()) })
+                typeof(CharacterIntroSlideshow).GetField(item.Item1, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(slideshow, item.Item2);
             typeof(CharacterIntroSlideshow).GetField("wizardSlides", BindingFlags.Instance | BindingFlags.NonPublic)
                 .SetValue(slideshow, new[] { sprite, sprite });
 

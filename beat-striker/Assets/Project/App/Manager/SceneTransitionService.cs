@@ -24,6 +24,8 @@ namespace Alice {
         const string LOG_PREFIX = "[SceneTransitionService]";
 
         readonly ISceneLoader sceneLoader;
+        readonly IInputFocusService focus;
+        IDisposable inputBlock;
         readonly IAppTransitionFactory transitionFactory;
         readonly IScreenRegistry screenRegistry;
         readonly IAppBGMPlayer appBgmPlayer;
@@ -54,8 +56,9 @@ namespace Alice {
             ISceneLoader sceneLoader,
             IAppTransitionFactory transitionFactory,
             IScreenRegistry screenRegistry,
-            IAppBGMPlayer appBgmPlayer) {
+            IAppBGMPlayer appBgmPlayer, IInputFocusService focus) {
             this.sceneLoader = sceneLoader;
+            this.focus = focus;
             this.transitionFactory = transitionFactory;
             this.screenRegistry = screenRegistry;
             this.appBgmPlayer = appBgmPlayer;
@@ -176,6 +179,8 @@ namespace Alice {
             var wasTransitioning = IsTransitioning;
             currentState = nextState;
             var isTransitioning = IsTransitioning;
+            if (isTransitioning) inputBlock ??= focus.Block();
+            else { inputBlock?.Dispose(); inputBlock = null; }
             if (wasTransitioning != isTransitioning) {
                 transitioningChanged.OnNext(isTransitioning);
             }

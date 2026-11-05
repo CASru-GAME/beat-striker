@@ -19,10 +19,13 @@ namespace Alice {
         public VirtualTouchControllerPresenter(
             IAppUISetting appUISetting,
             IGamePadRegistry gamePadRegistry,
-            VirtualTouchControllerCanvasView view) {
+            VirtualTouchControllerCanvasView view, IInputFocusService focus) {
             this.appUISetting = appUISetting;
             this.gamePadRegistry = gamePadRegistry;
             this.view = view;
+            focus.RegisterInputDevice(view.transform).AddTo(disposables);
+            // The native module drops captured pointers on a modal boundary without sending Up/EndDrag.
+            focus.Changed.Subscribe(_ => view.CancelPointerInput()).AddTo(disposables);
             virtualTouchGamePad = new VirtualTouchGamePad(OnVirtualTouchGamePadDestroyed);
         }
 

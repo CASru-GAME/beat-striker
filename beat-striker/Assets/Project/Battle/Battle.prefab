@@ -941,6 +941,8 @@ GameObject:
   - component: {fileID: 8754958838722470992}
   - component: {fileID: 1689353963777703519}
   - component: {fileID: 6026150257795842806}
+  - component: {fileID: 880000000000000001}
+  - component: {fileID: 880000000000000002}
   m_Layer: 5
   m_Name: PauseMenu
   m_TagString: Untagged
@@ -960,6 +962,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 880000000000000004}
   - {fileID: 4922172546845118050}
   - {fileID: 8022721485441722357}
   - {fileID: 3895206659730007407}
@@ -1506,6 +1509,7 @@ GameObject:
   - component: {fileID: 82969115449958417}
   - component: {fileID: 7526082120708182932}
   - component: {fileID: 7797105379557113399}
+  - component: {fileID: 870000000000000001}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -14552,9 +14556,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6076902563616086468}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Script: {fileID: 11500000, guid: 4a3e2d40f70642a2b9edd88a259fcfc7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.FocusGraphicRaycaster
   m_IgnoreReversedGraphics: 0
   m_BlockingObjects: 0
   m_BlockingMask:
@@ -23321,6 +23325,9 @@ MonoBehaviour:
   battlePlayerPresenters:
   - {fileID: 8281538944586036526}
   - {fileID: 4859134091085318300}
+  focusRaycasters:
+  - {fileID: 882348774671303654}
+  inputFocusBoundary: {fileID: 870000000000000001}
 --- !u!82 &547111780668462546
 AudioSource:
   m_ObjectHideFlags: 0
@@ -34152,3 +34159,131 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2851066912931261658, guid: 4cea2f3a112d97046b35166d18dab684, type: 3}
   m_PrefabInstance: {fileID: 7655406743667270249}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &870000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1102621503356978924}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c10828cbea43c6b4a05d7244a0a764, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.InputFocusBoundary
+  eventSystem: {fileID: 7526082120708182932}
+  inputModule: {fileID: 7797105379557113399}
+  scrollRects: []
+  selectables:
+  - {fileID: 5318030036022983006}
+--- !u!223 &880000000000000001
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733101205694131342}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 0
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_SortingLayerID: 0
+  m_SortingOrder: 4000
+  m_TargetDisplay: 0
+--- !u!114 &880000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733101205694131342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a3e2d40f70642a2b9edd88a259fcfc7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.FocusGraphicRaycaster
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!1 &880000000000000003
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 880000000000000004}
+  - component: {fileID: 880000000000000005}
+  - component: {fileID: 880000000000000006}
+  - component: {fileID: 880000000000000007}
+  m_Layer: 5
+  m_Name: Modal Input Backdrop
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!224 &880000000000000004
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880000000000000003}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 3888550116751517755}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 200000, y: 200000}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &880000000000000005
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880000000000000003}
+  m_CullTransparentMesh: 0
+--- !u!114 &880000000000000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880000000000000003}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
+  m_RaycastTarget: 1
+  m_Maskable: 1
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+--- !u!114 &880000000000000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880000000000000003}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4cb9f76f89bd7941ae4d9a2baf50ca2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:

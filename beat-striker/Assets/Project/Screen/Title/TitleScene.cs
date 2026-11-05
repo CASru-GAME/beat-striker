@@ -12,12 +12,10 @@ namespace Alice {
         public ChoiceDialogView PlayerDialog => playerDialog;
         public Observable<Unit> OnlineRequested => onlineRequested;
 
-        [SerializeField] SettingsDialogScope settingsDialogScopePrefab;
-        [SerializeField] Transform settingsDialogParent;
+        [SerializeField] SettingsDialogScope settingsDialogScope;
         [SerializeField] ActionEmitter settingsEmitter;
         [SerializeField] ActionEmitter quitEmitter;
 
-        SettingsDialogScope settingsDialogScope;
 
         public Observable<Unit> GotoSelectRequested => gotoSelectRequested;
         public Observable<Unit> GotoSettingsRequested => openSettingsRequested;
@@ -44,18 +42,10 @@ namespace Alice {
         }
 
         public void OpenSettingsDialog() {
-            if (settingsDialogScope == null) {
-                settingsDialogScope = Instantiate(settingsDialogScopePrefab, settingsDialogParent);
-            }
-
             settingsDialogScope.gameObject.SetActive(true);
         }
 
         public void CloseSettingsDialog() {
-            if (settingsDialogScope == null) {
-                return;
-            }
-
             settingsDialogScope.gameObject.SetActive(false);
         }
     }

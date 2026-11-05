@@ -10,9 +10,10 @@ namespace Alice {
         Sprite[] slides;
         TaskCompletionSource<bool> completion;
 
-        GameObject overlayRoot;
-        RectTransform slideRectTransform;
-        Image slideImage;
+        [SerializeField] GameObject overlayRoot;
+        [SerializeField] RectTransform slideRectTransform;
+        [SerializeField] Image slideImage;
+        public Transform ModalRoot => overlayRoot.transform;
         int currentIndex;
         int lastAdvanceFrame;
         int lastScreenWidth;
@@ -31,9 +32,7 @@ namespace Alice {
 
         void OnDestroy() {
             completion?.TrySetResult(false);
-            if (overlayRoot != null) {
-                Destroy(overlayRoot);
-            }
+
         }
 
         public Task<bool> PlayAsync(Striker striker) {
@@ -52,7 +51,6 @@ namespace Alice {
                 return completion.Task;
             }
 
-            EnsureOverlay();
             overlayRoot.SetActive(true);
             overlayRoot.transform.SetAsLastSibling();
             ShowCurrentSlide();
@@ -79,40 +77,6 @@ namespace Alice {
             slideImage.sprite = slides[currentIndex];
             slideImage.enabled = slideImage.sprite != null;
             ApplyAspectFill();
-        }
-
-        void EnsureOverlay() {
-            if (overlayRoot != null) {
-                return;
-            }
-
-            overlayRoot = new GameObject($"{nameof(CharacterIntroSlideshow)} Overlay", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-
-            var canvas = overlayRoot.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.overrideSorting = true;
-            canvas.sortingOrder = short.MaxValue;
-
-            var scaler = overlayRoot.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
-            scaler.scaleFactor = 1f;
-
-            var slideObject = new GameObject("Slide", typeof(RectTransform), typeof(Image), typeof(Button));
-            slideObject.transform.SetParent(overlayRoot.transform, false);
-
-            slideRectTransform = slideObject.GetComponent<RectTransform>();
-            slideRectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            slideRectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            slideRectTransform.pivot = new Vector2(0.5f, 0.5f);
-            slideRectTransform.anchoredPosition = Vector2.zero;
-
-            slideImage = slideObject.GetComponent<Image>();
-            slideImage.raycastTarget = true;
-            slideImage.preserveAspect = true;
-
-            var button = slideObject.GetComponent<Button>();
-            button.transition = Selectable.Transition.None;
-            button.onClick.AddListener(Advance);
         }
 
         void ApplyAspectFill() {

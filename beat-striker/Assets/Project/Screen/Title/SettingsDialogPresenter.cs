@@ -15,14 +15,15 @@ namespace Alice {
             SettingsDialog view,
             IAudioSetting audioSetting,
             ICursorMoveSetting cursorMoveSetting,
-            IGamePadRegistry gamePadRegistry) {
+            IGamePadRegistry gamePadRegistry, IInputFocusService inputFocus) {
             this.view = view;
+            inputFocus.RegisterModal(view.transform).AddTo(subscriptions);
             this.audioSetting = audioSetting;
             this.cursorMoveSetting = cursorMoveSetting;
             this.gamePadRegistry = gamePadRegistry;
 
             gamePadRegistry.OnAnyButtonDown
-                .Where(e => view.gameObject.activeInHierarchy && e.Button == GamePadButton.South && !view.IsTimeingAdjustActive)
+                .Where(e => inputFocus.CanReceive(view.transform, e.PlayerId) && view.gameObject.activeInHierarchy && e.Button == GamePadButton.South && !view.IsTimeingAdjustActive)
                 .Subscribe(_ => this.view.SetVisible(false))
                 .AddTo(subscriptions);
 

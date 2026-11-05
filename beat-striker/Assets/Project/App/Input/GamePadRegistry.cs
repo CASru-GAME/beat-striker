@@ -11,6 +11,9 @@ using VContainer;
 namespace Alice {
     public record PlayerGamePadButtonEvent(int PlayerId, GamePadButton Button);
 
+    // Simulation data must continue independently of local UI focus.
+    public interface IGamePadDataSource { }
+
     public interface IGamePad {
         Observable<Vector2> OnDirectionAsObservable { get; }
         Observable<Unit> OnDirectionCanceledAsObservable { get; }
@@ -43,13 +46,15 @@ namespace Alice {
         public string DeviceName { get; }
         public ReadOnlyReactiveProperty<bool> HasGamePad { get; }
         public Observable<Vector2> OnDirection { get; }
+        public Observable<Vector2> OnCursorDirection { get; }
         public Observable<Unit> OnDirectionCanceled { get; }
         public Observable<GamePadButton> OnButtonDown { get; }
         public Observable<GamePadButton> OnButtonUp { get; }
     }
 
-    public class GamePadRegistry : IGamePadRegistry {
-        readonly PlayerSession playerSession;
+    public class GamePadRegistry : IGamePadRegistry, IDisposable {
+        readonly IInputFocusService focus;
+        readonly IDisposable focusSubscription;
         readonly List<PlayerGamePad> registry = new();
         readonly Subject<PlayerGamePadButtonEvent> onAnyButtonDown = new();
         readonly Dictionary<int, Option<IGamePad>> replayOverridePreviousPrimaryByPlayerId = new();
@@ -59,9 +64,12 @@ namespace Alice {
         public Observable<PlayerGamePadButtonEvent> OnAnyButtonDown => onAnyButtonDown;
 
         [Inject]
-        public GamePadRegistry(PlayerSession playerSession = null) {
-            this.playerSession = playerSession;
+        public GamePadRegistry(IInputFocusService focus) {
+            this.focus = focus;
+            focusSubscription = focus.Changed.Subscribe(_ => { foreach (var player in registry) player.ClearLocalInput(); });
         }
+
+        public void Dispose() { focusSubscription?.Dispose(); }
 
         public IPlayerGamePad RequestRegister(IGamePad gamePad) {
             for (int i = 0; i < registry.Count; i++) {
@@ -73,7 +81,7 @@ namespace Alice {
                 }
             }
 
-            var playerGamePad = new PlayerGamePad(registry.Count, gamePad.ToOption(), true, HandleButtonDown, HandleButtonUp);
+            var playerGamePad = new PlayerGamePad(registry.Count, gamePad.ToOption(), true, HandleButtonDown, HandleButtonUp, focus);
             registry.Add(playerGamePad);
 
             Debug.Log($"Registered GamePad {gamePad.DeviceName} to Player {playerGamePad.PlayerId}".ToGreen());
@@ -198,7 +206,7 @@ namespace Alice {
 
         PlayerGamePad EnsurePlayerSlot(int playerId) {
             while (registry.Count <= playerId) {
-                registry.Add(new PlayerGamePad(registry.Count, null, false, HandleButtonDown, HandleButtonUp));
+                registry.Add(new PlayerGamePad(registry.Count, null, false, HandleButtonDown, HandleButtonUp, focus));
             }
             return registry[playerId];
         }
@@ -234,10 +242,14 @@ namespace Alice {
 
         void HandleButtonDown(int playerId, GamePadButton button) {
             var player = EnsurePlayerSlot(playerId);
-            if (playerSession != null && playerSession.IsNameInputActive && player.DeviceName == "Keybord") return;
             var mappedButton = MapFaceButton(button);
+            if (player.IsSynthetic) { player.EmitButtonDown(mappedButton); return; }
+            if (!player.PressedButtons.TryAdd(button, mappedButton)) return;
+            var version = focus.Version;
+            if (focus.HasTextFocus && player.DeviceName == "Keybord") return;
+            if (mappedButton == GamePadButton.East && focus.TryClick(playerId)) return;
             onAnyButtonDown.OnNext(new PlayerGamePadButtonEvent(playerId, mappedButton));
-            player.EmitButtonDown(mappedButton);
+            if (version == focus.Version && focus.CanReceive(null)) player.EmitButtonDown(mappedButton);
         }
 
         void RemoveRemotePrimaryIfExists(int playerId) {
@@ -255,7 +267,9 @@ namespace Alice {
 
         void HandleButtonUp(int playerId, GamePadButton button) {
             var player = EnsurePlayerSlot(playerId);
-            player.EmitButtonUp(MapFaceButton(button));
+            var mappedButton = player.PressedButtons.TryGetValue(button, out var pressedButton) ? pressedButton : MapFaceButton(button);
+            player.PressedButtons.Remove(button);
+            player.EmitButtonUp(mappedButton);
         }
 
         public GamePadButton GetPhysicalFaceButton(GamePadButton button) {
@@ -314,11 +328,14 @@ namespace Alice {
                 }
             }
 
+            public Dictionary<GamePadButton, GamePadButton> PressedButtons { get; } = new();
             public bool HasPrimaryGamePad => isPrimaryInput;
+            public bool IsSynthetic => (battleOverride.TryGetValue(out var injected) ? injected : current.GetValue(null)) is IGamePadDataSource;
             public string DeviceName => current.TryGetValue(out var gamePad) ? gamePad.DeviceName : null;
 
             public ReadOnlyReactiveProperty<bool> HasGamePad => hasGamePad;
             public Observable<Vector2> OnDirection => onDirection;
+            public Observable<Vector2> OnCursorDirection => onCursorDirection;
             public Observable<Unit> OnDirectionCanceled => onDirectionCanceled;
             public Observable<GamePadButton> OnButtonDown => onButtonDown;
             public Observable<GamePadButton> OnButtonUp => onButtonUp;
@@ -327,6 +344,11 @@ namespace Alice {
             Option<IGamePad> battleOverride;
             bool isPrimaryInput;
             readonly Subject<Vector2> onDirection = new();
+            readonly Subject<Vector2> onCursorDirection = new();
+            Vector2 lastDirection;
+            bool directionNeedsNeutral;
+            readonly HashSet<GamePadButton> deliveredButtons = new();
+            readonly IInputFocusService focus;
             readonly Subject<Unit> onDirectionCanceled = new();
             readonly Subject<GamePadButton> onButtonDown = new();
             readonly Subject<GamePadButton> onButtonUp = new();
@@ -343,7 +365,8 @@ namespace Alice {
                 Option<IGamePad> current,
                 bool isPrimaryInput,
                 Action<int, GamePadButton> buttonDownHandler,
-                Action<int, GamePadButton> buttonUpHandler) {
+                Action<int, GamePadButton> buttonUpHandler, IInputFocusService focus) {
+                this.focus = focus;
                 PlayerId = playerId;
                 this.isPrimaryInput = isPrimaryInput;
                 this.buttonDownHandler = buttonDownHandler;
@@ -385,14 +408,29 @@ namespace Alice {
             }
 
             public void EmitButtonDown(GamePadButton button) {
+                deliveredButtons.Add(button);
                 onButtonDown.OnNext(button);
             }
 
             public void EmitButtonUp(GamePadButton button) {
-                onButtonUp.OnNext(button);
+                if (deliveredButtons.Remove(button)) onButtonUp.OnNext(button);
+            }
+
+            public void ClearLocalInput() {
+                if (IsSynthetic) return;
+                directionNeedsNeutral = lastDirection != Vector2.zero;
+                onDirection.OnNext(Vector2.zero);
+                onDirectionCanceled.OnNext(Unit.Default);
+                var released = new List<GamePadButton>(deliveredButtons);
+                deliveredButtons.Clear();
+                foreach (var button in released) onButtonUp.OnNext(button);
             }
 
             void SwitchCurrent() {
+                PressedButtons.Clear();
+                ClearLocalInput();
+                lastDirection = Vector2.zero; directionNeedsNeutral = false;
+                onCursorDirection.OnNext(Vector2.zero);
                 directionSubscription?.Dispose();
                 directionCanceledSubscription?.Dispose();
                 buttonDownSubscription?.Dispose();
@@ -400,8 +438,19 @@ namespace Alice {
 
                 var effective = battleOverride.TryGetValue(out _) ? battleOverride : current;
                 if (effective.TryGetValue(out var activeGamePad)) {
-                    directionSubscription = activeGamePad.OnDirectionAsObservable.Subscribe(onDirection.OnNext);
-                    directionCanceledSubscription = activeGamePad.OnDirectionCanceledAsObservable.Subscribe(onDirectionCanceled.OnNext);
+                    directionSubscription = activeGamePad.OnDirectionAsObservable.Subscribe(direction => {
+                        lastDirection = direction;
+                        onCursorDirection.OnNext(direction);
+                        if (direction == Vector2.zero) directionNeedsNeutral = false;
+                        if (IsSynthetic || !directionNeedsNeutral && focus.CanReceive(null)) onDirection.OnNext(direction);
+                    });
+                    directionCanceledSubscription = activeGamePad.OnDirectionCanceledAsObservable.Subscribe(_ => {
+                        lastDirection = Vector2.zero;
+                        directionNeedsNeutral = false;
+                        onCursorDirection.OnNext(Vector2.zero);
+                        onDirection.OnNext(Vector2.zero);
+                        onDirectionCanceled.OnNext(Unit.Default);
+                    });
                     buttonDownSubscription = activeGamePad.OnButtonDownAsObservable.Subscribe(button => buttonDownHandler(PlayerId, button));
                     buttonUpSubscription = activeGamePad.OnButtonUpAsObservable.Subscribe(button => buttonUpHandler(PlayerId, button));
                 }

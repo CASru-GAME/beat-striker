@@ -18,7 +18,7 @@ namespace Alice {
         readonly ICursorFactory cursorFactory;
         readonly IScreenRegistry screenRegistry;
         readonly ICursorMoveSetting cursorMoveSetting;
-        readonly PlayerSession playerSession;
+        readonly IInputFocusService inputFocus;
 
         readonly List<IDisposable> playerJoinSubscriptions = new();
         readonly Dictionary<int, DeployedCursor> deployedByPlayerId = new();
@@ -34,12 +34,12 @@ namespace Alice {
             ICursorFactory cursorFactory,
             IScreenRegistry screenRegistry,
             ICursorMoveSetting cursorMoveSetting,
-            PlayerSession playerSession) {
+            IInputFocusService inputFocus) {
             this.gamePadRegistry = gamePadRegistry;
             this.cursorFactory = cursorFactory;
             this.screenRegistry = screenRegistry;
             this.cursorMoveSetting = cursorMoveSetting;
-            this.playerSession = playerSession;
+            this.inputFocus = inputFocus;
         }
 
         public void Initialize() {
@@ -137,8 +137,8 @@ namespace Alice {
             var cursor = cursorFactory.Create(playerId);
             cursor.SetSpeedScale(cursorMoveSetting.CursorSpeed.CurrentValue);
 
-            var directionSubscription = playerGamePad.OnDirection.Subscribe(direction => {
-                if (playerSession.IsNameInputActive && playerGamePad.DeviceName == "Keybord") {
+            var directionSubscription = playerGamePad.OnCursorDirection.Subscribe(direction => {
+                if (inputFocus.HasTextFocus && playerGamePad.DeviceName == "Keybord") {
                     cursor.StopMove();
                     return;
                 }
@@ -150,20 +150,20 @@ namespace Alice {
                 cursor.SetDirection(direction);
             });
 
-            var directionCanceledSubscription = playerGamePad.OnDirectionCanceled.Subscribe(_ => {
+            var directionCanceledSubscription = playerGamePad.OnCursorDirection.Where(direction => direction == Vector2.zero).Subscribe(_ => {
                 cursor.StopMove();
             });
 
-            var buttonDownSubscription = playerGamePad.OnButtonDown.Subscribe(button => {
-                if (button == GamePadButton.East) {
-                    cursor.Click();
-                }
-            });
+            var buttonDownSubscription = inputFocus.RegisterCursor(playerId, cursor.Click);
 
             var speedSubscription = cursorMoveSetting.CursorSpeed.Subscribe(cursor.SetSpeedScale);
-            var inputStateSubscription = playerSession.Changed.Subscribe(_ => {
-                if (playerSession.IsNameInputActive && playerGamePad.DeviceName == "Keybord") cursor.StopMove();
-            });
+            var inputStateSubscription = new CompositeDisposable();
+            inputFocus.Changed.Subscribe(_ => {
+                if (inputFocus.HasTextFocus && playerGamePad.DeviceName == "Keybord") cursor.StopMove();
+            }).AddTo(inputStateSubscription);
+            inputFocus.TextFocusChanged.Subscribe(active => {
+                if (active && playerGamePad.DeviceName == "Keybord") cursor.StopMove();
+            }).AddTo(inputStateSubscription);
 
             deployedByPlayerId[playerId] = new DeployedCursor(
                 cursor,

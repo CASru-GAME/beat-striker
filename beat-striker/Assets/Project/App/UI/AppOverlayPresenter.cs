@@ -32,8 +32,10 @@ namespace Alice {
             ISceneTransitionService sceneTransitionService,
             IMatchingModel matchingModel,
             IMatchingDuelOperations duelOperations,
-            IAppNetworkSetting networkSetting) {
+            IAppNetworkSetting networkSetting, IInputFocusService focus) {
             this.view = view;
+            focus.RegisterModal(view.IncomingRoot, priority: 1).AddTo(disposables);
+            focus.RegisterModal(view.CandidateRoot, priority: 1).AddTo(disposables);
             this.screenRegistry = screenRegistry;
             this.sceneTransitionService = sceneTransitionService;
             this.matchingModel = matchingModel;

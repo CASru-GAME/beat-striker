@@ -22,6 +22,8 @@ public class ResultScene : System.IDisposable
     readonly IAppStrikerRegistry appStrikerRegistry;
     readonly IGamePadRegistry gamePadRegistry;
     readonly PlayerSession playerSession;
+    readonly IInputFocusService focus;
+    readonly System.IDisposable focusRegistration;
     readonly ResultSceneView resultSceneView;
     readonly CompositeDisposable resultInputSubscriptions = new();
     TaskCompletionSource<bool> resultEndCompletionSource;
@@ -31,9 +33,11 @@ public class ResultScene : System.IDisposable
     bool disposed;
 
     [Inject]
-    public ResultScene(ResultSceneView resultSceneView, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IGamePadRegistry gamePadRegistry, PlayerSession playerSession)
+    public ResultScene(ResultSceneView resultSceneView, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IGamePadRegistry gamePadRegistry, PlayerSession playerSession, IInputFocusService focus)
     {
         this.resultSceneView = resultSceneView;
+        this.focus = focus;
+        focusRegistration = focus.RegisterModal(resultSceneView.ResultRoot.transform);
         this.playerSelectSetting = playerSelectSetting;
         this.appStrikerRegistry = appStrikerRegistry;
         this.gamePadRegistry = gamePadRegistry;
@@ -73,6 +77,7 @@ public class ResultScene : System.IDisposable
     public void Dispose()
     {
         disposed = true;
+        focusRegistration.Dispose();
         resultEndCompletionSource?.TrySetCanceled();
         resultInputSubscriptions.Dispose();
     }
@@ -81,15 +86,10 @@ public class ResultScene : System.IDisposable
     {
         resultInputSubscriptions.Clear();
 
-        for (var playerId = 0; playerId < MAX_RESULT_INPUT_PLAYER_SLOTS; playerId++)
-        {
-            if (playerSession.IsTrial && playerId != 0) continue;
-            var playerGamePad = gamePadRegistry.Get(playerId);
-            playerGamePad.OnButtonDown
-                .Where(button => button == GamePadButton.East)
-                .Subscribe(_ => AdvanceResultPhase())
-                .AddTo(resultInputSubscriptions);
-        }
+        gamePadRegistry.OnAnyButtonDown
+            .Where(input => input.Button == GamePadButton.East && (!playerSession.IsTrial || input.PlayerId == 0)
+                && focus.CanReceive(resultSceneView.ResultRoot.transform, input.PlayerId))
+            .Subscribe(_ => AdvanceResultPhase()).AddTo(resultInputSubscriptions);
     }
 
     async void StartSummaryPhase()

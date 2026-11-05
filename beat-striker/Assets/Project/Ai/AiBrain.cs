@@ -13,7 +13,7 @@ namespace Alice {
         public static readonly AiAction None = new(Vector2.zero, null);
     }
 
-    public abstract class AiBrain : MonoBehaviour, IGamePad {
+    public abstract class AiBrain : MonoBehaviour, IGamePad, IGamePadDataSource {
         readonly Subject<Vector2> onDirection = new();
         readonly Subject<Unit> onDirectionCanceled = new();
         readonly Subject<GamePadButton> onButtonDown = new();

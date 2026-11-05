@@ -18,8 +18,13 @@ namespace Alice {
         bool leaving;
         int operation;
 
-        public OnlineRoomPresenter(OnlineRoomView view, IOnlineRoomClient room, IOnlineDuelFusionClient duel, ISceneTransitionService transition) {
+        public OnlineRoomPresenter(OnlineRoomView view, IOnlineRoomClient room, IOnlineDuelFusionClient duel, ISceneTransitionService transition, IInputFocusService focus) {
             this.view = view;
+            view.InputRaycaster.Initialize(focus);
+            view.DuelRaycaster.Initialize(focus);
+            focus.RegisterModal(view.DuelRoot, isActive: () => view.IsDuelPending).AddTo(subscriptions);
+            Observable.EveryUpdate().Subscribe(_ => view.InputAllowed = focus.CanPoint(view.transform)).AddTo(subscriptions);
+            focus.Changed.Subscribe(_ => view.InputAllowed = focus.CanPoint(view.transform)).AddTo(subscriptions);
             this.room = room;
             this.duel = duel;
             this.transition = transition;

@@ -171,10 +171,11 @@ public class RankingScreenTests {
         owner = new GameObject("Inactive ranking views");
         owner.SetActive(false);
         var view = owner.AddComponent<RankingPresenterView>();
+        BindInactiveHistoryRoot(view);
         var list = owner.AddComponent<RankingHistoryListView>();
         var api = new DelayedHistoryApi();
         ExpectHistoryRequestLogs();
-        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, null, null, null, null, new PlayerSession(), new RankingNavigationState());
+        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, null, null, null, null, new PlayerSession(), new RankingNavigationState(), new InputFocusService());
         presenter.Dispose();
         api.Histories.SetResult(new[] { new BattleHistorySummary { id = "late-record" } });
         yield return null;
@@ -188,10 +189,11 @@ public class RankingScreenTests {
         owner = new GameObject("Inactive ranking views");
         owner.SetActive(false);
         var view = owner.AddComponent<RankingPresenterView>();
+        BindInactiveHistoryRoot(view);
         var list = owner.AddComponent<RankingHistoryListView>();
         var api = new DelayedHistoryApi();
         ExpectHistoryRequestLogs();
-        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, new TestMusicRegistry(), new TestStrikerRegistry(), null, null, new PlayerSession(), new RankingNavigationState());
+        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, new TestMusicRegistry(), new TestStrikerRegistry(), null, null, new PlayerSession(), new RankingNavigationState(), new InputFocusService());
         var check = typeof(RankingPresenter).GetMethod("CanPlayReplay", BindingFlags.Instance | BindingFlags.NonPublic);
         var replay = new ReplayPayload { stage = "Street", musicId = "known", strikerIds = new[] { 0, 1 }, rounds = new[] { new ReplayRoundPayload() } };
         Assert.That(check.Invoke(presenter, new object[] { replay }), Is.True);
@@ -346,7 +348,14 @@ public class RankingScreenTests {
         moreObject.transform.SetParent(owner.transform);
         more = moreObject.AddComponent<Botan>();
         SetField(view, "moreHistoryEmitter", more);
-        return new RankingPresenter(view, list, new ImmediateTransition(), new DelayedHistoryApi(), null, null, null, null, new TestMusicRegistry(), new TestStrikerRegistry(), records, new Profiles(), session, navigation);
+        return new RankingPresenter(view, list, new ImmediateTransition(), new DelayedHistoryApi(), null, null, null, null, new TestMusicRegistry(), new TestStrikerRegistry(), records, new Profiles(), session, navigation, new InputFocusService());
+    }
+
+    static void BindInactiveHistoryRoot(RankingPresenterView view) {
+        var dialog = new GameObject("History modal", typeof(RectTransform));
+        dialog.transform.SetParent(view.transform, false);
+        dialog.SetActive(false);
+        SetField(view, "historyDialog", dialog);
     }
 
     static void SetField(object target, string field, object value) => target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);
@@ -409,10 +418,11 @@ public class RankingScreenTests {
         owner = new GameObject("Inactive ranking views");
         owner.SetActive(false);
         var view = owner.AddComponent<RankingPresenterView>();
+        BindInactiveHistoryRoot(view);
         var list = owner.AddComponent<RankingHistoryListView>();
         var api = new DelayedHistoryApi();
         ExpectHistoryRequestLogs();
-        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, null, null, null, null, new PlayerSession(), new RankingNavigationState());
+        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, null, null, null, null, new PlayerSession(), new RankingNavigationState(), new InputFocusService());
         presenter.Dispose();
         api.Histories.SetException(new System.InvalidOperationException("Delayed network failure"));
         yield return null;

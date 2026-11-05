@@ -7,6 +7,7 @@ using VContainer;
 namespace Alice {
     public class TimeingAdjustPresenter : IDisposable {
         readonly SettingsDialog settingsDialog;
+        readonly IInputFocusService inputFocus;
         readonly IAudioSetting audioSetting;
         readonly IGamePadRegistry gamePadRegistry;
         readonly IAppBGMPlayer appBgmPlayer;
@@ -27,23 +28,35 @@ namespace Alice {
             SettingsDialog settingsDialog,
             IAudioSetting audioSetting,
             IGamePadRegistry gamePadRegistry,
-            IAppBGMPlayer appBgmPlayer) {
+            IAppBGMPlayer appBgmPlayer, IInputFocusService inputFocus) {
             this.settingsDialog = settingsDialog;
+            this.inputFocus = inputFocus;
             this.audioSetting = audioSetting;
             this.gamePadRegistry = gamePadRegistry;
             this.appBgmPlayer = appBgmPlayer;
+
+            settingsDialog.Closed.Subscribe(_ => Cancel()).AddTo(subscriptions);
 
             settingsDialog.TimingAdjustRequested
                 .Subscribe(_ => Start())
                 .AddTo(subscriptions);
 
             gamePadRegistry.OnAnyButtonDown
-                .Where(e => settingsDialog.gameObject.activeInHierarchy && isRunning && e.Button == GamePadButton.East)
+                .Where(e => isViewSubscribed && inputFocus.CanReceive(settingsDialog.TimingAdjustView.transform, e.PlayerId) && settingsDialog.gameObject.activeInHierarchy && isRunning && e.Button == GamePadButton.East)
                 .Subscribe(_ => HandleTap())
                 .AddTo(subscriptions);
         }
 
+        void Cancel() {
+            if (!isRunning) return;
+            isRunning = false;
+            settingsDialog.TimingAdjustView.StopSession();
+            settingsDialog.HideTimingAdjustPlaceholder();
+            if (isBgmStoppedForAdjust) { appBgmPlayer.Resume(); isBgmStoppedForAdjust = false; }
+        }
+
         public void Dispose() {
+            Cancel();
             subscriptions.Dispose();
             viewSubscriptions.Dispose();
             if (isBgmStoppedForAdjust) {
@@ -57,9 +70,10 @@ namespace Alice {
                 return;
             }
 
-            var timeingAdjustView = settingsDialog.GetOrCreateTimeingAdjustView();
+            var timeingAdjustView = settingsDialog.TimingAdjustView;
             if (!isViewSubscribed) {
                 isViewSubscribed = true;
+                inputFocus.RegisterModal(timeingAdjustView.transform).AddTo(viewSubscriptions);
                 timeingAdjustView.BeatPlayed
                     .Subscribe(HandleBeatPlayed)
                     .AddTo(viewSubscriptions);
@@ -96,7 +110,7 @@ namespace Alice {
             tapDspTimes.Add(AudioSettings.dspTime);
 
             UpdateCurrentTapBpmDisplay();
-            settingsDialog.GetOrCreateTimeingAdjustView().PlayTapPulse();
+            settingsDialog.TimingAdjustView.PlayTapPulse();
         }
 
         void UpdateCurrentTapBpmDisplay() {
@@ -116,7 +130,7 @@ namespace Alice {
 
                     var avgInterval = intervalSum / recentTapIntervals.Count;
                     var bpm = (float)(60d / avgInterval);
-                    settingsDialog.GetOrCreateTimeingAdjustView().SetCurrentTapBpm(bpm);
+                    settingsDialog.TimingAdjustView.SetCurrentTapBpm(bpm);
                 }
             }
 
@@ -154,14 +168,14 @@ namespace Alice {
             }
 
             isRunning = false;
-            settingsDialog.GetOrCreateTimeingAdjustView().StopSession();
+            settingsDialog.TimingAdjustView.StopSession();
             settingsDialog.HideTimingAdjustPlaceholder();
             if (isBgmStoppedForAdjust) {
                 appBgmPlayer.Resume();
                 isBgmStoppedForAdjust = false;
             }
 
-            var timeingAdjustView = settingsDialog.GetOrCreateTimeingAdjustView();
+            var timeingAdjustView = settingsDialog.TimingAdjustView;
             sampleLags.Clear();
             var halfWindow = timeingAdjustView.BeatIntervalSeconds * 0.3f;
             var firstSampleBeatIndex = timeingAdjustView.IgnoreBeatCount;
