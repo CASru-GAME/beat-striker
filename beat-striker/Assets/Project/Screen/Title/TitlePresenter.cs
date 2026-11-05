@@ -110,15 +110,15 @@ namespace Alice {
                     var editing = string.IsNullOrWhiteSpace(name);
                     while (!disposed) {
                         if (editing) {
-                            var result = await playerDialog.AskAsync($"{slot + 1}P 名前入力", "名前を1〜10文字で入力してください", new[] { "決定", "戻る" }, name ?? "");
+                            var result = await playerDialog.AskAsync($"{slot + 1}P 名前入力", "", new[] { "確定", "戻る" }, name == PlayerProfileService.GuestName ? "" : name ?? "", inputPlayerId: slot, directInput: true);
                             if (result == 1) return;
-                            if (!PlayerProfileService.TryNormalizeName(playerDialog.InputText, out name)) continue;
+                            if (!PlayerProfileService.TryNormalizeName(PlayerProfileService.EnteredNameOrGuest(playerDialog.InputText), out name)) continue;
                             await profiles.SelectNameAsync(slot, name);
                             if (disposed) return;
                             editing = false;
                         }
                         var profile = profiles.Get(name);
-                        var choice = await playerDialog.AskAsync($"{slot + 1}P プレイヤー確認", $"{name}\n{PlayerGrades.Label((PlayerGrade)profile.grade)}", new[] { "OK", "編集", "戻る" });
+                        var choice = await playerDialog.AskAsync($"{slot + 1}P プレイヤー確認", $"{name}\n{PlayerGrades.Label((PlayerGrade)profile.grade)}", new[] { "OK", "編集", "戻る" }, inputPlayerId: slot, directInput: true);
                         if (choice == 2) return;
                         if (choice == 1) { editing = true; continue; }
                         break;

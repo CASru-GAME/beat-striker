@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
 using R3;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 namespace Alice {
     public class ChoiceDialogView : MonoBehaviour {
@@ -11,25 +14,58 @@ namespace Alice {
         [SerializeField] TMP_InputField input;
         [SerializeField] ActionEmitter[] emitters;
         [SerializeField] TMP_Text[] labels;
+        [SerializeField] GameObject[] keyboardKeys;
+        [SerializeField] TMP_Text[] keyboardKeyLabels;
+        [SerializeField] RectTransform panel;
+        [SerializeField, Min(0.01f)] float openDuration = 0.22f;
+        [SerializeField, Min(0.01f)] float closeDuration = 0.16f;
+        [SerializeField, Min(0.01f)] float hoverDuration = 0.12f;
+        [SerializeField, Range(1f, 1.3f)] float hoverScale = 1.08f;
         readonly Subject<int> selected = new();
         readonly Subject<Unit> destroyed = new();
+        readonly Subject<bool> inputFocusChanged = new();
         int shownFrame = -1;
         int inputPlayerId = -1;
+        bool hasInputFocus;
         string[] options = System.Array.Empty<string>();
+        readonly List<RaycastResult> pointerHits = new();
         public Observable<int> Selected => selected;
         public Observable<Unit> Destroyed => destroyed;
+        public Observable<bool> InputFocusChanged => inputFocusChanged;
+        public int OptionCapacity => emitters.Length;
         public string InputText => input.text;
+        public bool IsInteractable { get; private set; }
         void Awake() {
             for (var i = 0; i < emitters.Length; i++) {
                 var index = i;
                 emitters[i].OnClickEvent.Subscribe(data => {
-                    if (Time.frameCount <= shownFrame || inputPlayerId >= 0 && data.EventData.pointerId >= 0 && data.EventData.pointerId != inputPlayerId) return;
+                    if (!IsInteractable || Time.frameCount <= shownFrame || inputPlayerId >= 0 && data.EventData.pointerId >= 0 && data.EventData.pointerId != inputPlayerId) return;
                     selected.OnNext(index);
                 }).AddTo(this);
+                emitters[i].OnHoverEvent.Subscribe(_ => AnimateButton(index, true)).AddTo(this);
+                emitters[i].OnHoverExitEvent.Subscribe(_ => AnimateButton(index, false)).AddTo(this);
             }
-            input.onSubmit.AddListener(SubmitName);
+            input.onSubmit.AddListener(EndEditing);
+            input.onEndEdit.AddListener(EndEditing);
+            input.onSelect.AddListener(InputSelected);
+            input.onDeselect.AddListener(InputDeselected);
+        }
+        void Update() {
+            if (!input.isFocused) return;
+            var eventSystem = EventSystem.current;
+            if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame) {
+                ReleaseInputFocus();
+                return;
+            }
+            if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) return;
+            var pointer = new PointerEventData(eventSystem) { position = Mouse.current.position.ReadValue() };
+            pointerHits.Clear();
+            eventSystem.RaycastAll(pointer, pointerHits);
+            if (pointerHits.Count > 0 && pointerHits[0].gameObject.transform.IsChildOf(input.transform)) return;
+            ReleaseInputFocus();
         }
         public void Show(string title, string body, string[] options, string initialInput = null, int inputPlayerId = -1) {
+            ReleaseInputFocus();
             shownFrame = Time.frameCount; this.inputPlayerId = inputPlayerId;
             this.options = options;
             heading.text = title; description.text = body; description.richText = false;
@@ -38,15 +74,74 @@ namespace Alice {
                 if (i < options.Length) labels[i].text = options[i];
             }
             input.gameObject.SetActive(initialInput != null);
-            if (initialInput != null) { input.SetTextWithoutNotify(initialInput); input.ActivateInputField(); }
+            if (initialInput != null) input.SetTextWithoutNotify(initialInput);
             dialogRoot.SetActive(true);
-            if (initialInput != null) input.ActivateInputField();
+            IsInteractable = false;
+            input.interactable = false;
+            LeanTween.cancel(panel.gameObject);
+            panel.localScale = Vector3.zero;
+            LeanTween.scale(panel.gameObject, Vector3.one, openDuration).setIgnoreTimeScale(true).setEaseOutCubic().setOnComplete(() => {
+                IsInteractable = true;
+                input.interactable = true;
+            });
         }
-        public void Hide() { input.DeactivateInputField(); dialogRoot.SetActive(false); }
-        public void SetSelection(int index) {
-            for (var i = 0; i < options.Length; i++) labels[i].text = (i == index ? "> " : "") + options[i];
+        public void Close(Action onClosed) {
+            IsInteractable = false;
+            ReleaseInputFocus();
+            input.interactable = false;
+            LeanTween.cancel(panel.gameObject);
+            LeanTween.scale(panel.gameObject, Vector3.zero, closeDuration).setIgnoreTimeScale(true).setEaseInCubic().setOnComplete(() => {
+                dialogRoot.SetActive(false);
+                onClosed();
+            });
         }
-        void SubmitName(string text) { if (Time.frameCount > shownFrame && input.gameObject.activeSelf) selected.OnNext(0); }
-        void OnDestroy() { input.onSubmit.RemoveListener(SubmitName); destroyed.OnNext(Unit.Default); destroyed.Dispose(); selected.Dispose(); }
+        public void Hide() { IsInteractable = false; ReleaseInputFocus(); dialogRoot.SetActive(false); }
+        void AnimateButton(int index, bool hovered) {
+            if (!IsInteractable) return;
+            var button = emitters[index].gameObject;
+            LeanTween.cancel(button);
+            LeanTween.scale(button, Vector3.one * (hovered ? hoverScale : 1f), hoverDuration).setIgnoreTimeScale(true).setEaseOutCubic();
+        }
+        public void SetButtonGuides(string confirmIcon, string cancelIcon, bool keyboard = false) {
+            for (var i = 0; i < options.Length; i++) {
+                labels[i].richText = true;
+                var icon = i == 0 ? confirmIcon : i == options.Length - 1 ? cancelIcon : null;
+                keyboardKeys[i].SetActive(keyboard && icon != null);
+                keyboardKeyLabels[i].text = keyboard ? icon ?? "" : "";
+                labels[i].text = (icon == null || keyboard ? "" : $"<sprite name=\"{icon}\" tint=1> ") + options[i];
+            }
+        }
+        void EndEditing(string text) => ReleaseInputFocus();
+        void InputSelected(string text) => SetInputFocus(true);
+        void InputDeselected(string text) => SetInputFocus(false);
+        void ReleaseInputFocus() {
+            input.DeactivateInputField(true);
+            var eventSystem = EventSystem.current;
+            if (eventSystem != null && !eventSystem.alreadySelecting && eventSystem.currentSelectedGameObject == input.gameObject) {
+                eventSystem.SetSelectedGameObject(null);
+            }
+            SetInputFocus(false);
+        }
+        void SetInputFocus(bool focused) {
+            if (hasInputFocus == focused) return;
+            hasInputFocus = focused;
+            inputFocusChanged.OnNext(focused);
+        }
+        void OnDisable() {
+            IsInteractable = false;
+            ReleaseInputFocus();
+            LeanTween.cancel(panel.gameObject);
+            foreach (var emitter in emitters) {
+                LeanTween.cancel(emitter.gameObject);
+                emitter.transform.localScale = Vector3.one;
+            }
+        }
+        void OnDestroy() {
+            input.onSubmit.RemoveListener(EndEditing);
+            input.onEndEdit.RemoveListener(EndEditing);
+            input.onSelect.RemoveListener(InputSelected);
+            input.onDeselect.RemoveListener(InputDeselected);
+            destroyed.OnNext(Unit.Default); destroyed.Dispose(); selected.Dispose(); inputFocusChanged.Dispose();
+        }
     }
 }

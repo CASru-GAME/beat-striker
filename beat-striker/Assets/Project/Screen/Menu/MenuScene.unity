@@ -803,6 +803,14 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
+      propertyPath: m_fontAsset
+      value:
+      objectReference: {fileID: 11400000, guid: 45ebcbcba74d44699958be6de3a61b3e, type: 2}
+    - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
+      propertyPath: m_sharedMaterial
+      value:
+      objectReference: {fileID: -6255709286732580734, guid: 45ebcbcba74d44699958be6de3a61b3e, type: 2}
+    - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_text
       value: "\u30ED\u30FC\u30AB\u30EB\u30D0\u30C8\u30EB"
       objectReference: {fileID: 0}

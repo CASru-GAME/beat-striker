@@ -18,6 +18,7 @@ namespace Alice {
         readonly ICursorFactory cursorFactory;
         readonly IScreenRegistry screenRegistry;
         readonly ICursorMoveSetting cursorMoveSetting;
+        readonly PlayerSession playerSession;
 
         readonly List<IDisposable> playerJoinSubscriptions = new();
         readonly Dictionary<int, DeployedCursor> deployedByPlayerId = new();
@@ -32,11 +33,13 @@ namespace Alice {
             IGamePadRegistry gamePadRegistry,
             ICursorFactory cursorFactory,
             IScreenRegistry screenRegistry,
-            ICursorMoveSetting cursorMoveSetting) {
+            ICursorMoveSetting cursorMoveSetting,
+            PlayerSession playerSession) {
             this.gamePadRegistry = gamePadRegistry;
             this.cursorFactory = cursorFactory;
             this.screenRegistry = screenRegistry;
             this.cursorMoveSetting = cursorMoveSetting;
+            this.playerSession = playerSession;
         }
 
         public void Initialize() {
@@ -135,6 +138,10 @@ namespace Alice {
             cursor.SetSpeedScale(cursorMoveSetting.CursorSpeed.CurrentValue);
 
             var directionSubscription = playerGamePad.OnDirection.Subscribe(direction => {
+                if (playerSession.IsNameInputActive && playerGamePad.DeviceName == "Keybord") {
+                    cursor.StopMove();
+                    return;
+                }
                 if (direction == Vector2.zero) {
                     cursor.StopMove();
                     return;
@@ -154,13 +161,17 @@ namespace Alice {
             });
 
             var speedSubscription = cursorMoveSetting.CursorSpeed.Subscribe(cursor.SetSpeedScale);
+            var inputStateSubscription = playerSession.Changed.Subscribe(_ => {
+                if (playerSession.IsNameInputActive && playerGamePad.DeviceName == "Keybord") cursor.StopMove();
+            });
 
             deployedByPlayerId[playerId] = new DeployedCursor(
                 cursor,
                 directionSubscription,
                 directionCanceledSubscription,
                 buttonDownSubscription,
-                speedSubscription);
+                speedSubscription,
+                inputStateSubscription);
         }
 
         void Undeploy(int playerId) {
@@ -178,18 +189,21 @@ namespace Alice {
             readonly IDisposable directionCanceledSubscription;
             readonly IDisposable buttonDownSubscription;
             readonly IDisposable speedSubscription;
+            readonly IDisposable inputStateSubscription;
 
             public DeployedCursor(
                 ICursor cursor,
                 IDisposable directionSubscription,
                 IDisposable directionCanceledSubscription,
                 IDisposable buttonDownSubscription,
-                IDisposable speedSubscription) {
+                IDisposable speedSubscription,
+                IDisposable inputStateSubscription) {
                 this.cursor = cursor;
                 this.directionSubscription = directionSubscription;
                 this.directionCanceledSubscription = directionCanceledSubscription;
                 this.buttonDownSubscription = buttonDownSubscription;
                 this.speedSubscription = speedSubscription;
+                this.inputStateSubscription = inputStateSubscription;
             }
 
             public void Dispose() {
@@ -197,6 +211,7 @@ namespace Alice {
                 directionCanceledSubscription.Dispose();
                 buttonDownSubscription.Dispose();
                 speedSubscription.Dispose();
+                inputStateSubscription.Dispose();
                 cursor.DestroyCursor();
             }
         }

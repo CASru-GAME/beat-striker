@@ -289,19 +289,19 @@ namespace Alice {
         async Task<bool> PrepareLocalParticipantsAsync() {
             var humanSlots = new[] { gamePadRegistry.Get(0).HasGamePad.CurrentValue, gamePadRegistry.Get(1).HasGamePad.CurrentValue };
             if (!humanSlots[0] || !humanSlots[1]) {
-                var choice = await cpuDialog.AskAsync("CPUの強さ", $"前回の設定：Lv{profiles.CpuLevel}", new[] { "Lv1", "Lv2", "Lv3", "Lv4", "戻る" });
+                var choice = await cpuDialog.AskAsync("CPUの強さ", $"前回の設定：Lv{profiles.CpuLevel}", new[] { "そのまま", "Lv1", "Lv2", "Lv3", "Lv4", "戻る" }, directInput: true);
                 if (disposed) return false;
-                if (choice == 4) { inputState = SceneInputState.ReadyToStart; return false; }
-                profiles.CpuLevel = choice + 1;
-                battleSelectSetting.SetAiStrength(choice + 1);
+                if (choice == 5) { inputState = SceneInputState.ReadyToStart; return false; }
+                if (choice > 0) profiles.CpuLevel = choice;
+                battleSelectSetting.SetAiStrength(profiles.CpuLevel);
             }
             for (var slot = 0; slot < humanSlots.Length; slot++) {
                 if (!humanSlots[slot]) continue;
                 while (string.IsNullOrWhiteSpace(playerSession.GetName(slot))) {
-                    var choice = await cpuDialog.AskAsync($"{slot + 1}P 名前入力", "名前を1〜10文字で入力してください", new[] { "決定", "戻る" }, "");
+                    var choice = await cpuDialog.AskAsync($"{slot + 1}P 名前入力", "", new[] { "確定", "戻る" }, "", inputPlayerId: slot, directInput: true);
                     if (disposed) return false;
                     if (choice == 1) { inputState = SceneInputState.ReadyToStart; return false; }
-                    if (!PlayerProfileService.TryNormalizeName(cpuDialog.InputText, out var name)) continue;
+                    if (!PlayerProfileService.TryNormalizeName(PlayerProfileService.EnteredNameOrGuest(cpuDialog.InputText), out var name)) continue;
                     await profiles.SelectNameAsync(slot, name);
                     if (disposed) return false;
                 }

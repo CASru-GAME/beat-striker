@@ -28,6 +28,7 @@ public class ResultScene : System.IDisposable
     ResultPhase resultPhase;
     int lastPhaseAdvanceFrame;
     bool canAdvancePhase;
+    bool disposed;
 
     [Inject]
     public ResultScene(ResultSceneView resultSceneView, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IGamePadRegistry gamePadRegistry, PlayerSession playerSession)
@@ -71,6 +72,8 @@ public class ResultScene : System.IDisposable
 
     public void Dispose()
     {
+        disposed = true;
+        resultEndCompletionSource?.TrySetCanceled();
         resultInputSubscriptions.Dispose();
     }
 
@@ -91,9 +94,11 @@ public class ResultScene : System.IDisposable
 
     async void StartSummaryPhase()
     {
-        resultSceneView.ResultPanelButton.StartPhase1FromFlow();
-        await resultSceneView.ResultPanelButton.WaitForPhase1CompletedAsync();
-        canAdvancePhase = true;
+        try {
+            resultSceneView.ResultPanelButton.StartPhase1FromFlow();
+            await resultSceneView.ResultPanelButton.WaitForPhase1CompletedAsync();
+            if (!disposed && resultPhase == ResultPhase.Summary) canAdvancePhase = true;
+        } catch (System.OperationCanceledException) { }
     }
 
     void AdvanceResultPhase()
@@ -119,11 +124,7 @@ public class ResultScene : System.IDisposable
         {
             resultPhase = ResultPhase.Detail;
             canAdvancePhase = false;
-            LeanTween.delayedCall(0f, () =>
-            {
-                resultSceneView.ResultPanelButton.ContinueToPhase2FromFlow();
-                canAdvancePhase = true;
-            });
+            StartDetailPhase();
             return;
         }
 
@@ -131,6 +132,15 @@ public class ResultScene : System.IDisposable
         canAdvancePhase = false;
         resultInputSubscriptions.Clear();
         resultEndCompletionSource.TrySetResult(true);
+    }
+
+    async void StartDetailPhase()
+    {
+        try {
+            resultSceneView.ResultPanelButton.ContinueToPhase2FromFlow();
+            await resultSceneView.ResultPanelButton.WaitForPhase2CompletedAsync();
+            if (!disposed && resultPhase == ResultPhase.Detail) canAdvancePhase = true;
+        } catch (System.OperationCanceledException) { }
     }
 
     void ApplyBattleResults(IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> battleResults)

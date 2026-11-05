@@ -10,6 +10,7 @@ namespace Alice {
         public Color endColor = Color.white;
         public bool triangle;
         public bool pointUp;
+        public bool hexagon;
 
         protected override void OnPopulateMesh(VertexHelper vh) {
             vh.Clear();
@@ -25,6 +26,16 @@ namespace Alice {
                 return;
             }
             var cut = Mathf.Min(Mathf.Abs(slant), r.width * 0.45f);
+            if (hexagon) {
+                vh.AddVert(new Vector3(r.xMin, r.center.y), color, Vector2.zero);
+                vh.AddVert(new Vector3(r.xMin + cut, r.yMax), color, Vector2.up);
+                vh.AddVert(new Vector3(r.xMax - cut, r.yMax), endColor, Vector2.one);
+                vh.AddVert(new Vector3(r.xMax, r.center.y), endColor, Vector2.right);
+                vh.AddVert(new Vector3(r.xMax - cut, r.yMin), endColor, Vector2.right);
+                vh.AddVert(new Vector3(r.xMin + cut, r.yMin), color, Vector2.zero);
+                for (var i = 1; i < 5; i++) vh.AddTriangle(0, i, i + 1);
+                return;
+            }
             vh.AddVert(new Vector3(r.xMin, r.yMin), color, Vector2.zero);
             vh.AddVert(new Vector3(r.xMin + cut, r.yMax), color, Vector2.up);
             vh.AddVert(new Vector3(r.xMax, r.yMax), endColor, Vector2.one);

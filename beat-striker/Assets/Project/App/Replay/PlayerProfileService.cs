@@ -22,6 +22,8 @@ namespace Alice {
     }
 
     public class PlayerProfileService : IPlayerProfileService, IInitializable, ITickable, IDisposable {
+        public const string GuestName = "ゲスト";
+        public static string EnteredNameOrGuest(string input) => string.IsNullOrWhiteSpace(input) ? GuestName : input;
         readonly IPlayerRecordsApiClient recordsApi;
         readonly IBattleHistoryApiClient historyApi;
         readonly PlayerSession session;

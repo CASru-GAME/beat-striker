@@ -55,8 +55,7 @@ namespace Alice.Editor {
             var setup = EditorSceneManager.GetSceneManagerSetup();
             try {
                 Open("Screen/Ranking/RankingScene.unity");
-                font = Object.FindFirstObjectByType<RankingPresenterView>().GetComponentsInChildren<TMP_Text>(true).Select(t => t.font).FirstOrDefault(f => f);
-                if (!font) font = Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None).Select(t => t.font).First(f => f);
+                font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(Project + "Fonts/kaiso_up/Kaisotai-Next-UP-B SDF.asset");
                 MakeDialogPrefab();
                 EditPrefab("App/UI/ChoiceDialog.prefab", root => {
                     var canvas = root.GetComponent<Canvas>(); canvas.overrideSorting = true; canvas.sortingOrder = 2000;
@@ -80,7 +79,7 @@ namespace Alice.Editor {
                         if (!label) label = Text(identities,side+" identity","",25,Vector2.zero,Vector2.one);
                         label.transform.SetParent(identities,false); label.name=side+" identity";
                         var rect=label.rectTransform; rect.anchorMin=new Vector2(side=="left"?.04f:.54f,.045f); rect.anchorMax=new Vector2(side=="left"?.46f:.96f,.22f); rect.offsetMin=rect.offsetMax=Vector2.zero;
-                        label.enableAutoSizing=true; label.fontSizeMin=16; label.fontSizeMax=25; label.alignment=TextAlignmentOptions.Center;
+                        label.font = font; label.fontSharedMaterial = font.material; label.enableAutoSizing=true; label.fontSizeMin=16; label.fontSizeMax=25; label.alignment=TextAlignmentOptions.Center;
                         Set(view,side+"IdentityLabel",label);
                     }
                     Set(view,"identityGroup",group);
@@ -240,6 +239,7 @@ namespace Alice.Editor {
         static void AuthorMenu() {
             var view=Object.FindFirstObjectByType<MenuPresenterView>(); var button=(Component)Get(view,"trialEmitter");
             foreach(var text in button.GetComponentsInChildren<TMP_Text>(true)) {
+                text.font = font; text.fontSharedMaterial = font.material;
                 var serialized = new SerializedObject(text); serialized.FindProperty("m_text").stringValue = "試練";
                 serialized.FindProperty("m_fontStyle").intValue=(int)FontStyles.Bold; serialized.FindProperty("m_fontWeight").intValue=700; serialized.FindProperty("m_fontColor").colorValue=Color.white; serialized.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.RecordPrefabInstancePropertyModifications(text);

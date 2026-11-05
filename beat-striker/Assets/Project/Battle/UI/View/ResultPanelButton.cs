@@ -95,6 +95,7 @@ public class ResultPanelButton : MonoBehaviour
     private Button goBackButton;
     private CanvasGroup nextTextCanvasGroup;
     private TaskCompletionSource<bool> phase1CompletionSource;
+    private TaskCompletionSource<bool> phase2CompletionSource;
     private bool hasPlayedPhase1;
     private bool hasPlayedPhase2;
     private bool isInitialized;
@@ -292,6 +293,8 @@ public class ResultPanelButton : MonoBehaviour
         InitializeIfNeeded();
         phase1CompletionSource?.TrySetCanceled();
         phase1CompletionSource = new TaskCompletionSource<bool>();
+        phase2CompletionSource?.TrySetCanceled();
+        phase2CompletionSource = new TaskCompletionSource<bool>();
         hasPlayedPhase1 = false;
         hasPlayedPhase2 = false;
         StartPhase1Animation();
@@ -301,6 +304,7 @@ public class ResultPanelButton : MonoBehaviour
     {
         return phase1CompletionSource?.Task ?? Task.CompletedTask;
     }
+    public Task WaitForPhase2CompletedAsync() => phase2CompletionSource.Task;
 
     public void ContinueToPhase2FromFlow()
     {
@@ -370,6 +374,15 @@ public class ResultPanelButton : MonoBehaviour
         // GoBackボタンアニメーション
         float goBackStartTime = iconStartTime + goBackDelay;
         AnimateGoBackButton(goBackStartTime);
+        var completedAt = Mathf.Max(
+            blackImageDelay + blackImageScaleDuration,
+            lineStartTime + lineExpandDuration,
+            scoreStartTime + scoreSlideDuration,
+            comboStartTime + comboSlideDuration,
+            iconStartTime + iconPopupDuration,
+            goBackStartTime + goBackScaleDuration + nextTextDelay);
+        var completion = phase2CompletionSource;
+        LeanTween.delayedCall(gameObject, completedAt, () => completion.TrySetResult(true));
     }
 
     void AnimateBlackImage(float delay)
@@ -609,6 +622,8 @@ public class ResultPanelButton : MonoBehaviour
     
     void OnDestroy()
     {
+        phase1CompletionSource?.TrySetCanceled();
+        phase2CompletionSource?.TrySetCanceled();
         // イベントリスナーを解除
         if (button != null)
         {
@@ -663,6 +678,7 @@ public class ResultPanelButton : MonoBehaviour
         hasPlayedPhase1 = false;
         hasPlayedPhase2 = false;
         phase1CompletionSource?.TrySetCanceled();
+        phase2CompletionSource?.TrySetCanceled();
         
         if (blackImage != null)
         {
