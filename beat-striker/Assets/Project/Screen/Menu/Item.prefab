@@ -292,7 +292,10 @@ MonoBehaviour:
   hoverSound: {fileID: 8300000, guid: 0f3941ec304286b43ab29c66d26d690d, type: 3}
   image: {fileID: 8199561097406715422}
   icon: {fileID: 677131135795256040}
-  description: {fileID: 7100000000000000005}
+  description: {fileID: 7100000000000000009}
+  descriptionShowDuration: 0.18
+  descriptionHideDuration: 0.12
+  descriptionSlideDistance: 14
   scaleAnimationDuration: 0.2
   scaleAnimationAmount: 1.5
 --- !u!114 &3765211191088331549
@@ -831,6 +834,7 @@ GameObject:
   - component: {fileID: 7100000000000000006}
   - component: {fileID: 7100000000000000007}
   - component: {fileID: 7100000000000000008}
+  - component: {fileID: 7100000000000000009}
   m_Layer: 5
   m_Name: Mode description
   m_TagString: Untagged
@@ -896,3 +900,15 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &7100000000000000009
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7100000000000000005}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
