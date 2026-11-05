@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -27,25 +28,22 @@ namespace Alice {
             webRequest.downloadHandler = new DownloadHandlerBuffer();
             webRequest.SetRequestHeader("Content-Type", "application/json");
             await SendAsync(webRequest);
-            var response = JsonUtility.FromJson<BattleHistoryCreateResponse>(webRequest.downloadHandler.text);
-            if (response == null || !response.ok || string.IsNullOrWhiteSpace(response.id)) {
-                throw new InvalidOperationException("Battle history API returned an invalid save response.");
-            }
-            return response;
+            return ApiResponseParser.Read(webRequest, new BattleHistoryCreateResponse(), response => response.ok && !string.IsNullOrWhiteSpace(response.id));
         }
 
         public async Task<BattleHistorySummary[]> GetSummariesAsync(int limit) {
             using var webRequest = UnityWebRequest.Get($"{BuildUrl("/battle-histories")}&limit={Mathf.Clamp(limit, 1, 100)}");
             await SendAsync(webRequest);
-            var response = JsonUtility.FromJson<BattleHistoryListResponse>(webRequest.downloadHandler.text);
-            return response?.items ?? Array.Empty<BattleHistorySummary>();
+            return ApiResponseParser.Read(webRequest, new BattleHistoryListResponse { items = null }, response => response.items != null
+                && response.items.All(item => item != null && !string.IsNullOrWhiteSpace(item.id))).items;
         }
 
         public async Task<BattleHistoryDetail> GetDetailAsync(string id) {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Battle history ID is required.", nameof(id));
             using var webRequest = UnityWebRequest.Get(BuildUrl($"/battle-histories/{id}"));
             await SendAsync(webRequest);
-            return JsonUtility.FromJson<BattleHistoryDetail>(webRequest.downloadHandler.text);
+            return ApiResponseParser.Read(webRequest, new BattleHistoryDetail(), response => !string.IsNullOrWhiteSpace(response.id)
+                && response.replayPayload != null && response.replayPayload.schemaVersion == 1 && response.replayPayload.rounds != null);
         }
 
         string BuildUrl(string route) {
@@ -67,11 +65,11 @@ namespace Alice {
             }
 
             if (webRequest.result != UnityWebRequest.Result.Success) {
-                throw new InvalidOperationException($"Battle history API failed. url={webRequest.url}, status={webRequest.responseCode}, error={webRequest.error}, body={webRequest.downloadHandler?.text}");
+                throw new ApiRequestException(webRequest.responseCode, $"Battle history API failed. url={webRequest.url}, status={webRequest.responseCode}, error={webRequest.error}, body={webRequest.downloadHandler?.text}");
             }
             var contentType = webRequest.GetResponseHeader("Content-Type");
             if (string.IsNullOrEmpty(contentType) || !contentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase)) {
-                throw new InvalidOperationException($"Battle history API did not return JSON. Check the PHP API installation. url={webRequest.url}");
+                throw new ApiRequestException(webRequest.responseCode, $"Battle history API did not return JSON. Check the PHP API installation. url={webRequest.url}");
             }
         }
     }

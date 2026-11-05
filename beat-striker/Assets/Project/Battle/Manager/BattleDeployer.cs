@@ -20,6 +20,7 @@ namespace Alice {
     }
 
     public class BattleDeployer : IBattleDeployer, IDisposable {
+        readonly PlayerSession playerSession;
         class DeployedStriker {
             public int PlayerId;
             public Striker Striker;
@@ -70,7 +71,7 @@ namespace Alice {
         LearningCharacter lastSelectedOpponent;
 
         [Inject]
-        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IReplaySetting replaySetting, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter) {
+        public BattleDeployer(IBattleSetting battleSetting, IBattleSelectSetting battleSelectSetting, IBattleRuleSetting battleRuleSetting, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IStrikerRegistry strikerRegistry, IStrikerFactory strikerHubFactory, IGamePadRegistry gamePadRegistry, IReplaySetting replaySetting, IAIRegistry aiRegistry, IAISetting aiSetting, ITutorialSetting tutorialSetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IBattlePresenter battlePresenter, PlayerSession playerSession) {
             this.battleSetting = battleSetting;
             this.battleSelectSetting = battleSelectSetting;
             this.battleRuleSetting = battleRuleSetting;
@@ -86,6 +87,7 @@ namespace Alice {
             this.musicPlayer = musicPlayer;
             this.beatJudge = beatJudge;
             this.battlePresenter = battlePresenter;
+            this.playerSession = playerSession;
         }
 
         public Awaitable DeployAsync(BattleAddressablePreload preload = null) {
@@ -202,7 +204,7 @@ namespace Alice {
         void ApplyLearningSelections() {
             var p1Striker = aiSetting.LearningPlayer1Striker;
             playerSelectSetting.SelectStriker(0, p1Striker);
-            
+
             if (aiSetting.UsesSelfPlayOpponentSelection) {
                 playerSelectSetting.SelectStriker(1, p1Striker);
                 lastSelectedOpponentIndex = -1;
@@ -296,6 +298,7 @@ namespace Alice {
             isRoundPaused = false;
 
             foreach (var deployed in deployedStrikers) {
+                gamePadRegistry.ClearBattleOverride(deployed.PlayerId);
                 strikerRegistry.RequestUnregister(deployed.PlayerId);
 
                 if (deployed.PlayerTransform != null) {
@@ -338,6 +341,8 @@ namespace Alice {
                 }
 
                 var gamePad = gamePadRegistry.Get(playerId);
+                var forceCpu = playerSession.IsTrial && playerId == 1;
+                if (forceCpu && aiBrain != null) gamePadRegistry.RequestRegisterBattleOverride(playerId, aiBrain);
                 if (aiBrain != null) {
                     roundSubscriptions.Add(aiSetting.Mode.Subscribe(_ => {
                         if (playerId != 0 && !aiSetting.UsesSelfPlayOpponentSelection) {
@@ -354,7 +359,12 @@ namespace Alice {
                         return;
                     }
 
-                    if (!hasGamePad) {
+                    if (playerSession.IsTrial && playerId == 0) {
+                        aiBrain.DisableAiMode();
+                        if (!hasGamePad) battlePresenter.RequestPauseMenu();
+                    } else if (forceCpu) {
+                        aiBrain.EnableAiMode();
+                    } else if (!hasGamePad) {
                         aiBrain.EnableAiMode();
                         gamePadRegistry.RequestRegisterLowPriority(playerId, aiBrain);
                     } else {
@@ -511,14 +521,14 @@ namespace Alice {
 
             var aiBrain = UnityEngine.Object.Instantiate(brainPrefab, battleSetting.PlayerTransforms[playerId]);
             aiBrain.name = brainName;
-            
+
             bool initialShouldLearn = aiSetting.EnablesAgentLearning;
             if (playerId != 0 && !aiSetting.UsesSelfPlayOpponentSelection) {
                 initialShouldLearn = false;
             }
             aiBrain.ApplyLearningMode(initialShouldLearn);
             aiBrain.ConfigureDemonstrationRecording(aiSetting.IsDemonstrationRecordingMode, aiSetting.DemonstrationName, playerId);
-            
+
             aiBrain.DisableAiMode();
             return aiBrain;
         }

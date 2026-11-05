@@ -47,6 +47,8 @@ namespace Alice {
         const float RunnerReleaseWaitTimeoutSeconds = 30f;
 
         readonly IAppNetworkSetting networkSetting;
+        readonly PlayerSession playerSession;
+        readonly IPlayerProfileService profiles;
         readonly IOnlineDuelIdentity identity;
         readonly ReactiveProperty<OnlineDuelUiState> state;
         readonly CompositeDisposable disposables = new();
@@ -105,9 +107,10 @@ namespace Alice {
         }
 
         [Inject]
-        public OnlineDuelFusionClient(IAppNetworkSetting networkSetting, IOnlineDuelIdentity identity) {
+        public OnlineDuelFusionClient(IAppNetworkSetting networkSetting, IOnlineDuelIdentity identity, PlayerSession playerSession = null, IPlayerProfileService profiles = null) {
             this.networkSetting = networkSetting;
             this.identity = identity;
+            this.playerSession = playerSession; this.profiles = profiles;
             state = new ReactiveProperty<OnlineDuelUiState>(OnlineDuelUiState.Idle(identity.DuelSessionId));
         }
 
@@ -269,6 +272,7 @@ namespace Alice {
                 striker = (int)request.LocalStriker,
                 stage = (int)request.CandidateStage,
                 musicId = request.CandidateMusicId,
+                player = request.Player,
             });
 
             Debug.Log($"{LOG_PREFIX} [match#{mid}] Match request sent. reservationId={request.ReservationId}, striker={request.LocalStriker}, stage={request.CandidateStage}, musicId={request.CandidateMusicId}");
@@ -413,6 +417,11 @@ namespace Alice {
         }
 
         void SendCommand(OnlineDuelCommandPayload payload) {
+            if (playerSession != null && profiles != null) {
+                var name = playerSession.GetName(0);
+                if (!string.IsNullOrWhiteSpace(name)) payload.player = profiles.Get(name).Identity;
+                if (playerSession.IsTrial) payload.appOverlayEnabled = false;
+            }
             Debug.Log($"{LOG_PREFIX} SendCommand requested. kind={(OnlineDuelCommandKind)payload.kind}, scene={payload.scene}, sceneSyncId={payload.sceneSyncId}, runnerExists={runner != null}, runnerIsRunning={(runner != null && runner.IsRunning)}, commandSendSuspended={commandSendSuspended}");
             if (runner == null || !runner.IsRunning || commandSendSuspended) {
                 Debug.LogWarning($"{LOG_PREFIX} Command skipped because runner is not running or suspended. kind={(OnlineDuelCommandKind)payload.kind}, runnerExists={runner != null}, runnerIsRunning={(runner != null && runner.IsRunning)}, commandSendSuspended={commandSendSuspended}");
@@ -521,7 +530,7 @@ namespace Alice {
                 (Striker)payload.opponentStriker,
                 (Stage)payload.stage,
                 payload.musicId ?? "",
-                payload.localIsPlayer1);
+                payload.localIsPlayer1, payload.localPlayer, payload.opponentPlayer, payload.reservationId);
             var nextState = current with {
                 UiMode = OnlineDuelUiMode.EnterBattle,
                 LocalSessionId = string.IsNullOrWhiteSpace(payload.localSessionId) ? identity.DuelSessionId : payload.localSessionId,

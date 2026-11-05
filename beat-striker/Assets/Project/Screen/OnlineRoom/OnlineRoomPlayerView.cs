@@ -27,8 +27,8 @@ namespace Alice {
             onSelect = select;
             numberLabel.text = (index + 1).ToString("00");
             nameLabel.richText = false;
-            nameLabel.text = OnlineRoomView.PlayerName(sessionId);
-            statusLabel.text = player.canInvite ? "対戦OK" : "取り込み中";
+            nameLabel.text = player.player == null ? OnlineRoomView.PlayerName(sessionId) : player.player.name;
+            statusLabel.text = (player.player == null ? "" : player.player.GradeLabel + " / ") + (player.canInvite ? "対戦OK" : "取り込み中");
             selectionMark.SetActive(selected);
             var color = selected ? new Color32(255, 220, 0, 255)
                 : player.canInvite ? new Color32(0, 206, 224, 255) : new Color32(90, 95, 104, 255);

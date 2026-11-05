@@ -4,6 +4,13 @@ using UnityEngine.UI;
 
 namespace Alice {
     public class BattleTransitionView : AppTransitionPresenter {
+        [SerializeField] TMPro.TMP_Text leftIdentityLabel;
+        [SerializeField] TMPro.TMP_Text rightIdentityLabel;
+        [SerializeField] CanvasGroup identityGroup;
+        public void SetIdentities(string left, string right) {
+            leftIdentityLabel.richText = rightIdentityLabel.richText = false;
+            leftIdentityLabel.text = left; rightIdentityLabel.text = right;
+        }
         [Header("Portraits")]
         [SerializeField] Image leftPortraitImage;
         [SerializeField] Image rightPortraitImage;
@@ -83,6 +90,7 @@ namespace Alice {
             await ShakeTransitionRootAsync();
 
             await ShowVsAsync();
+            identityGroup.alpha = 1f;
 
             if (holdDuration > 0f) {
                 await DelayAsync(holdDuration);
@@ -90,6 +98,7 @@ namespace Alice {
         }
 
         public async Task PlayTransitionInAsync() {
+            identityGroup.alpha = 0f;
             CancelAllTweens();
             var leftStart = leftMergePosition;
             var rightStart = rightMergePosition;
@@ -117,6 +126,7 @@ namespace Alice {
         }
 
         void ResetVisualState() {
+            identityGroup.alpha = 0f;
             leftPortraitTransform.anchoredPosition = ResolveLocalPosition(leftStartAnchor);
             rightPortraitTransform.anchoredPosition = ResolveLocalPosition(rightStartAnchor);
             leftPortraitTransform.localScale = Vector3.one;

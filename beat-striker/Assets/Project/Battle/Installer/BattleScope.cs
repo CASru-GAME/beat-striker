@@ -5,8 +5,9 @@ using VContainer;
 using VContainer.Unity;
 
 namespace Alice {
-    
+
     public class BattleScope : LifetimeScope {
+        [SerializeField] ChoiceDialogView trialDialog;
         [SerializeField] BattleSetting battleSetting;
         [SerializeField] AudioSource audioSource;
         [SerializeField] BattleOpeningBgmPlayer battleOpeningBgmPlayer;
@@ -18,6 +19,7 @@ namespace Alice {
         const string LOG_PREFIX = "[BattleScope]";
 
         protected override void Configure(IContainerBuilder builder) {
+            builder.RegisterInstance(trialDialog);
             Debug.Log($"{LOG_PREFIX} Configure begin. scene={gameObject.scene.name}, playerPresenterCount={battlePlayerPresenters.Length}");
             builder.Register<IStrikerRegistry, StrikerRegistry>(Lifetime.Singleton);
             builder.Register<IStrikerFactory, StrikerHubFactory>(Lifetime.Singleton);

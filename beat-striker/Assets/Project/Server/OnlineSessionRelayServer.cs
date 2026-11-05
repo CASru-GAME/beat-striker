@@ -112,6 +112,7 @@ namespace Alice {
             }
 
             RegisterSession(player, command.duelSessionId, command.scene, command.appOverlayEnabled, command.playerStatus, command.sceneSyncId);
+            if (command.player != null) presenceBySession[command.duelSessionId].Identity = command.player;
 
             var affected = new HashSet<string>();
             affected.Add(command.duelSessionId);
@@ -420,7 +421,7 @@ namespace Alice {
                 (Stage)command.stage,
                 command.musicId ?? "",
                 command.reservationId ?? "",
-                command.duelSessionId);
+                command.duelSessionId, command.player);
             if (string.IsNullOrWhiteSpace(request.ReservationId)) {
                 SendError(player, command.duelSessionId, "reservationId is required.");
                 return true;
@@ -482,6 +483,7 @@ namespace Alice {
                 stage = (int)selectedStage,
                 musicId = selectedMusicId,
                 localIsPlayer1 = true,
+                localPlayer = player1Request.Player, opponentPlayer = player2Request.Player,
             });
             SendEvent(p2, new OnlineDuelEventPayload {
                 kind = (int)OnlineDuelEventKind.MatchResult,
@@ -493,6 +495,7 @@ namespace Alice {
                 stage = (int)selectedStage,
                 musicId = selectedMusicId,
                 localIsPlayer1 = false,
+                localPlayer = player2Request.Player, opponentPlayer = player1Request.Player,
             });
 
             Debug.Log($"{LOG_PREFIX} Match decided. p1={player1Request.DuelSessionId}, p2={player2Request.DuelSessionId}, reservationId={reservationId}, stage={selectedStage}, musicId={selectedMusicId}");
@@ -518,6 +521,7 @@ namespace Alice {
                 if (presence.SessionId == viewerSessionId || !IsActiveDuelSession(presence.SessionId)) continue;
                 players.Add(new OnlineRoomPlayer {
                     sessionId = presence.SessionId,
+                    player = presence.Identity,
                     scene = presence.Scene,
                     status = presence.Status,
                     canInvite = IsDuelCandidateEligible(presence.SessionId)
@@ -1082,6 +1086,7 @@ namespace Alice {
         }
 
         class PresenceState {
+            public PlayerIdentity Identity;
             public string SessionId;
             public PlayerRef Player;
             public string Scene;

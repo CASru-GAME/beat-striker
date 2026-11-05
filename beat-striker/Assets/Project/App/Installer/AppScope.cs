@@ -35,6 +35,7 @@ namespace Alice {
 		[SerializeField] VirtualTouchControllerCanvasView virtualTouchControllerCanvasView;
 		[SerializeField] LoadingView loadingView;
 		[SerializeField] AppOverlayView appOverlayView;
+        [SerializeField] TrialSetting trialSetting;
 
 		public IAppAudioPlayer AppAudioPlayer => appAudioPlayer;
 
@@ -105,6 +106,13 @@ namespace Alice {
 			builder.Register<IOnlineDuelIdentity, OnlineDuelIdentity>(Lifetime.Singleton);
 			builder.Register<IBattleHistoryApiClient, BattleHistoryApiClient>(Lifetime.Singleton);
 			builder.Register<IReplaySetting, ReplaySetting>(Lifetime.Singleton);
+            builder.Register<PlayerSession>(Lifetime.Singleton);
+            builder.RegisterInstance(new PlayerRecordStorage(System.IO.Path.Combine(Application.persistentDataPath, "player-records")));
+            builder.Register<RankingNavigationState>(Lifetime.Singleton);
+            builder.RegisterInstance(trialSetting);
+            builder.Register<IPlayerRecordsApiClient, PlayerRecordsApiClient>(Lifetime.Singleton);
+            builder.RegisterEntryPoint<PlayerProfileService>(Lifetime.Singleton).AsSelf().As<IPlayerProfileService>();
+            builder.Register<TrialController>(Lifetime.Singleton);
 
 			builder.RegisterInstance(playerInputManager);
 			builder.RegisterEntryPoint<InputGuidePresenter>(Lifetime.Singleton);

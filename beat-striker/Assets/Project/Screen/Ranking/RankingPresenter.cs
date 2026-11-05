@@ -27,6 +27,19 @@ namespace Alice {
         readonly IMusicRegistry musicRegistry;
         readonly IAppStrikerRegistry strikerRegistry;
         readonly CompositeDisposable subscriptions = new();
+        readonly IPlayerRecordsApiClient records;
+        readonly IPlayerProfileService profiles;
+        readonly PlayerSession session;
+        readonly RankingNavigationState navigation;
+        readonly List<PlayerProfile> ranking = new();
+        readonly List<RankingBattleHistoryEntry> histories = new();
+        readonly string[] cursors = new string[6];
+        readonly bool[] hasMore = new bool[6];
+        readonly bool[] loadingGrade = new bool[6];
+        readonly bool[] failedGrade = new bool[6];
+        string selectedPlayer = "", historyCursor = "";
+        bool historyLoading;
+        int historyOperation;
         RankingInputState inputState = RankingInputState.Ready;
         bool disposed;
 
@@ -41,7 +54,7 @@ namespace Alice {
             IPlayerSelectSetting playerSelectSetting,
             IAppNetworkSetting appNetworkSetting,
             IMusicRegistry musicRegistry,
-            IAppStrikerRegistry strikerRegistry) {
+            IAppStrikerRegistry strikerRegistry, IPlayerRecordsApiClient records, IPlayerProfileService profiles, PlayerSession session, RankingNavigationState navigation) {
             this.view = view;
             this.historyListView = historyListView;
             this.sceneTransitionService = sceneTransitionService;
@@ -52,6 +65,11 @@ namespace Alice {
             this.appNetworkSetting = appNetworkSetting;
             this.musicRegistry = musicRegistry;
             this.strikerRegistry = strikerRegistry;
+            this.records = records; this.profiles = profiles; this.session = session; this.navigation = navigation;
+            view.PlayerSelected.Subscribe(name => { _ = LoadPlayerHistoryAsync(name, false); }).AddTo(subscriptions);
+            view.MoreGradeRequested.Subscribe(grade => { _ = LoadGradeAsync(grade, false); }).AddTo(subscriptions);
+            view.MoreHistoryRequested.Subscribe(ignored => { _ = LoadPlayerHistoryAsync(selectedPlayer, true); }).AddTo(subscriptions);
+            view.CloseHistoryRequested.Subscribe(_ => { if (inputState != RankingInputState.Ready) return; historyOperation++; historyLoading = false; selectedPlayer = ""; view.CloseHistory(); }).AddTo(subscriptions);
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.view.BackToMenuRequested
@@ -72,25 +90,85 @@ namespace Alice {
         }
 
         async Task EnterRankingAsync() {
+            await Task.Yield();
+            if (disposed) return;
             Debug.Log($"{LOG_PREFIX} EnterRankingAsync requesting end transition. scene={AppScene.Ranking}");
             var result = await sceneTransitionService.RequestEndTransitionAsync(AppScene.Ranking);
             if (disposed) return;
             Debug.Log($"{LOG_PREFIX} EnterRankingAsync end transition completed. isSuccess={result.IsSuccess}");
-            await LoadHistoryAsync();
+            if (navigation.HasRankingSnapshot) {
+                ranking.AddRange(navigation.RankingEntries.Select(profile => profile with { }));
+                Array.Copy(navigation.RankingCursors, cursors, cursors.Length);
+                for (var grade = 0; grade < hasMore.Length; grade++) hasMore[grade] = !string.IsNullOrEmpty(cursors[grade]);
+            } else {
+                ranking.AddRange(profiles.CachedRanking);
+            }
+            PresentRanking();
+            view.SetRankingStatus(cursors.Any(cursor => cursor == null) ? "階級を読み込んでいます…" : "");
+            if (!string.IsNullOrEmpty(navigation.PlayerName)) {
+                selectedPlayer = navigation.PlayerName; historyCursor = navigation.HistoryCursor;
+                histories.AddRange(navigation.Entries); historyListView.SetEntries(histories, navigation.HistoryRowPosition);
+                view.ShowHistory(selectedPlayer, !string.IsNullOrEmpty(historyCursor));
+            }
+            // A null cursor means the initial page has not completed. An empty cursor means that grade is exhausted.
+            await Task.WhenAll(Enumerable.Range(0, cursors.Length).Where(grade => cursors[grade] == null).Select(grade => LoadGradeAsync(grade, true)));
+            if (disposed) return;
+            Canvas.ForceUpdateCanvases(); view.ListPosition = navigation.ListPosition;
         }
 
-        async Task LoadHistoryAsync() {
+        void PresentRanking() {
+            view.SetRanking(ranking.Concat(profiles.CachedRanking).GroupBy(profile => profile.name)
+                .Select(group => group.OrderByDescending(profile => profile.grade).ThenBy(profile => profile.acquiredAt, StringComparer.Ordinal).First())
+                .OrderBy(p => p.grade).ThenBy(p => p.acquiredAt, StringComparer.Ordinal)
+                .Select(p => new RankingPlayerEntry(p.name, p.grade, FormatDate(p.acquiredAt))), hasMore);
+        }
+
+        async Task LoadGradeAsync(int grade, bool reset) {
+            if (disposed || loadingGrade[grade]) return;
+            loadingGrade[grade] = true;
             try {
-                var summaries = await battleHistoryApiClient.GetSummariesAsync(50);
+                var page = await records.GetRankingAsync(grade, reset ? "" : cursors[grade] ?? "");
                 if (disposed) return;
-                historyListView.SetEntries(summaries.Select(ToEntry));
+                // Grades never decrease. Concurrent grade pages can describe the same player before and after a promotion.
+                foreach (var profile in page.items) {
+                    if (ranking.Any(current => current.name == profile.name && current.grade > profile.grade)) continue;
+                    ranking.RemoveAll(current => current.name == profile.name);
+                    ranking.Add(profile);
+                }
+                cursors[grade] = page.nextCursor ?? ""; hasMore[grade] = !string.IsNullOrEmpty(cursors[grade]);
+                failedGrade[grade] = false; PresentRanking(); profiles.CacheRanking(ranking);
+            } catch (Exception exception) {
+                failedGrade[grade] = true;
+                if (!disposed) {
+                    hasMore[grade] = !string.IsNullOrEmpty(cursors[grade]) || cursors[grade] == null;
+                    PresentRanking();
+                    Debug.Log($"[Ranking] {exception.Message}");
+                }
+            } finally {
+                loadingGrade[grade] = false;
+                if (!disposed) view.SetRankingStatus(failedGrade.Any(failed => failed) ? "オフライン：保存済みの階級を含めて表示しています" : loadingGrade.Any(loading => loading) ? "階級を読み込んでいます…" : "");
             }
-            catch (Exception exception) {
-                if (disposed) return;
-                Debug.LogWarning($"{LOG_PREFIX} Failed to load battle histories: {exception.Message}");
-                historyListView.SetEntries(Array.Empty<RankingBattleHistoryEntry>());
-                historyListView.ShowStatus("通信できませんでした", "しばらくしてから再度開いてください");
-            }
+        }
+
+        async Task LoadPlayerHistoryAsync(string name, bool append) {
+            if (disposed || inputState != RankingInputState.Ready || historyLoading) return;
+            historyLoading = true; selectedPlayer = name;
+            var operation = ++historyOperation;
+            var rowPosition = append ? historyListView.RowPosition : 0;
+            if (!append) { histories.Clear(); historyCursor = ""; historyListView.SetEntries(histories); }
+            view.ShowHistory(name, false); historyListView.ShowStatus("読み込み中", "対戦履歴を取得しています");
+            try {
+                var page = await records.GetHistoryAsync(name, append ? historyCursor : "");
+                if (disposed || operation != historyOperation) return;
+                foreach (var entry in page.items.Select(ToEntry)) if (!histories.Any(row => row.Id == entry.Id)) histories.Add(entry);
+                historyCursor = page.nextCursor; historyListView.SetEntries(histories, rowPosition); view.ShowHistory(name, !string.IsNullOrEmpty(historyCursor));
+            } catch (Exception exception) {
+                if (!disposed && operation == historyOperation) {
+                    view.ShowHistory(name, !string.IsNullOrEmpty(historyCursor));
+                    historyListView.ShowStatus("通信できませんでした", append && !string.IsNullOrEmpty(historyCursor) ? "「さらに表示」で再試行できます" : "一度閉じて、もう一度選んでください");
+                    Debug.Log($"[Ranking] {exception.Message}");
+                }
+            } finally { if (operation == historyOperation) historyLoading = false; }
         }
 
         async Task RequestReplayAsync(string id) {
@@ -108,6 +186,11 @@ namespace Alice {
                     return;
                 }
 
+                navigation.PlayerName = selectedPlayer; navigation.HistoryCursor = historyCursor;
+                navigation.ListPosition = view.ListPosition; navigation.HistoryRowPosition = historyListView.RowPosition; navigation.Entries = histories.ToArray();
+                navigation.CaptureRanking(ranking, cursors);
+                session.SetMode(BattlePlayMode.Replay);
+                session.Prepare(detail.participants is { Length: 2 } ? detail.participants : Enumerable.Range(0, 2).Select(slot => new PlayerIdentity { name = GetArrayValue(detail.playerNames, slot, "ゲスト"), grade = -1 }).ToArray());
                 replaySetting.SetReplay(detail.replayPayload);
                 appNetworkSetting.SetLocalOnlinePlayerId(0);
                 ApplyReplaySelections(detail.replayPayload);
@@ -134,6 +217,8 @@ namespace Alice {
             }
 
             Debug.Log($"{LOG_PREFIX} RequestTransitionToMenu requesting start transition. nextScene={AppScene.Menu}");
+            navigation.Clear();
+            session.SetMode(BattlePlayMode.Local);
             RequestTransition(AppScene.Menu);
         }
 

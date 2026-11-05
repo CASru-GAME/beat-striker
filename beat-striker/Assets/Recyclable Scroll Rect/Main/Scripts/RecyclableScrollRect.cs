@@ -48,6 +48,32 @@ namespace PolyAndCode.UI
 
         private RecyclingSystem _recyclingSystem;
         private Vector2 _prevAnchoredPos;
+        private Coroutine _initialization;
+        private float _requestedVerticalRowPosition;
+        private bool _initializing;
+        private bool _reloadPending;
+
+        /// <summary>Logical row position, including the fraction of the first visible row.</summary>
+        public float VerticalRowPosition => !_initializing && _recyclingSystem is VerticalRecyclingSystem verticalSystem
+            ? verticalSystem.RowPosition
+            : _requestedVerticalRowPosition;
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            if (_recyclingSystem != null && _reloadPending) InitializeRows();
+        }
+
+        protected override void OnDisable()
+        {
+            if (_initialization != null)
+            {
+                StopCoroutine(_initialization);
+                _initialization = null;
+                _reloadPending = _initializing = true;
+            }
+            base.OnDisable();
+        }
 
         protected override void Start()
         {
@@ -78,12 +104,25 @@ namespace PolyAndCode.UI
             vertical = Direction == DirectionType.Vertical;
             horizontal = Direction == DirectionType.Horizontal;
 
-            _prevAnchoredPos = content.anchoredPosition;
+            InitializeRows();
+        }
+
+        private void InitializeRows()
+        {
+            _reloadPending = _initializing = true;
+            if (!isActiveAndEnabled) return;
+            if (_initialization != null) StopCoroutine(_initialization);
+            StopMovement();
             onValueChanged.RemoveListener(OnValueChangedListener);
-            //Adding listener after pool creation to avoid any unwanted recycling behaviour.(rare scenerio)
-            StartCoroutine(_recyclingSystem.InitCoroutine(() =>
-                                                               onValueChanged.AddListener(OnValueChangedListener)
-                                                              ));
+            _initialization = StartCoroutine(_recyclingSystem.InitCoroutine(() =>
+            {
+                if (_recyclingSystem is VerticalRecyclingSystem verticalSystem)
+                    verticalSystem.RowPosition = _requestedVerticalRowPosition;
+                _prevAnchoredPos = content.anchoredPosition;
+                _reloadPending = _initializing = false;
+                _initialization = null;
+                onValueChanged.AddListener(OnValueChangedListener);
+            }));
         }
 
         /// <summary>
@@ -121,15 +160,18 @@ namespace PolyAndCode.UI
         /// </summary>
         public void ReloadData(IRecyclableScrollRectDataSource dataSource)
         {
+            ReloadData(dataSource, 0);
+        }
+
+        /// <summary>Reloads rows and restores a logical vertical row position once initialization completes.</summary>
+        public void ReloadData(IRecyclableScrollRectDataSource dataSource, float verticalRowPosition)
+        {
+            DataSource = dataSource;
+            _requestedVerticalRowPosition = verticalRowPosition;
             if (_recyclingSystem != null)
             {
-                StopMovement();
-                onValueChanged.RemoveListener(OnValueChangedListener);
                 _recyclingSystem.DataSource = dataSource;
-                StartCoroutine(_recyclingSystem.InitCoroutine(() =>
-                                                               onValueChanged.AddListener(OnValueChangedListener)
-                                                              ));
-                _prevAnchoredPos = content.anchoredPosition;
+                InitializeRows();
             }
         }
 

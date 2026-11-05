@@ -40,6 +40,7 @@ namespace Alice {
 
     [Serializable]
     public class OnlineRoomPlayer {
+        public PlayerIdentity player;
         public string sessionId;
         public string scene;
         public OnlineDuelPlayerStatus status;
@@ -122,6 +123,7 @@ namespace Alice {
 
     [Serializable]
     public class OnlineDuelCommandPayload {
+        public PlayerIdentity player;
         public int kind;
         public string duelSessionId;
         public string scene;
@@ -138,6 +140,8 @@ namespace Alice {
 
     [Serializable]
     public class OnlineDuelEventPayload {
+        public PlayerIdentity localPlayer;
+        public PlayerIdentity opponentPlayer;
         public int kind;
         public int seq;
         public int uiMode;

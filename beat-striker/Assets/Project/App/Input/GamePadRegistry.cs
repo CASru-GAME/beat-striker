@@ -24,6 +24,8 @@ namespace Alice {
         IPlayerGamePad RequestRegister(IGamePad gamePad);
         IPlayerGamePad RequestRegister(int playerId, IGamePad gamePad);
         IPlayerGamePad RequestRegisterReplay(int playerId, IGamePad gamePad);
+        void RequestRegisterBattleOverride(int playerId, IGamePad gamePad);
+        void ClearBattleOverride(int playerId);
         IPlayerGamePad RequestRegisterLowPriority(int playerId, IGamePad gamePad);
         void RestoreReplayOverrides();
         void RequestUnregister(int playerId);
@@ -47,6 +49,7 @@ namespace Alice {
     }
 
     public class GamePadRegistry : IGamePadRegistry {
+        readonly PlayerSession playerSession;
         readonly List<PlayerGamePad> registry = new();
         readonly Subject<PlayerGamePadButtonEvent> onAnyButtonDown = new();
         readonly Dictionary<int, Option<IGamePad>> replayOverridePreviousPrimaryByPlayerId = new();
@@ -56,7 +59,8 @@ namespace Alice {
         public Observable<PlayerGamePadButtonEvent> OnAnyButtonDown => onAnyButtonDown;
 
         [Inject]
-        public GamePadRegistry() {
+        public GamePadRegistry(PlayerSession playerSession = null) {
+            this.playerSession = playerSession;
         }
 
         public IPlayerGamePad RequestRegister(IGamePad gamePad) {
@@ -94,6 +98,11 @@ namespace Alice {
             Debug.Log($"Registered Replay GamePad {gamePad.DeviceName} to Player {playerId}".ToGreen());
             return playerGamePad;
         }
+
+        public void RequestRegisterBattleOverride(int playerId, IGamePad gamePad) {
+            EnsurePlayerSlot(playerId).SetBattleOverride(gamePad.ToOption());
+        }
+        public void ClearBattleOverride(int playerId) => EnsurePlayerSlot(playerId).SetBattleOverride(null);
 
         public void RestoreReplayOverrides() {
             foreach (var pair in replayOverridePreviousPrimaryByPlayerId) {
@@ -225,6 +234,7 @@ namespace Alice {
 
         void HandleButtonDown(int playerId, GamePadButton button) {
             var player = EnsurePlayerSlot(playerId);
+            if (playerSession != null && playerSession.IsNameInputActive && player.DeviceName == "Keybord") return;
             var mappedButton = MapFaceButton(button);
             onAnyButtonDown.OnNext(new PlayerGamePadButtonEvent(playerId, mappedButton));
             player.EmitButtonDown(mappedButton);
@@ -314,6 +324,7 @@ namespace Alice {
             public Observable<GamePadButton> OnButtonUp => onButtonUp;
 
             Option<IGamePad> current;
+            Option<IGamePad> battleOverride;
             bool isPrimaryInput;
             readonly Subject<Vector2> onDirection = new();
             readonly Subject<Unit> onDirectionCanceled = new();
@@ -346,6 +357,7 @@ namespace Alice {
                 hasGamePad.OnNext(isPrimaryInput);
                 Current = gamePad;
             }
+            public void SetBattleOverride(Option<IGamePad> gamePad) { battleOverride = gamePad; SwitchCurrent(); }
 
             public void SetLowPriority(Option<IGamePad> gamePad) {
                 if (isPrimaryInput) {
@@ -386,7 +398,8 @@ namespace Alice {
                 buttonDownSubscription?.Dispose();
                 buttonUpSubscription?.Dispose();
 
-                if (current.TryGetValue(out var activeGamePad)) {
+                var effective = battleOverride.TryGetValue(out _) ? battleOverride : current;
+                if (effective.TryGetValue(out var activeGamePad)) {
                     directionSubscription = activeGamePad.OnDirectionAsObservable.Subscribe(onDirection.OnNext);
                     directionCanceledSubscription = activeGamePad.OnDirectionCanceledAsObservable.Subscribe(onDirectionCanceled.OnNext);
                     buttonDownSubscription = activeGamePad.OnButtonDownAsObservable.Subscribe(button => buttonDownHandler(PlayerId, button));

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using App;
 using R3;
 using UnityEngine;
@@ -9,6 +8,8 @@ using VContainer;
 
 namespace Alice {
     public class BattleReplayRecorder : IDisposable {
+        readonly PlayerSession playerSession;
+        readonly IPlayerProfileService profiles;
         const string LOG_PREFIX = "[BattleReplayRecorder]";
         const int PlayerCount = 2;
         const float PreBeatSnapshotLeadSeconds = 0.05f;
@@ -21,7 +22,6 @@ namespace Alice {
         readonly IBeatjudge beatJudge;
         readonly IMusicPlayer musicPlayer;
         readonly IStrikerRegistry strikerRegistry;
-        readonly IBattleHistoryApiClient apiClient;
         readonly IReplaySetting replaySetting;
         readonly IAISetting aiSetting;
         readonly List<ReplayRoundBuilder> rounds = new();
@@ -32,6 +32,7 @@ namespace Alice {
         ReplayRoundBuilder currentRound;
         bool battleStarted;
         bool finished;
+        public string SaveFailure { get; private set; } = "";
 
         [Inject]
         public BattleReplayRecorder(
@@ -43,9 +44,8 @@ namespace Alice {
             IBeatjudge beatJudge,
             IMusicPlayer musicPlayer,
             IStrikerRegistry strikerRegistry,
-            IBattleHistoryApiClient apiClient,
             IReplaySetting replaySetting,
-            IAISetting aiSetting) {
+            IAISetting aiSetting, PlayerSession playerSession, IPlayerProfileService profiles) {
             this.battleSelectSetting = battleSelectSetting;
             this.playerSelectSetting = playerSelectSetting;
             this.stageRegistry = stageRegistry;
@@ -54,9 +54,9 @@ namespace Alice {
             this.beatJudge = beatJudge;
             this.musicPlayer = musicPlayer;
             this.strikerRegistry = strikerRegistry;
-            this.apiClient = apiClient;
             this.replaySetting = replaySetting;
             this.aiSetting = aiSetting;
+            this.playerSession = playerSession; this.profiles = profiles;
         }
 
         public void BeginBattle() {
@@ -66,6 +66,7 @@ namespace Alice {
 
             battleStarted = true;
             finished = false;
+            SaveFailure = "";
             rounds.Clear();
             recordedPreBeatSnapshots.Clear();
             saveRequest = BuildInitialRequest();
@@ -99,16 +100,10 @@ namespace Alice {
             saveRequest.playedAt = DateTime.UtcNow.ToString("O");
             saveRequest.replayPayload.rounds = rounds.Select(round => round.Build()).ToArray();
             StopRecording();
-            _ = SaveAsync(saveRequest);
-        }
-
-        async Task SaveAsync(BattleHistorySaveRequest request) {
-            try {
-                await apiClient.SaveAsync(request);
-                Debug.Log($"<color=cyan>{LOG_PREFIX} Battle history upload succeeded.</color>");
-            }
-            catch (Exception exception) {
-                Debug.Log($"<color=red>{LOG_PREFIX} Failed to upload battle history (continuing): {exception.Message}</color>");
+            try { profiles.Record(saveRequest); }
+            catch (Exception exception) when (exception is System.IO.IOException || exception is UnauthorizedAccessException) {
+                SaveFailure = "記録を保存できませんでした。保存先の空き容量を確認してください。";
+                Debug.LogWarning($"{LOG_PREFIX} Local record could not be persisted: {exception.Message}");
             }
         }
 
@@ -128,7 +123,12 @@ namespace Alice {
             }
 
             return new BattleHistorySaveRequest {
-                playerNames = new[] { "ゲスト", "ゲスト" },
+                battleId = playerSession.BattleId,
+                mode = playerSession.Mode.ToString(),
+                participants = playerSession.Participants.ToArray(),
+                trialStartGrade = playerSession.TrialStartGrade,
+                trialTargetGrade = playerSession.TrialTargetGrade,
+                playerNames = playerSession.Participants.Select(player => player.name).ToArray(),
                 stage = selectedStage.ToString(),
                 stageName = stageRegistry.GetByStage(selectedStage).DisplayName,
                 musicId = selectedMusicId,
@@ -220,7 +220,7 @@ namespace Alice {
         }
 
         bool ShouldSkipHistoryRecording() {
-            return replaySetting.HasReplay || aiSetting.IsInfiniteRoundMode;
+            return replaySetting.HasReplay || aiSetting.IsInfiniteRoundMode || playerSession.Mode == BattlePlayMode.Tutorial;
         }
 
         public void Dispose() {

@@ -38,6 +38,33 @@ namespace PolyAndCode.UI
         //Cached zero vector 
         private Vector2 zeroVector = Vector2.zero;
 
+        public float RowPosition
+        {
+            get => _cellPool == null || _cellPool.Count == 0 || _cellHeight <= 0
+                ? 0
+                : (currentItemCount - _cellPool.Count) / (float)_coloumns + Content.anchoredPosition.y / _cellHeight;
+            set
+            {
+                if (_cellPool == null || _cellPool.Count == 0 || _cellHeight <= 0) return;
+                var totalRows = Mathf.CeilToInt(DataSource.GetItemCount() / (float)_coloumns);
+                var visibleRows = Viewport.rect.height / _cellHeight;
+                var position = Mathf.Clamp(value, 0, Mathf.Max(0, totalRows - visibleRows));
+                var bufferRows = Mathf.Max(0, Mathf.FloorToInt((_cellPool.Count / (float)_coloumns - visibleRows) * 0.5f));
+                var firstIndex = Mathf.Clamp(Mathf.FloorToInt(position) - bufferRows, 0, (DataSource.GetItemCount() - _cellPool.Count) / _coloumns) * _coloumns;
+                for (var index = 0; index < _cellPool.Count; index++)
+                {
+                    _cellPool[index].anchoredPosition = new Vector2(IsGrid ? index % _coloumns * _cellWidth : 0, -(index / _coloumns) * _cellHeight);
+                    DataSource.SetCell(_cachedCells[index], firstIndex + index);
+                }
+                currentItemCount = firstIndex + _cellPool.Count;
+                topMostCellIndex = 0;
+                bottomMostCellIndex = _cellPool.Count - 1;
+                _topMostCellColoumn = 0;
+                _bottomMostCellColoumn = bottomMostCellIndex % _coloumns;
+                Content.anchoredPosition = new Vector2(Content.anchoredPosition.x, (position - firstIndex / (float)_coloumns) * _cellHeight);
+            }
+        }
+
         #region INIT
         public VerticalRecyclingSystem(RectTransform prototypeCell, RectTransform viewport, RectTransform content, IRecyclableScrollRectDataSource dataSource, bool isGrid, int coloumns)
         {

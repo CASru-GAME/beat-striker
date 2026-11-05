@@ -16,6 +16,7 @@ public class BattleHistoryApiClientTests {
     GameObject owner;
     HttpListener server;
     BattleHistoryApiClient client;
+    PlayerRecordsApiClient recordsClient;
 
     [SetUp]
     public void SetUp() {
@@ -32,6 +33,7 @@ public class BattleHistoryApiClientTests {
         typeof(AppNetworkSetting).GetField("cloudApiBaseUrl", BindingFlags.NonPublic | BindingFlags.Instance)
             .SetValue(setting, baseUrl + "/beat-striker/");
         client = new BattleHistoryApiClient(setting);
+        recordsClient = new PlayerRecordsApiClient(setting);
     }
 
     [TearDown]
@@ -89,17 +91,79 @@ public class BattleHistoryApiClientTests {
         yield return WaitFor(list, served);
         Assert.That(list.IsFaulted, Is.True);
         Assert.That(list.Exception.GetBaseException().Message, Does.Contain("status=500"));
+        var failure = (ApiRequestException)list.Exception.GetBaseException();
+        Assert.That(failure.StatusCode, Is.EqualTo(500));
+        Assert.That(failure.IsTransient, Is.True);
 
         served = RespondOnce("<html>Installation page</html>", 200, "text/html");
         list = client.GetSummariesAsync(50);
         yield return WaitFor(list, served);
         Assert.That(list.IsFaulted, Is.True);
         Assert.That(list.Exception.GetBaseException().Message, Does.Contain("did not return JSON"));
+        failure = (ApiRequestException)list.Exception.GetBaseException();
+        Assert.That(failure.StatusCode, Is.EqualTo(200));
+        Assert.That(failure.IsTransient, Is.False);
+    }
+
+    [TestCase(0, true)]
+    [TestCase(408, true)]
+    [TestCase(429, true)]
+    [TestCase(500, true)]
+    [TestCase(503, true)]
+    [TestCase(400, false)]
+    [TestCase(413, false)]
+    [TestCase(200, false)]
+    public void FailureClassificationRetainsStatus(long status, bool transient) {
+        var exception = new ApiRequestException(status, "test failure");
+        Assert.That(exception.StatusCode, Is.EqualTo(status));
+        Assert.That(exception.IsTransient, Is.EqualTo(transient));
+    }
+
+    [UnityTest]
+    public IEnumerator InvalidJsonAndContractsArePermanentFailures() {
+        foreach (var body in new[] { "{", "{}", "{\"ok\":true}", "[]" }) {
+            var served = RespondOnce(body);
+            var save = client.SaveAsync(new BattleHistorySaveRequest());
+            yield return WaitFor(save, served);
+            Assert.That(save.Exception.GetBaseException(), Is.TypeOf<ApiRequestException>());
+            Assert.That(((ApiRequestException)save.Exception.GetBaseException()).IsTransient, Is.False);
+        }
+        var listServed = RespondOnce("{}");
+        var list = client.GetSummariesAsync(50);
+        yield return WaitFor(list, listServed);
+        Assert.That(list.Exception.GetBaseException(), Is.TypeOf<ApiRequestException>());
+    }
+
+    [UnityTest]
+    public IEnumerator PlayerRecordFailuresUseTheSameClassification() {
+        var served = RespondOnce("{\"error\":\"invalid name\"}", 400);
+        var profile = recordsClient.GetProfileAsync(new PlayerProfile { name = "名前" });
+        yield return WaitFor(profile, served);
+        var failure = (ApiRequestException)profile.Exception.GetBaseException();
+        Assert.That(failure.StatusCode, Is.EqualTo(400));
+        Assert.That(failure.IsTransient, Is.False);
+
+        served = RespondOnce("{}");
+        profile = recordsClient.GetProfileAsync(new PlayerProfile { name = "名前" });
+        yield return WaitFor(profile, served);
+        failure = (ApiRequestException)profile.Exception.GetBaseException();
+        Assert.That(failure.StatusCode, Is.EqualTo(200));
+        Assert.That(failure.IsTransient, Is.False);
+
+        served = RespondOnce("{}");
+        var ranking = recordsClient.GetRankingAsync(0, "");
+        yield return WaitFor(ranking, served);
+        Assert.That(ranking.Exception.GetBaseException(), Is.TypeOf<ApiRequestException>());
+
+        served = RespondOnce("{\"name\":\"名前\",\"grade\":2,\"createdAt\":\"2026-11-01T00:00:00Z\",\"acquiredAt\":\"2026-11-03T00:00:00Z\"}");
+        profile = recordsClient.GetProfileAsync(new PlayerProfile { name = "名前" });
+        yield return Finish(profile, served);
+        Assert.That(profile.Result.grade, Is.EqualTo(2));
     }
 
     [UnityTest]
     public IEnumerator RouteCannotInjectAQueryAndEmptyIdIsRejected() {
-        var served = RespondOnce("{\"id\":\"test\"}");
+        var served = RespondOnce("{\"id\":\"test\",\"replayPayload\":{\"schemaVersion\":1,\"rounds\":[]}}");
         var detail = client.GetDetailAsync("id&limit=999?test");
         yield return Finish(detail, served);
         Assert.That(served.Result.Route, Is.EqualTo("/battle-histories/id&limit=999?test"));

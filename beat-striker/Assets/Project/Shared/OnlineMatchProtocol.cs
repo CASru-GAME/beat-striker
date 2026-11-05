@@ -17,6 +17,7 @@ namespace Alice {
                 musicId = request.CandidateMusicId,
                 reservationId = request.ReservationId,
                 duelSessionId = request.DuelSessionId,
+                player = request.Player,
             };
             return Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
         }
@@ -28,6 +29,7 @@ namespace Alice {
                 stage = (int)result.Stage,
                 musicId = result.MusicId,
                 localIsPlayer1 = result.LocalIsPlayer1,
+                localPlayer = result.LocalPlayer, opponentPlayer = result.OpponentPlayer, battleId = result.BattleId,
             };
             return Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
         }
@@ -40,7 +42,7 @@ namespace Alice {
                 (Stage)payload.stage,
                 payload.musicId,
                 payload.reservationId ?? "",
-                payload.duelSessionId ?? "");
+                payload.duelSessionId ?? "", payload.player);
         }
 
         public static OnlineMatchResult DeserializeResult(ArraySegment<byte> data) {
@@ -68,7 +70,7 @@ namespace Alice {
                     (Striker)payload.opponentStriker,
                     (Stage)payload.stage,
                     payload.musicId ?? "",
-                    payload.localIsPlayer1);
+                    payload.localIsPlayer1, payload.localPlayer, payload.opponentPlayer, payload.battleId ?? "");
                 return true;
             }
             catch (Exception exception) {
@@ -97,6 +99,7 @@ namespace Alice {
 
         [Serializable]
         class MatchRequestPayload {
+            public PlayerIdentity player;
             public int striker;
             public int stage;
             public string musicId;
@@ -106,6 +109,8 @@ namespace Alice {
 
         [Serializable]
         class MatchResultPayload {
+            public PlayerIdentity localPlayer, opponentPlayer;
+            public string battleId;
             public int localStriker;
             public int opponentStriker;
             public int stage;

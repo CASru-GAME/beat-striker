@@ -924,12 +924,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 401f09dbbb0f04eceacebd36ccb37ad2, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Alice.Project.Client::Alice.MenuPresenterView
   gotoTitleEmitter: {fileID: 160966441}
   gotoTutorialEmitter: {fileID: 5605737739362868945}
   localBattleEmitter: {fileID: 1290272309}
-  onlineBattleEmitter: {fileID: 1806390780}
+  trialEmitter: {fileID: 1806390780}
   gotoRankingEmitter: {fileID: 2054648534}
 --- !u!114 &1486525829
 MonoBehaviour:
@@ -1118,7 +1118,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2550850078093008097, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_Name
-      value: Online
+      value: Trial button
       objectReference: {fileID: 0}
     - target: {fileID: 3808894050669153564, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_Color.a
@@ -1130,16 +1130,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3808894050669153564, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_Color.g
-      value: 0.9936027
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3808894050669153564, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_Color.r
-      value: 0.3066038
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3808894050669153564, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_Texture
-      value: 
-      objectReference: {fileID: 2800000, guid: b60f4527c45864d82be4afae67253296, type: 3}
+      value:
+      objectReference: {fileID: 2800000, guid: 77c9c0940ea76fa4e9ca5dd9bead4b9e, type: 3}
     - target: {fileID: 4863154951588840228, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: _gradient.key0.b
       value: 1
@@ -1166,11 +1166,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_text
-      value: "\u30AA\u30F3\u30E9\u30A4\u30F3\u30D0\u30C8\u30EB"
+      value: "\u8A66\u7DF4"
       objectReference: {fileID: 0}
     - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_margin.z
       value: -81.669556
+      objectReference: {fileID: 0}
+    - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
+      propertyPath: m_fontWeight
+      value: 700
       objectReference: {fileID: 0}
     - target: {fileID: 6680217095332153999, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_AnchorMax.x

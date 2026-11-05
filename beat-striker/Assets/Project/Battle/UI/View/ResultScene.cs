@@ -21,6 +21,7 @@ public class ResultScene : System.IDisposable
     readonly IPlayerSelectSetting playerSelectSetting;
     readonly IAppStrikerRegistry appStrikerRegistry;
     readonly IGamePadRegistry gamePadRegistry;
+    readonly PlayerSession playerSession;
     readonly ResultSceneView resultSceneView;
     readonly CompositeDisposable resultInputSubscriptions = new();
     TaskCompletionSource<bool> resultEndCompletionSource;
@@ -29,12 +30,13 @@ public class ResultScene : System.IDisposable
     bool canAdvancePhase;
 
     [Inject]
-    public ResultScene(ResultSceneView resultSceneView, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IGamePadRegistry gamePadRegistry)
+    public ResultScene(ResultSceneView resultSceneView, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IGamePadRegistry gamePadRegistry, PlayerSession playerSession)
     {
         this.resultSceneView = resultSceneView;
         this.playerSelectSetting = playerSelectSetting;
         this.appStrikerRegistry = appStrikerRegistry;
         this.gamePadRegistry = gamePadRegistry;
+        this.playerSession = playerSession;
         LoadStrikerPortraits();
         resultSceneView.InitializeInactiveState();
         resultPhase = ResultPhase.Hidden;
@@ -78,6 +80,7 @@ public class ResultScene : System.IDisposable
 
         for (var playerId = 0; playerId < MAX_RESULT_INPUT_PLAYER_SLOTS; playerId++)
         {
+            if (playerSession.IsTrial && playerId != 0) continue;
             var playerGamePad = gamePadRegistry.Get(playerId);
             playerGamePad.OnButtonDown
                 .Where(button => button == GamePadButton.East)

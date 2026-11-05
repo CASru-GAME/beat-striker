@@ -5,6 +5,7 @@ namespace Alice {
     [Serializable]
     public class BattleHistoryListResponse {
         public BattleHistorySummary[] items = Array.Empty<BattleHistorySummary>();
+        public string nextCursor = "";
     }
 
     [Serializable]
@@ -29,6 +30,7 @@ namespace Alice {
 
     [Serializable]
     public class BattleHistoryDetail {
+        public PlayerIdentity[] participants = Array.Empty<PlayerIdentity>();
         public string id;
         public string[] playerNames = Array.Empty<string>();
         public string stage;
@@ -46,6 +48,11 @@ namespace Alice {
 
     [Serializable]
     public class BattleHistorySaveRequest {
+        public string battleId = "";
+        public string mode = "Local";
+        public PlayerIdentity[] participants = Array.Empty<PlayerIdentity>();
+        public int trialStartGrade = -1;
+        public int trialTargetGrade = -1;
         public string[] playerNames = Array.Empty<string>();
         public string stage;
         public string stageName;

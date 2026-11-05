@@ -6,6 +6,11 @@ namespace Alice {
         readonly Subject<Unit> gotoSelectRequested = new();
         readonly Subject<Unit> openSettingsRequested = new();
         readonly Subject<Unit> quitRequested = new();
+        readonly Subject<Unit> onlineRequested = new();
+        [SerializeField] ActionEmitter onlineEmitter;
+        [SerializeField] ChoiceDialogView playerDialog;
+        public ChoiceDialogView PlayerDialog => playerDialog;
+        public Observable<Unit> OnlineRequested => onlineRequested;
 
         [SerializeField] SettingsDialogScope settingsDialogScopePrefab;
         [SerializeField] Transform settingsDialogParent;
@@ -33,6 +38,7 @@ namespace Alice {
         }
 
         void Awake() {
+            onlineEmitter.OnClickEvent.Subscribe(_ => onlineRequested.OnNext(Unit.Default)).AddTo(this);
             settingsEmitter.OnClickEvent.Subscribe(_ => RequestOpenSettings()).AddTo(this);
             quitEmitter.OnClickEvent.Subscribe(_ => RequestQuitGame()).AddTo(this);
         }

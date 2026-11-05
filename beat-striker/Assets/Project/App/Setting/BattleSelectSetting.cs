@@ -9,6 +9,7 @@ namespace Alice {
         ReadOnlyReactiveProperty<Stage> SelectedStage { get; }
         ReadOnlyReactiveProperty<string> SelectedMusicId { get; }
         int AiStrength { get; }
+        void SetAiStrength(int strength);
         void SelectStage(Stage stage);
         void SelectMusic(string musicId);
     }
@@ -24,6 +25,7 @@ namespace Alice {
         public ReadOnlyReactiveProperty<Stage> SelectedStage => selectedStageProperty;
         public ReadOnlyReactiveProperty<string> SelectedMusicId => selectedMusicIdProperty;
         public int AiStrength => Mathf.Max(0, aiStrength);
+        public void SetAiStrength(int strength) => aiStrength = Mathf.Clamp(strength, 1, 4);
 
         void Awake() {
             selectedStageProperty.OnNext(selectedStage);

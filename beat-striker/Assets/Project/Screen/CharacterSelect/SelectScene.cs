@@ -8,6 +8,8 @@ namespace Alice {
         [SerializeField] Backbutton backbutton;
         [SerializeField] AudioClip clickSound;
         [SerializeField] CharacterIntroSlideshow characterIntroSlideshow;
+        [SerializeField] ChoiceDialogView cpuDialog;
+        public ChoiceDialogView CpuDialog => cpuDialog;
 
         public Characterselectbutton[] CharacterSelectButtons => characterSelectButtons;
         public StartButtonAnimation StartButtonAnimation => startButtonAnimation;

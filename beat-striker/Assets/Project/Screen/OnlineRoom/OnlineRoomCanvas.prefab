@@ -633,7 +633,7 @@ GameObject:
   - component: {fileID: 100067}
   - component: {fileID: 100068}
   m_Layer: 5
-  m_Name: Back To Menu
+  m_Name: Back To Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -671,7 +671,7 @@ GameObject:
   - component: {fileID: 100071}
   - component: {fileID: 100072}
   m_Layer: 5
-  m_Name: Back To Menu Label
+  m_Name: Back To Title Label
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2867,7 +2867,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "< MENU"
+  m_text: "< TITLE"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b668dd0be616a4750b6baad383efb709, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: e40616581a454ca983dcdb110fb31007, type: 2}

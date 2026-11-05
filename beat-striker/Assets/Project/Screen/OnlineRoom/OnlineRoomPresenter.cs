@@ -113,7 +113,7 @@ namespace Alice {
 
         void Back() {
             if (disposed || leaving || duel.State.CurrentValue.HasReservation) return;
-            var result = transition.RequestStartTransition(AppScene.Menu);
+            var result = transition.RequestStartTransition(AppScene.Title);
             if (!result.IsSuccess) return;
             leaving = true;
             var mode = duel.State.CurrentValue.UiMode;

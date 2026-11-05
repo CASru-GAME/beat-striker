@@ -2,15 +2,16 @@
     "name": "Alice.Project.Client.Tests",
     "references": [
         "Alice.Project.Client",
-        "Alice.Shared"
+        "Alice.Shared",
+        "VContainer"
     ],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
+    "overrideReferences": true,
+    "precompiledReferences": ["R3.dll", "nunit.framework.dll"],
     "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],

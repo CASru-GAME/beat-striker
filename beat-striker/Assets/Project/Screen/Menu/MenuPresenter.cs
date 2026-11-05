@@ -19,8 +19,9 @@ namespace Alice {
         readonly IBattleSelectSetting battleSelectSetting;
         readonly ITutorialSetting tutorialSetting;
         readonly IAppNetworkSetting appNetworkSetting;
+        readonly PlayerSession playerSession;
         readonly CompositeDisposable subscriptions = new();
-        MenuInputState inputState = MenuInputState.Ready;
+        MenuInputState inputState = MenuInputState.Transitioning;
 
         [Inject]
         public MenuPresenter(
@@ -30,7 +31,7 @@ namespace Alice {
             IPlayerSelectSetting playerSelectSetting,
             IBattleSelectSetting battleSelectSetting,
             ITutorialSetting tutorialSetting,
-            IAppNetworkSetting appNetworkSetting) {
+            IAppNetworkSetting appNetworkSetting, PlayerSession playerSession) {
             this.view = view;
             this.sceneTransitionService = sceneTransitionService;
             this.gamePadRegistry = gamePadRegistry;
@@ -38,6 +39,7 @@ namespace Alice {
             this.battleSelectSetting = battleSelectSetting;
             this.tutorialSetting = tutorialSetting;
             this.appNetworkSetting = appNetworkSetting;
+            this.playerSession = playerSession;
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.view.GotoTitleRequested
@@ -61,11 +63,12 @@ namespace Alice {
                 })
                 .AddTo(subscriptions);
 
-            this.view.OnlineBattleRequested
+            this.view.TrialRequested
                 .Subscribe(_ => {
                     if (inputState != MenuInputState.Ready) return;
                     tutorialSetting.ClearTutorialBattleRequest();
-                    RequestTransition(AppScene.OnlineRoom);
+                    playerSession.SetMode(BattlePlayMode.Trial);
+                    RequestTransition(AppScene.CharacterSelect);
                 })
                 .AddTo(subscriptions);
 
@@ -80,11 +83,13 @@ namespace Alice {
         }
 
         async Task EnterMenuAsync() {
+            playerSession.SetMode(BattlePlayMode.Local);
             gamePadRegistry.RestoreOfflinePrimaryLayout(appNetworkSetting.LocalOnlinePlayerId);
             appNetworkSetting.SetLocalOnlinePlayerId(0);
             tutorialSetting.ClearTutorialBattleRequest();
             Debug.Log($"{LOG_PREFIX} EnterMenuAsync requesting end transition. scene={AppScene.Menu}");
             var result = await sceneTransitionService.RequestEndTransitionAsync(AppScene.Menu);
+            inputState = MenuInputState.Ready;
             Debug.Log($"{LOG_PREFIX} EnterMenuAsync end transition completed. isSuccess={result.IsSuccess}");
         }
 
@@ -106,6 +111,7 @@ namespace Alice {
             }
 
             tutorialSetting.ClearTutorialBattleRequest();
+            playerSession.SetMode(BattlePlayMode.Local);
             Debug.Log($"{LOG_PREFIX} GoToStageSelect requesting start transition. nextScene={AppScene.StageSelect}");
             RequestTransition(AppScene.StageSelect);
         }
@@ -128,6 +134,7 @@ namespace Alice {
             }
 
             var tutorialSelection = tutorialSetting.BattleSelection;
+            playerSession.SetMode(BattlePlayMode.Tutorial);
             tutorialSetting.RequestTutorialBattle();
             battleSelectSetting.SelectStage(tutorialSelection.Stage);
             battleSelectSetting.SelectMusic(tutorialSelection.MusicId);

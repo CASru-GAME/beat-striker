@@ -8,16 +8,18 @@ namespace Alice {
         readonly BattleTransitionView view;
         readonly IPlayerSelectSetting playerSelectSetting;
         readonly IAppStrikerRegistry appStrikerRegistry;
+        readonly PlayerSession session;
         readonly CompositeDisposable subscriptions = new();
 
         [Inject]
         public BattleTransitionPresenter(
             BattleTransitionView view,
             IPlayerSelectSetting playerSelectSetting,
-            IAppStrikerRegistry appStrikerRegistry) {
+            IAppStrikerRegistry appStrikerRegistry, PlayerSession session) {
             this.view = view;
             this.playerSelectSetting = playerSelectSetting;
             this.appStrikerRegistry = appStrikerRegistry;
+            this.session = session;
 
             view.Bind(this);
             UpdatePortraits();
@@ -44,6 +46,12 @@ namespace Alice {
             var leftThumbnail = ResolveThumbnail(0);
             var rightThumbnail = ResolveThumbnail(1);
             view.SetPortraits(leftThumbnail, rightThumbnail);
+            string Identity(int slot) {
+                if (slot >= session.Participants.Count) return "";
+                var player = session.Participants[slot];
+                return $"{player.name}\n{player.GradeLabel}" + (player.isCpu ? $" / CPU Lv{player.cpuLevel}" : "");
+            }
+            view.SetIdentities(Identity(0), Identity(1));
         }
 
         UnityEngine.Sprite ResolveThumbnail(int playerId) {

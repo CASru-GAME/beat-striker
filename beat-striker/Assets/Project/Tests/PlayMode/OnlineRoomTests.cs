@@ -67,9 +67,9 @@ public class OnlineRoomTests {
         Click("Reject Challenge");
         Assert.That(client.rejectCount, Is.EqualTo(1));
         client.state.Value = client.state.Value with { Message = "pending" };
-        Click("Back To Menu");
+        Click("Back To Title");
         Assert.That(client.rejectCount, Is.EqualTo(2));
-        Assert.That(client.transitions.LastScene, Is.EqualTo(AppScene.Menu));
+        Assert.That(client.transitions.LastScene, Is.EqualTo(AppScene.Title));
         presenter.Dispose();
         client.roster.Value = new(true, new[] { Player("late") });
         Assert.That(owner.GetComponentsInChildren<OnlineRoomPlayerView>().Length, Is.Zero, "Disposed screens must ignore late roster updates.");

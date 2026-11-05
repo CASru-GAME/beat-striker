@@ -93,7 +93,8 @@ namespace Alice {
             var matched = state.HasReservation;
             var opponent = incoming ? state.InviteFromSessionId : outgoing || matched ? state.OpponentSessionId : chosen?.sessionId;
             opponentLabel.richText = false;
-            opponentLabel.text = string.IsNullOrEmpty(opponent) ? "対戦相手を選べ！" : PlayerName(opponent);
+            var opponentEntry = Array.Find(roster.Players, entry => entry.sessionId == opponent);
+            opponentLabel.text = string.IsNullOrEmpty(opponent) ? "対戦相手を選べ！" : opponentEntry?.player == null ? PlayerName(opponent) : opponentEntry.player.name + " / " + opponentEntry.player.GradeLabel;
             opponentStatusLabel.text = incoming ? "挑戦状が届いた！" : outgoing ? "相手の返答を待っています" : matched ? "対戦成立！" : chosen == null ? "左のプレイヤーを選択" : $"{SceneName(chosen.scene)} / {(chosen.canInvite ? "対戦受付中" : "取り込み中")}";
             canChallenge = roster.IsConnected && chosen != null && chosen.canInvite && !incoming && !outgoing && !matched && !busy;
             challengeGroup.alpha = canChallenge ? 1 : 0.38f;

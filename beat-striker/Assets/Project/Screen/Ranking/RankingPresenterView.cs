@@ -21,72 +21,47 @@ namespace Alice {
         float battleHistoryScrollNormalizedSpeed = 1.5f;
         const float EdgeScrollZoneHeight = 48f;
         const float EdgeScrollSpeed = 500f;
+        [SerializeField] RankingHistoryListView historyList;
+        [SerializeField] RankingGradeSectionView[] gradeSections;
+        [SerializeField] GameObject historyDialog;
+        [SerializeField] TMP_Text historyHeading;
+        [SerializeField] TMP_Text rankingStatus;
+        [SerializeField] ActionEmitter closeHistoryEmitter;
+        [SerializeField] ActionEmitter moreHistoryEmitter;
+        [SerializeField] ScrollRect gradeScroll;
+        readonly Subject<string> playerSelected = new();
+        readonly Subject<int> moreGradeRequested = new();
+        readonly Subject<Unit> closeHistoryRequested = new(), moreHistoryRequested = new();
+        public Observable<string> PlayerSelected => playerSelected;
+        public Observable<int> MoreGradeRequested => moreGradeRequested;
+        public Observable<Unit> CloseHistoryRequested => closeHistoryRequested;
+        public Observable<Unit> MoreHistoryRequested => moreHistoryRequested;
+        public float ListPosition { get => gradeScroll.verticalNormalizedPosition; set => gradeScroll.verticalNormalizedPosition = value; }
+        public float HistoryPosition { get => battleHistoryScrollRect.verticalNormalizedPosition; set => battleHistoryScrollRect.verticalNormalizedPosition = value; }
+        public void SetRanking(System.Collections.Generic.IEnumerable<RankingPlayerEntry> entries, bool[] more) {
+            var list = new System.Collections.Generic.List<RankingPlayerEntry>(entries);
+            foreach (var section in gradeSections) section.Set(list.FindAll(row => row.Grade == section.Grade), more[section.Grade], playerSelected.OnNext);
+        }
+        public void SetRankingStatus(string text) => rankingStatus.text = text;
+        public void ShowHistory(string name, bool more) {
+            historyHeading.richText = false; historyHeading.text = name + " の対戦履歴";
+            moreHistoryEmitter.gameObject.SetActive(more); historyDialog.SetActive(true);
+        }
+        public void CloseHistory() => historyDialog.SetActive(false);
         public Observable<Unit> BackToMenuRequested => backToMenuRequested;
 
         void Awake() {
-            FindFirstObjectByType<RankingHistoryListView>().SetStatusLabel(statusLabel);
+            historyList.SetStatusLabel(statusLabel);
+            closeHistoryEmitter.OnClickEvent.Subscribe(_ => closeHistoryRequested.OnNext(Unit.Default)).AddTo(this);
+            moreHistoryEmitter.OnClickEvent.Subscribe(_ => moreHistoryRequested.OnNext(Unit.Default)).AddTo(this);
+            foreach (var section in gradeSections) section.MoreRequested.Subscribe(moreGradeRequested.OnNext).AddTo(this);
             BindScrollHint(battleHistoryScrollUpHoverBotan);
             BindScrollHint(battleHistoryScrollDownHoverBotan);
             backToMenuEmitter.OnClickEvent.Subscribe(_ => backToMenuRequested.OnNext(Unit.Default)).AddTo(this);
-            battleHistoryScrollUpHoverBotan.OnHoverEvent.Subscribe(_ => battleHistoryScrollUpHovered.Value = true).AddTo(this);
-            battleHistoryScrollUpHoverBotan.OnHoverExitEvent.Subscribe(_ => battleHistoryScrollUpHovered.Value = false).AddTo(this);
-            battleHistoryScrollDownHoverBotan.OnHoverEvent.Subscribe(_ => battleHistoryScrollDownHovered.Value = true).AddTo(this);
-            battleHistoryScrollDownHoverBotan.OnHoverExitEvent.Subscribe(_ => battleHistoryScrollDownHovered.Value = false).AddTo(this);
-        }
-
-        void BuildScreen() {
-            var canvas = battleHistoryScrollRect.transform.parent;
-            var bodyFont = ((RecyclableScrollRect)battleHistoryScrollRect).PrototypeCell.GetComponentInChildren<TextMeshProUGUI>().font;
-            if (!displayFont) displayFont = bodyFont;
-            var background = RankingUi.Band(canvas, "Ranking Backdrop", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, RankingUi.Ink, RankingUi.Ink);
-            background.transform.SetAsFirstSibling();
-            var left = RankingUi.Rect(canvas, "Ranking Title Panel", Vector2.zero, new Vector2(0.34f, 1), Vector2.zero, Vector2.zero);
-            RankingUi.Band(left, "Orange to Yellow", Vector2.zero, Vector2.one, new Vector2(-55, -15), new Vector2(0, 15), new Color32(255, 130, 0, 255), RankingUi.Yellow, 70);
-            for (var i = 0; i < 8; i++) {
-                var stripe = RankingUi.Band(left, "Speed Line", new Vector2(0, 0.5f), new Vector2(1, 0.5f), new Vector2(-55, i * 31 - 135), new Vector2(0, i * 31 - 133), new Color(1, 1, 1, 0.18f), new Color(1, 1, 1, 0.02f));
-                stripe.rectTransform.localEulerAngles = new Vector3(0, 0, 18);
-            }
-            var iconRect = RankingUi.Rect(left, "Menu Trophy", new Vector2(0.5f, 0.54f), new Vector2(0.5f, 0.54f), new Vector2(-135, -125), new Vector2(115, 125));
-            iconRect.localEulerAngles = new Vector3(0, 0, 13);
-            var icon = iconRect.gameObject.AddComponent<Image>();
-            icon.sprite = trophy; icon.preserveAspect = true; icon.raycastTarget = false;
-            icon.color = new Color32(255, 247, 121, 255);
-            var titleBand = RankingUi.Band(left, "Title Black Slash", new Vector2(0, 0.19f), new Vector2(1, 0.39f), new Vector2(-12, 0), new Vector2(-15, 0), RankingUi.Ink, RankingUi.Ink, 22);
-            titleBand.rectTransform.localEulerAngles = new Vector3(0, 0, 7);
-            var title = RankingUi.Text(titleBand.transform, "ランキング", displayFont, "ランキング", Vector2.zero, Vector2.one, new Vector2(17, 0), new Vector2(-8, 0), 47, Color.white, TextAlignmentOptions.Center);
-            title.enableAutoSizing = true; title.fontSizeMin = 30; title.fontSizeMax = 47;
-            RankingUi.Text(left, "Replay Invitation", displayFont, "あのバトルをもういちど！", new Vector2(0, 0.08f), new Vector2(1, 0.19f), new Vector2(12, 0), new Vector2(-30, 0), 21, RankingUi.Ink, TextAlignmentOptions.Center);
-            var heading = RankingUi.Text(canvas, "対戦履歴", displayFont, "バトルのきろく", new Vector2(0.36f, 1), new Vector2(0.80f, 1), new Vector2(5, -74), new Vector2(0, -6), 38, Color.white);
-            heading.rectTransform.localEulerAngles = new Vector3(0, 0, 3);
-            RankingUi.Text(canvas, "History Limit", bodyFont, "最新 50 戦", new Vector2(0.76f, 1), new Vector2(1, 1), new Vector2(0, -66), new Vector2(-42, -20), 17, RankingUi.Yellow, TextAlignmentOptions.MidlineRight);
-            var scroll = (RectTransform)battleHistoryScrollRect.transform;
-            scroll.anchorMin = new Vector2(0.35f, 0); scroll.anchorMax = Vector2.one;
-            scroll.offsetMin = new Vector2(0, 48); scroll.offsetMax = new Vector2(-46, -87);
-            scroll.localScale = Vector3.one;
-            var scrollImage = scroll.GetComponent<Image>(); scrollImage.color = Color.clear; scrollImage.sprite = null;
-            battleHistoryScrollRect.scrollSensitivity = 35;
-            statusLabel = RankingUi.Text(canvas, "History Status", bodyFont, "", new Vector2(0.36f, 0.35f), new Vector2(0.95f, 0.68f), new Vector2(15, 0), new Vector2(-15, 0), 28, Color.white, TextAlignmentOptions.Center);
-            ConfigureScrollHint(battleHistoryScrollUpHoverBotan, true);
-            ConfigureScrollHint(battleHistoryScrollDownHoverBotan, false);
-            RankingUi.Text(canvas, "Replay Help", bodyFont, "対戦を選んでリプレイ", new Vector2(0.35f, 0), new Vector2(1, 0), new Vector2(8, 4), new Vector2(-50, 40), 16, Color.white, TextAlignmentOptions.Center);
-            ConfigureBackButton();
-            backToMenuEmitter.transform.SetAsLastSibling();
-        }
-
-        void ConfigureBackButton() {
-            var rect = (RectTransform)backToMenuEmitter.transform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
-            rect.anchoredPosition = new Vector2(51, -35.25f);
-        }
-
-        void ConfigureScrollHint(Botan botan, bool up) {
-            var rect = (RectTransform)botan.transform;
-            rect.anchorMin = rect.anchorMax = new Vector2(1, up ? 1 : 0);
-            rect.anchoredPosition = new Vector2(-23, up ? -110 : 74); rect.sizeDelta = new Vector2(35, 48);
-            var image = botan.GetComponent<Image>(); image.sprite = null; image.color = RankingUi.Yellow;
-            var arrow = RankingUi.Band(rect, "Arrow", Vector2.zero, Vector2.one, new Vector2(9, 16), new Vector2(-9, -16), RankingUi.Ink, RankingUi.Ink);
-            arrow.triangle = true; arrow.pointUp = up; arrow.SetVerticesDirty();
-            rect.SetAsLastSibling();
+            battleHistoryScrollUpHoverBotan.OnHoverEvent.Subscribe(_ => battleHistoryScrollUpHovered.OnNext(true)).AddTo(this);
+            battleHistoryScrollUpHoverBotan.OnHoverExitEvent.Subscribe(_ => battleHistoryScrollUpHovered.OnNext(false)).AddTo(this);
+            battleHistoryScrollDownHoverBotan.OnHoverEvent.Subscribe(_ => battleHistoryScrollDownHovered.OnNext(true)).AddTo(this);
+            battleHistoryScrollDownHoverBotan.OnHoverExitEvent.Subscribe(_ => battleHistoryScrollDownHovered.OnNext(false)).AddTo(this);
         }
 
         void BindScrollHint(Botan botan) {
@@ -96,7 +71,7 @@ namespace Alice {
         }
 
         void Update() {
-            var scroll = battleHistoryScrollRect;
+            var scroll = historyDialog.activeSelf ? battleHistoryScrollRect : gradeScroll;
             if (!scroll || !scroll.vertical || !scroll.isActiveAndEnabled || !scroll.content) return;
             var direction = (battleHistoryScrollUpHovered.CurrentValue ? 1 : 0) - (battleHistoryScrollDownHovered.CurrentValue ? 1 : 0);
             var viewport = scroll.viewport ? scroll.viewport : (RectTransform)scroll.transform;
@@ -124,8 +99,8 @@ namespace Alice {
         }
 
         void OnDisable() {
-            battleHistoryScrollUpHovered.Value = false;
-            battleHistoryScrollDownHovered.Value = false;
+            battleHistoryScrollUpHovered.OnNext(false);
+            battleHistoryScrollDownHovered.OnNext(false);
         }
     }
 }

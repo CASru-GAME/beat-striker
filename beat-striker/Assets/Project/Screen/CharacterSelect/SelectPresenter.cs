@@ -12,6 +12,7 @@ namespace Alice {
         enum SceneInputState {
             Selecting,
             ReadyToStart,
+            Dialog,
             TransitioningToScreen,
             TransitioningToStageSelect,
         }
@@ -26,6 +27,10 @@ namespace Alice {
         readonly ITutorialSetting tutorialSetting;
         readonly IMatchingModel matchingModel;
         readonly IMatchingDuelOperations duelOperations;
+        readonly PlayerSession playerSession;
+        readonly IPlayerProfileService profiles;
+        readonly TrialController trial;
+        readonly ChoiceDialogPresenter cpuDialog;
         readonly CompositeDisposable subscriptions = new();
         readonly CharacterSelectSelectionPolicy selectionPolicy = new();
         readonly List<CharacterSelectSlotState> slotStates = new();
@@ -52,7 +57,7 @@ namespace Alice {
             IAppNetworkSetting appNetworkSetting,
             ITutorialSetting tutorialSetting,
             IMatchingModel matchingModel,
-            IMatchingDuelOperations duelOperations) {
+            IMatchingDuelOperations duelOperations, PlayerSession playerSession, IPlayerProfileService profiles, TrialController trial) {
             this.view = view;
             this.transitionService = transitionService;
             this.gamePadRegistry = gamePadRegistry;
@@ -63,6 +68,8 @@ namespace Alice {
             this.tutorialSetting = tutorialSetting;
             this.matchingModel = matchingModel;
             this.duelOperations = duelOperations;
+            this.playerSession = playerSession; this.profiles = profiles; this.trial = trial;
+            cpuDialog = new ChoiceDialogPresenter(view.CpuDialog, playerSession, gamePadRegistry);
 
             _ = InitializeAfterFrameAsync();
         }
@@ -108,7 +115,9 @@ namespace Alice {
                     .Subscribe(_ => RefreshState())
                     .AddTo(subscriptions);
 
+                var inputSlot = playerId;
                 gamePadRegistry.Get(playerId).OnButtonDown
+                    .Where(_ => !playerSession.IsTrial || inputSlot == 0)
                     .Subscribe(button => OnButtonDown(button))
                     .AddTo(subscriptions);
             }
@@ -130,11 +139,12 @@ namespace Alice {
         }
 
         void OnStrikerClicked(StrikerClickRequest request) {
+            if (playerSession.IsTrial && request.PlayerId != 0) return;
             if (IsTransitioning()) {
                 return;
             }
 
-            var targetSlot = tutorialSetting.IsTutorialBattleRequested || IsOnlineSelectionFlow()
+            var targetSlot = playerSession.IsTrial || tutorialSetting.IsTutorialBattleRequested || IsOnlineSelectionFlow()
                 ? 0
                 : selectionPolicy.ResolveSelectionTargetSlot(
                     request.PlayerId,
@@ -212,21 +222,25 @@ namespace Alice {
                 return;
             }
 
-            inputState = SceneInputState.TransitioningToScreen;
-
-            if (tutorialSetting.IsTutorialBattleRequested) {
-                if (playerSelectSetting.TryGetStriker(0, out var striker)) {
-                    showingCharacterIntro = true;
-                    if (!await view.CharacterIntroSlideshow.PlayAsync(striker) || disposed) return;
-                    showingCharacterIntro = false;
+            inputState = SceneInputState.Dialog;
+            try {
+                if (playerSession.IsTrial) trial.PrepareNext();
+                else if (!IsOnlineSelectionFlow() && !tutorialSetting.IsTutorialBattleRequested && !await PrepareLocalParticipantsAsync()) return;
+                if (disposed) return;
+                if (tutorialSetting.IsTutorialBattleRequested && !await PrepareTutorialAsync()) return;
+            } catch (OperationCanceledException) {
+                if (!disposed) inputState = SceneInputState.ReadyToStart;
+                return;
+            } catch (Exception exception) {
+                Debug.LogError($"{LOG_PREFIX} Battle preparation failed: {exception.Message}");
+                if (!disposed) {
+                    try { await cpuDialog.AskAsync("バトルを開始できませんでした", "名前・CPU設定の保存先と試練の設定を確認して、もう一度お試しください。", new[] { "OK" }); }
+                    catch (OperationCanceledException) { }
                 }
-
-                foreach (var selection in tutorialSetting.BattleSelection.PlayerSelections) {
-                    if (selection.PlayerId != 0) {
-                        playerSelectSetting.SelectStriker(selection.PlayerId, selection.Striker);
-                    }
-                }
+                if (!disposed) inputState = SceneInputState.ReadyToStart;
+                return;
             }
+            inputState = SceneInputState.TransitioningToScreen;
 
             if (IsOnlineSelectionFlow()) {
                 view.StartButtonAnimation.SetOnlineWaitingPopupVisible(true);
@@ -272,6 +286,70 @@ namespace Alice {
             }
         }
 
+        async Task<bool> PrepareLocalParticipantsAsync() {
+            var humanSlots = new[] { gamePadRegistry.Get(0).HasGamePad.CurrentValue, gamePadRegistry.Get(1).HasGamePad.CurrentValue };
+            if (!humanSlots[0] || !humanSlots[1]) {
+                var choice = await cpuDialog.AskAsync("CPUの強さ", $"前回の設定：Lv{profiles.CpuLevel}", new[] { "Lv1", "Lv2", "Lv3", "Lv4", "戻る" });
+                if (disposed) return false;
+                if (choice == 4) { inputState = SceneInputState.ReadyToStart; return false; }
+                profiles.CpuLevel = choice + 1;
+                battleSelectSetting.SetAiStrength(choice + 1);
+            }
+            for (var slot = 0; slot < humanSlots.Length; slot++) {
+                if (!humanSlots[slot]) continue;
+                while (string.IsNullOrWhiteSpace(playerSession.GetName(slot))) {
+                    var choice = await cpuDialog.AskAsync($"{slot + 1}P 名前入力", "名前を1〜10文字で入力してください", new[] { "決定", "戻る" }, "");
+                    if (disposed) return false;
+                    if (choice == 1) { inputState = SceneInputState.ReadyToStart; return false; }
+                    if (!PlayerProfileService.TryNormalizeName(cpuDialog.InputText, out var name)) continue;
+                    await profiles.SelectNameAsync(slot, name);
+                    if (disposed) return false;
+                }
+            }
+            for (var slot = 0; slot < humanSlots.Length; slot++) {
+                if (humanSlots[slot] == gamePadRegistry.Get(slot).HasGamePad.CurrentValue) continue;
+                inputState = SceneInputState.ReadyToStart;
+                return false;
+            }
+            var identities = new PlayerIdentity[2];
+            for (var slot = 0; slot < identities.Length; slot++) identities[slot] = humanSlots[slot]
+                ? profiles.Get(playerSession.GetName(slot)).Identity : CreateCpuIdentity(slot, battleSelectSetting.AiStrength);
+            playerSession.SetMode(BattlePlayMode.Local);
+            playerSession.Prepare(identities);
+            return true;
+        }
+
+        PlayerIdentity CreateCpuIdentity(int slot, int level) {
+            if (!playerSelectSetting.TryGetStriker(slot, out var striker)) throw new InvalidOperationException($"Player {slot} has no selected striker.");
+            return new PlayerIdentity {
+                name = appStrikerRegistry.GetByStriker(striker).DisplayName, isCpu = true, cpuLevel = level,
+                grade = level >= 1 && level <= 4 ? (int)PlayerGrades.Cpu(level, striker) : -1
+            };
+        }
+
+        async Task<bool> PrepareTutorialAsync() {
+            if (playerSelectSetting.TryGetStriker(0, out var striker)) {
+                showingCharacterIntro = true;
+                bool completed;
+                try { completed = await view.CharacterIntroSlideshow.PlayAsync(striker); }
+                finally { showingCharacterIntro = false; }
+                if (disposed) return false;
+                if (!completed) { inputState = SceneInputState.ReadyToStart; return false; }
+            }
+            foreach (var selection in tutorialSetting.BattleSelection.PlayerSelections) {
+                if (selection.PlayerId != 0) playerSelectSetting.SelectStriker(selection.PlayerId, selection.Striker);
+            }
+            PrepareTutorialParticipants();
+            return true;
+        }
+
+        void PrepareTutorialParticipants() {
+            var name = playerSession.GetName(0);
+            var player = string.IsNullOrWhiteSpace(name) ? new PlayerIdentity { name = "1P" } : profiles.Get(name).Identity;
+            playerSession.SetMode(BattlePlayMode.Tutorial);
+            playerSession.Prepare(new[] { player, CreateCpuIdentity(1, 0) });
+        }
+
         AppScene ResolvePlayScene() {
             return battleSelectSetting.SelectedStage.CurrentValue == Stage.Street
                 ? AppScene.Street
@@ -290,7 +368,7 @@ namespace Alice {
                 return;
             }
 
-            var nextScene = tutorialSetting.IsTutorialBattleRequested ? AppScene.Menu : AppScene.StageSelect;
+            var nextScene = tutorialSetting.IsTutorialBattleRequested || playerSession.IsTrial ? AppScene.Menu : AppScene.StageSelect;
             Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition requesting start transition. nextScene={nextScene}");
             var result = transitionService.RequestStartTransition(nextScene);
             if (!result.IsSuccess) {
@@ -336,8 +414,11 @@ namespace Alice {
                 battleSelectSetting.SelectedStage.CurrentValue,
                 battleSelectSetting.SelectedMusicId.CurrentValue,
                 reservationId,
-                matchingState.LocalSessionId);
+                matchingState.LocalSessionId, profiles.Get(playerSession.GetName(0)).Identity);
             var result = await duelOperations.MatchAsync(request);
+            if (result.LocalPlayer == null || result.OpponentPlayer == null || string.IsNullOrEmpty(result.BattleId)) throw new InvalidOperationException("対戦相手のプレイヤー情報を取得できません。リレーサーバーを更新してください。");
+            playerSession.SetMode(BattlePlayMode.Online);
+            playerSession.Prepare(result.LocalIsPlayer1 ? new[] { result.LocalPlayer, result.OpponentPlayer } : new[] { result.OpponentPlayer, result.LocalPlayer }, result.BattleId);
             Debug.Log($"{LOG_PREFIX} MatchAsync returned. Applying match result to settings before battle transition.");
 
             battleSelectSetting.SelectStage(result.Stage);
@@ -414,7 +495,7 @@ namespace Alice {
         }
 
         bool IsTransitioning() {
-            return inputState == SceneInputState.TransitioningToScreen
+            return inputState == SceneInputState.Dialog || inputState == SceneInputState.TransitioningToScreen
                 || inputState == SceneInputState.TransitioningToStageSelect;
         }
 
@@ -434,12 +515,12 @@ namespace Alice {
         }
 
         bool IsOnlineSelectionFlow() {
-             return matchingModel.IsEstablished.CurrentValue
-                 || matchingModel.State.CurrentValue.HasReservation;
+             return !playerSession.IsTrial && (matchingModel.IsEstablished.CurrentValue
+                 || matchingModel.State.CurrentValue.HasReservation);
         }
 
         int GetRequiredSlotCount() {
-            return tutorialSetting.IsTutorialBattleRequested || IsOnlineSelectionFlow()
+            return playerSession.IsTrial || tutorialSetting.IsTutorialBattleRequested || IsOnlineSelectionFlow()
                 ? 1
                 : selectionPolicy.GetRequiredSlotCount(GetJoinedPlayerCount());
         }
@@ -488,6 +569,7 @@ namespace Alice {
 
         public void Dispose() {
             disposed = true;
+            cpuDialog.Dispose();
             if (isOnlineMatchmakingInProgress) {
                 duelOperations.CancelMatchmaking();
             }

@@ -3471,6 +3471,7 @@ GameObject:
   - component: {fileID: 6291877219211561707}
   - component: {fileID: 7631814504287584424}
   - component: {fileID: 2328229850213635790}
+  - component: {fileID: 2464977394421409515}
   m_Layer: 0
   m_Name: App
   m_TagString: Untagged
@@ -3656,7 +3657,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 03d0d3c2b5f4477b93e19d8d08e14de8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AIRegistry
   fallbackAiId: Mock
   entries:
@@ -3665,24 +3666,84 @@ MonoBehaviour:
     Strength: 0
     Self: 0
     Opponent: 0
-  - Id: He
+  - Id: Hero.Lv1
     BrainPrefab: {fileID: 1718372972706777403, guid: 839eb3d475194f7392dfc857a80fd5dc, type: 3}
     Strength: 1
     Self: 1
     Opponent: 0
-  - Id: Wi
+  - Id: Hero.Lv2
+    BrainPrefab: {fileID: 1718372972706777403, guid: 839eb3d475194f7392dfc857a80fd5dc, type: 3}
+    Strength: 2
+    Self: 1
+    Opponent: 0
+  - Id: Hero.Lv3
+    BrainPrefab: {fileID: 1718372972706777403, guid: 839eb3d475194f7392dfc857a80fd5dc, type: 3}
+    Strength: 3
+    Self: 1
+    Opponent: 0
+  - Id: Hero.Lv4
+    BrainPrefab: {fileID: 1718372972706777403, guid: 839eb3d475194f7392dfc857a80fd5dc, type: 3}
+    Strength: 4
+    Self: 1
+    Opponent: 0
+  - Id: Wizard.Lv1
     BrainPrefab: {fileID: 1718372972706777403, guid: 714caf737be64e8e8962bf287bebd8d6, type: 3}
     Strength: 1
     Self: 2
     Opponent: 0
-  - Id: Wa
+  - Id: Wizard.Lv2
+    BrainPrefab: {fileID: 1718372972706777403, guid: 714caf737be64e8e8962bf287bebd8d6, type: 3}
+    Strength: 2
+    Self: 2
+    Opponent: 0
+  - Id: Wizard.Lv3
+    BrainPrefab: {fileID: 1718372972706777403, guid: 714caf737be64e8e8962bf287bebd8d6, type: 3}
+    Strength: 3
+    Self: 2
+    Opponent: 0
+  - Id: Wizard.Lv4
+    BrainPrefab: {fileID: 1718372972706777403, guid: 714caf737be64e8e8962bf287bebd8d6, type: 3}
+    Strength: 4
+    Self: 2
+    Opponent: 0
+  - Id: Warrior.Lv1
     BrainPrefab: {fileID: 1718372972706777403, guid: 78a4fa0b54d04cc0bf6fa744a64bd3d8, type: 3}
     Strength: 1
     Self: 4
     Opponent: 0
-  - Id: DemonKing
-    BrainPrefab: {fileID: 1718372972706777403, guid: 1352e75daebb66f49a3225a024d5a7a8, type: 3}
+  - Id: Warrior.Lv2
+    BrainPrefab: {fileID: 1718372972706777403, guid: 78a4fa0b54d04cc0bf6fa744a64bd3d8, type: 3}
+    Strength: 2
+    Self: 4
+    Opponent: 0
+  - Id: Warrior.Lv3
+    BrainPrefab: {fileID: 1718372972706777403, guid: 78a4fa0b54d04cc0bf6fa744a64bd3d8, type: 3}
+    Strength: 3
+    Self: 4
+    Opponent: 0
+  - Id: Warrior.Lv4
+    BrainPrefab: {fileID: 1718372972706777403, guid: 78a4fa0b54d04cc0bf6fa744a64bd3d8, type: 3}
+    Strength: 4
+    Self: 4
+    Opponent: 0
+  - Id: DemonKing.Lv1
+    BrainPrefab: {fileID: 8046662237982532771, guid: c7bd9786ae99f4fca9c6ec8a0907d876, type: 3}
     Strength: 1
+    Self: 5
+    Opponent: 0
+  - Id: DemonKing.Lv2
+    BrainPrefab: {fileID: 8046662237982532771, guid: c7bd9786ae99f4fca9c6ec8a0907d876, type: 3}
+    Strength: 2
+    Self: 5
+    Opponent: 0
+  - Id: DemonKing.Lv3
+    BrainPrefab: {fileID: 8046662237982532771, guid: c7bd9786ae99f4fca9c6ec8a0907d876, type: 3}
+    Strength: 3
+    Self: 5
+    Opponent: 0
+  - Id: DemonKing.Lv4
+    BrainPrefab: {fileID: 8046662237982532771, guid: c7bd9786ae99f4fca9c6ec8a0907d876, type: 3}
+    Strength: 4
     Self: 5
     Opponent: 0
 --- !u!114 &9201860890254514560
@@ -3695,7 +3756,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd039f2418dfd4118b5ee9b09d7337ab, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AppTransitionFactory
   defaultTransitionPresenterPrefab: {fileID: 5542158287853537125, guid: 50b2ebc5686784b6f8d03d0c315a4742, type: 3}
   transitionParent: {fileID: 5619376666138620005}
@@ -3704,6 +3765,24 @@ MonoBehaviour:
     ToScene: 3
     Prefab: {fileID: 9080934566226436904, guid: 48e5a30ff044e4f9b9832d61fdb00825, type: 3}
   - FromScene: 1
+    ToScene: 4
+    Prefab: {fileID: 9080934566226436904, guid: 48e5a30ff044e4f9b9832d61fdb00825, type: 3}
+  - FromScene: 3
+    ToScene: 3
+    Prefab: {fileID: 9080934566226436904, guid: 48e5a30ff044e4f9b9832d61fdb00825, type: 3}
+  - FromScene: 3
+    ToScene: 4
+    Prefab: {fileID: 9080934566226436904, guid: 48e5a30ff044e4f9b9832d61fdb00825, type: 3}
+  - FromScene: 4
+    ToScene: 3
+    Prefab: {fileID: 9080934566226436904, guid: 48e5a30ff044e4f9b9832d61fdb00825, type: 3}
+  - FromScene: 4
+    ToScene: 4
+    Prefab: {fileID: 9080934566226436904, guid: 48e5a30ff044e4f9b9832d61fdb00825, type: 3}
+  - FromScene: 8
+    ToScene: 3
+    Prefab: {fileID: 9080934566226436904, guid: 48e5a30ff044e4f9b9832d61fdb00825, type: 3}
+  - FromScene: 8
     ToScene: 4
     Prefab: {fileID: 9080934566226436904, guid: 48e5a30ff044e4f9b9832d61fdb00825, type: 3}
 --- !u!114 &906267494629859191
@@ -4178,10 +4257,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6106d62e900eb487899aec54912b28d1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::Alice.AppScope
   parentReference:
-    TypeName: 
+    TypeName:
   autoRun: 1
   autoInjectGameObjects: []
   playerInputManager: {fileID: 6291877219211561707}
@@ -4205,6 +4284,7 @@ MonoBehaviour:
   virtualTouchControllerCanvasView: {fileID: 4467947455306159405}
   loadingView: {fileID: 8180704571308059706}
   appOverlayView: {fileID: 7891000000000000003}
+  trialSetting: {fileID: 2464977394421409515}
 --- !u!114 &6291877219211561707
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7014,7 +7094,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 1000
+  m_SortingOrder: 3000
   m_TargetDisplay: 0
 --- !u!114 &3598658679041873126
 MonoBehaviour:
@@ -8231,3 +8311,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2464977394421409515
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4430401366509071009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acbf86d0a29d3244a8fb8ad1bdd11bce, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.TrialSetting
+  opponents: 000000000100000003000000
+  boss: 4
+  promotionStages: 0000000000000000010000000100000001000000
+  promotionLevels: 0100000002000000030000000400000004000000

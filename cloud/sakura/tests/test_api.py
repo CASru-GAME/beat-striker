@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 import time
 import unittest
+import uuid
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -120,6 +121,149 @@ class SakuraApiTests(unittest.TestCase):
         self.assertTrue(response["ok"])
         self.assertRegex(response["id"], r"^[a-f0-9]{32}$")
         return response["id"]
+
+    def profile(self, name, **extra):
+        status, result, _ = self.request('/players', 'POST', {
+            'name': name, 'createdAt': '2026-11-01T00:00:00Z', **extra})
+        self.assertEqual(status, 200, result)
+        return result
+
+    def trial_history(self, name='挑戦者', start=0, winner=0, played='2026-11-03T15:00:00Z'):
+        body = history()
+        body.update(battleId=uuid.uuid4().hex, mode='Trial', trialStartGrade=start,
+                    trialTargetGrade=start + 1 if start < 5 else -1,
+                    participants=[{'name': name, 'grade': start, 'isCpu': False, 'cpuLevel': 0},
+                                  {'name': 'CPU', 'grade': min(start + 1, 5), 'isCpu': True,
+                                   'cpuLevel': [1, 2, 3, 4, 4, 4][start]}],
+                    playerNames=[name, 'CPU'], playedAt=played, winnerPlayerId=winner,
+                    strikerIds=[0, 4 if start == 4 else 1])
+        body['replayPayload']['strikerIds'] = body['strikerIds']
+        return body
+
+    def test_player_names_initial_grade_and_identity(self):
+        first = self.profile('  プレイヤー  ', grade=5)
+        self.assertEqual(first['name'], 'プレイヤー')
+        self.assertEqual(first['grade'], 0)
+        self.assertEqual(self.profile('プレイヤー'), first)
+        self.assertEqual(self.profile('あ' * 10)['name'], 'あ' * 10)
+        for invalid in ['', '  ', 'あ' * 11, '名前\n改行']:
+            self.assertEqual(self.request('/players', 'POST', {'name': invalid})[0], 400)
+        self.profile('ABC')
+        self.profile('abc')
+        names = [item['name'] for item in self.request('/players', query={'grade': 0})[1]['items']]
+        self.assertIn('ABC', names)
+        self.assertIn('abc', names)
+
+    def test_trial_promotion_idempotency_and_losses(self):
+        self.profile('挑戦者')
+        battle = self.trial_history()
+        saved = self.save(battle)
+        self.assertEqual(self.save(battle), saved)
+        promoted = self.profile('挑戦者')
+        self.assertEqual(promoted['grade'], 1)
+        self.save(self.trial_history(played='2026-11-04T00:00:00Z'))
+        self.assertEqual(self.profile('挑戦者')['acquiredAt'], promoted['acquiredAt'])
+        self.save(self.trial_history(start=1, winner=1, played='2026-11-05T00:00:00Z'))
+        self.assertEqual(self.profile('挑戦者')['grade'], 1)
+        self.save(self.trial_history(start=1, winner=-1, played='2026-11-06T00:00:00Z'))
+        self.assertEqual(self.profile('挑戦者')['grade'], 1)
+        items = self.request('/battle-histories', query={'player': '挑戦者'})[1]['items']
+        self.assertEqual(len(items), 4)
+        self.assertEqual(self.request('/battle-histories', query={'player': '別人'})[1]['items'], [])
+        self.assertEqual(self.request('/players', query={'grade': 0})[1]['items'], [])
+
+    def test_same_name_merges_earliest_creation_without_changing_promoted_acquisition(self):
+        self.profile('同名', createdAt='2026-11-02T00:00:00Z')
+        merged = self.profile('同名', createdAt='2026-11-01T00:00:00Z')
+        self.assertEqual(merged['createdAt'], '2026-11-01T00:00:00.000000Z')
+        self.assertEqual(merged['acquiredAt'], merged['createdAt'])
+        self.save(self.trial_history(name='同名', played='2026-11-03T00:00:00Z'))
+        promoted = self.profile('同名', createdAt='2026-10-31T00:00:00Z')
+        self.assertEqual(promoted['createdAt'], '2026-10-31T00:00:00.000000Z')
+        self.assertEqual(promoted['acquiredAt'], '2026-11-03T00:00:00.000000Z')
+        self.assertEqual(promoted['grade'], 1)
+
+    def test_offline_results_merge_without_demotion_and_preserve_first_acquisition(self):
+        self.profile('挑戦者')
+        self.save(self.trial_history(start=2))
+        self.save(self.trial_history(start=0, played='2026-11-02T00:00:00Z'))
+        self.assertEqual(self.profile('挑戦者')['grade'], 3)
+        self.save(self.trial_history(start=4, played='2026-11-04T00:00:00Z'))
+        acquired = self.profile('挑戦者')['acquiredAt']
+        self.save(self.trial_history(start=5, played='2026-11-05T00:00:00Z'))
+        self.assertEqual(self.profile('挑戦者')['acquiredAt'], acquired)
+        self.assertEqual(self.profile('挑戦者')['grade'], 5)
+        self.assertEqual(self.profile('挑戦者')['lastTrialOpponent'], 1)
+        self.assertEqual(self.request('/players', query={'grade': 3})[1]['items'], [])
+
+    def test_grade_ranking_and_player_history_pagination(self):
+        for i in range(51):
+            self.profile(f'参加者{i:02}')
+        page = self.request('/players', query={'grade': 0})[1]
+        self.assertEqual([p['name'] for p in page['items']], [f'参加者{i:02}' for i in range(50)])
+        next_page = self.request('/players', query={'grade': 0, 'cursor': page['nextCursor']})[1]
+        self.assertEqual([p['name'] for p in next_page['items']], ['参加者50'])
+        self.assertEqual(next_page['nextCursor'], '')
+        for _ in range(51):
+            self.save(self.trial_history(winner=1))
+        page = self.request('/battle-histories', query={'player': '挑戦者'})[1]
+        self.assertEqual(len(page['items']), 50)
+        next_page = self.request('/battle-histories', query={'player': '挑戦者', 'cursor': page['nextCursor']})[1]
+        self.assertEqual(len(next_page['items']), 1)
+        self.assertEqual(next_page['nextCursor'], '')
+        self.assertNotIn(next_page['items'][0]['id'], [item['id'] for item in page['items']])
+
+    def test_invalid_trial_metadata_does_not_create_players_or_history(self):
+        variants = []
+        wrong_level = self.trial_history()
+        wrong_level['participants'][1]['cpuLevel'] = 5
+        variants.append(wrong_level)
+        wrong_kind = self.trial_history()
+        wrong_kind['participants'][1]['isCpu'] = False
+        variants.append(wrong_kind)
+        wrong_start = self.trial_history()
+        wrong_start['trialStartGrade'] = -1
+        variants.append(wrong_start)
+        wrong_target = self.trial_history()
+        wrong_target['trialTargetGrade'] = 5
+        variants.append(wrong_target)
+        for body in variants:
+            self.assertEqual(self.request('/battle-histories', 'POST', body)[0], 400)
+        self.assertEqual(self.request('/players', query={'grade': 0})[1]['items'], [])
+        self.assertEqual(self.request('/battle-histories')[1]['items'], [])
+
+    def test_trial_opponents_and_levels_follow_client_configuration(self):
+        body = self.trial_history(start=1)
+        body['participants'][1]['cpuLevel'] = 1
+        body['strikerIds'][1] = body['replayPayload']['strikerIds'][1] = 4
+        self.save(body)
+        self.assertEqual(self.profile('挑戦者')['grade'], 2)
+
+    def test_player_history_uses_completion_time_with_stable_pagination(self):
+        older = self.save(self.trial_history(winner=1, played='2026-11-02T23:59:59.9999999Z'))
+        tied = [self.save(self.trial_history(winner=1, played='2026-11-03T09:00:00+09:00')) for _ in range(51)]
+        newest = self.save(self.trial_history(winner=1, played='2026-11-03T00:00:01Z'))
+        delayed = self.save(self.trial_history(winner=1, played='2026-11-01T00:00:00Z'))
+        page = self.request('/battle-histories', query={'player': '挑戦者'})[1]
+        more = self.request('/battle-histories', query={'player': '挑戦者', 'cursor': page['nextCursor']})[1]
+        self.assertEqual([item['id'] for item in page['items'] + more['items']], [newest] + tied[::-1] + [older, delayed])
+        self.assertEqual(more['nextCursor'], '')
+        self.assertEqual(self.request('/battle-histories', query={'player': '挑戦者', 'cursor': '123'})[0], 400)
+
+    def test_existing_history_schema_migrates_completion_order(self):
+        newest = self.save(self.trial_history(winner=1, played='2026-11-05T00:00:00Z'))
+        oldest = self.save(self.trial_history(winner=1, played='2026-11-01T09:00:00+09:00'))
+        self.stop_server()
+        with sqlite3.connect(self.root / 'beat-striker-data' / 'history.sqlite3') as db:
+            db.execute('DROP INDEX battle_histories_played_order')
+            db.execute('ALTER TABLE battle_histories RENAME TO migrated_histories')
+            db.execute('CREATE TABLE battle_histories (sequence INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT NOT NULL UNIQUE, summary TEXT NOT NULL, detail TEXT NOT NULL)')
+            db.execute('INSERT INTO battle_histories SELECT sequence, id, summary, detail FROM migrated_histories')
+            db.execute('DROP TABLE migrated_histories')
+        self.start_server()
+        page = self.request('/battle-histories', query={'player': '挑戦者'})[1]
+        self.assertEqual([item['id'] for item in page['items']], [newest, oldest])
+        self.assertEqual(self.request('/battle-histories/' + oldest)[0], 200)
 
     def test_health_initializes_private_database_and_empty_list(self):
         status, response, headers = self.request()

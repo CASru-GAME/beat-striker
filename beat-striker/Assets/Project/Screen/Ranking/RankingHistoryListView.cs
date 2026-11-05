@@ -16,6 +16,7 @@ namespace Alice {
         readonly Subject<string> replayRequested = new();
 
         public Observable<string> ReplayRequested => replayRequested;
+        public float RowPosition => scrollRect.VerticalRowPosition;
 
         void Awake() {
             scrollRect.DataSource = this;
@@ -36,7 +37,7 @@ namespace Alice {
             }
         }
 
-        public void SetEntries(IEnumerable<RankingBattleHistoryEntry> nextEntries) {
+        public void SetEntries(IEnumerable<RankingBattleHistoryEntry> nextEntries, float rowPosition = 0) {
             entries.Clear();
             if (nextEntries != null) {
                 entries.AddRange(nextEntries);
@@ -44,7 +45,7 @@ namespace Alice {
 
             if (entries.Count == 0) ShowStatus("まだ対戦履歴がありません", "バトルの記録がここに表示されます");
             else if (statusLabel != null) statusLabel.gameObject.SetActive(false);
-            scrollRect.ReloadData();
+            scrollRect.ReloadData(this, rowPosition);
         }
 
         public int GetItemCount() {

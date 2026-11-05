@@ -20,7 +20,7 @@ namespace Alice.Editor {
                 PrefabUtility.SaveAsPrefabAsset(root, path);
             } finally { PrefabUtility.UnloadPrefabContents(root); }
             foreach (var sceneRoot in view.gameObject.scene.GetRootGameObjects()) ConfigureTextOverflow(sceneRoot);
-            typeof(RankingPresenterView).GetMethod("ConfigureBackButton", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(view, null);
+
             var back = (Component)new SerializedObject(view).FindProperty("backToMenuEmitter").objectReferenceValue;
             PrefabUtility.RecordPrefabInstancePropertyModifications(back.transform);
             var preview = Object.FindFirstObjectByType<RankingEditorPreview>();
@@ -96,18 +96,7 @@ namespace Alice.Editor {
                 Debug.LogError("Open RankingScene first."); return;
             }
             if (GameObject.Find("Ranking Backdrop")) { Debug.LogError("Ranking layout already exists."); return; }
-            const string path = "Assets/Project/Screen/Ranking/RankingHistoryCellView.prefab";
-            var root = PrefabUtility.LoadPrefabContents(path);
-            try {
-                var cell = root.GetComponent<RankingHistoryCellView>();
-                typeof(RankingHistoryCellView).GetMethod("BuildCell", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(cell, null);
-                EditorUtility.SetDirty(cell);
-                PrefabUtility.SaveAsPrefabAsset(root, path);
-            } finally { PrefabUtility.UnloadPrefabContents(root); }
-            typeof(RankingPresenterView).GetMethod("BuildScreen", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(view, null);
-            EditorUtility.SetDirty(view);
-            EditorSceneManager.MarkSceneDirty(view.gameObject.scene);
-            EditorSceneManager.SaveScene(view.gameObject.scene);
+            PlayerProgressionAuthoring.AuthorRanking();
         }
         // Editor-only sample records; never used by the API client or a player build.
         [MenuItem("Beat Striker/Preview/Ranking sample matches")]

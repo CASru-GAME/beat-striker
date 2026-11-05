@@ -33,6 +33,10 @@ namespace Alice {
         readonly BattleReplayRecorder battleReplayRecorder;
         readonly BattleReplayDriver battleReplayDriver;
         readonly ResultScene resultScene;
+        readonly PlayerSession playerSession;
+        readonly IPlayerProfileService profiles;
+        readonly TrialController trial;
+        readonly ChoiceDialogPresenter trialDialog;
         readonly IBattlePlayerPresenter[] battlePlayerPresenters;
         readonly BattleFlowStateMachine stateMachine = new();
         readonly BattleFlowPauseHandler pauseHandler;
@@ -53,7 +57,7 @@ namespace Alice {
         public Observable<Unit> OnRoundPlayableStarted => roundPlayableStartedSubject;
 
         [Inject]
-        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IAppStrikerRegistry appStrikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IMusicRegistry musicRegistry, IAISetting aiSetting, IAppNetworkSetting appNetworkSetting, IGamePadRegistry gamePadRegistry, IOnlineSessionBootstrap onlineSessionBootstrap, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, ILoadingOverlayService loadingOverlayService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, IBattleOnlineSync battleOnlineSync, BattleReplayRecorder battleReplayRecorder, BattleReplayDriver battleReplayDriver, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters) {
+        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IAppStrikerRegistry appStrikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IMusicRegistry musicRegistry, IAISetting aiSetting, IAppNetworkSetting appNetworkSetting, IGamePadRegistry gamePadRegistry, IOnlineSessionBootstrap onlineSessionBootstrap, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, ILoadingOverlayService loadingOverlayService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, IBattleOnlineSync battleOnlineSync, BattleReplayRecorder battleReplayRecorder, BattleReplayDriver battleReplayDriver, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters, PlayerSession playerSession, IPlayerProfileService profiles, TrialController trial, ChoiceDialogView trialDialogView) {
             this.battleSetting = battleSetting;
             this.battleDeployer = battleDeployer;
             this.strikerRegistry = strikerRegistry;
@@ -76,6 +80,8 @@ namespace Alice {
             this.battleReplayRecorder = battleReplayRecorder;
             this.battleReplayDriver = battleReplayDriver;
             this.resultScene = resultScene;
+            this.playerSession = playerSession; this.profiles = profiles; this.trial = trial;
+            trialDialog = new ChoiceDialogPresenter(trialDialogView, playerSession, gamePadRegistry);
             this.battlePlayerPresenters = battlePlayerPresenters;
             battlePrepared = false;
             outroHandled = false;
@@ -390,12 +396,39 @@ namespace Alice {
             resultScene.ShowResult(battleResults, roundWins);
             battleReplayDriver.FinishReplay();
             await resultScene.WaitForBattleEndInputAsync();
+            var nextScene = playerSession.Mode == BattlePlayMode.Replay ? AppScene.Ranking : AppScene.ResultMenu;
+            if (playerSession.IsTrial) {
+                nextScene = await ChooseTrialNextSceneAsync(winner.Value == 0);
+            } else if (!string.IsNullOrEmpty(battleReplayRecorder.SaveFailure)) {
+                await trialDialog.AskAsync("記録の保存", battleReplayRecorder.SaveFailure, new[] { "OK" }, directInput: true);
+            }
             await battlePresenter.PlayBattleFinishFadeInAsync();
             CompleteBattle();
             await LeaveOnlineBattleAppStateIfNeededAsync();
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync completed. requesting start transition to ResultMenu");
-            var startResult = sceneTransitionService.RequestStartTransition(AppScene.ResultMenu);
-            Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync start transition result. nextScene={AppScene.ResultMenu}, isSuccess={startResult.IsSuccess}");
+            var startResult = sceneTransitionService.RequestStartTransition(nextScene);
+            Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync start transition result. nextScene={nextScene}, isSuccess={startResult.IsSuccess}");
+        }
+
+        async Task<AppScene> ChooseTrialNextSceneAsync(bool won) {
+            var profile = profiles.Get(playerSession.TrialPlayerName);
+            var heading = won ? "挑戦成功！" : "もう一度、挑もう！";
+            var message = $"{profile.name}\n{PlayerGrades.Label((PlayerGrade)profile.grade)}\n{battleReplayRecorder.SaveFailure}";
+            while (true) {
+                var choice = await trialDialog.AskAsync(heading, message, new[] { "続けて挑戦", "一旦終わる" }, inputPlayerId: 0, directInput: true);
+                if (choice == 1) {
+                    playerSession.SetMode(BattlePlayMode.Local);
+                    return AppScene.Title;
+                }
+                try {
+                    trial.PrepareNext();
+                    return ResolveCurrentBattleScene();
+                } catch (Exception exception) {
+                    Debug.LogError($"{LOG_PREFIX} Trial preparation failed: {exception.Message}");
+                    heading = "次の試練を準備できませんでした";
+                    message = "試練の設定と保存先を確認してください。再試行するか、タイトルへ戻れます。";
+                }
+            }
         }
 
         bool BeginRoundResolution(bool stopMusic) {
