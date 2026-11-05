@@ -5787,7 +5787,6 @@ MonoBehaviour:
   wallMask:
     serializedVersion: 2
     m_Bits: 64
-  guardDuration: 0.65
   guardShiftDistance: 0
   fallbackClearanceRadius: 0.5
   minDistanceFromOpponent: 0.5

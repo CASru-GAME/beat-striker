@@ -72,6 +72,7 @@ public class StartButtonAnimation : MonoBehaviour {
 
         if (backgroundBotan != null) {
             backgroundBotan.gameObject.SetActive(false); // 最初は無効
+            backgroundBotan.OnClickEvent.Subscribe(_ => OnStartClicked()).AddTo(this);
         }
 
         onlineWaitingPopupRoot.gameObject.SetActive(false);
@@ -109,8 +110,7 @@ public class StartButtonAnimation : MonoBehaviour {
             Debug.Log($"Registering button {i}: {button.gameObject.name}");
             button.enabled = false;
             // 効果音イベントを登録（無効中は発火しない）
-            int index = i; // ローカルコピー
-            button.OnClickEvent.Subscribe((data) => OnBlackImageClicked(data, index));
+            button.OnClickEvent.Subscribe(_ => OnStartClicked()).AddTo(this);
         }
     }
 
@@ -278,8 +278,8 @@ public class StartButtonAnimation : MonoBehaviour {
             .setEase(LeanTweenType.easeOutQuad);
     }
 
-    void OnBlackImageClicked(BotanEventData data, int buttonIndex) {
-        Debug.Log($"Black image button {buttonIndex} clicked! Sound enabled: {blackImageSoundEnabled}, Time: {Time.time}");
+    void OnStartClicked() {
+        Debug.Log($"Start clicked! Sound enabled: {blackImageSoundEnabled}, Time: {Time.time}");
 
         // デバウンス: 短時間での連続クリックを防ぐ
         if (Time.time - lastClickTime < clickDebounceTime) {

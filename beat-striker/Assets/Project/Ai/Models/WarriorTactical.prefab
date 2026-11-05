@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f576bd857b914d2b91be69f4f2c3240e, type: 3}
   m_Name:
   m_EditorClassIdentifier: Alice.Project.Client::Alice.WarriorAiBrain
+  difficultyLevel: 4
   tuning:
     InitialBeatSeconds: 0.5
     GroundClearance: 0.2
@@ -67,7 +68,6 @@ MonoBehaviour:
     AirJumpDuration: 0.5
     JumpDuration: 0.4
     DiveSpeed: 20
-    GuardSeconds: 0.65
     GuardShift: 0.2
     ThrowSpeed: 35
     ThrowSeconds: 0.8

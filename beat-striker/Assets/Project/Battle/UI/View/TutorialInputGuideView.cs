@@ -88,8 +88,10 @@ namespace Alice {
             var direction = current.Direction;
             if (current.AlternateDirection && (int)(elapsed / (total + repeatPauseBeats)) % 2 != 0) direction.x *= -1f;
             var length = Length(current);
-            var directionAmount = Mathf.SmoothStep(0f, 1f, time / 0.2f) *
-                (1f - Mathf.SmoothStep(0f, 1f, (time - length + 0.2f) / 0.2f));
+            var directionAmount = direction.sqrMagnitude > 0f
+                ? Mathf.SmoothStep(0f, 1f, time / 0.2f) *
+                    (1f - Mathf.SmoothStep(0f, 1f, (time - length + 0.2f) / 0.2f))
+                : 0f;
             var buttonTime = time - (beatSynchronized ? 0f : directionLeadBeats);
             var press = Mathf.SmoothStep(0f, 1f, buttonTime / pressBeats) *
                 (1f - Mathf.SmoothStep(0f, 1f, (buttonTime - pressBeats - holdBeats) / releaseBeats));
@@ -118,7 +120,7 @@ namespace Alice {
             stickCap.rectTransform.anchoredPosition = direction.normalized * (stickTravel * frame.DirectionAmount);
             stickCap.SetMotion(frame.DirectionAmount, frame.DirectionAmount, 0f);
             stickBase.SetMotion(0f, 0f, 0f);
-            stickDirection.gameObject.SetActive(direction.sqrMagnitude > 0f && frame.DirectionAmount > 0f);
+            stickDirection.gameObject.SetActive(frame.DirectionAmount > 0f);
             stickDirection.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f);
         }
     }

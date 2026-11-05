@@ -25,6 +25,16 @@ namespace Core.DarkSatan {
         Vector3 direction;
         public override StrikerStateCategory Category => StrikerStateCategory.Attack;
 
+        public float ObservationDuration => duration;
+        public float ObservationTakeoffSeconds => takeoffTime;
+        public float ObservationDiveSeconds => diveTime;
+        public float ObservationJumpSpeed => jumpSpeed;
+        public float ObservationDiveSpeed => diveSpeed;
+        public float ObservationForwardSpeed => forwardSpeed;
+        public float ObservationHitStart => hitStart;
+        public float ObservationHitEnd => hitEnd;
+        public float ObservationDamage => damage;
+
         public override void OnEnter(IStrikerContext context) {
             elapsed = 0f;
             tookOff = diving = false;

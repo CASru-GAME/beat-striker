@@ -5,10 +5,11 @@
 ## 使用方法
 
 - プレハブは `Models/WarriorTactical.prefab`。
-- `App/App.prefab` のAIRegistryに、ID `Wa`、Self `Warrior`、Strength `1`、Opponent `Any` として登録する。
+- `App/App.prefab` のAIRegistryに、ID `Warrior.Lv1`〜`Warrior.Lv4`、Self `Warrior`、Strength `1`〜`4`、Opponent `Any` として登録している。
 - 通常対戦ではAI強度1以上で、ゲームパッドが割り当てられていない戦士に適用される。強度0は既存のMockを使用する。
 - 対戦相手は戦士・魔法使い・勇者・魔王に対応する。対戦相手ごとの距離、攻撃圧力、警戒範囲、飛び道具への警戒、跳躍の評価をプレハブのInspectorで調整できる。
 - 対戦相手プールなどでブレインを明示指定する場合は、このプレハブを指定する。
+- 全レベルで毎拍判断する。レベル1〜3は、評価が近い行動の選び方にばらつきを加える。[状況判断AIのレベル](AiDifficulty.md)
 
 ## 判断材料と行動
 

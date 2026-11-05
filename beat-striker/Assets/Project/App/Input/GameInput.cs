@@ -183,7 +183,7 @@ namespace Alice
                     ""path"": ""2DVector"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Keybord"",
                     ""action"": ""Direction"",
                     ""isComposite"": true,
                     ""isPartOfComposite"": false
@@ -194,7 +194,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/w"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""Direction"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -205,7 +205,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/s"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""Direction"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -216,7 +216,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/a"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""Direction"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -227,7 +227,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/d"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""Direction"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -238,7 +238,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/leftStick"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";SwichProController;Gamepad"",
+                    ""groups"": ""Gamepad;SwichProController;XInputSwitchLayout"",
                     ""action"": ""Direction"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -249,7 +249,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/dpad"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";SwichProController;Gamepad"",
+                    ""groups"": ""Gamepad;SwichProController;XInputSwitchLayout"",
                     ""action"": ""Direction"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -260,7 +260,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/i"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""North"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -271,7 +271,18 @@ namespace Alice
                     ""path"": ""<Gamepad>/buttonNorth"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Gamepad;SwichProController"",
+                    ""groups"": ""Gamepad;SwichProController"",
+                    ""action"": ""North"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""95041a72-6b93-4872-b821-5b8ca3de56a0"",
+                    ""path"": ""<XInputController>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""XInputSwitchLayout"",
                     ""action"": ""North"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -282,7 +293,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/j"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""West"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -293,7 +304,18 @@ namespace Alice
                     ""path"": ""<Gamepad>/buttonWest"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Gamepad;SwichProController"",
+                    ""groups"": ""Gamepad;SwichProController"",
+                    ""action"": ""West"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8efc4989-0932-4f1c-b90d-6af51ae7b1fd"",
+                    ""path"": ""<XInputController>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""XInputSwitchLayout"",
                     ""action"": ""West"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -304,7 +326,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/k"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""South"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -315,7 +337,18 @@ namespace Alice
                     ""path"": ""<Gamepad>/buttonSouth"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Gamepad;SwichProController"",
+                    ""groups"": ""Gamepad;SwichProController"",
+                    ""action"": ""South"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""529b1081-c0f9-4bb9-8a47-ed3e4174ff86"",
+                    ""path"": ""<XInputController>/buttonEast"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""XInputSwitchLayout"",
                     ""action"": ""South"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -326,7 +359,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/l"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""East"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -337,7 +370,18 @@ namespace Alice
                     ""path"": ""<Gamepad>/buttonEast"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Gamepad;SwichProController"",
+                    ""groups"": ""Gamepad;SwichProController"",
+                    ""action"": ""East"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fb9dd197-4971-46a2-8bac-e479ce2655aa"",
+                    ""path"": ""<XInputController>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""XInputSwitchLayout"",
                     ""action"": ""East"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -348,7 +392,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/c"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""Left"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -359,7 +403,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/leftShoulder"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Gamepad;SwichProController"",
+                    ""groups"": ""Gamepad;SwichProController;XInputSwitchLayout"",
                     ""action"": ""Left"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -370,7 +414,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/n"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""Right"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -381,7 +425,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/rightShoulder"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Gamepad;SwichProController"",
+                    ""groups"": ""Gamepad;SwichProController;XInputSwitchLayout"",
                     ""action"": ""Right"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -392,7 +436,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/start"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Gamepad;SwichProController;XInputSwitchLayout"",
                     ""action"": ""Start"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -403,7 +447,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/u"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Gamepad;SwichProController"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""Start"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -414,7 +458,7 @@ namespace Alice
                     ""path"": ""<Gamepad>/select"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keybord"",
+                    ""groups"": ""Gamepad;SwichProController;XInputSwitchLayout"",
                     ""action"": ""Select"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -425,7 +469,7 @@ namespace Alice
                     ""path"": ""<Keyboard>/e"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Gamepad;SwichProController"",
+                    ""groups"": ""Keybord"",
                     ""action"": ""Select"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -451,6 +495,17 @@ namespace Alice
             ""devices"": [
                 {
                     ""devicePath"": ""<SwitchProControllerHID>"",
+                    ""isOptional"": false,
+                    ""isOR"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""XInputSwitchLayout"",
+            ""bindingGroup"": ""XInputSwitchLayout"",
+            ""devices"": [
+                {
+                    ""devicePath"": ""<XInputController>"",
                     ""isOptional"": false,
                     ""isOR"": false
                 }
@@ -764,6 +819,19 @@ namespace Alice
             {
                 if (m_SwichProControllerSchemeIndex == -1) m_SwichProControllerSchemeIndex = asset.FindControlSchemeIndex("SwichProController");
                 return asset.controlSchemes[m_SwichProControllerSchemeIndex];
+            }
+        }
+        private int m_XInputSwitchLayoutSchemeIndex = -1;
+        /// <summary>
+        /// Provides access to the input control scheme.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputControlScheme" />
+        public InputControlScheme XInputSwitchLayoutScheme
+        {
+            get
+            {
+                if (m_XInputSwitchLayoutSchemeIndex == -1) m_XInputSwitchLayoutSchemeIndex = asset.FindControlSchemeIndex("XInputSwitchLayout");
+                return asset.controlSchemes[m_XInputSwitchLayoutSchemeIndex];
             }
         }
         private int m_GamepadSchemeIndex = -1;

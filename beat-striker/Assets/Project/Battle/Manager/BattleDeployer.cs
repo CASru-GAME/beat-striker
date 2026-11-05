@@ -390,10 +390,12 @@ namespace Alice {
 
                 roundSubscriptions.Add(beatPlayer.OnBeatCommandExecuted.Subscribe(beatResult => {
                     if (!beatResult.IsSuccess) {
+                        instance.CompleteBeat();
                         return;
                     }
 
                     if (beatResult.Button == GamePadButton.Select) {
+                        instance.CompleteBeat();
                         if (!replaySetting.HasReplay) {
                             pendingPauseBeatIndexes.Add(beatResult.BeatIndex);
                         }
@@ -435,6 +437,7 @@ namespace Alice {
                             instance.Guard();
                             break;
                     }
+                    instance.CompleteBeat();
                 }));
 
                 roundSubscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
@@ -446,6 +449,7 @@ namespace Alice {
                 }));
 
                 roundSubscriptions.Add(beatPlayer.OnBeatPassed.Subscribe(beatResult => {
+                    instance.CompleteBeat();
                     if (beatResult.Direction.sqrMagnitude > 0.0001f) {
                         instance.ChangeDirection(beatResult.Direction);
                         return;
@@ -521,6 +525,7 @@ namespace Alice {
 
             var aiBrain = UnityEngine.Object.Instantiate(brainPrefab, battleSetting.PlayerTransforms[playerId]);
             aiBrain.name = brainName;
+            if (!IsInfiniteRoundMode()) aiBrain.ApplyDifficulty(maxAiStrength);
 
             bool initialShouldLearn = aiSetting.EnablesAgentLearning;
             if (playerId != 0 && !aiSetting.UsesSelfPlayOpponentSelection) {

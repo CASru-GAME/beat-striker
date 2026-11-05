@@ -7,6 +7,8 @@ namespace Alice {
         IStrikerState ObservedState { get; }
         float StateElapsedSeconds { get; }
         int StateVersion { get; }
+        float NextGuardSeconds { get; }
+        float ActiveGuardSeconds { get; }
         Bounds BodyBounds { get; }
         Bounds? MovementBounds { get; }
         Transform ObservationRoot { get; }

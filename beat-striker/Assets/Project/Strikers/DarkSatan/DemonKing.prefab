@@ -15504,6 +15504,7 @@ GameObject:
   - component: {fileID: 8716767000433258826}
   - component: {fileID: 8515823221661986454}
   - component: {fileID: 4310568605961233167}
+  - component: {fileID: 7350335678546172012}
   m_Layer: 3
   m_Name: DemonKing
   m_TagString: Untagged
@@ -20842,7 +20843,6 @@ MonoBehaviour:
   wallMask:
     serializedVersion: 2
     m_Bits: 64
-  guardDuration: 0.65
   guardShiftDistance: 0
   fallbackClearanceRadius: 0.5
   minDistanceFromOpponent: 0.5
@@ -108643,3 +108643,28 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f738644f1a23c48b28ddd6ebe7abd819, type: 3}
   m_PrefabInstance: {fileID: 8085498297990797931}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7350335678546172012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1517210810096820132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44960a4e9e4444bbae4d77e7061f75c1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Core.DarkSatan.DemonKingCombatObservation
+  body: {fileID: 8937601008905073280}
+  ground: {fileID: 4726074325913578082}
+  melee: {fileID: 6657879471942446457}
+  uppercut: {fileID: 599964729035471473}
+  heelDrop: {fileID: 6065537338305464784}
+  charge: {fileID: 2285106771436749625}
+  dashNode: {fileID: 6544772151032152558}
+  dash: {fileID: 2890204996219143338}
+  jump: {fileID: 361391877649379335}
+  airJump: {fileID: 723661110471405025}
+  airSuperJump: {fileID: 8284743266976791752}
+  guard: {fileID: 7615511255632755114}
+  special: {fileID: 3559809864546958582}

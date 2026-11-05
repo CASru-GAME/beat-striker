@@ -9,7 +9,7 @@ namespace Alice.HeroAi {
     internal sealed class HeroAiDecision {
         readonly List<HeroAiCandidate> candidates = new(16);
 
-        public HeroAiChoice Choose(HeroAiFrame frame, HeroAiTuning tuning, HeroAiMatchup matchup, HeroAiMemory memory) {
+        public HeroAiChoice Choose(HeroAiFrame frame, HeroAiTuning tuning, HeroAiMatchup matchup, HeroAiMemory memory, AiDifficulty difficulty) {
             var self = frame.Self;
             if (self.Striker.HitPoint.CurrentValue <= 0f || frame.Opponent.Striker.HitPoint.CurrentValue <= 0f) return Idle("Round ended");
             // These authored states have no normal input parent. A rhythm input cannot interrupt them.
@@ -24,7 +24,9 @@ namespace Alice.HeroAi {
             BuildCandidates(frame);
             HeroAiChoice best = null;
             foreach (var candidate in candidates) {
-                var score = Score(candidate, frame, tuning, matchup, memory);
+                var isActive = candidate.Move != HeroAiMove.Wait;
+                var anticipationWeight = isActive ? difficulty.AnticipationWeight : 1f;
+                var score = difficulty.AdjustScore(Score(candidate, frame, tuning, matchup, memory, anticipationWeight), isActive);
                 if (best != null && score <= best.Score) continue;
                 best = new(new AiAction(candidate.Direction, ButtonFor(candidate.Move)), candidate.Move, score, candidate.Reason);
             }
@@ -67,7 +69,8 @@ namespace Alice.HeroAi {
 
         void Add(HeroAiMove move, Vector2 direction, string reason) => candidates.Add(new(move, direction, reason));
 
-        float Score(HeroAiCandidate candidate, HeroAiFrame frame, HeroAiTuning tuning, HeroAiMatchup matchup, HeroAiMemory memory) {
+        float Score(HeroAiCandidate candidate, HeroAiFrame frame, HeroAiTuning tuning, HeroAiMatchup matchup,
+            HeroAiMemory memory, float anticipationWeight) {
             var horizon = Mathf.Clamp(frame.BeatSeconds, .3f, 1.2f);
             var end = PredictSelf(candidate, frame, tuning, horizon);
             var enemy = PredictOpponent(frame, horizon + frame.ExecutionDelay, memory);
@@ -89,7 +92,7 @@ namespace Alice.HeroAi {
                 && frame.Opponent.Category != StrikerStateCategory.Special
                 && startGap < tuning.RushReach + frame.Self.Hero.RushProjectileSpeed * horizon * .35f
                 && HitChance(candidate, frame, tuning, memory) > .7f) anticipated *= .3f;
-            risk += anticipated;
+            risk += anticipated * anticipationWeight;
             if (candidate.Move == HeroAiMove.Guard) risk *= 1f + Mathf.Min(3f, memory.RecentGuardDamage * .15f);
             var hpRatio = frame.Self.Striker.HitPoint.CurrentValue / Mathf.Max(1f, frame.Self.Striker.MaxHitPoint.CurrentValue);
             var maximum = frame.Self.Striker.MaxSpecialPoint.CurrentValue;
@@ -236,8 +239,10 @@ namespace Alice.HeroAi {
 
         static float Vulnerability(HeroAiActor opponent, float future) {
             if (opponent.Category == StrikerStateCategory.Special) return .05f;
-            if (opponent.Category == StrikerStateCategory.Guard && opponent.Striker.Striker.CurrentValue is Striker.Warrior or Striker.DemonKing)
-                return opponent.StateSeconds + future < .65f ? .05f : 1f;
+            if (opponent.Category == StrikerStateCategory.Guard && opponent.Striker.Striker.CurrentValue is Striker.Warrior or Striker.DemonKing) {
+                var guardSeconds = (opponent.Striker as IStrikerCombatObservationSource)?.ActiveGuardSeconds ?? 1f;
+                return opponent.StateSeconds + future < guardSeconds ? .05f : 1f;
+            }
             return 1f;
         }
 

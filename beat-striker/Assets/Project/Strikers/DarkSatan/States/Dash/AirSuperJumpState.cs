@@ -18,6 +18,10 @@ namespace Core.DarkSatan {
         float elapsedTime;
         bool previousUseGravity;
 
+        public float ObservationSpeed => jumpSpeed;
+        public float ObservationDuration => duration;
+        public float ObservationAcceleration => downwardAcceleration;
+
         public override void OnEnter(IStrikerContext context) {
             var toOpponent = context.GetOpponent().Position.CurrentValue - context.Rigidbody.position;
             if (Vector3.Dot(context.Rigidbody.transform.forward, toOpponent) < 0) {

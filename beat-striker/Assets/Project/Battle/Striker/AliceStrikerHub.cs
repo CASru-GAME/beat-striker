@@ -14,6 +14,7 @@ public interface IStrikerContext {
     IEnumerable<IObservableStriker> GetAllStrikers();
     IObservableStriker GetSelf();
     IObservableStriker GetOpponent();
+    float BeginRecoveringGuard();
     void PlayAnimation(StrikerAnimationClip animation, Action<IStrikerStateContext> onComplete = null);
     void PlayAnimation(StrikerAnimationClip animation, Vector3 positionOffset, Vector3 rotationOffset, Action<IStrikerStateContext> onComplete = null);
     void ApplyDamage(float damage);
@@ -66,6 +67,7 @@ namespace Alice {
         void Charge();
         void Special();
         void Guard();
+        void CompleteBeat();
         void AddSpecialPoint(float value);
         void Die();
         void GiveHit(HitStatus status);
@@ -78,6 +80,15 @@ namespace Alice {
     }
 
     public class AliceStrikerHub : IStrikerContext, IStrikerHub, IStrikerTutorialSource, IDisposable {
+        const float MaximumGuardSeconds = 1f;
+        const float GuardRecoveryPerBeat = .1f;
+        const float GuardUseMultiplier = .5f;
+        bool requestingGuard;
+        bool guardedThisBeat;
+
+        public float NextGuardSeconds { get; private set; } = MaximumGuardSeconds;
+        public float ActiveGuardSeconds { get; private set; } = MaximumGuardSeconds;
+
         const float HISTORY_SECONDS = 1f;
         const float POSITION_SNAP_THRESHOLD = 0.2f;
         const float POSITION_LERP_RATE = 0.5f;
@@ -583,8 +594,30 @@ namespace Alice {
         public void Guard() {
             if (stateMachine == null || IsUnableToAct) return;
             var command = StartTutorialCommand(GamePadButton.North);
-            stateMachine.CurrentState.OnGuardRequested(stateMachine);
+            requestingGuard = true;
+            try {
+                stateMachine.CurrentState.OnGuardRequested(stateMachine);
+            } finally {
+                requestingGuard = false;
+            }
             CompleteTutorialCommand(command);
+        }
+
+        public float BeginRecoveringGuard() {
+            // State correction can restore a guard without executing a new command.
+            if (requestingGuard) {
+                ActiveGuardSeconds = NextGuardSeconds;
+                NextGuardSeconds *= GuardUseMultiplier;
+                guardedThisBeat = true;
+            }
+            return ActiveGuardSeconds;
+        }
+
+        public void CompleteBeat() {
+            if (!guardedThisBeat && strikerSubject.CurrentValue is Alice.Striker.Warrior or Alice.Striker.DemonKing) {
+                NextGuardSeconds = Mathf.Min(MaximumGuardSeconds, NextGuardSeconds + GuardRecoveryPerBeat);
+            }
+            guardedThisBeat = false;
         }
 
         public void AddSpecialPoint(float value) {

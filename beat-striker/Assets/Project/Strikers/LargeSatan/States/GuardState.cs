@@ -18,7 +18,6 @@ namespace Core.LargeSatan {
         [SerializeField] EffectPlayer effectPlayer, endEffectPlayer;
         [SerializeField] LayerMask wallMask = Physics.DefaultRaycastLayers;
 
-        [SerializeField] float guardDuration = 0.4f;
         [SerializeField, Min(0f)] float guardShiftDistance = 0.2f;
         [SerializeField, Min(0f)] float fallbackClearanceRadius = 0.5f;
         [SerializeField, Min(0f)] float minDistanceFromOpponent = 0.5f;
@@ -27,7 +26,7 @@ namespace Core.LargeSatan {
             context.Rigidbody.useGravity = false;
             context.Rigidbody.linearVelocity = Vector3.zero;
             ApplySafeGuardShift(context);
-            ScheduleStateEvent(guardDuration, nextContext => {
+            ScheduleStateEvent(context.BeginRecoveringGuard(), nextContext => {
                 nextContext.TryTransition(nextNode);
             });
             effectPlayer.Emit(effectPlayer.transform);

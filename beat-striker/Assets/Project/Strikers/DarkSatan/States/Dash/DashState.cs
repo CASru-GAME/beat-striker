@@ -33,6 +33,13 @@ namespace Core.DarkSatan {
         int lastEnterDirectionSign;
         int consecutiveEnterCount;
 
+        public float ObservationDuration => duration;
+        public float ObservationEndSpeedRatio => endSpeedRatio;
+        public float ObservationNextSpeed(bool forward) {
+            var chain = forward && lastEnterDirectionSign == 1 && Time.time - lastEnterTime <= reentryWindowSeconds;
+            return consecutiveDashSpeeds[Mathf.Min(chain ? consecutiveEnterCount + 1 : 0, consecutiveDashSpeeds.Length - 1)];
+        }
+
         public override void OnEnter(IStrikerContext context) {
             var toOpponent = context.GetOpponent().Position.CurrentValue - context.Rigidbody.position;
             if (Vector3.Dot(context.Rigidbody.transform.forward, toOpponent) < 0) {

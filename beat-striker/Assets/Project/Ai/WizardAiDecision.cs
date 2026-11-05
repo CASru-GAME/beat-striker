@@ -11,7 +11,7 @@ namespace Alice.WizardAi {
         readonly List<Bounds> shields = new(4);
         readonly HashSet<int> consumedShields = new();
 
-        public WizardAiChoice Choose(WizardAiFrame frame, WizardAiTuning tuning, WizardAiMatchup matchup, WizardAiMemory memory) {
+        public WizardAiChoice Choose(WizardAiFrame frame, WizardAiTuning tuning, WizardAiMatchup matchup, WizardAiMemory memory, AiDifficulty difficulty) {
             var self = frame.Self;
             if (self.Striker.HitPoint.CurrentValue <= 0f || frame.Opponent.Striker.HitPoint.CurrentValue <= 0f) return Idle("Round ended");
             if (self.Category == StrikerStateCategory.Special)
@@ -22,7 +22,9 @@ namespace Alice.WizardAi {
             BuildCandidates(frame);
             WizardAiChoice best = null;
             foreach (var candidate in candidates) {
-                var score = Score(candidate, frame, tuning, matchup, memory);
+                var isActive = candidate.Move != WizardAiMove.Wait;
+                var anticipationWeight = isActive ? difficulty.AnticipationWeight : 1f;
+                var score = difficulty.AdjustScore(Score(candidate, frame, tuning, matchup, memory, anticipationWeight), isActive);
                 if (best != null && score <= best.Score) continue;
                 best = new(new AiAction(candidate.Direction, ButtonFor(candidate.Move)), candidate.Move, score, candidate.Reason);
             }
@@ -53,7 +55,8 @@ namespace Alice.WizardAi {
 
         void Add(WizardAiMove move, Vector2 direction, string reason) => candidates.Add(new(move, direction, reason));
 
-        float Score(WizardAiCandidate candidate, WizardAiFrame frame, WizardAiTuning tuning, WizardAiMatchup matchup, WizardAiMemory memory) {
+        float Score(WizardAiCandidate candidate, WizardAiFrame frame, WizardAiTuning tuning, WizardAiMatchup matchup,
+            WizardAiMemory memory, float anticipationWeight) {
             var horizon = Mathf.Clamp(frame.BeatSeconds, .3f, 1.2f);
             var end = PredictSelf(candidate, frame, tuning, horizon);
             var enemy = PredictOpponent(frame, horizon + frame.ExecutionDelay, memory);
@@ -64,7 +67,7 @@ namespace Alice.WizardAi {
             var score = Mathf.Clamp(positionGain, -5f, 5f) * tuning.PositionWeight;
             var hpRatio = frame.Self.Striker.HitPoint.CurrentValue / Mathf.Max(1f, frame.Self.Striker.MaxHitPoint.CurrentValue);
             var risk = ThreatRisk(candidate, frame, tuning, horizon, matchup.ProjectileCaution);
-            risk += AnticipationRisk(candidate, frame, tuning, matchup, memory, horizon);
+            risk += AnticipationRisk(candidate, frame, tuning, matchup, memory, horizon) * anticipationWeight;
             score -= risk * tuning.RiskWeight * (hpRatio < .3f ? 1.35f : 1f);
             score -= BoundaryCost(candidate, frame, tuning, horizon);
 
@@ -224,8 +227,10 @@ namespace Alice.WizardAi {
 
         static float Vulnerability(WizardAiActor actor, float future) {
             if (actor.Category == StrikerStateCategory.Special) return .05f;
-            if (actor.Category == StrikerStateCategory.Guard && actor.Striker.Striker.CurrentValue is Striker.Warrior or Striker.DemonKing)
-                return actor.StateSeconds + future < .65f ? .05f : 1f;
+            if (actor.Category == StrikerStateCategory.Guard && actor.Striker.Striker.CurrentValue is Striker.Warrior or Striker.DemonKing) {
+                var guardSeconds = (actor.Striker as IStrikerCombatObservationSource)?.ActiveGuardSeconds ?? 1f;
+                return actor.StateSeconds + future < guardSeconds ? .05f : 1f;
+            }
             return 1f;
         }
 

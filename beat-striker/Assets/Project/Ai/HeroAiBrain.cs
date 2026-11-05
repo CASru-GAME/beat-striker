@@ -43,6 +43,7 @@ namespace Alice.HeroAi {
         readonly HeroAiSensor sensor = new();
         readonly HeroAiDecision decision = new();
         readonly HeroAiMemory memory = new();
+        readonly AiDifficulty difficulty = new();
         IObservableStriker observedSelf;
         IObservableStriker observedOpponent;
         int lastBeat = -1;
@@ -85,7 +86,7 @@ namespace Alice.HeroAi {
                 Striker.DemonKing => versusDemonKing,
                 _ => versusWarrior
             };
-            var result = decision.Choose(frame, tuning, matchup, memory);
+            var result = decision.Choose(frame, tuning, matchup, memory, difficulty);
             memory.Record(result);
             LastDecision = result.Reason;
             LastDecisionScore = result.Score;
@@ -93,6 +94,7 @@ namespace Alice.HeroAi {
         }
 
         protected override void OnAiEnabled() => ResetObservation();
+        protected override void OnDifficultyChanged(int level) => difficulty.Configure(level);
         protected override void OnAiDisabled() => ResetObservation();
         public override void EndRoundEpisode() => ResetObservation();
         public override void BeginRoundEpisode(int roundNumber, string player1StrikerName, string player2StrikerName, string aiBrainPrefabName) => ResetObservation();

@@ -127,6 +127,10 @@ namespace Alice {
                         isTimingSuccess = false;
                     }
                     if (!isTimingSuccess) {
+                        var upcomingBeatIndex = FindUpcomingPlayableBeat(time);
+                        if (player.IsBeatForfeited(upcomingBeatIndex)) return;
+
+                        var forfeitedBeatIndex = player.RegisterMiss(upcomingBeatIndex, Time.unscaledTimeAsDouble);
                         Debug.Log($"{LOG_PREFIX} OnButtonDown judged as miss. player={playerIndex}, button={button}, beat={result.BeatIndex}, zone={result.Zone}");
                         player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
                             result.BeatIndex,
@@ -135,14 +139,18 @@ namespace Alice {
                             BeatJudgeZone.Miss,
                             button,
                             player.CurrentInputDirection,
-                            player.ComboCount.CurrentValue));
+                            player.ComboCount.CurrentValue,
+                            forfeitedBeatIndex));
                         return;
                     }
+
+                    if (player.IsBeatForfeited(result.BeatIndex)) return;
 
                     var isGood = player.TrySavePendingCommand(result.BeatIndex, result.Zone, button,
                         player.CurrentInputDirection);
 
                     if (isGood) {
+                        player.ResetMissStreak();
                         player.LockInputUntilBeat(result.BeatIndex);
                         var beatResult = new IBeatPlayer.BeatResult(result.BeatIndex, time, true, result.Zone, button,
                             player.CurrentInputDirection, player.ComboCount.CurrentValue);
@@ -166,6 +174,10 @@ namespace Alice {
 
             subscriptions.Add(Observable.EveryUpdate().Subscribe(_ => {
                 UpdateOnlinePreBeatStateSnapshots();
+            }));
+
+            subscriptions.Add(musicPlayer.OnPlaybackLooped.Subscribe(_ => {
+                foreach (var player in beatPlayer) player.ResetMissPenalty();
             }));
 
             subscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
@@ -217,6 +229,17 @@ namespace Alice {
                         beatPlayer[playerIndex].ComboCount.CurrentValue));
                 }
             }));
+        }
+
+        int FindUpcomingPlayableBeat(float playbackTime) {
+            var judgeTime = playbackTime + audioSetting.CommandTimeOffset.CurrentValue;
+            var timeline = musicPlayer.CurrentBeatTimeline;
+            var firstIndex = IsOnlineBattle() ? lastOnlineBeatIndex + 1 : 0;
+            for (var index = firstIndex; index < timeline.Length; index++) {
+                if (timeline[index] > playbackTime && timeline[index] >= judgeTime) return index;
+            }
+
+            return -1;
         }
 
         void SubmitLocalOnlineCommandIfNeeded(int playerId, IBeatPlayer.BeatResult result) {
@@ -654,6 +677,7 @@ namespace Alice {
 
         public void Pause() {
             isPaused = true;
+            foreach (var player in beatPlayer) player.ResetMissStreak();
             // Music can keep advancing during tutorial and attention pauses. An input
             // queued for a skipped beat must not keep the player locked after resume.
             if (!IsOnlineBattle()) {

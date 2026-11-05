@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -29,6 +30,7 @@ namespace Alice {
         float centerRingFirstAlpha;
         bool battleViewActive;
         float[] beatTimeline = Array.Empty<float>();
+        readonly HashSet<int> hiddenBeats = new();
         float currentViewPlaybackTime;
         Vector3 currentWorldPosition;
         Vector3 currentLookDirection = Vector3.right;
@@ -41,8 +43,9 @@ namespace Alice {
         bool playerVisualReady;
         VisualMode visualMode = VisualMode.Hidden;
 
-        public void NotifyBeatPassed() {
-        }
+        public void ClearHiddenBeats() => hiddenBeats.Clear();
+
+        public void HideBeat(int beatIndex) => hiddenBeats.Add(beatIndex);
 
         void Awake() {
             CacheInitialState();
@@ -97,6 +100,7 @@ namespace Alice {
 
         public void SetBeatTimeline(float[] beats) {
             beatTimeline = beats ?? Array.Empty<float>();
+            hiddenBeats.Clear();
             if (battleViewActive) {
                 RefreshVisualMode();
             }
@@ -383,7 +387,7 @@ namespace Alice {
 
             for (var i = 0; i < rings.Length; i++) {
                 var targetIndex = firstUpcoming + i;
-                if (targetIndex < 0 || targetIndex >= beatTimeline.Length) {
+                if (targetIndex < 0 || targetIndex >= beatTimeline.Length || hiddenBeats.Contains(targetIndex)) {
                     SetImageAlpha(rings[i], 0f);
                     continue;
                 }

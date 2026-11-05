@@ -46,12 +46,14 @@ namespace Alice {
             var leftThumbnail = ResolveThumbnail(0);
             var rightThumbnail = ResolveThumbnail(1);
             view.SetPortraits(leftThumbnail, rightThumbnail);
-            string Identity(int slot) {
-                if (slot >= session.Participants.Count) return "";
+            for (var slot = 0; slot < 2; slot++) {
+                if (slot >= session.Participants.Count) {
+                    view.SetIdentity(slot, "", -1, "");
+                    continue;
+                }
                 var player = session.Participants[slot];
-                return $"{player.name}\n{player.GradeLabel}" + (player.isCpu ? $" / CPU Lv{player.cpuLevel}" : "");
+                view.SetIdentity(slot, player.name, player.grade, player.isCpu ? $"CPU  Lv.{player.cpuLevel}" : $"{slot + 1}P  PLAYER");
             }
-            view.SetIdentities(Identity(0), Identity(1));
         }
 
         UnityEngine.Sprite ResolveThumbnail(int playerId) {

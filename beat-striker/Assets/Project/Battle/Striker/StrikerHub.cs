@@ -181,6 +181,7 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     public IEnumerable<Alice.IObservableStriker> GetAllStrikers() => context.GetAllStrikers();
     public Alice.IObservableStriker GetSelf() => context.GetSelf();
     public Alice.IObservableStriker GetOpponent() => context.GetOpponent();
+    public float BeginRecoveringGuard() => context.BeginRecoveringGuard();
 
     public void ApplyDamage(float damage) {
         context.ApplyDamage(damage);

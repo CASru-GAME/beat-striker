@@ -26,7 +26,6 @@ namespace Alice {
         [Min(.01f)] public float AirJumpDuration = .5f;
         [Min(.01f)] public float JumpDuration = .4f;
         [Min(0f)] public float DiveSpeed = 20f;
-        [Min(.01f)] public float GuardSeconds = .65f;
         [Min(0f)] public float GuardShift = .2f;
         [Min(0f)] public float ThrowSpeed = 35f;
         [Min(.01f)] public float ThrowSeconds = .8f;
@@ -69,6 +68,7 @@ namespace Alice {
         readonly WarriorAiSensor sensor = new();
         readonly WarriorAiDecision decision = new();
         readonly WarriorAiMemory memory = new();
+        readonly AiDifficulty difficulty = new();
         IObservableStriker observedSelf;
         IObservableStriker observedOpponent;
         int lastBeat = -1;
@@ -107,7 +107,7 @@ namespace Alice {
                 Striker.DemonKing => versusDemonKing,
                 _ => versusWarrior
             };
-            var result = decision.Choose(frame, tuning, matchup, memory);
+            var result = decision.Choose(frame, tuning, matchup, memory, difficulty);
             memory.Record(result);
             LastDecision = result.Reason;
             LastDecisionScore = result.Score;
@@ -116,6 +116,7 @@ namespace Alice {
         }
 
         protected override void OnAiEnabled() => ResetObservation();
+        protected override void OnDifficultyChanged(int level) => difficulty.Configure(level);
         protected override void OnAiDisabled() => ResetObservation();
         public override void EndRoundEpisode() => ResetObservation();
         public override void BeginRoundEpisode(int roundNumber, string player1StrikerName, string player2StrikerName, string aiBrainPrefabName) => ResetObservation();

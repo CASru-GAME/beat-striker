@@ -29,6 +29,12 @@ namespace Core.DarkSatan {
         CollisionDetectionMode previousCollisionMode;
         public override StrikerStateCategory Category => StrikerStateCategory.Special;
 
+        public float ObservationReach => rushSpeed * (pushOffSeconds * .5f + rushSeconds) + hitRadius;
+        public float ObservationSpeed => rushSpeed;
+        public float ObservationRadius => hitRadius;
+        public float ObservationHeight => hitHeight;
+        public float ObservationDamage => damage;
+
         public StrikerProjectileObservation ObserveRush(Vector3 position) {
             if (hasHit || phase == Phase.Landing || phase == Phase.Brake) return null;
             var delay = phase == Phase.Attention && !cameraReleasing ? Mathf.Max(0f, attentionSeconds - elapsed) : 0f;

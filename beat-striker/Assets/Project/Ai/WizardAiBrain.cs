@@ -52,6 +52,7 @@ namespace Alice.WizardAi {
         readonly WizardAiSensor sensor = new();
         readonly WizardAiDecision decision = new();
         readonly WizardAiMemory memory = new();
+        readonly AiDifficulty difficulty = new();
         IObservableStriker observedSelf;
         IObservableStriker observedOpponent;
         int lastBeat = -1;
@@ -91,7 +92,7 @@ namespace Alice.WizardAi {
                 Striker.DemonKing => versusDemonKing,
                 _ => versusWarrior
             };
-            var result = decision.Choose(frame, tuning, matchup, memory);
+            var result = decision.Choose(frame, tuning, matchup, memory, difficulty);
             memory.Record(result);
             LastDecision = result.Reason;
             LastDecisionScore = result.Score;
@@ -99,6 +100,7 @@ namespace Alice.WizardAi {
         }
 
         protected override void OnAiEnabled() => ResetObservation();
+        protected override void OnDifficultyChanged(int level) => difficulty.Configure(level);
         protected override void OnAiDisabled() => ResetObservation();
         public override void EndRoundEpisode() => ResetObservation();
         public override void BeginRoundEpisode(int roundNumber, string player1StrikerName, string player2StrikerName, string aiBrainPrefabName) => ResetObservation();

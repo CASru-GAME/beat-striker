@@ -12,6 +12,8 @@ namespace Alice {
         [SerializeField] GameObject dialogRoot;
         [SerializeField] TMP_Text heading;
         [SerializeField] TMP_Text description;
+        [SerializeField] TMP_Text gradedDescription;
+        [SerializeField] GradeBadgeView gradeView;
         [SerializeField] TMP_InputField input;
         [SerializeField] ActionEmitter[] emitters;
         [SerializeField] TMP_Text[] labels;
@@ -75,11 +77,16 @@ namespace Alice {
             if (pointerHits.Count > 0 && pointerHits[0].gameObject.transform.IsChildOf(input.transform)) return;
             ReleaseInputFocus();
         }
-        public void Show(string title, string body, string[] options, string initialInput = null, int inputPlayerId = -1) {
+        public void Show(string title, string body, string[] options, string initialInput = null, int inputPlayerId = -1, int? grade = null) {
             ReleaseInputFocus();
             shownFrame = Time.frameCount; this.inputPlayerId = inputPlayerId;
             this.options = options;
             heading.text = title; description.text = body; description.richText = false;
+            description.gameObject.SetActive(!grade.HasValue);
+            gradedDescription.gameObject.SetActive(grade.HasValue);
+            gradedDescription.text = body;
+            gradeView.gameObject.SetActive(grade.HasValue);
+            if (grade.HasValue) gradeView.Set(grade.Value);
             for (var i = 0; i < emitters.Length; i++) {
                 emitters[i].gameObject.SetActive(i < options.Length);
                 if (i < options.Length) labels[i].text = options[i];

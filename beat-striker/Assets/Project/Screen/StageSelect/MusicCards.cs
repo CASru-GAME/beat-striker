@@ -80,73 +80,47 @@ public class MusicCards : MonoBehaviour
     }
 
     void HandleMusicSelected(MusicInfo musicInfo) {
+        if (isAnimating) return;
         musicSelected.OnNext(musicInfo);
     }
 
     public void OnRightPressed()
     {
-        if (cards.Count == 0) return;
-        if (isAnimating) return;
-        isAnimating = true;
-        
-        // クリック効果音を再生
-        PlayClickSound();
-
-        int previousIndex = currentIndex;
-        MusicCard currentCard = cards[previousIndex];
-        int nextIndex = (previousIndex + 1) % cards.Count;
-
-        Vector3 currentPos = currentCard.transform.localPosition;
-        
-        LeanTween.cancel(currentCard.gameObject);
-
-        LeanTween.moveLocalX(currentCard.gameObject, -slideDistance, leftSlideDuration).setEase(LeanTweenType.easeInOutQuad).setOnComplete(() =>
-        {
-            currentCard.transform.SetAsFirstSibling();
-
-            LeanTween.moveLocalX(currentCard.gameObject, 0f, rightSlideDuration).setEase(LeanTweenType.easeOutQuad).setOnComplete(() =>
-            {
-                currentCard.transform.localPosition = new Vector3(0f, currentPos.y, 0f);
-                isAnimating = false;
-                ApplyPreviewState();
-            });
-        });
-
-        currentIndex = nextIndex;
-        ApplyPreviewState(previousIndex);
+        SlideToAdjacentCard(moveToBack: true);
     }
 
     public void OnLeftPressed()
     {
-        if (cards.Count == 0) return;
+        SlideToAdjacentCard(moveToBack: false);
+    }
+
+    void SlideToAdjacentCard(bool moveToBack)
+    {
+        if (cards.Count < 2) return;
         if (isAnimating) return;
         isAnimating = true;
-        
-        // クリック効果音を再生
         PlayClickSound();
 
         int previousIndex = currentIndex;
-        int prevIndex = (previousIndex - 1 + cards.Count) % cards.Count;
-        MusicCard prevCard = cards[prevIndex];
+        int direction = moveToBack ? 1 : -1;
+        currentIndex = (previousIndex + direction + cards.Count) % cards.Count;
+        MusicCard movingCard = cards[moveToBack ? previousIndex : currentIndex];
+        float restingX = movingCard.transform.localPosition.x;
+        int frontSiblingIndex = cardContainer.childCount - 1;
+        LeanTween.cancel(movingCard.gameObject);
+        movingCard.transform.SetSiblingIndex(moveToBack ? frontSiblingIndex : 0);
+        ApplyPreviewState(previousIndex);
 
-        Vector3 currentPos = prevCard.transform.localPosition;
-        
-        LeanTween.cancel(prevCard.gameObject);
-
-        LeanTween.moveLocalX(prevCard.gameObject, -slideDistance, leftSlideDuration).setEase(LeanTweenType.easeInOutQuad).setOnComplete(() =>
+        LeanTween.moveLocalX(movingCard.gameObject, restingX + direction * slideDistance, leftSlideDuration).setEase(LeanTweenType.easeInOutQuad).setOnComplete(() =>
         {
-            prevCard.transform.SetAsLastSibling();
+            movingCard.transform.SetSiblingIndex(moveToBack ? 0 : frontSiblingIndex);
 
-            LeanTween.moveLocalX(prevCard.gameObject, 0f, rightSlideDuration).setEase(LeanTweenType.easeOutQuad).setOnComplete(() =>
+            LeanTween.moveLocalX(movingCard.gameObject, restingX, rightSlideDuration).setEase(LeanTweenType.easeOutQuad).setOnComplete(() =>
             {
-                prevCard.transform.localPosition = new Vector3(0f, currentPos.y, 0f);
-                isAnimating = false;
                 ApplyPreviewState();
+                isAnimating = false;
             });
         });
-
-        currentIndex = prevIndex;
-        ApplyPreviewState(previousIndex);
     }
 
     void ApplyPreviewState(int transitionIndex = -1)

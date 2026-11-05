@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5806a1118a9a4b71ae087d41a626c7b6, type: 3}
   m_Name:
   m_EditorClassIdentifier: Alice.Project.Client::Alice.WizardAi.WizardAiBrain
+  difficultyLevel: 4
   tuning:
     InitialBeatSeconds: 0.5
     GroundClearance: 0.2

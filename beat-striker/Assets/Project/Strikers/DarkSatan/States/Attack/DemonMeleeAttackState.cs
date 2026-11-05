@@ -53,6 +53,10 @@ namespace Core.DarkSatan {
 
         public override StrikerStateCategory Category => StrikerStateCategory.Attack;
 
+        public DemonMeleeStrike ObservationNextStrike => strikes[Time.time <= comboExpires ? nextStrike : 0];
+        public float ObservationStepStopDistance => stepStopDistance;
+        public float ObservationChainDelay => Mathf.Max(0f, strikes[currentStrike].ChainStart - elapsed);
+
         public override void OnEnter(IStrikerContext context) {
             if (Time.time > comboExpires) nextStrike = 0;
             foreach (var limb in strikes.Select(strike => strike.Limb).Distinct()) {

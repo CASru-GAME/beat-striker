@@ -21,6 +21,8 @@ namespace Core {
         public override Observable<BotanEventData> OnClickEvent => clickSubject;
         public override Observable<BotanEventData> OnHoverEvent => hoverSubject;
         public override Observable<BotanEventData> OnHoverExitEvent => hoverExitSubject;
+        // Keep the pointer handler active so input cannot fall through to another button.
+        public bool Interactable { get; set; } = true;
 
         public void OnDisable() {
             hoverCount = 0;
@@ -28,18 +30,19 @@ namespace Core {
 
         public void OnPointerEnter(PointerEventData eventData) {
             ++hoverCount;
-            if (hoverCount >= 2) return;
+            if (!Interactable || hoverCount >= 2) return;
             hoverSubject.OnNext(new BotanEventData(eventData));
         }
 
         public void OnPointerExit(PointerEventData eventData) {
             --hoverCount;
             hoverCount = Mathf.Max(0, hoverCount);
-            if (hoverCount >= 1) return;
+            if (!Interactable || hoverCount >= 1) return;
             hoverExitSubject.OnNext(new BotanEventData(eventData));
         }
 
         public void OnPointerDown(PointerEventData eventData) {
+            if (!Interactable) return;
             onClickEvent?.Invoke();
             clickSubject.OnNext(new BotanEventData(eventData));
             if (clickSound != null) {

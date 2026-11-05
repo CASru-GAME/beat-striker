@@ -21,6 +21,16 @@ namespace Core.DarkSatan {
 
         public override StrikerStateCategory Category => StrikerStateCategory.Charge;
         public bool HasVolley => volleys.Count > 0;
+        public int ObservationVolleyCount => volleys.Count;
+        public bool ObservationFired => fired;
+        public float ObservationSpreadSeconds => volleyPrefab.SpreadSeconds;
+        public float ObservationLaunchSeconds => launchDuration;
+        public float ObservationBulletDamage => volleyPrefab.ObservationDamage;
+        public float ObservationBulletSpeed => volleyPrefab.ObservationSpeed;
+        public int ObservationBulletsPerVolley => volleyPrefab.BulletCount;
+        public void CollectReadyProjectileObservations(List<StrikerProjectileObservation> observations) {
+            foreach (var volley in volleys) volley.CollectLaunchObservations(observations);
+        }
         public bool IsTutorialActionCommitted => fired;
         public TutorialReset Resource => TutorialReset.Charge;
         public void ResetTutorialResource() {

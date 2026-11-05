@@ -36,7 +36,6 @@ namespace Alice {
         void RestoreOfflinePrimaryLayout(int localOnlinePlayerId);
         IPlayerGamePad Get(int playerId);
         void HandlePlayerSlotClick(int sourcePlayerId, int targetPlayerId);
-        void RotateFaceButtonWiringClockwise();
         GamePadButton GetPhysicalFaceButton(GamePadButton button);
         Observable<PlayerGamePadButtonEvent> OnAnyButtonDown { get; }
     }
@@ -59,7 +58,6 @@ namespace Alice {
         readonly Subject<PlayerGamePadButtonEvent> onAnyButtonDown = new();
         readonly Dictionary<int, Option<IGamePad>> replayOverridePreviousPrimaryByPlayerId = new();
         readonly Dictionary<int, IGamePad> replayViewerGamePadsByPlayerId = new();
-        int faceButtonRotationOffset;
 
         public Observable<PlayerGamePadButtonEvent> OnAnyButtonDown => onAnyButtonDown;
 
@@ -199,11 +197,6 @@ namespace Alice {
             sourceSlot.ClearPrimary();
         }
 
-        public void RotateFaceButtonWiringClockwise() {
-            faceButtonRotationOffset = (faceButtonRotationOffset + 1) % 4;
-            Debug.Log($"Rotated face button wiring clockwise. offset={faceButtonRotationOffset}".ToCyan());
-        }
-
         PlayerGamePad EnsurePlayerSlot(int playerId) {
             while (registry.Count <= playerId) {
                 registry.Add(new PlayerGamePad(registry.Count, null, false, HandleButtonDown, HandleButtonUp, focus));
@@ -242,14 +235,13 @@ namespace Alice {
 
         void HandleButtonDown(int playerId, GamePadButton button) {
             var player = EnsurePlayerSlot(playerId);
-            var mappedButton = MapFaceButton(button);
-            if (player.IsSynthetic) { player.EmitButtonDown(mappedButton); return; }
-            if (!player.PressedButtons.TryAdd(button, mappedButton)) return;
+            if (player.IsSynthetic) { player.EmitButtonDown(button); return; }
+            if (!player.PressedButtons.Add(button)) return;
             var version = focus.Version;
             if (focus.HasTextFocus && player.DeviceName == "Keybord") return;
-            if (mappedButton == GamePadButton.East && focus.TryClick(playerId)) return;
-            onAnyButtonDown.OnNext(new PlayerGamePadButtonEvent(playerId, mappedButton));
-            if (version == focus.Version && focus.CanReceive(null)) player.EmitButtonDown(mappedButton);
+            if (button == GamePadButton.East && focus.TryClick(playerId)) return;
+            onAnyButtonDown.OnNext(new PlayerGamePadButtonEvent(playerId, button));
+            if (version == focus.Version && focus.CanReceive(null)) player.EmitButtonDown(button);
         }
 
         void RemoveRemotePrimaryIfExists(int playerId) {
@@ -267,56 +259,12 @@ namespace Alice {
 
         void HandleButtonUp(int playerId, GamePadButton button) {
             var player = EnsurePlayerSlot(playerId);
-            var mappedButton = player.PressedButtons.TryGetValue(button, out var pressedButton) ? pressedButton : MapFaceButton(button);
             player.PressedButtons.Remove(button);
-            player.EmitButtonUp(mappedButton);
+            player.EmitButtonUp(button);
         }
 
-        public GamePadButton GetPhysicalFaceButton(GamePadButton button) {
-            if (button is not (GamePadButton.North or GamePadButton.East or GamePadButton.South or GamePadButton.West)) {
-                return button;
-            }
-            var index = button switch {
-                GamePadButton.North => 0, GamePadButton.East => 1,
-                GamePadButton.South => 2, _ => 3,
-            };
-            return ((index - faceButtonRotationOffset + 4) % 4) switch {
-                0 => GamePadButton.North, 1 => GamePadButton.East,
-                2 => GamePadButton.South, _ => GamePadButton.West,
-            };
-        }
-
-        GamePadButton MapFaceButton(GamePadButton button) {
-            if (faceButtonRotationOffset == 0) {
-                return button;
-            }
-
-            return button switch {
-                GamePadButton.North => RotateFaceButton(GamePadButton.North),
-                GamePadButton.East => RotateFaceButton(GamePadButton.East),
-                GamePadButton.South => RotateFaceButton(GamePadButton.South),
-                GamePadButton.West => RotateFaceButton(GamePadButton.West),
-                _ => button,
-            };
-        }
-
-        GamePadButton RotateFaceButton(GamePadButton button) {
-            var index = button switch {
-                GamePadButton.North => 0,
-                GamePadButton.East => 1,
-                GamePadButton.South => 2,
-                GamePadButton.West => 3,
-                _ => 0,
-            };
-
-            var rotatedIndex = (index + faceButtonRotationOffset) % 4;
-            return rotatedIndex switch {
-                0 => GamePadButton.North,
-                1 => GamePadButton.East,
-                2 => GamePadButton.South,
-                _ => GamePadButton.West,
-            };
-        }
+        // Guides use the fixed Switch face-button positions.
+        public GamePadButton GetPhysicalFaceButton(GamePadButton button) => button;
 
         class PlayerGamePad : IPlayerGamePad {
             public int PlayerId { get; set; }
@@ -328,7 +276,7 @@ namespace Alice {
                 }
             }
 
-            public Dictionary<GamePadButton, GamePadButton> PressedButtons { get; } = new();
+            public HashSet<GamePadButton> PressedButtons { get; } = new();
             public bool HasPrimaryGamePad => isPrimaryInput;
             public bool IsSynthetic => (battleOverride.TryGetValue(out var injected) ? injected : current.GetValue(null)) is IGamePadDataSource;
             public string DeviceName => current.TryGetValue(out var gamePad) ? gamePad.DeviceName : null;

@@ -71,6 +71,7 @@ namespace Alice {
         public int PrecomputedBpm;
         [Min(0f)]
         public float PrecomputedLengthSeconds;
+        public bool TutorialOnly;
     }
 
     public record MusicInfo(
@@ -98,7 +99,7 @@ namespace Alice {
 
         readonly Dictionary<string, MusicInfo> musicById = new Dictionary<string, MusicInfo>();
         readonly Dictionary<string, AppMusicEntry> entryById = new Dictionary<string, AppMusicEntry>();
-        readonly List<MusicInfo> allMusic = new List<MusicInfo>();
+        readonly List<MusicInfo> selectableMusic = new List<MusicInfo>();
 
         bool isInitialized;
         MusicInfo defaultMusic;
@@ -122,7 +123,7 @@ namespace Alice {
 
         public IReadOnlyList<MusicInfo> GetAll() {
             EnsureInitialized();
-            return allMusic;
+            return selectableMusic;
         }
 
         public async Awaitable<LoadedAsset<AudioClip>> LoadAudioClipAsync(string id) {
@@ -177,7 +178,7 @@ namespace Alice {
 
             musicById.Clear();
             entryById.Clear();
-            allMusic.Clear();
+            selectableMusic.Clear();
             foreach (var entry in musicEntries) {
                 var music = new MusicInfo(
                     entry.Id,
@@ -188,10 +189,12 @@ namespace Alice {
                     entry.PrecomputedLengthSeconds);
                 musicById[music.Id] = music;
                 entryById[music.Id] = entry;
-                allMusic.Add(music);
+                if (!entry.TutorialOnly) {
+                    selectableMusic.Add(music);
+                }
             }
 
-            defaultMusic = allMusic[0];
+            defaultMusic = selectableMusic[0];
             isInitialized = true;
         }
 

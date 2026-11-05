@@ -96,8 +96,9 @@ namespace Alice {
 
             selectionPolicy.Reset(playerSelectSetting);
 
-            for (var i = 0; i < view.CharacterSelectButtons.Length; i++) {
-                view.CharacterSelectButtons[i].OnStrikerClicked
+            foreach (var button in view.CharacterSelectButtons) {
+                button.SetInteractable(CanSelectStriker(button.Striker));
+                button.OnStrikerClicked
                     .Subscribe(OnStrikerClicked)
                     .AddTo(subscriptions);
             }
@@ -144,9 +145,11 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} EnableStartInputAfterSceneEnterAsync completed. isSuccess={result.IsSuccess}, startTransitionInputEnabled={startTransitionInputEnabled}");
         }
 
+        bool CanSelectStriker(Striker striker) => !playerSession.IsTrial || striker != Striker.DemonKing;
+
         void OnStrikerClicked(StrikerClickRequest request) {
             if (playerSession.IsTrial && request.PlayerId != 0) return;
-            if (IsTransitioning()) {
+            if (IsTransitioning() || !CanSelectStriker(request.Striker)) {
                 return;
             }
 

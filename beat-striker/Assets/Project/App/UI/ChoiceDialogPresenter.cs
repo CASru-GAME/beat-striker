@@ -58,7 +58,7 @@ namespace Alice {
                 pending.TrySetResult(choice);
             });
         }
-        public Task<int> AskAsync(string title, string body, string[] options, string input = null, int inputPlayerId = -1, bool directInput = false) {
+        public Task<int> AskAsync(string title, string body, string[] options, string input = null, int inputPlayerId = -1, bool directInput = false, int? grade = null) {
             if (disposed || !ViewAvailable()) throw new ObjectDisposedException(nameof(ChoiceDialogPresenter));
             if (completion != null) throw new InvalidOperationException("The dialog is already open.");
             if (options == null || options.Length == 0 || options.Length > view.OptionCapacity) throw new ArgumentException("The options exceed the dialog's authored button capacity.", nameof(options));
@@ -70,7 +70,7 @@ namespace Alice {
             this.directInput = directInput; this.inputPlayerId = inputPlayerId; optionCount = options.Length; openedFrame = UnityEngine.Time.frameCount;
             try {
                 modal = focus.RegisterModal(view.ModalRoot, inputPlayerId);
-                view.Show(title, body, options, input, inputPlayerId);
+                view.Show(title, body, options, input, inputPlayerId, grade);
                 _ = focus.Version;
                 view.SetInputAllowed(focus.CanPoint(view.ModalRoot));
                 UpdateButtonGuides(inputPlayerId >= 0 ? inputPlayerId : 0);

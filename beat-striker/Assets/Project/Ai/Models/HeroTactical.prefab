@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afbe17994b664f8f98a7a82ace83dd74, type: 3}
   m_Name:
   m_EditorClassIdentifier: Alice.Project.Client::Alice.HeroAi.HeroAiBrain
+  difficultyLevel: 4
   tuning:
     InitialBeatSeconds: .5
     GroundClearance: .2

@@ -10,6 +10,7 @@ namespace Alice {
         [SerializeField] TextMeshProUGUI numberLabel;
         [SerializeField] TextMeshProUGUI nameLabel;
         [SerializeField] TextMeshProUGUI statusLabel;
+        [SerializeField] GradeBadgeView gradeView;
         [SerializeField] GameObject selectionMark;
         [SerializeField] RankingSlantedGraphic plate;
         [SerializeField] RectTransform art;
@@ -28,7 +29,9 @@ namespace Alice {
             numberLabel.text = (index + 1).ToString("00");
             nameLabel.richText = false;
             nameLabel.text = player.player == null ? OnlineRoomView.PlayerName(sessionId) : player.player.name;
-            statusLabel.text = (player.player == null ? "" : player.player.GradeLabel + " / ") + (player.canInvite ? "対戦OK" : "取り込み中");
+            statusLabel.text = player.canInvite ? "対戦OK" : "取り込み中";
+            gradeView.gameObject.SetActive(player.player != null);
+            if (player.player != null) gradeView.Set(player.player.grade);
             selectionMark.SetActive(selected);
             var color = selected ? new Color32(255, 220, 0, 255)
                 : player.canInvite ? new Color32(0, 206, 224, 255) : new Color32(90, 95, 104, 255);

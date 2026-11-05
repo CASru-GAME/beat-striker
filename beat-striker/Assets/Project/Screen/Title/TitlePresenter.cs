@@ -50,11 +50,6 @@ namespace Alice {
             view.OnlineRequested.Subscribe(ignored => { _ = ConfirmPlayersAsync(AppScene.OnlineRoom); }).AddTo(subscriptions);
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
-            this.gamePadRegistry.OnAnyButtonDown
-                .Where(e => e.Button == GamePadButton.Select && inputFocus.CanReceive(null))
-                .Subscribe(_ => RotateFaceButtonWiring())
-                .AddTo(subscriptions);
-
             this.view.GotoSelectRequested
                 .Subscribe(_ => {
                     Debug.Log($"{LOG_PREFIX} GotoSelectRequested received");
@@ -121,7 +116,7 @@ namespace Alice {
                             editing = false;
                         }
                         var profile = profiles.Get(name);
-                        var choice = await playerDialog.AskAsync($"{slot + 1}P プレイヤー確認", $"{name}\n{PlayerGrades.Label((PlayerGrade)profile.grade)}", new[] { "OK", "編集", "戻る" }, inputPlayerId: slot, directInput: true);
+                        var choice = await playerDialog.AskAsync($"{slot + 1}P プレイヤー確認", name, new[] { "OK", "編集", "戻る" }, inputPlayerId: slot, directInput: true, grade: profile.grade);
                         if (choice == 2) return;
                         if (choice == 1) { editing = true; continue; }
                         break;
@@ -150,14 +145,6 @@ namespace Alice {
             }
 
             inputState = TitleInputState.Ready;
-        }
-
-        void RotateFaceButtonWiring() {
-            if (inputState != TitleInputState.Ready) {
-                return;
-            }
-
-            gamePadRegistry.RotateFaceButtonWiringClockwise();
         }
 
         void QuitGame() {

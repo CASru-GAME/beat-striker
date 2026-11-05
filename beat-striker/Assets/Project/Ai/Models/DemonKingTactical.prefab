@@ -1,0 +1,90 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &714152330420949822
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4613717739136041729}
+  - component: {fileID: 1718372972706777403}
+  m_Layer: 0
+  m_Name: DemonKingTactical
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4613717739136041729
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 714152330420949822}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1718372972706777403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 714152330420949822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 134c1018f6ac4b719009111cf09c9985, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.DemonKingAi.DemonKingAiBrain
+  difficultyLevel: 4
+  tuning:
+    InitialBeatSeconds: .5
+    GroundClearance: .2
+    ProjectileObservationRadius: 60
+    PredictionMargin: .18
+    WalkSpeed: 1
+    MeleeReach: 1.8
+    AirAttackSpeed: 5
+    AirAttackDamage: 10
+    AirAttackSeconds: .5
+    DiveSpeed: 20
+    DiveSeconds: .5
+    DiveEndRatio: .1
+    MaximumBankedVolleys: 3
+    WarriorLungeReach: 6.5
+    WarriorWarpReach: 5
+    IceHalfWidth: .95
+    IceHeight: 1
+    IceGrowthSeconds: .09
+    DamageWeight: 1.8
+    RiskWeight: 46
+    PositionWeight: 2
+    SpecialScore: 55
+  versusWarrior:
+    PreferredDistance: 3
+    OpponentReach: 6.5
+    Pressure: 1
+    ProjectileCaution: 1.4
+  versusWizard:
+    PreferredDistance: 5
+    OpponentReach: 2.5
+    Pressure: 1
+    ProjectileCaution: 1.5
+  versusHero:
+    PreferredDistance: 4
+    OpponentReach: 5
+    Pressure: 1
+    ProjectileCaution: 1.4
+  versusDemonKing:
+    PreferredDistance: 3.5
+    OpponentReach: 5.5
+    Pressure: 1
+    ProjectileCaution: 1.5

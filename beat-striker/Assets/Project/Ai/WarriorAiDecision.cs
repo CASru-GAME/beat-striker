@@ -14,7 +14,7 @@ namespace Alice {
     internal sealed class WarriorAiDecision {
         readonly List<WarriorAiCandidate> candidates = new(20);
 
-        public WarriorAiChoice Choose(WarriorAiFrame frame, WarriorAiTuning tuning, WarriorAiMatchup matchup, WarriorAiMemory memory) {
+        public WarriorAiChoice Choose(WarriorAiFrame frame, WarriorAiTuning tuning, WarriorAiMatchup matchup, WarriorAiMemory memory, AiDifficulty difficulty) {
             var self = frame.Self;
             if (self.Striker.HitPoint.CurrentValue <= 0f || frame.Opponent.Striker.HitPoint.CurrentValue <= 0f) {
                 return Idle("Round ended");
@@ -28,7 +28,9 @@ namespace Alice {
             BuildCandidates(frame, tuning, memory);
             WarriorAiChoice best = null;
             foreach (var candidate in candidates) {
-                var score = Score(candidate, frame, tuning, matchup, memory);
+                var isActive = candidate.Move != WarriorAiMove.Wait;
+                var anticipationWeight = isActive ? difficulty.AnticipationWeight : 1f;
+                var score = difficulty.AdjustScore(Score(candidate, frame, tuning, matchup, memory, anticipationWeight), isActive);
                 if (best != null && score <= best.Score) continue;
                 best = new WarriorAiChoice(new AiAction(candidate.Direction, ButtonFor(candidate.Move)), candidate.Move, score, candidate.Reason);
             }
@@ -94,9 +96,10 @@ namespace Alice {
             Add(WarriorAiMove.Jump, (toward + Vector2.up).normalized, (toward + Vector2.up).normalized, jumpSpeed, jumpDuration, .01f, 0f, "Approach over projectiles");
             Add(WarriorAiMove.Jump, (-toward + Vector2.up).normalized, (-toward + Vector2.up).normalized, jumpSpeed, jumpDuration, .01f, 0f, "Escape upward and away");
             Add(WarriorAiMove.Jump, Vector2.up, Vector3.up, jumpSpeed, jumpDuration, .01f, 0f, "Evade ground attack");
-            Add(WarriorAiMove.Guard, toward, toward, 0f, tuning.GuardSeconds, 1f, 0f, "Dodge into punish range");
-            Add(WarriorAiMove.Guard, -toward, -toward, 0f, tuning.GuardSeconds, 1f, 0f, "Dodge incoming threat");
-            Add(WarriorAiMove.Guard, Vector2.zero, Vector3.zero, 0f, tuning.GuardSeconds, 1f, 0f, "Dodge without shifting");
+            var guardSeconds = (self.Striker as IStrikerCombatObservationSource)?.NextGuardSeconds ?? 1f;
+            Add(WarriorAiMove.Guard, toward, toward, 0f, guardSeconds, 1f, 0f, "Dodge into punish range");
+            Add(WarriorAiMove.Guard, -toward, -toward, 0f, guardSeconds, 1f, 0f, "Dodge incoming threat");
+            Add(WarriorAiMove.Guard, Vector2.zero, Vector3.zero, 0f, guardSeconds, 1f, 0f, "Dodge without shifting");
 
             var maxSpecial = self.Striker.MaxSpecialPoint.CurrentValue;
             if (maxSpecial > 0f && self.Striker.SpecialPoint.CurrentValue >= maxSpecial - .001f) {
@@ -109,7 +112,8 @@ namespace Alice {
             candidates.Add(new WarriorAiCandidate(move, input, motion, speed, duration, ratio, damage, reason));
         }
 
-        float Score(WarriorAiCandidate candidate, WarriorAiFrame frame, WarriorAiTuning tuning, WarriorAiMatchup matchup, WarriorAiMemory memory) {
+        float Score(WarriorAiCandidate candidate, WarriorAiFrame frame, WarriorAiTuning tuning, WarriorAiMatchup matchup,
+            WarriorAiMemory memory, float anticipationWeight) {
             var horizon = Mathf.Clamp(frame.BeatSeconds * 1.2f, .3f, 1.1f);
             var end = PredictSelf(candidate, frame, tuning, horizon);
             var enemyEnd = frame.Opponent.Body.center + PredictOpponentMove(frame, horizon + frame.ExecutionDelay, memory);
@@ -118,7 +122,7 @@ namespace Alice {
             var positionGain = Mathf.Abs(startGap - matchup.PreferredDistance) - Mathf.Abs(endGap - matchup.PreferredDistance);
             var score = Mathf.Clamp(positionGain, -6f, 6f) * tuning.PositionWeight * matchup.Pressure;
             var risk = ThreatRisk(candidate, frame, tuning, horizon, matchup.ProjectileCaution);
-            risk += AnticipationRisk(candidate, frame, tuning, matchup, memory, end, enemyEnd, horizon);
+            risk += AnticipationRisk(candidate, frame, tuning, matchup, memory, end, enemyEnd, horizon) * anticipationWeight;
             var hpRatio = frame.Self.Striker.HitPoint.CurrentValue / Mathf.Max(1f, frame.Self.Striker.MaxHitPoint.CurrentValue);
             score -= risk * tuning.RiskWeight * (hpRatio < .3f ? 1.3f : 1f);
             score -= BoundaryCost(candidate, frame, tuning, horizon);
@@ -190,7 +194,7 @@ namespace Alice {
                 var horizontal = delta.x * facing;
                 var chance = Mathf.Clamp01((reach - horizontal) / .8f) * Mathf.Clamp01((horizontal + 1f) / .7f)
                     * Mathf.Clamp01((verticalReach - Mathf.Abs(delta.y)) / .6f);
-                chance *= GuardAvailability(frame.Opponent, t + frame.ExecutionDelay, tuning);
+                chance *= GuardAvailability(frame.Opponent, t + frame.ExecutionDelay);
                 if (frame.Opponent.Category == StrikerStateCategory.Special) chance *= .1f;
                 chance *= 1f - Mathf.Min(.45f, memory.WhiffPressure * .08f + memory.GuardHabit * .2f);
                 best = Mathf.Max(best, chance);
@@ -213,7 +217,7 @@ namespace Alice {
                     var chance = Mathf.Clamp01((tolerance + .4f - perpendicular) / .8f)
                         * Mathf.Clamp01((tolerance + .4f - Mathf.Abs(along - emit.ObserveTravelDistance(t))) / .8f);
                     if (along <= 0f) chance = 0f;
-                    best = Mathf.Max(best, chance * GuardAvailability(frame.Opponent, t + frame.ExecutionDelay, tuning));
+                    best = Mathf.Max(best, chance * GuardAvailability(frame.Opponent, t + frame.ExecutionDelay));
                 }
                 return best;
             }
@@ -228,13 +232,14 @@ namespace Alice {
             var miss = (estimatedDelta - forward * estimatedAlong).magnitude;
             var estimatedTolerance = Mathf.Max(frame.Opponent.Body.extents.x, .5f) + .5f;
             return estimatedAlong <= 0f ? 0f : Mathf.Clamp01((estimatedTolerance + .4f - miss) / .8f)
-                * GuardAvailability(frame.Opponent, hitTime + frame.ExecutionDelay, tuning);
+                * GuardAvailability(frame.Opponent, hitTime + frame.ExecutionDelay);
         }
 
-        static float GuardAvailability(WarriorAiActor opponent, float future, WarriorAiTuning tuning) {
+        static float GuardAvailability(WarriorAiActor opponent, float future) {
             if (opponent.Category != StrikerStateCategory.Guard) return 1f;
             if (opponent.Striker.Striker.CurrentValue is Striker.Warrior or Striker.DemonKing) {
-                return future + opponent.StateSeconds < tuning.GuardSeconds ? .02f : .9f;
+                var guardSeconds = (opponent.Striker as IStrikerCombatObservationSource)?.ActiveGuardSeconds ?? 1f;
+                return future + opponent.StateSeconds < guardSeconds ? .02f : .9f;
             }
             // Hero and wizard shields can persist beyond the guarding animation.
             return .25f;
@@ -244,7 +249,7 @@ namespace Alice {
             var risk = 0f;
             foreach (var threat in frame.Threats) {
                 var start = Mathf.Max(frame.ExecutionDelay, threat.StartsAt);
-                if (candidate.Move == WarriorAiMove.Guard) start = Mathf.Max(start, frame.ExecutionDelay + tuning.GuardSeconds);
+                if (candidate.Move == WarriorAiMove.Guard) start = Mathf.Max(start, frame.ExecutionDelay + candidate.Duration);
                 var end = Mathf.Min(threat.EndsAt, frame.ExecutionDelay + horizon);
                 if (start >= end) continue;
                 var expanded = new Bounds(Vector3.zero, threat.Bounds.size + frame.Self.Body.size + Vector3.one * tuning.PredictionMargin * 2f);
@@ -278,7 +283,7 @@ namespace Alice {
 
         static float AnticipationRisk(WarriorAiCandidate candidate, WarriorAiFrame frame, WarriorAiTuning tuning,
             WarriorAiMatchup matchup, WarriorAiMemory memory, Vector3 selfEnd, Vector3 enemyEnd, float horizon) {
-            if (candidate.Move == WarriorAiMove.Guard && horizon <= tuning.GuardSeconds) return 0f;
+            if (candidate.Move == WarriorAiMove.Guard && horizon <= candidate.Duration) return 0f;
             var opponent = frame.Opponent;
             var gap = Mathf.Abs(selfEnd.x - enemyEnd.x);
             var vertical = Mathf.Abs(selfEnd.y - enemyEnd.y);
@@ -331,7 +336,7 @@ namespace Alice {
             switch (candidate.Move) {
                 case WarriorAiMove.Guard:
                     move = candidate.MotionDirection * tuning.GuardShift;
-                    if (seconds > tuning.GuardSeconds) move += Physics.gravity * (.5f * Mathf.Pow(seconds - tuning.GuardSeconds, 2));
+                    if (seconds > candidate.Duration) move += Physics.gravity * (.5f * Mathf.Pow(seconds - candidate.Duration, 2));
                     break;
                 case WarriorAiMove.Throw:
                     move = -candidate.MotionDirection * DecayingDistance(tuning.RecoilSpeed, Mathf.Max(0f, seconds - .1f), tuning.ThrowSeconds - .1f, .01f);

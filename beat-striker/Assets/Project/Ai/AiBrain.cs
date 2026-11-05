@@ -14,6 +14,9 @@ namespace Alice {
     }
 
     public abstract class AiBrain : MonoBehaviour, IGamePad, IGamePadDataSource {
+        [Tooltip("状況判断AIのレベル。通常対戦では選択されたCPUレベルを適用します。4が最大性能。")]
+        [SerializeField, Range(1, 4)] int difficultyLevel = 4;
+
         readonly Subject<Vector2> onDirection = new();
         readonly Subject<Unit> onDirectionCanceled = new();
         readonly Subject<GamePadButton> onButtonDown = new();
@@ -26,6 +29,12 @@ namespace Alice {
         public Observable<GamePadButton> OnButtonDownAsObservable => onButtonDown;
         public Observable<GamePadButton> OnButtonUpAsObservable => onButtonUp;
         public string DeviceName => nameof(AiBrain);
+        public int DifficultyLevel => Mathf.Clamp(difficultyLevel, 1, 4);
+
+        public void ApplyDifficulty(int level) {
+            difficultyLevel = Mathf.Clamp(level, 1, 4);
+            OnDifficultyChanged(DifficultyLevel);
+        }
 
         public void DestroyGamePad() {
             DisableAiMode();
@@ -41,6 +50,7 @@ namespace Alice {
                 return;
             }
             this.isAiMode = true;
+            OnDifficultyChanged(DifficultyLevel);
             OnAiEnabled();
         }
 
@@ -121,6 +131,7 @@ namespace Alice {
         protected virtual void OnAiEnabled() { }
         protected virtual void OnAiDisabled() { }
         protected virtual void OnLearningModeChanged(bool isLearning) { }
+        protected virtual void OnDifficultyChanged(int level) { }
 
         protected virtual void OnDestroy() {
             onDirection.Dispose();

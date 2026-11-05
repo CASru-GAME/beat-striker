@@ -3641,7 +3641,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.TutorialSetting
   stage: 1
-  musicId: sento
+  musicId: tutorial-drums
   playerSelections:
   - playerId: 0
     striker: 3
@@ -3730,22 +3730,22 @@ MonoBehaviour:
     Self: 4
     Opponent: 0
   - Id: DemonKing.Lv1
-    BrainPrefab: {fileID: 8046662237982532771, guid: c7bd9786ae99f4fca9c6ec8a0907d876, type: 3}
+    BrainPrefab: {fileID: 1718372972706777403, guid: fa0adbc9d14f4d3886e4aa5a9005266e, type: 3}
     Strength: 1
     Self: 5
     Opponent: 0
   - Id: DemonKing.Lv2
-    BrainPrefab: {fileID: 8046662237982532771, guid: c7bd9786ae99f4fca9c6ec8a0907d876, type: 3}
+    BrainPrefab: {fileID: 1718372972706777403, guid: fa0adbc9d14f4d3886e4aa5a9005266e, type: 3}
     Strength: 2
     Self: 5
     Opponent: 0
   - Id: DemonKing.Lv3
-    BrainPrefab: {fileID: 8046662237982532771, guid: c7bd9786ae99f4fca9c6ec8a0907d876, type: 3}
+    BrainPrefab: {fileID: 1718372972706777403, guid: fa0adbc9d14f4d3886e4aa5a9005266e, type: 3}
     Strength: 3
     Self: 5
     Opponent: 0
   - Id: DemonKing.Lv4
-    BrainPrefab: {fileID: 8046662237982532771, guid: c7bd9786ae99f4fca9c6ec8a0907d876, type: 3}
+    BrainPrefab: {fileID: 1718372972706777403, guid: fa0adbc9d14f4d3886e4aa5a9005266e, type: 3}
     Strength: 4
     Self: 5
     Opponent: 0
@@ -4097,6 +4097,14 @@ MonoBehaviour:
     BeatData: {fileID: 4900000, guid: dacc99fbf686e4339b3f1ffa4b1d2e0e, type: 3}
     PrecomputedBpm: 110
     PrecomputedLengthSeconds: 43.702858
+  - Id: tutorial-drums
+    DisplayName: Tutorial Drums
+    AudioClipReference:
+      m_AssetGUID: 57c9c9d96d0224b848976c87b5436708
+    BeatData: {fileID: 4900000, guid: 94a012a2f0604d55ab12d19250197639, type: 3}
+    PrecomputedBpm: 120
+    PrecomputedLengthSeconds: 32
+    TutorialOnly: 1
   debugLoadDelaySeconds: 0
 --- !u!114 &8416357320802876425
 MonoBehaviour:

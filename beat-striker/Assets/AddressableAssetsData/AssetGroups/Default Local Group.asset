@@ -280,6 +280,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 57c9c9d96d0224b848976c87b5436708
+    m_Address: Assets/Project/Battle/UI/View/217_dr_bpm120_4-4_4_pop.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 58f0df5510b261340b42f6cf80026c95
     m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_150.mp3
     m_ReadOnly: 0

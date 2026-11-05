@@ -25,6 +25,7 @@ namespace Alice {
         Observable<BeatSignal> OnViewBeatTiming { get; }
         Observable<float[]> OnBeatTimelinePrepared { get; }
         Observable<float> OnViewPlaybackTimeChanged { get; }
+        Observable<Unit> OnPlaybackLooped { get; }
         Observable<Unit> OnPlaybackCompleted { get; }
         BeatJudgeResult JudgeTiming(float playbackTime);
         float CurrentPlaybackTime { get; }
@@ -55,6 +56,7 @@ namespace Alice {
         readonly Subject<IMusicPlayer.BeatSignal> onViewBeatTiming = new();
         readonly Subject<float[]> onBeatTimelinePrepared = new();
         readonly Subject<float> onViewPlaybackTimeChanged = new();
+        readonly Subject<Unit> onPlaybackLooped = new();
         readonly Subject<Unit> onPlaybackCompleted = new();
         IDisposable beatSoundSubscription;
         IDisposable volumeSubscription;
@@ -85,6 +87,7 @@ namespace Alice {
         public Observable<IMusicPlayer.BeatSignal> OnViewBeatTiming => onViewBeatTiming;
         public Observable<float[]> OnBeatTimelinePrepared => onBeatTimelinePrepared;
         public Observable<float> OnViewPlaybackTimeChanged => onViewPlaybackTimeChanged;
+        public Observable<Unit> OnPlaybackLooped => onPlaybackLooped;
         public Observable<Unit> OnPlaybackCompleted => onPlaybackCompleted;
         public float CurrentPlaybackTime => GetCurrentPlaybackTime();
         public float CurrentViewPlaybackTime => currentViewPlaybackTime;
@@ -182,6 +185,7 @@ namespace Alice {
                 onViewPlaybackTimeChanged.OnNext(currentViewPlaybackTime);
                 if (lastPlaybackTime >= 0f && currentTime < lastPlaybackTime) {
                     ResetBeatEventIndexes();
+                    onPlaybackLooped.OnNext(Unit.Default);
                 }
 
                 EmitExcellentZoneEvents();
@@ -570,6 +574,7 @@ namespace Alice {
             onViewBeatTiming.Dispose();
             onBeatTimelinePrepared.Dispose();
             onViewPlaybackTimeChanged.Dispose();
+            onPlaybackLooped.Dispose();
             onPlaybackCompleted.Dispose();
         }
 

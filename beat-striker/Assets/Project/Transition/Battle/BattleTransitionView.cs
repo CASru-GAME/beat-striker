@@ -4,12 +4,11 @@ using UnityEngine.UI;
 
 namespace Alice {
     public class BattleTransitionView : AppTransitionPresenter {
-        [SerializeField] TMPro.TMP_Text leftIdentityLabel;
-        [SerializeField] TMPro.TMP_Text rightIdentityLabel;
+        [SerializeField] BattleIdentityView leftIdentity;
+        [SerializeField] BattleIdentityView rightIdentity;
         [SerializeField] CanvasGroup identityGroup;
-        public void SetIdentities(string left, string right) {
-            leftIdentityLabel.richText = rightIdentityLabel.richText = false;
-            leftIdentityLabel.text = left; rightIdentityLabel.text = right;
+        public void SetIdentity(int slot, string playerName, int grade, string playerLabel) {
+            (slot == 0 ? leftIdentity : rightIdentity).Set(playerName, grade, playerLabel);
         }
         [Header("Portraits")]
         [SerializeField] Image leftPortraitImage;

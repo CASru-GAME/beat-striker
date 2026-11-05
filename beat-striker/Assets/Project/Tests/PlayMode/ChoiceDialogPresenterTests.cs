@@ -257,7 +257,6 @@ public class ChoiceDialogPresenterTests {
         public void RequestUnregister(IGamePad gamePad) => throw new NotSupportedException();
         public void RestoreOfflinePrimaryLayout(int localOnlinePlayerId) => throw new NotSupportedException();
         public void HandlePlayerSlotClick(int sourcePlayerId, int targetPlayerId) => throw new NotSupportedException();
-        public void RotateFaceButtonWiringClockwise() => throw new NotSupportedException();
         public GamePadButton GetPhysicalFaceButton(GamePadButton button) => button;
 
         class Pad : IPlayerGamePad, IDisposable {

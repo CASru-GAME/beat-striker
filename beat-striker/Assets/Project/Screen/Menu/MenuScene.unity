@@ -803,14 +803,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
-      propertyPath: m_fontAsset
-      value:
-      objectReference: {fileID: 11400000, guid: 45ebcbcba74d44699958be6de3a61b3e, type: 2}
-    - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
-      propertyPath: m_sharedMaterial
-      value:
-      objectReference: {fileID: -6255709286732580734, guid: 45ebcbcba74d44699958be6de3a61b3e, type: 2}
-    - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_text
       value: "\u30ED\u30FC\u30AB\u30EB\u30D0\u30C8\u30EB"
       objectReference: {fileID: 0}
@@ -818,6 +810,14 @@ PrefabInstance:
       propertyPath: m_margin.z
       value: -32.627274
       objectReference: {fileID: 0}
+    - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 45ebcbcba74d44699958be6de3a61b3e, type: 2}
+    - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -6255709286732580734, guid: 45ebcbcba74d44699958be6de3a61b3e, type: 2}
     - target: {fileID: 6680217095332153999, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -932,7 +932,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 401f09dbbb0f04eceacebd36ccb37ad2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Alice.Project.Client::Alice.MenuPresenterView
   gotoTitleEmitter: {fileID: 160966441}
   gotoTutorialEmitter: {fileID: 5605737739362868945}
@@ -1001,19 +1001,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 677131135795256040, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 677131135795256040, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.55
       objectReference: {fileID: 0}
     - target: {fileID: 677131135795256040, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 677131135795256040, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.55
       objectReference: {fileID: 0}
     - target: {fileID: 677131135795256040, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 311.7311
+      value: 210
       objectReference: {fileID: 0}
     - target: {fileID: 677131135795256040, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 309.745
+      value: 210
       objectReference: {fileID: 0}
     - target: {fileID: 677131135795256040, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1025,11 +1033,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 677131135795256040, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 226.25493
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 677131135795256040, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -58.61762
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 677131135795256040, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -1149,8 +1157,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3808894050669153564, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_Texture
-      value:
-      objectReference: {fileID: 2800000, guid: 77c9c0940ea76fa4e9ca5dd9bead4b9e, type: 3}
+      value: 
+      objectReference: {fileID: 7506314328700112305, guid: f50eb0de0602be84193911034af4e816, type: 3}
     - target: {fileID: 4863154951588840228, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: _gradient.key0.b
       value: 1
@@ -1177,7 +1185,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_text
-      value: "\u8A66\u7DF4"
+      value: "\u30C1\u30E3\u30EC\u30F3\u30B8"
       objectReference: {fileID: 0}
     - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_margin.z
@@ -1185,7 +1193,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_fontWeight
-      value: 700
+      value: 400
+      objectReference: {fileID: 0}
+    - target: {fileID: 5659946178830669795, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6680217095332153999, guid: 49a37d127342241c4af4f3fb8877425d, type: 3}
       propertyPath: m_AnchorMax.x
@@ -1737,6 +1749,22 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!114 &870000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837010655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c10828cbea43c6b4a05d7244a0a764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.InputFocusBoundary
+  eventSystem: {fileID: 1837010657}
+  inputModule: {fileID: 1837010656}
+  scrollRects: []
+  selectables: []
 --- !u!1001 &4708638081823044182
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2082,19 +2110,3 @@ SceneRoots:
   - {fileID: 2092323712}
   - {fileID: 984328592}
   - {fileID: 1837010658}
---- !u!114 &870000000000000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1837010655}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a7c10828cbea43c6b4a05d7244a0a764, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Alice.Project.Client::Alice.InputFocusBoundary
-  eventSystem: {fileID: 1837010657}
-  inputModule: {fileID: 1837010656}
-  scrollRects: []
-  selectables: []

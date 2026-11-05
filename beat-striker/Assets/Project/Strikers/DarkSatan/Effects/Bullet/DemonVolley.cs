@@ -31,6 +31,17 @@ namespace Core.DarkSatan {
         bool fired;
         public float SpreadSeconds => spreadSeconds;
         public int BulletCount => bullets.Length;
+        public float ObservationDamage => damage;
+        public float ObservationSpeed => speed;
+        public void CollectLaunchObservations(System.Collections.Generic.List<StrikerProjectileObservation> observations) {
+            if (context == null || fired) return;
+            for (int i = 0; i < bullets.Length; i++) {
+                if (!active[i]) continue;
+                // Aim is locked when summoned; launching never retargets these rays.
+                observations.Add(new StrikerProjectileObservation(bullets[i].position, directions[i] * speed,
+                    hitRadius, 0f, flightSeconds));
+            }
+        }
         public bool IsActive(int index) => active[index];
         public Vector3 BulletPosition(int index) => bullets[index].position;
 

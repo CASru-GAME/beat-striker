@@ -2,6 +2,7 @@ using R3;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 using VContainer;
 
@@ -18,6 +19,11 @@ namespace Alice {
         int resetFrame;
         [Inject] public void Initialize(IInputFocusService focus) {
             this.focus = focus;
+            if (inputModule is InputSystemUIInputModule uiInput) {
+                // GamePadRegistry routes the pad's face buttons through the player cursor and dialogs.
+                uiInput.submit.action.ApplyBindingOverride("<Keyboard>/{Submit}", path: "*/{Submit}");
+                uiInput.cancel.action.ApplyBindingOverride("<Keyboard>/{Cancel}", path: "*/{Cancel}");
+            }
             focus.Changed.Subscribe(_ => ResetInput()).AddTo(this);
             ResetInput();
         }

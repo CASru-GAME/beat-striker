@@ -22,14 +22,18 @@ namespace Alice {
             BeatJudgeZone Zone,
             GamePadButton Button,
             Vector2 Direction,
-            int ComboCount);
+            int ComboCount,
+            int? ForfeitedBeatIndex = null);
     }
 
     public partial class BeatJudge {
         
         class BeatPlayer : IBeatPlayer {
+            const double CONSECUTIVE_MISS_SECONDS = 0.2;
+
             readonly Dictionary<int, PendingCommand> pendingCommands = new Dictionary<int, PendingCommand>();
             readonly HashSet<int> attemptedCommands = new HashSet<int>();
+            readonly HashSet<int> forfeitedBeats = new();
             readonly ReactiveProperty<int> comboCount = new(0);
             public Subject<IBeatPlayer.BeatResult> onBeatCommandRequested = new Subject<IBeatPlayer.BeatResult>();
             public Subject<IBeatPlayer.BeatResult> onBeatCommandExecuted = new Subject<IBeatPlayer.BeatResult>();
@@ -42,6 +46,7 @@ namespace Alice {
             int maxCombo;
             bool isInputLocked;
             int lockedBeatIndex = -1;
+            double lastMissTime = double.NegativeInfinity;
 
             record PendingCommand(BeatJudgeZone Zone, GamePadButton Button, Vector2 Direction);
 
@@ -56,6 +61,26 @@ namespace Alice {
             public int Miss => miss;
             public int MaxCombo => maxCombo;
             public bool IsInputLocked => isInputLocked;
+
+            public bool IsBeatForfeited(int beatIndex) => forfeitedBeats.Contains(beatIndex);
+
+            public int? RegisterMiss(int beatIndex, double time) {
+                if (beatIndex >= 0 && time - lastMissTime <= CONSECUTIVE_MISS_SECONDS) {
+                    forfeitedBeats.Add(beatIndex);
+                    ResetMissStreak();
+                    return beatIndex;
+                }
+
+                lastMissTime = time;
+                return null;
+            }
+
+            public void ResetMissStreak() => lastMissTime = double.NegativeInfinity;
+
+            public void ResetMissPenalty() {
+                forfeitedBeats.Clear();
+                ResetMissStreak();
+            }
 
             public bool TrySavePendingCommand(int beatIndex, BeatJudgeZone zone, GamePadButton button, Vector2 direction) {
                 if (pendingCommands.ContainsKey(beatIndex)) {
@@ -136,6 +161,7 @@ namespace Alice {
 
             public void ResetForLoop() {
                 CancelPendingCommands();
+                ResetMissPenalty();
                 comboCount.OnNext(0);
             }
 

@@ -6,6 +6,7 @@ using App;
 using R3;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 namespace Alice {
 
@@ -26,6 +27,7 @@ namespace Alice {
         private PlayerInput playerInput;
         private GameInput input;
         bool isRegistered;
+        bool waitingForButtonRelease;
         readonly Subject<Vector2> onDirection = new();
         readonly Subject<Unit> onDirectionCanceled = new();
         readonly Subject<GamePadButton> onButtonDown = new();
@@ -56,15 +58,15 @@ namespace Alice {
         }
 
         void OnEnable() {
-            input.asset.devices = playerInput.devices;
             input.Player.AddCallbacks(this);
-            input.Player.Enable();
             playerInput.onControlsChanged += OnControlsChanged;
+            SyncControls();
 
             RegisterIfNeeded();
         }
 
         void OnDisable() {
+            waitingForButtonRelease = false;
             input.Player.RemoveCallbacks(this);
             input.Player.Disable();
             playerInput.onControlsChanged -= OnControlsChanged;
@@ -88,7 +90,32 @@ namespace Alice {
 
         private void OnControlsChanged(PlayerInput changed) {
             if (changed == playerInput)
-                input.asset.devices = playerInput.devices;
+                SyncControls();
+        }
+
+        void SyncControls() {
+            waitingForButtonRelease = false;
+            input.Player.Disable();
+            input.asset.devices = playerInput.devices;
+            var scheme = playerInput.currentControlScheme;
+            if (string.IsNullOrEmpty(scheme)) return;
+            input.bindingMask = InputBinding.MaskByGroup(scheme);
+            waitingForButtonRelease = true;
+        }
+
+        void Update() {
+            if (!waitingForButtonRelease) return;
+
+            // Joining happens before the joining event is applied to the device state.
+            // Wait until a later frame and release so that press cannot also click the UI.
+            foreach (var action in input.Player.Get()) {
+                foreach (var control in action.controls) {
+                    if (control is ButtonControl button && button.isPressed) return;
+                }
+            }
+
+            waitingForButtonRelease = false;
+            input.Player.Enable();
         }
 
         void OnDestroy() {

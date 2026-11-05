@@ -10,6 +10,7 @@ namespace Core.DarkSatan {
         [SerializeField] float diveThreshold = -0.5f;
         [SerializeField] GroundChecker groundChecker;
         int airJumpCounter = 0;
+        public bool ObservationNextAirJumpIsSuper => airJumpCounter % 2 == 1;
 
         public void Awake() {
             groundChecker.IsGroundedProperty.Subscribe(isGrounded => {

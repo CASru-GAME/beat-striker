@@ -90,6 +90,7 @@ namespace Alice {
         }
 
         public void PresentRoundPlayableStart() {
+            ringView.SetBeatTimeline(musicPlayer.CurrentBeatTimeline);
             roundPlayable = true;
             RefreshBattleViewVisibility();
         }
@@ -127,14 +128,12 @@ namespace Alice {
                 .Subscribe(result => {
                     if (!roundPlayable) return;
                     ringView.NotifyBeatRequested(result.Zone);
+                    if (result.ForfeitedBeatIndex is int beatIndex) ringView.HideBeat(beatIndex);
                 })
                 .AddTo(disposables);
 
-            musicPlayer.OnViewBeatTiming
-                .Subscribe(_ => {
-                    if (!roundPlayable) return;
-                    ringView.NotifyBeatPassed();
-                })
+            musicPlayer.OnPlaybackLooped
+                .Subscribe(_ => ringView.ClearHiddenBeats())
                 .AddTo(disposables);
 
         }

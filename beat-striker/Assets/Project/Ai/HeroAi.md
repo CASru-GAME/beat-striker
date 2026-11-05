@@ -5,10 +5,11 @@
 ## 使用方法
 
 - 設定プレハブは `Models/HeroTactical.prefab`。
-- `App/App.prefab` のAIRegistryに、ID `He`、Self `Hero`、Strength `1`、Opponent `Any` として登録している。
+- `App/App.prefab` のAIRegistryに、ID `Hero.Lv1`〜`Hero.Lv4`、Self `Hero`、Strength `1`〜`4`、Opponent `Any` として登録している。
 - 通常対戦ではAI強度1以上で、ゲームパッドを割り当てていない勇者に適用する。ブレインを明示指定する機能では、このプレハブを指定する。
 - キャラクターは `Strikers/LargeHero/Hero.prefab`。ルートの `HeroCombatObservation` に、状態・盾・攻撃判定・弾の参照を保存している。
 - 戦士・ウィザード・勇者・魔王に対する距離、攻撃圧力、警戒範囲、飛び道具への警戒をInspectorで調整できる。
+- 全レベルで毎拍判断する。レベル1〜3は、評価が近い行動の選び方にばらつきを加える。[状況判断AIのレベル](AiDifficulty.md)
 
 ## 観測と判断
 
