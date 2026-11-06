@@ -33,6 +33,8 @@ namespace Alice {
         readonly IPlayerProfileService profiles;
         readonly TrialController trial;
         readonly ChoiceDialogPresenter cpuDialog;
+        readonly ChoiceDialogPresenter introductionDialog;
+        readonly ITrialProgressService trialProgress;
         readonly CompositeDisposable subscriptions = new();
         readonly CharacterSelectSelectionPolicy selectionPolicy = new();
         readonly List<CharacterSelectSlotState> slotStates = new();
@@ -59,7 +61,7 @@ namespace Alice {
             IAppNetworkSetting appNetworkSetting,
             ITutorialSetting tutorialSetting,
             IMatchingModel matchingModel,
-            IMatchingDuelOperations duelOperations, PlayerSession playerSession, IPlayerProfileService profiles, TrialController trial, IInputFocusService inputFocus) {
+            IMatchingDuelOperations duelOperations, PlayerSession playerSession, IPlayerProfileService profiles, TrialController trial, IInputFocusService inputFocus, ITrialProgressService trialProgress, IAudioSetting audioSetting) {
             this.view = view;
             this.transitionService = transitionService;
             this.gamePadRegistry = gamePadRegistry;
@@ -77,6 +79,9 @@ namespace Alice {
             gamePadRegistry.OnAnyButtonDown.Where(e => inputFocus.CanReceive(view.CharacterIntroSlideshow.ModalRoot, e.PlayerId) && e.Button == GamePadButton.East).Subscribe(_ => view.CharacterIntroSlideshow.Advance()).AddTo(subscriptions);
             gamePadRegistry.OnAnyButtonDown.Where(e => inputFocus.CanReceive(view.StartButtonAnimation.WaitingRoot, e.PlayerId) && e.Button == GamePadButton.South).Subscribe(_ => duelOperations.CancelMatchmaking()).AddTo(subscriptions);
             cpuDialog = new ChoiceDialogPresenter(view.CpuDialog, gamePadRegistry, inputFocus);
+            this.trialProgress = trialProgress;
+            introductionDialog = new ChoiceDialogPresenter(view.TrialIntroduction.Dialog, gamePadRegistry, inputFocus);
+            audioSetting.VolumeBalance.Subscribe(volume => view.TrialIntroduction.SetVolume(volume.MasterVolume * volume.SeVolume)).AddTo(subscriptions);
 
             _ = InitializeAfterFrameAsync();
         }
@@ -140,6 +145,9 @@ namespace Alice {
             startTransitionInputEnabled = false;
             Debug.Log($"{LOG_PREFIX} EnableStartInputAfterSceneEnterAsync requesting end transition. scene={AppScene.CharacterSelect}");
             var result = await transitionService.RequestEndTransitionAsync(AppScene.CharacterSelect);
+            if (disposed) return;
+            if (result.IsSuccess && playerSession.IsTrial) await ShowTrialIntroductionAsync();
+            if (disposed) return;
             startTransitionInputEnabled = true;
             onlineScenePresenceReady = true;
             PublishOnlineCharacterSelectStatus();
@@ -147,6 +155,32 @@ namespace Alice {
         }
 
         bool CanSelectStriker(Striker striker) => !playerSession.IsTrial || striker != Striker.DemonKing;
+
+        async Task ShowTrialIntroductionAsync() {
+            var name = playerSession.GetName(0);
+            if (trialProgress.GetTrialProgress(name).introductionSeen || !string.IsNullOrEmpty(profiles.Get(name).lastTrialAt)) return;
+            using var hold = inputFocus.HoldScreen();
+            inputState = SceneInputState.Dialog;
+            RefreshState();
+            try {
+                var pending = introductionDialog.AskAsync("チャレンジモードとは", "CPUと戦い、階級の頂点を目指すモード！\n最初はピアニッシモ級からスタート\n好きなストライカーで挑戦しよう", new[] { "挑戦する！" }, inputPlayerId: 0, directInput: true);
+                view.TrialIntroduction.ShowPage();
+                await pending;
+                if (disposed) return;
+                view.TrialIntroduction.StopNarration();
+                trialProgress.CompleteTrialIntroduction(name);
+            } catch (OperationCanceledException) {
+                // Scene disposal cancels the dialog; incomplete guides remain available next time.
+            } catch (Exception exception) {
+                Debug.LogError($"{LOG_PREFIX} Challenge introduction could not be saved: {exception.Message}");
+            } finally {
+                if (!disposed) {
+                    view.TrialIntroduction.StopNarration();
+                    inputState = SceneInputState.Selecting;
+                    RefreshState();
+                }
+            }
+        }
 
         void OnStrikerClicked(StrikerClickRequest request) {
             if (playerSession.IsTrial && request.PlayerId != 0) return;
@@ -247,7 +281,7 @@ namespace Alice {
             } catch (Exception exception) {
                 Debug.LogError($"{LOG_PREFIX} Battle preparation failed: {exception.Message}");
                 if (!disposed) {
-                    try { await cpuDialog.AskAsync("バトルを開始できませんでした", "名前・CPU設定の保存先と試練の設定を確認して、もう一度お試しください。", new[] { "OK" }); }
+                    try { await cpuDialog.AskAsync("バトルを開始できませんでした", "名前・CPU設定の保存先と試練の設定を確認して、もう一度お試しください", new[] { "OK" }); }
                     catch (OperationCanceledException) { }
                 }
                 if (!disposed) inputState = SceneInputState.ReadyToStart;
@@ -591,6 +625,7 @@ namespace Alice {
         public void Dispose() {
             disposed = true;
             cpuDialog.Dispose();
+            introductionDialog.Dispose();
             if (isOnlineMatchmakingInProgress) {
                 duelOperations.CancelMatchmaking();
             }

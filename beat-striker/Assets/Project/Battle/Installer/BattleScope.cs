@@ -8,6 +8,7 @@ namespace Alice {
 
     public class BattleScope : LifetimeScope {
         [SerializeField] ChoiceDialogView trialDialog;
+        [SerializeField] TrialResultView trialResultView;
         [SerializeField] BattleSetting battleSetting;
         [SerializeField] AudioSource audioSource;
         [SerializeField] BattleOpeningBgmPlayer battleOpeningBgmPlayer;
@@ -27,6 +28,7 @@ namespace Alice {
             });
             builder.RegisterComponent(inputFocusBoundary);
             builder.RegisterInstance(trialDialog);
+            builder.RegisterInstance(trialResultView);
             Debug.Log($"{LOG_PREFIX} Configure begin. scene={gameObject.scene.name}, playerPresenterCount={battlePlayerPresenters.Length}");
             builder.Register<IStrikerRegistry, StrikerRegistry>(Lifetime.Singleton);
             builder.Register<IStrikerFactory, StrikerHubFactory>(Lifetime.Singleton);

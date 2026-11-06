@@ -31,7 +31,7 @@ namespace Alice {
 
         public Task PresentTransitionOutAsync(TransitionContext context) {
             UpdatePortraits();
-            return view.PlayTransitionOutAsync();
+            return view.PlayTransitionOutAsync(session.IsTrial, session.TrialTargetGrade);
         }
 
         public Task PresentTransitionInAsync(TransitionContext context) {

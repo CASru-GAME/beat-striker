@@ -79,12 +79,12 @@ namespace Alice {
                 Render();
                 await Task.Delay(12000);
                 if (disposed || leaving || room.Roster.CurrentValue.IsConnected) return;
-                feedback = "一覧を取得できませんでした。再接続を押してください";
+                feedback = "一覧を取得できませんでした　再接続を押してください";
                 Render();
             } catch (Exception exception) {
                 if (disposed || leaving) return;
                 Debug.LogWarning($"[OnlineRoom] Connection failed: {exception.Message}");
-                feedback = "接続できませんでした。再接続を押してください";
+                feedback = "接続できませんでした　再接続を押してください";
                 Render();
             } finally { refreshing = false; }
         }
@@ -99,7 +99,7 @@ namespace Alice {
                 if (!await room.InvitePlayerAsync(selection)) {
                     if (disposed || leaving || current != operation) return;
                     busy = false;
-                    feedback = "この相手には挑戦できません。選び直してください";
+                    feedback = "この相手には挑戦できません　選び直してください";
                     Render();
                     return;
                 }
@@ -108,7 +108,7 @@ namespace Alice {
                 if (disposed || leaving || current != operation) return;
                 Debug.LogWarning($"[OnlineRoom] Challenge failed: {exception.Message}");
                 busy = false;
-                feedback = "送信できませんでした。再接続してください";
+                feedback = "送信できませんでした　再接続してください";
                 Render();
             }
         }
@@ -126,7 +126,7 @@ namespace Alice {
             await Task.Delay(8000);
             if (disposed || leaving || current != operation || !busy) return;
             busy = false;
-            feedback = "返答を確認できませんでした。再接続してください";
+            feedback = "返答を確認できませんでした　再接続してください";
             Render();
         }
 
@@ -145,11 +145,11 @@ namespace Alice {
         }
 
         static string LocalizeMessage(string message) => message switch {
-            "Invite rejected." => "今回は見送り。また別の相手に挑もう！",
+            "Invite rejected." => "今回は見送り　また別の相手に挑もう！",
             "Invite canceled." => "挑戦状が取り消されました",
             "Invite expired." => "挑戦状の有効時間が切れました",
             "Opponent disconnected." or "Presence expired." => "相手が退出しました",
-            "Target player is not available." => "相手が取り込み中になりました。選び直してください",
+            "Target player is not available." => "相手が取り込み中になりました　選び直してください",
             _ => "",
         };
 

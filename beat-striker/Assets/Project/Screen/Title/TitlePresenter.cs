@@ -129,7 +129,7 @@ namespace Alice {
             catch (System.Exception exception) {
                 Debug.LogError($"{LOG_PREFIX} Player confirmation failed: {exception.Message}");
                 if (!disposed) {
-                    try { await playerDialog.AskAsync("名前を保存できませんでした", "保存先を確認して、もう一度お試しください。", new[] { "OK" }); }
+                    try { await playerDialog.AskAsync("名前を保存できませんでした", "保存先を確認して、もう一度お試しください", new[] { "OK" }); }
                     catch (System.OperationCanceledException) { }
                 }
             }

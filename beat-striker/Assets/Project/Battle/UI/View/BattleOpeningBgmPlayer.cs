@@ -6,7 +6,7 @@ namespace Alice {
         void Play();
         void PlayBattleFinish();
         void Stop();
-        void StopBattleFinish();
+        void StopBattleFinish(bool immediately = false);
     }
 
     public class BattleOpeningBgmPlayer : MonoBehaviour, IBattleOpeningBgmPlayer {
@@ -44,8 +44,8 @@ namespace Alice {
             StopAllManagedAudioSources();
         }
 
-        public void StopBattleFinish() {
-            StopAllManagedAudioSources();
+        public void StopBattleFinish(bool immediately = false) {
+            StopAllManagedAudioSources(immediately);
         }
 
         void PlayClips(AudioClip primary, AudioClip secondary) {
@@ -59,7 +59,7 @@ namespace Alice {
             for (var i = 0; i < managedAudioSources.Length; i++) {
                 var managedAudioSource = managedAudioSources[i];
                 StopScheduledPlay(managedAudioSource);
-                BeginFadeOut(managedAudioSource);
+                StopManagedAudioSource(managedAudioSource);
 
                 managedAudioSource.Clip = i == 0 ? primary : secondary;
                 if (managedAudioSource.Clip == null) {
@@ -74,11 +74,11 @@ namespace Alice {
             }
         }
 
-        void StopAllManagedAudioSources() {
+        void StopAllManagedAudioSources(bool immediately = false) {
             InitializeAudioSources();
 
             for (var i = 0; i < managedAudioSources.Length; i++) {
-                BeginFadeOut(managedAudioSources[i]);
+                StopManagedAudioSource(managedAudioSources[i], immediately);
             }
         }
 
@@ -118,10 +118,10 @@ namespace Alice {
             }
         }
 
-        void BeginFadeOut(ManagedAudioSource managedAudioSource) {
+        void StopManagedAudioSource(ManagedAudioSource managedAudioSource, bool immediately = false) {
             StopScheduledPlay(managedAudioSource);
 
-            if (!managedAudioSource.Source.isPlaying) {
+            if (immediately || !managedAudioSource.Source.isPlaying) {
                 managedAudioSource.Source.Stop();
                 managedAudioSource.Source.volume = volume;
                 return;

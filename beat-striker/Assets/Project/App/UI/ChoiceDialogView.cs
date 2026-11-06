@@ -25,6 +25,7 @@ namespace Alice {
         [SerializeField] GameObject[] keyboardKeys;
         [SerializeField] TMP_Text[] keyboardKeyLabels;
         [SerializeField] RectTransform panel;
+        [SerializeField] CanvasGroup fullScreenFade;
         [SerializeField] AudioClip selectionSound;
         [SerializeField, Min(0.01f)] float openDuration = 0.22f;
         [SerializeField, Min(0.01f)] float closeDuration = 0.16f;
@@ -55,7 +56,11 @@ namespace Alice {
         public Transform ModalRoot => dialogRoot.transform;
         public int OptionCapacity => emitters.Length;
         public string InputText => input.text;
-        public bool IsInteractable { get; private set; }
+        bool openComplete;
+        bool presentationLocked;
+        public bool IsInteractable { get => openComplete && !presentationLocked; private set => openComplete = value; }
+        public void SetPresentationLocked(bool locked) => presentationLocked = locked;
+        public void SetHeadingColor(Color color) => heading.color = color;
         void Awake() {
             for (var i = 0; i < emitters.Length; i++) {
                 var index = i;
@@ -98,6 +103,7 @@ namespace Alice {
         public void Show(string title, string body, string[] options, string initialInput = null, int inputPlayerId = -1, int? grade = null) {
             ReleaseInputFocus();
             shownFrame = Time.frameCount; this.inputPlayerId = inputPlayerId;
+            presentationLocked = false;
             this.options = options;
             heading.text = title; SetDescription(body); description.richText = false;
             SetValueArrowsVisible(false);
@@ -118,9 +124,9 @@ namespace Alice {
             dialogRoot.SetActive(true);
             IsInteractable = false;
             input.interactable = false;
-            LeanTween.cancel(panel.gameObject);
-            panel.localScale = Vector3.zero;
-            LeanTween.scale(panel.gameObject, Vector3.one, openDuration).setIgnoreTimeScale(true).setEaseOutCubic().setOnComplete(() => {
+            if (fullScreenFade) fullScreenFade.alpha = 0f;
+            else panel.localScale = Vector3.zero;
+            AnimateVisibility(true, () => {
                 IsInteractable = true;
                 input.interactable = inputAllowed;
             });
@@ -140,11 +146,21 @@ namespace Alice {
             IsInteractable = false;
             ReleaseInputFocus();
             input.interactable = false;
-            LeanTween.cancel(panel.gameObject);
-            LeanTween.scale(panel.gameObject, Vector3.zero, closeDuration).setIgnoreTimeScale(true).setEaseInCubic().setOnComplete(() => {
+            AnimateVisibility(false, () => {
                 dialogRoot.SetActive(false);
                 onClosed();
             });
+        }
+        void AnimateVisibility(bool visible, Action onComplete) {
+            LeanTween.cancel(panel.gameObject);
+            var duration = visible ? openDuration : closeDuration;
+            var animation = fullScreenFade
+                ? LeanTween.value(panel.gameObject, fullScreenFade.alpha, visible ? 1f : 0f, duration)
+                    .setOnUpdate((float alpha) => fullScreenFade.alpha = alpha)
+                : LeanTween.scale(panel.gameObject, visible ? Vector3.one : Vector3.zero, duration);
+            animation.setIgnoreTimeScale(true)
+                .setEase(visible ? LeanTweenType.easeOutCubic : LeanTweenType.easeInCubic)
+                .setOnComplete(onComplete);
         }
         public void Hide() { LeanTween.cancel(panel.gameObject); IsInteractable = false; ReleaseInputFocus(); dialogRoot.SetActive(false); }
         void BindHover(ActionEmitter emitter) {

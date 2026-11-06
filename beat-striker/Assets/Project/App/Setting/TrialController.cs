@@ -5,13 +5,15 @@ namespace Alice {
     public class TrialController {
         readonly PlayerSession session;
         readonly IPlayerProfileService profiles;
+        readonly ITrialProgressService progress;
         readonly TrialSetting setting;
         readonly IPlayerSelectSetting players;
         readonly IBattleSelectSetting battle;
         readonly IMusicRegistry music;
         readonly IStageRegistry stages;
         readonly IAppStrikerRegistry strikers;
-        public TrialController(PlayerSession session, IPlayerProfileService profiles, TrialSetting setting, IPlayerSelectSetting players, IBattleSelectSetting battle, IMusicRegistry music, IStageRegistry stages, IAppStrikerRegistry strikers) {
+        public TrialController(PlayerSession session, IPlayerProfileService profiles, TrialSetting setting, IPlayerSelectSetting players, IBattleSelectSetting battle, IMusicRegistry music, IStageRegistry stages, IAppStrikerRegistry strikers, ITrialProgressService progress) {
+            this.progress = progress;
             this.session = session; this.profiles = profiles; this.setting = setting; this.players = players; this.battle = battle; this.music = music; this.stages = stages; this.strikers = strikers;
         }
         public void PrepareNext() {
@@ -31,7 +33,7 @@ namespace Alice {
             battle.SetAiStrength(level);
             battle.SelectStage(grade < 5 ? setting.GetStage(grade) : stages.GetAll()[UnityEngine.Random.Range(0, stages.GetAll().Count)].Stage);
             battle.SelectMusic(songs[UnityEngine.Random.Range(0, songs.Length)].Id);
-            session.Prepare(new[] { profile.Identity, new PlayerIdentity { name = strikers.GetByStriker(opponent).DisplayName, grade = (int)PlayerGrades.Cpu(level, opponent), isCpu = true, cpuLevel = level } }, trialStartGrade: grade);
+            session.Prepare(new[] { profile.Identity, new PlayerIdentity { name = strikers.GetByStriker(opponent).DisplayName, grade = (int)PlayerGrades.Cpu(level, opponent), isCpu = true, cpuLevel = level } }, trialStartGrade: grade, trialStartStreak: progress.GetTrialProgress(profile.name).championStreak);
         }
     }
 }

@@ -14,10 +14,10 @@ namespace Alice {
         readonly IDisposable resumeSubscription;
         readonly IDisposable backSubscription;
 
-        readonly Subject<Unit> suspendRequestedSubject = new();
+        readonly Subject<int?> suspendRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
 
-        public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
+        public Observable<int?> OnSuspendRequested => suspendRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
 
         [Inject]
@@ -25,7 +25,7 @@ namespace Alice {
             this.cursorDeployer = cursorDeployer;
             focusRegistration = focus.RegisterModal(suspendMenuView.Root.transform);
             this.suspendMenuView = suspendMenuView;
-            suspendSubscription = suspendMenuView.SuspendButton.OnClickEvent.Subscribe(_ => RequestSuspend());
+            suspendSubscription = suspendMenuView.SuspendButton.OnClickEvent.Subscribe(RequestSuspend);
             resumeSubscription = suspendMenuView.ResumeButton.OnClickEvent.Subscribe(_ => RequestResume());
             backSubscription = gamePads.OnAnyButtonDown
                 .Where(input => input.Button == GamePadButton.South && focus.CanReceive(suspendMenuView.Root.transform, input.PlayerId))
@@ -82,10 +82,11 @@ namespace Alice {
             cursorDeployer.SetForceEnabled(false);
         }
 
-        void RequestSuspend() {
+        void RequestSuspend(BotanEventData data) {
             if (opening || closing || requested) return;
             requested = true;
-            suspendRequestedSubject.OnNext(Unit.Default);
+            suspendRequestedSubject.OnNext(data.EventData is CursorPointerEventData cursor && cursor.PlayerId is 0 or 1
+                ? cursor.PlayerId : null);
         }
 
         void RequestResume() {

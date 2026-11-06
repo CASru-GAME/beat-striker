@@ -69,7 +69,7 @@ namespace Alice {
         Observable<OnlineStrikerPreBeatStateSnapshot> OnStrikerPreBeatStateSnapshotReceived { get; }
         Observable<Unit> OnPauseRequested { get; }
         Observable<Unit> OnResumeRequested { get; }
-        Observable<Unit> OnSuspendFinishRequested { get; }
+        Observable<int> OnSuspendFinishRequested { get; }
         Observable<int> OnRoundResolutionRequested { get; }
         Observable<Unit> OnDisconnected { get; }
         Observable<OnlineSuspendMenuBeatSnapshot> OnSuspendMenuBeatReceived { get; }
@@ -80,7 +80,7 @@ namespace Alice {
         void PublishPhase(BattleFlowState state, int round);
         void RequestPause();
         void RequestResume();
-        void RequestSuspendFinish();
+        void RequestSuspendFinish(int round);
         void RequestRoundResolution(int deadPlayerId);
         void PublishOutcome(BattleOutcomeSnapshot snapshot);
         void PublishBeatNotification(OnlineBeatNotificationSnapshot snapshot);
@@ -118,7 +118,7 @@ namespace Alice {
         readonly Dictionary<(int ApplyBeatIndex, int PlayerId), OnlineStrikerPreBeatStateSnapshot> latestStrikerPreBeatStateSnapshots = new();
         readonly Subject<Unit> pauseRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
-        readonly Subject<Unit> suspendFinishRequestedSubject = new();
+        readonly Subject<int> suspendFinishRequestedSubject = new();
         readonly Subject<int> roundResolutionRequestedSubject = new();
         readonly Subject<Unit> disconnectedSubject = new();
         readonly Dictionary<(int Gate, int Round, int Sub), int> flowGateArrivalMask = new();
@@ -161,7 +161,7 @@ namespace Alice {
         public Observable<OnlineSuspendMenuBeatSnapshot> OnSuspendMenuBeatReceived => suspendMenuBeatReceivedSubject;
         public Observable<Unit> OnPauseRequested => pauseRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
-        public Observable<Unit> OnSuspendFinishRequested => suspendFinishRequestedSubject;
+        public Observable<int> OnSuspendFinishRequested => suspendFinishRequestedSubject;
         public Observable<int> OnRoundResolutionRequested => roundResolutionRequestedSubject;
         public Observable<Unit> OnDisconnected => disconnectedSubject;
 
@@ -387,9 +387,9 @@ namespace Alice {
             SendRequest(OnlineBattleProtocol.ResumeRequestKey, new EmptyPayload());
         }
 
-        public void RequestSuspendFinish() {
-            Debug.Log($"{LOG_PREFIX} RequestSuspendFinish sent.");
-            SendRequest(OnlineBattleProtocol.SuspendFinishRequestKey, new EmptyPayload());
+        public void RequestSuspendFinish(int round) {
+            Debug.Log($"{LOG_PREFIX} RequestSuspendFinish sent. round={round}");
+            SendRequest(OnlineBattleProtocol.SuspendFinishRequestKey, new SuspendFinishRequestPayload { round = round });
         }
 
         public void RequestRoundResolution(int deadPlayerId) {
@@ -911,7 +911,8 @@ namespace Alice {
             }
 
             if (key == OnlineBattleProtocol.SuspendFinishRequestKey) {
-                suspendFinishRequestedSubject.OnNext(Unit.Default);
+                var payload = JsonUtility.FromJson<SuspendFinishRequestPayload>(Decode(data));
+                suspendFinishRequestedSubject.OnNext(payload.round);
                 return;
             }
 
@@ -1077,6 +1078,11 @@ namespace Alice {
 
         [Serializable]
         class EmptyPayload { }
+
+        [Serializable]
+        class SuspendFinishRequestPayload {
+            public int round;
+        }
 
         [Serializable]
         class FlowGatePayload {

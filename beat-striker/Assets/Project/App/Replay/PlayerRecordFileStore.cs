@@ -67,6 +67,9 @@ namespace Alice {
             if (record is BattleHistorySaveRequest battle) { ValidateBattle(battle); return; }
             if (record is PlayerProfileCache cache && cache.slotNames?.Length == 4 && cache.slotNames.All(name => string.IsNullOrEmpty(name) || ValidName(name))
                 && cache.profiles != null && cache.ranking != null && cache.profiles.All(ValidProfile) && cache.ranking.All(ValidProfile)
+                && cache.trialProgress != null && cache.trialProgress.All(p => p != null && ValidName(p.name) && p.championStreak >= 0
+                    && (string.IsNullOrEmpty(p.lastResultAt) || ValidTimestamp(p.lastResultAt))
+                    && (string.IsNullOrEmpty(p.lastBattleId) || IsBattleId(p.lastBattleId)))
                 && cache.cpuLevel >= 1 && cache.cpuLevel <= 4) return;
             throw new ArgumentException("Invalid player record data.");
         }

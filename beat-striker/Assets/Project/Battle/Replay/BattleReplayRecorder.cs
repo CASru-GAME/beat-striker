@@ -102,7 +102,7 @@ namespace Alice {
             StopRecording();
             try { profiles.Record(saveRequest); }
             catch (Exception exception) when (exception is System.IO.IOException || exception is UnauthorizedAccessException) {
-                SaveFailure = "記録を保存できませんでした。保存先の空き容量を確認してください。";
+                SaveFailure = "記録を保存できませんでした　保存先の空き容量を確認してください";
                 Debug.LogWarning($"{LOG_PREFIX} Local record could not be persisted: {exception.Message}");
             }
         }

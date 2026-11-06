@@ -118,7 +118,7 @@ namespace Alice {
             builder.Register<RankingNavigationState>(Lifetime.Singleton);
             builder.RegisterInstance(trialSetting);
             builder.Register<PlayerRecordsApiClient>(Lifetime.Singleton).As<IPlayerRecordsApiClient>().As<IPlayerFeedbackApiClient>();
-            builder.RegisterEntryPoint<PlayerProfileService>(Lifetime.Singleton).AsSelf().As<IPlayerProfileService>();
+            builder.RegisterEntryPoint<PlayerProfileService>(Lifetime.Singleton).AsSelf().As<IPlayerProfileService>().As<ITrialProgressService>();
             builder.Register<TrialController>(Lifetime.Singleton);
 
 			builder.RegisterInstance(playerInputManager);

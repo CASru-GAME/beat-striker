@@ -17,6 +17,7 @@ namespace Alice {
         public string BattleId { get; private set; } = "";
         public int TrialTargetGrade { get; private set; } = -1;
         public int TrialStartGrade { get; private set; } = -1;
+        public int TrialStartStreak { get; private set; }
         public string TrialPlayerName { get; private set; } = "";
         public bool IsTrial => Mode == BattlePlayMode.Trial;
         public Observable<Unit> Changed => changed;
@@ -27,13 +28,15 @@ namespace Alice {
             if (Mode != mode) {
                 participants = Array.Empty<PlayerIdentity>();
                 BattleId = ""; TrialStartGrade = -1; TrialTargetGrade = -1; TrialPlayerName = "";
+                TrialStartStreak = 0;
             }
             Mode = mode; changed.OnNext(Unit.Default);
         }
-        public void Prepare(PlayerIdentity[] identities, string battleId = null, int trialStartGrade = -1) {
+        public void Prepare(PlayerIdentity[] identities, string battleId = null, int trialStartGrade = -1, int trialStartStreak = 0) {
             participants = Array.ConvertAll(identities, identity => identity with { });
             BattleId = battleId ?? Guid.NewGuid().ToString("N");
             TrialStartGrade = trialStartGrade;
+            TrialStartStreak = trialStartStreak;
             TrialTargetGrade = IsTrial && trialStartGrade < 5 ? trialStartGrade + 1 : -1;
             TrialPlayerName = IsTrial ? identities[0].name : "";
             changed.OnNext(Unit.Default);

@@ -21,7 +21,7 @@ namespace Alice {
         Observable<Unit> Changed { get; }
     }
 
-    public class PlayerProfileService : IPlayerProfileService, IInitializable, ITickable, IDisposable {
+    public class PlayerProfileService : IPlayerProfileService, ITrialProgressService, IInitializable, ITickable, IDisposable {
         public const string GuestName = "ゲスト";
         public static string EnteredNameOrGuest(string input) => string.IsNullOrWhiteSpace(input) ? GuestName : input;
         readonly IPlayerRecordsApiClient recordsApi;
@@ -107,6 +107,15 @@ namespace Alice {
             profiles = source.profiles.Where(p => p.name != profile.name).Append(profile).ToArray()
         };
         public void CacheRanking(IEnumerable<PlayerProfile> profiles) => Commit(cache with { ranking = profiles.Select(p => p with { }).ToArray() });
+        public TrialProgress GetTrialProgress(string name) =>
+            (cache.trialProgress.FirstOrDefault(p => p.name == name) ?? new TrialProgress { name = name }) with { };
+        public void CompleteTrialIntroduction(string name) {
+            var progress = GetTrialProgress(name) with { introductionSeen = true };
+            Commit(ReplaceTrialProgress(cache, progress));
+        }
+        static PlayerProfileCache ReplaceTrialProgress(PlayerProfileCache source, TrialProgress progress) => source with {
+            trialProgress = source.trialProgress.Where(p => p.name != progress.name).Append(progress).ToArray()
+        };
         public void Record(BattleHistorySaveRequest request) {
             PlayerRecordFileStore.ValidateBattle(request);
             var path = files.BattlePath(request.battleId);
@@ -128,7 +137,16 @@ namespace Alice {
             if (string.IsNullOrEmpty(profile.lastTrialAt) || !Earlier(request.playedAt, profile.lastTrialAt)) {
                 profile.lastTrialOpponent = request.strikerIds[1]; profile.lastTrialAt = request.playedAt;
             }
-            return ReplaceProfile(source, profile);
+            var next = ReplaceProfile(source, profile);
+            var progress = source.trialProgress.FirstOrDefault(p => p.name == profile.name) ?? new TrialProgress { name = profile.name };
+            // The outbox is applied again during recovery and upload. Count each result only once.
+            if (progress.lastBattleId == request.battleId || !string.IsNullOrEmpty(progress.lastResultAt) && !Earlier(progress.lastResultAt, request.playedAt)) return next;
+            return ReplaceTrialProgress(next, progress with {
+                introductionSeen = true,
+                championStreak = request.trialStartGrade == 5 && request.winnerPlayerId == 0 ? progress.championStreak + 1 : 0,
+                lastBattleId = request.battleId,
+                lastResultAt = request.playedAt
+            });
         }
         BattleHistorySaveRequest ReadQueuedBattle(string path) {
             try { return files.Read<BattleHistorySaveRequest>(path); }

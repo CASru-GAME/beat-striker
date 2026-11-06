@@ -61,6 +61,9 @@ namespace Alice {
         void CancelDirection();
         void ConfigureSurvival(bool preventsHitPointDeath, float hitPointRecoveryRatioPerSecond);
         void RestoreHitPoint();
+#if UNITY_EDITOR
+        void ApplyDamage(float damage);
+#endif
         void Default();
         void Dash();
         void Attack();

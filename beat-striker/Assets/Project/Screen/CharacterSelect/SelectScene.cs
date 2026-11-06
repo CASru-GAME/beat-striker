@@ -9,6 +9,8 @@ namespace Alice {
         [SerializeField] AudioClip clickSound;
         [SerializeField] CharacterIntroSlideshow characterIntroSlideshow;
         [SerializeField] ChoiceDialogView cpuDialog;
+        [SerializeField] TrialIntroductionView trialIntroduction;
+        public TrialIntroductionView TrialIntroduction => trialIntroduction;
         public ChoiceDialogView CpuDialog => cpuDialog;
 
         public Characterselectbutton[] CharacterSelectButtons => characterSelectButtons;

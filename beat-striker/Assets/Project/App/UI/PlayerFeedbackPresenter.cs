@@ -47,7 +47,7 @@ namespace Alice {
                     if (await api.HasFeedbackAsync(candidate.Name, token)) continue;
                     token.ThrowIfCancellationRequested();
                     await dialog.AskAsync("感想のお願い",
-                        $"{candidate.Name} さん、プレイありがとうございます。\nよろしければ、感想をお聞かせください。\nお名前と感想は公開され、送信後は変更できません。\n空欄でも送信できます。",
+                        $"{candidate.Name} さん、プレイありがとうございます\nよろしければ、感想をお聞かせください\nお名前と感想は共有され、送信後は変更できません\n空欄でも送信できます",
                         new[] { "送信" }, "", inputPlayerId: candidate.Slot, directInput: true);
                     await SubmitAsync(candidate, dialog, token);
                 }
@@ -71,7 +71,7 @@ namespace Alice {
                     Debug.LogWarning($"[PlayerFeedbackPresenter] {exception.Message}");
                 }
                 token.ThrowIfCancellationRequested();
-                var choice = await dialog.AskAsync("感想を送信できませんでした", "通信環境を確認して再試行できます。",
+                var choice = await dialog.AskAsync("感想を送信できませんでした", "通信環境を確認して再試行できます",
                     new[] { "再試行", "閉じる" }, inputPlayerId: candidate.Slot, directInput: true);
                 if (choice != 0) return;
             }

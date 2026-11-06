@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 namespace Alice {
     public class BattleTransitionView : AppTransitionPresenter {
+        [SerializeField] TrialAnnouncementView trialAnnouncement;
         [SerializeField] BattleIdentityView leftIdentity;
         [SerializeField] BattleIdentityView rightIdentity;
         [SerializeField] CanvasGroup identityGroup;
@@ -39,6 +40,7 @@ namespace Alice {
         [SerializeField] float vsDisappearExpandDuration = 0.06f;
         [SerializeField] float vsDisappearShrinkDuration = 0.1f;
         [SerializeField] float holdDuration = 0.35f;
+        [SerializeField, Min(0f)] float trialExtraHoldDuration = .5f;
         [SerializeField] float separateDuration = 0.3f;
 
         [Header("Tuning")]
@@ -69,9 +71,10 @@ namespace Alice {
             rightPortraitImage.sprite = right;
         }
 
-        public async Task PlayTransitionOutAsync() {
+        public async Task PlayTransitionOutAsync(bool isTrial, int trialTargetGrade) {
             CancelAllTweens();
             ResetVisualState();
+            trialAnnouncement.Configure(isTrial ? trialTargetGrade : -1);
             PlayClip(transitionStartClip);
 
             var leftStart = ResolveLocalPosition(leftStartAnchor);
@@ -90,9 +93,12 @@ namespace Alice {
 
             await ShowVsAsync();
             identityGroup.alpha = 1f;
+            var showPromotion = isTrial && trialTargetGrade >= 0;
+            await trialAnnouncement.PlayAsync(showPromotion ? trialExtraHoldDuration : 0f);
 
-            if (holdDuration > 0f) {
-                await DelayAsync(holdDuration);
+            var vsHold = holdDuration + (isTrial && !showPromotion ? trialExtraHoldDuration : 0f);
+            if (vsHold > 0f) {
+                await DelayAsync(vsHold);
             }
         }
 

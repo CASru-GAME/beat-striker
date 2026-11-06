@@ -198,6 +198,9 @@ namespace Alice {
                 while (battleOnlineSync.NetworkTime < resumeNetworkTime) {
                     await Task.Yield();
                 }
+                if (!stateMachine.CanResumeFromSuspend) {
+                    return;
+                }
 
                 var judged = musicPlayer.JudgeTiming(musicPlayer.CurrentPlaybackTime);
                 Debug.Log($"[BattleFlowOnlineHandler] Resume reached. beat={judged.BeatIndex}, playback={musicPlayer.CurrentPlaybackTime:0.000}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
@@ -211,14 +214,6 @@ namespace Alice {
             }
         }
 
-        public void ApplyOnlineSuspendFinishRequest(Func<Task> completeBattleBySuspendMenuAsync) {
-            if (!IsOnlineBattle || !stateMachine.CanSuspendBattle) {
-                return;
-            }
-
-            _ = completeBattleBySuspendMenuAsync();
-        }
-
         public void ApplyOnlineRoundResolutionRequest(int deadPlayerId) {
             if (!IsOnlineBattle || stateMachine.IsBattleEndingOrFinished || stateMachine.IsRoundResolving) {
                 return;
@@ -226,11 +221,6 @@ namespace Alice {
 
             Debug.Log($"[BattleFlowOnlineHandler] ApplyOnlineRoundResolutionRequest. deadPlayerId={deadPlayerId}, currentRound={getCurrentRound()}, currentState={stateMachine.Current}, localPlayerId={appNetworkSetting.LocalOnlinePlayerId}");
             onRoundResolutionRequested(deadPlayerId);
-        }
-
-        public void RequestSuspendFinish() {
-            Debug.Log($"[BattleFlowOnlineHandler] RequestSuspendFinish. localPlayerId={appNetworkSetting.LocalOnlinePlayerId}, currentRound={getCurrentRound()}");
-            battleOnlineSync.RequestSuspendFinish();
         }
 
         public void RequestRoundResolution(int deadPlayerId) {
@@ -255,8 +245,8 @@ namespace Alice {
                 ? outcome.FinalWinnerPlayerId
                 : outcome.RoundWinnerPlayerId;
 
-            if (!stateMachine.IsRoundResolving) {
-                if (!beginRoundResolution(outcome.StopMusic)) {
+            if (!outcome.StopMusic && !stateMachine.IsRoundResolving) {
+                if (!beginRoundResolution(false)) {
                     return false;
                 }
 
@@ -264,7 +254,7 @@ namespace Alice {
                 pauseHandler.PresentRoundPlayableFinishToPlayers();
             }
 
-            _ = completeBattleWithWinnerAsync(new CorePlayerId(finalWinnerId), roundWins, false);
+            _ = completeBattleWithWinnerAsync(new CorePlayerId(finalWinnerId), roundWins, outcome.StopMusic);
             return true;
         }
 

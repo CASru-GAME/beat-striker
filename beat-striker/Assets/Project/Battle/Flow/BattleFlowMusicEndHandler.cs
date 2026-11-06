@@ -84,26 +84,6 @@ namespace Alice {
             }
         }
 
-        public async Task CompleteBattleBySuspendMenuAsync() {
-            try {
-                if (!beginRoundResolution(true)) {
-                    return;
-                }
-
-                beatJudge.ResetRoundState();
-                pauseHandler.PresentRoundPlayableFinishToPlayers();
-
-                var winnerPlayerId = resolveTopHitPointPlayerId();
-                var roundWins = battleJudge.GetRoundWins();
-                // サスペンド終了によるバトル終了も同様に対称送信（重複はマージで吸収）。
-                publishRoundOutcome(Math.Max(1, getCurrentRound()), -1, winnerPlayerId, false, winnerPlayerId, true, roundWins);
-                await completeBattleWithWinnerAsync(new CorePlayerId(winnerPlayerId), roundWins, true);
-            }
-            catch (Exception exception) {
-                Debug.LogException(exception);
-            }
-        }
-
         public CorePlayerId ResolveMusicEndWinner(IReadOnlyDictionary<CorePlayerId, int> roundWins) {
             if (roundWins.Count > 0) {
                 var highestWinCount = 0;

@@ -18,12 +18,12 @@ namespace Alice {
         Task PlayRoundResumeTransitionAsync();
         Task PlayBattleEndingAsync(CorePlayerId winner);
         Task PlayBattleFinishFadeOutAsync();
-        Task PlayBattleFinishFadeInAsync();
+        Task PlayBattleFinishFadeInAsync(bool stopResultBgm = false);
         void PlayInpact(StrikerImpact command);
         void RequestAttention(int playerId, AttentionRequest request);
-        void RequestPauseMenu();
-        Observable<Unit> OnPauseMenuRequested { get; }
-        Observable<Unit> OnSuspendRequested { get; }
+        void RequestPauseMenu(int playerId);
+        Observable<int> OnPauseMenuRequested { get; }
+        Observable<int?> OnSuspendRequested { get; }
         Observable<Unit> OnResumeRequested { get; }
         Observable<bool> OnAttentionActiveStateChanged { get; }
         bool IsAttentionPresentationActive { get; }
@@ -54,8 +54,8 @@ namespace Alice {
         CompositeDisposable attentionTextSubscriptions = new();
         readonly CompositeDisposable specialCommandSubscriptions = new();
         readonly Dictionary<int, IDisposable> specialStateSubscriptions = new();
-        readonly Subject<Unit> pauseMenuRequestedSubject = new();
-        readonly Subject<Unit> suspendRequestedSubject = new();
+        readonly Subject<int> pauseMenuRequestedSubject = new();
+        readonly Subject<int?> suspendRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
         bool isCinematicSkipEnabled;
         string pendingAttentionTechniqueText = string.Empty;
@@ -66,8 +66,8 @@ namespace Alice {
         readonly Dictionary<int, int> firstEarlySuccessPlayerByBeat = new();
         readonly HashSet<int> playedSuccessSoundBeatIndexes = new();
 
-        public Observable<Unit> OnPauseMenuRequested => pauseMenuRequestedSubject;
-        public Observable<Unit> OnSuspendRequested => suspendRequestedSubject;
+        public Observable<int> OnPauseMenuRequested => pauseMenuRequestedSubject;
+        public Observable<int?> OnSuspendRequested => suspendRequestedSubject;
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
         public Observable<bool> OnAttentionActiveStateChanged => battlePresenterView.StageCamera.OnAttentionActiveStateChanged;
         public bool IsAttentionPresentationActive => battlePresenterView.StageCamera.IsAttentionPresentationActive;
@@ -234,7 +234,10 @@ namespace Alice {
             await battlePresenterView.FadePresenter.PresentFadeOutAsync();
         }
 
-        public async Task PlayBattleFinishFadeInAsync() {
+        public async Task PlayBattleFinishFadeInAsync(bool stopResultBgm = false) {
+            if (stopResultBgm) {
+                battleOpeningBgmPlayer.StopBattleFinish(immediately: true);
+            }
             battlePresenterView.StageCamera.PresentBattleFinish();
             await battlePresenterView.FadePresenter.PresentFadeInAsync();
         }
@@ -253,8 +256,8 @@ namespace Alice {
             _ = HideAttentionTextBeforeLooseAsync(sequence, request.DurationSeconds);
         }
 
-        public void RequestPauseMenu() {
-            pauseMenuRequestedSubject.OnNext(Unit.Default);
+        public void RequestPauseMenu(int playerId) {
+            pauseMenuRequestedSubject.OnNext(playerId);
         }
 
         public void OpenSuspendMenu() {
@@ -327,7 +330,7 @@ namespace Alice {
             suspendMenuSubscriptions = new CompositeDisposable();
 
             suspendMenuPresenter.OnSuspendRequested
-                .Subscribe(_ => suspendRequestedSubject.OnNext(Unit.Default))
+                .Subscribe(playerId => suspendRequestedSubject.OnNext(playerId))
                 .AddTo(suspendMenuSubscriptions);
 
             suspendMenuPresenter.OnResumeRequested
