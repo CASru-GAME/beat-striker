@@ -415,7 +415,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 236393945dceb9140955ffd240db4e70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.LargeHero.Bullet
-  damage: 20
+  damage: 15
   nockbackSpeed: 10
   speed: 20
   rotationTarget: {fileID: 5069511397029549552}

@@ -111,7 +111,7 @@ namespace Alice {
                     Add(WarriorAiMove.Attack, -toward, Vector3.up, speed, duration, .1f, damage, "Vertical anti-air");
                 }
                 if (!self.Grounded && !isLinkedAttack && self.State is not Core.LargeSatan.Attack1State && delta.y < -.6f) {
-                    Add(WarriorAiMove.Attack, Vector2.down, Vector3.down, tuning.DiveAttackSpeed, tuning.AirAttackDuration, 1f, 15f, "Dive attack from above");
+                    Add(WarriorAiMove.Attack, Vector2.down, Vector3.down, tuning.DiveAttackSpeed, tuning.AirAttackDuration, 1f, 20f, "Dive attack from above");
                 }
                 Add(WarriorAiMove.PrepareThrow, aim, Vector3.zero, .5f, frame.BeatSeconds, 1f, 0f, "Prepare ranged pressure");
             }

@@ -147,7 +147,7 @@ MonoBehaviour:
   nextNode: {fileID: 6059471881157454106}
   comboNode: {fileID: 6646820647200852723}
   attackPlayer: {fileID: 7358051529129111365}
-  damage: 50
+  damage: 35
   nockbackSpeed: 10
 --- !u!135 &4492672547922250092
 SphereCollider:
@@ -80186,7 +80186,7 @@ MonoBehaviour:
   nextNode: {fileID: 6059471881157454106}
   comboNode: {fileID: 836980988452117581}
   attackPlayer: {fileID: 3710182776436218068}
-  damage: 20
+  damage: 15
   nockbackSpeed: 1
 --- !u!114 &3710182776436218068
 MonoBehaviour:
