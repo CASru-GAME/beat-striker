@@ -33,6 +33,7 @@ public class StrikerHub : MonoBehaviour {
     private StrikerStageBoundary stageBoundary;
     readonly Dictionary<string, StrikerState> stateByPathId = new();
     readonly Dictionary<StrikerState, string> pathIdByState = new();
+    readonly Subject<Unit> onBeatCompleted = new();
 
     public Rigidbody Rigidbody => rb;
     public Bounds BodyBounds => stageBoundary != null ? stageBoundary.BodyBounds : bodyCollider.bounds;
@@ -47,6 +48,8 @@ public class StrikerHub : MonoBehaviour {
     public StrikerState InspectorVictoryState => VictoryState;
     public StrikerState InspectorIntroState => IntroState;
     public Transform InspectorCenterPositionTransform => centerPositionTransform;
+    public Observable<Unit> OnBeatCompleted => onBeatCompleted;
+    internal void CompleteBeat() => onBeatCompleted.OnNext(Unit.Default);
     public IReadOnlyList<TutorialActionLesson> TutorialLessons => tutorialLessons;
     public ITutorialGroundSource TutorialGroundSource => (ITutorialGroundSource)tutorialGroundSource;
     public void ResetTutorialResources(TutorialReset reset) {
@@ -118,6 +121,7 @@ public class StrikerHub : MonoBehaviour {
 
     void OnDestroy() {
         aliceRuntime?.Dispose();
+        onBeatCompleted.Dispose();
     }
 
     public bool TryGetStatePathId(IStrikerState state, out string pathId) {

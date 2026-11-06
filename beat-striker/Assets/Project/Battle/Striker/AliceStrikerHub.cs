@@ -618,6 +618,7 @@ namespace Alice {
                 NextGuardSeconds = Mathf.Min(MaximumGuardSeconds, NextGuardSeconds + GuardRecoveryPerBeat);
             }
             guardedThisBeat = false;
+            legacyHub.CompleteBeat();
         }
 
         public void AddSpecialPoint(float value) {

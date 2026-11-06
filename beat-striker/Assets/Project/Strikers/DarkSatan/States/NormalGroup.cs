@@ -31,7 +31,7 @@ namespace Core.DarkSatan {
 
         // チャージコマンドが押された時に呼ばれる
         public override void OnChargeRequested(IStrikerStateContext context) {
-            context.TryTransition(chargeState, true);
+            chargeState.RequestCharge(context);
         }
 
         // ダッシュコマンドが押された時に呼ばれる

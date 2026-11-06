@@ -1,9 +1,14 @@
 using UnityEngine;
 using Alice;
+using R3;
+using System;
 using System.Collections.Generic;
 
 namespace Core.DarkSatan {
     public sealed class DemonChargeAttackState : StrikerState, ITutorialActionProgress, ITutorialResourceReset {
+        const decimal BulletRecoveryPerBeat = 0.3m;
+
+        [SerializeField] StrikerHub strikerHub;
         [SerializeField] StrikerNode nextNode;
         [SerializeField] DemonVolley volleyPrefab;
         [SerializeField] DemonAttackEffect attackEffect;
@@ -13,6 +18,9 @@ namespace Core.DarkSatan {
         [SerializeField, Min(0f)] float maxLaunchDelay = 0.3f;
 
         readonly List<DemonVolley> volleys = new();
+        decimal nextVolleySize;
+        bool requestingCharge;
+        bool chargedThisBeat;
         bool fired;
         bool launchRequested;
         bool previousGravity;
@@ -27,7 +35,22 @@ namespace Core.DarkSatan {
         public float ObservationLaunchSeconds => launchDuration;
         public float ObservationBulletDamage => volleyPrefab.ObservationDamage;
         public float ObservationBulletSpeed => volleyPrefab.ObservationSpeed;
-        public int ObservationBulletsPerVolley => volleyPrefab.BulletCount;
+        public int ObservationMaximumBulletsPerVolley => volleyPrefab.BulletCount;
+        public int ObservationBulletsPerVolley =>
+            Math.Min(volleyPrefab.BulletCount, Math.Max(1, (int)Math.Ceiling(nextVolleySize)));
+
+        void Awake() {
+            nextVolleySize = volleyPrefab.BulletCount;
+            strikerHub.OnBeatCompleted.Subscribe(_ => CompleteBeat()).AddTo(this);
+        }
+
+        void CompleteBeat() {
+            if (!chargedThisBeat) {
+                nextVolleySize = Math.Min(volleyPrefab.BulletCount, nextVolleySize + BulletRecoveryPerBeat);
+            }
+            chargedThisBeat = false;
+        }
+
         public void CollectReadyProjectileObservations(List<StrikerProjectileObservation> observations) {
             foreach (var volley in volleys) volley.CollectLaunchObservations(observations);
         }
@@ -41,6 +64,18 @@ namespace Core.DarkSatan {
             }
             volleys.Clear();
             launchRequested = fired = false;
+            nextVolleySize = volleyPrefab.BulletCount;
+            chargedThisBeat = false;
+        }
+
+        public void RequestCharge(IStrikerStateContext context) {
+            // Online state correction can enter this state without a charge command.
+            requestingCharge = true;
+            try {
+                context.TryTransition(this, true);
+            } finally {
+                requestingCharge = false;
+            }
         }
 
         public void RequestLaunch() {
@@ -60,7 +95,7 @@ namespace Core.DarkSatan {
             elapsed = 0f;
             fired = false;
             if (!launchRequested) {
-                Deploy(context);
+                Deploy(context, requestingCharge);
             }
             if (launchRequested) {
                 elapsed = volleyPrefab.SpreadSeconds;
@@ -138,15 +173,19 @@ namespace Core.DarkSatan {
             velocity.y = 0f;
             context.Rigidbody.linearVelocity = velocity;
             elapsed = 0f;
-            Deploy(context);
+            Deploy(context, true);
             context.PlayAnimation(chargeAnimation);
         }
 
-        void Deploy(IStrikerContext context) {
+        void Deploy(IStrikerContext context, bool fromChargeCommand) {
             var center = context.GetSelf().CenterPosition.CurrentValue;
             var volley = Instantiate(volleyPrefab, center, Quaternion.identity, context.Rigidbody.transform);
-            volley.Begin(context, this);
+            volley.Begin(context, this, ObservationBulletsPerVolley);
             volleys.Add(volley);
+            if (fromChargeCommand) {
+                nextVolleySize = nextVolleySize * 2m / 3m;
+                chargedThisBeat = true;
+            }
             attackEffect.Play(volley.SpreadSeconds);
         }
 

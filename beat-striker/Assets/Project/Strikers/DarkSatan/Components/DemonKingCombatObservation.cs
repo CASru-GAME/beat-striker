@@ -32,6 +32,7 @@ namespace Core.DarkSatan {
         public float LaunchSeconds => charge.ObservationLaunchSeconds;
         public float BulletDamage => charge.ObservationBulletDamage;
         public float BulletSpeed => charge.ObservationBulletSpeed;
+        public int MaximumBulletsPerVolley => charge.ObservationMaximumBulletsPerVolley;
         public int BulletsPerVolley => charge.ObservationBulletsPerVolley;
         public void CollectReadyProjectiles(List<StrikerProjectileObservation> result) => charge.CollectReadyProjectileObservations(result);
         public float DashSpeed(bool forward) => dash.ObservationNextSpeed(forward);

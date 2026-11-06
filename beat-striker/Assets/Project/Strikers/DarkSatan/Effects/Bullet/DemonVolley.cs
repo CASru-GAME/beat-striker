@@ -27,6 +27,7 @@ namespace Core.DarkSatan {
         Vector3[] directions;
         bool[] active;
         float[] launchDelays;
+        int deployedBulletCount;
         float elapsed;
         bool fired;
         public float SpreadSeconds => spreadSeconds;
@@ -56,16 +57,20 @@ namespace Core.DarkSatan {
             }
         }
 
-        public void Begin(IStrikerContext strikerContext, DemonChargeAttackState attackOwner) {
+        public void Begin(IStrikerContext strikerContext, DemonChargeAttackState attackOwner, int bulletCount) {
             context = strikerContext;
             owner = attackOwner;
             origin = transform.position;
+            deployedBulletCount = bulletCount;
             summonSound.PlayAtApp(origin);
             directions = new Vector3[bullets.Length];
             active = new bool[bullets.Length];
             launchDelays = new float[bullets.Length];
             var target = context.GetOpponent().CenterPosition.CurrentValue;
-            for (int i = 0; i < bullets.Length; i++) {
+            for (int i = deployedBulletCount; i < bullets.Length; i++) {
+                bullets[i].gameObject.SetActive(false);
+            }
+            for (int i = 0; i < deployedBulletCount; i++) {
                 var spreadPosition = GetSpreadPosition(i, spreadRadius);
                 if (IsBlockedByStage(spreadPosition)) {
                     bullets[i].gameObject.SetActive(false);
@@ -104,7 +109,7 @@ namespace Core.DarkSatan {
             + spreadExpansionSpeed * Mathf.Max(0f, elapsed - spreadSeconds);
 
         Vector3 GetSpreadPosition(int index, float spread) {
-            float angle = 2f * Mathf.PI * index / bullets.Length;
+            float angle = 2f * Mathf.PI * index / deployedBulletCount;
             return origin + spread * new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
         }
 

@@ -146,7 +146,6 @@ namespace Alice {
         public float RecentHits { get; private set; }
         public float GuardHabit { get; private set; }
         public float AttackHabit { get; private set; }
-        public float ChargeHabit { get; private set; }
         public float WhiffPressure { get; private set; }
         public int GuardStreak { get; private set; }
         public int DashStreak { get; private set; }
@@ -176,7 +175,6 @@ namespace Alice {
             }
             GuardHabit = Mathf.Lerp(GuardHabit, frame.Opponent.Category == StrikerStateCategory.Guard ? 1f : 0f, .25f);
             AttackHabit = Mathf.Lerp(AttackHabit, frame.Opponent.Category is StrikerStateCategory.Attack or StrikerStateCategory.Dash ? 1f : 0f, .25f);
-            ChargeHabit = Mathf.Lerp(ChargeHabit, frame.Opponent.Category == StrikerStateCategory.Charge ? 1f : 0f, .25f);
             selfHitPoint = currentSelfHp;
             opponentHitPoint = currentOpponentHp;
             opponentPosition = frame.Opponent.Position;
@@ -191,7 +189,7 @@ namespace Alice {
 
         public void Reset() {
             initialized = false;
-            RecentDamage = RecentHits = GuardHabit = AttackHabit = ChargeHabit = WhiffPressure = 0f;
+            RecentDamage = RecentHits = GuardHabit = AttackHabit = WhiffPressure = 0f;
             GuardStreak = DashStreak = StaleBeats = 0;
             OpponentDrift = Vector3.zero;
             NextAirJumpIsSuper = false;

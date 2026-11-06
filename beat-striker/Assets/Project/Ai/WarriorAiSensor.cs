@@ -12,7 +12,8 @@ namespace Alice {
         Vector3 Velocity,
         Bounds Body,
         Bounds? Arena,
-        bool Grounded
+        bool Grounded,
+        Vector3? WarpBodyCenter
     );
 
     internal sealed record WarriorAiThreat(
@@ -22,13 +23,15 @@ namespace Alice {
 
     internal sealed record WarriorAiFrame(
         WarriorAiActor Self, WarriorAiActor Opponent,
-        float ExecutionDelay, float BeatSeconds, IReadOnlyList<WarriorAiThreat> Threats
+        float ExecutionDelay, float BeatSeconds, IReadOnlyList<WarriorAiThreat> Threats,
+        IReadOnlyList<Bounds> OpponentShields, Core.LargeWizard.WizardCombatObservation OpponentWizard
     );
 
     internal sealed class WarriorAiSensor {
         readonly Collider[] nearby = new Collider[256];
         readonly HashSet<int> observedColliders = new();
         readonly List<WarriorAiThreat> threats = new();
+        readonly List<Bounds> opponentShields = new();
         readonly List<StrikerProjectileObservation> projectiles = new();
         readonly List<Core.DarkSatan.DemonVolley> demonVolleys = new();
         readonly List<Core.LargeSatan.WarriorGateVolley> gateVolleys = new();
@@ -40,8 +43,9 @@ namespace Alice {
         Core.DarkSatan.DemonMeleeLimb[] limbs = System.Array.Empty<Core.DarkSatan.DemonMeleeLimb>();
 
         public WarriorAiFrame Observe(AiObservation observation, float beatSeconds, WarriorAiTuning tuning) {
-            var self = ObserveActor(observation.Self, tuning.GroundClearance);
-            var opponent = ObserveActor(observation.Opponent, tuning.GroundClearance);
+            var executionDelay = Mathf.Max(0f, observation.Signal.BeatTime - observation.CurrentPlaybackTime);
+            var self = ObserveActor(observation.Self, tuning.GroundClearance, executionDelay);
+            var opponent = ObserveActor(observation.Opponent, tuning.GroundClearance, executionDelay);
             var source = observation.Opponent as IStrikerCombatObservationSource;
             var root = source?.ObservationRoot;
             if (opponentRoot != root) {
@@ -53,6 +57,7 @@ namespace Alice {
             }
 
             threats.Clear();
+            opponentShields.Clear();
             projectiles.Clear();
             observedBeams.Clear();
             foreach (var attack in attacks) {
@@ -94,12 +99,14 @@ namespace Alice {
 
             ObservePhysicsProjectiles(self.Body.center, tuning.ProjectileObservationRadius);
             ObserveKnownWizardBeams();
-            return new WarriorAiFrame(self, opponent,
-                Mathf.Max(0f, observation.Signal.BeatTime - observation.CurrentPlaybackTime), beatSeconds, threats);
+            Core.LargeWizard.WizardCombatObservation wizard = null;
+            root?.TryGetComponent(out wizard);
+            return new WarriorAiFrame(self, opponent, executionDelay, beatSeconds, threats, opponentShields, wizard);
         }
 
-        static WarriorAiActor ObserveActor(IObservableStriker striker, float groundClearance) {
+        static WarriorAiActor ObserveActor(IObservableStriker striker, float groundClearance, float executionDelay) {
             var source = striker as IStrikerCombatObservationSource;
+            var state = source?.ObservedState;
             var body = source?.BodyBounds ?? new Bounds(striker.CenterPosition.CurrentValue, new Vector3(1f, 2f, 1f));
             var arena = source?.MovementBounds;
             var velocity = striker.Velocity.CurrentValue;
@@ -108,9 +115,14 @@ namespace Alice {
             var grounded = arena.HasValue
                 ? body.min.y <= arena.Value.min.y + groundClearance && velocity.y <= .5f
                 : Mathf.Abs(velocity.y) < .2f;
-            return new WarriorAiActor(striker, source?.ObservedState, source?.ObservedState?.Category ?? striker.CurrentStateCategory.CurrentValue,
+            Vector3? warpBodyCenter = null;
+            if (state is Core.LargeSatan.EmitState emit && striker is IStrikerContext context) {
+                var warpPosition = emit.ObserveWarpPosition(context, executionDelay);
+                if (warpPosition.HasValue) warpBodyCenter = warpPosition.Value + body.center - striker.Position.CurrentValue;
+            }
+            return new WarriorAiActor(striker, state, state?.Category ?? striker.CurrentStateCategory.CurrentValue,
                 source?.StateElapsedSeconds ?? 0f, source?.StateVersion ?? 0,
-                striker.Position.CurrentValue, velocity, body, arena, grounded);
+                striker.Position.CurrentValue, velocity, body, arena, grounded, warpBodyCenter);
         }
 
         void ObservePhysicsProjectiles(Vector3 center, float radius) {
@@ -158,6 +170,9 @@ namespace Alice {
                 if (owner == opponentRoot && opponentRoot != null) RememberWizardSpecial(special);
             } else if (body.TryGetComponent<Core.LargeWizard.Guard>(out var guard)) {
                 owner = guard.ObservationOwner;
+                if (!guard.IsObservationProjectile && owner != null && owner == opponentRoot) {
+                    opponentShields.Add(collider.bounds);
+                }
                 severity = guard.IsObservationProjectile ? 1f : .35f;
             } else if (body.TryGetComponent<Core.LargeHero.Bullet>(out var heroBullet)) {
                 owner = heroBullet.OwnerRoot != null ? heroBullet.OwnerRoot.transform : null;
@@ -201,6 +216,7 @@ namespace Alice {
             attacks = System.Array.Empty<AttackPlayer>();
             limbs = System.Array.Empty<Core.DarkSatan.DemonMeleeLimb>();
             threats.Clear();
+            opponentShields.Clear();
             projectiles.Clear();
             demonVolleys.Clear();
             gateVolleys.Clear();

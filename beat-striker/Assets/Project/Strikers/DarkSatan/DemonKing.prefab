@@ -5542,6 +5542,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Alice.Project.Client::Core.DarkSatan.DemonChargeAttackState
   parents:
   - {fileID: 1412494263704707963}
+  strikerHub: {fileID: 8716767000433258826}
   nextNode: {fileID: 5551572408817209888}
   volleyPrefab: {fileID: 3529831467928831227, guid: 722e829ee31dbe84c8ff9e10cd28d554, type: 3}
   attackEffect: {fileID: 7022542496648198191}

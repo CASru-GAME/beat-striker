@@ -12,7 +12,15 @@ namespace Alice {
     );
 
     internal sealed class WarriorAiDecision {
+        const float IceActivationDelay = .09f;
+        const float IceLifetime = 2f;
+        const float RockRadius = 3.17f;
+        const float RockLifetime = 2f;
+        const int SpearSamples = 12;
+        static readonly Vector3 iceSize = new(1.9f, 1.1f, 2.7f);
+
         readonly List<WarriorAiCandidate> candidates = new(20);
+        readonly List<WarriorAiThreat> spearForecast = new(SpearSamples * 2);
 
         public WarriorAiChoice Choose(WarriorAiFrame frame, WarriorAiTuning tuning, WarriorAiMatchup matchup, WarriorAiMemory memory, AiDifficulty difficulty) {
             var self = frame.Self;
@@ -26,6 +34,7 @@ namespace Alice {
             }
 
             BuildCandidates(frame, tuning, memory);
+            BuildSpearForecast(frame);
             var (selected, score) = difficulty.SelectCandidate(
                 candidates,
                 static candidate => candidate.Move != WarriorAiMove.Wait,
@@ -120,7 +129,10 @@ namespace Alice {
             var positionGain = Mathf.Abs(startGap - matchup.PreferredDistance) - Mathf.Abs(endGap - matchup.PreferredDistance);
             var score = Mathf.Clamp(positionGain, -6f, 6f) * tuning.PositionWeight * matchup.Pressure;
             var risk = ThreatRisk(candidate, frame, tuning, horizon, matchup.ProjectileCaution);
-            risk += AnticipationRisk(candidate, frame, tuning, matchup, memory, end, enemyEnd, horizon) * anticipationWeight;
+            var anticipated = AnticipationRisk(candidate, frame, tuning, matchup, memory, end, enemyEnd, horizon)
+                + WizardSpellRisk(candidate, frame, tuning, horizon)
+                + SpearRisk(candidate, frame, tuning, horizon) * matchup.ProjectileCaution;
+            risk += anticipated * anticipationWeight;
             var hpRatio = frame.Self.Striker.HitPoint.CurrentValue / Mathf.Max(1f, frame.Self.Striker.MaxHitPoint.CurrentValue);
             score -= risk * tuning.RiskWeight * (hpRatio < .3f ? 1.3f : 1f);
             score -= BoundaryCost(candidate, frame, tuning, horizon);
@@ -141,23 +153,31 @@ namespace Alice {
                     score += chance * 21f * matchup.Pressure - (1f - chance) * 9f;
                     break;
                 }
-                case WarriorAiMove.PrepareThrow:
+                case WarriorAiMove.PrepareThrow: {
                     score += startGap >= tuning.ThrowMinimumDistance && startGap <= tuning.ThrowMaximumDistance ? 11f : -10f;
                     score += memory.GuardHabit * 2f;
+                    var throwOrigin = CandidateOrigin(candidate, frame);
+                    if (ShieldBlocks(frame, throwOrigin, enemyEnd - throwOrigin, enemyEnd, .2f)) score -= 6f;
                     if (Mathf.Abs(enemyEnd.y - end.y) > 6f) score -= 5f;
                     if (frame.Self.State is Core.LargeSatan.EmitState) score -= 3f;
                     break;
+                }
                 case WarriorAiMove.Dash:
                     score += endGap < tuning.AttackReach + 2f ? 3f : 0f;
                     score += Mathf.Min(memory.StaleBeats, 8) * .2f;
                     if (startGap < matchup.PreferredDistance && Vector3.Dot(candidate.MotionDirection, enemyEnd - end) > 0f) score -= 4f;
                     break;
-                case WarriorAiMove.Jump:
+                case WarriorAiMove.Jump: {
                     score += matchup.JumpPreference;
                     if (endGap < startGap) score += memory.GuardHabit * 4f;
+                    var start = frame.Self.Body.center;
+                    var target = frame.Opponent.Body.center;
+                    if (endGap < startGap && ShieldBlocks(frame, start, target - start, target, .25f)
+                        && !ShieldBlocks(frame, end, enemyEnd - end, enemyEnd, .25f)) score += 4f;
                     score -= Mathf.Max(0f, end.y - enemyEnd.y - 2f) * 1.4f;
                     if (!frame.Self.Grounded && frame.Self.Body.center.y >= frame.Opponent.Body.center.y + 2f) score -= 6f;
                     break;
+                }
                 case WarriorAiMove.Dive:
                     score += frame.Self.Body.center.y > frame.Opponent.Body.center.y + 1f ? 3f : -4f;
                     break;
@@ -180,6 +200,7 @@ namespace Alice {
 
         static float AttackChance(WarriorAiCandidate candidate, WarriorAiFrame frame, WarriorAiTuning tuning, WarriorAiMemory memory) {
             var best = 0f;
+            var origin = CandidateOrigin(candidate, frame);
             for (int i = 0; i <= 10; i++) {
                 var t = .05f * i;
                 var self = PredictSelf(candidate, frame, tuning, t);
@@ -193,6 +214,7 @@ namespace Alice {
                 var chance = Mathf.Clamp01((reach - horizontal) / .8f) * Mathf.Clamp01((horizontal + 1f) / .7f)
                     * Mathf.Clamp01((verticalReach - Mathf.Abs(delta.y)) / .6f);
                 chance *= GuardAvailability(frame.Opponent, t + frame.ExecutionDelay);
+                if (chance > 0f && ShieldBlocks(frame, origin, enemy - origin, enemy, .25f)) chance *= .3f;
                 if (frame.Opponent.Category == StrikerStateCategory.Special) chance *= .1f;
                 chance *= 1f - Mathf.Min(.45f, memory.WhiffPressure * .08f + memory.GuardHabit * .2f);
                 best = Mathf.Max(best, chance);
@@ -204,17 +226,19 @@ namespace Alice {
             if (frame.Self.State is Core.LargeSatan.ChargeState charge && charge.ObservedEmitState != null) {
                 var emit = charge.ObservedEmitState;
                 var spearOrigin = charge.ObservedPoleArm.transform.position;
+                var direction = candidate.MotionDirection.normalized;
                 var best = 0f;
                 for (var i = 0; i <= 16; i++) {
                     var t = emit.ObservationHoldSeconds + emit.ObservationFlightSeconds * i / 16f;
                     var target = frame.Opponent.Body.center + PredictOpponentMove(frame, t + frame.ExecutionDelay, memory);
                     var delta = target - spearOrigin;
-                    var along = Vector3.Dot(delta, candidate.MotionDirection.normalized);
-                    var perpendicular = (delta - candidate.MotionDirection.normalized * along).magnitude;
+                    var along = Vector3.Dot(delta, direction);
+                    var perpendicular = (delta - direction * along).magnitude;
                     var tolerance = Mathf.Max(frame.Opponent.Body.extents.x, .5f) + .5f;
                     var chance = Mathf.Clamp01((tolerance + .4f - perpendicular) / .8f)
                         * Mathf.Clamp01((tolerance + .4f - Mathf.Abs(along - emit.ObserveTravelDistance(t))) / .8f);
                     if (along <= 0f) chance = 0f;
+                    if (chance > 0f && ShieldBlocks(frame, spearOrigin, direction, target, charge.ObservedPoleArm.hitRadius)) chance *= .15f;
                     best = Mathf.Max(best, chance * GuardAvailability(frame.Opponent, t + frame.ExecutionDelay));
                 }
                 return best;
@@ -229,8 +253,26 @@ namespace Alice {
             var estimatedAlong = Vector3.Dot(estimatedDelta, forward);
             var miss = (estimatedDelta - forward * estimatedAlong).magnitude;
             var estimatedTolerance = Mathf.Max(frame.Opponent.Body.extents.x, .5f) + .5f;
-            return estimatedAlong <= 0f ? 0f : Mathf.Clamp01((estimatedTolerance + .4f - miss) / .8f)
+            var transmission = ShieldBlocks(frame, origin, forward, estimatedTarget, .2f) ? .15f : 1f;
+            return estimatedAlong <= 0f ? 0f : Mathf.Clamp01((estimatedTolerance + .4f - miss) / .8f) * transmission
                 * GuardAvailability(frame.Opponent, hitTime + frame.ExecutionDelay);
+        }
+
+        static bool ShieldBlocks(WarriorAiFrame frame, Vector3 origin, Vector3 direction, Vector3 enemyCenter, float radius) {
+            if (frame.OpponentShields.Count == 0 || direction.sqrMagnitude < .000001f) return false;
+            var ray = new Ray(origin, direction.normalized);
+            var body = frame.Opponent.Body;
+            var translation = enemyCenter - body.center;
+            body.center = enemyCenter;
+            body.Expand(radius * 2f);
+            if (body.Contains(origin) || !body.IntersectRay(ray, out var bodyDistance)) return false;
+            foreach (var observedShield in frame.OpponentShields) {
+                var shield = observedShield;
+                shield.center += translation;
+                shield.Expand(radius * 2f);
+                if (shield.Contains(origin) || (shield.IntersectRay(ray, out var shieldDistance) && shieldDistance < bodyDistance)) return true;
+            }
+            return false;
         }
 
         static float GuardAvailability(WarriorAiActor opponent, float future) {
@@ -239,33 +281,35 @@ namespace Alice {
                 var guardSeconds = (opponent.Striker as IStrikerCombatObservationSource)?.ActiveGuardSeconds ?? 1f;
                 return future + opponent.StateSeconds < guardSeconds ? .02f : .9f;
             }
-            // Hero and wizard shields can persist beyond the guarding animation.
+            // Wizard shields are evaluated by their actual position, including after GuardState.
+            if (opponent.Striker.Striker.CurrentValue == Striker.Wizard) return 1f;
             return .25f;
         }
 
         static float ThreatRisk(WarriorAiCandidate candidate, WarriorAiFrame frame, WarriorAiTuning tuning, float horizon, float projectileCaution) {
             var risk = 0f;
             foreach (var threat in frame.Threats) {
-                var start = Mathf.Max(frame.ExecutionDelay, threat.StartsAt);
-                if (candidate.Move == WarriorAiMove.Guard) start = Mathf.Max(start, frame.ExecutionDelay + candidate.Duration);
-                var end = Mathf.Min(threat.EndsAt, frame.ExecutionDelay + horizon);
-                if (start >= end) continue;
-                var expanded = new Bounds(Vector3.zero, threat.Bounds.size + frame.Self.Body.size + Vector3.one * tuning.PredictionMargin * 2f);
-                var hit = false;
-                for (int i = 0; i < 8; i++) {
-                    var t0 = Mathf.Lerp(start, end, i / 8f);
-                    var t1 = Mathf.Lerp(start, end, (i + 1) / 8f);
-                    var p0 = RelativeThreatPosition(candidate, frame, tuning, threat, t0);
-                    var p1 = RelativeThreatPosition(candidate, frame, tuning, threat, t1);
-                    if (expanded.Contains(p0) || expanded.Contains(p1) || SegmentIntersects(expanded, p0, p1)) {
-                        hit = true;
-                        break;
-                    }
-                }
-                if (hit) risk += threat.Severity * (threat.Projectile ? projectileCaution : 1f);
+                if (ThreatHits(candidate, frame, tuning, threat, horizon))
+                    risk += threat.Severity * (threat.Projectile ? projectileCaution : 1f);
                 if (risk >= 3f) return 3f;
             }
             return risk;
+        }
+
+        static bool ThreatHits(WarriorAiCandidate candidate, WarriorAiFrame frame, WarriorAiTuning tuning, WarriorAiThreat threat, float horizon, int samples = 8) {
+            var start = Mathf.Max(frame.ExecutionDelay, threat.StartsAt);
+            if (candidate.Move == WarriorAiMove.Guard) start = Mathf.Max(start, frame.ExecutionDelay + candidate.Duration);
+            var end = Mathf.Min(threat.EndsAt, frame.ExecutionDelay + horizon);
+            if (start >= end) return false;
+            var expanded = new Bounds(Vector3.zero, threat.Bounds.size + frame.Self.Body.size + Vector3.one * tuning.PredictionMargin * 2f);
+            var previous = RelativeThreatPosition(candidate, frame, tuning, threat, start);
+            if (expanded.Contains(previous)) return true;
+            for (var i = 1; i <= samples; i++) {
+                var current = RelativeThreatPosition(candidate, frame, tuning, threat, Mathf.Lerp(start, end, (float)i / samples));
+                if (expanded.Contains(current) || SegmentIntersects(expanded, previous, current)) return true;
+                previous = current;
+            }
+            return false;
         }
 
         static Vector3 RelativeThreatPosition(WarriorAiCandidate candidate, WarriorAiFrame frame, WarriorAiTuning tuning, WarriorAiThreat threat, float t) {
@@ -306,9 +350,105 @@ namespace Alice {
             }
             var inRange = Mathf.Clamp01((range + .8f - gap) / 1.5f) * Mathf.Clamp01((2.5f - vertical) / 1.3f);
             var risk = inRange * aggression;
-            if (candidate.Move == WarriorAiMove.PrepareThrow && opponent.Striker.Striker.CurrentValue == Striker.Wizard) {
-                // Ice and falling rocks target the current location even from across the arena.
-                risk += memory.ChargeHabit * .15f;
+            if (opponent.WarpBodyCenter is Vector3 warp) {
+                var exposedAt = candidate.Move == WarriorAiMove.Guard ? candidate.Duration : 0f;
+                var followUpEnds = Mathf.Min(horizon, tuning.AttackDuration);
+                for (var t = exposedAt; t < followUpEnds; t += .05f) {
+                    var separation = PredictSelf(candidate, frame, tuning, t) - warp;
+                    var followUp = Mathf.Clamp01((matchup.OpponentReach - Mathf.Abs(separation.x)) / 1.5f)
+                        * Mathf.Clamp01((2.5f - Mathf.Abs(separation.y)) / 1.3f);
+                    risk = Mathf.Max(risk, followUp * (.55f + memory.AttackHabit * .45f));
+                }
+            }
+            return risk;
+        }
+
+        static float WizardSpellRisk(WarriorAiCandidate candidate, WarriorAiFrame frame, WarriorAiTuning tuning, float horizon) {
+            var wizard = frame.OpponentWizard;
+            if (wizard == null) return 0f;
+
+            var opponent = frame.Opponent;
+            var (ice, spawnTime, weight) = opponent.State switch {
+                Core.LargeWizard.Attack2State { IsTutorialActionCommitted: false } =>
+                    (true, Mathf.Max(0f, wizard.IceReleaseSeconds - opponent.StateSeconds), 1f),
+                Core.LargeWizard.Attack3State { IsTutorialActionCommitted: false } =>
+                    (false, Mathf.Max(0f, wizard.RockReleaseSeconds - opponent.StateSeconds), 1f),
+                _ when opponent.Category is StrikerStateCategory.Special or StrikerStateCategory.Unknown => (false, 0f, 0f),
+                _ when wizard.Energy == 2 => (true, frame.ExecutionDelay + wizard.IceReleaseSeconds, .8f),
+                _ when wizard.Energy >= 3 => (false, frame.ExecutionDelay + wizard.RockReleaseSeconds, .65f),
+                _ => (false, 0f, 0f)
+            };
+            if (weight == 0f) return 0f;
+
+            // Both spells lock onto the defender's position when the spell spawns.
+            var target = spawnTime < frame.ExecutionDelay
+                ? ClampToArena(frame.Self.Body.center + frame.Self.Velocity * spawnTime, frame.Self)
+                : PredictSelf(candidate, frame, tuning, spawnTime - frame.ExecutionDelay);
+            var floor = frame.Self.Arena?.min.y ?? frame.Self.Body.min.y;
+            WarriorAiThreat threat;
+            if (ice) {
+                target.y = floor + iceSize.y * .5f;
+                threat = new WarriorAiThreat(new Bounds(target, iceSize), Vector3.zero, Vector3.zero,
+                    spawnTime + IceActivationDelay, spawnTime + IceLifetime, 1.4f, true);
+            } else {
+                target.y += wizard.RockSpawnHeight + frame.Self.Position.y - frame.Self.Body.center.y;
+                var fall = Mathf.Sqrt(2f * Mathf.Max(0f, target.y + RockRadius - floor) / Mathf.Max(.01f, -Physics.gravity.y));
+                threat = new WarriorAiThreat(new Bounds(target, Vector3.one * (RockRadius * 2f)), Vector3.zero, Physics.gravity,
+                    spawnTime, spawnTime + Mathf.Min(fall, RockLifetime), 1.6f, true);
+            }
+            var risk = threat.Severity * weight;
+            if (ThreatHits(candidate, frame, tuning, threat, horizon, 16)) return risk;
+            // A late drop still matters, but there is another beat to evade it.
+            if (!ice && ThreatHits(candidate, frame, tuning, threat, threat.EndsAt - frame.ExecutionDelay, 16)) return risk * .4f;
+            return 0f;
+        }
+
+        void BuildSpearForecast(WarriorAiFrame frame) {
+            spearForecast.Clear();
+            if (frame.Opponent.State is not Core.LargeSatan.ChargeState charge || charge.ObservedEmitState == null) return;
+
+            var emit = charge.ObservedEmitState;
+            var spear = charge.ObservedPoleArm;
+            var look = frame.Opponent.Striker.LookDirection.CurrentValue;
+            var aim = emit.ObserveThrowDirection(Vector2.zero, look);
+            var target = frame.Self.Body.center + frame.Self.Velocity * frame.ExecutionDelay;
+            var adjustedAim = emit.ObserveThrowDirection(SnapDirection(target - spear.transform.position), look);
+            AddSpearPath(frame.ExecutionDelay, emit, spear, aim, 1.15f);
+            if (Vector3.Dot(aim, adjustedAim) < .999f)
+                AddSpearPath(frame.ExecutionDelay, emit, spear, adjustedAim, .75f);
+        }
+
+        void AddSpearPath(float commandTime, Core.LargeSatan.EmitState emit, PoleArm spear, Vector3 direction, float severity) {
+            var origin = spear.transform.position;
+            var hold = emit.ObservationHoldSeconds;
+            var flight = emit.ObservationFlightSeconds;
+            var distance = emit.ObserveTravelDistance(hold + flight);
+            if (Physics.SphereCast(origin, spear.hitRadius, direction, out var wall, distance, spear.wallMask, QueryTriggerInteraction.Ignore))
+                distance = wall.distance;
+
+            var lastTime = hold;
+            var lastDistance = 0f;
+            var size = Vector3.one * (spear.hitRadius * 2f);
+            for (var i = 1; i <= SpearSamples; i++) {
+                var time = hold + flight * i / SpearSamples;
+                var nextDistance = emit.ObserveTravelDistance(time);
+                var speed = (nextDistance - lastDistance) / Mathf.Max(.001f, time - lastTime);
+                var reachesWall = nextDistance >= distance;
+                var end = reachesWall && speed > 0f ? lastTime + (distance - lastDistance) / speed : time;
+                spearForecast.Add(new WarriorAiThreat(new Bounds(origin + direction * lastDistance, size), direction * speed, Vector3.zero,
+                    commandTime + lastTime, commandTime + end, severity, true));
+                if (reachesWall) break;
+                lastTime = time;
+                lastDistance = nextDistance;
+            }
+        }
+
+        float SpearRisk(WarriorAiCandidate candidate, WarriorAiFrame frame, WarriorAiTuning tuning, float horizon) {
+            var risk = 0f;
+            // A single spear follows one aim, so overlapping forecasts contribute only once.
+            foreach (var segment in spearForecast) {
+                if (segment.Severity > risk && ThreatHits(candidate, frame, tuning, segment, horizon, 2))
+                    risk = segment.Severity;
             }
             return risk;
         }
@@ -368,10 +508,7 @@ namespace Alice {
         }
 
         static Vector3 CandidateOrigin(WarriorAiCandidate candidate, WarriorAiFrame frame) {
-            if (candidate.Move != WarriorAiMove.Wait && frame.Self.State is Core.LargeSatan.EmitState emit) {
-                // Any new command exits EmitState and warps to the current spear position.
-                return frame.Self.Body.center + emit.ObservedPoleArm.transform.position - frame.Self.Position;
-            }
+            if (candidate.Move != WarriorAiMove.Wait && frame.Self.WarpBodyCenter is Vector3 warp) return warp;
             return frame.Self.Body.center + frame.Self.Velocity * frame.ExecutionDelay;
         }
 

@@ -52,6 +52,17 @@ namespace Core.LargeSatan {
             return ToWorldDirection(SelectEmitAngle(inputDirection, lookDirection), lookDirection);
         }
 
+        public Vector3? ObserveWarpPosition(IStrikerContext context, float secondsAhead) {
+            if (hasWarped) return null;
+            var target = emitStoppedByWall ? emitStopPosition : poleArm.transform.position;
+            var projectile = poleArm.ObserveProjectile();
+            if (projectile != null) {
+                var travel = ObserveTravelDistance(elapsedTime + secondsAhead) - ObserveTravelDistance(elapsedTime);
+                target += projectile.Velocity.normalized * travel;
+            }
+            return ComputeSafeWarpPosition(context, target);
+        }
+
         float SelectEmitAngle(Vector3 inputDirection, Vector3 lookDirection) {
             var plannedAngle = poleArm.PlannedEmitAngle;
             if (inputDirection.sqrMagnitude < .001f) return plannedAngle;
@@ -167,19 +178,18 @@ namespace Core.LargeSatan {
                 return;
             }
 
-            var warpPosition = ComputeSafeWarpPosition(context);
+            var target = emitStoppedByWall ? emitStopPosition : poleArm.transform.position;
+            var warpPosition = ComputeSafeWarpPosition(context, target);
             context.Rigidbody.position = warpPosition;
             warpEffectPlayer.Emit(warpEffectPlayer.transform);
             warpOutEffectPlayer.Emit(warpOutEffectPlayer.transform);
             hasWarped = true;
         }
 
-        Vector3 ComputeSafeWarpPosition(IStrikerContext context) {
-            Vector3 currentPos = context.Rigidbody.position;
-            Vector3 targetPos = emitStoppedByWall ? emitStopPosition : poleArm.transform.position;
+        Vector3 ComputeSafeWarpPosition(IStrikerContext context, Vector3 targetPos) {
             return StrikerWarpSafetyUtility.ComputeSafeDestination(
                 context,
-                currentPos,
+                context.Rigidbody.position,
                 targetPos,
                 poleArm.wallMask,
                 fallbackClearanceRadius,

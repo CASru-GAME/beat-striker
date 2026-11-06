@@ -116,11 +116,17 @@ namespace Alice.DemonKingAi {
                     break;
                 }
                 case DemonKingAiMove.Charge: {
-                    if (source.VolleyCount >= tuning.MaximumBankedVolleys) return float.NegativeInfinity;
+                    var bulletCount = source.BulletsPerVolley;
+                    if (bulletCount == 0 || source.VolleyCount >= tuning.MaximumBankedVolleys) return float.NegativeInfinity;
+
                     var steady = Mathf.Clamp01(1f - frame.Opponent.Velocity.magnitude / 28f);
-                    score += 8f + steady * 6f + Mathf.Min(startGap, 12f) * .3f;
+                    var summonValue = 8f + steady * 6f + Mathf.Min(startGap, 12f) * .3f;
+                    if (frame.OpponentShields.Count > 0) summonValue += memory.ShieldHabit * 4f;
+
+                    // Give other moves room to win while a small volley recovers.
+                    var volleyFraction = (float)bulletCount / source.MaximumBulletsPerVolley;
+                    score += Mathf.Lerp(-12f, summonValue, volleyFraction);
                     score -= source.VolleyCount * 4f;
-                    if (frame.OpponentShields.Count > 0) score += memory.ShieldHabit * 4f;
                     if (source.HasVolley && VolleyDamage(frame, memory) > source.BulletDamage * 2f) score -= 12f;
                     break;
                 }
