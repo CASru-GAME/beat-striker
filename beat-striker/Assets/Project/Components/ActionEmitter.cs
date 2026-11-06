@@ -12,5 +12,6 @@ namespace Alice {
         public abstract Observable<BotanEventData> OnClickEvent { get; }
         public abstract Observable<BotanEventData> OnHoverEvent { get; }
         public abstract Observable<BotanEventData> OnHoverExitEvent { get; }
+        public abstract void PlayClickSound();
     }
 }

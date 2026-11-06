@@ -143,14 +143,14 @@ public class Stageselectbutton : MonoBehaviour
         });
     }
     
-    public void HidePopup()
+    public void HidePopup(bool playSound = false)
     {
         // 表示されていなかったら何もしない
         if (!isPopupShown) return;
         
         if (currentPopup != null)
         {
-            currentPopup.Hide();
+            currentPopup.Hide(playSound);
         }
     }
 

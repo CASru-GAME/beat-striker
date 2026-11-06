@@ -85,6 +85,20 @@ namespace Alice {
                 throw;
             }
         }
+        public async Task<int?> SelectValueAsync(string title, PlayerGrade[] values, int index) {
+            var pending = AskAsync(title, "", new[] { "決定", "戻る" }, directInput: true);
+            view.SetValueArrowsVisible(true);
+            view.SetSelectedGrade(values[index]);
+
+            using var arrows = view.ValueStepRequested.Subscribe(direction => {
+                if (closing || !view.IsInteractable || !focus.CanReceive(view.ModalRoot)) return;
+                index = (index + direction + values.Length) % values.Length;
+                view.SetSelectedGrade(values[index]);
+                view.PlaySelectionSound();
+            });
+            return await pending == 0 ? index : null;
+        }
+
         void UpdateButtonGuides(int playerId) {
             var keyboard = pads.Get(playerId).DeviceName == "Keybord";
             var confirm = pads.GetPhysicalFaceButton(GamePadButton.East);

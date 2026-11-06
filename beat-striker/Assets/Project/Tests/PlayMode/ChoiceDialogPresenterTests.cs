@@ -265,6 +265,7 @@ public class ChoiceDialogPresenterTests {
             public int PlayerId { get; }
             public string DeviceName => owner.DeviceName;
             public ReadOnlyReactiveProperty<bool> HasGamePad => hasGamePad;
+            public bool IsCpuControlled => false;
             public Observable<Vector2> OnDirection => owner.Track<Vector2>();
             public Observable<Vector2> OnCursorDirection => owner.Track<Vector2>();
             public Observable<Unit> OnDirectionCanceled => owner.Track<Unit>();

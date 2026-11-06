@@ -423,7 +423,7 @@ namespace Alice {
 
         async Task<AppScene> ChooseTrialNextSceneAsync(bool won) {
             var profile = profiles.Get(playerSession.TrialPlayerName);
-            var heading = won ? "挑戦成功！" : "もう一度、挑もう！";
+            var heading = won ? "おめでとうございます" : "残念でした";
             var message = $"{profile.name}\n{battleReplayRecorder.SaveFailure}";
             while (true) {
                 var choice = await trialDialog.AskAsync(heading, message, new[] { "続けて挑戦", "一旦終わる" }, inputPlayerId: 0, directInput: true, grade: profile.grade);

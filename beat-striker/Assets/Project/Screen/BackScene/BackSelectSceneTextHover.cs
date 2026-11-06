@@ -33,6 +33,7 @@ namespace Alice {
         private Botan botan;
 
         public Observable<AppScene> OnClicked => clicked;
+        public void PlayClickSound() => clickSound.PlayAtApp(clickSoundVolume);
     
         void Start() {
 
@@ -100,9 +101,7 @@ namespace Alice {
         public void OnPointerClick(PointerEventData eventData) {
         
         // クリック時の効果音を再生
-        if (clickSound != null) {
-            clickSound.PlayAtApp(clickSoundVolume);
-        }
+        if (clickSound != null) PlayClickSound();
 
         clicked.OnNext(scene);
         }

@@ -18,7 +18,7 @@ namespace Alice {
         bool leaving;
         int operation;
 
-        public OnlineRoomPresenter(OnlineRoomView view, IOnlineRoomClient room, IOnlineDuelFusionClient duel, ISceneTransitionService transition, IInputFocusService focus) {
+        public OnlineRoomPresenter(OnlineRoomView view, IOnlineRoomClient room, IOnlineDuelFusionClient duel, ISceneTransitionService transition, IInputFocusService focus, IGamePadRegistry gamePads) {
             this.view = view;
             view.InputRaycaster.Initialize(focus);
             view.DuelRaycaster.Initialize(focus);
@@ -29,6 +29,20 @@ namespace Alice {
             this.duel = duel;
             this.transition = transition;
             view.BackRequested.Subscribe(_ => Back()).AddTo(subscriptions);
+            gamePads.OnAnyButtonDown.Where(input => input.Button == GamePadButton.South).Subscribe(input => {
+                if (focus.CanReceive(null, input.PlayerId)) {
+                    if (disposed || leaving || duel.State.CurrentValue.HasReservation) return;
+                    view.PlayBackSound();
+                    Back();
+                }
+                else if (focus.CanReceive(view.DuelRoot, input.PlayerId)) {
+                    if (busy || disposed || leaving) return;
+                    switch (duel.State.CurrentValue.UiMode) {
+                        case OnlineDuelUiMode.IncomingInvite: view.PlayRejectSound(); Respond(duel.RejectInvite); break;
+                        case OnlineDuelUiMode.InviteSent: view.PlayCancelSound(); Respond(duel.CancelInvite); break;
+                    }
+                }
+            }).AddTo(subscriptions);
             view.RefreshRequested.Subscribe(ignored => { _ = RefreshAsync(); }).AddTo(subscriptions);
             view.PlayerSelected.Subscribe(id => { if (busy) return; selection = id; feedback = ""; Render(); }).AddTo(subscriptions);
             view.ChallengeRequested.Subscribe(ignored => { _ = ChallengeAsync(); }).AddTo(subscriptions);

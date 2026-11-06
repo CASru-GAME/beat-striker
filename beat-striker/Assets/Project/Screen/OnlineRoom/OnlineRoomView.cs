@@ -57,6 +57,9 @@ namespace Alice {
         public Observable<Unit> RejectRequested => reject;
         public Observable<Unit> CancelRequested => cancel;
         public Observable<string> PlayerSelected => selected;
+        public void PlayBackSound() => backButton.PlayClickSound();
+        public void PlayRejectSound() => rejectButton.PlayClickSound();
+        public void PlayCancelSound() => cancelButton.PlayClickSound();
 
         void Awake() {
             backButton.OnClickEvent.Subscribe(_ => back.OnNext(Unit.Default)).AddTo(this);

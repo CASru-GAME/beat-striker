@@ -12,6 +12,7 @@ namespace Alice {
         readonly BattleSuspendMenuView suspendMenuView;
         readonly IDisposable suspendSubscription;
         readonly IDisposable resumeSubscription;
+        readonly IDisposable backSubscription;
 
         readonly Subject<Unit> suspendRequestedSubject = new();
         readonly Subject<Unit> resumeRequestedSubject = new();
@@ -20,12 +21,19 @@ namespace Alice {
         public Observable<Unit> OnResumeRequested => resumeRequestedSubject;
 
         [Inject]
-        public BattleSuspendMenuPresenter(ICursorDeployer cursorDeployer, BattleSuspendMenuView suspendMenuView, IInputFocusService focus) {
+        public BattleSuspendMenuPresenter(ICursorDeployer cursorDeployer, BattleSuspendMenuView suspendMenuView, IInputFocusService focus, IGamePadRegistry gamePads) {
             this.cursorDeployer = cursorDeployer;
             focusRegistration = focus.RegisterModal(suspendMenuView.Root.transform);
             this.suspendMenuView = suspendMenuView;
             suspendSubscription = suspendMenuView.SuspendButton.OnClickEvent.Subscribe(_ => RequestSuspend());
             resumeSubscription = suspendMenuView.ResumeButton.OnClickEvent.Subscribe(_ => RequestResume());
+            backSubscription = gamePads.OnAnyButtonDown
+                .Where(input => input.Button == GamePadButton.South && focus.CanReceive(suspendMenuView.Root.transform, input.PlayerId))
+                .Subscribe(_ => {
+                    if (opening || closing || requested) return;
+                    suspendMenuView.ResumeButton.PlayClickSound();
+                    RequestResume();
+                });
 
             HideImmediate();
         }
@@ -34,6 +42,7 @@ namespace Alice {
             focusRegistration.Dispose();
             suspendSubscription.Dispose();
             resumeSubscription.Dispose();
+            backSubscription.Dispose();
             cursorDeployer.SetForceEnabled(false);
             suspendRequestedSubject.Dispose();
             resumeRequestedSubject.Dispose();

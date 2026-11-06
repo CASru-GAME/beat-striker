@@ -1154,7 +1154,7 @@ MonoBehaviour:
   onClickEvent:
     m_PersistentCalls:
       m_Calls: []
-  clickSound: {fileID: 0}
+  clickSound: {fileID: 8300000, guid: fffdef6c6ce19b5409acca832a61af2e, type: 3}
 --- !u!1 &7979272122721896245
 GameObject:
   m_ObjectHideFlags: 0

@@ -14,11 +14,14 @@ namespace Alice {
         [SerializeField] TMP_Text description;
         [SerializeField] TMP_Text gradedDescription;
         [SerializeField] GradeBadgeView gradeView;
+        [SerializeField] GradeBadgeView selectedGradeView;
         [SerializeField] TMP_InputField input;
         [SerializeField] GameObject inputGuide;
         [SerializeField, Min(0)] int inputCodePointLimit;
         [SerializeField] ActionEmitter[] emitters;
         [SerializeField] TMP_Text[] labels;
+        [SerializeField] ActionEmitter previousValue;
+        [SerializeField] ActionEmitter nextValue;
         [SerializeField] GameObject[] keyboardKeys;
         [SerializeField] TMP_Text[] keyboardKeyLabels;
         [SerializeField] RectTransform panel;
@@ -28,6 +31,7 @@ namespace Alice {
         [SerializeField, Min(0.01f)] float hoverDuration = 0.12f;
         [SerializeField, Range(1f, 1.3f)] float hoverScale = 1.08f;
         readonly Subject<int> selected = new();
+        readonly Subject<int> valueStepRequested = new();
         readonly Subject<Unit> destroyed = new();
         readonly Subject<Unit> disabled = new();
         readonly Subject<bool> inputFocusChanged = new();
@@ -38,6 +42,7 @@ namespace Alice {
         string[] options = System.Array.Empty<string>();
         readonly List<RaycastResult> pointerHits = new();
         public Observable<int> Selected => selected;
+        public Observable<int> ValueStepRequested => valueStepRequested;
         public Observable<Unit> Destroyed => destroyed;
         public Observable<Unit> Disabled => disabled;
         public Observable<bool> InputFocusChanged => inputFocusChanged;
@@ -55,19 +60,28 @@ namespace Alice {
             for (var i = 0; i < emitters.Length; i++) {
                 var index = i;
                 emitters[i].OnClickEvent.Subscribe(data => {
-                    if (!IsInteractable || Time.frameCount <= shownFrame || inputPlayerId >= 0 && data.EventData is CursorPointerEventData cursor && cursor.PlayerId != inputPlayerId) return;
-                    selected.OnNext(index);
+                    if (CanClick(data)) selected.OnNext(index);
                 }).AddTo(this);
-                emitters[i].OnHoverEvent.Subscribe(_ => AnimateButton(index, true)).AddTo(this);
-                emitters[i].OnHoverExitEvent.Subscribe(_ => AnimateButton(index, false)).AddTo(this);
+                BindHover(emitters[i]);
             }
+            previousValue.OnClickEvent.Subscribe(data => { if (CanClick(data)) valueStepRequested.OnNext(-1); }).AddTo(this);
+            nextValue.OnClickEvent.Subscribe(data => { if (CanClick(data)) valueStepRequested.OnNext(1); }).AddTo(this);
+            BindHover(previousValue);
+            BindHover(nextValue);
             input.onSubmit.AddListener(EndEditing);
             input.onEndEdit.AddListener(EndEditing);
             input.onSelect.AddListener(InputSelected);
             input.onDeselect.AddListener(InputDeselected);
             if (inputCodePointLimit > 0) input.onValueChanged.AddListener(LimitInput);
         }
+        bool CanClick(Core.BotanEventData data) => IsInteractable && Time.frameCount > shownFrame
+            && (inputPlayerId < 0 || data.EventData is not CursorPointerEventData cursor || cursor.PlayerId == inputPlayerId);
+
         void Update() {
+            if (IsInteractable && previousValue.gameObject.activeSelf && Keyboard.current is { } keyboard) {
+                var step = (keyboard.rightArrowKey.wasPressedThisFrame ? 1 : 0) - (keyboard.leftArrowKey.wasPressedThisFrame ? 1 : 0);
+                if (step != 0) valueStepRequested.OnNext(step);
+            }
             if (!input.isFocused) return;
             var eventSystem = EventSystem.current;
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame) {
@@ -85,7 +99,9 @@ namespace Alice {
             ReleaseInputFocus();
             shownFrame = Time.frameCount; this.inputPlayerId = inputPlayerId;
             this.options = options;
-            heading.text = title; description.text = body; description.richText = false;
+            heading.text = title; SetDescription(body); description.richText = false;
+            SetValueArrowsVisible(false);
+            selectedGradeView.gameObject.SetActive(false);
             description.gameObject.SetActive(!grade.HasValue);
             gradedDescription.gameObject.SetActive(grade.HasValue);
             gradedDescription.text = body;
@@ -109,6 +125,16 @@ namespace Alice {
                 input.interactable = inputAllowed;
             });
         }
+        public void SetDescription(string body) => description.text = body;
+        public void SetSelectedGrade(PlayerGrade grade) {
+            description.gameObject.SetActive(false);
+            selectedGradeView.gameObject.SetActive(true);
+            selectedGradeView.Set((int)grade);
+        }
+        public void SetValueArrowsVisible(bool visible) {
+            previousValue.gameObject.SetActive(visible);
+            nextValue.gameObject.SetActive(visible);
+        }
         public void PlaySelectionSound() => selectionSound.PlayAtApp();
         public void Close(Action onClosed) {
             IsInteractable = false;
@@ -121,11 +147,18 @@ namespace Alice {
             });
         }
         public void Hide() { LeanTween.cancel(panel.gameObject); IsInteractable = false; ReleaseInputFocus(); dialogRoot.SetActive(false); }
-        void AnimateButton(int index, bool hovered) {
+        void BindHover(ActionEmitter emitter) {
+            emitter.OnHoverEvent.Subscribe(_ => AnimateButton(emitter.gameObject, true)).AddTo(this);
+            emitter.OnHoverExitEvent.Subscribe(_ => AnimateButton(emitter.gameObject, false)).AddTo(this);
+        }
+        void AnimateButton(GameObject button, bool hovered) {
             if (!IsInteractable) return;
-            var button = emitters[index].gameObject;
             LeanTween.cancel(button);
             LeanTween.scale(button, Vector3.one * (hovered ? hoverScale : 1f), hoverDuration).setIgnoreTimeScale(true).setEaseOutCubic();
+        }
+        void ResetButtonScale(ActionEmitter emitter) {
+            LeanTween.cancel(emitter.gameObject);
+            emitter.transform.localScale = Vector3.one;
         }
         public void SetButtonGuides(string confirmIcon, string cancelIcon, bool keyboard = false) {
             for (var i = 0; i < options.Length; i++) {
@@ -164,10 +197,9 @@ namespace Alice {
             IsInteractable = false;
             ReleaseInputFocus();
             LeanTween.cancel(panel.gameObject);
-            foreach (var emitter in emitters) {
-                LeanTween.cancel(emitter.gameObject);
-                emitter.transform.localScale = Vector3.one;
-            }
+            foreach (var emitter in emitters) ResetButtonScale(emitter);
+            ResetButtonScale(previousValue);
+            ResetButtonScale(nextValue);
         }
         void OnDestroy() {
             input.onSubmit.RemoveListener(EndEditing);
@@ -176,6 +208,7 @@ namespace Alice {
             input.onDeselect.RemoveListener(InputDeselected);
             input.onValueChanged.RemoveListener(LimitInput);
             destroyed.OnNext(Unit.Default); destroyed.Dispose(); disabled.Dispose(); selected.Dispose(); inputFocusChanged.Dispose();
+            valueStepRequested.Dispose();
         }
     }
 }

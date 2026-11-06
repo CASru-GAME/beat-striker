@@ -76,11 +76,15 @@ public class MusicPopup : MonoBehaviour
         musicCards.Initialize(musics, preloadedAssetsByMusicId);
     }
     
-    public void Hide()
+    public void Hide(bool playSound = false)
     {
         if (!isShowing) return;
+        if (playSound) hideButton.PlayClickSound();
         
         isShowing = false;
+        canvasGroup.blocksRaycasts = false;
+        StopAllCoroutines();
+        if (musicSelection != null) LeanTween.cancel(musicSelection.gameObject);
         StartCoroutine(HideWithFadeAndMusicSlide());
     }
     

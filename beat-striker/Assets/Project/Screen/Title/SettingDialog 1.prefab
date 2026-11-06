@@ -442,6 +442,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b7fc17964b8b424b8ff38c1822b95d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Alice.SettingsDialog
+  backSound: {fileID: 8300000, guid: fffdef6c6ce19b5409acca832a61af2e, type: 3}
   timingAdjustEmitter: {fileID: 7384494007488891928}
   cursorSpeedLeftEmitter: {fileID: 586352779316500920}
   cursorSpeedRightEmitter: {fileID: 7398903202747361527}

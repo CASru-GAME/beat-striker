@@ -13,7 +13,7 @@ namespace Alice {
         public static readonly AiAction None = new(Vector2.zero, null);
     }
 
-    public abstract class AiBrain : MonoBehaviour, IGamePad, IGamePadDataSource {
+    public abstract class AiBrain : MonoBehaviour, ICpuGamePad {
         [Tooltip("状況判断AIのレベル。通常対戦では選択されたCPUレベルを適用します。4が最大性能。")]
         [SerializeField, Range(1, 4)] int difficultyLevel = 4;
 

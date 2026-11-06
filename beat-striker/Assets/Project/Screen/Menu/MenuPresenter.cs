@@ -31,7 +31,7 @@ namespace Alice {
             IPlayerSelectSetting playerSelectSetting,
             IBattleSelectSetting battleSelectSetting,
             ITutorialSetting tutorialSetting,
-            IAppNetworkSetting appNetworkSetting, PlayerSession playerSession) {
+            IAppNetworkSetting appNetworkSetting, PlayerSession playerSession, IInputFocusService focus) {
             this.view = view;
             this.sceneTransitionService = sceneTransitionService;
             this.gamePadRegistry = gamePadRegistry;
@@ -45,6 +45,14 @@ namespace Alice {
             this.view.GotoTitleRequested
                 .Subscribe(_ => {
                     Debug.Log($"{LOG_PREFIX} GotoTitleRequested received");
+                    RequestTransitionToTitle();
+                })
+                .AddTo(subscriptions);
+            gamePadRegistry.OnAnyButtonDown
+                .Where(input => input.Button == GamePadButton.South && focus.CanReceive(null, input.PlayerId))
+                .Subscribe(_ => {
+                    if (inputState != MenuInputState.Ready) return;
+                    view.PlayBackSound();
                     RequestTransitionToTitle();
                 })
                 .AddTo(subscriptions);

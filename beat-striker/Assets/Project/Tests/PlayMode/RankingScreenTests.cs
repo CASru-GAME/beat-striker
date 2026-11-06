@@ -185,7 +185,9 @@ public class RankingScreenTests {
         var list = owner.AddComponent<RankingHistoryListView>();
         var api = new DelayedHistoryApi();
         ExpectHistoryRequestLogs();
-        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, null, null, null, null, new PlayerSession(), new RankingNavigationState(), new InputFocusService());
+        using var focus = new InputFocusService();
+        using var pads = new GamePadRegistry(focus);
+        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, null, null, null, null, new PlayerSession(), new RankingNavigationState(), focus, pads);
         presenter.Dispose();
         api.Histories.SetResult(new[] { new BattleHistorySummary { id = "late-record" } });
         yield return null;
@@ -203,7 +205,9 @@ public class RankingScreenTests {
         var list = owner.AddComponent<RankingHistoryListView>();
         var api = new DelayedHistoryApi();
         ExpectHistoryRequestLogs();
-        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, new TestMusicRegistry(), new TestStrikerRegistry(), null, null, new PlayerSession(), new RankingNavigationState(), new InputFocusService());
+        using var focus = new InputFocusService();
+        using var pads = new GamePadRegistry(focus);
+        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, new TestMusicRegistry(), new TestStrikerRegistry(), null, null, new PlayerSession(), new RankingNavigationState(), focus, pads);
         var check = typeof(RankingPresenter).GetMethod("CanPlayReplay", BindingFlags.Instance | BindingFlags.NonPublic);
         var replay = new ReplayPayload { stage = "Street", musicId = "known", strikerIds = new[] { 0, 1 }, rounds = new[] { new ReplayRoundPayload() } };
         Assert.That(check.Invoke(presenter, new object[] { replay }), Is.True);
@@ -353,7 +357,8 @@ public class RankingScreenTests {
         dialog.transform.SetParent(owner.transform);
         SetField(view, "historyDialog", dialog);
         SetField(view, "battleHistoryScrollRect", historyScroll);
-        return new RankingPresenter(view, list, new ImmediateTransition(), new DelayedHistoryApi(), null, null, null, null, new TestMusicRegistry(), new TestStrikerRegistry(), records, new Profiles(), session, navigation, new InputFocusService());
+        var focus = new InputFocusService();
+        return new RankingPresenter(view, list, new ImmediateTransition(), new DelayedHistoryApi(), null, null, null, null, new TestMusicRegistry(), new TestStrikerRegistry(), records, new Profiles(), session, navigation, focus, new GamePadRegistry(focus));
     }
 
     static void BindInactiveHistoryRoot(RankingPresenterView view) {
@@ -427,7 +432,9 @@ public class RankingScreenTests {
         var list = owner.AddComponent<RankingHistoryListView>();
         var api = new DelayedHistoryApi();
         ExpectHistoryRequestLogs();
-        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, null, null, null, null, new PlayerSession(), new RankingNavigationState(), new InputFocusService());
+        using var focus = new InputFocusService();
+        using var pads = new GamePadRegistry(focus);
+        using var presenter = new RankingPresenter(view, list, new ImmediateTransition(), api, null, null, null, null, null, null, null, null, new PlayerSession(), new RankingNavigationState(), focus, pads);
         presenter.Dispose();
         api.Histories.SetException(new System.InvalidOperationException("Delayed network failure"));
         yield return null;

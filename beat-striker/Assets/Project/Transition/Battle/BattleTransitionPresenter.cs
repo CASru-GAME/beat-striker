@@ -52,7 +52,7 @@ namespace Alice {
                     continue;
                 }
                 var player = session.Participants[slot];
-                view.SetIdentity(slot, player.name, player.grade, player.isCpu ? $"CPU  Lv.{player.cpuLevel}" : $"{slot + 1}P  PLAYER");
+                view.SetIdentity(slot, player.name, player.grade, player.isCpu ? "CPU" : $"{slot + 1}P  PLAYER");
             }
         }
 

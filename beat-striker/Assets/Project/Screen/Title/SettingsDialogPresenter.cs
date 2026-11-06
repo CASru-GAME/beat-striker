@@ -24,7 +24,10 @@ namespace Alice {
 
             gamePadRegistry.OnAnyButtonDown
                 .Where(e => inputFocus.CanReceive(view.transform, e.PlayerId) && view.gameObject.activeInHierarchy && e.Button == GamePadButton.South && !view.IsTimeingAdjustActive)
-                .Subscribe(_ => this.view.SetVisible(false))
+                .Subscribe(_ => {
+                    this.view.PlayBackSound();
+                    this.view.SetVisible(false);
+                })
                 .AddTo(subscriptions);
 
             this.view.CursorSpeedDecreaseRequested

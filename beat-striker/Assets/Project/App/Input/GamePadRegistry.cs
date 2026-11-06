@@ -14,6 +14,8 @@ namespace Alice {
     // Simulation data must continue independently of local UI focus.
     public interface IGamePadDataSource { }
 
+    public interface ICpuGamePad : IGamePad, IGamePadDataSource { }
+
     public interface IGamePad {
         Observable<Vector2> OnDirectionAsObservable { get; }
         Observable<Unit> OnDirectionCanceledAsObservable { get; }
@@ -44,6 +46,7 @@ namespace Alice {
         public int PlayerId { get; }
         public string DeviceName { get; }
         public ReadOnlyReactiveProperty<bool> HasGamePad { get; }
+        public bool IsCpuControlled { get; }
         public Observable<Vector2> OnDirection { get; }
         public Observable<Vector2> OnCursorDirection { get; }
         public Observable<Unit> OnDirectionCanceled { get; }
@@ -278,7 +281,9 @@ namespace Alice {
 
             public HashSet<GamePadButton> PressedButtons { get; } = new();
             public bool HasPrimaryGamePad => isPrimaryInput;
-            public bool IsSynthetic => (battleOverride.TryGetValue(out var injected) ? injected : current.GetValue(null)) is IGamePadDataSource;
+            Option<IGamePad> EffectiveInput => battleOverride.TryGetValue(out _) ? battleOverride : current;
+            public bool IsSynthetic => EffectiveInput.GetValue(null) is IGamePadDataSource;
+            public bool IsCpuControlled => EffectiveInput.GetValue(null) is ICpuGamePad;
             public string DeviceName => current.TryGetValue(out var gamePad) ? gamePad.DeviceName : null;
 
             public ReadOnlyReactiveProperty<bool> HasGamePad => hasGamePad;
@@ -384,8 +389,7 @@ namespace Alice {
                 buttonDownSubscription?.Dispose();
                 buttonUpSubscription?.Dispose();
 
-                var effective = battleOverride.TryGetValue(out _) ? battleOverride : current;
-                if (effective.TryGetValue(out var activeGamePad)) {
+                if (EffectiveInput.TryGetValue(out var activeGamePad)) {
                     directionSubscription = activeGamePad.OnDirectionAsObservable.Subscribe(direction => {
                         lastDirection = direction;
                         onCursorDirection.OnNext(direction);

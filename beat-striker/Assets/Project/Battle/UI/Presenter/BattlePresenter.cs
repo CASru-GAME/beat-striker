@@ -39,6 +39,7 @@ namespace Alice {
         readonly IAppStrikerRegistry appStrikerRegistry;
         readonly IGamePadRegistry gamePadRegistry;
         readonly IReplaySetting replaySetting;
+        readonly PlayerSession playerSession;
         readonly IMusicPlayer musicPlayer;
         readonly IBeatjudge beatJudge;
         readonly IAISetting aiSetting;
@@ -62,8 +63,7 @@ namespace Alice {
         bool suppressAttentionTextForCurrentRequest;
         bool isDisposed;
         int totalBeatCount;
-        int currentExcellentWindowBeatIndex = -1;
-        readonly HashSet<int> pendingSuccessSoundBeatIndexes = new();
+        readonly Dictionary<int, int> firstEarlySuccessPlayerByBeat = new();
         readonly HashSet<int> playedSuccessSoundBeatIndexes = new();
 
         public Observable<Unit> OnPauseMenuRequested => pauseMenuRequestedSubject;
@@ -73,11 +73,12 @@ namespace Alice {
         public bool IsAttentionPresentationActive => battlePresenterView.StageCamera.IsAttentionPresentationActive;
 
         [Inject]
-        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IReplaySetting replaySetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IAISetting aiSetting, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter, IAppStrikerRegistry appStrikerRegistry) {
+        public BattlePresenter(IStrikerRegistry strikerRegistry, IGamePadRegistry gamePadRegistry, IReplaySetting replaySetting, IMusicPlayer musicPlayer, IBeatjudge beatJudge, IAISetting aiSetting, IBattleOpeningBgmPlayer battleOpeningBgmPlayer, BattlePresenterView battlePresenterView, BattleSuspendMenuPresenter suspendMenuPresenter, IAppStrikerRegistry appStrikerRegistry, PlayerSession playerSession) {
             this.strikerRegistry = strikerRegistry;
             this.appStrikerRegistry = appStrikerRegistry;
             this.gamePadRegistry = gamePadRegistry;
             this.replaySetting = replaySetting;
+            this.playerSession = playerSession;
             this.musicPlayer = musicPlayer;
             this.beatJudge = beatJudge;
             this.aiSetting = aiSetting;
@@ -341,6 +342,10 @@ namespace Alice {
             musicPlayer.OnBeatTiming
                 .Subscribe(signal => {
                     if(battlePresenterView.BeatSound) battlePresenterView.BeatSound.PlayAtApp(Vector3.zero);
+                    if (firstEarlySuccessPlayerByBeat.Remove(signal.BeatIndex, out var earlyPlayerId)
+                        && (!IsCpuControlled(earlyPlayerId) || IsCpuControlled(1 - earlyPlayerId))) {
+                        PlaySuccessSoundForBeat(signal.BeatIndex);
+                    }
 
                     var remainingBeatCount = totalBeatCount - (signal.BeatIndex + 1);
                     battlePresenterView.SetRemainingBeatCount(remainingBeatCount);
@@ -353,83 +358,78 @@ namespace Alice {
                 })
                 .AddTo(audioSubscriptions);
 
-            musicPlayer.OnExcellentZoneEntered
-                .Subscribe(signal => {
-                    if (currentExcellentWindowBeatIndex >= 0 && signal.BeatIndex < currentExcellentWindowBeatIndex) {
-                        pendingSuccessSoundBeatIndexes.Clear();
-                        playedSuccessSoundBeatIndexes.Clear();
-                    }
-
-                    currentExcellentWindowBeatIndex = signal.BeatIndex;
-                    PlayPendingSuccessSoundIfNeeded(signal.BeatIndex);
-                })
+            musicPlayer.OnPlaybackLooped
+                .Subscribe(_ => ResetSuccessSounds())
                 .AddTo(audioSubscriptions);
 
             musicPlayer.OnBeatTimelinePrepared
                 .Subscribe(beatTimeline => {
                     totalBeatCount = beatTimeline?.Length ?? 0;
-                    currentExcellentWindowBeatIndex = -1;
-                    pendingSuccessSoundBeatIndexes.Clear();
-                    playedSuccessSoundBeatIndexes.Clear();
+                    ResetSuccessSounds();
                     battlePresenterView.SetRemainingBeatCountVs();
                 })
                 .AddTo(audioSubscriptions);
 
             musicPlayer.OnPlaybackCompleted
                 .Subscribe(_ => {
-                    currentExcellentWindowBeatIndex = -1;
-                    pendingSuccessSoundBeatIndexes.Clear();
-                    playedSuccessSoundBeatIndexes.Clear();
+                    ResetSuccessSounds();
                     battlePresenterView.SetRemainingBeatCount(0);
                 })
                 .AddTo(audioSubscriptions);
 
             for (var playerId = 0; playerId < BATTLE_PLAYER_COUNT; playerId++) {
-                var beatPlayer = beatJudge.GetBeatPlayer(playerId);
+                var capturedPlayerId = playerId;
+                var beatPlayer = beatJudge.GetBeatPlayer(capturedPlayerId);
 
                 beatPlayer.OnBeatCommandRequested
-                    .Subscribe(result => {
-                        if (!result.IsSuccess || result.Zone == BeatJudgeZone.Miss) {
-                            battlePresenterView.PlayJudgeMissSound();
-                            return;
-                        }
-
-                        if (beatJudge.ExecutesCommandsImmediately) {
-                            PlaySuccessSoundForBeat(result.BeatIndex);
-                            return;
-                        }
-
-                        if (result.Zone != BeatJudgeZone.Excellent) {
-                            if (result.Zone == BeatJudgeZone.Good) {
-                                pendingSuccessSoundBeatIndexes.Add(result.BeatIndex);
-                                PlayPendingSuccessSoundIfNeeded(currentExcellentWindowBeatIndex);
-                            }
-
-                            return;
-                        }
-
-                        pendingSuccessSoundBeatIndexes.Remove(result.BeatIndex);
-                        PlaySuccessSoundForBeat(result.BeatIndex);
-                    })
+                    .Subscribe(result => PlayJudgeSound(capturedPlayerId, result))
                     .AddTo(audioSubscriptions);
-
             }
         }
 
-        void PlayPendingSuccessSoundIfNeeded(int beatIndex) {
-            if (beatIndex < 0 || !pendingSuccessSoundBeatIndexes.Remove(beatIndex)) {
+        void PlayJudgeSound(int playerId, IBeatPlayer.BeatResult result) {
+            if (!result.IsSuccess || result.Zone == BeatJudgeZone.Miss) {
+                battlePresenterView.PlayJudgeMissSound();
                 return;
             }
 
+            var beatIndex = result.BeatIndex;
+            var timeline = musicPlayer.CurrentBeatTimeline;
+            if (beatIndex < 0 || beatIndex >= timeline.Length || playedSuccessSoundBeatIndexes.Contains(beatIndex)) return;
+
+            var playerIsCpu = IsCpuControlled(playerId);
+            var opponentIsCpu = IsCpuControlled(1 - playerId);
+            if (playerIsCpu != opponentIsCpu) {
+                if (playerIsCpu) return;
+            } else if (musicPlayer.CurrentPlaybackTime < timeline[beatIndex]) {
+                if (!firstEarlySuccessPlayerByBeat.TryGetValue(beatIndex, out var firstPlayerId)) {
+                    firstEarlySuccessPlayerByBeat.Add(beatIndex, playerId);
+                    return;
+                }
+                if (firstPlayerId == playerId) return;
+            }
+
+            firstEarlySuccessPlayerByBeat.Remove(beatIndex);
             PlaySuccessSoundForBeat(beatIndex);
         }
 
-        void PlaySuccessSoundForBeat(int beatIndex) {
-            if (beatIndex < 0 || !playedSuccessSoundBeatIndexes.Add(beatIndex)) {
-                return;
+        bool IsCpuControlled(int playerId) {
+            if (replaySetting.HasReplay && playerId < playerSession.Participants.Count) {
+                return playerSession.Participants[playerId].isCpu;
             }
 
-            battlePresenterView.PlayJudgeSuccessSound();
+            return gamePadRegistry.Get(playerId).IsCpuControlled;
+        }
+
+        void ResetSuccessSounds() {
+            firstEarlySuccessPlayerByBeat.Clear();
+            playedSuccessSoundBeatIndexes.Clear();
+        }
+
+        void PlaySuccessSoundForBeat(int beatIndex) {
+            if (playedSuccessSoundBeatIndexes.Add(beatIndex)) {
+                battlePresenterView.PlayJudgeSuccessSound();
+            }
         }
 
         void SubscribeSpecialCommandEvents() {

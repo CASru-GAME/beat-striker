@@ -15,10 +15,22 @@ namespace Alice {
         [Inject]
         public BackScenePresenter(
             BackSelectSceneTextHover[] views,
-            ISceneTransitionService transitionService) {
+            ISceneTransitionService transitionService, IGamePadRegistry gamePads, IInputFocusService focus) {
             this.views = views;
             this.transitionService = transitionService;
 
+            gamePads.OnAnyButtonDown
+                .Where(input => input.Button == GamePadButton.South && focus.CanReceive(null, input.PlayerId))
+                .Subscribe(_ => {
+                    var result = transitionService.RequestStartTransition(AppScene.Title);
+                    if (!result.IsSuccess) return;
+                    foreach (var item in views) {
+                        if (item.scene != AppScene.Title) continue;
+                        item.PlayClickSound();
+                        break;
+                    }
+                })
+                .AddTo(subscriptions);
             Initialize();
         }
 

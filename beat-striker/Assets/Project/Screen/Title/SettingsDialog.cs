@@ -42,6 +42,7 @@ namespace Alice {
 
         [Header("Buttons")]
         [SerializeField] ActionEmitter timingAdjustEmitter;
+        [SerializeField] AudioClip backSound;
         [SerializeField] ActionEmitter cursorSpeedLeftEmitter;
         [SerializeField] ActionEmitter cursorSpeedRightEmitter;
         [SerializeField] ActionEmitter bgmVolumeLeftEmitter;
@@ -109,6 +110,7 @@ namespace Alice {
         public void SetVisible(bool visible) {
             gameObject.SetActive(visible);
         }
+        public void PlayBackSound() => backSound.PlayAtApp();
 
         public void SetCursorSpeedValue(float value) {
             cursorSpeedValueLabel.text = value.ToString("0.0");

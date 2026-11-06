@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using R3;
 using UnityEngine;
@@ -185,8 +186,10 @@ namespace Alice {
                     return;
                 }
 
-                Debug.Log($"{LOG_PREFIX} OnButtonDown South received. undo selection requested");
-                UndoSelection();
+                if (!TryUndoSelection()) {
+                    view.Backbutton.PlayClickSound();
+                    RequestStageSelectTransition();
+                }
                 return;
             }
 
@@ -299,11 +302,17 @@ namespace Alice {
         async Task<bool> PrepareLocalParticipantsAsync() {
             var humanSlots = new[] { gamePadRegistry.Get(0).HasGamePad.CurrentValue, gamePadRegistry.Get(1).HasGamePad.CurrentValue };
             if (!humanSlots[0] || !humanSlots[1]) {
-                var choice = await cpuDialog.AskAsync("CPUの強さ", $"前回の設定：Lv{profiles.CpuLevel}", new[] { "そのまま", "Lv1", "Lv2", "Lv3", "Lv4", "戻る" }, directInput: true);
+                var cpuSlot = humanSlots[1] ? 0 : 1;
+                if (!playerSelectSetting.TryGetStriker(cpuSlot, out var cpuStriker)) {
+                    throw new InvalidOperationException($"Player {cpuSlot} has no selected striker.");
+                }
+                var grades = Enumerable.Range(1, 4).Select(level => PlayerGrades.Cpu(level, cpuStriker)).ToArray();
+                var choice = await cpuDialog.SelectValueAsync("CPUの階級", grades, profiles.CpuLevel - 1);
                 if (disposed) return false;
-                if (choice == 5) { inputState = SceneInputState.ReadyToStart; return false; }
-                if (choice > 0) profiles.CpuLevel = choice;
-                battleSelectSetting.SetAiStrength(profiles.CpuLevel);
+                if (!choice.HasValue) { inputState = SceneInputState.ReadyToStart; return false; }
+                var level = choice.Value + 1;
+                if (level != profiles.CpuLevel) profiles.CpuLevel = level;
+                battleSelectSetting.SetAiStrength(level);
             }
             for (var slot = 0; slot < humanSlots.Length; slot++) {
                 if (!humanSlots[slot]) continue;
@@ -391,7 +400,7 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} RequestStageSelectTransition accepted. inputState={inputState}");
         }
 
-        void UndoSelection() {
+        bool TryUndoSelection() {
             if (selectionPolicy.TryPopUndoSlot(playerSelectSetting, out var slot)) {
                 playerSelectSetting.DeselectStriker(slot);
             }
@@ -401,9 +410,11 @@ namespace Alice {
             }
             else {
                 Debug.Log($"{LOG_PREFIX} UndoSelection skipped because no selected slot was found");
+                return false;
             }
 
             RefreshState();
+            return true;
         }
 
         async Task MatchOnlineAsync() {

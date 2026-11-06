@@ -34,6 +34,8 @@ namespace Alice {
         readonly Subject<Unit> closeHistoryRequested = new(), moreHistoryRequested = new();
         bool hasMoreHistory;
         public Transform HistoryRoot => historyDialog.transform;
+        public void PlayBackSound() => backToMenuEmitter.PlayClickSound();
+        public void PlayCloseHistorySound() => closeHistoryEmitter.PlayClickSound();
         public bool InputAllowed { private get; set; } = true;
         public Observable<string> PlayerSelected => playerSelected;
         public Observable<Unit> CloseHistoryRequested => closeHistoryRequested;

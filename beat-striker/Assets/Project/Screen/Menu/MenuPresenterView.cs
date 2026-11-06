@@ -21,6 +21,7 @@ namespace Alice {
         public Observable<Unit> LocalBattleRequested => localBattleRequested;
         public Observable<Unit> TrialRequested => trialRequested;
         public Observable<Unit> GotoRankingRequested => gotoRankingRequested;
+        public void PlayBackSound() => gotoTitleEmitter.PlayClickSound();
 
         void Awake() {
             gotoTitleEmitter.OnClickEvent.Subscribe(_ => gotoTitleRequested.OnNext(Unit.Default)).AddTo(this);

@@ -28,7 +28,8 @@ namespace Alice {
             IBattleSelectSetting selectSetting,
             IMusicRegistry musicRegistry,
             IAppBGMPlayer appBgmPlayer,
-            ILoadingOverlayService loadingOverlayService) {
+            ILoadingOverlayService loadingOverlayService,
+            IGamePadRegistry gamePads, IInputFocusService focus) {
             this.view = view;
             this.transitionService = transitionService;
             this.selectSetting = selectSetting;
@@ -36,6 +37,10 @@ namespace Alice {
             this.appBgmPlayer = appBgmPlayer;
             this.loadingOverlayService = loadingOverlayService;
 
+            gamePads.OnAnyButtonDown
+                .Where(input => input.Button == GamePadButton.South && initialized && focus.CanReceive(null, input.PlayerId))
+                .Subscribe(_ => Back(true))
+                .AddTo(subscriptions);
             _ = InitializeAsync();
         }
 
@@ -72,15 +77,22 @@ namespace Alice {
                 stageSelectButton.OnPreviewVisibilityChanged.Subscribe(OnPreviewVisibilityChanged).AddTo(subscriptions);
             }
 
-            view.BackButton.OnBackPressed.Subscribe(_ => {
-                Debug.Log($"{LOG_PREFIX} BackButton pressed. requesting start transition to {AppScene.Menu}");
-                appBgmPlayer.Resume();
-                var result = transitionService.RequestStartTransition(AppScene.Menu);
-                Debug.Log($"{LOG_PREFIX} BackButton transition request result. isSuccess={result.IsSuccess}");
-            }).AddTo(subscriptions);
+            view.BackButton.OnBackPressed.Subscribe(_ => Back(false)).AddTo(subscriptions);
 
             initialized = true;
             Debug.Log($"{LOG_PREFIX} Initialize completed");
+        }
+
+        void Back(bool playSound) {
+            if (transitionService.IsTransitioning) return;
+            if (isPopupVisible) {
+                foreach (var stageSelectButton in view.StageSelectButtons) stageSelectButton.HidePopup(playSound);
+                return;
+            }
+
+            if (playSound) view.BackButton.PlayClickSound();
+            appBgmPlayer.Resume();
+            transitionService.RequestStartTransition(AppScene.Menu);
         }
 
         async Task EnterStageSelectAsync() {

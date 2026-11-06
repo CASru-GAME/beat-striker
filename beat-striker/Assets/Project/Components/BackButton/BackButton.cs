@@ -14,6 +14,7 @@ public class Backbutton : MonoBehaviour {
     private float originalAlpha;
     private Vector3 originalScale;
     public Observable<Unit> OnBackPressed => onBackPressed;
+    public void PlayClickSound() => button.PlayClickSound();
     private readonly Subject<Unit> onBackPressed = new();
 
     void Awake() {

@@ -53,7 +53,7 @@ namespace Alice {
             IPlayerSelectSetting playerSelectSetting,
             IAppNetworkSetting appNetworkSetting,
             IMusicRegistry musicRegistry,
-            IAppStrikerRegistry strikerRegistry, IPlayerRecordsApiClient records, IPlayerProfileService profiles, PlayerSession session, RankingNavigationState navigation, IInputFocusService focus) {
+            IAppStrikerRegistry strikerRegistry, IPlayerRecordsApiClient records, IPlayerProfileService profiles, PlayerSession session, RankingNavigationState navigation, IInputFocusService focus, IGamePadRegistry gamePads) {
             this.view = view;
             focus.RegisterModal(view.HistoryRoot).AddTo(subscriptions);
             Observable.EveryUpdate().Subscribe(_ => view.InputAllowed = inputState == RankingInputState.Ready && focus.CanPoint(view.HistoryRoot.gameObject.activeInHierarchy ? view.HistoryRoot : view.transform)).AddTo(subscriptions);
@@ -70,7 +70,17 @@ namespace Alice {
             this.records = records; this.profiles = profiles; this.session = session; this.navigation = navigation;
             view.PlayerSelected.Subscribe(name => { _ = LoadPlayerHistoryAsync(name, false); }).AddTo(subscriptions);
             view.MoreHistoryRequested.Subscribe(ignored => { _ = LoadPlayerHistoryAsync(selectedPlayer, true); }).AddTo(subscriptions);
-            view.CloseHistoryRequested.Subscribe(_ => { if (inputState != RankingInputState.Ready) return; historyOperation++; historyLoading = false; selectedPlayer = ""; view.CloseHistory(); }).AddTo(subscriptions);
+            view.CloseHistoryRequested.Subscribe(_ => CloseHistory()).AddTo(subscriptions);
+            gamePads.OnAnyButtonDown.Where(input => input.Button == GamePadButton.South).Subscribe(input => {
+                if (inputState != RankingInputState.Ready) return;
+                if (focus.CanReceive(view.HistoryRoot, input.PlayerId)) {
+                    view.PlayCloseHistorySound();
+                    CloseHistory();
+                } else if (focus.CanReceive(null, input.PlayerId)) {
+                    view.PlayBackSound();
+                    RequestTransitionToMenu();
+                }
+            }).AddTo(subscriptions);
             Debug.Log($"{LOG_PREFIX} Constructed and subscribing view events");
 
             this.view.BackToMenuRequested
@@ -217,6 +227,14 @@ namespace Alice {
                 inputState = RankingInputState.Ready;
                 if (historyClosed) view.ShowHistory(selectedPlayer, !string.IsNullOrEmpty(historyCursor));
             }
+        }
+
+        void CloseHistory() {
+            if (inputState != RankingInputState.Ready) return;
+            historyOperation++;
+            historyLoading = false;
+            selectedPlayer = "";
+            view.CloseHistory();
         }
 
         void RequestTransitionToMenu() {
