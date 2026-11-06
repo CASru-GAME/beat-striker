@@ -7,12 +7,27 @@ namespace Alice.DemonKingAi {
     internal sealed record DemonKingAiCandidate(DemonKingAiMove Move, Vector2 Direction, string Reason);
 
     internal sealed class DemonKingAiDecision {
+        bool advancedTactics;
+        int opponentReply;
+        float predictionWeight = 1f;
+        float followUpWeight = 1f;
+        float threatWeight = 1f;
+
+        readonly List<DemonKingAiThreat> forecast = new(8);
+        bool hasMeleeForecast, hasRushForecast;
         readonly List<DemonKingAiCandidate> candidates = new(20);
         readonly HashSet<int> consumedShields = new();
+        readonly List<int> launchOrder = new();
 
         public DemonKingAiChoice Choose(DemonKingAiFrame frame, DemonKingAiTuning tuning, DemonKingAiMatchup matchup, DemonKingAiMemory memory, AiDifficulty difficulty) {
+            advancedTactics = difficulty.UsesAdvancedTactics;
+            opponentReply = 0;
+            predictionWeight = difficulty.PredictionWeight;
+            followUpWeight = difficulty.FollowUpWeight;
+            threatWeight = difficulty.ThreatWeight;
             var self = frame.Self;
             if (self.Striker.HitPoint.CurrentValue <= 0f || frame.Opponent.Striker.HitPoint.CurrentValue <= 0f) return Idle("Round ended");
+            if (difficulty.MissesBeat()) return Idle("Missed the beat");
             if (self.Category == StrikerStateCategory.Special) return Idle("Complete the Overlord rush");
             if (self.State is Core.DarkSatan.StunState stun && !stun.ObservationAutoRecovers)
                 return new(new AiAction(Vector2.zero, GamePadButton.North), DemonKingAiMove.Recover, 0f, "Break hit stun");
@@ -24,9 +39,18 @@ namespace Alice.DemonKingAi {
                 candidates,
                 static candidate => candidate.Move != DemonKingAiMove.Wait,
                 static candidate => ButtonFor(candidate.Move),
-                (candidate, anticipationWeight) => Score(candidate, frame, tuning, matchup, memory, anticipationWeight));
+                candidate => IsDefensive(candidate, frame),
+                (candidate, anticipationWeight) => ScoreReplies(candidate, frame, tuning, matchup, memory, anticipationWeight));
             if (selected == null) return Idle("Observe");
             return new(new AiAction(selected.Direction, ButtonFor(selected.Move)), selected.Move, score, selected.Reason);
+        }
+
+        static bool IsDefensive(DemonKingAiCandidate candidate, DemonKingAiFrame frame) {
+            var toward = frame.Opponent.Body.center.x - frame.Self.Body.center.x;
+            return candidate.Move == DemonKingAiMove.Guard
+                || candidate.Move is DemonKingAiMove.Move or DemonKingAiMove.Walk or DemonKingAiMove.Dive
+                    && (candidate.Direction.x * toward <= 0f
+                        || candidate.Direction.y > 0f && frame.Opponent.Body.center.y < frame.Self.Body.center.y + 2f);
         }
 
         void BuildCandidates(DemonKingAiFrame frame) {
@@ -66,10 +90,66 @@ namespace Alice.DemonKingAi {
 
         void Add(DemonKingAiMove move, Vector2 direction, string reason) => candidates.Add(new(move, direction, reason));
 
+        // Evaluate visible motion and both horizontal replies. No opponent input is read.
+        float ScoreReplies(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning,
+            DemonKingAiMatchup matchup, DemonKingAiMemory memory, float anticipationWeight) {
+            opponentReply = 0;
+            var continuing = Score(candidate, frame, tuning, matchup, memory, anticipationWeight);
+            if (!advancedTactics || float.IsInfinity(continuing)) return continuing;
+            opponentReply = -1;
+            var retreating = Score(candidate, frame, tuning, matchup, memory, anticipationWeight);
+            opponentReply = 1;
+            var approaching = Score(candidate, frame, tuning, matchup, memory, anticipationWeight);
+            opponentReply = 0;
+            var retreatWeight = Mathf.Lerp(.15f, .4f, memory.RetreatHabit);
+            var approachWeight = Mathf.Lerp(.15f, .35f, memory.AttackHabit);
+            var expected = continuing * (1f - retreatWeight - approachWeight)
+                + retreating * retreatWeight + approaching * approachWeight;
+            // Keep a small worst-case weight so a single optimistic read cannot dominate.
+            return expected * .85f + Mathf.Min(continuing, Mathf.Min(retreating, approaching)) * .15f;
+        }
+
+        // A body attack that has not started may be interrupted by a reliable fast counter.
+        // Existing hitboxes/projectiles keep their full risk in ThreatRisk.
+        float CounterPressure(DemonKingAiFrame frame, float chance, float impact) {
+            if (!advancedTactics || chance < .7f || impact > .25f
+                || frame.Opponent.Striker.Striker.CurrentValue == Striker.Hero
+                || frame.Opponent.Category is StrikerStateCategory.Special or StrikerStateCategory.Guard
+                || frame.Opponent.State is Core.DarkSatan.Attack2State or Core.LargeSatan.Attack2State) return 1f;
+            return Mathf.Lerp(1f, .3f, chance * Mathf.Clamp01((.3f - impact) / .25f));
+        }
+
+        Vector3 ReplyPosition(DemonKingAiFrame frame, Vector3 predicted, float seconds, DemonKingAiMemory memory) {
+            if (!advancedTactics || opponentReply == 0 || seconds <= frame.ExecutionDelay) return predicted;
+            var enemy = frame.Opponent;
+            if (enemy.Category is StrikerStateCategory.Special or StrikerStateCategory.Unknown
+                || enemy.State is Core.LargeHero.StunState or Core.LargeWizard.StunState or Core.LargeSatan.StunState
+                    or Core.DarkSatan.StunState) return predicted;
+            var locked = enemy.State is Core.LargeHero.GuardState guard ? guard.ObservationDuration
+                : enemy.State is Core.DarkSatan.DemonDirectionalAttackState strike ? strike.ObservationDuration : 0f;
+            var remaining = Mathf.Max(0f, locked - enemy.StateSeconds - frame.ExecutionDelay);
+            var responseAt = frame.ExecutionDelay + Mathf.Ceil(remaining / frame.BeatSeconds) * frame.BeatSeconds;
+            var available = Mathf.Max(0f, seconds - responseAt);
+            if (available <= 0f) return predicted;
+            if (enemy.State is Core.LargeSatan.EmitState emit && opponentReply < 0
+                && seconds + enemy.StateSeconds < emit.ObservationFlightSeconds)
+                return ClampToArena(enemy.Body.center + enemy.Velocity * Mathf.Min(seconds, .12f), enemy);
+            var toward = Mathf.Sign(frame.Self.Body.center.x - enemy.Body.center.x);
+            if (toward == 0f) toward = -Mathf.Sign(enemy.Striker.LookDirection.CurrentValue.x);
+            // Replace the lateral drift after the reply instead of counting it twice.
+            var drift = enemy.Velocity.x * Mathf.Min(available, .3f);
+            predicted.x += toward * opponentReply * memory.RepositionSpeed * .24f * (1f - Mathf.Exp(-available / .24f)) - drift;
+            return ClampToArena(predicted, enemy);
+        }
+
         float Score(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, DemonKingAiMatchup matchup,
             DemonKingAiMemory memory, float anticipationWeight) {
             var source = frame.Self.Demon;
             var horizon = Mathf.Clamp(frame.BeatSeconds, .3f, 1.2f);
+            if (advancedTactics && candidate.Move is DemonKingAiMove.Uppercut or DemonKingAiMove.HeelDrop) {
+                var technique = candidate.Move == DemonKingAiMove.Uppercut ? source.Uppercut : source.HeelDrop;
+                horizon = Mathf.Max(horizon, AttackBufferSeconds(candidate, frame) + technique.ObservationDuration);
+            }
             var end = PredictSelf(candidate, frame, tuning, horizon);
             var enemy = PredictOpponent(frame, horizon + frame.ExecutionDelay, memory);
             var gap = Mathf.Abs(enemy.x - end.x);
@@ -78,10 +158,16 @@ namespace Alice.DemonKingAi {
             var gain = Mathf.Abs(startGap - matchup.PreferredDistance) - Mathf.Abs(gap - matchup.PreferredDistance);
             var score = Mathf.Clamp(gain, -6f, 6f) * tuning.PositionWeight * matchup.Pressure * (altitude > 4f ? .2f : 1f);
             score += Mathf.Clamp(altitude - Mathf.Abs(enemy.y - end.y), -4f, 4f) * (altitude > 4f ? 7f : 2f);
-            var risk = ThreatRisk(candidate, frame, tuning, horizon, matchup.ProjectileCaution)
-                + AnticipationRisk(candidate, frame, tuning, matchup, memory, horizon) * anticipationWeight;
+            BuildSpellForecast(candidate, frame, tuning, anticipationWeight);
+            BuildPressureForecast(candidate, frame, tuning, memory, anticipationWeight);
+            var anticipated = AnticipationRisk(candidate, frame, tuning, matchup, memory, horizon);
+            if (advancedTactics && candidate.Move is DemonKingAiMove.Melee or DemonKingAiMove.Uppercut or DemonKingAiMove.HeelDrop or DemonKingAiMove.AirAttack) {
+                var chance = MeleeChance(candidate, frame, tuning, memory, out var impact);
+                anticipated *= CounterPressure(frame, chance, impact);
+            }
+            var risk = ThreatRisk(candidate, frame, tuning, horizon, matchup.ProjectileCaution) + anticipated * anticipationWeight;
             var hp = frame.Self.Striker.HitPoint.CurrentValue / Mathf.Max(1f, frame.Self.Striker.MaxHitPoint.CurrentValue);
-            score -= risk * tuning.RiskWeight * (hp < .3f ? 1.3f : 1f);
+            score -= risk * threatWeight * tuning.RiskWeight * (hp < .3f ? 1.3f : 1f);
             var raw = PredictSelf(candidate, frame, tuning, horizon, false);
             score -= Vector3.Distance(raw, end) * 4f;
 
@@ -103,7 +189,7 @@ namespace Alice.DemonKingAi {
                     score -= (1f - chance) * (8f + memory.WhiffPressure * 2f);
                     if (chance > .7f && damage >= frame.Opponent.Striker.HitPoint.CurrentValue) score += 18f;
                     // Contact can remove one disposable shield and create a route for the next strike.
-                    if (frame.OpponentShields.Count > 0 && startGap < 4.5f) score += 5f * memory.ShieldHabit;
+                    if (frame.OpponentShields.Count > 0 && startGap < 4.5f) score += 5f * (memory.ShieldHabit * predictionWeight);
                     break;
                 }
                 case DemonKingAiMove.Launch: {
@@ -121,7 +207,7 @@ namespace Alice.DemonKingAi {
 
                     var steady = Mathf.Clamp01(1f - frame.Opponent.Velocity.magnitude / 28f);
                     var summonValue = 8f + steady * 6f + Mathf.Min(startGap, 12f) * .3f;
-                    if (frame.OpponentShields.Count > 0) summonValue += memory.ShieldHabit * 4f;
+                    if (frame.OpponentShields.Count > 0) summonValue += (memory.ShieldHabit * predictionWeight) * 4f;
 
                     // Give other moves room to win while a small volley recovers.
                     var volleyFraction = (float)bulletCount / source.MaximumBulletsPerVolley;
@@ -142,7 +228,7 @@ namespace Alice.DemonKingAi {
                 case DemonKingAiMove.Move:
                     score -= 4f;
                     if (end.y > enemy.y + 2f) score -= end.y - enemy.y - 2f;
-                    if (memory.ShieldHabit > .3f && candidate.Direction.y > .5f && gap < startGap) score += 5f;
+                    if ((memory.ShieldHabit * predictionWeight) > .3f && candidate.Direction.y > .5f && gap < startGap) score += 5f;
                     break;
                 case DemonKingAiMove.Dive:
                     score -= 4f;
@@ -154,7 +240,30 @@ namespace Alice.DemonKingAi {
                     score -= 6f + Mathf.Min(memory.StaleBeats, 8);
                     break;
             }
+            score -= followUpWeight * memory.ResponsePenalty(candidate.Move, candidate.Direction, frame);
+            // Reward a safe position that can convert into an attack on the next beat.
+            if (followUpWeight > 0f) score += followUpWeight * FollowUpValue(candidate, frame, tuning, memory) / (1f + risk * 2f);
             return score;
+        }
+
+        float FollowUpValue(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, DemonKingAiMemory memory) {
+            if (candidate.Move is DemonKingAiMove.Wait or DemonKingAiMove.Charge or DemonKingAiMove.Launch or DemonKingAiMove.Special) return 0f;
+            var at = frame.BeatSeconds;
+            if (advancedTactics) {
+                if (frame.Self.Demon.HasVolley) return 0f;
+                var locked = candidate.Move == DemonKingAiMove.Uppercut ? frame.Self.Demon.Uppercut.ObservationDuration
+                    : candidate.Move == DemonKingAiMove.HeelDrop ? frame.Self.Demon.HeelDrop.ObservationDuration : 0f;
+                at *= Mathf.Max(1f, Mathf.Ceil((locked + AttackBufferSeconds(candidate, frame)) / frame.BeatSeconds));
+            }
+            var self = PredictSelf(candidate, frame, tuning, at);
+            var target = PredictOpponent(frame, at + frame.ExecutionDelay, memory);
+            var strike = frame.Self.Demon.NextStrike;
+            var reach = tuning.MeleeReach + strike.StepSpeed * strike.StepDuration;
+            var delta = target - self;
+            var opening = Mathf.Clamp01((reach + frame.Opponent.Body.extents.x - Mathf.Abs(delta.x)) / 2f)
+                * Mathf.Clamp01((1.5f + frame.Opponent.Body.extents.y - Mathf.Abs(delta.y)) / 1.2f);
+            return opening * 16f * ShieldTransmission(self, target, .2f, frame)
+                * Vulnerability(frame.Opponent, at + frame.ExecutionDelay + strike.HitStart);
         }
 
         static float Damage(DemonKingAiMove move, Core.DarkSatan.DemonKingCombatObservation source, DemonKingAiTuning tuning) => move switch {
@@ -164,7 +273,11 @@ namespace Alice.DemonKingAi {
             _ => source.NextStrike.Damage
         };
 
-        static float MeleeChance(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, DemonKingAiMemory memory) {
+        float MeleeChance(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, DemonKingAiMemory memory)
+            => MeleeChance(candidate, frame, tuning, memory, out _);
+
+        float MeleeChance(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, DemonKingAiMemory memory, out float firstImpact) {
+            firstImpact = float.PositiveInfinity;
             var source = frame.Self.Demon;
             var technique = candidate.Move == DemonKingAiMove.Uppercut ? source.Uppercut : source.HeelDrop;
             var directional = candidate.Move is DemonKingAiMove.Uppercut or DemonKingAiMove.HeelDrop;
@@ -185,19 +298,41 @@ namespace Alice.DemonKingAi {
                 var hit = Mathf.Clamp01((reach - horizontal) / .8f) * Mathf.Clamp01((1.5f + frame.Opponent.Body.extents.y - vertical) / .9f);
                 if ((opponent.x - self.x) * facing < -.5f) hit *= .2f;
                 hit *= ShieldTransmission(self, opponent, .4f, frame) * Vulnerability(frame.Opponent, t + frame.ExecutionDelay);
+                if (hit >= .7f) firstImpact = Mathf.Min(firstImpact, t);
                 chance = Mathf.Max(chance, hit);
             }
-            return chance * (1f - memory.WhiffPressure * .04f);
+            return chance * (1f - memory.WhiffPressure * (advancedTactics ? .01f : .04f));
         }
 
         float VolleyDamage(DemonKingAiFrame frame, DemonKingAiMemory memory) {
             consumedShields.Clear();
             var damage = 0f;
-            foreach (var projectile in frame.ReadyProjectiles) {
+            launchOrder.Clear();
+            for (var i = 0; i < frame.ReadyProjectiles.Count; i++) launchOrder.Add(i);
+            if (advancedTactics) {
+                // The real volley staggers bullets in distance order, preserving summon order on ties.
+                launchOrder.Sort((a, b) => {
+                    var da = (frame.ReadyProjectiles[a].Position - frame.Opponent.Body.center).sqrMagnitude;
+                    var db = (frame.ReadyProjectiles[b].Position - frame.Opponent.Body.center).sqrMagnitude;
+                    var order = da.CompareTo(db);
+                    return order != 0 ? order : a.CompareTo(b);
+                });
+            }
+            var launchWait = advancedTactics && frame.Self.State is Core.DarkSatan.DemonChargeAttackState
+                ? Mathf.Max(0f, frame.Self.Demon.SpreadSeconds - frame.Self.StateSeconds - frame.ExecutionDelay) : 0f;
+            for (var order = 0; order < launchOrder.Count; order++) {
+                var projectile = frame.ReadyProjectiles[launchOrder[order]];
                 if (projectile.Velocity.sqrMagnitude < .001f) continue;
                 var arrival = Vector3.Distance(projectile.Position, frame.Opponent.Body.center) / projectile.Velocity.magnitude;
                 if (arrival > projectile.LifetimeSeconds) continue;
-                var target = PredictOpponent(frame, arrival + frame.ExecutionDelay, memory);
+                var delay = advancedTactics ? launchWait + frame.Self.Demon.MaxLaunchDelay * order / Mathf.Max(1, launchOrder.Count - 1) : 0f;
+                var target = PredictOpponent(frame, arrival + delay + frame.ExecutionDelay, memory);
+                if (advancedTactics) {
+                    // Refine travel time against the moving target along this bullet's fixed ray.
+                    arrival = Vector3.Dot(target - projectile.Position, projectile.Velocity.normalized) / projectile.Velocity.magnitude;
+                    if (arrival < 0f || arrival > projectile.LifetimeSeconds) continue;
+                    target = PredictOpponent(frame, arrival + delay + frame.ExecutionDelay, memory);
+                }
                 var body = frame.Opponent.Body;
                 body.center = target;
                 body.Expand(projectile.Radius * 2f);
@@ -212,12 +347,12 @@ namespace Alice.DemonKingAi {
                     if (shield.IntersectRay(ray, out var shieldDistance) && shieldDistance < nearest) { blocked = i; nearest = shieldDistance; }
                 }
                 if (blocked >= 0) { consumedShields.Add(blocked); damage += frame.Self.Demon.BulletDamage * .15f; }
-                else damage += frame.Self.Demon.BulletDamage * Vulnerability(frame.Opponent, arrival + frame.ExecutionDelay);
+                else damage += frame.Self.Demon.BulletDamage * Vulnerability(frame.Opponent, arrival + delay + frame.ExecutionDelay);
             }
             return Mathf.Min(damage, frame.Opponent.Striker.HitPoint.CurrentValue + 5f);
         }
 
-        static float SpecialChance(DemonKingAiFrame frame, DemonKingAiMemory memory) {
+        float SpecialChance(DemonKingAiFrame frame, DemonKingAiMemory memory) {
             if (frame.Opponent.Category == StrikerStateCategory.Special) return 0f;
             var source = frame.Self.Demon;
             var gap = Mathf.Abs(frame.Opponent.Position.x - frame.Self.Position.x);
@@ -245,7 +380,8 @@ namespace Alice.DemonKingAi {
             return 1f;
         }
 
-        static float Vulnerability(DemonKingAiActor opponent, float future) {
+        float Vulnerability(DemonKingAiActor opponent, float future) {
+            future *= predictionWeight;
             if (opponent.Category == StrikerStateCategory.Guard && opponent.Striker.Striker.CurrentValue is Striker.Warrior or Striker.DemonKing) {
                 var seconds = (opponent.Striker as IStrikerCombatObservationSource)?.ActiveGuardSeconds ?? 1f;
                 return opponent.StateSeconds + future < seconds ? .03f : 1f;
@@ -253,12 +389,144 @@ namespace Alice.DemonKingAi {
             return opponent.Category == StrikerStateCategory.Special ? .15f : 1f;
         }
 
-        static float ThreatRisk(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, float horizon, float caution) {
+        void BuildSpellForecast(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, float anticipationWeight) {
+            forecast.Clear();
+            var wizard = frame.Opponent.Wizard;
+            if (wizard == null || anticipationWeight <= 0f) return;
+            var enemy = frame.Opponent;
+            var energy = wizard.Energy;
+            if (enemy.State is Core.LargeWizard.ChargeState { IsTutorialActionCommitted: false }
+                && enemy.StateSeconds + frame.ExecutionDelay >= wizard.ChargeSeconds) energy = Mathf.Min(3, energy + 1);
+            var (spell, spawnTime, confidence) = enemy.State switch {
+                Core.LargeWizard.Attack1State { IsTutorialActionCommitted: false } => (1, Mathf.Max(0f, wizard.FireReleaseSeconds - enemy.StateSeconds), 1f),
+                Core.LargeWizard.Attack2State { IsTutorialActionCommitted: false } => (2, Mathf.Max(0f, wizard.IceReleaseSeconds - enemy.StateSeconds), 1f),
+                Core.LargeWizard.Attack3State { IsTutorialActionCommitted: false } => (3, Mathf.Max(0f, wizard.RockReleaseSeconds - enemy.StateSeconds), 1f),
+                Core.LargeWizard.Attack1State or Core.LargeWizard.Attack2State or Core.LargeWizard.Attack3State
+                    or Core.LargeWizard.StunState or Core.LargeWizard.StunCancelState => (0, 0f, 0f),
+                _ when enemy.Category is StrikerStateCategory.Special or StrikerStateCategory.Unknown => (0, 0f, 0f),
+                _ when energy == 1 => (1, frame.ExecutionDelay + wizard.FireReleaseSeconds, .7f),
+                _ when energy == 2 => (2, frame.ExecutionDelay + wizard.IceReleaseSeconds, .9f),
+                _ when energy >= 3 => (3, frame.ExecutionDelay + wizard.RockReleaseSeconds, .8f),
+                _ => (0, 0f, 0f)
+            };
+            if (spell == 0) return;
+            var weight = confidence * anticipationWeight;
+            // Targeted spells choose the defender's position at spawn, not at command input.
+            var target = spawnTime < frame.ExecutionDelay
+                ? ClampToArena(frame.Self.Body.center + frame.Self.Velocity * spawnTime, frame.Self)
+                : PredictSelf(candidate, frame, tuning, spawnTime - frame.ExecutionDelay);
+            target += frame.Self.Position - frame.Self.Body.center;
+            if (spell == 2) {
+                var ice = wizard.IcePrefab;
+                target.y = frame.Self.Arena?.min.y ?? frame.Self.Body.min.y;
+                forecast.Add(new DemonKingAiThreat(ice.ObserveSpawnBounds(target), Vector3.zero, Vector3.zero,
+                    spawnTime + ice.ObservationActivationDelay, spawnTime + ice.ObservationLifetime,
+                    ice.ObservationDamage / 10f, true, true, Confidence: weight));
+            } else if (spell == 3) {
+                var rock = wizard.RockPrefab;
+                target += Vector3.up * wizard.RockSpawnHeight;
+                forecast.Add(new DemonKingAiThreat(rock.ObserveSpawnBounds(target), Vector3.zero, Physics.gravity,
+                    spawnTime, spawnTime + rock.ObservationLifetime, rock.ObservationDamage / 10f, true, Confidence: weight));
+            } else {
+                var fire = wizard.FirePrefab;
+                var origin = wizard.FireOrigin + enemy.Velocity * Mathf.Min(spawnTime, .12f);
+                forecast.Add(new DemonKingAiThreat(new Bounds(origin, Vector3.one * fire.ObservationRadius * 2f),
+                    enemy.Striker.LookDirection.CurrentValue.normalized * fire.ObservationSpeed, Vector3.zero,
+                    spawnTime, spawnTime + wizard.FireLifetime, fire.ObservationDamage / 10f, true, Confidence: weight));
+            }
+        }
+
+        void BuildPressureForecast(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning,
+            DemonKingAiMemory memory, float anticipationWeight) {
+            hasMeleeForecast = hasRushForecast = false;
+            if (anticipationWeight <= 0f) return;
+            var enemy = frame.Opponent;
+            // Hit-stun requires a recovery command. Committed specials are already sensed.
+            if (enemy.Category is StrikerStateCategory.Special or StrikerStateCategory.Unknown
+                || enemy.State is Core.LargeSatan.StunState or Core.LargeSatan.StunCancelState
+                    or Core.LargeWizard.StunState or Core.LargeWizard.StunCancelState or Core.LargeHero.StunState) return;
+            var nextMelee = enemy.State is Core.LargeSatan.IWarriorMeleeObservation current
+                ? current.ObservationNextAttack ?? memory.MeleeOpener : memory.MeleeOpener;
+            var hero = enemy.Hero;
+            var wizard = enemy.Wizard;
+            var firstCommand = enemy.State is Core.LargeHero.GuardState guard
+                ? Mathf.Ceil(Mathf.Max(0f, guard.ObservationDuration - enemy.StateSeconds - frame.ExecutionDelay) / frame.BeatSeconds) : 0f;
+            var guardDuration = candidate.Move == DemonKingAiMove.Guard ? frame.Self.NextGuardSeconds : frame.BeatSeconds;
+            var commands = Mathf.Clamp(Mathf.CeilToInt(guardDuration / frame.BeatSeconds) + 1, 2, 5);
+            var launchIndex = -1;
+            var nearestLaunch = float.PositiveInfinity;
+            if (wizard != null) {
+                for (var i = 0; i < frame.OpponentShields.Count; i++) {
+                    var bounds = frame.OpponentShields[i].Bounds;
+                    var distance = (bounds.center - wizard.ShieldLaunchPosition).sqrMagnitude;
+                    if (distance < nearestLaunch) { nearestLaunch = distance; launchIndex = i; }
+                }
+            }
+            Vector3? pressureOrigin = null;
+            var pressureFacing = enemy.Striker.LookDirection.CurrentValue.normalized;
+            for (var beat = (int)firstCommand; beat < commands; beat++) {
+                var commandAt = frame.ExecutionDelay + frame.BeatSeconds * beat;
+                // Beyond the next decision our next input is unknown; discount continued exposure.
+                var weight = anticipationWeight * (beat == 0 ? 1f : followUpWeight * Mathf.Pow(.6f, beat));
+                if (weight <= 0f) continue;
+                var origin = pressureOrigin ?? (PredictOpponent(frame, commandAt, memory));
+                var target = PredictSelf(candidate, frame, tuning, frame.BeatSeconds * beat);
+                var toward = target.x >= origin.x ? Vector3.right : Vector3.left;
+                if (hero != null && !hero.UsesAirInputs(enemy.State)
+                    && enemy.State is not (Core.LargeHero.Slash1State or Core.LargeHero.Slash2State or Core.LargeHero.Slash3State)) {
+                    var offset = hero.RushOrigin - enemy.Body.center;
+                    offset.x *= toward.x * Mathf.Sign(enemy.Striker.LookDirection.CurrentValue.x);
+                    var bounds = hero.RushBounds(origin + offset, toward);
+                    var lifetime = hero.RushProjectileLifetimeSeconds ?? frame.BeatSeconds * 2f;
+                    forecast.Add(new DemonKingAiThreat(bounds, toward * hero.RushProjectileSpeed, Vector3.zero,
+                        commandAt, commandAt + lifetime, hero.RushDamage / 10f, true,
+                        Confidence: weight * Mathf.Lerp(.25f, .95f, memory.RushHabit)));
+                    hasRushForecast = true;
+                    pressureOrigin = ClampToArena(origin + toward * (hero.RushSpeed * Mathf.Min(frame.BeatSeconds, hero.RushSeconds)), enemy);
+                    pressureFacing = toward;
+                } else if (enemy.Striker.Striker.CurrentValue == Striker.Warrior && nextMelee != null
+                    && (enemy.Grounded || enemy.State is Core.LargeSatan.IWarriorMeleeObservation)
+                    && enemy.State is not Core.LargeSatan.ChargeState) {
+                    // The combo link selects the finisher before it has an active hitbox.
+                    var attack = nextMelee;
+                    var hit = attack.ObservationHitWindow;
+                    var decay = Mathf.Log(1f / Mathf.Clamp(attack.ObservationEndSpeedRatio, .0001f, 1f))
+                        / Mathf.Max(.01f, attack.ObservationDuration);
+                    var facing = attack is Core.LargeSatan.Attack2State ? pressureFacing : toward;
+                    var bounds = attack.ObservationBounds;
+                    var offset = bounds.center - enemy.Body.center;
+                    offset.x *= facing.x * Mathf.Sign(enemy.Striker.LookDirection.CurrentValue.x);
+                    var travel = decay > .0001f ? (1f - Mathf.Exp(-decay * hit.x)) / decay : hit.x;
+                    bounds.center = origin + offset + facing * (attack.ObservationSpeed * travel);
+                    forecast.Add(new DemonKingAiThreat(bounds, facing * (attack.ObservationSpeed * Mathf.Exp(-decay * hit.x)), Vector3.zero,
+                        commandAt + hit.x, commandAt + hit.y, attack.ObservationDamage / 10f, false,
+                        Confidence: weight * Mathf.Lerp(.25f, .95f, memory.MeleeHabit), MotionDecay: decay, AnchoredAtStart: true));
+                    hasMeleeForecast = true;
+                    var step = decay > .0001f ? (1f - Mathf.Exp(-decay * frame.BeatSeconds)) / decay : frame.BeatSeconds;
+                    pressureOrigin = ClampToArena(origin + facing * (attack.ObservationSpeed * step), enemy);
+                    pressureFacing = facing;
+                    nextMelee = attack.ObservationNextAttack ?? memory.MeleeOpener;
+                } else if (wizard != null && launchIndex >= 0 && (beat == 0 || frame.OpponentShields.Count >= 3)) {
+                    // Stacking three shields can replenish and launch on every beat, even with neutral input.
+                    var bounds = frame.OpponentShields[launchIndex].Bounds;
+                    bounds.center += origin - enemy.Body.center;
+                    forecast.Add(new DemonKingAiThreat(bounds, enemy.Striker.LookDirection.CurrentValue.normalized * wizard.ShieldSpeed,
+                        Vector3.zero, commandAt, commandAt + wizard.ShieldLifetime, Mathf.Max(.25f, wizard.ShieldDamage / 10f), true,
+                        Confidence: weight * Mathf.Lerp(.2f, .95f, Mathf.Max(memory.ShieldLaunchHabit, memory.ShieldHabit * .65f))));
+                }
+            }
+        }
+
+        float ThreatRisk(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, float horizon, float caution) {
             var risk = 0f;
-            foreach (var threat in frame.Threats) {
+            for (var threatIndex = 0; threatIndex < frame.Threats.Count + forecast.Count; threatIndex++) {
+                var threat = threatIndex < frame.Threats.Count ? frame.Threats[threatIndex] : forecast[threatIndex - frame.Threats.Count];
                 var start = Mathf.Max(frame.ExecutionDelay, threat.StartsAt);
                 if (candidate.Move == DemonKingAiMove.Guard) start = Mathf.Max(start, frame.ExecutionDelay + frame.Self.NextGuardSeconds);
-                var end = Mathf.Min(threat.EndsAt, frame.ExecutionDelay + horizon);
+                var exposureHorizon = horizon + frame.BeatSeconds * followUpWeight * .5f;
+                if (threat.GroundHazard) exposureHorizon = Mathf.Max(exposureHorizon, frame.BeatSeconds * (1f + followUpWeight));
+                if (candidate.Move == DemonKingAiMove.Guard) exposureHorizon = Mathf.Max(exposureHorizon, frame.Self.NextGuardSeconds + frame.BeatSeconds);
+                var end = Mathf.Min(threat.EndsAt, frame.ExecutionDelay + exposureHorizon);
                 if (start >= end) continue;
                 var body = new Bounds(Vector3.zero, threat.Bounds.size + frame.Self.Body.size + Vector3.one * tuning.PredictionMargin * 2f);
                 for (var i = 0; i < 12; i++) {
@@ -267,7 +535,7 @@ namespace Alice.DemonKingAi {
                     var p0 = PredictSelf(candidate, frame, tuning, a - frame.ExecutionDelay) - ThreatPosition(threat, a);
                     var p1 = PredictSelf(candidate, frame, tuning, b - frame.ExecutionDelay) - ThreatPosition(threat, b);
                     if (!SegmentIntersects(body, p0, p1)) continue;
-                    risk += threat.Severity * (threat.Projectile ? caution : 1f);
+                    risk += threat.Severity * threat.Confidence * (threat.Projectile ? caution : 1f);
                     break;
                 }
             }
@@ -275,42 +543,42 @@ namespace Alice.DemonKingAi {
         }
 
         static Vector3 ThreatPosition(DemonKingAiThreat threat, float seconds) {
-            var moving = threat.Projectile ? Mathf.Max(0f, seconds - threat.StartsAt) : seconds;
-            return threat.Bounds.center + threat.Velocity * moving + threat.Acceleration * (.5f * moving * moving);
+            var moving = threat.Projectile || threat.AnchoredAtStart ? Mathf.Max(0f, seconds - threat.StartsAt) : seconds;
+            var travel = threat.MotionDecay > .0001f ? (1f - Mathf.Exp(-threat.MotionDecay * moving)) / threat.MotionDecay : moving;
+            return threat.Bounds.center + threat.Velocity * travel + threat.Acceleration * (.5f * moving * moving);
         }
 
-        static float AnticipationRisk(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, DemonKingAiMatchup matchup, DemonKingAiMemory memory, float horizon) {
+        float AnticipationRisk(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, DemonKingAiMatchup matchup, DemonKingAiMemory memory, float horizon) {
+            if (hasMeleeForecast || hasRushForecast) return 0f;
             var enemy = frame.Opponent;
             if (enemy.State is Core.LargeHero.StunState or Core.LargeWizard.StunState or Core.LargeWizard.StunCancelState
                 or Core.LargeSatan.StunState or Core.LargeSatan.StunCancelState) return 0f;
-            if (enemy.State is Core.DarkSatan.StunState stun && !stun.ObservationAutoRecovers) return 0f;
-            var risk = 0f;
-            if (enemy.Wizard != null && enemy.Wizard.Energy == 2) {
-                var release = enemy.Wizard.IceReleaseSeconds;
-                var at = PredictSelf(candidate, frame, tuning, release);
-                var grown = PredictSelf(candidate, frame, tuning, release + tuning.IceGrowthSeconds);
-                var floor = frame.Self.Arena?.min.y ?? frame.Self.Body.min.y;
-                if (candidate.Move != DemonKingAiMove.Guard || release + tuning.IceGrowthSeconds >= frame.Self.NextGuardSeconds)
-                    risk += Mathf.Clamp01((tuning.IceHalfWidth + frame.Self.Body.extents.x + tuning.PredictionMargin - Mathf.Abs(grown.x - at.x)) / .7f)
-                        * Mathf.Clamp01((tuning.IceHeight + tuning.PredictionMargin - (grown.y - frame.Self.Body.extents.y - floor)) / .8f) * 1.3f;
+            var recoveryDelay = 0f;
+            if (enemy.State is Core.DarkSatan.StunState stun) {
+                if (!stun.ObservationAutoRecovers) return 0f;
+                recoveryDelay = Mathf.Max(0f, stun.ObservationDuration - enemy.StateSeconds - frame.ExecutionDelay);
+            } else if (enemy.State is Core.DarkSatan.StunCancelState cancel) {
+                recoveryDelay = Mathf.Max(0f, cancel.ObservationDuration - enemy.StateSeconds - frame.ExecutionDelay);
             }
+            var risk = 0f;
             for (var i = 1; i <= 8; i++) {
                 var t = horizon * i / 8f;
+                if (t < recoveryDelay) continue;
                 if (candidate.Move == DemonKingAiMove.Guard && t < frame.Self.NextGuardSeconds) continue;
                 var self = PredictSelf(candidate, frame, tuning, t);
                 var opponent = PredictOpponent(frame, t + frame.ExecutionDelay, memory);
                 var reach = matchup.OpponentReach;
-                var aggression = .1f + memory.AttackHabit * .45f;
+                var aggression = .1f + (memory.AttackHabit * predictionWeight) * .45f;
                 if (enemy.Striker.Striker.CurrentValue == Striker.Warrior) {
                     reach = tuning.WarriorLungeReach;
-                    aggression += memory.AbHabit * .5f;
-                    if (enemy.State is Core.LargeSatan.EmitState) { reach = tuning.WarriorWarpReach; aggression = .7f + memory.AbHabit * .7f; }
+                    aggression += (memory.AbHabit * predictionWeight) * .5f;
+                    if (enemy.State is Core.LargeSatan.EmitState) { reach = tuning.WarriorWarpReach; aggression = .7f + (memory.AbHabit * predictionWeight) * .7f; }
                     if (enemy.State is Core.LargeSatan.ChargeState charge && charge.ObservedEmitState != null) {
                         var direction = charge.ObservedEmitState.ObserveThrowDirection(Vector2.zero, enemy.Striker.LookDirection.CurrentValue);
                         var origin = charge.ObservedPoleArm.transform.position;
                         var spear = origin + direction * charge.ObservedEmitState.ObserveTravelDistance(t);
                         var lane = new Bounds(Vector3.zero, frame.Self.Body.size + Vector3.one * .8f);
-                        if (SegmentIntersects(lane, origin - self, spear - self)) risk += (.9f + memory.AbHabit * .5f) / 8f;
+                        if (SegmentIntersects(lane, origin - self, spear - self)) risk += (.9f + (memory.AbHabit * predictionWeight) * .5f) / 8f;
                     }
                 }
                 if (enemy.Category == StrikerStateCategory.Special) aggression = 1.5f;
@@ -321,19 +589,21 @@ namespace Alice.DemonKingAi {
                     var lunge = enemy.Striker.Striker.CurrentValue == Striker.Hero ? 11f : 5f;
                     var gap = Mathf.Max(0f, Mathf.Abs(self.x - enemy.Body.center.x) - lunge * Mathf.Clamp01(t / Mathf.Max(.08f, frame.BeatSeconds)));
                     proximity = Mathf.Max(proximity, Mathf.Clamp01((3f - gap) / 2f) * vertical);
-                    aggression = Mathf.Max(aggression, .5f + memory.AttackHabit);
+                    aggression = Mathf.Max(aggression, .5f + (memory.AttackHabit * predictionWeight));
                 }
                 risk += proximity * aggression / 8f;
-                if (enemy.State is Core.LargeWizard.Attack3State && enemy.Wizard != null
-                    && enemy.StateSeconds + frame.ExecutionDelay < enemy.Wizard.RockReleaseSeconds + .1f)
-                    risk += Mathf.Clamp01(1f - Mathf.Abs(self.x - frame.Self.Body.center.x) / 2f) * .7f / 8f;
             }
             return risk;
         }
 
-        static Vector3 PredictOpponent(DemonKingAiFrame frame, float seconds, DemonKingAiMemory memory) {
+        Vector3 PredictOpponent(DemonKingAiFrame frame, float seconds, DemonKingAiMemory memory) {
             var enemy = frame.Opponent;
-            if (enemy.State is Core.LargeSatan.EmitState emit) {
+            seconds *= predictionWeight;
+            if (advancedTactics && enemy.State is Core.LargeSatan.EmitState warpState && enemy.Striker is IStrikerContext context) {
+                var destination = warpState.ObserveWarpPosition(context, Mathf.Min(seconds, frame.ExecutionDelay));
+                if (destination.HasValue) return ReplyPosition(frame, ClampToArena(destination.Value + enemy.Body.center - enemy.Position, enemy), seconds, memory);
+            }
+            if (!advancedTactics && predictionWeight > .5f && enemy.State is Core.LargeSatan.EmitState emit) {
                 var spear = emit.ObservedPoleArm.ObserveProjectile();
                 return ClampToArena(emit.ObservedPoleArm.transform.position + (spear?.Velocity ?? Vector3.zero) * Mathf.Min(seconds, .15f) + enemy.Body.center - enemy.Position, enemy);
             }
@@ -343,7 +613,7 @@ namespace Alice.DemonKingAi {
             var velocity = enemy.Category == StrikerStateCategory.Idle ? Vector3.Lerp(enemy.Velocity, memory.OpponentDrift, .35f) : enemy.Velocity;
             var move = velocity * Mathf.Min(seconds, duration);
             if (!enemy.Grounded && velocity.y < 0f) move.y += Physics.gravity.y * .5f * seconds * seconds;
-            return ClampToArena(enemy.Body.center + move, enemy);
+            return ReplyPosition(frame, ClampToArena(enemy.Body.center + move, enemy), seconds, memory);
         }
 
         static Vector3 PredictSelf(DemonKingAiCandidate candidate, DemonKingAiFrame frame, DemonKingAiTuning tuning, float seconds, bool clamp = true) {

@@ -15,9 +15,6 @@ namespace Alice.WizardAi {
         [Min(0f)] public float FireRadius = .73f;
         [Min(0f)] public float FireDamage = 10f;
         [Min(0f)] public float IceDamage = 20f;
-        [Min(0f)] public float IceHalfWidth = .95f;
-        [Min(0f)] public float IceHeight = 1f;
-        [Min(0f)] public float IceGrowthSeconds = .09f;
         [Min(0f)] public float RockDamage = 30f;
         [Min(0f)] public float RockRadius = 1.59f;
         [Min(0f)] public float ShieldRadius = 1.16f;
@@ -71,8 +68,13 @@ namespace Alice.WizardAi {
                 ResetObservation();
                 observedSelf = observation.Self;
                 observedOpponent = observation.Opponent;
-                opponentStateSubscription = observedOpponent.CurrentStateCategory.DistinctUntilChanged()
-                    .Subscribe(memory.ObserveOpponentCategory).AddTo(this);
+                if (observedOpponent is IStrikerCombatObservationSource source) {
+                    memory.ObserveOpponentState(source.ObservedState);
+                    opponentStateSubscription = source.OnCombatStateEntered.Subscribe(memory.ObserveOpponentState).AddTo(this);
+                } else {
+                    opponentStateSubscription = observedOpponent.CurrentStateCategory.DistinctUntilChanged()
+                        .Subscribe(memory.ObserveOpponentCategory).AddTo(this);
+                }
             }
             if (lastBeat == observation.Signal.BeatIndex) return new AiAction(lastAction.Direction, null);
             beatSeconds = lastBeat < 0 ? tuning.InitialBeatSeconds
@@ -93,7 +95,7 @@ namespace Alice.WizardAi {
                 _ => versusWarrior
             };
             var result = decision.Choose(frame, tuning, matchup, memory, difficulty);
-            memory.Record(result);
+            memory.Record(result, frame);
             LastDecision = result.Reason;
             LastDecisionScore = result.Score;
             return lastAction = result.Action;
@@ -136,6 +138,8 @@ namespace Alice.WizardAi {
         public float RecentDamage { get; private set; }
         public float WhiffPressure { get; private set; }
         public Vector3 OpponentDrift { get; private set; }
+        public float RetreatHabit { get; private set; }
+        public float RepositionSpeed { get; private set; } = 8f;
         public int StaleBeats { get; private set; }
         public int GuardStreak { get; private set; }
 
@@ -148,12 +152,69 @@ namespace Alice.WizardAi {
             lastOffensiveCategory = category;
         }
 
+        bool meleeEntered, rushEntered, shieldLaunched;
+        readonly float[,] responseLoss = new float[4, ((int)WizardAiMove.Recover + 1) * 9];
+        int lastPattern, lastResponse;
+        bool hasResponse;
+
+        public Core.LargeSatan.IWarriorMeleeObservation MeleeOpener { get; private set; }
+        public float MeleeHabit { get; private set; }
+        public float RushHabit { get; private set; }
+        public float ShieldLaunchHabit { get; private set; }
+
+        public void ObserveOpponentState(IStrikerState state) {
+            if (state == null) return;
+            ObserveOpponentCategory(state.Category);
+            if (state is Core.LargeSatan.Attack0State opener) MeleeOpener = opener;
+            meleeEntered |= state is Core.LargeSatan.Attack0State or Core.LargeSatan.Attack1State or Core.LargeSatan.Attack2State;
+            rushEntered |= state is Core.LargeHero.RushState;
+            shieldLaunched |= state is Core.LargeWizard.GuardState { HasLaunchedShield: true };
+        }
+
+        int PatternIndex => ShieldLaunchHabit > .15f && ShieldLaunchHabit >= Mathf.Max(MeleeHabit, RushHabit) ? 2
+            : RushHabit > .15f && RushHabit >= MeleeHabit ? 3 : MeleeHabit > .15f ? 1 : 0;
+
+        static int ResponseIndex(WizardAiMove move, Vector2 direction, WizardAiFrame frame) {
+            var toward = frame.Opponent.Position.x >= frame.Self.Position.x ? 1f : -1f;
+            var horizontal = Mathf.RoundToInt(direction.x * toward);
+            var vertical = Mathf.RoundToInt(direction.y);
+            return (int)move * 9 + (vertical + 1) * 3 + horizontal + 1;
+        }
+
+        public float ResponsePenalty(WizardAiMove move, Vector2 direction, WizardAiFrame frame)
+            => responseLoss[PatternIndex, ResponseIndex(move, direction, frame)];
+
+        void AdvancePatterns() {
+            // Count entries once per decision, not every frame spent inside one attack.
+            MeleeHabit = Mathf.Lerp(MeleeHabit, meleeEntered ? 1f : 0f, meleeEntered ? .4f : .12f);
+            RushHabit = Mathf.Lerp(RushHabit, rushEntered ? 1f : 0f, rushEntered ? .4f : .12f);
+            ShieldLaunchHabit = Mathf.Lerp(ShieldLaunchHabit, shieldLaunched ? 1f : 0f, shieldLaunched ? .4f : .12f);
+            meleeEntered = rushEntered = shieldLaunched = false;
+            for (var pattern = 0; pattern < responseLoss.GetLength(0); pattern++)
+                for (var response = 0; response < responseLoss.GetLength(1); response++) responseLoss[pattern, response] *= .85f;
+        }
+
+        void LearnResponse(float received, float dealt) {
+            if (!hasResponse) return;
+            responseLoss[lastPattern, lastResponse] = Mathf.Clamp(responseLoss[lastPattern, lastResponse]
+                + received * 1.2f - dealt * .6f, 0f, 24f);
+        }
+
         public void Observe(WizardAiFrame frame) {
+            AdvancePatterns();
+            var enemy = frame.Opponent;
+            var away = Mathf.Sign(enemy.Position.x - frame.Self.Position.x);
+            var movingAway = enemy.Velocity.x * away > 1f;
+            RetreatHabit = Mathf.Lerp(RetreatHabit, movingAway ? 1f : 0f, .2f);
+            // Ignore hit-stun knockback and teleports when learning a movement response.
+            if (enemy.Category is StrikerStateCategory.Idle or StrikerStateCategory.Dash)
+                RepositionSpeed = Mathf.Lerp(RepositionSpeed, Mathf.Clamp(Mathf.Abs(enemy.Velocity.x), 4f, 18f), .2f);
             var self = frame.Self.Striker.HitPoint.CurrentValue;
             var opponent = frame.Opponent.Striker.HitPoint.CurrentValue;
             if (initialized) {
                 var dealt = Mathf.Max(0f, opponentHp - opponent);
                 var received = Mathf.Max(0f, selfHp - self);
+                LearnResponse(received, dealt);
                 RecentDamage = RecentDamage * .6f + received;
                 StaleBeats = dealt > .01f || received > .01f ? 0 : Mathf.Min(30, StaleBeats + 1);
                 // Delayed spells can hit several beats after casting; only decay the pressure on a hit.
@@ -180,16 +241,26 @@ namespace Alice.WizardAi {
             initialized = true;
         }
 
-        public void Record(WizardAiChoice result) {
+        public void Record(WizardAiChoice result, WizardAiFrame frame) {
+            lastPattern = PatternIndex;
+            lastResponse = ResponseIndex(result.Move, result.Action.Direction, frame);
+            hasResponse = result.Move is not (WizardAiMove.Wait or WizardAiMove.Recover or WizardAiMove.Special);
             GuardStreak = result.Move == WizardAiMove.Shield ? GuardStreak + 1 : 0;
             lastMove = result.Move;
         }
 
         public void Reset() {
+            MeleeOpener = null;
+            MeleeHabit = RushHabit = ShieldLaunchHabit = 0f;
+            meleeEntered = rushEntered = shieldLaunched = false;
+            hasResponse = false;
+            Array.Clear(responseLoss, 0, responseLoss.Length);
             initialized = false;
             ShieldHabit = AttackHabit = AbHabit = RecentDamage = WhiffPressure = 0f;
             StaleBeats = GuardStreak = 0;
             OpponentDrift = Vector3.zero;
+            RetreatHabit = 0f;
+            RepositionSpeed = 8f;
             previousCategory = StrikerStateCategory.Unknown;
             previousVersion = 0;
             lastMove = WizardAiMove.Wait;

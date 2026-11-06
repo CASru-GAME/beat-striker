@@ -173,6 +173,7 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
     bool forceSameStateTransitionInProgress;
     bool isGroupProcessingPrevented;
     readonly IStrikerContext context;
+    readonly Subject<IStrikerState> stateEntered;
     readonly float deployWorldZ;
     public IStrikerState CurrentState => currentState;
     float stateEnteredTime;
@@ -217,8 +218,9 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
 
     public bool IsGroupProcessingPrevented => isGroupProcessingPrevented;
 
-    public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = null) {
+    public StrikerStateMachine(IStrikerContext context, IStrikerState defaultState = null, Subject<IStrikerState> stateEntered = null) {
         this.context = context;
+        this.stateEntered = stateEntered;
         deployWorldZ = context.Rigidbody.position.z;
         if (defaultState != null) {
             ChangeState(defaultState);
@@ -260,6 +262,9 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
             StateVersion++;
             newState.OnEnter(context);
             currentState = newState;
+            // Publish committed states, including same-category combos and forced re-entry.
+            // Observers receive no pending input and must not drive transitions here.
+            stateEntered?.OnNext(newState);
         }
         finally {
             isChangingState = false;

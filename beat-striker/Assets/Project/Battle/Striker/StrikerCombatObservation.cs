@@ -1,4 +1,5 @@
 using UnityEngine;
+using R3;
 
 namespace Alice {
     // Optional, read-only combat detail for brains. IObservableStriker remains usable
@@ -7,6 +8,7 @@ namespace Alice {
         IStrikerState ObservedState { get; }
         float StateElapsedSeconds { get; }
         int StateVersion { get; }
+        Observable<IStrikerState> OnCombatStateEntered { get; }
         float NextGuardSeconds { get; }
         float ActiveGuardSeconds { get; }
         Bounds BodyBounds { get; }

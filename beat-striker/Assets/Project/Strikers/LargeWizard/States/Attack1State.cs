@@ -15,13 +15,15 @@ namespace Core.LargeWizard {
         [SerializeField] StrikerNode nextNode;
         [SerializeField] AudioClip audioClip;
 
-        [SerializeField] GameObject firePrefab;
+        [SerializeField] Fire firePrefab;
         [SerializeField] Transform firePosition;
         [SerializeField] float fireTime = 0.3f;
         public float ObservationReleaseSeconds => fireTime;
         public Vector3 ObservationOrigin => firePosition.position;
         [Tooltip("firePrefab を削除するまでの秒数")]
         [SerializeField, Min(0f)] float firePrefabDestroyDelaySeconds = 5f;
+        public Fire ObservationPrefab => firePrefab;
+        public float ObservationLifetime => firePrefabDestroyDelaySeconds;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -35,10 +37,10 @@ namespace Core.LargeWizard {
 
             ScheduleStateEvent(fireTime, context => {
                 var particleInstance = Instantiate(firePrefab, firePosition.position, context.Rigidbody.rotation);
-                var fire = particleInstance.GetComponent<Fire>();
+                var fire = particleInstance;
                 fire.Hurtbox = context.Rigidbody.GetComponentInChildren<Hurtbox>();
                 fire.SetOwnerStrikerHub(context.Rigidbody.GetComponent<StrikerHub>());
-                Destroy(particleInstance, firePrefabDestroyDelaySeconds);
+                Destroy(particleInstance.gameObject, firePrefabDestroyDelaySeconds);
                 IsTutorialActionCommitted = true;
             });
         }

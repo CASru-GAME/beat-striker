@@ -1,6 +1,7 @@
 using Core.Battle;
 using UnityEngine;
 using Core.Striker;
+using System.Collections.Generic;
 
 namespace Core.LargeWizard {
 
@@ -15,7 +16,7 @@ namespace Core.LargeWizard {
         [SerializeField] StrikerNode nextNode;
 
         [Header("Ice attack settings")]
-        [SerializeField] GameObject icePrefab;             // 地面から生える氷のプレハブ
+        [SerializeField] Ice icePrefab;             // 地面から生える氷のプレハブ
         [SerializeField] AudioClip audioClip1;             // 氷生成時の音
         [SerializeField] AudioClip audioClip2;             // 氷が攻撃判定を発生させるときの音
         [SerializeField] LayerMask groundMask;             // 地面レイヤー
@@ -23,6 +24,16 @@ namespace Core.LargeWizard {
         [SerializeField] Vector3 raycastStartOffset = new Vector3(0f, 0.5f, 0f); // レイキャスト開始地点のオフセット
         [SerializeField] float groundRayDistance = 50f;    // 地面探索レイの長さ
         public float ObservationReleaseSeconds => fireTime;
+        public Ice ObservationPrefab => icePrefab;
+        readonly List<Ice> activeIce = new();
+
+        public void CollectActiveIce(List<Ice> results) {
+            for (var i = activeIce.Count - 1; i >= 0; i--) {
+                var ice = activeIce[i];
+                if (ice == null || !ice.IsObservationThreat || ice.ObservationEndsAt <= 0f) activeIce.RemoveAt(i);
+                else results.Add(ice);
+            }
+        }
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -65,7 +76,9 @@ namespace Core.LargeWizard {
 
                 var ice = Instantiate(icePrefab, spawnPos, Quaternion.identity);
 
-                var iceBehavior = ice.GetComponent<Ice>();
+                activeIce.RemoveAll(item => item == null || !item.IsObservationThreat);
+                activeIce.Add(ice);
+                var iceBehavior = ice;
 
                 iceBehavior.SetAttackerPosition(ctx.Rigidbody.transform.position);
 

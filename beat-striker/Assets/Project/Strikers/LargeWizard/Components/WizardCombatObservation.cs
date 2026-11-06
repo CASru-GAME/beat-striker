@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Core.LargeWizard {
     // Authored on the character prefab. Brains only read combat data through this component.
@@ -16,14 +17,21 @@ namespace Core.LargeWizard {
         public int Energy => energyStorage.StoredEnergy;
         public float ChargeSeconds => charge.ObservationDuration;
         public float FireReleaseSeconds => fire.ObservationReleaseSeconds;
+        public Fire FirePrefab => fire.ObservationPrefab;
+        public float FireLifetime => fire.ObservationLifetime;
         public float IceReleaseSeconds => ice.ObservationReleaseSeconds;
+        public Ice IcePrefab => ice.ObservationPrefab;
+        public void CollectActiveIce(List<Ice> results) => ice.CollectActiveIce(results);
         public float RockReleaseSeconds => rock.ObservationReleaseSeconds;
+        public Rock RockPrefab => rock.ObservationPrefab;
         public float RockSpawnHeight => rock.ObservationSpawnHeight;
         public Vector3 FireOrigin => fire.ObservationOrigin;
         public float DashSpeed => dash.ObservationSpeed;
         public float JumpSpeed => jump.ObservationSpeed;
         public float ShieldSpeed => guard.ObservationLaunchSpeed;
         public float ShieldDamage => guard.ObservationLaunchDamage;
+        public float ShieldLifetime => guard.ObservationLaunchLifetime;
+        public Vector3 ShieldLaunchPosition => guard.ObservationLaunchPosition;
         public float SpecialRange => special.ObservationRange;
         public float SpecialDelay => special.ObservationBeamDelay;
         public Vector3 SpecialOrigin => special.ObservationOrigin;

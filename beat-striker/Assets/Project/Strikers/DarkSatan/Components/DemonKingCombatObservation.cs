@@ -30,6 +30,7 @@ namespace Core.DarkSatan {
         public bool VolleyFired => charge.ObservationFired;
         public float SpreadSeconds => charge.ObservationSpreadSeconds;
         public float LaunchSeconds => charge.ObservationLaunchSeconds;
+        public float MaxLaunchDelay => charge.ObservationMaxLaunchDelay;
         public float BulletDamage => charge.ObservationBulletDamage;
         public float BulletSpeed => charge.ObservationBulletSpeed;
         public int MaximumBulletsPerVolley => charge.ObservationMaximumBulletsPerVolley;

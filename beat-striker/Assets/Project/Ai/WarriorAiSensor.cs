@@ -13,12 +13,14 @@ namespace Alice {
         Bounds Body,
         Bounds? Arena,
         bool Grounded,
-        Vector3? WarpBodyCenter
+        Vector3? WarpBodyCenter,
+        Core.LargeHero.HeroCombatObservation Hero
     );
 
     internal sealed record WarriorAiThreat(
         Bounds Bounds, Vector3 Velocity, Vector3 Acceleration,
-        float StartsAt, float EndsAt, float Severity, bool Projectile
+        float StartsAt, float EndsAt, float Severity, bool Projectile, bool GroundHazard = false,
+        float Confidence = 1f, float MotionDecay = 0f, bool AnchoredAtStart = false
     );
 
     internal sealed record WarriorAiFrame(
@@ -35,6 +37,7 @@ namespace Alice {
         readonly List<StrikerProjectileObservation> projectiles = new();
         readonly List<Core.DarkSatan.DemonVolley> demonVolleys = new();
         readonly List<Core.LargeSatan.WarriorGateVolley> gateVolleys = new();
+        readonly List<Core.LargeWizard.Ice> iceSpells = new();
         readonly List<Core.LargeWizard.Special> wizardSpecials = new();
         readonly List<beam11> wizardBeams = new();
         readonly HashSet<beam11> observedBeams = new();
@@ -101,6 +104,7 @@ namespace Alice {
             ObserveKnownWizardBeams();
             Core.LargeWizard.WizardCombatObservation wizard = null;
             root?.TryGetComponent(out wizard);
+            ObserveIce(wizard);
             return new WarriorAiFrame(self, opponent, executionDelay, beatSeconds, threats, opponentShields, wizard);
         }
 
@@ -120,9 +124,11 @@ namespace Alice {
                 var warpPosition = emit.ObserveWarpPosition(context, executionDelay);
                 if (warpPosition.HasValue) warpBodyCenter = warpPosition.Value + body.center - striker.Position.CurrentValue;
             }
+            Core.LargeHero.HeroCombatObservation hero = null;
+            source?.ObservationRoot?.TryGetComponent(out hero);
             return new WarriorAiActor(striker, state, state?.Category ?? striker.CurrentStateCategory.CurrentValue,
                 source?.StateElapsedSeconds ?? 0f, source?.StateVersion ?? 0,
-                striker.Position.CurrentValue, velocity, body, arena, grounded, warpBodyCenter);
+                striker.Position.CurrentValue, velocity, body, arena, grounded, warpBodyCenter, hero);
         }
 
         void ObservePhysicsProjectiles(Vector3 center, float radius) {
@@ -148,19 +154,20 @@ namespace Alice {
             Transform owner;
             var severity = 1f;
             var acceleration = Vector3.zero;
+            var endsAt = 2f;
             // Physics queries observe hazards; component lookups classify optional kinds.
             // Nothing here is used to find or wire a required dependency.
             if (body.TryGetComponent<Core.LargeWizard.Fire>(out var fire)) {
                 owner = fire.ObservationOwner;
-            } else if (body.TryGetComponent<Core.LargeWizard.Ice>(out var ice)) {
-                if (!ice.IsObservationThreat) return;
-                owner = ice.ObservationOwner;
-                severity = 1.4f;
+            } else if (body.TryGetComponent<Core.LargeWizard.Ice>(out _)) {
+                // The caster tracks ice even before its collider is enabled.
+                return;
             } else if (body.TryGetComponent<Core.LargeWizard.Rock>(out var rock)) {
                 if (!rock.IsObservationThreat) return;
                 owner = rock.ObservationOwner;
                 acceleration = Physics.gravity;
-                severity = 1.6f;
+                severity = rock.ObservationDamage / 10f;
+                endsAt = rock.ObservationEndsAt;
             } else if (body.TryGetComponent<Core.LargeWizard.beam>(out var beam)) {
                 owner = beam.ObservationOwner;
                 severity = 1.5f;
@@ -173,14 +180,25 @@ namespace Alice {
                 if (!guard.IsObservationProjectile && owner != null && owner == opponentRoot) {
                     opponentShields.Add(collider.bounds);
                 }
-                severity = guard.IsObservationProjectile ? 1f : .35f;
+                severity = guard.IsObservationProjectile ? Mathf.Max(.25f, guard.ObservationDamage / 10f) : .35f;
             } else if (body.TryGetComponent<Core.LargeHero.Bullet>(out var heroBullet)) {
                 owner = heroBullet.OwnerRoot != null ? heroBullet.OwnerRoot.transform : null;
+                severity = Mathf.Max(.3f, heroBullet.ObservationDamage / 10f);
             } else {
                 return;
             }
             if (owner != opponentRoot || opponentRoot == null) return;
-            threats.Add(new WarriorAiThreat(collider.bounds, body.linearVelocity, acceleration, 0f, 2f, severity, true));
+            threats.Add(new WarriorAiThreat(collider.bounds, body.linearVelocity, acceleration, 0f, endsAt, severity, true));
+        }
+
+        void ObserveIce(Core.LargeWizard.WizardCombatObservation wizard) {
+            iceSpells.Clear();
+            if (wizard == null) return;
+            wizard.CollectActiveIce(iceSpells);
+            foreach (var ice in iceSpells) {
+                threats.Add(new WarriorAiThreat(ice.ObservationBounds, Vector3.zero, Vector3.zero,
+                    ice.ObservationStartsAt, ice.ObservationEndsAt, ice.ObservationDamage / 10f, true, true));
+            }
         }
 
         void RememberWizardSpecial(Core.LargeWizard.Special special) {
@@ -212,6 +230,7 @@ namespace Alice {
         }
 
         public void Reset() {
+            iceSpells.Clear();
             opponentRoot = null;
             attacks = System.Array.Empty<AttackPlayer>();
             limbs = System.Array.Empty<Core.DarkSatan.DemonMeleeLimb>();

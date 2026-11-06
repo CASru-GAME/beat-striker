@@ -22,7 +22,8 @@ namespace Alice.DemonKingAi {
 
     internal sealed record DemonKingAiThreat(
         Bounds Bounds, Vector3 Velocity, Vector3 Acceleration,
-        float StartsAt, float EndsAt, float Severity, bool Projectile
+        float StartsAt, float EndsAt, float Severity, bool Projectile, bool GroundHazard = false,
+        float Confidence = 1f, float MotionDecay = 0f, bool AnchoredAtStart = false
     );
 
     internal sealed record DemonKingAiShield(Bounds Bounds);
@@ -45,6 +46,7 @@ namespace Alice.DemonKingAi {
         readonly List<StrikerProjectileObservation> readyProjectiles = new();
         readonly List<Core.DarkSatan.DemonVolley> demonVolleys = new();
         readonly List<Core.LargeSatan.WarriorGateVolley> gateVolleys = new();
+        readonly List<Core.LargeWizard.Ice> iceSpells = new();
         readonly List<Core.LargeWizard.Special> wizardSpecials = new();
         readonly List<beam11> wizardBeams = new();
         readonly HashSet<beam11> observedBeams = new();
@@ -107,6 +109,7 @@ namespace Alice.DemonKingAi {
 
             ObservePhysicsProjectiles(self.Body.center, tuning.ProjectileObservationRadius);
             ObserveKnownWizardBeams();
+            ObserveIce(opponent.Wizard);
             ObserveShields((observation.Self as IStrikerCombatObservationSource)?.ObservationRoot, selfShields);
             ObserveShields(opponentRoot, opponentShields);
             readyProjectiles.Clear();
@@ -175,19 +178,20 @@ namespace Alice.DemonKingAi {
             Transform owner;
             var severity = 1f;
             var acceleration = Vector3.zero;
+            var endsAt = 2f;
             // Physics queries observe hazards; component lookups classify optional kinds.
             // Nothing here is used to find or wire a required dependency.
             if (body.TryGetComponent<Core.LargeWizard.Fire>(out var fire)) {
                 owner = fire.ObservationOwner;
-            } else if (body.TryGetComponent<Core.LargeWizard.Ice>(out var ice)) {
-                if (!ice.IsObservationThreat) return;
-                owner = ice.ObservationOwner;
-                severity = 1.4f;
+            } else if (body.TryGetComponent<Core.LargeWizard.Ice>(out _)) {
+                // The caster tracks ice even before its collider is enabled.
+                return;
             } else if (body.TryGetComponent<Core.LargeWizard.Rock>(out var rock)) {
                 if (!rock.IsObservationThreat) return;
                 owner = rock.ObservationOwner;
                 acceleration = Physics.gravity;
-                severity = 1.6f;
+                severity = rock.ObservationDamage / 10f;
+                endsAt = rock.ObservationEndsAt;
             } else if (body.TryGetComponent<Core.LargeWizard.beam>(out var beam)) {
                 owner = beam.ObservationOwner;
                 severity = 1.5f;
@@ -206,7 +210,17 @@ namespace Alice.DemonKingAi {
                 return;
             }
             if (owner != opponentRoot || opponentRoot == null) return;
-            threats.Add(new DemonKingAiThreat(collider.bounds, body.linearVelocity, acceleration, 0f, 2f, severity, true));
+            threats.Add(new DemonKingAiThreat(collider.bounds, body.linearVelocity, acceleration, 0f, endsAt, severity, true));
+        }
+
+        void ObserveIce(Core.LargeWizard.WizardCombatObservation wizard) {
+            iceSpells.Clear();
+            if (wizard == null) return;
+            wizard.CollectActiveIce(iceSpells);
+            foreach (var ice in iceSpells) {
+                threats.Add(new DemonKingAiThreat(ice.ObservationBounds, Vector3.zero, Vector3.zero,
+                    ice.ObservationStartsAt, ice.ObservationEndsAt, ice.ObservationDamage / 10f, true, true));
+            }
         }
 
         void RememberWizardSpecial(Core.LargeWizard.Special special) {
@@ -238,6 +252,7 @@ namespace Alice.DemonKingAi {
         }
 
         public void Reset() {
+            iceSpells.Clear();
             selfShields.Clear();
             opponentShields.Clear();
             guards.Clear();

@@ -10,13 +10,29 @@ namespace Alice {
         float anticipationWeight = 1f;
         float alternativeChance;
         float maxAlternativeScoreGap;
+        float missChance;
+        float defenseChance = 1f;
+
+        public float PredictionWeight { get; private set; } = 1f;
+        public float ThreatWeight { get; private set; } = 1f;
+        public float FollowUpWeight { get; private set; } = 1f;
+        public bool UsesAdvancedTactics { get; private set; }
+
+        public bool MissesBeat() => missChance > 0f && random.NextDouble() < missChance;
 
         public void Configure(int level) {
+            UsesAdvancedTactics = Mathf.Clamp(level, 1, 4) == 4;
             (scoreVariation, anticipationWeight, alternativeChance, maxAlternativeScoreGap) = Mathf.Clamp(level, 1, 4) switch {
-                1 => (12f, .5f, .60f, 40f),
-                2 => (8f, .7f, .35f, 25f),
-                3 => (4f, .85f, .15f, 12f),
+                1 => (18f, 0f, .65f, 50f),
+                2 => (12f, .08f, .45f, 35f),
+                3 => (2f, .9f, .05f, 6f),
                 _ => (0f, 1f, 0f, 0f)
+            };
+            (missChance, defenseChance, PredictionWeight, ThreatWeight, FollowUpWeight) = Mathf.Clamp(level, 1, 4) switch {
+                1 => (.10f, .06f, 0f, .15f, 0f),
+                2 => (.05f, .12f, .1f, .3f, 0f),
+                3 => (0f, 1f, .9f, 1f, .5f),
+                _ => (0f, 1f, 1f, 1f, 1f)
             };
         }
 
@@ -24,14 +40,18 @@ namespace Alice {
             IReadOnlyList<TCandidate> candidates,
             Predicate<TCandidate> isActive,
             Func<TCandidate, GamePadButton?> buttonFor,
+            Predicate<TCandidate> isDefensive,
             Func<TCandidate, float, float> evaluate) where TCandidate : class {
             scores.Clear();
+            // Roll once for the entire decision; extra dodge directions must not increase defense frequency.
+            var allowDefense = defenseChance >= 1f || random.NextDouble() < defenseChance;
             var bestIndex = -1;
             var bestScore = float.NegativeInfinity;
             for (var i = 0; i < candidates.Count; i++) {
                 var candidate = candidates[i];
                 var active = isActive(candidate);
-                var score = AdjustScore(evaluate(candidate, active ? anticipationWeight : 1f), active);
+                var score = !allowDefense && isDefensive(candidate) ? float.NegativeInfinity
+                    : AdjustScore(evaluate(candidate, anticipationWeight), active);
                 scores.Add(score);
                 if (score > bestScore) {
                     bestIndex = i;

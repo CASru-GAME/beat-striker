@@ -55,9 +55,6 @@ MonoBehaviour:
     BeamRadius: .7
     WarriorLungeReach: 6.5
     WarriorWarpReach: 5
-    IceHalfWidth: .95
-    IceHeight: 1
-    IceGrowthSeconds: .09
     DamageWeight: 1.5
     RiskWeight: 46
     PositionWeight: 2

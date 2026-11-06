@@ -4989,6 +4989,7 @@ Transform:
   - {fileID: 3616507986131213314}
   - {fileID: 3414390779727665320}
   - {fileID: 5344387806863856206}
+  - {fileID: 7340941527317546002}
   m_Father: {fileID: 7201851954051567416}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9214202796625303400
@@ -5149,7 +5150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
   attackEffectPlayer: {fileID: 6192075559583134628}
   hitEffectPlayer: {fileID: 1063649124943374328}
-  blockedHitEffectPlayer: {fileID: 1063649124943374328}
+  blockedHitEffectPlayer: {fileID: 7340941527317546003}
   attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
   hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
@@ -11559,7 +11560,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
   attackEffectPlayer: {fileID: 917046264041560210}
   hitEffectPlayer: {fileID: 1063649124943374328}
-  blockedHitEffectPlayer: {fileID: 1063649124943374328}
+  blockedHitEffectPlayer: {fileID: 7340941527317546003}
   attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
   hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
@@ -11871,7 +11872,7 @@ MonoBehaviour:
     fadeTime: 0.1
     speed: 1
   landTransitionDelay: 0.2
-  damage: 15
+  damage: 20
   nockbackSpeed: 10
   attackPlayer: {fileID: 8534614244524601084}
   impact: 5
@@ -11925,7 +11926,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
   attackEffectPlayer: {fileID: 3928871652516346861}
   hitEffectPlayer: {fileID: 1063649124943374328}
-  blockedHitEffectPlayer: {fileID: 1063649124943374328}
+  blockedHitEffectPlayer: {fileID: 7340941527317546003}
   attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
   hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
@@ -17059,7 +17060,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
   attackEffectPlayer: {fileID: 839518711300973302}
   hitEffectPlayer: {fileID: 1063649124943374328}
-  blockedHitEffectPlayer: {fileID: 1063649124943374328}
+  blockedHitEffectPlayer: {fileID: 7340941527317546003}
   attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
   hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
@@ -22084,6 +22085,56 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
   m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
+  effectPrefab: {fileID: 6657185314982672520, guid: 8e00925ba0300cb418bdb92b10553a93, type: 3}
+  sound: {fileID: 0}
+  followEffectPlayerTransform: 0
+  fallbackLifetimeSeconds: 1
+  initialPoolSize: 2
+  maxPoolSize: 32
+--- !u!1 &7340941527317546001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7340941527317546002}
+  - component: {fileID: 7340941527317546003}
+  m_Layer: 0
+  m_Name: BlockedHitEffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7340941527317546002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7340941527317546001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.0018100236, y: -0.019327207, z: -0.9713851, w: -0.23671553}
+  m_LocalPosition: {x: -0.01286, y: 0.30521, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1425690710777153012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7340941527317546003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7340941527317546001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09bcfe804a5b4771857d58a0043527b, type: 3}
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::EffectPlayer
   effectPrefab: {fileID: 2096984256431161180, guid: 791869b43f6664df4b8fabe66e83c25f, type: 3}
   sound: {fileID: 0}
@@ -27310,7 +27361,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackPlayer
   attackEffectPlayer: {fileID: 1717125907848184316}
   hitEffectPlayer: {fileID: 1063649124943374328}
-  blockedHitEffectPlayer: {fileID: 1063649124943374328}
+  blockedHitEffectPlayer: {fileID: 7340941527317546003}
   attackSound: {fileID: 8300000, guid: e1368fa68775b48c29c002357c18f9ad, type: 3}
   hitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}
   blockedHitSound: {fileID: 8300000, guid: 4e88ec6c1da524157852d9134ae95b73, type: 3}

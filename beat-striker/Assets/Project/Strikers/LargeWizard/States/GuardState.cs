@@ -26,6 +26,8 @@ namespace Core.LargeWizard {
         [SerializeField] Hurtbox shieldPrefab;
         public float ObservationLaunchSpeed => launchedShieldSpeed;
         public float ObservationLaunchDamage => launchedShieldDamage;
+        public float ObservationLaunchLifetime => launchedShieldLifetime;
+        public Vector3 ObservationLaunchPosition => thirdShieldSpawnTransform.position;
 
         IDisposable disposable;
         Hurtbox shieldInstance;

@@ -9,7 +9,11 @@ namespace Core.LargeWizard {
         [SerializeField] float damage = 10f;
         [SerializeField] float nockbackSpeed = 10f;
         [SerializeField] float speed = 20f;
+        [SerializeField] SphereCollider fireCollider;
         Rigidbody rb;
+        public float ObservationSpeed => speed;
+        public float ObservationDamage => damage;
+        public float ObservationRadius => fireCollider.radius * Mathf.Max(transform.localScale.x, transform.localScale.y, transform.localScale.z);
 
         [SerializeField] GameObject impactPrefab;
         [SerializeField] AudioClip audioClip;

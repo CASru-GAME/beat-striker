@@ -30,7 +30,29 @@ public class AttackPlayer : MonoBehaviour {
     Collider observationCollider;
 
     public Bounds ObservationBounds => observationCollider.bounds;
+    // Collider.bounds is empty while disabled; forecasts must use the authored shape.
+    public Bounds ObservationAuthoredBounds {
+        get {
+            if (observationCollider is SphereCollider sphere) {
+                var scale = sphere.transform.lossyScale;
+                var radius = sphere.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+                return new Bounds(sphere.transform.TransformPoint(sphere.center), Vector3.one * radius * 2f);
+            }
+            if (observationCollider is BoxCollider box) {
+                var bounds = new Bounds(box.transform.TransformPoint(box.center), Vector3.zero);
+                for (var i = 0; i < 8; i++) {
+                    var signs = new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f);
+                    bounds.Encapsulate(box.transform.TransformPoint(box.center + Vector3.Scale(box.size * .5f, signs)));
+                }
+                return bounds;
+            }
+            return observationCollider.bounds;
+        }
+    }
+
     public float? ObservationEffectLifetimeSeconds => attackEffectPlayer != null ? attackEffectPlayer.ObservationFixedLifetimeSeconds : null;
+    public float ObservationHitStart => hitDetectionStartTime;
+    public float ObservationHitEnd => hitDetectionStartTime + hitDetectionDuration;
     public float ObservationStartDelay => Mathf.Max(0f, hitDetectionStartTime - episodeTime);
     public float ObservationRemainingSeconds => enabled ? Mathf.Max(0f, hitDetectionStartTime + hitDetectionDuration - episodeTime) : 0f;
 

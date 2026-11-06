@@ -124,6 +124,7 @@ namespace Alice {
         readonly ReactiveProperty<float> specialPointSubject = new(0f);
         readonly ReactiveProperty<float> maxSpecialPointSubject = new(0f);
         readonly ReactiveProperty<StrikerStateCategory> currentStateCategorySubject = new(StrikerStateCategory.Unknown);
+        readonly Subject<IStrikerState> onCombatStateEntered = new();
         readonly Subject<StrikerImpact> onInpactGeneratedSubject = new();
         readonly Subject<AttentionRequest> onAttentionRequestedSubject = new();
         readonly Subject<Unit> onSpecialRequestFailedSubject = new();
@@ -165,6 +166,7 @@ namespace Alice {
         public IStrikerState ObservedState => stateMachine?.CurrentState;
         public float StateElapsedSeconds => stateMachine?.StateElapsedSeconds ?? 0f;
         public int StateVersion => stateMachine?.StateVersion ?? 0;
+        public Observable<IStrikerState> OnCombatStateEntered => onCombatStateEntered;
         public Bounds BodyBounds => legacyHub.BodyBounds;
         public Bounds? MovementBounds => legacyHub.MovementBounds;
         public Transform ObservationRoot => strikerTransform;
@@ -269,7 +271,7 @@ namespace Alice {
             }
 
             if (stateMachine == null) {
-                stateMachine = new StrikerStateMachine(this, defaultState);
+                stateMachine = new StrikerStateMachine(this, defaultState, onCombatStateEntered);
             }
 
             var currentPosition = rb.position;
@@ -438,6 +440,7 @@ namespace Alice {
             specialPointSubject.Dispose();
             maxSpecialPointSubject.Dispose();
             currentStateCategorySubject.Dispose();
+            onCombatStateEntered.Dispose();
             onInpactGeneratedSubject.Dispose();
             onAttentionRequestedSubject.Dispose();
             onSpecialRequestFailedSubject.Dispose();
@@ -634,7 +637,7 @@ namespace Alice {
         public void Default() {
             if (!initialized || IsUnableToAct) return;
             if (stateMachine == null) {
-                stateMachine = new StrikerStateMachine(this, defaultState);
+                stateMachine = new StrikerStateMachine(this, defaultState, onCombatStateEntered);
                 return;
             }
             stateMachine.ChangeState(defaultState);

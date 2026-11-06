@@ -56,9 +56,6 @@ MonoBehaviour:
     FireRadius: 0.73
     FireDamage: 10
     IceDamage: 20
-    IceHalfWidth: 0.95
-    IceHeight: 1
-    IceGrowthSeconds: 0.09
     RockDamage: 30
     RockRadius: 1.59
     ShieldRadius: 1.16

@@ -79,6 +79,13 @@ namespace Core.LargeHero {
             _ => UsesAirInputs(state) ? airAttack.ObservationDamage : slash1.ObservationDamage
         };
 
+        public Vector2 NextMeleeHitWindow(IStrikerState state) => state switch {
+            Slash1State => slash2.ObservationHitWindow,
+            Slash2State => slash3.ObservationHitWindow,
+            Slash3State => slash1.ObservationHitWindow,
+            _ => UsesAirInputs(state) ? airAttack.ObservationHitWindow : slash1.ObservationHitWindow
+        };
+
         public Bounds NextMeleeBounds(IStrikerState state) {
             var volume = state switch {
                 Slash1State => slash2Volume,

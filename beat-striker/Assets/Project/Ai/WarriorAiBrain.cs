@@ -1,4 +1,5 @@
 using System;
+using R3;
 using UnityEngine;
 
 namespace Alice {
@@ -75,6 +76,7 @@ namespace Alice {
         float lastBeatTime;
         float beatSeconds;
         AiAction lastAction = AiAction.None;
+        IDisposable opponentStateSubscription;
 
         public string LastDecision { get; private set; } = string.Empty;
         public float LastDecisionScore { get; private set; }
@@ -88,6 +90,13 @@ namespace Alice {
                 ResetObservation();
                 observedSelf = observation.Self;
                 observedOpponent = observation.Opponent;
+                if (observedOpponent is IStrikerCombatObservationSource source) {
+                    memory.ObserveOpponentState(source.ObservedState);
+                    opponentStateSubscription = source.OnCombatStateEntered.Subscribe(memory.ObserveOpponentState).AddTo(this);
+                } else {
+                    opponentStateSubscription = observedOpponent.CurrentStateCategory.DistinctUntilChanged()
+                        .Subscribe(memory.ObserveOpponentCategory).AddTo(this);
+                }
             }
             if (lastBeat == observation.Signal.BeatIndex) return new AiAction(lastAction.Direction, null);
             if (lastBeat >= 0) {
@@ -108,7 +117,7 @@ namespace Alice {
                 _ => versusWarrior
             };
             var result = decision.Choose(frame, tuning, matchup, memory, difficulty);
-            memory.Record(result);
+            memory.Record(result, frame);
             LastDecision = result.Reason;
             LastDecisionScore = result.Score;
             lastAction = result.Action;
@@ -123,6 +132,8 @@ namespace Alice {
         public override void CompleteRoundEpisode(int roundNumber, bool player1Win) => ResetObservation();
 
         void ResetObservation() {
+            opponentStateSubscription?.Dispose();
+            opponentStateSubscription = null;
             sensor.Reset();
             memory.Reset();
             observedSelf = null;
@@ -141,6 +152,7 @@ namespace Alice {
         Vector3 opponentPosition;
         bool initialized;
         WarriorAiMove lastMove;
+        bool attackSinceDecision, guardSinceDecision;
 
         public float RecentDamage { get; private set; }
         public float RecentHits { get; private set; }
@@ -151,9 +163,72 @@ namespace Alice {
         public int DashStreak { get; private set; }
         public int StaleBeats { get; private set; }
         public Vector3 OpponentDrift { get; private set; }
+        public float RetreatHabit { get; private set; }
+        public float RepositionSpeed { get; private set; } = 8f;
         public bool NextAirJumpIsSuper { get; private set; }
 
+        bool meleeEntered, rushEntered, shieldLaunched;
+        readonly float[,] responseLoss = new float[4, ((int)WarriorAiMove.Recover + 1) * 9];
+        int lastPattern, lastResponse;
+        bool hasResponse;
+
+        public Core.LargeSatan.IWarriorMeleeObservation MeleeOpener { get; private set; }
+        public float MeleeHabit { get; private set; }
+        public float RushHabit { get; private set; }
+        public float ShieldLaunchHabit { get; private set; }
+
+        public void ObserveOpponentState(IStrikerState state) {
+            if (state == null) return;
+            ObserveOpponentCategory(state.Category);
+            if (state is Core.LargeSatan.Attack0State opener) MeleeOpener = opener;
+            meleeEntered |= state is Core.LargeSatan.Attack0State or Core.LargeSatan.Attack1State or Core.LargeSatan.Attack2State;
+            rushEntered |= state is Core.LargeHero.RushState;
+            shieldLaunched |= state is Core.LargeWizard.GuardState { HasLaunchedShield: true };
+        }
+
+        int PatternIndex => ShieldLaunchHabit > .15f && ShieldLaunchHabit >= Mathf.Max(MeleeHabit, RushHabit) ? 2
+            : RushHabit > .15f && RushHabit >= MeleeHabit ? 3 : MeleeHabit > .15f ? 1 : 0;
+
+        static int ResponseIndex(WarriorAiMove move, Vector2 direction, WarriorAiFrame frame) {
+            var toward = frame.Opponent.Position.x >= frame.Self.Position.x ? 1f : -1f;
+            var horizontal = Mathf.RoundToInt(direction.x * toward);
+            var vertical = Mathf.RoundToInt(direction.y);
+            return (int)move * 9 + (vertical + 1) * 3 + horizontal + 1;
+        }
+
+        public float ResponsePenalty(WarriorAiMove move, Vector2 direction, WarriorAiFrame frame)
+            => responseLoss[PatternIndex, ResponseIndex(move, direction, frame)];
+
+        void AdvancePatterns() {
+            // Count entries once per decision, not every frame spent inside one attack.
+            MeleeHabit = Mathf.Lerp(MeleeHabit, meleeEntered ? 1f : 0f, meleeEntered ? .4f : .12f);
+            RushHabit = Mathf.Lerp(RushHabit, rushEntered ? 1f : 0f, rushEntered ? .4f : .12f);
+            ShieldLaunchHabit = Mathf.Lerp(ShieldLaunchHabit, shieldLaunched ? 1f : 0f, shieldLaunched ? .4f : .12f);
+            meleeEntered = rushEntered = shieldLaunched = false;
+            for (var pattern = 0; pattern < responseLoss.GetLength(0); pattern++)
+                for (var response = 0; response < responseLoss.GetLength(1); response++) responseLoss[pattern, response] *= .85f;
+        }
+
+        void LearnResponse(float received, float dealt) {
+            if (!hasResponse) return;
+            responseLoss[lastPattern, lastResponse] = Mathf.Clamp(responseLoss[lastPattern, lastResponse]
+                + received * 1.2f - dealt * .6f, 0f, 24f);
+        }
+
+        public void ObserveOpponentCategory(StrikerStateCategory category) {
+            attackSinceDecision |= category is StrikerStateCategory.Attack or StrikerStateCategory.Dash;
+            guardSinceDecision |= category == StrikerStateCategory.Guard;
+        }
+
         public void Observe(WarriorAiFrame frame) {
+            AdvancePatterns();
+            var enemy = frame.Opponent;
+            var away = Mathf.Sign(enemy.Position.x - frame.Self.Position.x);
+            var movingAway = enemy.Velocity.x * away > 1f;
+            RetreatHabit = Mathf.Lerp(RetreatHabit, movingAway ? 1f : 0f, .2f);
+            // Ignore hit-stun knockback and teleports when learning a movement response.
+            if (enemy.Category is StrikerStateCategory.Idle or StrikerStateCategory.Dash)
+                RepositionSpeed = Mathf.Lerp(RepositionSpeed, Mathf.Clamp(Mathf.Abs(enemy.Velocity.x), 4f, 18f), .2f);
             var currentSelfHp = frame.Self.Striker.HitPoint.CurrentValue;
             var currentOpponentHp = frame.Opponent.Striker.HitPoint.CurrentValue;
             if (frame.Self.Grounded) NextAirJumpIsSuper = false;
@@ -162,6 +237,7 @@ namespace Alice {
             if (initialized) {
                 var received = Mathf.Max(0f, selfHitPoint - currentSelfHp);
                 var dealt = Mathf.Max(0f, opponentHitPoint - currentOpponentHp);
+                LearnResponse(received, dealt);
                 RecentDamage = RecentDamage * .55f + received;
                 RecentHits = RecentHits * .55f + dealt;
                 if (lastMove == WarriorAiMove.Attack || lastMove == WarriorAiMove.Throw) {
@@ -173,27 +249,39 @@ namespace Alice {
                 var drift = (frame.Opponent.Position - opponentPosition) / Mathf.Max(frame.BeatSeconds, .08f);
                 OpponentDrift = Vector3.Lerp(OpponentDrift, Vector3.ClampMagnitude(drift, 12f), .55f);
             }
-            GuardHabit = Mathf.Lerp(GuardHabit, frame.Opponent.Category == StrikerStateCategory.Guard ? 1f : 0f, .25f);
-            AttackHabit = Mathf.Lerp(AttackHabit, frame.Opponent.Category is StrikerStateCategory.Attack or StrikerStateCategory.Dash ? 1f : 0f, .25f);
+            GuardHabit = Mathf.Lerp(GuardHabit, guardSinceDecision || frame.Opponent.Category == StrikerStateCategory.Guard ? 1f : 0f, .25f);
+            AttackHabit = Mathf.Lerp(AttackHabit, attackSinceDecision || frame.Opponent.Category is StrikerStateCategory.Attack or StrikerStateCategory.Dash ? 1f : 0f, .25f);
+            attackSinceDecision = guardSinceDecision = false;
             selfHitPoint = currentSelfHp;
             opponentHitPoint = currentOpponentHp;
             opponentPosition = frame.Opponent.Position;
             initialized = true;
         }
 
-        public void Record(WarriorAiChoice result) {
+        public void Record(WarriorAiChoice result, WarriorAiFrame frame) {
+            lastPattern = PatternIndex;
+            lastResponse = ResponseIndex(result.Move, result.Action.Direction, frame);
+            hasResponse = result.Move is not (WarriorAiMove.Wait or WarriorAiMove.Recover or WarriorAiMove.Special);
             GuardStreak = result.Move == WarriorAiMove.Guard ? GuardStreak + 1 : 0;
             DashStreak = result.Move == WarriorAiMove.Dash ? DashStreak + 1 : 0;
             lastMove = result.Move;
         }
 
         public void Reset() {
+            MeleeOpener = null;
+            MeleeHabit = RushHabit = ShieldLaunchHabit = 0f;
+            meleeEntered = rushEntered = shieldLaunched = false;
+            hasResponse = false;
+            Array.Clear(responseLoss, 0, responseLoss.Length);
             initialized = false;
             RecentDamage = RecentHits = GuardHabit = AttackHabit = WhiffPressure = 0f;
             GuardStreak = DashStreak = StaleBeats = 0;
             OpponentDrift = Vector3.zero;
+            RetreatHabit = 0f;
+            RepositionSpeed = 8f;
             NextAirJumpIsSuper = false;
             lastMove = WarriorAiMove.Wait;
+            attackSinceDecision = guardSinceDecision = false;
         }
     }
 }

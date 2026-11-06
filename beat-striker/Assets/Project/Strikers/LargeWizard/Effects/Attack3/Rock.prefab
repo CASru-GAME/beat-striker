@@ -229,6 +229,7 @@ MonoBehaviour:
   damage: 30
   knockbackSpeed: 20
   lifetime: 2
+  rockCollider: {fileID: 8863127779226038252}
   positionOffset: {x: 0, y: 0, z: 0}
   rotationOffset: {x: 0, y: 0, z: 0}
 --- !u!136 &8863127779226038252

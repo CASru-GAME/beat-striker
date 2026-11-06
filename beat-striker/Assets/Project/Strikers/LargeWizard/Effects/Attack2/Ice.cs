@@ -13,6 +13,7 @@ namespace Core.LargeWizard {
         [SerializeField] float growDuration = 0.3f;    // 生え切るまでの時間
         [SerializeField] float lifetime = 1.5f;          // 生成後に自動破棄されるまでの時間
         [SerializeField] float colliderEnableRatio = 0.3f; // コライダーを有効にする成長割合 (0~1)
+        [SerializeField] BoxCollider iceCollider;
 
         [SerializeField] GameObject impactPrefab;
 
@@ -24,14 +25,36 @@ namespace Core.LargeWizard {
         float elapsed;
         bool grown;
         bool hasHit;
+        float spawnedAt;
         public Transform ObservationOwner => ownerStrikerHub != null ? ownerStrikerHub.transform : attackerRoot;
         public bool IsObservationThreat => !hasHit;
-        Collider iceCollider;
+        public float ObservationActivationDelay => growDuration * colliderEnableRatio;
+        public float ObservationLifetime => lifetime;
+        public float ObservationDamage => damage;
+        public float ObservationStartsAt => Mathf.Max(0f, ObservationActivationDelay - (Time.time - spawnedAt));
+        public float ObservationEndsAt => Mathf.Max(0f, lifetime - (Time.time - spawnedAt));
+        public Bounds ObservationBounds => BoundsAt(transform.position, transform.rotation, targetScale);
+
+        public Bounds ObserveSpawnBounds(Vector3 groundPosition) =>
+            BoundsAt(groundPosition + positionOffset, Quaternion.Euler(rotationOffset), transform.localScale);
+
+        Bounds BoundsAt(Vector3 position, Quaternion rotation, Vector3 scale) {
+            var matrix = Matrix4x4.TRS(position, rotation, scale);
+            var bounds = new Bounds(matrix.MultiplyPoint3x4(iceCollider.center), Vector3.zero);
+            var half = iceCollider.size * .5f;
+            for (var i = 0; i < 8; i++) {
+                var corner = iceCollider.center + Vector3.Scale(half,
+                    new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+                bounds.Encapsulate(matrix.MultiplyPoint3x4(corner));
+            }
+            return bounds;
+        }
         Vector3 attackerPosition;
         Transform attackerRoot;
         StrikerHub ownerStrikerHub;
 
         void Awake() {
+            spawnedAt = Time.time;
             // インスペクタで指定したオフセットを適用
             transform.position += positionOffset;
             transform.rotation *= Quaternion.Euler(rotationOffset);
@@ -41,7 +64,6 @@ namespace Core.LargeWizard {
             transform.localScale = new Vector3(targetScale.x, 0f, targetScale.z);
 
             // コライダーを無効化しておき、成長途中で有効にする
-            iceCollider = GetComponent<Collider>();
             iceCollider.enabled = false;
         }
 

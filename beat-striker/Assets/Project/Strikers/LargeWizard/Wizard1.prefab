@@ -1641,7 +1641,7 @@ MonoBehaviour:
     fadeTime: 0
     speed: 1
   nextNode: {fileID: 707581214265331847}
-  rockPrefab: {fileID: 4793939790490883922, guid: 293e8d717f381ec499f372708db3a639, type: 3}
+  rockPrefab: {fileID: 4133251406871427886, guid: 293e8d717f381ec499f372708db3a639, type: 3}
   audioClip: {fileID: 8300000, guid: f71556e7226e6674fa5b3fb7568539fa, type: 3}
   fireTime: 0.5
   spawnHeight: 5
@@ -1696,7 +1696,7 @@ MonoBehaviour:
     fadeTime: 0
     speed: 1
   nextNode: {fileID: 707581214265331847}
-  icePrefab: {fileID: 3449808654560837077, guid: 0c4b00a58e8c7304db00cde5d352cd03, type: 3}
+  icePrefab: {fileID: 5815800142353969475, guid: 0c4b00a58e8c7304db00cde5d352cd03, type: 3}
   audioClip1: {fileID: 8300000, guid: 21594ada729263045a68121b996d7114, type: 3}
   audioClip2: {fileID: 8300000, guid: 4e706ebf9352de1459f4b13fd98bfdd1, type: 3}
   groundMask:
@@ -1757,7 +1757,7 @@ MonoBehaviour:
     speed: 0.5
   nextNode: {fileID: 707581214265331847}
   audioClip: {fileID: 8300000, guid: 2ae61b8ee18bf594f8cee97c2f34ed54, type: 3}
-  firePrefab: {fileID: 3295605662574902340, guid: f75a7422d1cf6944b88b9eccbf28a3db, type: 3}
+  firePrefab: {fileID: 6086406038810869487, guid: f75a7422d1cf6944b88b9eccbf28a3db, type: 3}
   firePosition: {fileID: 924816658567410061}
   fireTime: 0.3
   firePrefabDestroyDelaySeconds: 5

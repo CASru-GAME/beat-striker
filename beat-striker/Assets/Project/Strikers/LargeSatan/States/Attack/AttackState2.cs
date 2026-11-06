@@ -6,7 +6,7 @@ namespace Core.LargeSatan {
 
 
 
-    public class Attack2State : StrikerState {
+    public class Attack2State : StrikerState, IWarriorMeleeObservation {
         public override Alice.StrikerStateCategory Category => Alice.StrikerStateCategory.Attack;
 
         [SerializeField] private StrikerAnimationClip animationClip;
@@ -23,6 +23,14 @@ namespace Core.LargeSatan {
         [SerializeField] float impact = 5;
 
         [SerializeField] float waitDuration = 0.8f;
+
+        public float ObservationSpeed => speed;
+        public float ObservationDuration => duration;
+        public float ObservationEndSpeedRatio => endSpeedRatio;
+        public float ObservationDamage => damage;
+        public Vector2 ObservationHitWindow => new(attackPlayer.ObservationHitStart, attackPlayer.ObservationHitEnd);
+        public Bounds ObservationBounds => attackPlayer.ObservationAuthoredBounds;
+        public IWarriorMeleeObservation ObservationNextAttack => null;
 
         Vector3 initialVelocity;
         float elapsedTime;

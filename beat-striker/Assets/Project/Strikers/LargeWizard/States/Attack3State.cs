@@ -16,12 +16,13 @@ namespace Core.LargeWizard {
          [SerializeField] StrikerNode nextNode;
 
         [Header("Rock attack settings")]
-        [SerializeField] GameObject rockPrefab;             // 頭上に生成する岩のプレハブ
+        [SerializeField] Rock rockPrefab;             // 頭上に生成する岩のプレハブ
         [SerializeField] AudioClip audioClip;             // 岩生成時の音
         [SerializeField] float fireTime = 0.3f;           // 岩を生成するタイミング（秒）
         [SerializeField] float spawnHeight = 5f;           // 相手の頭上からの生成高さ
         public float ObservationReleaseSeconds => fireTime;
         public float ObservationSpawnHeight => spawnHeight;
+        public Rock ObservationPrefab => rockPrefab;
 
         // このステートに遷移した直後に呼ばれる
         public override void OnEnter(IStrikerContext context) {
@@ -36,7 +37,7 @@ namespace Core.LargeWizard {
 
                 var spawnPos = opponent.transform.position + Vector3.up * spawnHeight;
                 var rock = Instantiate(rockPrefab, spawnPos, Quaternion.identity);
-                var rockBehavior = rock.GetComponent<Rock>();
+                var rockBehavior = rock;
                 rockBehavior.SetAttackerPosition(ctx.Rigidbody.transform.position);
                 rockBehavior.SetAttackerRoot(ctx.Rigidbody.transform.root);
                 rockBehavior.SetOwnerStrikerHub(ctx.Rigidbody.GetComponent<StrikerHub>());

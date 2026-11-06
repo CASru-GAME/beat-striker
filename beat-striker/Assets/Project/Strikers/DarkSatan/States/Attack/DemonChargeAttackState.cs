@@ -33,6 +33,7 @@ namespace Core.DarkSatan {
         public bool ObservationFired => fired;
         public float ObservationSpreadSeconds => volleyPrefab.SpreadSeconds;
         public float ObservationLaunchSeconds => launchDuration;
+        public float ObservationMaxLaunchDelay => maxLaunchDelay;
         public float ObservationBulletDamage => volleyPrefab.ObservationDamage;
         public float ObservationBulletSpeed => volleyPrefab.ObservationSpeed;
         public int ObservationMaximumBulletsPerVolley => volleyPrefab.BulletCount;

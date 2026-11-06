@@ -79,6 +79,7 @@ MonoBehaviour:
   growDuration: 0.3
   lifetime: 2
   colliderEnableRatio: 0.3
+  iceCollider: {fileID: 2869254374944055428}
   impactPrefab: {fileID: 4971847399818931446, guid: 3358bdba5eb832146a8ddb52266e2242, type: 3}
   positionOffset: {x: 0, y: 0, z: 1.5}
   rotationOffset: {x: 0, y: 180, z: 0}
