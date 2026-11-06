@@ -9,14 +9,16 @@ namespace Alice {
         readonly IGamePadRegistry pads;
         readonly IInputFocusService focus;
         readonly int sceneHandle;
+        readonly int modalPriority;
         IDisposable modal;
         readonly CompositeDisposable subscriptions = new();
         TaskCompletionSource<int> completion;
         bool directInput, disposed, closing;
         int optionCount, inputPlayerId, openedFrame;
         public string InputText { get; private set; }
-        public ChoiceDialogPresenter(ChoiceDialogView view, IGamePadRegistry pads, IInputFocusService focus) {
+        public ChoiceDialogPresenter(ChoiceDialogView view, IGamePadRegistry pads, IInputFocusService focus, int modalPriority = 0) {
             this.view = view; this.pads = pads; this.focus = focus;
+            this.modalPriority = modalPriority;
             sceneHandle = view.gameObject.scene.handle;
             view.InputRaycaster.Initialize(focus);
             focus.Changed.Subscribe(_ => {
@@ -70,7 +72,7 @@ namespace Alice {
             closing = false;
             this.directInput = directInput; this.inputPlayerId = inputPlayerId; optionCount = options.Length; openedFrame = UnityEngine.Time.frameCount;
             try {
-                modal = focus.RegisterModal(view.ModalRoot, inputPlayerId);
+                modal = focus.RegisterModal(view.ModalRoot, inputPlayerId, modalPriority);
                 view.Show(title, body, options, input, inputPlayerId, grade);
                 _ = focus.Version;
                 view.SetInputAllowed(focus.CanPoint(view.ModalRoot));

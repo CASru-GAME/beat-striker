@@ -12,6 +12,7 @@ namespace Alice {
         readonly IReplaySetting replaySetting;
         readonly IGamePadRegistry gamePadRegistry;
         readonly IMusicPlayer musicPlayer;
+        readonly IBeatjudge beatJudge;
         readonly IStrikerRegistry strikerRegistry;
         readonly ReplayGamePad[] replayGamePads = new ReplayGamePad[PlayerCount];
         readonly List<IDisposable> subscriptions = new();
@@ -24,11 +25,13 @@ namespace Alice {
             IReplaySetting replaySetting,
             IGamePadRegistry gamePadRegistry,
             IMusicPlayer musicPlayer,
-            IStrikerRegistry strikerRegistry) {
+            IStrikerRegistry strikerRegistry,
+            IBeatjudge beatJudge) {
             this.replaySetting = replaySetting;
             this.gamePadRegistry = gamePadRegistry;
             this.musicPlayer = musicPlayer;
             this.strikerRegistry = strikerRegistry;
+            this.beatJudge = beatJudge;
         }
 
         public bool IsReplay => replaySetting.TryGetReplay(out replayPayload);
@@ -50,7 +53,8 @@ namespace Alice {
             }
 
             var round = replayPayload.rounds.FirstOrDefault(item => item.roundNumber == roundNumber);
-            currentRound = round != null ? new ReplayRoundRuntime(round) : new ReplayRoundRuntime(new ReplayRoundPayload { roundNumber = roundNumber });
+            currentRound = new ReplayRoundRuntime(round ?? new ReplayRoundPayload { roundNumber = roundNumber },
+                replayPayload.executesCommandsImmediately);
             if (!isActive) {
                 subscriptions.Add(Observable.EveryUpdate().Subscribe(_ => Tick()));
                 isActive = true;
@@ -68,22 +72,31 @@ namespace Alice {
         }
 
         void Tick() {
-            if (currentRound == null) {
+            if (currentRound == null || beatJudge.IsPaused || musicPlayer.CurrentBeatTimeline.Length == 0) {
                 return;
             }
 
             var playbackTime = musicPlayer.CurrentPlaybackTime;
-            while (currentRound.NextStateIndex < currentRound.States.Length
-                   && currentRound.States[currentRound.NextStateIndex].playbackTime <= playbackTime) {
-                ApplyState(currentRound.States[currentRound.NextStateIndex]);
-                currentRound.NextStateIndex += 1;
-            }
+            var round = currentRound;
+            while (currentRound == round && !beatJudge.IsPaused) {
+                var stateTime = round.NextStateIndex < round.States.Length
+                    ? round.States[round.NextStateIndex].playbackTime : float.PositiveInfinity;
+                var commandTime = round.NextCommandIndex < round.Commands.Length
+                    ? GetExecutionTime(round.Commands[round.NextCommandIndex]) : float.PositiveInfinity;
+                if (Mathf.Min(stateTime, commandTime) > playbackTime) break;
 
-            while (currentRound.NextCommandIndex < currentRound.Commands.Length
-                   && currentRound.Commands[currentRound.NextCommandIndex].time <= playbackTime) {
-                ApplyCommand(currentRound.Commands[currentRound.NextCommandIndex]);
-                currentRound.NextCommandIndex += 1;
+                // Immediate attacks can precede a pre-beat snapshot, even within the same frame.
+                if (stateTime <= commandTime) ApplyState(round.States[round.NextStateIndex++]);
+                else ApplyCommand(round.Commands[round.NextCommandIndex++]);
             }
+        }
+
+        float GetExecutionTime(ReplayBeatNotificationPayload command) {
+            if (replayPayload.executesCommandsImmediately) return command.time;
+            var timeline = musicPlayer.CurrentBeatTimeline;
+            return command.beatIndex >= 0 && command.beatIndex < timeline.Length
+                ? timeline[command.beatIndex]
+                : command.time;
         }
 
         void ApplyCommand(ReplayBeatNotificationPayload command) {
@@ -93,13 +106,8 @@ namespace Alice {
 
             var gamePad = replayGamePads[command.playerId];
             gamePad.EmitDirection(new Vector2(command.directionX, command.directionY));
-            if ((OnlineBeatNotificationKind)command.kind != OnlineBeatNotificationKind.Command) {
-                return;
-            }
-
-            var button = (GamePadButton)command.button;
-            gamePad.EmitButtonDown(button);
-            gamePad.EmitButtonUp(button);
+            // Use the recorded judgement; frame delay must not turn a late success into a miss.
+            beatJudge.ApplyReplayNotification(command);
         }
 
         void ApplyState(ReplayPreBeatStatePayload state) {
@@ -129,9 +137,9 @@ namespace Alice {
             public int NextCommandIndex { get; set; }
             public int NextStateIndex { get; set; }
 
-            public ReplayRoundRuntime(ReplayRoundPayload payload) {
+            public ReplayRoundRuntime(ReplayRoundPayload payload, bool executesCommandsImmediately) {
                 Commands = (payload.beatNotifications ?? Array.Empty<ReplayBeatNotificationPayload>())
-                    .OrderBy(item => item.time)
+                    .OrderBy(item => executesCommandsImmediately ? item.time : item.beatIndex)
                     .ThenBy(item => item.playerId)
                     .ToArray();
                 States = (payload.preBeatStates ?? Array.Empty<ReplayPreBeatStatePayload>())

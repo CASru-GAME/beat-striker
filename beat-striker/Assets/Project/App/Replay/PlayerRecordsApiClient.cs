@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -13,7 +14,12 @@ namespace Alice {
         Task<BattleHistoryListResponse> GetHistoryAsync(string name, string cursor);
     }
 
-    public class PlayerRecordsApiClient : IPlayerRecordsApiClient {
+    public interface IPlayerFeedbackApiClient {
+        Task<bool> HasFeedbackAsync(string name, CancellationToken cancellationToken);
+        Task SubmitFeedbackAsync(string name, string comment, CancellationToken cancellationToken);
+    }
+
+    public class PlayerRecordsApiClient : IPlayerRecordsApiClient, IPlayerFeedbackApiClient {
         readonly IAppNetworkSetting setting;
         public PlayerRecordsApiClient(IAppNetworkSetting setting) { this.setting = setting; }
         public Task<PlayerProfile> GetProfileAsync(PlayerProfile profile) => Request("/players", "", new PlayerProfile(), response => ValidProfile(response) && response.name == profile.name, profile);
@@ -22,7 +28,31 @@ namespace Alice {
         public Task<BattleHistoryListResponse> GetHistoryAsync(string name, string cursor) => Request("/battle-histories", $"&player={UnityWebRequest.EscapeURL(name)}&cursor={UnityWebRequest.EscapeURL(cursor ?? "")}",
             new BattleHistoryListResponse { items = null }, response => response.items != null && response.items.All(item => item != null && !string.IsNullOrWhiteSpace(item.id)));
 
-        async Task<T> Request<T>(string route, string query, T response, Func<T, bool> valid, object body = null) where T : class {
+        public async Task<bool> HasFeedbackAsync(string name, CancellationToken cancellationToken) {
+            var response = await Request("/feedback", $"&name={UnityWebRequest.EscapeURL(name)}",
+                new FeedbackResponse(), result => result.ok, cancellationToken: cancellationToken);
+            return response.submitted;
+        }
+
+        public Task SubmitFeedbackAsync(string name, string comment, CancellationToken cancellationToken) =>
+            Request("/feedback", "", new FeedbackResponse(), result => result.ok && result.submitted,
+                new FeedbackSubmission { name = name, comment = comment }, cancellationToken);
+
+        [Serializable]
+        record FeedbackSubmission {
+            public string name;
+            public string comment;
+        }
+
+        [Serializable]
+        record FeedbackResponse {
+            public bool ok;
+            public bool submitted;
+        }
+
+        async Task<T> Request<T>(string route, string query, T response, Func<T, bool> valid, object body = null,
+            CancellationToken cancellationToken = default) where T : class {
+            cancellationToken.ThrowIfCancellationRequested();
             var url = $"{setting.CloudApiBaseUrl.TrimEnd('/')}/index.php?route={UnityWebRequest.EscapeURL(route)}{query}";
             using var request = new UnityWebRequest(url, body == null ? "GET" : "POST");
             request.downloadHandler = new DownloadHandlerBuffer();
@@ -33,7 +63,8 @@ namespace Alice {
             request.SetRequestHeader("Accept", "application/json");
             request.timeout = 8;
             var operation = request.SendWebRequest();
-            while (!operation.isDone) await Task.Yield();
+            while (!operation.isDone && !cancellationToken.IsCancellationRequested) await Task.Yield();
+            cancellationToken.ThrowIfCancellationRequested();
             if (request.result != UnityWebRequest.Result.Success) throw new ApiRequestException(request.responseCode, $"Player records API: {request.responseCode} {request.error}");
             var contentType = request.GetResponseHeader("Content-Type");
             if (contentType == null || !contentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase)) throw new ApiRequestException(request.responseCode, "Player records API did not return JSON.");

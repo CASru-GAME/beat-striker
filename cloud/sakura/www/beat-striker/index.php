@@ -85,6 +85,16 @@ function database(): PDO
     $db->exec('CREATE TABLE IF NOT EXISTS battle_requests (battle_id TEXT PRIMARY KEY, history_id TEXT NOT NULL UNIQUE)');
     $db->exec('CREATE TABLE IF NOT EXISTS history_players (history_id TEXT NOT NULL, player_name TEXT NOT NULL, PRIMARY KEY(history_id, player_name))');
     $db->exec('CREATE INDEX IF NOT EXISTS history_players_name ON history_players(player_name, history_id)');
+    $db->exec('CREATE TABLE IF NOT EXISTS player_feedback (
+        sequence INTEGER PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE COLLATE BINARY,
+        comment TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    )');
+    $db->exec("CREATE TRIGGER IF NOT EXISTS player_feedback_no_update BEFORE UPDATE ON player_feedback
+        BEGIN SELECT RAISE(ABORT, 'feedback is immutable'); END");
+    $db->exec("CREATE TRIGGER IF NOT EXISTS player_feedback_no_delete BEFORE DELETE ON player_feedback
+        BEGIN SELECT RAISE(ABORT, 'feedback is immutable'); END");
     $connection = $db;
     return $connection;
 }
@@ -97,6 +107,69 @@ function playerName($value): string
         respond(400, ['error' => 'name must contain 1 to 10 characters']);
     }
     return $name;
+}
+
+function feedbackName($value): string
+{
+    $name = playerName($value);
+    if ($name === 'ゲスト') respond(400, ['error' => 'feedback requires a player name']);
+    return $name;
+}
+
+function feedbackPage(): void
+{
+    $before = filter_var($_GET['before'] ?? PHP_INT_MAX, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+    if ($before === false) respond(400, ['error' => 'invalid feedback cursor']);
+    $statement = database()->prepare('SELECT sequence, name, comment, created_at FROM player_feedback
+        WHERE sequence < ? ORDER BY sequence DESC LIMIT 51');
+    $statement->bindValue(1, $before, PDO::PARAM_INT);
+    $statement->execute();
+    $rows = $statement->fetchAll();
+    $more = count($rows) > 50;
+    $escape = static fn(string $text): string => htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+    header('Content-Type: text/html; charset=utf-8');
+    header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'");
+    echo <<<'HTML'
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>感想一覧 | ビート・ストライカー</title>
+<style>
+:root { color-scheme: dark; background: #10131b; color: #f2f5fa; font-family: system-ui, sans-serif; }
+body { margin: 0; }
+main { max-width: 52rem; margin: auto; padding: 2rem 1rem; }
+header { border-bottom: 2px solid #62e8ff; padding-bottom: 1rem; }
+h1, h2, p { margin: 0; }
+h1 { font-size: 2rem; }
+header p, time { color: #aebad0; }
+article { background: #1b2130; border-inline-start: 3px solid #62e8ff; margin: 1rem 0; padding: 1rem; }
+article h2 { font-size: 1.1rem; overflow-wrap: anywhere; }
+article p { margin-top: .75rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+time { font-size: .85rem; }
+nav, .empty { margin-top: 1rem; }
+a { color: #62e8ff; margin-inline-end: 1.5rem; }
+</style>
+</head>
+<body><main>
+<header><p>ビート・ストライカー</p><h1>感想一覧</h1></header>
+HTML;
+    if (!$rows) echo '<p class="empty">表示する感想はありません。</p>';
+    foreach (array_slice($rows, 0, 50) as $row) {
+        $name = $escape($row['name']);
+        $date = $escape($row['created_at']);
+        $comment = $row['comment'] === '' ? '（本文なし）' : $escape($row['comment']);
+        echo "<article><h2>{$name}</h2><time datetime=\"{$date}\">{$date}</time><p>{$comment}</p></article>";
+    }
+    if ($before !== PHP_INT_MAX || $more) {
+        echo '<nav aria-label="ページ移動">';
+        if ($before !== PHP_INT_MAX) echo '<a href="?route=%2Ffeedback-list">最新の感想へ</a>';
+        if ($more) echo '<a href="?route=%2Ffeedback-list&amp;before=' . (int)$rows[49]['sequence'] . '">次の50件</a>';
+        echo '</nav>';
+    }
+    echo '</main></body></html>';
 }
 
 function timestamp(string $value): string
@@ -261,6 +334,37 @@ try {
     if ($route === '/' && $method === 'GET') {
         database()->query('SELECT 1')->fetchColumn();
         respond(200, ['ok' => true, 'service' => 'beat-striker-api', 'storage' => 'sqlite']);
+    }
+
+    if ($route === '/feedback') {
+        if ($method === 'GET') {
+            $name = feedbackName($_GET['name'] ?? null);
+            $statement = database()->prepare('SELECT 1 FROM player_feedback WHERE name = ?');
+            $statement->execute([$name]);
+            respond(200, ['ok' => true, 'submitted' => $statement->fetchColumn() !== false]);
+        }
+        if ($method === 'POST') {
+            $body = readBody();
+            $name = feedbackName($body->name ?? null);
+            $comment = $body->comment ?? null;
+            if (!is_string($comment) || strlen($comment) > 800 || preg_match_all('/./us', $comment) > 200) {
+                respond(400, ['error' => 'comment must contain 0 to 200 characters']);
+            }
+            $statement = database()->prepare('INSERT INTO player_feedback(name, comment, created_at) VALUES(?, ?, ?)
+                ON CONFLICT(name) DO NOTHING');
+            $statement->execute([$name, $comment, gmdate('Y-m-d\TH:i:s\Z')]);
+            if ($statement->rowCount() === 0) respond(409, ['error' => 'feedback already submitted']);
+            respond(201, ['ok' => true, 'submitted' => true]);
+        }
+        header('Allow: GET, POST, OPTIONS'); respond(405, ['error' => 'method not allowed']);
+    }
+
+    if ($route === '/feedback-list') {
+        if ($method !== 'GET') {
+            header('Allow: GET, OPTIONS'); respond(405, ['error' => 'method not allowed']);
+        }
+        feedbackPage();
+        exit;
     }
 
     if ($route === '/players') {

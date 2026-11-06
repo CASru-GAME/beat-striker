@@ -4,35 +4,26 @@
 Composer、Node.js、Firestore、MySQLの作成、URL書き換え設定は不要です。
 さくらのサーバー契約の範囲で動作し、このAPIにGoogle Cloudの利用料は発生しません。
 
-## GitHub Actionsで自動デプロイ
+## ローカルからデプロイ
 
-`.github/workflows/deploy.yml`の **Deploy Sakura API** が、`main`へのpush時に動作します。
-対象は`cloud/sakura/`またはワークフローの変更です。Pull Requestではテストのみ実行します。
-Actionsの「Run workflow」から`main`を指定して手動実行することもできます。
+さくらの本番反映はローカルから行います。サーバーでPHP 8.2以降と `pdo_sqlite` を有効にし、作業端末のPATHに `pwsh` と `curl` を用意してください。
 
-初回はリポジトリの **Settings → Secrets and variables → Actions → Secrets** に以下を登録します。
+`cloud/sakura/.env.local` にさくらのFTP認証情報をUTF-8の `KEY=値` 形式で記載します。このファイルはGitの管理対象外です。
 
-| Repository secret | 値 |
-| --- | --- |
-| `SAKURA_FTP_USERNAME` | さくらのFTPアカウント名 |
-| `SAKURA_FTP_PASSWORD` | FTP接続パスワード |
+```dotenv
+SAKURA_FTP_USERNAME=your_ftp_username
+SAKURA_FTP_PASSWORD=your_ftp_password
+```
 
-[このリポジトリのActions Secrets設定](https://github.com/CASru-GAME/beat-striker/settings/secrets/actions)
-で登録できます。パスワードをソースコードやチャットに書く必要はありません。
+リポジトリのルートで実行します。
 
-接続先には以下の既定値を使います。変更する場合のみ、同じ設定画面の **Variables** に登録します。
+```powershell
+pwsh -File ./cloud/sakura/Upload-SakuraApi.ps1 -EnvFile ./cloud/sakura/.env.local
+```
 
-| Repository variable | 既定値 |
-| --- | --- |
-| `SAKURA_FTP_HOST` | `rintify.sakura.ne.jp` |
-| `SAKURA_FTP_DIRECTORY` | `/www/beat-striker` |
-| `SAKURA_API_BASE_URL` | `https://rintify.sakura.ne.jp/beat-striker` |
+スクリプトは明示的TLSのFTP（FTPS）で `index.php` を別名で転送し、転送完了後に公開ファイルを置き換えます。SQLiteは公開ディレクトリ外に置きます。置き換え後はAPIのヘルスチェック、対戦履歴一覧、感想の受付確認、公開感想一覧を確認し、すべて成功すると `API稼働確認完了` と表示します。
 
-サーバー側ではPHP 8.2以降と`pdo_sqlite`を有効にしてください。
-テスト成功後、明示的TLSのFTP（FTPS）で`index.php`をアップロードし、
-公開URLのヘルスチェックと一覧取得が成功することまで確認します。
-認証情報が未登録の場合や疎通確認に失敗した場合は、Actionsを失敗として終了します。
-同時デプロイは直列化し、データベースはアップロードや削除の対象に含めません。
+設置先が異なる場合は `-FtpHost`、`-RemoteDirectory`、`-ApiBaseUrl` で指定します。GitHub ActionsはPHPの構文とHTTP APIの検証に利用できます。本番への反映結果はローカルのコマンドと公開URLで確認してください。
 
 ## FTPで手動設置する場合
 
@@ -61,24 +52,6 @@ FTPログイン先/
 `beat-striker-data`を作成し、所有者の書き込みを許可します（通常700）。777は不要です。
 上記と異なる階層へ設置する場合は、`index.php`内の`$directory`を公開領域外の保存先へ変更してください。
 
-### PowerShellからアップロード
-
-リポジトリのルートで次を実行すると、FTPアカウントの入力画面が開きます。
-パスワードはスクリプトや設定ファイルに保存しません。FTP接続は明示的TLS（FTPS）を使います。
-
-```powershell
-pwsh -File ./cloud/sakura/Upload-SakuraApi.ps1
-```
-
-FTPの接続先やログイン後のパスが異なる場合は引数で指定します。
-
-```powershell
-pwsh -File ./cloud/sakura/Upload-SakuraApi.ps1 -FtpHost example.sakura.ne.jp -RemoteDirectory /www/beat-striker -ApiBaseUrl https://example.sakura.ne.jp/beat-striker
-```
-
-スクリプトは`index.php`を上書きし、その後にヘルスチェックと一覧取得を行います。
-既存サイトやデータベースは削除しません。手動のFTPクライアントでも同じ1ファイルを更新できます。
-
 ## Unityの設定
 
 `Assets/Project/App/App.prefab`の`AppNetworkSetting`にある`Cloud Api Base Url`を設定します。
@@ -98,8 +71,19 @@ pwsh -File ./cloud/sakura/Upload-SakuraApi.ps1 -FtpHost example.sakura.ne.jp -Re
 | POST | `/battle-histories` | 対戦履歴・リプレイ保存 |
 | GET | `/battle-histories` | 最新順の履歴。`limit`省略時50、最大100 |
 | GET | `/battle-histories/{id}` | リプレイを含む詳細 |
+| GET | `/feedback` | `name`を指定し、受付済みかを`submitted`で取得 |
+| POST | `/feedback` | `name`と`comment`を保存。同じ名前の再送は409 |
+| GET | `/feedback-list` | 公開の感想一覧。最新順に50件ずつ表示 |
 | POST | `/scores` | 名前と数値スコア保存（既存API互換） |
 | OPTIONS | 任意 | WebGL向けCORSプリフライト |
+
+### 感想の受付と公開一覧
+
+ローカル対戦の結果メニューと、チャレンジで「一旦終わる」を選んだ後のタイトル画面で、受付前の名前に感想フォームを表示します。ゲストとCPUは対象外です。同じ名前で参加したプレイヤーには1件だけ表示します。
+
+感想は0〜200 Unicodeコードポイントです。空欄で送信した場合も受付済みになります。同じ名前で送信が重なった場合は、先に保存した1件を保持します。名前の比較はプレイヤー記録と同じです。初回送信者の認証はありません。
+
+感想は名前とともに公開されます。デプロイ後はAPIの `index.php?route=%2Ffeedback-list` で閲覧できます。
 
 ### 名前・階級・プレイヤー別履歴
 
@@ -140,7 +124,6 @@ PHP側の`post_max_size`やWebサーバーの本文上限がこれより小さ�
 初回のSQLiteは空です。既存のFirestoreの履歴は自動移行されません。
 この変更は対戦履歴APIのみです。オンライン対戦のPhoton / Relayサーバーは別の仕組みです。
 旧Cloud Run用のコードとTerraformは保守用に残しています。
-GitHub Actionsのデプロイ先はさくらへ置き換えており、Cloud Runへのデプロイは実行しません。
 
 ## トラブルシューティング
 

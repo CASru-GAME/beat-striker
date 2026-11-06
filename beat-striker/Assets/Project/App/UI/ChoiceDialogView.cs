@@ -15,6 +15,8 @@ namespace Alice {
         [SerializeField] TMP_Text gradedDescription;
         [SerializeField] GradeBadgeView gradeView;
         [SerializeField] TMP_InputField input;
+        [SerializeField] GameObject inputGuide;
+        [SerializeField, Min(0)] int inputCodePointLimit;
         [SerializeField] ActionEmitter[] emitters;
         [SerializeField] TMP_Text[] labels;
         [SerializeField] GameObject[] keyboardKeys;
@@ -63,6 +65,7 @@ namespace Alice {
             input.onEndEdit.AddListener(EndEditing);
             input.onSelect.AddListener(InputSelected);
             input.onDeselect.AddListener(InputDeselected);
+            if (inputCodePointLimit > 0) input.onValueChanged.AddListener(LimitInput);
         }
         void Update() {
             if (!input.isFocused) return;
@@ -92,8 +95,10 @@ namespace Alice {
                 emitters[i].gameObject.SetActive(i < options.Length);
                 if (i < options.Length) labels[i].text = options[i];
             }
-            input.gameObject.SetActive(initialInput != null);
-            if (initialInput != null) input.SetTextWithoutNotify(initialInput);
+            var hasInput = initialInput != null;
+            inputGuide.SetActive(hasInput);
+            input.gameObject.SetActive(hasInput);
+            if (hasInput) input.SetTextWithoutNotify(initialInput);
             dialogRoot.SetActive(true);
             IsInteractable = false;
             input.interactable = false;
@@ -132,6 +137,13 @@ namespace Alice {
             }
         }
         void EndEditing(string text) => ReleaseInputFocus();
+        void LimitInput(string text) {
+            var end = 0;
+            for (var count = 0; count < inputCodePointLimit && end < text.Length; count++) {
+                end += char.IsSurrogatePair(text, end) ? 2 : 1;
+            }
+            if (end < text.Length) input.SetTextWithoutNotify(text.Substring(0, end));
+        }
         void InputSelected(string text) => SetInputFocus(true);
         void InputDeselected(string text) => SetInputFocus(false);
         void ReleaseInputFocus() {
@@ -162,6 +174,7 @@ namespace Alice {
             input.onEndEdit.RemoveListener(EndEditing);
             input.onSelect.RemoveListener(InputSelected);
             input.onDeselect.RemoveListener(InputDeselected);
+            input.onValueChanged.RemoveListener(LimitInput);
             destroyed.OnNext(Unit.Default); destroyed.Dispose(); disabled.Dispose(); selected.Dispose(); inputFocusChanged.Dispose();
         }
     }

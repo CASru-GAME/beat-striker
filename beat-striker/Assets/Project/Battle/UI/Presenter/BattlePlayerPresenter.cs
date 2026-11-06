@@ -128,6 +128,7 @@ namespace Alice {
                 .Subscribe(result => {
                     if (!roundPlayable) return;
                     ringView.NotifyBeatRequested(result.Zone);
+                    if (result.IsSuccess && beatJudge.ExecutesCommandsImmediately) ringView.HideBeat(result.BeatIndex);
                     if (result.ForfeitedBeatIndex is int beatIndex) ringView.HideBeat(beatIndex);
                 })
                 .AddTo(disposables);

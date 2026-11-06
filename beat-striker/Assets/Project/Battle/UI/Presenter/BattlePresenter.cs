@@ -394,18 +394,22 @@ namespace Alice {
                             return;
                         }
 
-                        var judgeResult = musicPlayer.JudgeTiming(result.Time);
+                        if (beatJudge.ExecutesCommandsImmediately) {
+                            PlaySuccessSoundForBeat(result.BeatIndex);
+                            return;
+                        }
+
                         if (result.Zone != BeatJudgeZone.Excellent) {
                             if (result.Zone == BeatJudgeZone.Good) {
-                                pendingSuccessSoundBeatIndexes.Add(judgeResult.BeatIndex);
+                                pendingSuccessSoundBeatIndexes.Add(result.BeatIndex);
                                 PlayPendingSuccessSoundIfNeeded(currentExcellentWindowBeatIndex);
                             }
 
                             return;
                         }
 
-                        pendingSuccessSoundBeatIndexes.Remove(judgeResult.BeatIndex);
-                        PlaySuccessSoundForBeat(judgeResult.BeatIndex);
+                        pendingSuccessSoundBeatIndexes.Remove(result.BeatIndex);
+                        PlaySuccessSoundForBeat(result.BeatIndex);
                     })
                     .AddTo(audioSubscriptions);
 

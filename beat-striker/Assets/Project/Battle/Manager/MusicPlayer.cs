@@ -28,6 +28,7 @@ namespace Alice {
         Observable<Unit> OnPlaybackLooped { get; }
         Observable<Unit> OnPlaybackCompleted { get; }
         BeatJudgeResult JudgeTiming(float playbackTime);
+        BeatJudgeResult JudgeOfflineTiming(float playbackTime, Predicate<int> isAvailable);
         float CurrentPlaybackTime { get; }
         float CurrentViewPlaybackTime { get; }
         float[] CurrentBeatTimeline { get; }
@@ -494,31 +495,46 @@ namespace Alice {
 
         public IMusicPlayer.BeatJudgeResult JudgeTiming(float playbackTime) {
             var judgeTime = playbackTime + audioSetting.CommandTimeOffset.CurrentValue;
-            
-
-            for (var i = 0; i < beats.Length; i++) {
-                var beatTime = beats[i];
-                if (judgeTime > beatTime) {
-                    continue;
-                }
-
-                var goodWindow = Mathf.Max(0f, audioSetting.GoodWindow.CurrentValue);
-                var excellentWindow = Mathf.Clamp(audioSetting.ExcellentWindow.CurrentValue, 0f, goodWindow);
-                var excellentWindowStart = beatTime - excellentWindow;
-                if (judgeTime >= excellentWindowStart) {
-                    return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Excellent, i, beatTime);
-                }
-
-                var goodWindowStart = beatTime - goodWindow;
-                if (judgeTime >= goodWindowStart) {
-                    return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Good, i, beatTime);
-                }
-                
+            var index = Array.BinarySearch(beats, judgeTime);
+            if (index < 0) index = ~index;
+            var goodWindow = Mathf.Max(0f, audioSetting.GoodWindow.CurrentValue);
+            if (index >= beats.Length || judgeTime < beats[index] - goodWindow) {
                 return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Miss, -1, 0f);
             }
 
-            
-            return new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Miss, -1, 0f);
+            return CreateTimingResult(index, judgeTime, goodWindow);
+        }
+
+        public IMusicPlayer.BeatJudgeResult JudgeOfflineTiming(float playbackTime, Predicate<int> isAvailable) {
+            var judgeTime = playbackTime + audioSetting.CommandTimeOffset.CurrentValue;
+            var goodWindow = audioSetting.OfflineGoodWindow;
+            var nearestIndex = -1;
+            var nearestDistance = float.PositiveInfinity;
+            for (var index = 0; index < beats.Length; index++) {
+                var beatTime = beats[index];
+                if (judgeTime > beatTime + goodWindow) continue;
+                if (judgeTime < beatTime - goodWindow) break;
+                if (!isAvailable(index)) continue;
+
+                var distance = Mathf.Abs(judgeTime - beatTime);
+                // 同距離なら時刻が早い拍を優先し、1入力を1拍だけに割り当てる。
+                if (distance >= nearestDistance) continue;
+                nearestIndex = index;
+                nearestDistance = distance;
+            }
+
+            return nearestIndex < 0
+                ? new IMusicPlayer.BeatJudgeResult(BeatJudgeZone.Miss, -1, 0f)
+                : CreateTimingResult(nearestIndex, judgeTime, goodWindow);
+        }
+
+        IMusicPlayer.BeatJudgeResult CreateTimingResult(int index, float judgeTime, float goodWindow) {
+            var excellentWindow = Mathf.Clamp(audioSetting.ExcellentWindow.CurrentValue, 0f, goodWindow);
+            var beatTime = beats[index];
+            var zone = judgeTime >= beatTime - excellentWindow && judgeTime <= beatTime + excellentWindow
+                ? BeatJudgeZone.Excellent
+                : BeatJudgeZone.Good;
+            return new IMusicPlayer.BeatJudgeResult(zone, index, beatTime);
         }
 
         void EmitGoodZoneEvents() {

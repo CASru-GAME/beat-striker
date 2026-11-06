@@ -1,9 +1,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
- 
-using App;
 using R3;
 using UnityEngine;
 
@@ -31,8 +28,7 @@ namespace Alice {
         class BeatPlayer : IBeatPlayer {
             const double CONSECUTIVE_MISS_SECONDS = 0.2;
 
-            readonly Dictionary<int, PendingCommand> pendingCommands = new Dictionary<int, PendingCommand>();
-            readonly HashSet<int> attemptedCommands = new HashSet<int>();
+            readonly HashSet<int> successfulBeats = new();
             readonly HashSet<int> forfeitedBeats = new();
             readonly ReactiveProperty<int> comboCount = new(0);
             public Subject<IBeatPlayer.BeatResult> onBeatCommandRequested = new Subject<IBeatPlayer.BeatResult>();
@@ -44,11 +40,8 @@ namespace Alice {
             int good;
             int miss;
             int maxCombo;
-            bool isInputLocked;
-            int lockedBeatIndex = -1;
             double lastMissTime = double.NegativeInfinity;
-
-            record PendingCommand(BeatJudgeZone Zone, GamePadButton Button, Vector2 Direction);
+            int pendingBeatIndex = -1;
 
             public Observable<IBeatPlayer.BeatResult> OnBeatCommandRequested => onBeatCommandRequested;
             public Observable<IBeatPlayer.BeatResult> OnBeatCommandExecuted => onBeatCommandExecuted;
@@ -60,7 +53,10 @@ namespace Alice {
             public int Good => good;
             public int Miss => miss;
             public int MaxCombo => maxCombo;
-            public bool IsInputLocked => isInputLocked;
+            public bool IsInputLocked => pendingBeatIndex >= 0;
+            public bool HasSucceeded(int beatIndex) => successfulBeats.Contains(beatIndex);
+            public bool IsBeatAvailable(int beatIndex) => !HasSucceeded(beatIndex) && !IsBeatForfeited(beatIndex);
+            public void MarkSucceeded(int beatIndex) => successfulBeats.Add(beatIndex);
 
             public bool IsBeatForfeited(int beatIndex) => forfeitedBeats.Contains(beatIndex);
 
@@ -82,30 +78,7 @@ namespace Alice {
                 ResetMissStreak();
             }
 
-            public bool TrySavePendingCommand(int beatIndex, BeatJudgeZone zone, GamePadButton button, Vector2 direction) {
-                if (pendingCommands.ContainsKey(beatIndex)) {
-                    
-                    return false;
-                }
-
-                pendingCommands[beatIndex] = new PendingCommand(zone, button, direction);
-                
-                return true;
-            }
-
-            public void LockInputUntilBeat(int beatIndex) {
-                isInputLocked = true;
-                lockedBeatIndex = beatIndex;
-            }
-
-            public void UnlockInputIfBeatMatched(int beatIndex) {
-                if (!isInputLocked || lockedBeatIndex != beatIndex) {
-                    return;
-                }
-
-                isInputLocked = false;
-                lockedBeatIndex = -1;
-            }
+            public void ReserveOnlineBeat(int beatIndex) => pendingBeatIndex = beatIndex;
 
             public void UpdateInputDirection(Vector2 direction) {
                 currentInputDirection = direction;
@@ -115,52 +88,15 @@ namespace Alice {
                 currentInputDirection = Vector2.zero;
             }
 
-            public void RecordAttempt(int beatIndex) {
-                if (beatIndex < 0) return;
-                attemptedCommands.Add(beatIndex);
-            }
-
-            public bool HasAttempt(int beatIndex) {
-                return attemptedCommands.Contains(beatIndex);
-            }
-
-            public void ClearAttempt(int beatIndex) {
-                attemptedCommands.Remove(beatIndex);
-            }
-
-            public bool TryConsumePendingCommand(int beatIndex, out BeatJudgeZone zone, out GamePadButton button, out Vector2 direction) {
-                if (!pendingCommands.TryGetValue(beatIndex, out var command)) {
-                    zone = BeatJudgeZone.Miss;
-                    button = default;
-                    direction = Vector2.zero;
-                    
-                    return false;
-                }
-
-                pendingCommands.Remove(beatIndex);
-                attemptedCommands.Remove(beatIndex);
-                zone = command.Zone;
-                button = command.Button;
-                direction = command.Direction;
-                
-                return true;
-            }
-
             public void ClearSubmittedCommand(int beatIndex) {
-                pendingCommands.Remove(beatIndex);
-                attemptedCommands.Remove(beatIndex);
-                UnlockInputIfBeatMatched(beatIndex);
+                if (pendingBeatIndex == beatIndex) pendingBeatIndex = -1;
             }
 
-            public void CancelPendingCommands() {
-                pendingCommands.Clear();
-                attemptedCommands.Clear();
-                isInputLocked = false;
-                lockedBeatIndex = -1;
-            }
+            public void CancelPendingCommands() => pendingBeatIndex = -1;
 
             public void ResetForLoop() {
                 CancelPendingCommands();
+                successfulBeats.Clear();
                 ResetMissPenalty();
                 comboCount.OnNext(0);
             }

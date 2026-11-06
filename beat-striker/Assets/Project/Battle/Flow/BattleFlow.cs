@@ -413,6 +413,11 @@ namespace Alice {
             await LeaveOnlineBattleAppStateIfNeededAsync();
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync completed. requesting start transition to ResultMenu");
             var startResult = sceneTransitionService.RequestStartTransition(nextScene);
+            if (startResult.IsSuccess && sceneTransitionService.IsTransitioning &&
+                (playerSession.Mode == BattlePlayMode.Local && nextScene == AppScene.ResultMenu ||
+                 playerSession.IsTrial && nextScene == AppScene.Title)) {
+                playerSession.QueueFeedback(nextScene);
+            }
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync start transition result. nextScene={nextScene}, isSuccess={startResult.IsSuccess}");
         }
 
@@ -423,7 +428,6 @@ namespace Alice {
             while (true) {
                 var choice = await trialDialog.AskAsync(heading, message, new[] { "続けて挑戦", "一旦終わる" }, inputPlayerId: 0, directInput: true, grade: profile.grade);
                 if (choice == 1) {
-                    playerSession.SetMode(BattlePlayMode.Local);
                     return AppScene.Title;
                 }
                 try {

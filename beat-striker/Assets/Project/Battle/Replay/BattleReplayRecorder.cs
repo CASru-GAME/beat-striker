@@ -141,6 +141,7 @@ namespace Alice {
                 appVersion = Application.version,
                 replayPayload = new ReplayPayload {
                     schemaVersion = 1,
+                    executesCommandsImmediately = beatJudge.ExecutesCommandsImmediately,
                     stage = selectedStage.ToString(),
                     musicId = selectedMusicId,
                     strikerIds = strikerIds,
@@ -159,7 +160,7 @@ namespace Alice {
             currentRound.BeatNotifications.Add(new ReplayBeatNotificationPayload {
                 playerId = playerId,
                 beatIndex = result.BeatIndex,
-                time = kind == OnlineBeatNotificationKind.Pass ? Mathf.Max(0f, result.Time - 0.03f) : result.Time,
+                time = result.Time,
                 kind = (int)kind,
                 zone = (int)result.Zone,
                 button = (int)result.Button,

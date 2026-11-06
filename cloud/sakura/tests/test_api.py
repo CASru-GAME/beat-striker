@@ -99,7 +99,7 @@ class SakuraApiTests(unittest.TestCase):
         self.temporary.cleanup()
 
     def request(self, route="/", method="GET", body=None, query=None, raw=None,
-                content_type="application/json"):
+                content_type="application/json", html=False):
         data = raw
         if body is not None:
             data = json.dumps(body, ensure_ascii=False).encode("utf-8")
@@ -112,6 +112,8 @@ class SakuraApiTests(unittest.TestCase):
             response = error
         with response:
             raw_response = response.read()
+            if html:
+                return response.status, raw_response.decode("utf-8"), response.headers
             result = json.loads(raw_response) if raw_response else None
             return response.status, result, response.headers
 
@@ -153,6 +155,55 @@ class SakuraApiTests(unittest.TestCase):
         names = [item['name'] for item in self.request('/players', query={'grade': 0})[1]['items']]
         self.assertIn('ABC', names)
         self.assertIn('abc', names)
+
+    def test_feedback_is_immutable_per_name_and_persists(self):
+        route = '/feedback'
+        self.assertFalse(self.request(route, query={'name': '奏者'})[1]['submitted'])
+        comment = '🎵' * 200
+        self.assertEqual(self.request(route, 'POST', {'name': '奏者', 'comment': comment})[0], 201)
+        self.assertEqual(self.request(route, 'POST', {'name': ' 奏者 ', 'comment': '上書き'})[0], 409)
+        for method in ['PUT', 'PATCH', 'DELETE']:
+            self.assertEqual(self.request(route, method, {'name': '奏者', 'comment': '上書き'})[0], 405)
+
+        self.assertEqual(self.request(route, 'POST', {'name': '別の奏者', 'comment': ''})[0], 201)
+        self.assertEqual(self.request(route, 'POST', {'name': '別の奏者', 'comment': '後から送信'})[0], 409)
+        for invalid in [None, [], 'あ' * 201, '\n' * 201]:
+            self.assertEqual(self.request(route, 'POST', {'name': '無効', 'comment': invalid})[0], 400)
+        self.assertEqual(self.request(route, 'POST', {'name': 'ゲスト', 'comment': ''})[0], 400)
+        self.assertFalse(self.request(route, query={'name': '無効'})[1]['submitted'])
+
+        database = self.root / 'beat-striker-data' / 'history.sqlite3'
+        with closing(sqlite3.connect(database)) as connection, connection:
+            for statement in ["UPDATE player_feedback SET comment = ''", "DELETE FROM player_feedback"]:
+                with self.assertRaisesRegex(sqlite3.IntegrityError, 'feedback is immutable'):
+                    connection.execute(statement)
+        self.stop_server()
+        self.start_server()
+        self.assertTrue(self.request(route, query={'name': '奏者'})[1]['submitted'])
+        self.assertTrue(self.request(route, query={'name': '別の奏者'})[1]['submitted'])
+        _, page, _ = self.request('/feedback-list', html=True)
+        self.assertIn(comment, page)
+        self.assertIn('（本文なし）', page)
+        self.assertNotIn('上書き', page)
+
+    def test_feedback_list_escapes_html_and_paginates(self):
+        route = '/feedback-list'
+        status, page, headers = self.request(route, html=True)
+        self.assertEqual(status, 200)
+        self.assertIn('text/html', headers['Content-Type'])
+        self.assertIn('表示する感想はありません', page)
+        self.assertEqual(self.request('/feedback', 'POST', {'name': '<b>', 'comment': '<script>例</script>\n感想'})[0], 201)
+        for index in range(50):
+            self.assertEqual(self.request('/feedback', 'POST', {'name': f'奏者{index}', 'comment': ''})[0], 201)
+        _, page, _ = self.request(route, html=True)
+        self.assertEqual(page.count('<article>'), 50)
+        self.assertIn('before=2', page)
+        self.assertNotIn('&lt;b&gt;', page)
+        _, page, _ = self.request(route, query={'before': 2}, html=True)
+        self.assertEqual(page.count('<article>'), 1)
+        self.assertIn('&lt;b&gt;', page)
+        self.assertIn('&lt;script&gt;例&lt;/script&gt;\n感想', page)
+        self.assertNotIn('<script>', page)
 
     def test_trial_promotion_idempotency_and_losses(self):
         self.profile('挑戦者')

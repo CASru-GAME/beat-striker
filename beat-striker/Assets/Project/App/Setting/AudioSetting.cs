@@ -12,6 +12,7 @@ namespace Alice {
         ReadOnlyReactiveProperty<float> BeatTimeOffset { get; }
         float MinimumPlaybackSeconds { get; }
         ReadOnlyReactiveProperty<float> GoodWindow { get; }
+        float OfflineGoodWindow { get; }
         ReadOnlyReactiveProperty<float> ExcellentWindow { get; }
         ReadOnlyReactiveProperty<float> GoodScoreMultiplier { get; }
         ReadOnlyReactiveProperty<float> ExcellentScoreMultiplier { get; }
@@ -30,7 +31,11 @@ namespace Alice {
         [Tooltip("ビートデータの全時刻に加算するグローバル補正（秒）。正の値でビートが遅れ、負の値で早まります。")]
         [SerializeField] float beatTimeOffset = 0;
         [FormerlySerializedAs("perfectWindow")]
+        [Tooltip("オンラインの入力受付時間（拍の前、秒）。")]
         [SerializeField] float goodWindow = 0.1f;
+        [Tooltip("オフラインの入力受付時間（拍の前後それぞれ、秒）。")]
+        [Min(0f)]
+        [SerializeField] float offlineGoodWindow = 0.25f;
         [SerializeField] float excellentWindow = 0.05f;
         [SerializeField] float goodScoreMultiplier = 1f;
         [SerializeField] float excellentScoreMultiplier = 1.5f;
@@ -72,6 +77,7 @@ namespace Alice {
             }
         }
         public float MinimumPlaybackSeconds => minimumPlaybackSeconds;
+        public float OfflineGoodWindow => Mathf.Max(0f, offlineGoodWindow);
         public ReadOnlyReactiveProperty<float> GoodWindow {
             get {
                 EnsureInitialized();

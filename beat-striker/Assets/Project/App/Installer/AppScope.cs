@@ -35,6 +35,7 @@ namespace Alice {
 		[SerializeField] VirtualTouchControllerCanvasView virtualTouchControllerCanvasView;
 		[SerializeField] LoadingView loadingView;
 		[SerializeField] AppOverlayView appOverlayView;
+		[SerializeField] ChoiceDialogView feedbackDialog;
         [SerializeField] TrialSetting trialSetting;
 
 		public IAppAudioPlayer AppAudioPlayer => appAudioPlayer;
@@ -116,7 +117,7 @@ namespace Alice {
             builder.RegisterInstance(new PlayerRecordStorage(System.IO.Path.Combine(Application.persistentDataPath, "player-records")));
             builder.Register<RankingNavigationState>(Lifetime.Singleton);
             builder.RegisterInstance(trialSetting);
-            builder.Register<IPlayerRecordsApiClient, PlayerRecordsApiClient>(Lifetime.Singleton);
+            builder.Register<PlayerRecordsApiClient>(Lifetime.Singleton).As<IPlayerRecordsApiClient>().As<IPlayerFeedbackApiClient>();
             builder.RegisterEntryPoint<PlayerProfileService>(Lifetime.Singleton).AsSelf().As<IPlayerProfileService>();
             builder.Register<TrialController>(Lifetime.Singleton);
 
@@ -127,6 +128,7 @@ namespace Alice {
 			builder.RegisterEntryPoint<OnlineDuelFusionClient>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<MatchingController>(Lifetime.Singleton).AsSelf().As<IMatchingDuelOperations>();
 			builder.RegisterEntryPoint<AppOverlayPresenter>(Lifetime.Singleton);
+			builder.RegisterEntryPoint<PlayerFeedbackPresenter>(Lifetime.Singleton).WithParameter(feedbackDialog);
 
 			builder.RegisterBuildCallback(container => {
 				Debug.Log($"{LOG_PREFIX} BuildCallback begin. scene={gameObject.scene.name}");

@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using R3;
 
 namespace Alice {
     public enum BattlePlayMode { Local, Trial, Online, Replay, Tutorial }
+    internal record PlayerFeedbackCandidate(int Slot, string Name);
 
     public class PlayerSession : IDisposable {
         readonly Subject<Unit> changed = new();
         bool disposed;
         readonly Dictionary<int, string> slotNames = new();
         PlayerIdentity[] participants = Array.Empty<PlayerIdentity>();
+        (AppScene Destination, PlayerFeedbackCandidate[] Candidates)? pendingFeedback;
         public BattlePlayMode Mode { get; private set; }
         public string BattleId { get; private set; } = "";
         public int TrialTargetGrade { get; private set; } = -1;
@@ -34,6 +37,20 @@ namespace Alice {
             TrialTargetGrade = IsTrial && trialStartGrade < 5 ? trialStartGrade + 1 : -1;
             TrialPlayerName = IsTrial ? identities[0].name : "";
             changed.OnNext(Unit.Default);
+        }
+        internal void QueueFeedback(AppScene destination) {
+            pendingFeedback = (destination, participants
+                .Select((player, slot) => new { player, slot })
+                .Where(entry => !entry.player.isCpu && !string.IsNullOrWhiteSpace(entry.player.name) && entry.player.name != PlayerProfileService.GuestName)
+                .GroupBy(entry => entry.player.name, StringComparer.Ordinal)
+                .Select(group => new PlayerFeedbackCandidate(group.First().slot, group.Key))
+                .ToArray());
+        }
+        internal PlayerFeedbackCandidate[] TakeFeedback(AppScene destination) {
+            var pending = pendingFeedback;
+            pendingFeedback = null;
+            return pending.HasValue && pending.Value.Destination == destination
+                ? pending.Value.Candidates : Array.Empty<PlayerFeedbackCandidate>();
         }
         public void Dispose() {
             if (disposed) return;

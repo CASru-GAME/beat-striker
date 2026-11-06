@@ -70,6 +70,7 @@ namespace Alice {
     [Serializable]
     public class ReplayPayload {
         public int schemaVersion = 1;
+        public bool executesCommandsImmediately;
         public string stage;
         public string musicId;
         public int[] strikerIds = Array.Empty<int>();

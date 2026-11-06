@@ -81,17 +81,8 @@ namespace Alice {
                 .Subscribe(balance => tutorialView.SetNarrationVolume(balance.MasterVolume * balance.SeVolume))
                 .AddTo(subscriptions);
 
-            var beatPlayer = beatJudge.GetBeatPlayer(TUTORIAL_PLAYER_ID);
-
-            beatPlayer.OnBeatPassed
+            musicPlayer.OnBeatTiming
                 .Subscribe(_ => { TryStartTutorialSequence(); tutorialView.PulseRhythmGuide(); })
-                .AddTo(subscriptions);
-
-            beatPlayer.OnBeatCommandExecuted
-                .Subscribe(_event => {
-                    TryStartTutorialSequence();
-                    tutorialView.PulseRhythmGuide();
-                })
                 .AddTo(subscriptions);
         }
 

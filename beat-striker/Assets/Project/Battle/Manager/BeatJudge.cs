@@ -13,6 +13,9 @@ namespace Alice {
     public record BeatPlayerBattleResult(int Score, int Excellent, int Good, int Miss, int MaxCombo);
 
     public interface IBeatjudge {
+        bool ExecutesCommandsImmediately { get; }
+        bool IsPaused { get; }
+        void ApplyReplayNotification(ReplayBeatNotificationPayload notification);
         IBeatPlayer GetBeatPlayer(int playerId);
         IReadOnlyDictionary<PlayerId, BeatPlayerBattleResult> GetBattleResults();
         void ResetBattleState();
@@ -47,13 +50,15 @@ namespace Alice {
         readonly BeatOnlineCommandBuffer onlineCommandBuffer;
         readonly IStrikerRegistry strikerRegistry;
         readonly IMusicPlayer musicPlayer;
+        readonly IReplaySetting replaySetting;
         readonly List<IDisposable> subscriptions = new();
         readonly Queue<IMusicPlayer.BeatSignal> pendingOnlineBeatSignals = new();
         readonly HashSet<PreBeatStatePublishKey> publishedPreBeatStateSnapshotKeys = new();
         readonly HashSet<int> appliedPreBeatStateSnapshotBeats = new();
         readonly int[] lastReceivedOnlineBeatIndexByPlayer = new int[PLAYER_COUNT];
         BeatPlayer[] beatPlayer = new BeatPlayer[PLAYER_COUNT];
-        float lastCommandPlaybackTime = -1f;
+        float lastOfflinePlaybackTime = -1f;
+        int nextOfflineBeatIndex;
         int lastOnlineBeatIndex = -1;
         bool isOnlineBeatDrainRunning;
         bool isPaused;
@@ -64,16 +69,21 @@ namespace Alice {
 
         record PreBeatStatePublishKey(int BeatIndex, int SlotIndex);
 
+        public bool ExecutesCommandsImmediately => !IsOnlineBattle()
+            && (!replaySetting.TryGetReplay(out var replay) || replay.executesCommandsImmediately);
+        public bool IsPaused => isPaused || isOnlineNotificationWaitPaused;
+
         [Inject]
         public BeatJudge(IGamePadRegistry gamePadRegistry, IMusicPlayer musicPlayer, IAudioSetting audioSetting,
             IAppNetworkSetting appNetworkSetting, IBattleOnlineSync battleOnlineSync,
-            BeatOnlineCommandBuffer onlineCommandBuffer, IStrikerRegistry strikerRegistry) {
+            BeatOnlineCommandBuffer onlineCommandBuffer, IStrikerRegistry strikerRegistry, IReplaySetting replaySetting) {
             this.audioSetting = audioSetting;
             this.appNetworkSetting = appNetworkSetting;
             this.battleOnlineSync = battleOnlineSync;
             this.onlineCommandBuffer = onlineCommandBuffer;
             this.strikerRegistry = strikerRegistry;
             this.musicPlayer = musicPlayer;
+            this.replaySetting = replaySetting;
 
 
             for (int i = 0; i < beatPlayer.Length; i++) {
@@ -93,79 +103,7 @@ namespace Alice {
                     beatPlayer[playerIndex].ClearInputDirection();
                 }));
 
-                var subscription = gamePad.OnButtonDown.Subscribe(button => {
-                    if (isPaused || isOnlineNotificationWaitPaused) {
-                        return;
-                    }
-
-                    if (musicPlayer.CurrentBeatTimeline.Length == 0) {
-                        return;
-                    }
-
-                var player = beatPlayer[playerIndex];
-                var time = musicPlayer.CurrentPlaybackTime;
-                Debug.Log($"{LOG_PREFIX} OnButtonDown received. player={playerIndex}, button={button}, time={time:0.000}, isOnline={IsOnlineBattle()}, paused={isPaused}, onlineWaitPaused={isOnlineNotificationWaitPaused}");
-                if (!IsOnlineBattle() && lastCommandPlaybackTime >= 0f && time < lastCommandPlaybackTime - 1.0f) {
-                    for (var j = 0; j < beatPlayer.Length; j++) {
-                        beatPlayer[j].ResetForLoop();
-                        }
-
-                        ResetOnlineCommandState();
-                    }
-
-                    lastCommandPlaybackTime = time;
-
-                    if (player.IsInputLocked) {
-                        Debug.Log($"{LOG_PREFIX} OnButtonDown ignored because input is locked. player={playerIndex}, button={button}, time={time:0.000}");
-                        return;
-                    }
-
-                    var result = musicPlayer.JudgeTiming(time);
-                    var isTimingSuccess = result.Zone != BeatJudgeZone.Miss && time < result.BeatTime;
-
-                    if (IsOnlineBattle() && result.BeatIndex <= lastOnlineBeatIndex) {
-                        isTimingSuccess = false;
-                    }
-                    if (!isTimingSuccess) {
-                        var upcomingBeatIndex = FindUpcomingPlayableBeat(time);
-                        if (player.IsBeatForfeited(upcomingBeatIndex)) return;
-
-                        var forfeitedBeatIndex = player.RegisterMiss(upcomingBeatIndex, Time.unscaledTimeAsDouble);
-                        Debug.Log($"{LOG_PREFIX} OnButtonDown judged as miss. player={playerIndex}, button={button}, beat={result.BeatIndex}, zone={result.Zone}");
-                        player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(
-                            result.BeatIndex,
-                            time,
-                            false,
-                            BeatJudgeZone.Miss,
-                            button,
-                            player.CurrentInputDirection,
-                            player.ComboCount.CurrentValue,
-                            forfeitedBeatIndex));
-                        return;
-                    }
-
-                    if (player.IsBeatForfeited(result.BeatIndex)) return;
-
-                    var isGood = player.TrySavePendingCommand(result.BeatIndex, result.Zone, button,
-                        player.CurrentInputDirection);
-
-                    if (isGood) {
-                        player.ResetMissStreak();
-                        player.LockInputUntilBeat(result.BeatIndex);
-                        var beatResult = new IBeatPlayer.BeatResult(result.BeatIndex, time, true, result.Zone, button,
-                            player.CurrentInputDirection, player.ComboCount.CurrentValue);
-                        player.onBeatCommandRequested.OnNext(beatResult);
-                        SubmitLocalOnlineCommandIfNeeded(playerIndex, beatResult);
-                        Debug.Log($"{LOG_PREFIX} OnButtonDown accepted. player={playerIndex}, button={button}, beat={beatResult.BeatIndex}, zone={beatResult.Zone}, direction={beatResult.Direction}");
-                    }
-                    else {
-                        Debug.Log($"{LOG_PREFIX} OnButtonDown timing accepted but command not saved. player={playerIndex}, button={button}, beat={result.BeatIndex}, zone={result.Zone}, inputDirection={player.CurrentInputDirection}");
-                    }
-
-                    // Record that player attempted this beat so it's not considered a pass later
-                    player.RecordAttempt(result.BeatIndex);
-                });
-                subscriptions.Add(subscription);
+                subscriptions.Add(gamePad.OnButtonDown.Subscribe(button => HandleButtonDown(playerIndex, button)));
             }
 
             Debug.Log($"{LOG_PREFIX} Constructed. playerCount={beatPlayer.Length}, localOnlinePlayerId={appNetworkSetting.LocalOnlinePlayerId}, isOnline={IsOnlineBattle()}, battleSyncReady={battleOnlineSync.IsReady}");
@@ -173,69 +111,134 @@ namespace Alice {
             subscriptions.Add(battleOnlineSync.OnBeatNotificationReceived.Subscribe(ApplyOnlineBeatNotification));
 
             subscriptions.Add(Observable.EveryUpdate().Subscribe(_ => {
+                UpdateOfflineBeats(musicPlayer.CurrentPlaybackTime);
                 UpdateOnlinePreBeatStateSnapshots();
             }));
-
+            subscriptions.Add(musicPlayer.OnBeatTimelinePrepared.Subscribe(_ => ResetOfflineTracking()));
             subscriptions.Add(musicPlayer.OnPlaybackLooped.Subscribe(_ => {
-                foreach (var player in beatPlayer) player.ResetMissPenalty();
+                if (ExecutesCommandsImmediately) ObserveOfflinePlaybackTime(musicPlayer.CurrentPlaybackTime);
+                else foreach (var player in beatPlayer) player.ResetMissPenalty();
             }));
-
-            subscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(signal => {
-                if (isPaused) {
-                    return;
-                }
-
-                if (IsOnlineBattle()) {
-                    EnqueueOnlineBeatSignal(signal);
-                    return;
-                }
-
-                for (var playerIndex = 0; playerIndex < beatPlayer.Length; playerIndex++) {
-                    if (!beatPlayer[playerIndex].TryConsumePendingCommand(signal.BeatIndex, out var zone,
-                            out var button, out var direction)) {
-                        // If player attempted this beat (but it wasn't saved as pending), it's a miss rather than a pass
-                        if (beatPlayer[playerIndex].HasAttempt(signal.BeatIndex)) {
-                            beatPlayer[playerIndex].ClearAttempt(signal.BeatIndex);
-                            beatPlayer[playerIndex].ResetCombo();
-                            beatPlayer[playerIndex].IncrementMiss();
-                            beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(
-                                new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false, BeatJudgeZone.Miss,
-                                    default, Vector2.zero, beatPlayer[playerIndex].ComboCount.CurrentValue));
-                            continue;
-                        }
-
-                        // No pending command and no attempt -> player passed the beat
-                        beatPlayer[playerIndex].ResetCombo();
-                        beatPlayer[playerIndex].IncrementMiss();
-                        beatPlayer[playerIndex].onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex,
-                            signal.BeatTime, false, BeatJudgeZone.Miss, default,
-                            beatPlayer[playerIndex].CurrentInputDirection,
-                            beatPlayer[playerIndex].ComboCount.CurrentValue));
-                        continue;
-                    }
-
-                    beatPlayer[playerIndex].UnlockInputIfBeatMatched(signal.BeatIndex);
-                    beatPlayer[playerIndex].IncrementCombo();
-                    if (zone == BeatJudgeZone.Excellent) {
-                        beatPlayer[playerIndex].IncrementExcellent();
-                    }
-                    else if (zone == BeatJudgeZone.Good) {
-                        beatPlayer[playerIndex].IncrementGood();
-                    }
-
-                    beatPlayer[playerIndex].AddScore(CalculateScore(zone));
-                    beatPlayer[playerIndex].onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex,
-                        signal.BeatTime, true, zone, button, direction,
-                        beatPlayer[playerIndex].ComboCount.CurrentValue));
-                }
-            }));
+            subscriptions.Add(musicPlayer.OnBeatTiming.Subscribe(HandleBeatTiming));
         }
 
-        int FindUpcomingPlayableBeat(float playbackTime) {
+        void HandleButtonDown(int playerIndex, GamePadButton button) {
+            if (isPaused || isOnlineNotificationWaitPaused || replaySetting.HasReplay
+                || musicPlayer.CurrentBeatTimeline.Length == 0) return;
+
+            var time = musicPlayer.CurrentPlaybackTime;
+            var immediate = ExecutesCommandsImmediately;
+            if (immediate) UpdateOfflineBeats(time);
+            // A missed beat can synchronously pause the tutorial while deadlines are processed.
+            if (isPaused) return;
+
+            var player = beatPlayer[playerIndex];
+            if (player.IsInputLocked) return;
+
+            var result = immediate
+                ? musicPlayer.JudgeOfflineTiming(time, player.IsBeatAvailable)
+                : musicPlayer.JudgeTiming(time);
+            var isSuccess = result.Zone != BeatJudgeZone.Miss;
+            if (!immediate) {
+                isSuccess &= time < result.BeatTime && (!IsOnlineBattle() || result.BeatIndex > lastOnlineBeatIndex);
+            }
+            if (!isSuccess) {
+                // Repeated presses on an already resolved beat do not consume a future beat.
+                if (immediate && musicPlayer.JudgeOfflineTiming(time, index => !player.IsBeatAvailable(index)).BeatIndex >= 0) return;
+                ReportInputMiss(player, button, time, result.BeatIndex);
+                return;
+            }
+            if (player.IsBeatForfeited(result.BeatIndex)) return;
+
+            var command = new IBeatPlayer.BeatResult(result.BeatIndex, time, true, result.Zone, button,
+                player.CurrentInputDirection, player.ComboCount.CurrentValue);
+            player.ResetMissStreak();
+            // Reserve before publishing, so a reentrant input cannot execute the same beat twice.
+            if (immediate) player.MarkSucceeded(result.BeatIndex);
+            else player.ReserveOnlineBeat(result.BeatIndex);
+            player.onBeatCommandRequested.OnNext(command);
+            if (immediate) ExecuteCommand(player, command);
+            else SubmitLocalOnlineCommandIfNeeded(playerIndex, command);
+        }
+
+        void ReportInputMiss(BeatPlayer player, GamePadButton button, float time, int beatIndex) {
+            var upcomingBeatIndex = FindUpcomingPlayableBeat(time, player);
+            if (player.IsBeatForfeited(upcomingBeatIndex)) return;
+            var forfeitedBeatIndex = player.RegisterMiss(upcomingBeatIndex, Time.unscaledTimeAsDouble);
+            player.onBeatCommandRequested.OnNext(new IBeatPlayer.BeatResult(beatIndex, time, false,
+                BeatJudgeZone.Miss, button, player.CurrentInputDirection, player.ComboCount.CurrentValue,
+                forfeitedBeatIndex));
+        }
+
+        void HandleBeatTiming(IMusicPlayer.BeatSignal signal) {
+            if (!isPaused && IsOnlineBattle()) EnqueueOnlineBeatSignal(signal);
+        }
+
+        public void ApplyReplayNotification(ReplayBeatNotificationPayload notification) {
+            if (!replaySetting.HasReplay || isPaused) return;
+            var player = beatPlayer[notification.playerId];
+            var direction = new Vector2(notification.directionX, notification.directionY);
+            var button = (GamePadButton)notification.button;
+            if ((OnlineBeatNotificationKind)notification.kind == OnlineBeatNotificationKind.Pass) {
+                PassBeat(player, notification.beatIndex, notification.time, direction, button);
+                return;
+            }
+
+            var zone = (BeatJudgeZone)notification.zone;
+            var result = new IBeatPlayer.BeatResult(notification.beatIndex, notification.time,
+                zone != BeatJudgeZone.Miss, zone, button, direction, player.ComboCount.CurrentValue);
+            player.onBeatCommandRequested.OnNext(result);
+            if (result.IsSuccess) ExecuteCommand(player, result);
+        }
+
+        void ExecuteCommand(BeatPlayer player, IBeatPlayer.BeatResult command) {
+            player.IncrementCombo();
+            if (command.Zone == BeatJudgeZone.Excellent) player.IncrementExcellent();
+            else if (command.Zone == BeatJudgeZone.Good) player.IncrementGood();
+            player.AddScore(CalculateScore(command.Zone));
+            player.onBeatCommandExecuted.OnNext(command with { ComboCount = player.ComboCount.CurrentValue });
+        }
+
+        void PassBeat(BeatPlayer player, int beatIndex, float time, Vector2 direction, GamePadButton button = default) {
+            player.ResetCombo();
+            player.IncrementMiss();
+            player.onBeatPassed.OnNext(new IBeatPlayer.BeatResult(beatIndex, time, false,
+                BeatJudgeZone.Miss, button, direction, player.ComboCount.CurrentValue));
+        }
+
+        void ResetOfflineTracking() {
+            lastOfflinePlaybackTime = -1f;
+            nextOfflineBeatIndex = 0;
+            foreach (var player in beatPlayer) player.ResetForLoop();
+        }
+
+        void ObserveOfflinePlaybackTime(float time) {
+            if (lastOfflinePlaybackTime >= 0f && time < lastOfflinePlaybackTime) ResetOfflineTracking();
+            lastOfflinePlaybackTime = time;
+        }
+
+        void UpdateOfflineBeats(float time) {
+            if (!ExecutesCommandsImmediately || replaySetting.HasReplay) return;
+            ObserveOfflinePlaybackTime(time);
+            var judgeTime = time + audioSetting.CommandTimeOffset.CurrentValue;
+            var timeline = musicPlayer.CurrentBeatTimeline;
+            while (nextOfflineBeatIndex < timeline.Length
+                   && judgeTime > timeline[nextOfflineBeatIndex] + audioSetting.OfflineGoodWindow) {
+                var beatIndex = nextOfflineBeatIndex++;
+                if (isPaused) continue;
+                foreach (var player in beatPlayer) {
+                    if (isPaused) break;
+                    if (!player.HasSucceeded(beatIndex)) PassBeat(player, beatIndex, time, player.CurrentInputDirection);
+                }
+            }
+        }
+
+        int FindUpcomingPlayableBeat(float playbackTime, BeatPlayer player) {
             var judgeTime = playbackTime + audioSetting.CommandTimeOffset.CurrentValue;
             var timeline = musicPlayer.CurrentBeatTimeline;
             var firstIndex = IsOnlineBattle() ? lastOnlineBeatIndex + 1 : 0;
             for (var index = firstIndex; index < timeline.Length; index++) {
+                if (player.HasSucceeded(index)) continue;
                 if (timeline[index] > playbackTime && timeline[index] >= judgeTime) return index;
             }
 
@@ -553,24 +556,12 @@ namespace Alice {
             var player = beatPlayer[playerId];
             player.ClearSubmittedCommand(signal.BeatIndex);
             if (notification.Kind != OnlineBeatNotificationKind.Command) {
-                player.ResetCombo();
-                player.IncrementMiss();
-                player.onBeatPassed.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, false,
-                    BeatJudgeZone.Miss, notification.Button, notification.Direction, player.ComboCount.CurrentValue));
+                PassBeat(player, signal.BeatIndex, signal.BeatTime, notification.Direction, notification.Button);
                 Debug.Log($"{LOG_PREFIX} ExecuteOnlineNotification pass. player={playerId}, beat={signal.BeatIndex}, kind={notification.Kind}");
                 return;
             }
 
-            player.IncrementCombo();
-            if (notification.Zone == BeatJudgeZone.Excellent) {
-                player.IncrementExcellent();
-            }
-            else if (notification.Zone == BeatJudgeZone.Good) {
-                player.IncrementGood();
-            }
-
-            player.AddScore(CalculateScore(notification.Zone));
-            player.onBeatCommandExecuted.OnNext(new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, true,
+            ExecuteCommand(player, new IBeatPlayer.BeatResult(signal.BeatIndex, signal.BeatTime, true,
                 notification.Zone, notification.Button, notification.Direction, player.ComboCount.CurrentValue));
             Debug.Log($"{LOG_PREFIX} ExecuteOnlineNotification command. player={playerId}, beat={signal.BeatIndex}, zone={notification.Zone}, button={notification.Button}, direction={notification.Direction}, combo={player.ComboCount.CurrentValue}");
         }
@@ -656,7 +647,7 @@ namespace Alice {
         }
 
         public void ResetBattleState() {
-            lastCommandPlaybackTime = -1f;
+            ResetOfflineTracking();
             ResetOnlineCommandState();
             for (var playerId = 0; playerId < beatPlayer.Length; playerId++) {
                 beatPlayer[playerId].ResetBattleState();
@@ -664,14 +655,11 @@ namespace Alice {
         }
 
         public void ResetRoundState() {
-            lastCommandPlaybackTime = -1f;
+            ResetOfflineTracking();
             if (IsOnlineBattle()) {
                 ResetOnlineCommandStateForRoundResume();
             } else {
                 ResetOnlineCommandState();
-            }
-            for (var i = 0; i < beatPlayer.Length; i++) {
-                beatPlayer[i].ResetForLoop();
             }
         }
 
@@ -686,6 +674,8 @@ namespace Alice {
         }
 
         public void Resume() {
+            // Skip deadlines that elapsed while music continued during a tutorial pause.
+            if (isPaused) UpdateOfflineBeats(musicPlayer.CurrentPlaybackTime);
             isPaused = false;
         }
 

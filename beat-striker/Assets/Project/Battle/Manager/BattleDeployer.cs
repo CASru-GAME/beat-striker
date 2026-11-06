@@ -397,7 +397,8 @@ namespace Alice {
                     if (beatResult.Button == GamePadButton.Select) {
                         instance.CompleteBeat();
                         if (!replaySetting.HasReplay) {
-                            pendingPauseBeatIndexes.Add(beatResult.BeatIndex);
+                            if (beatJudge.ExecutesCommandsImmediately) battlePresenter.RequestPauseMenu();
+                            else pendingPauseBeatIndexes.Add(beatResult.BeatIndex);
                         }
                         return;
                     }
