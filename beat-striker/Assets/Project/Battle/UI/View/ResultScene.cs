@@ -9,8 +9,6 @@ using VContainer;
 
 public class ResultScene : System.IDisposable
 {
-    const int MAX_RESULT_INPUT_PLAYER_SLOTS = 8;
-
     enum ResultPhase
     {
         Hidden,
@@ -21,7 +19,6 @@ public class ResultScene : System.IDisposable
     readonly IPlayerSelectSetting playerSelectSetting;
     readonly IAppStrikerRegistry appStrikerRegistry;
     readonly IGamePadRegistry gamePadRegistry;
-    readonly PlayerSession playerSession;
     readonly IInputFocusService focus;
     readonly System.IDisposable focusRegistration;
     readonly ResultSceneView resultSceneView;
@@ -33,7 +30,7 @@ public class ResultScene : System.IDisposable
     bool disposed;
 
     [Inject]
-    public ResultScene(ResultSceneView resultSceneView, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IGamePadRegistry gamePadRegistry, PlayerSession playerSession, IInputFocusService focus)
+    public ResultScene(ResultSceneView resultSceneView, IPlayerSelectSetting playerSelectSetting, IAppStrikerRegistry appStrikerRegistry, IGamePadRegistry gamePadRegistry, IInputFocusService focus)
     {
         this.resultSceneView = resultSceneView;
         this.focus = focus;
@@ -41,7 +38,6 @@ public class ResultScene : System.IDisposable
         this.playerSelectSetting = playerSelectSetting;
         this.appStrikerRegistry = appStrikerRegistry;
         this.gamePadRegistry = gamePadRegistry;
-        this.playerSession = playerSession;
         LoadStrikerPortraits();
         resultSceneView.InitializeInactiveState();
         resultPhase = ResultPhase.Hidden;
@@ -87,7 +83,7 @@ public class ResultScene : System.IDisposable
         resultInputSubscriptions.Clear();
 
         gamePadRegistry.OnAnyButtonDown
-            .Where(input => input.Button == GamePadButton.East && (!playerSession.IsTrial || input.PlayerId == 0)
+            .Where(input => input.Button == GamePadButton.East
                 && focus.CanReceive(resultSceneView.ResultRoot.transform, input.PlayerId))
             .Subscribe(_ => AdvanceResultPhase()).AddTo(resultInputSubscriptions);
     }
@@ -97,7 +93,10 @@ public class ResultScene : System.IDisposable
         try {
             resultSceneView.ResultPanelButton.StartPhase1FromFlow();
             await resultSceneView.ResultPanelButton.WaitForPhase1CompletedAsync();
-            if (!disposed && resultPhase == ResultPhase.Summary) canAdvancePhase = true;
+            if (!disposed && resultPhase == ResultPhase.Summary) {
+                canAdvancePhase = true;
+                resultSceneView.ShowAdvanceGuide("詳細へ");
+            }
         } catch (System.OperationCanceledException) { }
     }
 
@@ -120,6 +119,7 @@ public class ResultScene : System.IDisposable
             return;
         }
 
+        resultSceneView.HideAdvanceGuide();
         if (resultPhase == ResultPhase.Summary)
         {
             resultPhase = ResultPhase.Detail;
@@ -139,7 +139,10 @@ public class ResultScene : System.IDisposable
         try {
             resultSceneView.ResultPanelButton.ContinueToPhase2FromFlow();
             await resultSceneView.ResultPanelButton.WaitForPhase2CompletedAsync();
-            if (!disposed && resultPhase == ResultPhase.Detail) canAdvancePhase = true;
+            if (!disposed && resultPhase == ResultPhase.Detail) {
+                canAdvancePhase = true;
+                resultSceneView.ShowAdvanceGuide("次へ");
+            }
         } catch (System.OperationCanceledException) { }
     }
 

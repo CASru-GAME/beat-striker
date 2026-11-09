@@ -57,13 +57,8 @@ public class ResultPanelButton : MonoBehaviour
     
     [Header("GoBack Button Animation")]
     public GameObject goBackSceneImage; // 白いImage（GoBackSceneImage）
-    public GameObject nextText; // Textオブジェクト（Next）
     public float goBackDelay = 0.2f; // GoBackボタン出現の遅延（Icon開始からの時間）
     public float goBackScaleDuration = 0.5f; // GoBackボタンスケール時間
-    public float nextTextDelay = 0.5f; // Nextテキスト出現の遅延（GoBackアニメーション完了からの時間）
-    public float nextTextFadeDuration = 0.8f; // NextテキストフェードIN/OUT時間（1サイクル）
-    public float nextTextMinAlpha = 0.3f; // Nextテキストの最小透明度
-    public float nextTextMaxAlpha = 1f; // Nextテキストの最大透明度
     
     [Header("Auto Start")]
     public bool autoStart = true; // 自動的にアニメーションを開始するか
@@ -93,7 +88,6 @@ public class ResultPanelButton : MonoBehaviour
     // GoBackボタン関連
     private RectTransform goBackRect;
     private Button goBackButton;
-    private CanvasGroup nextTextCanvasGroup;
     private TaskCompletionSource<bool> phase1CompletionSource;
     private TaskCompletionSource<bool> phase2CompletionSource;
     private bool hasPlayedPhase1;
@@ -197,17 +191,6 @@ public class ResultPanelButton : MonoBehaviour
             {
                 goBackButton.interactable = false;
             }
-        }
-        
-        // Nextテキストの初期設定
-        if (nextText != null)
-        {
-            nextTextCanvasGroup = nextText.GetComponent<CanvasGroup>();
-            if (nextTextCanvasGroup == null)
-            {
-                nextTextCanvasGroup = nextText.AddComponent<CanvasGroup>();
-            }
-            nextTextCanvasGroup.alpha = 0f;
         }
         
         // ボタンクリックイベント
@@ -380,7 +363,7 @@ public class ResultPanelButton : MonoBehaviour
             scoreStartTime + scoreSlideDuration,
             comboStartTime + comboSlideDuration,
             iconStartTime + iconPopupDuration,
-            goBackStartTime + goBackScaleDuration + nextTextDelay);
+            goBackStartTime + goBackScaleDuration);
         var completion = phase2CompletionSource;
         LeanTween.delayedCall(gameObject, completedAt, () => completion.TrySetResult(true));
     }
@@ -580,34 +563,7 @@ public class ResultPanelButton : MonoBehaviour
                             goBackButton.interactable = true;
                             Debug.Log("GoBackButton enabled");
                         }
-                        
-                        // Nextテキストをフェードイン
-                        AnimateNextText();
                     });
-            });
-        }
-    }
-    
-    void AnimateNextText()
-    {
-        if (nextText != null && nextTextCanvasGroup != null)
-        {
-            LeanTween.delayedCall(nextText, nextTextDelay, () =>
-            {
-                if (nextTextCanvasGroup == null)
-                {
-                    return;
-                }
-
-                Debug.Log("NextText fade loop start");
-                
-                // 最小透明度からスタート
-                nextTextCanvasGroup.alpha = nextTextMinAlpha;
-                
-                // フェードイン→フェードアウトをループ
-                LeanTween.alphaCanvas(nextTextCanvasGroup, nextTextMaxAlpha, nextTextFadeDuration / 2f)
-                    .setEase(LeanTweenType.easeInOutQuad)
-                    .setLoopPingPong(); // ピンポンループ(往復)
             });
         }
     }
@@ -628,11 +584,6 @@ public class ResultPanelButton : MonoBehaviour
         if (button != null)
         {
             button.onClick.RemoveListener(OnButtonClick);
-        }
-
-        if (nextText != null)
-        {
-            LeanTween.cancel(nextText);
         }
 
         if (scoreAbovePanel != null)
@@ -707,15 +658,6 @@ public class ResultPanelButton : MonoBehaviour
                 playerWinnerCanvasGroup.alpha = 1f;
             }
             playerWinnerPanel.SetActive(false);
-        }
-
-        if (nextText != null)
-        {
-            LeanTween.cancel(nextText);
-            if (nextTextCanvasGroup != null)
-            {
-                nextTextCanvasGroup.alpha = nextTextMinAlpha;
-            }
         }
 
         if (scoreAbovePanel != null)

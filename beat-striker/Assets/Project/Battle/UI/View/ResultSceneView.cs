@@ -6,6 +6,7 @@ public class ResultSceneView : MonoBehaviour
 {
     [SerializeField] GameObject resultRoot;
     [SerializeField] ResultPanelButton resultPanelButton;
+    [SerializeField] TMP_Text advanceGuide;
     [SerializeField] Image player1PortraitImage;
     [SerializeField] Image player2PortraitImage;
     [SerializeField] TMP_Text player1ScoreText;
@@ -52,11 +53,24 @@ public class ResultSceneView : MonoBehaviour
 
     public void InitializeInactiveState()
     {
+        HideAdvanceGuide();
         resultRoot.SetActive(false);
     }
 
     public void ShowRoot()
     {
+        HideAdvanceGuide();
         resultRoot.SetActive(true);
+    }
+
+    public void ShowAdvanceGuide(string action)
+    {
+        advanceGuide.text = $"<mark=#000000A6 padding=\"40,40,20,20\"><sprite name=\"East\"> 右ボタン / Lキー  {action}</mark>";
+        advanceGuide.gameObject.SetActive(true);
+    }
+
+    public void HideAdvanceGuide()
+    {
+        advanceGuide.gameObject.SetActive(false);
     }
 }

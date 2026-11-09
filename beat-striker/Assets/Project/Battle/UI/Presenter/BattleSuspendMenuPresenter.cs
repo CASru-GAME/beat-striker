@@ -7,6 +7,7 @@ using VContainer;
 namespace Alice {
     public class BattleSuspendMenuPresenter : IDisposable {
         readonly ICursorDeployer cursorDeployer;
+        readonly IGamePadRegistry gamePads;
         readonly IDisposable focusRegistration;
         bool opening, closing, requested;
         readonly BattleSuspendMenuView suspendMenuView;
@@ -23,6 +24,7 @@ namespace Alice {
         [Inject]
         public BattleSuspendMenuPresenter(ICursorDeployer cursorDeployer, BattleSuspendMenuView suspendMenuView, IInputFocusService focus, IGamePadRegistry gamePads) {
             this.cursorDeployer = cursorDeployer;
+            this.gamePads = gamePads;
             focusRegistration = focus.RegisterModal(suspendMenuView.Root.transform);
             this.suspendMenuView = suspendMenuView;
             suspendSubscription = suspendMenuView.SuspendButton.OnClickEvent.Subscribe(RequestSuspend);
@@ -48,7 +50,16 @@ namespace Alice {
             resumeRequestedSubject.Dispose();
         }
 
-        public void Show() {
+        public void Show(int commandPlayerId) {
+            string ButtonName(GamePadButton button, string touchLabel) =>
+                gamePads.GetButtonDisplayName(commandPlayerId, button) ?? touchLabel;
+
+            suspendMenuView.SetCommandButtons(
+                ButtonName(GamePadButton.West, "Y"),
+                ButtonName(GamePadButton.East, "A"),
+                ButtonName(GamePadButton.South, "B"),
+                ButtonName(GamePadButton.North, "X"),
+                ButtonName(GamePadButton.Start, "Start"));
             opening = true; closing = false; requested = false;
             LeanTween.cancel(suspendMenuView.Root);
             suspendMenuView.Root.transform.localScale = Vector3.one * suspendMenuView.ShowStartScale;

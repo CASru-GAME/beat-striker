@@ -36,6 +36,8 @@ namespace Alice {
 		[SerializeField] LoadingView loadingView;
 		[SerializeField] AppOverlayView appOverlayView;
 		[SerializeField] ChoiceDialogView feedbackDialog;
+        [SerializeField] GamePadMappingDialogView gamePadMappingDialog;
+        [SerializeField] ChoiceDialogView localPlayerJoinDialog;
         [SerializeField] TrialSetting trialSetting;
 
 		public IAppAudioPlayer AppAudioPlayer => appAudioPlayer;
@@ -94,7 +96,8 @@ namespace Alice {
 			builder.Register<ICursorMoveSetting, CursorMoveSetting>(Lifetime.Singleton);
 			builder.RegisterInstance<IBattleRuleSetting>(battleRuleSetting);
 			builder.RegisterEntryPoint<InputFocusService>(Lifetime.Singleton).As<IInputFocusService>();
-            builder.Register<IGamePadRegistry, GamePadRegistry>(Lifetime.Singleton);
+            builder.Register<GamePadRegistry>(Lifetime.Singleton).AsSelf().As<IGamePadRegistry>();
+            builder.Register<GamePadButtonMapping>(Lifetime.Singleton);
 			builder.RegisterInstance<IAppTransitionFactory>(appTransitionFactory);
 			builder.RegisterInstance<ICursorFactory>(cursorFactory);
 			builder.RegisterInstance<IAppBGMPlayer>(appBgmPlayer);
@@ -128,7 +131,10 @@ namespace Alice {
 			builder.RegisterEntryPoint<OnlineDuelFusionClient>(Lifetime.Singleton);
 			builder.RegisterEntryPoint<MatchingController>(Lifetime.Singleton).AsSelf().As<IMatchingDuelOperations>();
 			builder.RegisterEntryPoint<AppOverlayPresenter>(Lifetime.Singleton);
-			builder.RegisterEntryPoint<PlayerFeedbackPresenter>(Lifetime.Singleton).WithParameter(feedbackDialog);
+			builder.RegisterEntryPoint<PlayerFeedbackPresenter>(Lifetime.Singleton).AsSelf().WithParameter(feedbackDialog);
+            builder.RegisterEntryPoint<GamePadMappingPresenter>(Lifetime.Singleton).AsSelf().WithParameter(gamePadMappingDialog);
+            builder.RegisterEntryPoint<LocalPlayerJoinPresenter>(Lifetime.Singleton)
+                .As<ILocalControllerConnections>().WithParameter(localPlayerJoinDialog);
 
 			builder.RegisterBuildCallback(container => {
 				Debug.Log($"{LOG_PREFIX} BuildCallback begin. scene={gameObject.scene.name}");

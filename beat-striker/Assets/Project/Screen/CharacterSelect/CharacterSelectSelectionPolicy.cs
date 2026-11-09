@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class CharacterSelectSelectionPolicy
 {
-    public const int MAXPLAYERS = 4;
+    public const int MAXPLAYERS = GamePadRegistry.LocalPlayerLimit;
 
     readonly List<int> selectionStack = new();
 

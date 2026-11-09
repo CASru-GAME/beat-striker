@@ -3498,6 +3498,7 @@ Transform:
   - {fileID: 4174785440973187577}
   - {fileID: 4665681709509328049}
   - {fileID: 7892000000000000202}
+  - {fileID: 7892000000000000402}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9133904809460036572
@@ -3649,6 +3650,7 @@ MonoBehaviour:
   - playerId: 1
     striker: 4
   aiStrength: 0
+  opponentAiBrain: {fileID: 8046662237982532771, guid: aef0e33155854ff1a22dade44837675e, type: 3}
   opponentHitPointRecoveryRatioPerSecond: 0.5
   isTutorialBattleRequested: 0
 --- !u!114 &904021008660354504
@@ -4298,6 +4300,8 @@ MonoBehaviour:
   loadingView: {fileID: 8180704571308059706}
   appOverlayView: {fileID: 7891000000000000003}
   feedbackDialog: {fileID: 7892000000000000201}
+  gamePadMappingDialog: {fileID: 7892000000000000301}
+  localPlayerJoinDialog: {fileID: 7892000000000000401}
   trialSetting: {fileID: 2464977394421409515}
   focusRaycasters:
   - {fileID: 7330728313389316256}
@@ -4315,9 +4319,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInputManager
   m_NotificationBehavior: 3
-  m_MaxPlayerCount: -1
+  m_MaxPlayerCount: 2
   m_AllowJoining: 1
-  m_JoinBehavior: 0
+  m_JoinBehavior: 2
   m_PlayerJoinedEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -7086,6 +7090,7 @@ RectTransform:
   - {fileID: 6248138678312193466}
   - {fileID: 2666392664801917288}
   - {fileID: 7891000000000000002}
+  - {fileID: 7892000000000000302}
   m_Father: {fileID: 5619376666138620005}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -8702,3 +8707,65 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4cb9f76f89bd7941ae4d9a2baf50ca2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+--- !u!1001 &7892000000000000300
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4174785440973187577}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 93e5cfcd655643df8a221854e7dcc220, type: 3}
+--- !u!114 &7892000000000000301 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1001098, guid: 93e5cfcd655643df8a221854e7dcc220, type: 3}
+  m_PrefabInstance: {fileID: 7892000000000000300}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79a97a251763447cbe3a7703aaf49210, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.GamePadMappingDialogView
+--- !u!224 &7892000000000000302 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 1001002, guid: 93e5cfcd655643df8a221854e7dcc220, type: 3}
+  m_PrefabInstance: {fileID: 7892000000000000300}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7892000000000000400
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5619376666138620005}
+    m_Modifications:
+    - target: {fileID: 1020939625699779759, guid: 4cea2f3a112d97046b35166d18dab684, type: 3}
+      propertyPath: m_Name
+      value: LocalPlayerJoinDialog
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4cea2f3a112d97046b35166d18dab684, type: 3}
+--- !u!114 &7892000000000000401 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5043330788574310776, guid: 4cea2f3a112d97046b35166d18dab684, type: 3}
+  m_PrefabInstance: {fileID: 7892000000000000400}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad07000f76c12e44aa33e24f2770a7aa, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Alice.Project.Client::Alice.ChoiceDialogView
+--- !u!224 &7892000000000000402 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2851066912931261658, guid: 4cea2f3a112d97046b35166d18dab684, type: 3}
+  m_PrefabInstance: {fileID: 7892000000000000400}
+  m_PrefabAsset: {fileID: 0}

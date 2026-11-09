@@ -40,6 +40,7 @@ namespace Alice {
     public class MusicPlayer : IMusicPlayer, IDisposable {
         const string LOG_PREFIX = "[MusicPlayer]";
         enum PlaybackClockMode {
+            Inactive,
             AudioTimeline,
             AudioLoop,
             VirtualLoop,
@@ -107,7 +108,7 @@ namespace Alice {
         }
 
         public async Awaitable PlayAsync(BattleAddressablePreload preload = null) {
-            ReleaseLoadedAssets();
+            Stop();
             var version = playVersion;
             var selectedMusic = musicRegistry.GetById(battleSelectSetting.SelectedMusicId.CurrentValue);
             var usesPreloadedAssets = preload != null && preload.HasMusic(selectedMusic.Id);
@@ -145,23 +146,26 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Play start. musicId={selectedMusic.Id}, beatOffset={beatOffset:0.###}, commandOffset={audioSetting.CommandTimeOffset.CurrentValue:0.###}, viewOffset={audioSetting.ViewTimeOffset.CurrentValue:0.###}");
             audioSource.clip = clip;
             playbackClipLengthSeconds = clip != null ? Mathf.Max(0f, clip.length) : 0f;
-            playbackClockMode = ResolvePlaybackClockMode();
+            var requestedClockMode = ResolvePlaybackClockMode();
+            playbackClockMode = clip == null && requestedClockMode != PlaybackClockMode.VirtualLoop
+                ? PlaybackClockMode.Inactive
+                : requestedClockMode;
             playbackTimelineLengthSeconds = ResolvePlaybackTimelineLengthSeconds(playbackClipLengthSeconds, playbackClockMode);
             audioSource.loop = ShouldLoopAudioPlayback(playbackClockMode);
 
-            beatSoundSubscription?.Dispose();
             beats = BuildPlaybackTimelineBeats(beatData, playbackClipLengthSeconds, playbackTimelineLengthSeconds);
-            onBeatTimelinePrepared.OnNext(beats);
             ResetBeatEventIndexes();
             lastPlaybackTime = -1f;
             logicalPlaybackTime = 0f;
             completedAudioLoopCount = 0;
             lastRawAudioTime = -1f;
-            isPlaybackClockRunning = true;
+            isPlaybackClockRunning = playbackClockMode != PlaybackClockMode.Inactive;
             playbackCompleted = false;
             isPlaybackPaused = false;
+            onBeatTimelinePrepared.OnNext(beats);
+            if (version != playVersion) return;
 
-            if (clip == null && playbackClockMode != PlaybackClockMode.VirtualLoop) {
+            if (playbackClockMode == PlaybackClockMode.Inactive) {
                 Debug.LogWarning($"{LOG_PREFIX} Selected music clip was not loaded. musicId={selectedMusic.Id}");
                 CompletePlayback();
                 return;
@@ -201,12 +205,12 @@ namespace Alice {
         public void Stop() {
             beatSoundSubscription?.Dispose();
             beatSoundSubscription = null;
-            audioSource.Stop();
-            audioSource.clip = null;
-            ReleaseLoadedAssets();
+            playbackClockMode = PlaybackClockMode.Inactive;
             isPlaybackClockRunning = false;
             playbackCompleted = true;
             isPlaybackPaused = false;
+            audioSource.Stop();
+            ReleaseLoadedAssets();
         }
 
         public void Pause() {

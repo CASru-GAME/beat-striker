@@ -19,7 +19,6 @@ namespace Alice {
         float fillElapsedSeconds;
         bool isFull;
         bool materialInitialized;
-        float lastSetRatio;
 
         void Awake() {
             currentRatio = 0f;
@@ -33,45 +32,26 @@ namespace Alice {
         void Update() {
             if (targetRatio <= currentRatio) return;
 
-            if (fillDurationSeconds <= 0f) {
-                currentRatio = targetRatio;
-                ApplyScale(currentRatio);
-                ApplyFullMaterial(currentRatio >= 1f);
-                return;
-            }
-
             fillElapsedSeconds = Mathf.Min(fillDurationSeconds, fillElapsedSeconds + Time.deltaTime);
-            var progress = Mathf.Clamp01(fillElapsedSeconds / fillDurationSeconds);
-            currentRatio = Mathf.Lerp(fillStartRatio, targetRatio, progress);
+            currentRatio = fillElapsedSeconds >= fillDurationSeconds
+                ? targetRatio
+                : Mathf.Lerp(fillStartRatio, targetRatio, fillElapsedSeconds / fillDurationSeconds);
             ApplyScale(currentRatio);
-
-            if (Mathf.Approximately(currentRatio, targetRatio)) {
-                ApplyFullMaterial(currentRatio >= 1f);
-            }
+            ApplyFullMaterial(currentRatio >= 1f);
         }
 
         public void SetSpecialRatio(float ratio) {
             var clampedRatio = Mathf.Clamp01(ratio);
-            var previousRatio = currentRatio;
+            if (clampedRatio == targetRatio) return;
 
+            targetRatio = clampedRatio;
+            fillElapsedSeconds = 0f;
             if (clampedRatio < currentRatio) {
                 currentRatio = clampedRatio;
                 ApplyScale(currentRatio);
+                ApplyFullMaterial(false);
             }
-
-            targetRatio = clampedRatio;
             fillStartRatio = currentRatio;
-            fillElapsedSeconds = 0f;
-
-            lastSetRatio = clampedRatio;
-
-            if (clampedRatio < previousRatio) {
-                ApplyFullMaterial(clampedRatio >= 1f);
-            }
-
-            if (clampedRatio >= 1f && currentRatio >= 1f) {
-                ApplyFullMaterial(true);
-            }
         }
 
         void ApplyScale(float ratio) {
@@ -89,10 +69,10 @@ namespace Alice {
             materialInitialized = true;
             specialBarGraphic.material = isFull ? fullMaterial : normalMaterial;
 
-            if(fullFillSound && lastSetRatio > 0.5f && lastSetRatio < 1f) {
-                fullFillSound.PlayAtApp(Camera.main.transform.position);
-                buttonGuideMotion.Play();
-            }
+            if (!isFull) return;
+
+            buttonGuideMotion.Play();
+            if (fullFillSound) fullFillSound.PlayAtApp();
         }
     }
 }

@@ -20,12 +20,12 @@ namespace Alice {
             this.completeBattleByPendingMusicEndIfNeeded = completeBattleByPendingMusicEndIfNeeded;
         }
 
-        public void ApplySuspendMenuPause() {
+        public void ApplySuspendMenuPause(int commandPlayerId) {
             if (!stateMachine.CanPauseForSuspend) {
                 return;
             }
 
-            battlePresenter.OpenSuspendMenu();
+            battlePresenter.OpenSuspendMenu(commandPlayerId);
             PauseRoundForSuspendMenu();
         }
 

@@ -1,0 +1,848 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Tutorial Voice
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Tutorial Voice
+  m_GUID: efdd2c16430c427d9eefb3112e69fc94
+  m_SerializeEntries:
+  - m_GUID: 078f083adb38bef4496e0052fabe7852
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_10_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 07da4168df79f7644a62710600a2bef1
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_151.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 08b232d638f05f34abbce17ecb3e3360
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_warrior_06_01_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 09283718a6a8de14594ebb95f32821d7
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_press.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 095f43349210a354d8745082793bea1b
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_155.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0b29aa83aa0ceea49b2417bbb722a824
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_07_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0d00866bc333da0478944067fc43f93d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/final.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0d1dd2e1897ee3f4ba96f8657349064f
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/special_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0db3f08a147a08b429cd5b436ddf66cc
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/overview.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ed5eaf091a1c9c4a8e460c65eb4e554
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/walk_intro.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f1b8460f9b9da945a5c3db97adb3156
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/dash_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f62179fb25e65e4c85ab189b2703733
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/special_intro.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1105168ed00f69b469eec4af9931bd5b
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/hp.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 14685795b97970a4496149737b066b73
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_warrior_03_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 15ef01ddbd7efac41b31678879908fc5
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_three.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 16a3eb57891aa844f9df4a6e64d0116d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_137.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 18ccdded4134d2d4fa166a5b48e84dd0
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_05_01_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1a0060f54ea34a6438eff90e5a5e4506
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_113.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b013c6aaa2eeaa44b6e021d3cac3b1b
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_103.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1edc5a0fc3ed7e24a8901cf8afbcf2e0
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_06_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f4f3b6cf4638db42ba7fd3c24f19449
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_intro_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 201ea4dd8947aa947925140dfe927621
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_any_button.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 23189ab079b20b6478c7e6b7c8ad8f94
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_05_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 24c1598b8eac814438dfb01ec68d486f
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_162.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 27ecdb20fe48b6d46a9b455fddc47436
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_demon_07_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d63ef05f762d7446aeb7679b5733b82
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/button_y.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2ddb1c153dd8c55449c0ea14b8a3f9ce
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_146.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2e8fcda8e08975a43a4ff049c5317431
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_145.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33a85804e42df6b4c8d6276f7328c33b
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/button_x.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 378ae21e111bcf144a69bf9a73e774e8
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/attack_practice.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 37fc9333a420af44da29d3372b645476
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_122.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3926cf463dcff404588aa21b8f83e9e7
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/hp_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3a535ad408bf19c40b2c1dcbb19502ec
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_143.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3a67c8f88b115b648b7e6ba4b3ef4eb2
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_152.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b9ee630633a9f1419247a18606b8ba7
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_120.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3bbdd08f3d054ef499f643153d9d13b0
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_147.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 414c3e797d2aba143ad8abd03a4382b6
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/score_award.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 418164aad67146e42a2555bd51b3b1f6
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_164.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 41b525ea9fc99474f9ed60ab2d4d722a
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_131.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 43f0e6263c540b54fa86943e20f91428
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_129.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 44f381d1b613618438a266d2c5a9de7e
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/next.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 45fc6547b6b85054e9cdfd8e61f11cd0
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_hero_07_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4b434fb6333920b4eb2a8928f3e6c851
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_04_01_page4.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4be2f182285e29c49ac516531eefacd8
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/attack_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d5d7eeca897609499b422ed40a2246f
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_125.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4fffe4f3c88c2ec4ba3df68783beed3e
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_hero_08_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 50c88c5d885648f42b5251137ca9073c
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_demon_05_01_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 51ac81d358646a040864de803773a053
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_106.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 535cbe41fd096ee4fab0834801291a5d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_hero_06_01_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5501d4496acbfe34bbc6000896cdc1ec
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/charge_attack_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 55f9f64d282d86b4bb2285df097b9c85
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_hero_06_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58f0df5510b261340b42f6cf80026c95
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_150.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5c24832643029d14e8c39a68696044f5
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_06_01_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5d1477547df8a8b49aa475df9438d2b1
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_158.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5eb714a6f42d67f45a185f4606e4f6eb
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_08_01_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5f71e209b300c8440885b9178930e419
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_135.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 61106122af8ff8c4b909b5565f2faf07
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_intro_page3.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 611863d52223bb349811dd373b6ecf58
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_159.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6519f989bdd487149a8b8ec65bae7007
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_demon_06_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65fff42e656172141a79cdf6ad467b12
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/direction_stick.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6625d5f3facf1f14da20f0710126bd1d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_149.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 66a45f50dc93c8e46bb7712ba74b3dfd
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_09_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 66cd26a2546fdec409d89be23420bf81
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/walk_keyboard.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6a865592e4d0f4742a642d4fd88efdb9
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_133.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6ad6f08c655879242910e92a0e398094
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_warrior_07_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6dad692394f5f3249a4d86b28d15c15a
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/charge_then.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6f32cbe7fdce6cc42897e40f8838af4a
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_intro_page4.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70b4b6e81c067f44cb0dbe8c4c829d50
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/charge_attack.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7410b7beae1a23e4098d53a1642f8a64
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_153.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 748cd578b2b79a946a49a603d4d18983
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_136.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 78193e9518a63e046bd496a56b8fc93b
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_139.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c364acdc74d04b4583634f6f6543fa9
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_hero_05_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c7701daed80a9a408d6f517f046ba4d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_109.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7d193f787b50fd44c9080fe1420c51d0
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/button_start.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7fe5b7bc3c18bbf429fac3730ebd776e
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/direction_hold_stick.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 81f2cf480a6b652438cf49f84f11662a
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_112.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 82b35a8a9ae51ee45a86dd4606c90129
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_111.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 82bf31de3eae5594ab6c7fcc1e13e0a2
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_warrior_05_01_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8506f2588eaebab4abd02f4e10bde9c5
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_intro.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86235dbd5f811564c87ec6584bcf40af
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/score_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 871494e21610e754d8b0fe5ccd04e87e
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_161.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 874fcee99e67b174abbc40e565b8d5c6
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_105.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 88e46f9afff51b24b9072c5a5def20e2
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_142.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 88f3439681f31ec4b84b5dc784480431
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_107.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 893126600277b90439cc2ff01e55a2c1
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_03_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 895497bc056b4fe4d868003ddee04bc1
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/dash_practice.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 899cb94ef35bae34f8146adce05c91ac
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_demon_04_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ac36564a9bd58640b8545a1ef324648
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_hero_03_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b3108585b13e9e4087a199d1f7d431c
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_forward_move.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 90548b742a61acd4bb7f06b1011f7b0d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_148.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9180eb2b7db2a3a4a95d39152a79acbb
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_118.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9356e8d19f1308a4e99ea0f7e6a4b058
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_134.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 94a0ce6301fd39f4db4809fde81f4712
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/sp_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9720c0b7561c17f4389d82f985f16291
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/timer.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9863a90a809b06643a36363712c703ad
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/score.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9bf09af2c03b46e44a5a720888e66565
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_163.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c051ba4e77278744b9f6f0ce177da32
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_141.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9d7286afe9eebd945af44ee7c0986954
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_127.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9fcb58db240d70643a0886ad1477536d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_warrior_08_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a07c9432825a4c04fbdd824f952abbe2
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_demon_08_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a0ec285b1e6a5814bb5969226efbf256
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/key_l.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a25562b4c4905414c95033b0c758a98f
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/charge_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a4f53f63998de1446a2d0f1d70f34bc7
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/direction_hold_keyboard.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a62d9afdd6805744bb78b04e39f7b83b
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_157.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a6f9513cf494aad42b9958a9444bc705
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_demon_05_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a7875558c871f0f4287b050b3b9dd92a
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_warrior_05_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a86d7572422d0f541a15bea66dbb886e
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_119.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aa30ae196ae70604ebe0054f63b8b336
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_123.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab936989bcf5cbf4f87673fbf692d032
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_165.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac8ee7fe2df3c464c9e0afe74b59d85d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/victory.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: af5005f1c851ded488870756412705e1
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/timer_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b10a24dd9597b58408b418c2bf1a4e70
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/direction_hold_command.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b1df009fca4d694459849f77d4720c9a
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_140.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b21e04aacb568484c8ffb0915904802d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_132.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b3bbf4e8982aff84d95a2a4ce1ca3447
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_121.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b40ddb09029d2944e83e7166d182428e
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_130.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b4a11a5737aee2c43a2f356ed92a2b64
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/sp.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7ece07313bc69e44a38629bec37ddb7
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_110.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b96b58c530dc61747bed4e1bdac0177a
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_104.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bc43c5b67a7664e4987d7996d03d8f7a
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_124.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bcebc8488f43dd041b22d1b72be10ef8
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_138.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bd7dd803e032c454aafebdb9a1c46e64
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_warrior_04_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be41798ea6fe2ac429b6e1a6e2c8ceed
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/charge_practice.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be7eaee6215b15846988afa1259d3ecf
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_114.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c00dad24e6ea3964d839f38ee7508d49
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/key_j.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c31feb1a461e4a54698aef9cb15c5acb
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/direction_keyboard.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c4e7a87762e7eb549a3acff0b0a11208
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/victory_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c5f944c7bd82a484abd0bd550d23ad74
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/rhythm_retry.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c61fc458ee984b643a97db87f1400024
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/button_a.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c706a1a67b911d34d9b5c190acffabb4
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/key_u.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c86e670add313c54da329cbdf93387af
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_115.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c8d0570d574361e4fbf974a9e7912826
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_144.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ca081dec68ef74f408729f97bd9d09df
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_108.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cc564c34b82ce1d4b92d3d3c581389bb
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/walk_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cdbb2ef2e825ce14a9ee904f190f1e38
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/guard_practice.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cfd3f9e691daf014ea1d4f80515b0191
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/button_b.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d236d074869c9864faf74c9e5fcff247
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_warrior_06_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d5b04d1ac1bdabb428f9fef9865c8017
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_154.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d7afdf9ae7a998e4ba0d00eafffc3c92
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_156.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0785dc31065c1842a62e115bca4f915
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_07_01_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0f88616528c78246a9ed6a1d16d4713
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/key_k.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e1812381bfc40c54c96e6875af22e644
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/sp_page3.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e1b2360fb648c854d99b1850803db7a5
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_hero_04_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e4854d982b865444fa47dd366af07a59
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_116.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e5793ce194e389d48a4f256da0aaffb4
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_04_02.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e77e7cea6e3b40d49bad01f2b5f4f1c2
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_117.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e7847cd2a5d677f4890dde183187b35e
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_hero_08_02.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e82f0899cd1f14346805aed78c40b2d1
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/special_practice.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e9d937ee908de5e45ad12a1f022c074d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_demon_06_01_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ea861d63f238a824688de5b883959147
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_04_01_page3.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ec7dd6812c9139a4fae575a31f466288
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_08_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eeee11d226559644ba3e88876f094657
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/key_i.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: efc8f5f27dba4364d976ddca3e6a41cd
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_126.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: efe6dd7a66cda8043a4618b5ff7a42e7
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_jump.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f18a0b21727b9f647a1aac62684ba877
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_09_02.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f1d64a6a1b503024090e99405cd84240
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_demon_03_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f2744693c99d5944ea7d57a35cdd837d
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_wizard_04_01.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f37174faa6dfc66498ccc46cfaff4129
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/walk_stick.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f38b1046dfa9049439d1f697ab99c1f7
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/score_award_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f6b6a271c82c65f4681e155b3c5f1b75
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/guard_end.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f703a5553a91f634ba0ffc8f62f91d91
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_special_ready.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f7a9a803c6f46db44a909a62898cc299
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_128.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd5fbabc476eac847b8b16ae21487984
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/lesson_hero_05_01_page2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fec2caf1e5921fa498cd54619ce11200
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_102.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff1a7b0af5a65254b8d820c659fa14e2
+    m_Address: Assets/Project/Battle/UI/Tutorial/Voice/script_160.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: b3db2403530b146249ea2259dd135d7b, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 3b645bc91c2d4b778f45de247eaf6357, type: 2}
+    - {fileID: 11400000, guid: b149d779927e44daaefada79fc06e304, type: 2}

@@ -1,11 +1,8 @@
-using Core;
 using R3;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Alice {
-    public record GamePadSlotClickRequest(int TargetPlayerId, int CursorPlayerId);
     public record ValueRangeSetting(float Min, float Max, float Step);
 
     public class SettingsDialog : MonoBehaviour {
@@ -20,17 +17,6 @@ namespace Alice {
             }
         }
 
-        [System.Serializable]
-        class PlayerSlotView {
-            [SerializeField] ActionEmitter emitter;
-            [SerializeField] Graphic iconGraphic;
-            [SerializeField] int playerId;
-
-            public ActionEmitter Emitter => emitter;
-            public Graphic IconGraphic => iconGraphic;
-            public int PlayerId => playerId;
-        }
-
         readonly Subject<Unit> opened = new();
         readonly Subject<Unit> closed = new();
         readonly Subject<Unit> timingAdjustRequested = new();
@@ -38,7 +24,7 @@ namespace Alice {
         readonly Subject<Unit> cursorSpeedIncreaseRequested = new();
         readonly Subject<Unit> bgmVolumeDecreaseRequested = new();
         readonly Subject<Unit> bgmVolumeIncreaseRequested = new();
-        readonly Subject<GamePadSlotClickRequest> gamePadSlotClicked = new();
+        readonly Subject<Unit> controllerResetRequested = new();
 
         [Header("Buttons")]
         [SerializeField] ActionEmitter timingAdjustEmitter;
@@ -47,16 +33,12 @@ namespace Alice {
         [SerializeField] ActionEmitter cursorSpeedRightEmitter;
         [SerializeField] ActionEmitter bgmVolumeLeftEmitter;
         [SerializeField] ActionEmitter bgmVolumeRightEmitter;
-        [SerializeField] PlayerSlotView[] playerSlots;
+        [SerializeField] ActionEmitter controllerResetEmitter;
 
         [Header("Value Labels")]
         [SerializeField] TextMeshProUGUI cursorSpeedValueLabel;
         [SerializeField] TextMeshProUGUI bgmVolumeValueLabel;
         [SerializeField] TextMeshProUGUI beatOffsetValueLabel;
-
-        [Header("Player Slot Colors")]
-        [SerializeField] Color connectedColor = Color.white;
-        [SerializeField] Color disconnectedColor = new Color(0.25f, 0.25f, 0.25f, 1f);
 
         [Header("Ranges")]
         [SerializeField] ValueRangeSettingEntry cursorSpeedRange = new();
@@ -72,7 +54,7 @@ namespace Alice {
         public Observable<Unit> CursorSpeedIncreaseRequested => cursorSpeedIncreaseRequested;
         public Observable<Unit> BgmVolumeDecreaseRequested => bgmVolumeDecreaseRequested;
         public Observable<Unit> BgmVolumeIncreaseRequested => bgmVolumeIncreaseRequested;
-        public Observable<GamePadSlotClickRequest> GamePadSlotClicked => gamePadSlotClicked;
+        public Observable<Unit> ControllerResetRequested => controllerResetRequested;
         public bool IsTimeingAdjustActive => timeingAdjustView != null && timeingAdjustView.gameObject.activeSelf;
 
         public ValueRangeSetting CursorSpeedRange => cursorSpeedRange.ToValueRangeSetting();
@@ -85,18 +67,7 @@ namespace Alice {
             bgmVolumeLeftEmitter.OnClickEvent.Subscribe(_ => bgmVolumeDecreaseRequested.OnNext(Unit.Default)).AddTo(this);
             bgmVolumeRightEmitter.OnClickEvent.Subscribe(_ => bgmVolumeIncreaseRequested.OnNext(Unit.Default)).AddTo(this);
 
-            for (var i = 0; i < playerSlots.Length; i++) {
-                var slot = playerSlots[i];
-                slot.Emitter.OnClickEvent
-                    .Subscribe(data => {
-                        if (data.EventData is not CursorPointerEventData) {
-                            return;
-                        }
-
-                        gamePadSlotClicked.OnNext(new GamePadSlotClickRequest(slot.PlayerId, ((CursorPointerEventData)data.EventData).PlayerId));
-                    })
-                    .AddTo(this);
-            }
+            controllerResetEmitter.OnClickEvent.Subscribe(_ => controllerResetRequested.OnNext(Unit.Default)).AddTo(this);
         }
 
         void OnEnable() {
@@ -123,17 +94,6 @@ namespace Alice {
         public void SetBeatOffsetValue(float value) {
             var roundedValue = Mathf.Round(value * 100f) / 100f;
             beatOffsetValueLabel.text = roundedValue.ToString("0.00");
-        }
-
-        public void SetGamePadConnected(int playerId, bool connected) {
-            for (var i = 0; i < playerSlots.Length; i++) {
-                if (playerSlots[i].PlayerId != playerId) {
-                    continue;
-                }
-
-                playerSlots[i].IconGraphic.color = connected ? connectedColor : disconnectedColor;
-                return;
-            }
         }
 
         public TimeingAdjustView TimingAdjustView => timeingAdjustView;

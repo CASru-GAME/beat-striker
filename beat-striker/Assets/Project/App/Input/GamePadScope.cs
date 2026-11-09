@@ -12,7 +12,7 @@ namespace Alice {
             Debug.Log($"{LOG_PREFIX} Configure begin. scene={gameObject.scene.name}, gamePad={gamePad.name}");
             builder.RegisterBuildCallback(container => {
                 Debug.Log($"{LOG_PREFIX} BuildCallback begin. scene={gameObject.scene.name}, gamePad={gamePad.name}");
-                gamePad.Initialize(container.Resolve<IGamePadRegistry>());
+                gamePad.Initialize(container.Resolve<IGamePadRegistry>(), container.Resolve<GamePadButtonMapping>());
                 Debug.Log($"{LOG_PREFIX} BuildCallback initialize completed. gamePad={gamePad.name}");
             });
             Debug.Log($"{LOG_PREFIX} Configure completed. scene={gameObject.scene.name}, gamePad={gamePad.name}");

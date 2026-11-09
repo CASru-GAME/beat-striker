@@ -8,8 +8,10 @@ namespace Alice {
         [SerializeField] ActionEmitter gamePadEmitter;
         [SerializeField] ActionEmitter touchPanelEmitter;
         [SerializeField] ActionEmitter keyboardEmitter;
+        [SerializeField] BootCreditsView credits;
 
         public Observable<bool> TouchControllerSelectionRequested => touchControllerSelectionRequested;
+        public Awaitable PlayCreditsAsync() => credits.PlayAsync(destroyCancellationToken);
 
         void Awake() {
             gamePadEmitter.OnClickEvent

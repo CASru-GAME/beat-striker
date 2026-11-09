@@ -39,6 +39,7 @@ namespace Alice {
         IPlayerGamePad Get(int playerId);
         void HandlePlayerSlotClick(int sourcePlayerId, int targetPlayerId);
         GamePadButton GetPhysicalFaceButton(GamePadButton button);
+        string GetButtonDisplayName(int playerId, GamePadButton button);
         Observable<PlayerGamePadButtonEvent> OnAnyButtonDown { get; }
     }
 
@@ -55,6 +56,7 @@ namespace Alice {
     }
 
     public class GamePadRegistry : IGamePadRegistry, IDisposable {
+        public const int LocalPlayerLimit = 2;
         readonly IInputFocusService focus;
         readonly IDisposable focusSubscription;
         readonly List<PlayerGamePad> registry = new();
@@ -73,23 +75,21 @@ namespace Alice {
         public void Dispose() { focusSubscription?.Dispose(); }
 
         public IPlayerGamePad RequestRegister(IGamePad gamePad) {
-            for (int i = 0; i < registry.Count; i++) {
-                if (!registry[i].HasPrimaryGamePad) {
-                    registry[i].SetPrimary(gamePad.ToOption());
-
-                    Debug.Log($"Registered GamePad {gamePad.DeviceName} to Player {i}".ToGreen());
-                    return registry[i];
-                }
+            for (var i = 0; i < LocalPlayerLimit; i++) {
+                if (GetPrimaryInput(i) == null) return RequestRegister(i, gamePad);
             }
-
-            var playerGamePad = new PlayerGamePad(registry.Count, gamePad.ToOption(), true, HandleButtonDown, HandleButtonUp, focus);
-            registry.Add(playerGamePad);
-
-            Debug.Log($"Registered GamePad {gamePad.DeviceName} to Player {playerGamePad.PlayerId}".ToGreen());
-            return playerGamePad;
+            return null;
         }
 
+        internal IGamePad GetPrimaryInput(int playerId) {
+            var slot = EnsurePlayerSlot(playerId);
+            return slot.HasPrimaryGamePad ? slot.Current.GetValue(null) : null;
+        }
+
+        internal bool HasReplayOverrides => replayOverridePreviousPrimaryByPlayerId.Count > 0;
+
         public IPlayerGamePad RequestRegister(int playerId, IGamePad gamePad) {
+            if (playerId < 0 || playerId >= LocalPlayerLimit) throw new ArgumentOutOfRangeException(nameof(playerId));
             RequestUnregister(playerId);
             var playerGamePad = EnsurePlayerSlot(playerId);
             playerGamePad.SetPrimary(gamePad.ToOption());
@@ -148,6 +148,13 @@ namespace Alice {
         }
 
         public void RequestUnregister(IGamePad gamePad) {
+            // A local pad can also be parked in a replay viewer slot.
+            var savedSlots = new List<int>();
+            foreach (var pair in replayOverridePreviousPrimaryByPlayerId) {
+                if (pair.Value.GetValue(null) == gamePad) savedSlots.Add(pair.Key);
+            }
+            foreach (var slot in savedSlots) replayOverridePreviousPrimaryByPlayerId[slot] = null;
+
             var playerGamePads = registry.FindAll(p => p.Current.GetValue(null) == gamePad);
             foreach (var playerGamePad in playerGamePads) {
                 Debug.Log($"Unregistered GamePad {gamePad.DeviceName} from Player {playerGamePad.PlayerId}".ToOrange());
@@ -175,6 +182,8 @@ namespace Alice {
         }
 
         public void HandlePlayerSlotClick(int sourcePlayerId, int targetPlayerId) {
+            if (sourcePlayerId < 0 || sourcePlayerId >= LocalPlayerLimit ||
+                targetPlayerId < 0 || targetPlayerId >= LocalPlayerLimit) return;
             var sourceSlot = EnsurePlayerSlot(sourcePlayerId);
             var targetSlot = EnsurePlayerSlot(targetPlayerId);
 
@@ -268,6 +277,9 @@ namespace Alice {
 
         // Guides use the fixed Switch face-button positions.
         public GamePadButton GetPhysicalFaceButton(GamePadButton button) => button;
+
+        public string GetButtonDisplayName(int playerId, GamePadButton button) =>
+            (GetPrimaryInput(playerId) as GamePad)?.GetButtonDisplayName(button);
 
         class PlayerGamePad : IPlayerGamePad {
             public int PlayerId { get; set; }

@@ -39,9 +39,12 @@ public class ButtonGuideStartOffsetMotion : MonoBehaviour {
     }
 
     public void Play() {
-        if (!gameObject.activeInHierarchy) {
-            return;
+        if (!gameObject.activeSelf) {
+            gameObject.SetActive(true);
+            if (showOnEnable) return; // OnEnable starts the sequence for automatic guides.
         }
+
+        if (!isActiveAndEnabled) return;
 
         if (sequenceCoroutine != null) {
             StopCoroutine(sequenceCoroutine);

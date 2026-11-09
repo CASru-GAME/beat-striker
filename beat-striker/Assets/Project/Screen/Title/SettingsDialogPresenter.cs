@@ -7,7 +7,6 @@ namespace Alice {
         readonly SettingsDialog view;
         readonly IAudioSetting audioSetting;
         readonly ICursorMoveSetting cursorMoveSetting;
-        readonly IGamePadRegistry gamePadRegistry;
         readonly CompositeDisposable subscriptions = new();
 
         [Inject]
@@ -15,12 +14,11 @@ namespace Alice {
             SettingsDialog view,
             IAudioSetting audioSetting,
             ICursorMoveSetting cursorMoveSetting,
-            IGamePadRegistry gamePadRegistry, IInputFocusService inputFocus) {
+            IGamePadRegistry gamePadRegistry, IInputFocusService inputFocus, ILocalControllerConnections connections) {
             this.view = view;
             inputFocus.RegisterModal(view.transform).AddTo(subscriptions);
             this.audioSetting = audioSetting;
             this.cursorMoveSetting = cursorMoveSetting;
-            this.gamePadRegistry = gamePadRegistry;
 
             gamePadRegistry.OnAnyButtonDown
                 .Where(e => inputFocus.CanReceive(view.transform, e.PlayerId) && view.gameObject.activeInHierarchy && e.Button == GamePadButton.South && !view.IsTimeingAdjustActive)
@@ -46,8 +44,12 @@ namespace Alice {
                 .Subscribe(_ => UpdateBgmVolume(1f))
                 .AddTo(subscriptions);
 
-            this.view.GamePadSlotClicked
-                .Subscribe(request => gamePadRegistry.HandlePlayerSlotClick(request.CursorPlayerId, request.TargetPlayerId))
+            this.view.ControllerResetRequested
+                .Where(_ => inputFocus.CanReceive(view.transform) && !view.IsTimeingAdjustActive)
+                .Subscribe(_ => {
+                    connections.RequestReset();
+                    view.SetVisible(false);
+                })
                 .AddTo(subscriptions);
 
             cursorMoveSetting.CursorSpeed
@@ -61,13 +63,6 @@ namespace Alice {
             audioSetting.BeatOffset
                 .Subscribe(offset => this.view.SetBeatOffsetValue(offset.BeatTimeOffset))
                 .AddTo(subscriptions);
-
-            for (var i = 0; i < 3; i++) {
-                var slotIndex = i;
-                gamePadRegistry.Get(slotIndex).HasGamePad
-                    .Subscribe(hasGamePad => this.view.SetGamePadConnected(slotIndex, hasGamePad))
-                    .AddTo(subscriptions);
-            }
 
             this.view.SetCursorSpeedValue(cursorMoveSetting.CursorSpeed.CurrentValue);
             this.view.SetBgmVolumeValue(audioSetting.VolumeBalance.CurrentValue.BgmVolume);

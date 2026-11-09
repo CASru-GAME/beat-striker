@@ -37,6 +37,7 @@ namespace Alice {
         readonly BattleReplayDriver battleReplayDriver;
         readonly ResultScene resultScene;
         readonly PlayerSession playerSession;
+        readonly PlayerFeedbackPresenter feedback;
         readonly IPlayerProfileService profiles;
         readonly TrialController trial;
         readonly ChoiceDialogPresenter trialDialog;
@@ -64,7 +65,7 @@ namespace Alice {
         public Observable<Unit> OnRoundPlayableStarted => roundPlayableStartedSubject;
 
         [Inject]
-        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IAppStrikerRegistry appStrikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IMusicRegistry musicRegistry, IAISetting aiSetting, IAppNetworkSetting appNetworkSetting, IGamePadRegistry gamePadRegistry, IOnlineSessionBootstrap onlineSessionBootstrap, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, ILoadingOverlayService loadingOverlayService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, IBattleOnlineSync battleOnlineSync, BattleReplayRecorder battleReplayRecorder, BattleReplayDriver battleReplayDriver, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters, PlayerSession playerSession, IPlayerProfileService profiles, TrialController trial, ChoiceDialogView trialDialogView, TrialResultView trialResultView, ICursorDeployer cursorDeployer, IInputFocusService inputFocus) {
+        public BattleFlow(IBattleSetting battleSetting, IBattleDeployer battleDeployer, IStrikerRegistry strikerRegistry, IAppStrikerRegistry appStrikerRegistry, IBattleJudge battleJudge, IBeatjudge beatJudge, IMusicPlayer musicPlayer, IMusicRegistry musicRegistry, IAISetting aiSetting, IAppNetworkSetting appNetworkSetting, IGamePadRegistry gamePadRegistry, IOnlineSessionBootstrap onlineSessionBootstrap, IBattleSelectSetting battleSelectSetting, ITutorialSetting tutorialSetting, ISceneTransitionService sceneTransitionService, ILoadingOverlayService loadingOverlayService, IBattlePresenter battlePresenter, IBattleTutorialSignalEmitter tutorialSignalEmitter, IBattleOnlineSync battleOnlineSync, BattleReplayRecorder battleReplayRecorder, BattleReplayDriver battleReplayDriver, ResultScene resultScene, IBattlePlayerPresenter[] battlePlayerPresenters, PlayerSession playerSession, PlayerFeedbackPresenter feedback, IPlayerProfileService profiles, TrialController trial, ChoiceDialogView trialDialogView, TrialResultView trialResultView, ICursorDeployer cursorDeployer, IInputFocusService inputFocus) {
             this.battleSetting = battleSetting;
             this.battleDeployer = battleDeployer;
             this.strikerRegistry = strikerRegistry;
@@ -88,6 +89,7 @@ namespace Alice {
             this.battleReplayDriver = battleReplayDriver;
             this.resultScene = resultScene;
             this.playerSession = playerSession; this.profiles = profiles; this.trial = trial;
+            this.feedback = feedback;
             trialDialog = new ChoiceDialogPresenter(trialDialogView, gamePadRegistry, inputFocus);
             this.trialResultView = trialResultView;
             this.cursorDeployer = cursorDeployer;
@@ -467,22 +469,27 @@ namespace Alice {
             battleFinishedSubject.OnNext(Unit.Default);
             outroStartedSubject.OnNext(winner);
             battleReplayRecorder.FinishBattle(winner.Value, roundWins);
+            var feedbackCandidates = feedback.RecordCompletedBattle();
             // 結果画面へ進む前に双方で「終了情報の取り込み完了」を揃える（タイトル戻り EndBattleToTitleAsync も同一ゲート ID）。
             if (onlineHandler.IsOnlineBattle) {
                 await onlineHandler.PassFlowGateAsync(BattleFlowSyncGate.BattleEndOutcomeSynced, 0);
             }
 
             await battlePresenter.PlayBattleEndingAsync(winner);
+            if (playerSession.IsTrial) gamePadRegistry.ClearBattleOverride(1);
             var battleResults = beatJudge.GetBattleResults();
             resultScene.ShowResult(battleResults, roundWins);
             battleReplayDriver.FinishReplay();
             await resultScene.WaitForBattleEndInputAsync();
             var nextScene = playerSession.Mode == BattlePlayMode.Replay ? AppScene.Ranking : AppScene.ResultMenu;
-            if (playerSession.IsTrial || !string.IsNullOrEmpty(battleReplayRecorder.SaveFailure)) {
+            if (playerSession.IsTrial || !string.IsNullOrEmpty(battleReplayRecorder.SaveFailure) || feedbackCandidates.Length > 0) {
                 cursorDeployer.SetForceEnabled(true);
                 try {
                     if (playerSession.IsTrial) nextScene = await ChooseTrialNextSceneAsync(winner.Value == 0);
-                    else await trialDialog.AskAsync("記録の保存", battleReplayRecorder.SaveFailure, new[] { "OK" }, directInput: true);
+                    else if (!string.IsNullOrEmpty(battleReplayRecorder.SaveFailure)) await trialDialog.AskAsync("記録の保存", battleReplayRecorder.SaveFailure, new[] { "OK" }, directInput: true);
+                    await feedback.PresentAsync(feedbackCandidates);
+                } catch (OperationCanceledException) {
+                    return;
                 } finally {
                     cursorDeployer.SetForceEnabled(false);
                 }
@@ -493,11 +500,6 @@ namespace Alice {
             await LeaveOnlineBattleAppStateIfNeededAsync();
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync completed. requesting start transition to ResultMenu");
             var startResult = sceneTransitionService.RequestStartTransition(nextScene);
-            if (startResult.IsSuccess && sceneTransitionService.IsTransitioning &&
-                (playerSession.Mode == BattlePlayMode.Local && nextScene == AppScene.ResultMenu ||
-                 playerSession.IsTrial && nextScene == AppScene.Title)) {
-                playerSession.QueueFeedback(nextScene);
-            }
             Debug.Log($"{LOG_PREFIX} CompleteBattleWithWinnerAsync start transition result. nextScene={nextScene}, isSuccess={startResult.IsSuccess}");
         }
 
@@ -508,7 +510,7 @@ namespace Alice {
             var showPresentation = true;
             var message = $"{profile.name}\n{battleReplayRecorder.SaveFailure}";
             while (true) {
-                var pending = trialDialog.AskAsync(heading, message, new[] { "続けて挑戦", "一旦終わる" }, inputPlayerId: 0, directInput: true);
+                var pending = trialDialog.AskAsync(heading, message, new[] { "続けて挑戦", "一旦終わる" }, directInput: true);
                 if (showPresentation) trialResultView.Play(presentation);
                 int choice;
                 try { choice = await pending; }
@@ -568,7 +570,8 @@ namespace Alice {
             if (onlineHandler.IsOnlineBattle) {
                 battleOnlineSync.ClearResumeAckState();
             }
-            pauseHandler.ApplySuspendMenuPause();
+            var commandPlayerId = onlineHandler.IsOnlineBattle ? appNetworkSetting.LocalOnlinePlayerId : pauseRequestingPlayerId;
+            pauseHandler.ApplySuspendMenuPause(commandPlayerId);
         }
 
         void ApplySuspendMenuResume() {

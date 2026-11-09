@@ -59,8 +59,7 @@ namespace Alice {
                 return;
             }
 
-            gamePadRegistry.RequestRegister(virtualTouchGamePad);
-            isRegistered = true;
+            isRegistered = gamePadRegistry.RequestRegister(virtualTouchGamePad) != null;
         }
 
         void UnregisterIfNeeded() {

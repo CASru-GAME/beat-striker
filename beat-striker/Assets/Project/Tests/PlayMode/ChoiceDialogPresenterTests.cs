@@ -258,6 +258,7 @@ public class ChoiceDialogPresenterTests {
         public void RestoreOfflinePrimaryLayout(int localOnlinePlayerId) => throw new NotSupportedException();
         public void HandlePlayerSlotClick(int sourcePlayerId, int targetPlayerId) => throw new NotSupportedException();
         public GamePadButton GetPhysicalFaceButton(GamePadButton button) => button;
+        public string GetButtonDisplayName(int playerId, GamePadButton button) => throw new NotSupportedException();
 
         class Pad : IPlayerGamePad, IDisposable {
             readonly CountingPads owner;

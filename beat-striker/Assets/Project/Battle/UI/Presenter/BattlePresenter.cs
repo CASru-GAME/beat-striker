@@ -27,7 +27,7 @@ namespace Alice {
         Observable<Unit> OnResumeRequested { get; }
         Observable<bool> OnAttentionActiveStateChanged { get; }
         bool IsAttentionPresentationActive { get; }
-        void OpenSuspendMenu();
+        void OpenSuspendMenu(int commandPlayerId);
         void CloseSuspendMenu();
     }
 
@@ -260,9 +260,9 @@ namespace Alice {
             pauseMenuRequestedSubject.OnNext(playerId);
         }
 
-        public void OpenSuspendMenu() {
+        public void OpenSuspendMenu(int commandPlayerId) {
             battlePresenterView.HideSpecialCommand();
-            suspendMenuPresenter.Show();
+            suspendMenuPresenter.Show(commandPlayerId);
         }
 
         public void CloseSuspendMenu() {

@@ -24,6 +24,8 @@ namespace Alice {
     [RequireComponent(typeof(PlayerInput))]
     public class GamePad : MonoBehaviour, GameInput.IPlayerActions, IGamePad {
         IGamePadRegistry registry;
+        GamePadButtonMapping buttonMapping;
+        Gamepad pairedGamepad;
         private PlayerInput playerInput;
         private GameInput input;
         bool isRegistered;
@@ -39,6 +41,25 @@ namespace Alice {
         public Observable<GamePadButton> OnButtonUpAsObservable => onButtonUp;
         public string DeviceName => playerInput.currentControlScheme;
 
+        internal string GetButtonDisplayName(GamePadButton button) {
+            var actions = input.Player;
+            var action = button switch {
+                GamePadButton.North => actions.North,
+                GamePadButton.South => actions.South,
+                GamePadButton.West => actions.West,
+                GamePadButton.East => actions.East,
+                GamePadButton.Left => actions.Left,
+                GamePadButton.Right => actions.Right,
+                GamePadButton.Start => actions.Start,
+                GamePadButton.Select => actions.Select,
+                _ => throw new System.ArgumentOutOfRangeException(nameof(button)),
+            };
+
+            if (action.controls.Count == 0) return null;
+            var control = action.controls[0];
+            return control.shortDisplayName ?? control.displayName;
+        }
+
         public void DestroyGamePad() {
             Destroy(gameObject);
         }
@@ -49,20 +70,22 @@ namespace Alice {
             DontDestroyOnLoad(this.gameObject);
         }
 
-        public void Initialize(IGamePadRegistry registry) {
+        public void Initialize(IGamePadRegistry registry, GamePadButtonMapping buttonMapping) {
             this.registry = registry;
+            this.buttonMapping = buttonMapping;
+            buttonMapping.Changed.Subscribe(device => {
+                if (isActiveAndEnabled && pairedGamepad == device) {
+                    SyncControls();
+                }
+            }).AddTo(this);
 
-            if (isActiveAndEnabled) {
-                RegisterIfNeeded();
-            }
+            if (isActiveAndEnabled && input != null) SyncControls();
         }
 
         void OnEnable() {
             input.Player.AddCallbacks(this);
             playerInput.onControlsChanged += OnControlsChanged;
             SyncControls();
-
-            RegisterIfNeeded();
         }
 
         void OnDisable() {
@@ -77,15 +100,14 @@ namespace Alice {
             }
         }
 
-        void RegisterIfNeeded() {
-            if(isRegistered) return;
-            if (registry == null) {
-                Debug.LogWarning("GamePad registry is not available. GamePad will not be registered.", this);
-                return;
-            }
-
-            registry.RequestRegister(this);
+        internal void Register(int playerId) {
+            registry.RequestRegister(playerId, this);
             isRegistered = true;
+        }
+
+        internal void SwitchDevice(string controlScheme, InputDevice device) {
+            playerInput.SwitchCurrentControlScheme(controlScheme, device);
+            SyncControls();
         }
 
         private void OnControlsChanged(PlayerInput changed) {
@@ -97,7 +119,15 @@ namespace Alice {
             waitingForButtonRelease = false;
             input.Player.Disable();
             input.asset.devices = playerInput.devices;
+            pairedGamepad = null;
+            foreach (var device in playerInput.devices) {
+                if (device is Gamepad gamepad) {
+                    pairedGamepad = gamepad;
+                    break;
+                }
+            }
             var scheme = playerInput.currentControlScheme;
+            buttonMapping?.Apply(input.Player, pairedGamepad, scheme);
             if (string.IsNullOrEmpty(scheme)) return;
             input.bindingMask = InputBinding.MaskByGroup(scheme);
             waitingForButtonRelease = true;
@@ -167,6 +197,7 @@ namespace Alice {
 
         void EmitButton(InputAction.CallbackContext c, GamePadButton button) {
             if (c.started) {
+                if (c.control.device is Gamepad && buttonMapping?.BlocksGamepadButtons == true) return;
                 onButtonDown.OnNext(button);
             }
             else if (c.canceled) {

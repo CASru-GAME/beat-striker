@@ -128,10 +128,8 @@ namespace Alice {
                     .Subscribe(_ => RefreshState())
                     .AddTo(subscriptions);
 
-                var inputSlot = playerId;
                 gamePadRegistry.Get(playerId).OnButtonDown
-                    .Where(_ => !playerSession.IsTrial || inputSlot == 0)
-                    .Subscribe(button => OnButtonDown(button))
+                    .Subscribe(OnButtonDown)
                     .AddTo(subscriptions);
             }
 
@@ -163,7 +161,7 @@ namespace Alice {
             inputState = SceneInputState.Dialog;
             RefreshState();
             try {
-                var pending = introductionDialog.AskAsync("チャレンジモードとは", "CPUと戦い、階級の頂点を目指すモード！\n最初はピアニッシモ級からスタート\n好きなストライカーで挑戦しよう", new[] { "挑戦する！" }, inputPlayerId: 0, directInput: true);
+                var pending = introductionDialog.AskAsync("チャレンジモードとは", "CPUと戦い、階級の頂点を目指すモード！\n最初はピアニッシモ級からスタート\n好きなストライカーで挑戦しよう", new[] { "挑戦する！" }, directInput: true);
                 view.TrialIntroduction.ShowPage();
                 await pending;
                 if (disposed) return;
@@ -183,7 +181,6 @@ namespace Alice {
         }
 
         void OnStrikerClicked(StrikerClickRequest request) {
-            if (playerSession.IsTrial && request.PlayerId != 0) return;
             if (IsTransitioning() || !CanSelectStriker(request.Striker)) {
                 return;
             }
@@ -400,7 +397,8 @@ namespace Alice {
             var name = playerSession.GetName(0);
             var player = string.IsNullOrWhiteSpace(name) ? new PlayerIdentity { name = "1P" } : profiles.Get(name).Identity;
             playerSession.SetMode(BattlePlayMode.Tutorial);
-            playerSession.Prepare(new[] { player, CreateCpuIdentity(1, 0) });
+            playerSession.Prepare(new[] { player, CreateCpuIdentity(1, 0) },
+                cpuBrainOverrides: new[] { null, tutorialSetting.OpponentAiBrain });
         }
 
         AppScene ResolvePlayScene() {

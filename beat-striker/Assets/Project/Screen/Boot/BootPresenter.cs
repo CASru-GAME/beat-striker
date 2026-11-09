@@ -17,18 +17,22 @@ namespace Alice {
         readonly BootScene view;
         readonly IAppUISetting appUISetting;
         readonly ISceneTransitionService sceneTransitionService;
+        readonly IInputFocusService inputFocus;
         readonly CompositeDisposable subscriptions = new();
 
         BootInputState inputState = BootInputState.Entering;
+        bool disposed;
 
         [Inject]
         public BootPresenter(
             BootScene view,
             IAppUISetting appUISetting,
-            ISceneTransitionService sceneTransitionService) {
+            ISceneTransitionService sceneTransitionService,
+            IInputFocusService inputFocus) {
             this.view = view;
             this.appUISetting = appUISetting;
             this.sceneTransitionService = sceneTransitionService;
+            this.inputFocus = inputFocus;
 
             view.TouchControllerSelectionRequested
                 .Subscribe(OnTouchControllerSelectionRequested)
@@ -38,10 +42,21 @@ namespace Alice {
         }
 
         async Task EnterBootAsync() {
-            Debug.Log($"{LOG_PREFIX} EnterBootAsync requesting end transition. scene={AppScene.Boot}");
-            var result = await sceneTransitionService.RequestEndTransitionAsync(AppScene.Boot);
+            using (inputFocus.Block()) {
+                Debug.Log($"{LOG_PREFIX} EnterBootAsync requesting end transition. scene={AppScene.Boot}");
+                var result = await sceneTransitionService.RequestEndTransitionAsync(AppScene.Boot);
+                if (disposed) return;
+
+                try {
+                    await view.PlayCreditsAsync();
+                }
+                catch (OperationCanceledException) {
+                    return;
+                }
+                Debug.Log($"{LOG_PREFIX} EnterBootAsync completed. isSuccess={result.IsSuccess}");
+            }
+            if (disposed) return;
             inputState = BootInputState.Ready;
-            Debug.Log($"{LOG_PREFIX} EnterBootAsync completed. isSuccess={result.IsSuccess}");
         }
 
         void OnTouchControllerSelectionRequested(bool usesTouchController) {
@@ -65,6 +80,7 @@ namespace Alice {
         }
 
         public void Dispose() {
+            disposed = true;
             subscriptions.Dispose();
         }
     }

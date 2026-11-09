@@ -7,6 +7,7 @@ namespace Alice {
     public interface ITutorialSetting {
         TutorialBattleSelection BattleSelection { get; }
         int AiStrength { get; }
+        AiBrain OpponentAiBrain { get; }
         float OpponentHitPointRecoveryRatioPerSecond { get; }
         bool IsTutorialBattleRequested { get; }
         void RequestTutorialBattle();
@@ -28,10 +29,12 @@ namespace Alice {
         [SerializeField] string musicId;
         [SerializeField] List<TutorialPlayerStrikerEntry> playerSelections = new();
         [SerializeField, Min(0)] int aiStrength = 1;
+        [SerializeField] AiBrain opponentAiBrain;
         [SerializeField, Min(0f)] float opponentHitPointRecoveryRatioPerSecond = 0.5f;
         [SerializeField] bool isTutorialBattleRequested;
 
         public int AiStrength => Mathf.Max(0, aiStrength);
+        public AiBrain OpponentAiBrain => opponentAiBrain;
         public float OpponentHitPointRecoveryRatioPerSecond => opponentHitPointRecoveryRatioPerSecond;
         public bool IsTutorialBattleRequested => isTutorialBattleRequested;
 

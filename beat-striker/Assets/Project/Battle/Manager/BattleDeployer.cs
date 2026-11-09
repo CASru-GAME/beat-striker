@@ -341,7 +341,7 @@ namespace Alice {
                 }
 
                 var gamePad = gamePadRegistry.Get(playerId);
-                var forceCpu = playerSession.IsTrial && playerId == 1;
+                var forceCpu = (playerSession.IsTrial && playerId == 1) || playerSession.GetCpuBrainOverride(playerId) != null;
                 if (forceCpu && aiBrain != null) gamePadRegistry.RequestRegisterBattleOverride(playerId, aiBrain);
                 if (aiBrain != null) {
                     roundSubscriptions.Add(aiSetting.Mode.Subscribe(_ => {
@@ -501,12 +501,15 @@ namespace Alice {
         }
 
         AiBrain CreateRuntimeAiBrain(int playerId, Striker selfStriker) {
-            if (playerId != 0 && aiSetting.UsesFixedTestOpponentSequence) {
+            var specifiedBrain = playerSession.GetCpuBrainOverride(playerId);
+            if (specifiedBrain == null && playerId != 0 && aiSetting.UsesFixedTestOpponentSequence) {
                 return CreateTestModeOpponentBrain(playerId);
             }
 
-            if (IsInfiniteRoundMode() && playerId != 0 && !aiSetting.UsesSelfPlayOpponentSelection && lastSelectedOpponent?.BrainPrefab != null) {
-                var specifiedBrain = lastSelectedOpponent.BrainPrefab;
+            if (specifiedBrain == null && IsInfiniteRoundMode() && playerId != 0 && !aiSetting.UsesSelfPlayOpponentSelection) {
+                specifiedBrain = lastSelectedOpponent?.BrainPrefab;
+            }
+            if (specifiedBrain != null) {
                 var specifiedBrainName = $"{specifiedBrain.name}_Player{playerId}";
                 var specifiedAiBrain = UnityEngine.Object.Instantiate(specifiedBrain, battleSetting.PlayerTransforms[playerId]);
                 specifiedAiBrain.name = specifiedBrainName;
