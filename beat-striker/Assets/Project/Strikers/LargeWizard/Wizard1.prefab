@@ -590,12 +590,13 @@ MonoBehaviour:
     - Label: "\u30b8\u30e3\u30f3\u30d7"
       Instruction: "{Up} + {Jump}"
       Command: 2
-      Direction: 2
-      Ground: 1
+      Direction: 0
+      GuideDirection: 2
+      Ground: 0
       TargetStates:
       - {fileID: 1841557291681574819}
       RequiredCount: 1
-      CompleteOnExit: 1
+      CompleteOnExit: 0
       RequiresCommittedAction: 0
       RequiresShieldLaunch: 0
     ResetBeforePractice: 0
@@ -613,12 +614,12 @@ MonoBehaviour:
       Instruction: "{Forward} + {Jump}"
       Command: 2
       Direction: 4
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 5360974398772848802}
       - {fileID: 1841557291681574819}
       RequiredCount: 1
-      CompleteOnExit: 1
+      CompleteOnExit: 0
       RequiresCommittedAction: 0
       RequiresShieldLaunch: 0
     ResetBeforePractice: 0
@@ -636,7 +637,7 @@ MonoBehaviour:
       Instruction: "{Attack}\u3067\u653b\u6483"
       Command: 3
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 1588872990873593035}
       RequiredCount: 1
@@ -658,7 +659,7 @@ MonoBehaviour:
       Instruction: "{Charge}\u3067\u30c1\u30e3\u30fc\u30b8"
       Command: 1
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 7677753745911566938}
       RequiredCount: 1
@@ -684,7 +685,7 @@ MonoBehaviour:
       Instruction: "{Charge}\u3067\u30c1\u30e3\u30fc\u30b8"
       Command: 1
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 7677753745911566938}
       RequiredCount: 1
@@ -695,7 +696,7 @@ MonoBehaviour:
       Instruction: "{Attack}\u3067\u653b\u6483"
       Command: 3
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 4324538208326174747}
       RequiredCount: 1
@@ -715,7 +716,7 @@ MonoBehaviour:
       Instruction: "{Charge}\u3067\u30c1\u30e3\u30fc\u30b8"
       Command: 1
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 7677753745911566938}
       RequiredCount: 2
@@ -726,7 +727,7 @@ MonoBehaviour:
       Instruction: "{Attack}\u3067\u653b\u6483"
       Command: 3
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 7010646026458285884}
       RequiredCount: 1
@@ -746,7 +747,7 @@ MonoBehaviour:
       Instruction: "{Charge}\u3067\u30c1\u30e3\u30fc\u30b8"
       Command: 1
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 7677753745911566938}
       RequiredCount: 3
@@ -757,7 +758,7 @@ MonoBehaviour:
       Instruction: "{Attack}\u3067\u653b\u6483"
       Command: 3
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 6075840688452119110}
       RequiredCount: 1
@@ -781,7 +782,7 @@ MonoBehaviour:
       Instruction: "{Guard}\u3067\u30ac\u30fc\u30c9"
       Command: 0
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 516385516661520776}
       RequiredCount: 1
@@ -798,14 +799,14 @@ MonoBehaviour:
       Voice: script_139
     - Text: "\u305d\u3057\u3066 \uff14\u679a\u4ee5\u4e0a\u305f\u3081\u308b\u3068 \u76fe\u304c\u524d\u65b9\u306b\u653e\u51fa\u3055\u308c\u308b\u306e\u3060"
       Voice: script_140
-    PracticeInstruction: "{Guard}\u30924\u56de\u62bc\u3057\u3066\u307f\u3088\u3046"
+    PracticeInstruction: "{Guard}\u30924\u56de\u62bc\u3057\u3066 \u76fe\u3092\u5c04\u51fa\u3057\u3066\u307f\u3088\u3046"
     AfterPracticePages: []
     Steps:
     - Label: "\u30ac\u30fc\u30c9"
       Instruction: "\u65b9\u5411\u5165\u529b\u306a\u3057 + {Guard}"
       Command: 0
-      Direction: 1
-      Ground: 1
+      Direction: 0
+      Ground: 0
       TargetStates:
       - {fileID: 516385516661520776}
       RequiredCount: 4
@@ -829,7 +830,7 @@ MonoBehaviour:
       Instruction: "{Special}\u3067\u5fc5\u6bba\u6280"
       Command: 6
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 7084057613530797037}
       RequiredCount: 1

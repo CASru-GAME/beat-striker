@@ -149,7 +149,7 @@ namespace Alice {
         void RefreshPracticeInput() {
             if (currentPracticeStep == null) return;
             var facing = !TryResolveTutorialStriker(out var striker) || striker.LookDirection.CurrentValue.x >= 0f ? 1f : -1f;
-            TutorialInputCue Cue(TutorialActionStep step) => new(PhysicalControl(step.Command), step.Direction switch {
+            TutorialInputCue Cue(TutorialActionStep step) => new(PhysicalControl(step.Command), step.CueDirection switch {
                 TutorialDirection.Up => Vector2.up, TutorialDirection.Down => Vector2.down,
                 TutorialDirection.Forward => Vector2.right * facing,
                 TutorialDirection.ForwardUp => new Vector2(facing, 1f), _ => Vector2.zero,
@@ -283,25 +283,24 @@ namespace Alice {
                 RefreshTutorialInput();
                 RequestTutorialPause();
                 source.ResetTutorialPractice(lesson.ResetBeforePractice);
-                if (lesson.IsSpecial && !TryFillSpecialPointMax()) return;
+                if (lesson.IsSpecial) striker.AddSpecialPoint(float.MaxValue);
                 await AwaitWhileActiveAsync(RunActionStepAsync(
                     TutorialUiKey.CharacterDescription, TutorialUiKey.CharacterPractice,
-                    () => WaitForCharacterActionAsync(source, lesson)));
+                    () => WaitForCharacterActionAsync(striker, source, lesson)));
                 showingAfterPractice = true;
                 for (var page = 0; page < lesson.AfterPracticePages.Length; page++) {
                     currentDescriptionPage = page;
                     RefreshTutorialInput();
                     tutorialView.SetCharacterLessonNarration(new[] { lesson.AfterPracticePages[page].Voice });
-                    await AwaitWhileActiveAsync(tutorialView.ShowAsync(TutorialUiKey.CharacterDescription));
-                    await AwaitWhileActiveAsync(WaitForEastAsync());
+                    await ShowDescriptionAndWaitForEastAsync(TutorialUiKey.CharacterDescription);
                 }
             }
             currentLesson = null;
             currentPracticeStep = null;
         }
 
-        async Task WaitForCharacterActionAsync(IStrikerTutorialSource source, TutorialActionLesson lesson) {
-            var progress = new TutorialLessonProgress(lesson, source.CaptureTutorialCommand().Id);
+        async Task WaitForCharacterActionAsync(IStrikerHub striker, IStrikerTutorialSource source, TutorialActionLesson lesson) {
+            var progress = new TutorialLessonProgress(lesson, source.TutorialCommandId);
             var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             using var practiceSubscriptions = new CompositeDisposable();
             var retryPending = false;
@@ -317,12 +316,10 @@ namespace Alice {
                 ShowProgress(true);
             }
             ShowProgress();
-            source.OnTutorialCommandExecuted.Subscribe(command => {
+            source.OnTutorialCommandExecuted.Subscribe(result => {
                 if (retryPending || completion.Task.IsCompleted) return;
-                // Buffered repeats can arrive just after a charge completes. They do
-                // not invalidate the setup: judge the actual attack that uses it.
-                if (progress.RequiresRetryAfterCommand(command, source.ObservedState)) Retry();
-                else if (progress.IsUnexpectedCommand(command)) ShowProgress();
+                // An ignored button press does not invalidate an already completed setup.
+                if (progress.RequiresRetryAfterCommand(result.Command, result.EnteredState)) Retry();
             }).AddTo(practiceSubscriptions);
             foreach (var state in lesson.Steps.SelectMany(step => step.TargetStates).Distinct()) {
                 state.OnTutorialExecution.Subscribe(execution => {
@@ -335,26 +332,31 @@ namespace Alice {
                 }).AddTo(practiceSubscriptions);
             }
             Observable.EveryUpdate().Subscribe(_ => {
-                tutorialView.SetAttentionActive(battlePresenter.IsAttentionPresentationActive);
+                var attentionActive = battlePresenter.IsAttentionPresentationActive;
+                tutorialView.SetAttentionActive(attentionActive);
                 if (disposed || !tutorialSetting.IsTutorialBattleRequested) {
                     completion.TrySetResult(false);
                     return;
                 }
-                if (retryPending && !completion.Task.IsCompleted &&
-                    source.ObservedState.Category == StrikerStateCategory.Idle &&
-                    source.CaptureTutorialCommand().IsGrounded && !battlePresenter.IsAttentionPresentationActive) {
+                if (completion.Task.IsCompleted) return;
+                var category = source.ObservedState.Category;
+                if (lesson.IsSpecial && category != StrikerStateCategory.Special && !attentionActive &&
+                    striker.SpecialPoint.CurrentValue < striker.MaxSpecialPoint.CurrentValue) {
+                    // A rejected input or an approach that timed out can spend SP.
+                    striker.AddSpecialPoint(float.MaxValue);
+                }
+                if (retryPending && category == StrikerStateCategory.Idle && !attentionActive) {
                     source.ResetTutorialPractice(TutorialReset.All);
-                    progress.Reset(source.CaptureTutorialCommand().Id);
-                    if (lesson.IsSpecial) TryFillSpecialPointMax();
+                    progress.Reset(source.TutorialCommandId);
                     retryPending = false;
                     ShowProgress();
                 }
                 if (!retryPending && !progress.IsComplete && progress.StepIndex > 0 &&
                     lesson.ResetBeforePractice == TutorialReset.None && !lesson.Steps[0].CompleteOnExit &&
-                    source.ObservedState.Category == StrikerStateCategory.Idle && source.CaptureTutorialCommand().IsGrounded) {
+                    category == StrikerStateCategory.Idle && source.IsTutorialGrounded) {
                     // Landing or letting a temporary stance expire ends the setup.
                     // Prompt for that setup again instead of waiting for an impossible follow-up.
-                    progress.Reset(source.CaptureTutorialCommand().Id);
+                    progress.Reset(source.TutorialCommandId);
                     ShowProgress();
                 }
             }).AddTo(practiceSubscriptions);
@@ -387,8 +389,7 @@ namespace Alice {
                     tutorialView.SetCharacterLessonNarration(new[] { currentLesson.Pages[page].Voice });
                 }
                 else tutorialView.SetDescriptionPage(descriptionKey, page);
-                await AwaitWhileActiveAsync(tutorialView.ShowAsync(descriptionKey));
-                await AwaitWhileActiveAsync(WaitForEastAsync());
+                await ShowDescriptionAndWaitForEastAsync(descriptionKey);
                 if (!tutorialSetting.IsTutorialBattleRequested) break;
             }
             if (!tutorialSetting.IsTutorialBattleRequested) {
@@ -423,8 +424,7 @@ namespace Alice {
             for (var i = 0; i < descriptionKeys.Length; i++) {
                 for (var page = 0; page < tutorialView.GetDescriptionPageCount(descriptionKeys[i]); page++) {
                     tutorialView.SetDescriptionPage(descriptionKeys[i], page);
-                    await AwaitWhileActiveAsync(tutorialView.ShowAsync(descriptionKeys[i]));
-                    await AwaitWhileActiveAsync(WaitForEastAsync());
+                    await ShowDescriptionAndWaitForEastAsync(descriptionKeys[i]);
 
                     if (!tutorialSetting.IsTutorialBattleRequested) break;
                 }
@@ -454,30 +454,23 @@ namespace Alice {
             tutorialResumeRequestedSubject.OnNext(Unit.Default);
         }
 
-        Task WaitForEastAsync() {
-            var tcs = new TaskCompletionSource<bool>();
-            IDisposable subscription = null;
-            subscription = gamePadRegistry.Get(TUTORIAL_PLAYER_ID).OnButtonDown
+        async Task ShowDescriptionAndWaitForEastAsync(TutorialUiKey key) {
+            var confirmation = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using var subscription = gamePadRegistry.Get(TUTORIAL_PLAYER_ID).OnButtonDown
                 .Where(button => button == GamePadButton.East)
-                .Subscribe(_ => {
-                    subscription.Dispose();
-                    tcs.TrySetResult(true);
-                });
-
-            if (!tutorialSetting.IsTutorialBattleRequested) {
-                subscription.Dispose();
-                tcs.TrySetResult(true);
-            }
-
-            subscription.AddTo(subscriptions);
-            return tcs.Task;
+                .Take(1)
+                .Subscribe(_ => confirmation.TrySetResult(true));
+            // The confirmation hint is visible while the page fades in.
+            await AwaitWhileActiveAsync(tutorialView.ShowAsync(key));
+            if (tutorialSetting.IsTutorialBattleRequested) await AwaitWhileActiveAsync(confirmation.Task);
         }
 
         async Task WaitForRhythmAsync() {
             var beatPlayer = beatJudge.GetBeatPlayer(TUTORIAL_PLAYER_ID);
-            var completion = new TaskCompletionSource<bool>();
+            var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             var successCount = 0;
             var previousBeatIndex = -1;
+            var previousPlaybackTime = -1f;
             using var practiceSubscriptions = new CompositeDisposable();
 
             void ResetProgress() {
@@ -486,15 +479,32 @@ namespace Alice {
                 tutorialView.SetRhythmProgress(0, RHYTHM_REQUIRED_SUCCESSES);
             }
 
+            void ObservePlayback(float time) {
+                if (time < previousPlaybackTime) ResetProgress();
+                previousPlaybackTime = time;
+            }
+
             beatPlayer.OnBeatCommandRequested
                 .Where(result => !result.IsSuccess)
-                .Subscribe(_ => ResetProgress()).AddTo(practiceSubscriptions);
-            beatPlayer.OnBeatPassed.Subscribe(_ => ResetProgress()).AddTo(practiceSubscriptions);
+                .Subscribe(result => {
+                    if (completion.Task.IsCompleted) return;
+                    previousPlaybackTime = result.Time;
+                    ResetProgress();
+                }).AddTo(practiceSubscriptions);
+            beatPlayer.OnBeatPassed.Subscribe(result => {
+                if (completion.Task.IsCompleted) return;
+                ObservePlayback(result.Time);
+                // A late deadline for an earlier beat can arrive after an early hit.
+                if (result.BeatIndex > previousBeatIndex && successCount > 0) ResetProgress();
+            }).AddTo(practiceSubscriptions);
             beatPlayer.OnBeatCommandExecuted.Subscribe(result => {
+                if (completion.Task.IsCompleted) return;
+                ObservePlayback(result.Time);
                 if (!result.IsSuccess || result.Button is not (GamePadButton.North or GamePadButton.East or GamePadButton.South or GamePadButton.West)) {
                     ResetProgress();
                     return;
                 }
+                if (result.BeatIndex == previousBeatIndex) return;
                 successCount = successCount > 0 && result.BeatIndex == previousBeatIndex + 1 ? successCount + 1 : 1;
                 previousBeatIndex = result.BeatIndex;
                 tutorialView.SetRhythmProgress(successCount, RHYTHM_REQUIRED_SUCCESSES);
@@ -528,25 +538,24 @@ namespace Alice {
             await AwaitWhileActiveAsync(battlePresenter.PresentTutorialRoundWinAsync(TUTORIAL_PLAYER_ID, winCount));
         }
 
-        Task WaitForWalkAsync() {
+        async Task WaitForWalkAsync() {
             if (!TryResolveTutorialStriker(out var striker)) {
-                return Task.CompletedTask;
+                throw new InvalidOperationException("Tutorial player is not deployed.");
             }
 
             var threshold = tutorialView.WalkVelocityThreshold;
             var requiredTravelDistance = tutorialView.WalkPracticeRequiredTravelDistance;
-            var tcs = new TaskCompletionSource<bool>();
+            var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             var previousPosition = striker.Position.CurrentValue;
             var travelDistance = 0f;
 
-            IDisposable subscription = null;
-            subscription = Observable.EveryUpdate()
+            using var subscription = Observable.EveryUpdate()
                 .Subscribe(_ => {
                     if (!tutorialSetting.IsTutorialBattleRequested) {
-                        subscription.Dispose();
-                        tcs.TrySetResult(true);
+                        completion.TrySetResult(false);
                         return;
                     }
+                    if (completion.Task.IsCompleted) return;
 
                     var currentPosition = striker.Position.CurrentValue;
                     var stepDistance = new Vector2(
@@ -554,9 +563,9 @@ namespace Alice {
                         currentPosition.z - previousPosition.z).magnitude;
                     previousPosition = currentPosition;
 
-                    var velocity = striker.Velocity.CurrentValue;
-                    var horizontal = new Vector2(velocity.x, velocity.z).magnitude;
-                    if (horizontal < threshold) {
+                    // Judge speed over the same update interval as the measured displacement.
+                    var elapsed = Time.deltaTime;
+                    if (elapsed <= 0f || stepDistance < threshold * elapsed) {
                         return;
                     }
 
@@ -565,21 +574,10 @@ namespace Alice {
                         return;
                     }
 
-                    subscription.Dispose();
-                    tcs.TrySetResult(true);
+                    completion.TrySetResult(true);
                 });
 
-            subscription.AddTo(subscriptions);
-            return tcs.Task;
-        }
-
-        bool TryFillSpecialPointMax() {
-            if (!TryResolveTutorialStriker(out var striker)) {
-                return false;
-            }
-
-            striker.AddSpecialPoint(float.MaxValue);
-            return true;
+            await AwaitWhileActiveAsync(completion.Task);
         }
 
         bool TryResolveTutorialStriker(out IStrikerHub striker) {

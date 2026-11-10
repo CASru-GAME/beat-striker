@@ -128,9 +128,8 @@ namespace Alice {
         readonly Subject<StrikerImpact> onInpactGeneratedSubject = new();
         readonly Subject<AttentionRequest> onAttentionRequestedSubject = new();
         readonly Subject<Unit> onSpecialRequestFailedSubject = new();
-        readonly Subject<TutorialCommandContext> onTutorialCommandExecuted = new();
-        int tutorialCommandId;
-        GamePadButton tutorialCommandButton;
+        readonly Subject<TutorialCommandResult> onTutorialCommandExecuted = new();
+        bool observeTutorialCommands;
         IDisposable stateNameSubscription;
 
         Vector2 inputDirection;
@@ -171,21 +170,10 @@ namespace Alice {
         public Bounds? MovementBounds => legacyHub.MovementBounds;
         public Transform ObservationRoot => strikerTransform;
         public IReadOnlyList<TutorialActionLesson> TutorialLessons => legacyHub.TutorialLessons;
-        public Observable<TutorialCommandContext> OnTutorialCommandExecuted => onTutorialCommandExecuted;
-        public TutorialCommandContext CaptureTutorialCommand() => new(tutorialCommandId, tutorialCommandButton,
-            new Vector2(inputDirection.x * Mathf.Sign(strikerTransform.forward.x), inputDirection.y),
-            legacyHub.TutorialGroundSource.IsGrounded);
-
-        TutorialCommandContext StartTutorialCommand(GamePadButton button) {
-            if (TutorialLessons.Count == 0) return null;
-            tutorialCommandId++;
-            tutorialCommandButton = button;
-            return CaptureTutorialCommand();
-        }
-
-        void CompleteTutorialCommand(TutorialCommandContext command) {
-            if (command != null) onTutorialCommandExecuted.OnNext(command);
-        }
+        public Observable<TutorialCommandResult> OnTutorialCommandExecuted => onTutorialCommandExecuted;
+        public int TutorialCommandId { get; private set; }
+        public bool IsTutorialGrounded => legacyHub.TutorialGroundSource.IsGrounded;
+        public TutorialCommandContext ActiveTutorialCommand { get; private set; }
 
         public void ResetTutorialPractice(TutorialReset reset) {
             Default();
@@ -242,9 +230,11 @@ namespace Alice {
         public AliceStrikerHub() {
         }
 
-        public void InitializeRuntimeDependencies(IStrikerRegistry strikerRegistry, IBattleOnlineSync battleOnlineSync) {
+        public void InitializeRuntimeDependencies(IStrikerRegistry strikerRegistry, IBattleOnlineSync battleOnlineSync,
+            bool observeTutorialCommands) {
             this.strikerRegistry = strikerRegistry;
             this.battleOnlineSync = battleOnlineSync;
+            this.observeTutorialCommands = observeTutorialCommands && TutorialLessons.Count > 0;
         }
 
         public void ConfigureSurvival(bool preventsHitPointDeath, float hitPointRecoveryRatioPerSecond) {
@@ -561,52 +551,47 @@ namespace Alice {
             inputDirection = Vector2.zero;
         }
 
-        public void Dash() {
-            if (stateMachine == null || IsUnableToAct) return;
-            var command = StartTutorialCommand(GamePadButton.West);
-            stateMachine.CurrentState.OnDashRequested(stateMachine);
-            CompleteTutorialCommand(command);
-        }
+        public void Dash() => ExecuteCommand(GamePadButton.West);
+        public void Attack() => ExecuteCommand(GamePadButton.East);
+        public void Charge() => ExecuteCommand(GamePadButton.South);
+        public void Special() => ExecuteCommand(GamePadButton.Start);
+        public void Guard() => ExecuteCommand(GamePadButton.North);
 
-        public void Attack() {
+        void ExecuteCommand(GamePadButton button) {
             if (stateMachine == null || IsUnableToAct) return;
-            var command = StartTutorialCommand(GamePadButton.East);
-            stateMachine.CurrentState.OnAttackRequested(stateMachine);
-            CompleteTutorialCommand(command);
-        }
-
-        public void Charge() {
-            if (stateMachine == null || IsUnableToAct) return;
-            var command = StartTutorialCommand(GamePadButton.South);
-            stateMachine.CurrentState.OnChargeRequested(stateMachine);
-            CompleteTutorialCommand(command);
-        }
-
-        public void Special() {
-            if (stateMachine == null || IsUnableToAct) return;
-
-            if (!CanUseSpecial()) {
+            if (button == GamePadButton.Start && !CanUseSpecial()) {
                 onSpecialRequestFailedSubject.OnNext(Unit.Default);
                 return;
             }
 
-            var command = StartTutorialCommand(GamePadButton.Start);
-            currentSpecialPoint = 0f;
-            specialPointSubject.OnNext(currentSpecialPoint);
-            stateMachine.CurrentState.OnSpecialRequested(stateMachine);
-            CompleteTutorialCommand(command);
-        }
-
-        public void Guard() {
-            if (stateMachine == null || IsUnableToAct) return;
-            var command = StartTutorialCommand(GamePadButton.North);
-            requestingGuard = true;
+            var previousCommand = ActiveTutorialCommand;
+            var wasRequestingGuard = requestingGuard;
+            var previousStateVersion = stateMachine.StateVersion;
+            var command = observeTutorialCommands
+                ? new TutorialCommandContext(++TutorialCommandId, button, LocalInputDirection, IsTutorialGrounded)
+                : null;
+            ActiveTutorialCommand = command;
+            requestingGuard = button == GamePadButton.North;
             try {
-                stateMachine.CurrentState.OnGuardRequested(stateMachine);
+                switch (button) {
+                    case GamePadButton.West: stateMachine.CurrentState.OnDashRequested(stateMachine); break;
+                    case GamePadButton.East: stateMachine.CurrentState.OnAttackRequested(stateMachine); break;
+                    case GamePadButton.South: stateMachine.CurrentState.OnChargeRequested(stateMachine); break;
+                    case GamePadButton.North: stateMachine.CurrentState.OnGuardRequested(stateMachine); break;
+                    case GamePadButton.Start:
+                        currentSpecialPoint = 0f;
+                        specialPointSubject.OnNext(currentSpecialPoint);
+                        stateMachine.CurrentState.OnSpecialRequested(stateMachine);
+                        break;
+                }
             } finally {
-                requestingGuard = false;
+                ActiveTutorialCommand = previousCommand;
+                requestingGuard = wasRequestingGuard;
             }
-            CompleteTutorialCommand(command);
+            if (command != null) {
+                var enteredState = stateMachine.StateVersion != previousStateVersion ? stateMachine.CurrentState : null;
+                onTutorialCommandExecuted.OnNext(new TutorialCommandResult(command, enteredState));
+            }
         }
 
         public float BeginRecoveringGuard() {

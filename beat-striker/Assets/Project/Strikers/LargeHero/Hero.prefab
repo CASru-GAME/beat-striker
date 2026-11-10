@@ -74821,12 +74821,13 @@ MonoBehaviour:
     - Label: "\u30b8\u30e3\u30f3\u30d7"
       Instruction: "{Up} + {Jump}"
       Command: 2
-      Direction: 2
-      Ground: 1
+      Direction: 8
+      GuideDirection: 2
+      Ground: 0
       TargetStates:
       - {fileID: 1725136736966926176}
       RequiredCount: 1
-      CompleteOnExit: 1
+      CompleteOnExit: 0
       RequiresCommittedAction: 0
       RequiresShieldLaunch: 0
     ResetBeforePractice: 0
@@ -74844,11 +74845,11 @@ MonoBehaviour:
       Instruction: "{Forward} + {Jump}"
       Command: 2
       Direction: 4
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 1725136736966926176}
       RequiredCount: 1
-      CompleteOnExit: 1
+      CompleteOnExit: 0
       RequiresCommittedAction: 0
       RequiresShieldLaunch: 0
     ResetBeforePractice: 0
@@ -74865,8 +74866,8 @@ MonoBehaviour:
     - Label: "\u653b\u6483"
       Instruction: "\u5de6\u53f3\u5165\u529b\u306a\u3057 + {Attack}"
       Command: 3
-      Direction: 6
-      Ground: 1
+      Direction: 0
+      Ground: 0
       TargetStates:
       - {fileID: 6646820647200852723}
       RequiredCount: 1
@@ -74888,7 +74889,7 @@ MonoBehaviour:
       Instruction: "{Forward} + {Attack}"
       Command: 3
       Direction: 4
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 4157371287227188172}
       RequiredCount: 1
@@ -74910,7 +74911,7 @@ MonoBehaviour:
       Instruction: "{Charge}\u3067\u30c1\u30e3\u30fc\u30b8"
       Command: 1
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 2697159971508307948}
       RequiredCount: 1
@@ -74932,7 +74933,7 @@ MonoBehaviour:
       Instruction: "{Charge}\u3067\u30c1\u30e3\u30fc\u30b8"
       Command: 1
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 2697159971508307948}
       RequiredCount: 1
@@ -74942,8 +74943,8 @@ MonoBehaviour:
     - Label: "\u653b\u6483"
       Instruction: "\u5de6\u53f3\u5165\u529b\u306a\u3057 + {Attack}"
       Command: 3
-      Direction: 6
-      Ground: 1
+      Direction: 0
+      Ground: 0
       TargetStates:
       - {fileID: 1001626645920160719}
       RequiredCount: 1
@@ -74965,7 +74966,7 @@ MonoBehaviour:
       Instruction: "{Guard}\u3067\u30ac\u30fc\u30c9"
       Command: 0
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
       - {fileID: 3723594526513847027}
       RequiredCount: 1
@@ -74989,9 +74990,8 @@ MonoBehaviour:
       Instruction: "{Special}\u3067\u5fc5\u6bba\u6280"
       Command: 6
       Direction: 0
-      Ground: 1
+      Ground: 0
       TargetStates:
-      - {fileID: 910000000000002003}
       - {fileID: 234091878709252225}
       RequiredCount: 1
       CompleteOnExit: 0

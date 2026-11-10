@@ -23,7 +23,7 @@ namespace Alice {
 
     [Flags]
     public enum TutorialReset { None = 0, Charge = 1, Guard = 2, All = Charge | Guard }
-    public enum TutorialDirection { Any, Neutral, Up, ForwardUp, Forward, Down, NoHorizontal, NoVertical }
+    public enum TutorialDirection { Any, Neutral, Up, ForwardUp, Forward, Down, NoHorizontal, NoVertical, UpOrNeutral }
     public enum TutorialGround { Any, Grounded, Airborne }
 
     [Serializable]
@@ -32,12 +32,15 @@ namespace Alice {
         public string Instruction;
         public GamePadButton Command;
         public TutorialDirection Direction;
+        public TutorialDirection GuideDirection;
         public TutorialGround Ground;
         public StrikerState[] TargetStates;
         [Min(1)] public int RequiredCount = 1;
         public bool CompleteOnExit = true;
         public bool RequiresCommittedAction;
         public bool RequiresShieldLaunch;
+
+        public TutorialDirection CueDirection => GuideDirection == TutorialDirection.Any ? Direction : GuideDirection;
 
         public bool Matches(TutorialCommandContext command) {
             if (command.Button != Command) return false;
@@ -47,18 +50,20 @@ namespace Alice {
             return Direction switch {
                 TutorialDirection.Any => true,
                 TutorialDirection.Neutral => direction.sqrMagnitude < 0.01f,
-                TutorialDirection.Up => direction.y > 0.5f && Mathf.Abs(direction.x) < 0.5f,
+                TutorialDirection.Up => direction.y > 0f && direction.y >= Mathf.Abs(direction.x),
                 TutorialDirection.ForwardUp => direction.x > 0.5f && direction.y > 0.5f,
-                TutorialDirection.Forward => direction.x > 0.5f && Mathf.Abs(direction.y) < 0.5f,
+                TutorialDirection.Forward => direction.x > 0f,
                 TutorialDirection.Down => direction.y < -0.5f,
                 TutorialDirection.NoHorizontal => direction.x == 0f,
                 TutorialDirection.NoVertical => Mathf.Abs(direction.y) <= 0.5f,
+                TutorialDirection.UpOrNeutral => direction.y > 0f || direction == Vector2.zero,
                 _ => false,
             };
         }
     }
 
     public record TutorialCommandContext(int Id, GamePadButton Button, Vector2 LocalDirection, bool IsGrounded);
+    public record TutorialCommandResult(TutorialCommandContext Command, IStrikerState EnteredState);
     public record TutorialStateExecution(StrikerState State, int ExecutionId, TutorialCommandContext Command,
         bool Exited, bool Committed, bool ShieldLaunched);
 
@@ -71,8 +76,10 @@ namespace Alice {
 
     public interface IStrikerTutorialSource : IStrikerCombatObservationSource {
         IReadOnlyList<TutorialActionLesson> TutorialLessons { get; }
-        Observable<TutorialCommandContext> OnTutorialCommandExecuted { get; }
-        TutorialCommandContext CaptureTutorialCommand();
+        int TutorialCommandId { get; }
+        bool IsTutorialGrounded { get; }
+        TutorialCommandContext ActiveTutorialCommand { get; }
+        Observable<TutorialCommandResult> OnTutorialCommandExecuted { get; }
         void ResetTutorialPractice(TutorialReset reset);
     }
 

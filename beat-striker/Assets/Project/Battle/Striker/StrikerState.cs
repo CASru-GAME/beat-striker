@@ -18,7 +18,7 @@ public interface IStrikerStateContext : IStrikerContext {
 public interface IStrikerState {
     StrikerStateCategory Category { get; }
     IEnumerable<IStrikerGroup> Parents { get; }
-    void OnEnter(IStrikerContext context);
+    void OnEnter(IStrikerContext context, TutorialCommandContext command);
     void OnExit(IStrikerContext context);
     void OnUpdate(IStrikerStateContext context);
     void OnEnemyBehind(IStrikerStateContext context);
@@ -39,7 +39,7 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
     protected CompositeDisposable disposables = new();
     readonly Subject<TutorialStateExecution> tutorialExecutions = new();
     public Observable<TutorialStateExecution> OnTutorialExecution => tutorialExecutions;
-    TutorialCommandContext tutorialCommand;
+    internal TutorialCommandContext TutorialCommand { get; private set; }
     int tutorialExecutionId;
 
     private readonly List<(float delay, float elapsedTime, Action<IStrikerStateContext> action)> timeActions = new();
@@ -248,29 +248,33 @@ public abstract class StrikerState : StrikerNode, IStrikerState {
         timeActions.Add((delay, 0f, action));
     }
 
-    void IStrikerState.OnEnter(IStrikerContext ctx) {
+    void IStrikerState.OnEnter(IStrikerContext ctx, TutorialCommandContext command) {
         disposables.Dispose();
         disposables = new CompositeDisposable();
-        tutorialCommand = ctx.GetSelf() is IStrikerTutorialSource source && source.TutorialLessons.Count > 0
-            ? source.CaptureTutorialCommand() : null;
-        tutorialExecutionId++;
+        BeginTutorialExecution(command);
         OnEnter(ctx);
         PublishTutorialExecution(false);
+    }
+
+    protected void BeginTutorialExecution(TutorialCommandContext command) {
+        TutorialCommand = command;
+        tutorialExecutionId++;
     }
 
     void IStrikerState.OnExit(IStrikerContext ctx) {
         timeActions.Clear();
         OnExit(ctx);
         PublishTutorialExecution(true);
+        TutorialCommand = null;
         disposables.Dispose();
         disposables = new CompositeDisposable();
     }
 
     void PublishTutorialExecution(bool exited) {
-        if (tutorialCommand == null) return;
+        if (TutorialCommand == null) return;
         var committed = this is not ITutorialActionProgress progress || progress.IsTutorialActionCommitted;
         var launched = this is ITutorialGuardProgress guard && guard.HasLaunchedShield;
-        tutorialExecutions.OnNext(new TutorialStateExecution(this, tutorialExecutionId, tutorialCommand, exited, committed, launched));
+        tutorialExecutions.OnNext(new TutorialStateExecution(this, tutorialExecutionId, TutorialCommand, exited, committed, launched));
     }
 
     protected virtual void OnDestroy() => tutorialExecutions.Dispose();

@@ -31,10 +31,11 @@ namespace Alice {
             playerTransform.SetParent(instance.transform);
             var runtime = instance.EnsureAliceRuntimeHub();
             if (runtime is AliceStrikerHub aliceRuntime) {
-                aliceRuntime.InitializeRuntimeDependencies(strikerRegistry, battleOnlineSync);
-                var isTutorialOpponent = tutorialSetting.IsTutorialBattleRequested && playerId == 1;
+                var isTutorial = tutorialSetting.IsTutorialBattleRequested;
+                aliceRuntime.InitializeRuntimeDependencies(strikerRegistry, battleOnlineSync, isTutorial && playerId == 0);
+                var isTutorialOpponent = isTutorial && playerId == 1;
                 aliceRuntime.ConfigureSurvival(
-                    tutorialSetting.IsTutorialBattleRequested,
+                    isTutorial,
                     isTutorialOpponent ? tutorialSetting.OpponentHitPointRecoveryRatioPerSecond : 0f);
             }
             runtime.SetPlayerId(playerId);

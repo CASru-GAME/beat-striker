@@ -22,6 +22,7 @@ namespace Core.DarkSatan {
         bool requestingCharge;
         bool chargedThisBeat;
         bool fired;
+        bool launchedVolley;
         bool launchRequested;
         bool previousGravity;
         float elapsed;
@@ -55,7 +56,7 @@ namespace Core.DarkSatan {
         public void CollectReadyProjectileObservations(List<StrikerProjectileObservation> observations) {
             foreach (var volley in volleys) volley.CollectLaunchObservations(observations);
         }
-        public bool IsTutorialActionCommitted => fired;
+        public bool IsTutorialActionCommitted => launchedVolley;
         public TutorialReset Resource => TutorialReset.Charge;
         public void ResetTutorialResource() {
             foreach (var volley in volleys.ToArray()) {
@@ -64,7 +65,7 @@ namespace Core.DarkSatan {
                 Destroy(volley.gameObject);
             }
             volleys.Clear();
-            launchRequested = fired = false;
+            launchRequested = fired = launchedVolley = false;
             nextVolleySize = volleyPrefab.BulletCount;
             chargedThisBeat = false;
         }
@@ -94,7 +95,7 @@ namespace Core.DarkSatan {
             velocity.y = 0f;
             context.Rigidbody.linearVelocity = velocity;
             elapsed = 0f;
-            fired = false;
+            fired = launchedVolley = false;
             if (!launchRequested) {
                 Deploy(context, requestingCharge);
             }
@@ -128,6 +129,10 @@ namespace Core.DarkSatan {
         public override void OnAttackRequested(IStrikerStateContext context) {
             context.PreventGroup();
             if (fired) return;
+            if (!launchRequested) {
+                // Launch can execute on a later update without re-entering this state.
+                BeginTutorialExecution((context.GetSelf() as IStrikerTutorialSource)?.ActiveTutorialCommand);
+            }
             if (elapsed < volleyPrefab.SpreadSeconds) {
                 launchRequested = true;
                 return;
@@ -161,6 +166,7 @@ namespace Core.DarkSatan {
                 bullet.volley.SetLaunchDelay(bullet.index, ordered.Count > 1 ? maxLaunchDelay * i / (ordered.Count - 1) : 0f);
             }
             for (int i = 0; i < volleys.Count; i++) volleys[i].Fire(i == 0);
+            launchedVolley = ordered.Count > 0;
             volleys.Clear();
             context.PlayAnimation(launchAnimation);
             attackEffect.Play(launchDuration);

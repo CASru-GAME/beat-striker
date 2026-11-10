@@ -19,7 +19,7 @@ namespace Alice {
             var offset = spawnX - observation.Self.Position.CurrentValue.x;
             var distance = Mathf.Abs(offset);
             isReturning = isReturning ? distance > arrivalDistance : distance >= returnDistance;
-            if (!isReturning || !self.CaptureTutorialCommand().IsGrounded) return AiAction.None;
+            if (!isReturning || !self.IsTutorialGrounded) return AiAction.None;
 
             // West recovers from stun without attacking. Dash after locomotion resumes.
             if (self.ObservedState is Core.DarkSatan.StunState { ObservationAutoRecovers: false }) {

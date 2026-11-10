@@ -54,7 +54,7 @@ namespace Core.LargeWizard {
             var ownerStrikerHub = context.Rigidbody.GetComponent<StrikerHub>();
             var hasDirectionInput = context.LocalInputDirection.sqrMagnitude > 0.0001f;
 
-            var existingGuards = context.Rigidbody.GetComponentsInChildren<Core.LargeWizard.Guard>(true);
+            var existingGuards = context.Rigidbody.GetComponentsInChildren<Core.LargeWizard.Guard>();
             if (hasDirectionInput) {
                 if (existingGuards.Length > 0) {
                     disposable = Disposable.Create(() => { });

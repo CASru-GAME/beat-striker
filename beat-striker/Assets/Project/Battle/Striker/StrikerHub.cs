@@ -242,6 +242,12 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
 
         isChangingState = true;
         try {
+            var command = (context as IStrikerTutorialSource)?.ActiveTutorialCommand;
+            if (newState.Category == StrikerStateCategory.Special && command?.Button != GamePadButton.Start &&
+                currentState is StrikerState { Category: StrikerStateCategory.Special } previousSpecial) {
+                // The approach and launch are parts of the same special, even across frames.
+                command = previousSpecial.TutorialCommand;
+            }
             var oldParents = currentState != null
                 ? new HashSet<IStrikerGroup>(currentState.Parents ?? Array.Empty<IStrikerGroup>())
                 : new HashSet<IStrikerGroup>();
@@ -260,7 +266,7 @@ public class StrikerStateMachine : IStrikerStateContext, IStrikerNodeContext {
 
             stateEnteredTime = Time.time;
             StateVersion++;
-            newState.OnEnter(context);
+            newState.OnEnter(context, command);
             currentState = newState;
             // Publish committed states, including same-category combos and forced re-entry.
             // Observers receive no pending input and must not drive transitions here.
